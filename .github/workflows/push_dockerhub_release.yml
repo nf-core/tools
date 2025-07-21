@@ -25,24 +25,21 @@ jobs:
       - name: Check out code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - name: Build nfcore/tools:latest docker image
+      - name: Build nfcore/tools docker image (latest)
         run: docker build --no-cache . -t nfcore/tools:latest
+
+      - name: Push nfcore/tools docker image to DockerHub (latest,release)
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push nfcore/tools:latest
+          docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
+          docker push nfcore/tools:${{ github.event.release.tag_name }}
 
       - name: Build nfcore/devcontainer:latest devcontainer image
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: nfcore/devcontainer
-          imageTag: latest
+          imageTag: ${{ github.event.release.tag_name }},latest
           platform: linux/amd64,linux/arm64
-          push: false
-
-      - name: Push Docker images to DockerHub (release)
-        run: |
-          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push nfcore/tools:latest
-          docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
-          docker push nfcore/tools:${{ github.event.release.tag_name }}
-          docker push nfcore/devcontainer:latest
-          docker tag nfcore/devcontainer:latest nfcore/devcontainer:${{ github.event.release.tag_name }}
-          docker push nfcore/devcontainer:${{ github.event.release.tag_name }}
+          push: always
