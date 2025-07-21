@@ -2,7 +2,7 @@
     $schema: "https://docs.renovatebot.com/renovate-schema.json",
     extends: ["github>nf-core/ops//.github/renovate/default.json5"],
     ignorePaths: ["**/nf_core/pipeline-template/modules/nf-core/**"],
-    baseBranches: ["dev"],
+    baseBranchPatterns: ["dev"],
     packageRules: [
         {
             matchDatasources: ["docker"],
