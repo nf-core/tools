@@ -247,31 +247,36 @@ class ContainerFetcher(ABC):
             library_path = self.library_dir / container_filename if self.library_dir is not None else None
             cache_path = self.cache_dir / container_filename if self.cache_dir is not None else None
 
-            # get the container from the library
+            # Get the container from the library
             if library_path and library_path.exists():
-                containers_copy.append((container, library_path, output_path))
-                # update the cache if needed
-                if cache_path and not self.amend_cachedir and not cache_path.exists():
+                # Update the cache if needed
+                if cache_path and not cache_path.exists():
                     containers_copy.append((container, library_path, cache_path))
                     self.progress.update_main_task(total=total_tasks)
 
-            # get the container from the cache
-            elif cache_path and cache_path.exists():
+                if not self.amend_cachedir:
+                    # We are not just amending the cache directory, so the file should be copied to the output
+                    containers_copy.append((container, library_path, output_path))
+
+            # Get the container from the cache
+            elif cache_path and cache_path.exists() and not self.amend_cachedir:
                 log.debug(f"Container '{container_filename}' found in cache at '{cache_path}'.")
                 containers_copy.append((container, cache_path, output_path))
-            # no library or cache
+
+            # Image is not in library or cache
             else:
                 # We treat downloading and pulling equivalently since this differs between docker and singularity.
                 # - Singularity images can either be downloaded from an http address, or pulled from a registry with `(singularity|apptainer) pull`
                 # - Docker images are always pulled, but needs the additional `docker image save` command for the image to be saved in the correct place
                 if cache_path:
-                    # download into the cache
+                    # Download into the cache
                     containers_remote_fetch.append((container, cache_path))
-                    # only copy to the output if we are not amending the cache
+
+                    # Do not copy to the output directory "(docker|singularity)-images" if we solely amending the cache
                     if not self.amend_cachedir:
                         containers_copy.append((container, cache_path, output_path))
                 else:
-                    # download or pull directly to the output
+                    # There is no cache directory so download or pull directly to the output
                     containers_remote_fetch.append((container, output_path))
 
         # Fetch containers from a remote location
