@@ -12,6 +12,7 @@
     // Mount full current path to make mounting into docker-outside-of-docker work
     //"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
     //"workspaceFolder": "${localWorkspaceFolder}",
+    "onCreateCommand": ".devcontainer/build-devcontainer/setup.sh",
 
     "remoteUser": "root",
     "privileged": true,
