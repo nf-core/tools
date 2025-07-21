@@ -9,7 +9,7 @@ import shutil
 import tarfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from zipfile import ZipFile
 
 import questionary
@@ -17,7 +17,6 @@ import requests
 import rich
 
 import nf_core
-import nf_core.pipelines.download.utils
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
@@ -76,7 +75,7 @@ class DownloadWorkflow:
         force: bool = False,
         platform: bool = False,
         download_configuration=None,
-        additional_tags: Optional[list[str] | str] = None,
+        additional_tags: Optional[Union[list[str], str]] = None,
         container_system=None,
         container_library=None,
         container_cache_utilisation=None,
@@ -659,9 +658,9 @@ class DownloadWorkflow:
         ((self.outdir / gh_name).rename(self.outdir / revision_dirname),)
 
         # Make downloaded files executable
-        for dirpath, _, filelist in (self.outdir / revision_dirname).walk():
+        for dirpath, _, filelist in os.walk(self.outdir / revision_dirname):
             for fname in filelist:
-                (dirpath / fname).chmod(0o775)
+                (Path(dirpath) / fname).chmod(0o775)
 
         return revision_dirname
 
@@ -681,9 +680,9 @@ class DownloadWorkflow:
 
         # Make downloaded files executable
 
-        for dirpath, _, filelist in (self.outdir / "configs").walk():
+        for dirpath, _, filelist in os.walk(self.outdir / "configs"):
             for fname in filelist:
-                (dirpath / fname).chmod(0o775)
+                (Path(dirpath) / fname).chmod(0o775)
 
     def wf_use_local_configs(self, revision_dirname: str):
         """Edit the downloaded nextflow.config file to use the local config files"""
@@ -844,10 +843,10 @@ class DownloadWorkflow:
         config_findings = rectify_raw_container_matches(config_findings[:])
 
         # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in (workflow_directory / "modules").walk():
+        for subdir, _, files in os.walk(workflow_directory / "modules"):
             for file in files:
                 if file.endswith(".nf"):
-                    file_path = subdir / file
+                    file_path = Path(subdir) / file
                     with open(file_path) as fh:
                         # Look for any lines with container "xxx" or container 'xxx'
                         search_space = fh.read()
@@ -998,10 +997,10 @@ class DownloadWorkflow:
         if self.compress_type == "zip":
             with ZipFile(self.output_filename, "w") as zip_file:
                 # Iterate over all the files in directory
-                for folder_name, _, filenames in self.outdir.walk():
+                for folder_name, _, filenames in os.walk(self.outdir):
                     for filename in filenames:
                         # create complete filepath of file in directory
-                        file_path = folder_name / filename
+                        file_path = Path(folder_name) / filename
                         # Add file to zip
                         zip_file.write(file_path)
             log.info(f"Command to extract files: [bright_magenta]unzip {self.output_filename}[/]")

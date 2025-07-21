@@ -5,7 +5,7 @@ import shutil
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Container, Generator, Iterable
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import rich.progress
 
@@ -37,7 +37,7 @@ class ContainerProgress(rich.progress.Progress):
         return task_types_and_columns
 
     def get_renderables(self) -> Generator[rich.table.Table, None, None]:
-        self.columns: Iterable[str | rich.progress.ProgressColumn]
+        self.columns: Iterable[Union[str, rich.progress.ProgressColumn]]
         for task in self.tasks:
             for task_type, columns in self.get_task_types_and_columns().items():
                 if task.fields.get("progress_type") == task_type:
