@@ -15,73 +15,45 @@ yaml.indent(mapping=2, sequence=2, offset=2)
 
 
 def yaml_dump_to_string(data):
-    """Helper function to dump YAML data to string using ruamel.yaml"""
     stream = io.StringIO()
     yaml.dump(data, stream)
     return stream.getvalue()
 
 
-@pytest.fixture
-def dummy_module_factory():
-    """Factory fixture for creating DummyModule instances"""
-
-    def _create_dummy_module(path):
-        class DummyModule(NFCoreComponent):
-            def __init__(self, path):
-                self.environment_yml = path
-                self.component_dir = path.parent
-                self.component_name = "dummy"
-                self.passed = []
-                self.failed = []
-                self.warned = []
-
-        return DummyModule(path)
-
-    return _create_dummy_module
+class DummyModule(NFCoreComponent):
+    def __init__(self, path):
+        self.environment_yml = path
+        self.component_dir = path.parent
+        self.component_name = "dummy"
+        self.passed = []
+        self.failed = []
+        self.warned = []
 
 
-@pytest.fixture
-def dummy_lint_factory():
-    """Factory fixture for creating DummyLint instances"""
-
-    def _create_dummy_lint(tmp_path):
-        class DummyLint(ComponentLint):
-            def __init__(self):
-                self.modules_repo = type("repo", (), {"local_repo_dir": tmp_path})
-                self.passed = []
-                self.failed = []
-
-        return DummyLint()
-
-    return _create_dummy_lint
+class DummyLint(ComponentLint):
+    def __init__(self, tmp_path):
+        self.modules_repo = type("repo", (), {"local_repo_dir": tmp_path})
+        self.passed = []
+        self.failed = []
 
 
-@pytest.fixture
-def setup_lint_environment(tmp_path, dummy_module_factory, dummy_lint_factory):
-    """Setup function that creates the necessary directory structure and dummy objects for linting"""
+def setup_test_environment(tmp_path, content, filename="environment.yml"):
+    test_file = tmp_path / filename
+    test_file.write_text(content)
 
-    def _setup(test_file_content, filename="environment.yml"):
-        test_file = tmp_path / filename
-        test_file.write_text(test_file_content)
+    (tmp_path / "modules").mkdir(exist_ok=True)
+    (tmp_path / "modules" / "environment-schema.json").write_text("{}")
 
-        # Create required directory structure
-        (tmp_path / "modules").mkdir(exist_ok=True)
-        (tmp_path / "modules" / "environment-schema.json").write_text("{}")
+    module = DummyModule(test_file)
+    lint = DummyLint(tmp_path)
 
-        module = dummy_module_factory(test_file)
-        lint = dummy_lint_factory(tmp_path)
-
-        return test_file, module, lint
-
-    return _setup
+    return test_file, module, lint
 
 
-def assert_yaml_result(test_file, expected, check_sorting=True):
-    """Helper function to assert YAML parsing results"""
+def assert_yaml_result(test_file, expected):
     result = test_file.read_text()
     lines = result.splitlines(True)
 
-    # Handle YAML with schema headers
     if lines[:2] == [
         "---\n",
         "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n",
@@ -90,7 +62,6 @@ def assert_yaml_result(test_file, expected, check_sorting=True):
     else:
         parsed = yaml.load(result)
 
-    # Assert expected content
     if isinstance(expected, list):
         assert parsed["dependencies"] == expected
     else:
@@ -186,25 +157,14 @@ def assert_yaml_result(test_file, expected, check_sorting=True):
             },
         ),
     ],
-    ids=[
-        "basic_dependency_sorting",
-        "dict_dependency_sorting",
-        "existing_headers",
-        "channel_preservation",
-        "channel_preservation_with_additional_channels",
-        "namespaced_dependencies",
-        "mixed_dependencies",
-        "full_environment",
-    ],
 )
-def test_environment_yml_sorting(setup_lint_environment, input_content, expected):
+def test_environment_yml_sorting(tmp_path, input_content, expected):
     """Test that environment.yml files are sorted correctly"""
-    test_file, module, lint = setup_lint_environment(input_content)
+    test_file, module, lint = setup_test_environment(tmp_path, input_content)
 
     environment_yml(lint, module)
 
     assert_yaml_result(test_file, expected)
-    # Check linter passed for sorting
     assert any("environment_yml_sorted" in x for x in [p.lint_test for p in lint.passed])
 
 
@@ -214,25 +174,24 @@ def test_environment_yml_sorting(setup_lint_environment, input_content, expected
         ("invalid: yaml: here", "bad.yml"),
         ("", "empty.yml"),
     ],
-    ids=["invalid_yaml", "empty_file"],
 )
-def test_environment_yml_invalid_files(setup_lint_environment, invalid_content, filename):
+def test_environment_yml_invalid_files(tmp_path, invalid_content, filename):
     """Test that invalid YAML files raise exceptions"""
-    test_file, module, lint = setup_lint_environment(invalid_content, filename)
+    test_file, module, lint = setup_test_environment(tmp_path, invalid_content, filename)
 
     with pytest.raises(Exception):
         environment_yml(lint, module)
 
 
-def test_environment_yml_missing_dependencies(setup_lint_environment):
+def test_environment_yml_missing_dependencies(tmp_path):
     """Test handling of environment.yml without dependencies section"""
     content = "channels:\n  - conda-forge\n"
-    test_file, module, lint = setup_lint_environment(content)
+    test_file, module, lint = setup_test_environment(tmp_path, content)
 
     environment_yml(lint, module)
 
     expected = {"channels": ["conda-forge"]}
-    assert_yaml_result(test_file, expected, check_sorting=False)
+    assert_yaml_result(test_file, expected)
 
 
 # Integration tests using the full ModuleLint class
