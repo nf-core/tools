@@ -42,11 +42,9 @@ curl -s https://get.nextflow.io | bash
 echo "Installing nf-test..."
 conda install -y -c bioconda nf-test
 
-# Set ownership and permissions on the nextflow and nf-test executables
+# Set ownership and permissions on the nextflow executable
 chown "${USERNAME}:nextflow" "${NEXTFLOW_INSTALL_DIR}"/nextflow
-chown "${USERNAME}:nextflow" "${NEXTFLOW_INSTALL_DIR}"/nf-test
 chmod g+r+w "${NEXTFLOW_INSTALL_DIR}"/nextflow
-chmod g+r+w "${NEXTFLOW_INSTALL_DIR}"/nf-test
 #find "${NEXTFLOW_INSTALL_DIR}" -type d -print0 | xargs -n 1 -0 chmod g+s
 
 echo "Done!"
