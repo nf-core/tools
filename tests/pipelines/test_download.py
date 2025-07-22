@@ -39,7 +39,6 @@ from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     check_nextflow_version,
-    run_cmd,
 )
 
 from ..utils import TEST_DATA_DIR, with_temporary_folder
@@ -668,64 +667,6 @@ class DownloadTest(unittest.TestCase):
             assert wf_config["params.custom_config_base"] == f"{test_outdir}/workflow/../configs/"
 
     #
-    # Tests for 'find_container_images'
-    #
-    @with_temporary_folder
-    @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_find_container_images_config_basic(self, tmp_path, mock_fetch_wf_config):
-        tmp_path = Path(tmp_path)
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        mock_fetch_wf_config.return_value = {
-            "process.mapping.container": "cutting-edge-container",
-            "process.nocontainer": "not-so-cutting-edge",
-        }
-        download_obj.find_container_images(Path("workflow"))
-        assert len(download_obj.containers) == 1
-        assert download_obj.containers[0] == "cutting-edge-container"
-
-    #
-    # Test for 'find_container_images' in config with nextflow
-    #
-    @pytest.mark.skipif(
-        shutil.which("nextflow") is None,
-        reason="Can't run test that requires nextflow to run if not installed.",
-    )
-    @with_temporary_folder
-    @mock.patch("nf_core.utils.fetch_wf_config")
-    def test__find_container_images_config_nextflow(self, tmp_path, mock_fetch_wf_config):
-        tmp_path = Path(tmp_path)
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        result = run_cmd("nextflow", f"config -flat {TEST_DATA_DIR}'/mock_config_containers'")
-        if result is not None:
-            nfconfig_raw, _ = result
-            config = {}
-            nfconfig = nfconfig_raw.decode("utf-8")
-            multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
-
-            for match in multiline_key_value_pattern.finditer(nfconfig):
-                k = match.group(2).strip()
-                v = match.group(3).strip().strip("'\"")
-                if k and v:
-                    config[k] = v
-            mock_fetch_wf_config.return_value = config
-            download_obj.find_container_images(Path("workflow"))
-            assert "nfcore/methylseq:1.0" in download_obj.containers
-            assert "nfcore/methylseq:1.4" in download_obj.containers
-            assert "nfcore/sarek:dev" in download_obj.containers
-            assert (
-                "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
-            )
-            assert (
-                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/06/06beccfa4d48e5daf30dd8cee4f7e06fd51594963db0d5087ab695365b79903b/data"
-                in download_obj.containers
-            )
-            assert (
-                "community.wave.seqera.io/library/last_samtools_open-fonts:176a6ab0c8171057" in download_obj.containers
-            )
-            assert "singularity" not in download_obj.containers
-            # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
-
-    #
     # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
     # produces the same results
     #
@@ -749,7 +690,7 @@ class DownloadTest(unittest.TestCase):
 
         # Run get containers with `nextflow inspect`
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images_nf_inspect(mock_pipeline_dir, entrypoint=entrypoint)
+        download_obj.find_container_images(mock_pipeline_dir, entrypoint=entrypoint)
 
         # Store the containers found by the new method
         found_containers = set(download_obj.containers)
@@ -789,7 +730,7 @@ class DownloadTest(unittest.TestCase):
 
         # Run get containers with `nextflow inspect`
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images_nf_inspect(mock_pipeline_dir, entrypoint=entrypoint)
+        download_obj.find_container_images(mock_pipeline_dir, entrypoint=entrypoint)
 
         # Store the containers found by the new method
         found_containers = set(download_obj.containers)
@@ -804,201 +745,6 @@ class DownloadTest(unittest.TestCase):
             f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
             f"Containers that should've been found: {ref_container_strs}"
         )
-
-    #
-    # Test for 'find_container_images' in modules
-    #
-    @with_temporary_folder
-    @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
-        tmp_path = Path(tmp_path)
-
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system="singularity")
-        mock_fetch_wf_config.return_value = {}
-        download_obj.find_container_images(Path(TEST_DATA_DIR, "mock_module_containers"))
-
-        # mock_docker_single_quay_io.nf
-        assert "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0" in download_obj.containers
-
-        # mock_dsl2_apptainer_var1.nf (possible future convention?)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwoapptainervarone:1.1.0--py38h7be5676_2"
-            in download_obj.containers
-        )
-        assert "biocontainers/dsltwoapptainervarone:1.1.0--py38h7be5676_2" not in download_obj.containers
-
-        # mock_dsl2_apptainer_var2.nf (possible future convention?)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwoapptainervartwo:1.1.0--hdfd78af_0"
-            in download_obj.containers
-        )
-        assert "biocontainers/dsltwoapptainervartwo:1.1.0--hdfd78af_0" not in download_obj.containers
-
-        # mock_dsl2_current_inverted.nf (new implementation supports if the direct download URL is listed after Docker URI)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwocurrentinv:3.3.2--h1b792b2_1" in download_obj.containers
-        )
-        assert "biocontainers/dsltwocurrentinv:3.3.2--h1b792b2_1" not in download_obj.containers
-
-        # mock_dsl2_current.nf (main nf-core convention, should be the one in far the most modules)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwocurrent:1.2.1--pyhdfd78af_0" in download_obj.containers
-        )
-        assert "biocontainers/dsltwocurrent:1.2.1--pyhdfd78af_0" not in download_obj.containers
-
-        # mock_dsl2_old.nf (initial DSL2 convention)
-        assert "https://depot.galaxyproject.org/singularity/dsltwoold:0.23.0--0" in download_obj.containers
-        assert "quay.io/biocontainers/dsltwoold:0.23.0--0" not in download_obj.containers
-
-        # mock_dsl2_variable.nf (currently the edgiest edge case supported)
-        assert (
-            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
-            in download_obj.containers
-        )
-        assert (
-            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0"
-            in download_obj.containers
-        )
-        assert (
-            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
-            not in download_obj.containers
-        )
-        assert (
-            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0"
-            not in download_obj.containers
-        )
-
-        # mock_seqera_container_oras.nf
-        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in download_obj.containers
-        assert "community.wave.seqera.io/library/umi-transfer:1.0.0--d30e8812ea280fa1" not in download_obj.containers
-
-        # mock_seqera_container_oras_mulled.nf
-        assert (
-            "oras://community.wave.seqera.io/library/umi-transfer_umicollapse:796a995ff53da9e3"
-            in download_obj.containers
-        )
-        assert (
-            "community.wave.seqera.io/library/umi-transfer_umicollapse:3298d4f1b49e33bd" not in download_obj.containers
-        )
-
-        # mock_seqera_container_http.nf
-        assert (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
-            in download_obj.containers
-        )
-
-        # ToDO: This URI should actually NOT be in there, but prioritize_direct_download() can not handle this case.
-        #
-        # It works purely by comparing the strings, thus can establish the equivalence of 'https://depot.galaxyproject.org/singularity/umi_tools:1.1.5--py39hf95cd2a_0'
-        # and 'biocontainers/umi_tools:1.1.5--py39hf95cd2a_0' because of the identical string 'umi_tools:1.1.5--py39hf95cd2a_0', but has no means to establish that
-        # 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data' and
-        # 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264' are the equivalent container. It would need to query an API at Seqera for that.
-
-        assert "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264" in download_obj.containers
-
-    #
-    # Test for 'prioritize_direct_download'
-    #
-    @with_temporary_folder
-    def test_prioritize_direct_download(self, tmp_path):
-        # tests deduplication and https priority as well as Seqera Container exception
-        tmp_path = Path(tmp_path)
-        test_container = [
-            "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "biocontainers/umi-transfer:1.5.0--h715e4b3_0",
-            "https://depot.galaxyproject.org/singularity/umi-transfer:1.5.0--h715e4b3_0",
-            "biocontainers/umi-transfer:1.5.0--h715e4b3_0",
-            "quay.io/nf-core/sortmerna:4.3.7--6502243397c065ba",
-            "nf-core/sortmerna:4.3.7--6502243397c065ba",
-            "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_1",
-            "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0",
-            "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1",
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data",
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
-        ]
-
-        result = nf_core.pipelines.download.utils.prioritize_direct_download(test_container)
-
-        # Verify that the priority works for regular https downloads (https encountered first)
-        assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
-        assert "nf-core/ubuntu:22.04" not in result
-
-        # Verify that the priority works for regular https downloads (https encountered second)
-        assert "biocontainers/umi-transfer:1.5.0--h715e4b3_0" not in result
-        assert "https://depot.galaxyproject.org/singularity/umi-transfer:1.5.0--h715e4b3_0" in result
-
-        # Verify that the priority works for images with and without explicit registry
-        # No priority here, though - the first is retained.
-        assert "nf-core/sortmerna:4.3.7--6502243397c065ba" in result
-        assert "quay.io/nf-core/sortmerna:4.3.7--6502243397c065ba" not in result
-
-        # Verify that different versions of the same tool and different build numbers are retained
-        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_1" in result
-        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0" in result
-        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1" in result
-
-        # Verify that Seqera containers are not deduplicated...
-        assert (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data"
-            in result
-        )
-        assert (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
-            in result
-        )
-        # ...but identical ones are.
-        assert (
-            result.count(
-                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
-            )
-            == 1
-        )
-
-    #
-    # Test for 'reconcile_seqera_container_uris'
-    #
-    @with_temporary_folder
-    def test_reconcile_seqera_container_uris(self, tmp_path):
-        tmp_path = Path(tmp_path)
-        prioritized_container = [
-            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
-            "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649",
-        ]
-
-        test_container = [
-            "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "community.wave.seqera.io/library/umi-transfer:1.5.0--73c1a6b65e5b0b81",
-            "community.wave.seqera.io/library/sylph:0.6.1--a21713a57a65a373",
-            "biocontainers/sylph:0.6.1--b97274cdc1caa649",
-        ]
-
-        # test that the test_container list is returned as it is, if no prioritized_containers are specified
-        result_empty = nf_core.pipelines.download.utils.reconcile_seqera_container_uris([], test_container)
-        assert result_empty == test_container
-
-        result = nf_core.pipelines.download.utils.reconcile_seqera_container_uris(prioritized_container, test_container)
-
-        # Verify that unrelated images are retained
-        assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
-        assert "nf-core/ubuntu:22.04" in result
-
-        # Verify that the priority works for regular Seqera container (Native Singularity over Docker, but only for Seqera registry)
-        assert "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649" in result
-        assert "community.wave.seqera.io/library/sylph:0.6.1--a21713a57a65a373" not in result
-        assert "biocontainers/sylph:0.6.1--b97274cdc1caa649" in result
-
-        # Verify that version strings are respected: Version 1.0.0 does not replace version 1.5.0
-        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in result
-        assert "community.wave.seqera.io/library/umi-transfer:1.5.0--73c1a6b65e5b0b81" in result
-
-        # assert that the deduplication works
-        assert test_container.count("nf-core/ubuntu:22.04") == 3
-        assert result.count("nf-core/ubuntu:22.04") == 1
 
     #
     # Tests for 'singularity_pull_image'
@@ -1101,12 +847,11 @@ class DownloadTest(unittest.TestCase):
             container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
             container_system="singularity",
         )
-        mock_fetch_wf_config.return_value = {
-            "process.helloworld.container": "helloworld",
-            "process.hellooworld.container": "helloooooooworld",
-            "process.mapping.container": "ewels/multiqc:gorewrite",
-        }
-        download_obj.find_container_images(Path("workflow"))
+        download_obj.containers = [
+            "helloworld",
+            "helloooooooworld",
+            "ewels/multiqc:gorewrite",
+        ]
         assert len(download_obj.container_library) == 4
         # This list of fake container images should produce all kinds of ContainerErrors.
         # Test that they are all caught inside SingularityFetcher.fetch_containers().
@@ -1470,7 +1215,7 @@ class DownloadTest(unittest.TestCase):
         tmp_dir = Path(tmp_dir)
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
-            revision=("3.7", "3.9"),
+            revision=("3.19.0", "3.17.0"),
             compress_type="none",
             platform=True,
             container_system="singularity",
@@ -1515,15 +1260,12 @@ class DownloadTest(unittest.TestCase):
         # assert that the download has a "latest" branch.
         assert "latest" in all_heads
 
-        # download_obj.download_workflow_platform(location=tmp_dir) will run container image detection for all requested revisions
-        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 33
+        # download_obj.download_workflow_platform(location=tmp_dir) will run `nextflow inspect` for each revision
+        # This means that the containers in download_obj.containers are the containers the last specified revision i.e. 3.17
+        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 39
         assert (
-            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0" in download_obj.containers
+            "https://depot.galaxyproject.org/singularity/bbmap:39.10--h92535d8_0" in download_obj.containers
         )  # direct definition
-        assert (
-            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
-            in download_obj.containers
-        )  # indirect definition via $container variable.
 
         # clean-up
         # remove "nf-core-rnaseq*" directories

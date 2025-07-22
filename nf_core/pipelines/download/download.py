@@ -22,11 +22,7 @@ import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SingularityFetcher
-from nf_core.pipelines.download.utils import (
-    DownloadError,
-    prioritize_direct_download,
-    rectify_raw_container_matches,
-)
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
@@ -576,7 +572,7 @@ class DownloadWorkflow:
         """
         Reads the file specified as index for the remote Singularity cache dir
 
-        NOTE: This is not supported for docker (yet)
+        NOTE: This is not supported for Docker yet
         """
         n_total_images = 0
         try:
@@ -733,154 +729,54 @@ class DownloadWorkflow:
             + "\n"
         )
 
-    def find_container_images(self, workflow_directory: Path) -> None:
-        """Find container image names for workflow using the `nextflow inspect` command.
+    def find_container_images(self, workflow_directory: Path, entrypoint="main.nf") -> None:
+        """
+        Find container image names for workflow using the `nextflow inspect` command.
 
-        ONLY WORKS FOR NEXTFLOW >= 25.04.4
+        Requires Nextflow >= 25.04.4
 
-        Falls back to using `find_container_images_legacy()` when `nextflow inspect` fails.
+        Args:
+            workflow_directory (Path): The directory containing the workflow files.
+            entrypoint (str): The entrypoint for the `nextflow inspect` command.
         """
         # Check if we have an outdated Nextflow version
         if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
-            log.warning(
-                "The `nextflow inspect` command requires Nextflow version >= "
-                + pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)
+            raise DownloadError(
+                f"The `nextflow inspect` command requires Nextflow version >= "
+                f"{pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}"
+                f"Please upgrade your Nextflow version"
             )
-            log.info("Falling back to legacy container extraction method.")
-            self.find_container_images_legacy(workflow_directory)
+
         else:
             log.info(
                 "Fetching container names for workflow using [blue bold]nextflow inspect[/]. This might take a while."
             )
             try:
-                self.find_container_images_nf_inspect(workflow_directory)
-                return
+                # TODO: Select container system via profile. Is this stable enough?
+                # NOTE: We will likely don't need this after the switch to Seqera containers
+                profile = f"-profile {self.container_system}" if self.container_system else ""
+
+                # Run nextflow inspect
+                executable = "nextflow"
+                cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
+                cmd_out = run_cmd(executable, cmd_params)
+                if cmd_out is None:
+                    raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+
+                out, _ = cmd_out
+                out_json = json.loads(out)
+                # NOTE: Should we save the container name too to have more meta information?
+                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+                # We only want to process unique containers
+                self.containers = list(set(named_containers.values()))
 
             except RuntimeError as e:
                 log.warning("Running 'nextflow inspect' failed with the following error")
-                log.warning(e)
+                raise DownloadError(e)
 
             except KeyError as e:
                 log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
-                log.debug(e)
-
-            self.find_container_images_legacy(workflow_directory)
-
-    def find_container_images_nf_inspect(self, workflow_directory: Path, entrypoint="main.nf"):
-        # TODO: Select container system via profile. Is this stable enough?
-        # NOTE: We will likely don't need this after the switch to Seqera containers
-        profile = f"-profile {self.container_system}" if self.container_system else ""
-
-        # Run nextflow inspect
-        executable = "nextflow"
-        cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
-        cmd_out = run_cmd(executable, cmd_params)
-        if cmd_out is None:
-            raise RuntimeError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
-
-        out, _ = cmd_out
-        out_json = json.loads(out)
-        # NOTE: We only save the container strings to comply with the legacy function.
-        named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-
-        self.containers = list(set(named_containers.values()))
-
-    def find_container_images_legacy(self, workflow_directory: Path) -> None:
-        """Find container image names for workflow.
-
-        DEPRECATION NOTE: USED FOR NEXTFLOW VERSIONS < 25.04.4
-
-        Starts by using `nextflow config` to pull out any process.container
-        declarations. This works for DSL1. It should return a simple string with resolved logic,
-        but not always, e.g. not for differentialabundance 1.2.0
-
-        Second, we look for DSL2 containers. These can't be found with
-        `nextflow config` at the time of writing, so we scrape the pipeline files.
-        This returns raw matches that will likely need to be cleaned.
-        """
-
-        log.warning("Using legacy container extraction method. This will be deprecated in the future.")
-        log.debug("Fetching container names for workflow ")
-        # since this is run for multiple revisions now, account for previously detected containers.
-        previous_findings = [] if not self.containers else self.containers
-        config_findings = []
-        module_findings = []
-
-        # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
-
-        # Find any config variables that look like a container
-        for k, v in self.nf_config.items():
-            if (k.startswith("process.") or k.startswith("params.")) and k.endswith(".container"):
-                """
-                Can be plain string / Docker URI or DSL2 syntax
-
-                Since raw parsing is done by Nextflow, single quotes will be (partially) escaped in DSL2.
-                Use cleaning regex on DSL2. Same as for modules, except that (?<![\\]) ensures that escaped quotes are ignored.
-                """
-
-                # for DSL2 syntax in process scope of configs
-                config_regex = re.compile(
-                    r"[\\s{}=$]*(?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1[\\s}]*"
-                )
-                config_findings_dsl2 = re.findall(config_regex, v)
-
-                if bool(config_findings_dsl2):
-                    # finding will always be a tuple of length 2, first the quote used and second the enquoted value.
-                    for finding in config_findings_dsl2:
-                        config_findings.append(finding + (self.nf_config, "Nextflow configs"))
-                else:  # no regex match, likely just plain string
-                    """
-                    Append string also as finding-like tuple for consistency
-                    because all will run through rectify_raw_container_matches()
-                    self.nf_config is needed, because we need to restart search over raw input
-                    if no proper container matches are found.
-                    """
-                    config_findings.append((k, v.strip("'\""), self.nf_config, "Nextflow configs"))
-
-        # rectify the container paths found in the config
-        # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?
-        config_findings = rectify_raw_container_matches(config_findings[:])
-
-        # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in os.walk(workflow_directory / "modules"):
-            for file in files:
-                if file.endswith(".nf"):
-                    file_path = Path(subdir) / file
-                    with open(file_path) as fh:
-                        # Look for any lines with container "xxx" or container 'xxx'
-                        search_space = fh.read()
-                        """
-                        Figure out which quotes were used and match everything until the closing quote.
-                        Since the other quote typically appears inside, a simple r"container\\s*[\"\']([^\"\']*)[\"\']" unfortunately abridges the matches.
-
-                        container\\s+[\\s{}$=]* matches the literal word "container" followed by whitespace, brackets, equal or variable names.
-                        (?P<quote>[\'\"]) The quote character is captured into the quote group \1.
-                        The pattern (?:.(?!\1))*.? is used to match any character (.) not followed by the closing quote character (?!\1).
-                        This capture happens greedy *, but we add a .? to ensure that we don't match the whole file until the last occurrence
-                        of the closing quote character, but rather stop at the first occurrence. \1 inserts the matched quote character into the regex, either " or '.
-                        It may be followed by whitespace or closing bracket [\\s}]*
-                        re.DOTALL is used to account for the string to be spread out across multiple lines.
-                        """
-                        container_regex = re.compile(
-                            r"container\s+[\\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\\s}]*",
-                            re.DOTALL,
-                        )
-
-                        local_module_findings = re.findall(container_regex, search_space)
-
-                        # finding fill always be a tuple of length 2, first the quote used and second the enquoted value.
-                        for finding in local_module_findings:
-                            # append finding since we want to collect them from all modules
-                            # also append search_space because we need to start over later if nothing was found.
-                            module_findings.append(finding + (search_space, file_path))
-
-        # Not sure if there will ever be multiple container definitions per module, but beware DSL3.
-        # Like above run on shallow copy, because length may change at runtime.
-        module_findings = rectify_raw_container_matches(module_findings[:])
-
-        # Again clean list, in case config declares Docker URI but module or previous finding already had the http:// download
-        self.containers = prioritize_direct_download(previous_findings + config_findings + module_findings)
+                raise DownloadError(e)
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
