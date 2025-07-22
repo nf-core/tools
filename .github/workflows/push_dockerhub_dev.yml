@@ -1,7 +1,9 @@
 name: nf-core Docker push (dev)
 # This builds the docker image and pushes it to DockerHub
 # Runs on nf-core repo releases and push event to 'dev' branch (PR merges)
-on: workflow_dispatch
+on:
+  push:
+    branches: [dev]
 
 # Cancel if a newer run is started
 concurrency:
@@ -13,7 +15,7 @@ jobs:
     name: Push new Docker image to Docker Hub (dev)
     runs-on: ubuntu-latest
     # Only run for the nf-core repo, for releases and merged PRs
-    #if: ${{ github.repository == 'nf-core/tools' }}
+    if: ${{ github.repository == 'nf-core/tools' }}
     env:
       TARGET_PLATFORM: "linux/amd64,linux/arm64"
     strategy:
@@ -45,14 +47,14 @@ jobs:
           command: |
             docker buildx build \
             --platform ${{ env.TARGET_PLATFORM }} \
-            -t fljulian/nfcore-tools:dev \
+            -t nfcore/tools:dev \
             --push --no-cache .
 
       - name: Build and push nfcore/devcontainer:dev image (dev)
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
-          imageName: fljulian/nfcore-devcontainer
+          imageName: nfcore/devcontainer
           imageTag: dev
           platform: ${{ env.TARGET_PLATFORM }}
           push: always
