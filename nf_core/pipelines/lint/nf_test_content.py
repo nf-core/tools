@@ -1,14 +1,14 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
 
-def nf_test_content(self) -> Dict[str, List[str]]:
+def nf_test_content(self) -> dict[str, list[str]]:
     """Checks that the pipeline nf-test files have the appropriate content.
 
     This lint test checks the following files and content of these files:
@@ -75,9 +75,9 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 - tests/nextflow.config
                 - nf-test.config
     """
-    passed: List[str] = []
-    failed: List[str] = []
-    ignored: List[str] = []
+    passed: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
 
     _, pipeline_conf = load_tools_config(self.wf_path)
     lint_conf = getattr(pipeline_conf, "lint", None) or None
@@ -85,7 +85,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     # Content of *.nf.test files
     test_fns = list(Path(self.wf_path, "tests").glob("*.nf.test"))
-    test_checks: Dict[str, Dict[str, Union[str, bool]]] = {
+    test_checks: dict[str, dict[str, Union[str, bool]]] = {
         "outdir": {
             "pattern": r"outdir *= *[\"']\${?outputDir}?[\"']",
             "description": "`outdir` parameter",
@@ -131,7 +131,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     # Content of nextflow.config file
     conf_fn = Path(self.wf_path, "tests", "nextflow.config")
 
-    config_checks: Dict[str, Dict[str, str]] = {
+    config_checks: dict[str, dict[str, str]] = {
         "modules_testdata_base_path": {
             "pattern": "modules_testdata_base_path",
             "description": "`modules_testdata_base_path`",
@@ -144,29 +144,29 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     # Check if tests/nextflow.config is present
     if not conf_fn.exists():
         failed.append(f"'{conf_fn.relative_to(self.wf_path)}' does not exist")
-
-    if nf_test_content_conf is None or str(conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
-        checks_passed = {check: False for check in config_checks}
-        with open(conf_fn) as fh:
-            for line in fh:
-                line = line.strip()
-                for check_name, config_check_info in config_checks.items():
-                    if re.search(str(config_check_info["pattern"]), line):
-                        passed.append(
-                            f"'{conf_fn.relative_to(self.wf_path)}' contains {config_check_info['description']}"
-                        )
-                        checks_passed[check_name] = True
-        for check_name, config_check_info in config_checks.items():
-            if not checks_passed[check_name]:
-                failed.append(
-                    f"'{conf_fn.relative_to(self.wf_path)}' does not contain {config_check_info['description']}"
-                )
     else:
-        ignored.append(f"'{conf_fn.relative_to(self.wf_path)}' checking ignored")
+        if nf_test_content_conf is None or str(conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
+            checks_passed = {check: False for check in config_checks}
+            with open(conf_fn) as fh:
+                for line in fh:
+                    line = line.strip()
+                    for check_name, config_check_info in config_checks.items():
+                        if re.search(str(config_check_info["pattern"]), line):
+                            passed.append(
+                                f"'{conf_fn.relative_to(self.wf_path)}' contains {config_check_info['description']}"
+                            )
+                            checks_passed[check_name] = True
+            for check_name, config_check_info in config_checks.items():
+                if not checks_passed[check_name]:
+                    failed.append(
+                        f"'{conf_fn.relative_to(self.wf_path)}' does not contain {config_check_info['description']}"
+                    )
+        else:
+            ignored.append(f"'{conf_fn.relative_to(self.wf_path)}' checking ignored")
 
     # Content of nf-test.config file
     nf_test_conf_fn = Path(self.wf_path, "nf-test.config")
-    nf_test_checks: Dict[str, Dict[str, str]] = {
+    nf_test_checks: dict[str, dict[str, str]] = {
         "testsDir": {
             "pattern": r'testsDir "\."',
             "description": "sets a `testsDir`",
@@ -184,21 +184,24 @@ def nf_test_content(self) -> Dict[str, List[str]]:
         },
     }
 
-    if nf_test_content_conf is None or str(nf_test_conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
-        checks_passed = {check: False for check in nf_test_checks}
-        with open(nf_test_conf_fn) as fh:
-            for line in fh:
-                line = line.strip()
-                for check_name, nf_test_check_info in nf_test_checks.items():
-                    if re.search(str(nf_test_check_info["pattern"]), line):
-                        passed.append(
-                            f"'{nf_test_conf_fn.relative_to(self.wf_path)}' {nf_test_check_info['description']}"
-                        )
-                        checks_passed[check_name] = True
-        for check_name, nf_test_check_info in nf_test_checks.items():
-            if not checks_passed[check_name]:
-                failed.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' {nf_test_check_info['failure_msg']}")
+    if not nf_test_conf_fn.exists():
+        failed.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' does not exist")
     else:
-        ignored.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' checking ignored")
+        if nf_test_content_conf is None or str(nf_test_conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
+            checks_passed = {check: False for check in nf_test_checks}
+            with open(nf_test_conf_fn) as fh:
+                for line in fh:
+                    line = line.strip()
+                    for check_name, nf_test_check_info in nf_test_checks.items():
+                        if re.search(str(nf_test_check_info["pattern"]), line):
+                            passed.append(
+                                f"'{nf_test_conf_fn.relative_to(self.wf_path)}' {nf_test_check_info['description']}"
+                            )
+                            checks_passed[check_name] = True
+            for check_name, nf_test_check_info in nf_test_checks.items():
+                if not checks_passed[check_name]:
+                    failed.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' {nf_test_check_info['failure_msg']}")
+        else:
+            ignored.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' checking ignored")
 
     return {"passed": passed, "failed": failed, "ignored": ignored}

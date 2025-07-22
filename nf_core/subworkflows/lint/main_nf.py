@@ -4,14 +4,13 @@ Lint the main.nf file of a subworkflow
 
 import logging
 import re
-from typing import List, Tuple
 
 from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
 
-def main_nf(_, subworkflow: NFCoreComponent) -> Tuple[List[str], List[str]]:
+def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     """
     Lint a ``main.nf`` subworkflow file
 
@@ -27,11 +26,11 @@ def main_nf(_, subworkflow: NFCoreComponent) -> Tuple[List[str], List[str]]:
     * The subworkflow emits a software version
     """
 
-    inputs: List[str] = []
-    outputs: List[str] = []
+    inputs: list[str] = []
+    outputs: list[str] = []
 
     # Read the lines directly from the subworkflow
-    lines: List[str] = []
+    lines: list[str] = []
 
     if len(lines) == 0:
         try:
@@ -156,7 +155,7 @@ def check_main_section(self, lines, included_components):
                 )
 
 
-def check_subworkflow_section(self, lines: List[str]) -> List[str]:
+def check_subworkflow_section(self, lines: list[str]) -> list[str]:
     """Lint the section of a subworkflow before the workflow definition
     Specifically checks if the subworkflow includes at least two modules or subworkflows
 
@@ -202,7 +201,7 @@ def check_subworkflow_section(self, lines: List[str]) -> List[str]:
     return includes
 
 
-def check_workflow_section(self, lines: List[str]) -> None:
+def check_workflow_section(self, lines: list[str]) -> None:
     """Lint the workflow definition of a subworkflow before
     Specifically checks that the name is all capital letters
 

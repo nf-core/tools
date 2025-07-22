@@ -104,7 +104,9 @@ class NfcoreCreateTest(unittest.TestCase):
     def test_pipeline_creation_with_yml_skip(self, tmp_path):
         # Update pipeline_create_template_skip.yml file
         template_features_yml = load_features_yaml()
-        all_features = list(template_features_yml.keys())
+        all_features = []
+        for section in template_features_yml.values():
+            all_features += list(section["features"].keys())
         all_features.remove("is_nfcore")
         env = jinja2.Environment(loader=jinja2.PackageLoader("tests", "data"), keep_trailing_newline=True)
         skip_template = env.get_template(
@@ -148,9 +150,10 @@ class NfcoreCreateTest(unittest.TestCase):
             "workflows/pipeline.nf",
         ]
         all_skipped_files = []
-        for feature in template_features_yml.keys():
-            if template_features_yml[feature]["skippable_paths"]:
-                all_skipped_files.extend(template_features_yml[feature]["skippable_paths"])
+        for section in template_features_yml.values():
+            for feature in section["features"].keys():
+                if section["features"][feature]["skippable_paths"]:
+                    all_skipped_files.extend(section["features"][feature]["skippable_paths"])
 
         for root, _, files in os.walk(PIPELINE_TEMPLATE):
             for file in files:

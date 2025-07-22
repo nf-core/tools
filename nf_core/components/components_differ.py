@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 from rich import box
 from rich.console import Console, Group, RenderableType
@@ -308,7 +308,7 @@ class ComponentsDiffer:
             )
 
     @staticmethod
-    def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
+    def per_file_patch(patch_fn: Union[str, Path]) -> dict[str, list[str]]:
         """
         Splits a patch file for several files into one patch per file.
 
@@ -324,7 +324,7 @@ class ComponentsDiffer:
 
         patches = {}
         i = 0
-        patch_lines: List[str] = []
+        patch_lines: list[str] = []
         key = "preamble"
         while i < len(lines):
             line = lines[i]
@@ -470,7 +470,7 @@ class ComponentsDiffer:
         patch_path: Union[str, Path],
         component_dir: Path,
         reverse: bool = False,
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """
         Try applying a full patch file to a module or subworkflow
 

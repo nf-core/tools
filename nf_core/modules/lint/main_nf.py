@@ -6,7 +6,6 @@ import logging
 import re
 import sqlite3
 from pathlib import Path
-from typing import List, Tuple
 from urllib.parse import urlparse, urlunparse
 
 import requests
@@ -23,7 +22,7 @@ log = logging.getLogger(__name__)
 
 def main_nf(
     module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
-) -> Tuple[List[str], List[str]]:
+) -> tuple[list[str], list[str]]:
     """
     Lint a ``main.nf`` module file
 
@@ -43,12 +42,12 @@ def main_nf(
       of ``software`` and ``prefix``
     """
 
-    inputs: List[str] = []
-    outputs: List[str] = []
+    inputs: list[str] = []
+    outputs: list[str] = []
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
-    lines: List[str] = []
+    lines: list[str] = []
     if module.is_patched:
         lines = ComponentsDiffer.try_apply_patch(
             module.component_type,

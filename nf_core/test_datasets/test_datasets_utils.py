@@ -2,7 +2,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import questionary
 import requests
@@ -55,7 +55,7 @@ class GithubApiEndpoints:
         return url
 
 
-def get_remote_branch_names() -> List[str]:
+def get_remote_branch_names() -> list[str]:
     """
     List all branch names on the remote github repository for test-datasets for pipelines or modules.
     """
@@ -83,7 +83,7 @@ def get_remote_branch_names() -> List[str]:
     return branches
 
 
-def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: List[str] = []) -> List[str]:
+def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: list[str] = []) -> list[str]:
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
@@ -128,15 +128,15 @@ def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_pre
 
 def list_files_by_branch(
     branch: str = "",
-    branches: List[str] = [],
-    ignored_file_prefixes: List[str] = [
+    branches: list[str] = [],
+    ignored_file_prefixes: list[str] = [
         ".",
         "CITATION",
         "LICENSE",
         "README",
         "docs",
     ],
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """
     Lists files for all branches in the test-datasets github repo.
     Returns dictionary with branchnames as keys and file-lists as values
@@ -177,7 +177,7 @@ def create_download_url(branch: str, path: str) -> str:
     return gh_api_url.get_file_download_url(branch, path)
 
 
-def get_or_prompt_branch(maybe_branch: str) -> Tuple[str, List[str]]:
+def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
     """
     If branch is given, return a tuple of (maybe_branch, empty_list) else
     prompt the user to enter a branch name and return (branch_name, all_branches)
@@ -217,7 +217,7 @@ def get_or_prompt_branch(maybe_branch: str) -> Tuple[str, List[str]]:
         return branch, all_branches
 
 
-def get_or_prompt_file_selection(files: List[str], query: Optional[str]) -> str:
+def get_or_prompt_file_selection(files: list[str], query: Optional[str]) -> str:
     """
     Prompt with autocompletion to enter a file from a list of files until a valid file is selected.
     """

@@ -3,7 +3,7 @@ import mmap
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
@@ -65,7 +65,7 @@ class ComponentCommand:
         self.default_subworkflows_path = Path("subworkflows", self.org)
         self.default_subworkflows_tests_path = Path("tests", "subworkflows", self.org)
 
-    def get_local_components(self) -> List[str]:
+    def get_local_components(self) -> list[str]:
         """
         Get the local modules/subworkflows in a pipeline
         """
@@ -78,7 +78,7 @@ class ComponentCommand:
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
 
-    def get_components_clone_modules(self) -> List[str]:
+    def get_components_clone_modules(self) -> list[str]:
         """
         Get the modules/subworkflows repository available in a clone of nf-core/modules
         """
@@ -142,7 +142,7 @@ class ComponentCommand:
             log.error(f"Could not remove {self.component_type[:-1]} {component_name}: {e}")
             return False
 
-    def components_from_repo(self, install_dir: str) -> List[str]:
+    def components_from_repo(self, install_dir: str) -> list[str]:
         """
         Gets the modules/subworkflows installed from a certain repository
 
@@ -200,7 +200,7 @@ class ComponentCommand:
             modules/nf-core/modules/TOOL/SUBTOOL
         """
         if self.repo_type == "pipeline":
-            wrong_location_modules: List[Path] = []
+            wrong_location_modules: list[Path] = []
             for directory, _, files in os.walk(Path(self.directory, "modules")):
                 if "main.nf" in files:
                     module_path = Path(directory).relative_to(Path(self.directory, "modules"))
@@ -263,7 +263,7 @@ class ComponentCommand:
                     ][module_name]["patch"] = str(patch_path.relative_to(self.directory.resolve()))
                 modules_json.dump()
 
-    def check_if_in_include_stmts(self, component_path: str) -> Dict[str, List[Dict[str, Union[int, str]]]]:
+    def check_if_in_include_stmts(self, component_path: str) -> dict[str, list[dict[str, Union[int, str]]]]:
         """
         Checks for include statements in the main.nf file of the pipeline and a list of line numbers where the component is included
         Args:
@@ -272,7 +272,7 @@ class ComponentCommand:
         Returns:
             (list): A list of dictionaries, with the workflow file and the line number where the component is included
         """
-        include_stmts: Dict[str, List[Dict[str, Union[int, str]]]] = {}
+        include_stmts: dict[str, list[dict[str, Union[int, str]]]] = {}
         if self.repo_type == "pipeline":
             workflow_files = Path(self.directory, "workflows").glob("*.nf")
             for workflow_file in workflow_files:

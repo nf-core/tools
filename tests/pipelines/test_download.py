@@ -7,7 +7,6 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from typing import List
 from unittest import mock
 
 import pytest
@@ -28,11 +27,11 @@ class DownloadTest(unittest.TestCase):
         self._caplog = caplog
 
     @property
-    def logged_levels(self) -> List[str]:
+    def logged_levels(self) -> list[str]:
         return [record.levelname for record in self._caplog.records]
 
     @property
-    def logged_messages(self) -> List[str]:
+    def logged_messages(self) -> list[str]:
         return [record.message for record in self._caplog.records]
 
     def __contains__(self, item: str) -> bool:
@@ -222,22 +221,30 @@ class DownloadTest(unittest.TestCase):
         if result is not None:
             nfconfig_raw, _ = result
             config = {}
-            for line in nfconfig_raw.splitlines():
-                ul = line.decode("utf-8")
-                try:
-                    k, v = ul.split(" = ", 1)
-                    config[k] = v.strip("'\"")
-                except ValueError:
-                    pass
+            nfconfig = nfconfig_raw.decode("utf-8")
+            multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
+
+            for match in multiline_key_value_pattern.finditer(nfconfig):
+                k = match.group(2).strip()
+                v = match.group(3).strip().strip("'\"")
+                if k and v:
+                    config[k] = v
             mock_fetch_wf_config.return_value = config
             download_obj.find_container_images("workflow")
-            assert len(download_obj.containers) == 4
             assert "nfcore/methylseq:1.0" in download_obj.containers
             assert "nfcore/methylseq:1.4" in download_obj.containers
             assert "nfcore/sarek:dev" in download_obj.containers
             assert (
                 "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
             )
+            assert (
+                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/06/06beccfa4d48e5daf30dd8cee4f7e06fd51594963db0d5087ab695365b79903b/data"
+                in download_obj.containers
+            )
+            assert (
+                "community.wave.seqera.io/library/last_samtools_open-fonts:176a6ab0c8171057" in download_obj.containers
+            )
+            assert "singularity" not in download_obj.containers
             # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
 
     #

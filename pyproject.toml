@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools>=40.6.0", "wheel"]
 
 [tool.pytest.ini_options]
-markers = ["datafiles: load datafiles"]
+markers = ["datafiles: load datafiles", "integration"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
@@ -22,7 +22,7 @@ norecursedirs = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py38"
+target-version = "py39"
 cache-dir = "~/.cache/ruff"
 
 [tool.ruff.lint]
