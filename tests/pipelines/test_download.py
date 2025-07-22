@@ -756,79 +756,81 @@ class DownloadTest(unittest.TestCase):
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress")
-    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
+    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_progress):
         tmp_dir = Path(tmp_dir)
-        with SingularityFetcher([], [], None, None, False) as singularity_fetcher:
-            # Test successful pull
+        singularity_fetcher = SingularityFetcher([], [], "none", None)
+        singularity_fetcher.progress = mock_progress()
+        # Test successful pull
+        singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
+
+        # Pull again, but now the image already exists
+        with pytest.raises(SingularityError.ImageExistsError):
             singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
 
-            # Pull again, but now the image already exists
-            with pytest.raises(SingularityError.ImageExistsError):
-                singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
+        # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
+        singularity_fetcher.pull_image("docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", "docker.io")
 
-            # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
-            singularity_fetcher.pull_image("docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", "docker.io")
+        # Test successful pull with absolute oras:// URI
+        singularity_fetcher.pull_image(
+            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+            f"{tmp_dir}/umi-transfer-oras.sif",
+            "docker.io",
+        )
 
-            # Test successful pull with absolute oras:// URI
+        # try pulling Docker container image with oras://
+        with pytest.raises(SingularityError.NoSingularityContainerError):
             singularity_fetcher.pull_image(
-                "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
-                f"{tmp_dir}/umi-transfer-oras.sif",
+                "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
+                f"{tmp_dir}/umi-transfer-oras_impostor.sif",
                 "docker.io",
             )
 
-            # try pulling Docker container image with oras://
-            with pytest.raises(SingularityError.NoSingularityContainerError):
-                singularity_fetcher.pull_image(
-                    "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
-                    f"{tmp_dir}/umi-transfer-oras_impostor.sif",
-                    "docker.io",
-                )
+        # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
+        with pytest.raises(SingularityError.RegistryNotFoundError):
+            singularity_fetcher.pull_image(
+                "hello-world",
+                f"{tmp_dir}/break_the_registry_test.sif",
+                "register-this-domain-to-break-the-test.io",
+            )
 
-            # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
-            with pytest.raises(SingularityError.RegistryNotFoundError):
-                singularity_fetcher.pull_image(
-                    "hello-world",
-                    f"{tmp_dir}/break_the_registry_test.sif",
-                    "register-this-domain-to-break-the-test.io",
-                )
+        # test Image not found for several registries
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "quay.io")
 
-            # test Image not found for several registries
-            with pytest.raises(SingularityError.ImageNotFoundError):
-                singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "quay.io")
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "docker.io")
 
-            with pytest.raises(SingularityError.ImageNotFoundError):
-                singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "docker.io")
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "ghcr.io")
 
-            with pytest.raises(SingularityError.ImageNotFoundError):
-                singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "ghcr.io")
+        # test Image not found for absolute URI.
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image(
+                "docker.io/bschiffthaler/nothingtopullhere",
+                f"{tmp_dir}/nothingtopullhere.sif",
+                "docker.io",
+            )
 
-            # test Image not found for absolute URI.
-            with pytest.raises(SingularityError.ImageNotFoundError):
-                singularity_fetcher.pull_image(
-                    "docker.io/bschiffthaler/nothingtopullhere",
-                    f"{tmp_dir}/nothingtopullhere.sif",
-                    "docker.io",
-                )
-
-            # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
-            with pytest.raises(SingularityError.InvalidTagError):
-                singularity_fetcher.pull_image(
-                    "ewels/multiqc:go-rewrite",
-                    f"{tmp_dir}/multiqc-go.sif",
-                    "ghcr.io",
-                )
+        # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
+        with pytest.raises(SingularityError.InvalidTagError):
+            singularity_fetcher.pull_image(
+                "ewels/multiqc:go-rewrite",
+                f"{tmp_dir}/multiqc-go.sif",
+                "ghcr.io",
+            )
 
     @pytest.mark.skipif(
         shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
     def test_singularity_pull_image_successfully(self, tmp_dir, mock_progress):
         tmp_dir = Path(tmp_dir)
-        with SingularityFetcher([], [], None, None, False) as singularity_fetcher:
-            singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
+        singularity_fetcher = SingularityFetcher([], [], "none", None)
+        singularity_fetcher.progress = mock_progress()
+        singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
     #
     # Tests for 'SingularityFetcher.fetch_containers'
@@ -855,14 +857,17 @@ class DownloadTest(unittest.TestCase):
         assert len(download_obj.container_library) == 4
         # This list of fake container images should produce all kinds of ContainerErrors.
         # Test that they are all caught inside SingularityFetcher.fetch_containers().
-        with SingularityFetcher(
-            download_obj.container_library, download_obj.registry_set, None, None, False
-        ) as singularity_fetcher:
-            singularity_fetcher.fetch_containers(
-                download_obj.containers,
-                download_obj.outdir,
-                download_obj.containers_remote,
-            )
+        singularity_fetcher = SingularityFetcher(
+            container_library=download_obj.container_library,
+            registry_set=download_obj.registry_set,
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
+        singularity_fetcher.fetch_containers(
+            download_obj.containers,
+            download_obj.outdir,
+            download_obj.containers_remote,
+        )
 
     #
     # Tests for 'singularity.symlink_registries' function
@@ -908,7 +913,7 @@ class DownloadTest(unittest.TestCase):
                 "community-cr-prod.seqera.io/docker/registry/v2",
                 "depot.galaxyproject.org/singularity",
             ]
-            fetcher = SingularityFetcher([], registries, None, None, None, False)
+            fetcher = SingularityFetcher([], registries, "none", None)
 
             fetcher.symlink_registries(tmp_path / "path/to/singularity-image.img")
 
@@ -982,7 +987,7 @@ class DownloadTest(unittest.TestCase):
                 "quay.io",  # Same as in the filename
                 "community-cr-prod.seqera.io/docker/registry/v2",
             ]
-            fetcher = SingularityFetcher([], registries, None, None, None, False)
+            fetcher = SingularityFetcher([], registries, "none", None)
             fetcher.symlink_registries(tmp_path / "path/to/quay.io-singularity-image.img")
 
             # Check that os.makedirs was called with the correct arguments
@@ -1055,7 +1060,7 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         tmp_dir = Path(tmp_dir)
         with pytest.raises(OSError):
-            SingularityFetcher([], [], mock_rich_progress, None, None, False)
+            SingularityFetcher([], [], "none", None)
 
     #
     # Test for 'singularity.get_container_filename' function
@@ -1071,7 +1076,8 @@ class DownloadTest(unittest.TestCase):
             "community-cr-prod.seqera.io/docker/registry/v2",
         ]
 
-        fetcher = SingularityFetcher([], registries, None, None, None, False)
+        fetcher = SingularityFetcher([], registries, "none", None)
+        print(fetcher.registry_set)
         # Test --- galaxy URL #
         result = fetcher.get_container_filename(
             "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",
@@ -1163,10 +1169,10 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.container_cache_utilisation == "remote" and download_obj.container_system == "singularity"
         assert isinstance(download_obj.containers_remote, list) and len(download_obj.containers_remote) == 0
         # read in the file
-        download_obj.read_remote_singularity_containers()
-        assert len(download_obj.containers_remote) == 33
-        assert "depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img" in download_obj.containers_remote
-        assert "MV Rena" not in download_obj.containers_remote  # decoy in test file
+        containers_remote = SingularityFetcher.read_remote_singularity_containers(download_obj.container_cache_index)
+        assert len(containers_remote) == 33
+        assert "depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img" in containers_remote
+        assert "MV Rena" not in containers_remote  # decoy in test file
 
     #
     # Tests for the main entry method 'download_workflow'

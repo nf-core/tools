@@ -36,8 +36,8 @@ class SingularityFetcher(ContainerFetcher):
 
     def __init__(
         self,
-        registry_set: Iterable[str],
         container_library: Iterable[str],
+        registry_set: Iterable[str],
         container_cache_utilisation=None,
         container_cache_index=None,
         parallel: int = 4,
@@ -47,11 +47,9 @@ class SingularityFetcher(ContainerFetcher):
             # Prompt for the creation of a Singularity cache directory
             SingularityFetcher.prompt_singularity_cachedir_creation()
 
-            if container_cache_utilisation:
+            if container_cache_utilisation is None:
                 # No choice regarding singularity cache has been made.
                 container_cache_utilisation = SingularityFetcher.prompt_singularity_cachedir_utilization()
-        print(os.environ.get("NXF_SINGULARITY_CACHEDIR"))
-        print(os.environ.get("NXF_SINGULARITY_CACHEDIR") == "")
 
         if container_cache_utilisation == "remote":
             # If we have a remote cache, we need to read it
@@ -91,7 +89,12 @@ class SingularityFetcher(ContainerFetcher):
             library_dir = None
 
         # Find out what the cache directory is
-        cache_dir = Path(path_str) if (path_str := os.environ.get("NXF_SINGULARITY_CACHEDIR")) else None
+        cache_dir = (
+            Path(path_str)
+            if (path_str := os.environ.get("NXF_SINGULARITY_CACHEDIR"))
+            and container_cache_utilisation in {"amend", "copy"}
+            else None
+        )
         log.debug(f"NXF_SINGULARITY_CACHEDIR: {cache_dir}")
 
         if container_cache_utilisation in ["amend", "copy"]:
@@ -102,11 +105,10 @@ class SingularityFetcher(ContainerFetcher):
             else:
                 raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
-        progress_ctx = SingularityProgress()
         super().__init__(
             container_library=container_library,
             registry_set=registry_set,
-            progress_ctx=progress_ctx,
+            progress_factory=SingularityProgress,
             cache_dir=cache_dir,
             library_dir=library_dir,
             amend_cachedir=container_cache_utilisation == "amend",

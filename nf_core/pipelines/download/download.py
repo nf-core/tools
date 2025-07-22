@@ -447,8 +447,8 @@ class DownloadWorkflow:
         """
         if self.container_system == "singularity":
             self.container_fetcher = SingularityFetcher(
-                registry_set=self.registry_set,
                 container_library=self.container_library,
+                registry_set=self.registry_set,
                 container_cache_utilisation=self.container_cache_utilisation,
                 container_cache_index=self.container_cache_index,
                 parallel=self.parallel,

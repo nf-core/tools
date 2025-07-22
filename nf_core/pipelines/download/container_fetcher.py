@@ -5,7 +5,7 @@ import shutil
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Container, Generator, Iterable
 from pathlib import Path
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 import rich.progress
 
@@ -94,7 +94,7 @@ class ContainerFetcher(ABC):
         self,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress_ctx: ContainerProgress,
+        progress_factory: Callable[[], ContainerProgress],
         library_dir: Optional[Path],
         cache_dir: Optional[Path],
         amend_cachedir: bool,
@@ -102,8 +102,6 @@ class ContainerFetcher(ABC):
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
-        self._progress_ctx = progress_ctx
-        self.progress: Optional[ContainerProgress] = None
         self.kill_with_fire = False
         self.implementation = None
         self.name = None
@@ -114,7 +112,8 @@ class ContainerFetcher(ABC):
 
         self.check_and_set_implementation()
 
-        self.progress = progress_ctx
+        self.progress_factory = progress_factory
+        self.progress: Optional[ContainerProgress] = None
 
     @property
     def progress(self) -> rich.progress.Progress:
@@ -213,6 +212,10 @@ class ContainerFetcher(ABC):
         all the containers we find and does the appropriate action; copying
         from cache or fetching from a remote location
         """
+
+        # Create a new progress bar
+        self.progress = self.progress_factory()
+
         with self.progress:
             self.progress.add_main_task(total=0)
 
@@ -261,7 +264,7 @@ class ContainerFetcher(ABC):
 
                 # Image is not in library or cache
                 else:
-                    # We treat downloading and pulling equivalently since this differs between docker and singularity.
+                    # Fetching of remote containers, either pulling or downloading, differs between docker and singularity:
                     # - Singularity images can either be downloaded from an http address, or pulled from a registry with `(singularity|apptainer) pull`
                     # - Docker images are always pulled, but needs the additional `docker image save` command for the image to be saved in the correct place
                     if cache_path:
@@ -288,6 +291,9 @@ class ContainerFetcher(ABC):
                 for container, src_path, dest_path in containers_copy:
                     self.copy_image(container, src_path, dest_path)
                     self.progress.update_main_task(advance=1)
+
+        # Unset the progress bar, so that we get an AssertionError if we access it after it is closed
+        self.progress = None
 
     @abstractmethod
     def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
