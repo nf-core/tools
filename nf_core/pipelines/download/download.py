@@ -575,7 +575,7 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self, workflow_directory: Path, entrypoint="main.nf") -> None:
+    def find_container_images(self, workflow_directory: Path, with_test_containers=True, entrypoint="main.nf") -> None:
         """
         Find container image names for workflow using the `nextflow inspect` command.
 
@@ -600,7 +600,10 @@ class DownloadWorkflow:
             try:
                 # TODO: Select container system via profile. Is this stable enough?
                 # NOTE: We will likely don't need this after the switch to Seqera containers
-                profile = f"-profile {self.container_system}" if self.container_system else ""
+                profile_str = f"{self.container_system}"
+                if with_test_containers:
+                    profile_str += ",test,test_full"
+                profile = f"-profile {profile_str}" if self.container_system else ""
 
                 # Run nextflow inspect
                 executable = "nextflow"
