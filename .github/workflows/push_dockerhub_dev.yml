@@ -36,12 +36,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
-      # Retry building tools image once because of irregularly occuring
-      # 403 http errors when installing nf-test
+      # Retry building tools image once after a delay because of
+      # irregularly occuring 403 http errors when installing nf-test
       - name: Build nfcore/tools image (dev)
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
         with:
-          timeout_minutes: 5
+          timeout_minutes: 20
           max_attempts: 2
           retry_wait_seconds: 60
           command: |
