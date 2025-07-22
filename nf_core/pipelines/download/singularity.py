@@ -36,6 +36,7 @@ class SingularityFetcher(ContainerFetcher):
 
     def __init__(
         self,
+        outdir: Path,
         container_library: Iterable[str],
         registry_set: Iterable[str],
         container_cache_utilisation=None,
@@ -105,7 +106,9 @@ class SingularityFetcher(ContainerFetcher):
             else:
                 raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
+        container_output_dir = outdir / "singularity-images"
         super().__init__(
+            container_output_dir=container_output_dir,
             container_library=container_library,
             registry_set=registry_set,
             progress_factory=SingularityProgress,

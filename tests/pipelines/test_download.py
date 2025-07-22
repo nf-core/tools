@@ -759,7 +759,13 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_progress):
         tmp_dir = Path(tmp_dir)
-        singularity_fetcher = SingularityFetcher([], [], "none", None)
+        singularity_fetcher = SingularityFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
         singularity_fetcher.progress = mock_progress()
         # Test successful pull
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
@@ -828,7 +834,13 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
     def test_singularity_pull_image_successfully(self, tmp_dir, mock_progress):
         tmp_dir = Path(tmp_dir)
-        singularity_fetcher = SingularityFetcher([], [], "none", None)
+        singularity_fetcher = SingularityFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
         singularity_fetcher.progress = mock_progress()
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
@@ -858,6 +870,7 @@ class DownloadTest(unittest.TestCase):
         # This list of fake container images should produce all kinds of ContainerErrors.
         # Test that they are all caught inside SingularityFetcher.fetch_containers().
         singularity_fetcher = SingularityFetcher(
+            outdir=tmp_path,
             container_library=download_obj.container_library,
             registry_set=download_obj.registry_set,
             container_cache_utilisation="none",
@@ -865,7 +878,6 @@ class DownloadTest(unittest.TestCase):
         )
         singularity_fetcher.fetch_containers(
             download_obj.containers,
-            download_obj.outdir,
             download_obj.containers_remote,
         )
 
@@ -913,7 +925,13 @@ class DownloadTest(unittest.TestCase):
                 "community-cr-prod.seqera.io/docker/registry/v2",
                 "depot.galaxyproject.org/singularity",
             ]
-            fetcher = SingularityFetcher([], registries, "none", None)
+            fetcher = SingularityFetcher(
+                outdir=tmp_path,
+                container_library=[],
+                registry_set=registries,
+                container_cache_utilisation="none",
+                container_cache_index=None,
+            )
 
             fetcher.symlink_registries(tmp_path / "path/to/singularity-image.img")
 
@@ -987,7 +1005,13 @@ class DownloadTest(unittest.TestCase):
                 "quay.io",  # Same as in the filename
                 "community-cr-prod.seqera.io/docker/registry/v2",
             ]
-            fetcher = SingularityFetcher([], registries, "none", None)
+            fetcher = SingularityFetcher(
+                outdir=tmp_path,
+                container_library=[],
+                registry_set=registries,
+                container_cache_utilisation="none",
+                container_cache_index=None,
+            )
             fetcher.symlink_registries(tmp_path / "path/to/quay.io-singularity-image.img")
 
             # Check that os.makedirs was called with the correct arguments
@@ -1060,7 +1084,13 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         tmp_dir = Path(tmp_dir)
         with pytest.raises(OSError):
-            SingularityFetcher([], [], "none", None)
+            SingularityFetcher(
+                outdir=tmp_dir,
+                container_library=[],
+                registry_set=[],
+                container_cache_utilisation="none",
+                container_cache_index=None,
+            )
 
     #
     # Test for 'singularity.get_container_filename' function
@@ -1076,8 +1106,13 @@ class DownloadTest(unittest.TestCase):
             "community-cr-prod.seqera.io/docker/registry/v2",
         ]
 
-        fetcher = SingularityFetcher([], registries, "none", None)
-        print(fetcher.registry_set)
+        fetcher = SingularityFetcher(
+            outdir=Path("test_singularity_get_container_filename"),
+            container_library=[],
+            registry_set=registries,
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
         # Test --- galaxy URL #
         result = fetcher.get_container_filename(
             "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",

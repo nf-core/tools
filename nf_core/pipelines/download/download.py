@@ -246,6 +246,10 @@ class DownloadWorkflow:
             log.info("Downloading workflow for static")
             self.download_workflow_static()
 
+        # The container fetcher might have some clean-up code, call it
+        if self.container_fetcher:
+            self.container_fetcher.cleanup()
+
     def download_workflow_static(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
 
@@ -280,11 +284,6 @@ class DownloadWorkflow:
         if self.compress_type is not None:
             log.info("Compressing output into archive")
             self.compress_download()
-
-        # If docker is the selected image format, then we should tell the
-        # user how to load the images into the offline daemon
-        if self.container_system == "docker":
-            self.write_docker_load_message()
 
     def download_workflow_platform(self, location: Optional[Path] = None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
@@ -445,8 +444,10 @@ class DownloadWorkflow:
         """
         Create the appropriate ContainerFetcher object
         """
+        assert self.outdir is not None  # mypy
         if self.container_system == "singularity":
             self.container_fetcher = SingularityFetcher(
+                outdir=self.outdir,
                 container_library=self.container_library,
                 registry_set=self.registry_set,
                 container_cache_utilisation=self.container_cache_utilisation,
@@ -455,6 +456,7 @@ class DownloadWorkflow:
             )
         elif self.container_system == "docker":
             self.container_fetcher = DockerFetcher(
+                outdir=self.outdir,
                 registry_set=self.registry_set,
                 container_library=self.container_library,
                 parallel=self.parallel,
@@ -573,25 +575,6 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def write_docker_load_message(self):
-        # There is not direct Nextflow support for loading docker images like we do for singularity above
-        # Instead we give the user a `bash` command to load the downloaded docker images into the offline docker daemon
-        # Courtesy of @vmkalbskopf in https://github.com/nextflow-io/nextflow/discussions/4708
-        docker_load_command = "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i"
-        indent_spaces = 4
-        docker_img_dir = self.get_container_output_dir()
-        stderr.print(
-            "\n"
-            + (1 * indent_spaces * " " + f"Downloaded docker images written to [blue not bold]'{docker_img_dir}'[/]. ")
-            + (0 * indent_spaces * " " + "After copying the pipeline and images to the offline machine, run\n\n")
-            + (2 * indent_spaces * " " + f"[blue bold]{docker_load_command}[/]\n\n")
-            + (
-                1 * indent_spaces * " "
-                + f"inside [blue not bold]'{docker_img_dir}'[/] to load the images into the offline docker daemon."
-            )
-            + "\n"
-        )
-
     def find_container_images(self, workflow_directory: Path, entrypoint="main.nf") -> None:
         """
         Find container image names for workflow using the `nextflow inspect` command.
@@ -696,7 +679,6 @@ class DownloadWorkflow:
             if self.container_fetcher is not None:
                 self.container_fetcher.fetch_containers(
                     self.containers,
-                    out_path_dir,
                     self.containers_remote,
                 )
 

@@ -10,9 +10,16 @@ from typing import Optional
 
 import rich.progress
 
+import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
 
 log = logging.getLogger(__name__)
+stderr = rich.console.Console(
+    stderr=True,
+    style="dim",
+    highlight=False,
+    force_terminal=nf_core.utils.rich_force_colors(),
+)
 
 
 class DockerFetcher(ContainerFetcher):
@@ -22,6 +29,7 @@ class DockerFetcher(ContainerFetcher):
 
     def __init__(
         self,
+        outdir: Path,
         container_library: Iterable[str],
         registry_set: Iterable[str],
         parallel: int = 4,
@@ -30,8 +38,9 @@ class DockerFetcher(ContainerFetcher):
         Intialize the docker image fetcher
 
         """
-
+        container_output_dir = outdir / "docker-images"
         super().__init__(
+            container_output_dir=container_output_dir,
             container_library=container_library,
             registry_set=registry_set,
             progress_factory=DockerProgress,
@@ -250,6 +259,36 @@ class DockerFetcher(ContainerFetcher):
                     command=command,
                     error_msg=lines,
                 )
+
+    def cleanup(self):
+        """
+        Cleanup by writing the load message to the screen
+        """
+        super().cleanup()
+        self.write_docker_load_message()
+
+    def write_docker_load_message(self):
+        """
+        Write a message to the user about how to load the downloaded docker images into the offline docker daemon
+        """
+        # There is not direct Nextflow support for loading docker images like we do for Singularity
+        # Instead we give the user a `bash` command to load the downloaded docker images into the offline docker daemon
+        # Courtesy of @vmkalbskopf in https://github.com/nextflow-io/nextflow/discussions/4708
+        # TODO: Should we create a bash script instead?
+        docker_load_command = "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i"
+        indent_spaces = 4
+        docker_img_dir = self.get_container_output_dir()
+        stderr.print(
+            "\n"
+            + (1 * indent_spaces * " " + f"Downloaded docker images written to [blue not bold]'{docker_img_dir}'[/]. ")
+            + (0 * indent_spaces * " " + "After copying the pipeline and images to the offline machine, run\n\n")
+            + (2 * indent_spaces * " " + f"[blue bold]{docker_load_command}[/]\n\n")
+            + (
+                1 * indent_spaces * " "
+                + f"inside [blue not bold]'{docker_img_dir}'[/] to load the images into the offline docker daemon."
+            )
+            + "\n"
+        )
 
 
 class DockerProgress(ContainerProgress):

@@ -92,6 +92,7 @@ class ContainerFetcher(ABC):
 
     def __init__(
         self,
+        container_output_dir: Path,
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress_factory: Callable[[], ContainerProgress],
@@ -100,6 +101,7 @@ class ContainerFetcher(ABC):
         amend_cachedir: bool,
         parallel: int = 4,
     ) -> None:
+        self._container_output_dir = container_output_dir
         self.container_library = list(container_library)
         self.registry_set = registry_set
         self.kill_with_fire = False
@@ -123,6 +125,12 @@ class ContainerFetcher(ABC):
     @progress.setter
     def progress(self, progress: Optional[ContainerProgress]) -> None:
         self._progress = progress
+
+    def get_container_output_dir(self) -> Path:
+        """
+        Get the output directory for the container images.
+        """
+        return self._container_output_dir
 
     @abstractmethod
     def check_and_set_implementation(self) -> None:
@@ -204,7 +212,6 @@ class ContainerFetcher(ABC):
     def fetch_containers(
         self,
         containers: Collection[str],
-        output_dir: Path,
         exclude_list: Container[str],
     ):
         """
@@ -236,7 +243,7 @@ class ContainerFetcher(ABC):
                     continue
 
                 # Generate file paths for all three locations
-                output_path = output_dir / container_filename
+                output_path = self.get_container_output_dir() / container_filename
 
                 if output_path.exists():
                     log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
@@ -313,3 +320,9 @@ class ContainerFetcher(ABC):
 
         with intermediate_file(dest_path) as dest_path_tmp:
             shutil.copyfile(src_path, dest_path_tmp.name)
+
+    def cleanup(self) -> None:
+        """
+        Cleanup any temporary files or resources.
+        """
+        pass
