@@ -34,8 +34,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
-      #- name: Build nfcore/tools image (dev)
-      #  run: docker buildx build --platform ${{ env.TARGET_PLATFORM }} -t fljulian/nfcore-tools:dev --push --no-cache .
+      # Retry building tools image once because of irregularly occuring
+      # 403 http errors when installing nf-test
+      - name: Build nfcore/tools image (dev)
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
+        with:
+          max_attempts: 2
+          timeout_seconds: 30
+          retry_on: error
+          command: |
+            docker buildx build \
+            --platform ${{ env.TARGET_PLATFORM }} \
+            -t fljulian/nfcore-tools:dev \
+            --push --no-cache .
 
       - name: Build and push nfcore/devcontainer:dev image (dev)
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
