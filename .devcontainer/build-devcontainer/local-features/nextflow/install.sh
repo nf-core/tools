@@ -38,10 +38,9 @@ echo "Installing Nextflow..."
 cd $NEXTFLOW_INSTALL_DIR
 curl -s https://get.nextflow.io | bash
 
-# Install nf-test
+# Install nf-test via conda
 echo "Installing nf-test..."
-cd $NEXTFLOW_INSTALL_DIR
-curl -fsSL https://get.nf-test.com | bash
+conda install -y -c bioconda nf-test
 
 # Set ownership and permissions on the nextflow and nf-test executables
 chown "${USERNAME}:nextflow" "${NEXTFLOW_INSTALL_DIR}"/nextflow

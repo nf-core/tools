@@ -3,5 +3,5 @@
     "name": "Nextflow Installation",
     "description": "Install Nextflow and nf-test",
     "version": "1.0.0",
-    "installsAfter": ["ghcr.io/devcontainers/features/java:1"]
+    "installsAfter": ["ghcr.io/devcontainers/features/java:1", "ghcr.io/rocker-org/devcontainer-features/miniforge:2"]
 }
