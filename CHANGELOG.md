@@ -14,6 +14,12 @@
 
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
+- Refactor downloads command ([#3634](https://github.com/nf-core/tools/pull/3634))
+  - Split `download.py` into subdirectory `download/`
+  - Use `nextflow inspect` for container discovery and remove legacy regex container discovery (requires Nextflow >= 25.04.04)
+  - Add support for downloading docker images into tar archives
+  - Change long flag `--parallel-downloads` to `--parallel`. Short flag remains.
+  - Add pipeline to test data to be compatible with `nextflow inspect`
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
