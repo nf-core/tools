@@ -14,6 +14,7 @@
 
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
+- Stop using Gitpod in favor of devcontainer for codespaces ([#3569](https://github.com/nf-core/tools/pull/3569))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
@@ -47,7 +48,6 @@
 
 - update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
-- Stop using Gitpod in favor of devcontainer for codespaces ([#3569](https://github.com/nf-core/tools/pull/3569))
 - Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
 - Make changelog bot push to correct remote ([#3638](https://github.com/nf-core/tools/pull/3638))
 - Give unique button ids to help buttons in create app ([#3645](https://github.com/nf-core/tools/pull/3645))
