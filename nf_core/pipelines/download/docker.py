@@ -30,6 +30,7 @@ class DockerFetcher(ContainerFetcher):
         Intialize the docker image fetcher
 
         """
+
         progress_ctx = DockerProgress()
         super().__init__(
             container_library=container_library,
