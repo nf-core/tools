@@ -17,26 +17,32 @@ jobs:
     # Only run for the nf-core repo, for releases and merged PRs
     #if: ${{ github.repository == 'nf-core/tools' }}
     env:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+      TARGET_PLATFORM: "linux/amd64,linux/arm64"
     strategy:
       fail-fast: false
     steps:
       - name: Check out code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
+      - name: Set up QEMU for multi-architecture build
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
-      - name: Build nfcore/tools docker image (latest)
-        run: docker build --no-cache . -t fljulian/nfcore-tools:latest
+      - name: Log in to Docker Hub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
 
-      - name: Push nfcore/tools docker image to DockerHub (latest,release)
+      - name: Build and push nfcore/tools docker image (latest)
         run: |
-          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push fljulian/nfcore-tools:latest
-          docker tag fljulian/nfcore-tools:latest fljulian/nfcore-tools:${{ github.event.release.tag_name }}
-          docker push fljulian/nfcore-tools:${{ github.event.release.tag_name }}
+          docker buildx build \
+           --platform ${{ env.TARGET_PLATFORM }} \
+           -t fljulian/nfcore-tools:${{ github.event.release.tag_name }} \
+           -t fljulian/nfcore-tools:latest \
+           --push --no-cache .
 
       - name: Build nfcore/devcontainer:latest devcontainer image
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
@@ -44,5 +50,6 @@ jobs:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: fljulian/nfcore-devcontainer
           imageTag: ${{ github.event.release.tag_name }},latest
-          platform: linux/amd64,linux/arm64
+          platform: ${{ env.TARGET_PLATFORM }}
           push: always
+          noCache: true
