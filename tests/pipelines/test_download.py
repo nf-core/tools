@@ -8,6 +8,8 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -23,7 +25,11 @@ import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow
 from nf_core.pipelines.download.container_fetcher import ContainerProgress
-from nf_core.pipelines.download.docker import DockerProgress
+from nf_core.pipelines.download.docker import (
+    DockerError,
+    DockerFetcher,
+    DockerProgress,
+)
 from nf_core.pipelines.download.singularity import (
     FileDownloader,
     SingularityError,
@@ -826,6 +832,57 @@ class DownloadTest(unittest.TestCase):
                 "ghcr.io",
             )
 
+    #
+    # Tests for 'DockerFetcher.pull_image'
+    #
+    # If Docker is installed, but the container can't be accessed because it does not exist or there are access
+    # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
+    @pytest.mark.skipif(
+        shutil.which("docker") is None,
+        reason="Can't test what Docker does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.pipelines.download.docker.DockerProgress")
+    @mock.patch("rich.progress.Task")
+    def test_docker_pull_image_docker_installed(self, tmp_dir, mock_progress, mock_task):
+        tmp_dir = Path(tmp_dir)
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+        )
+        docker_fetcher.progress = mock_progress()
+        mock_task_obj = mock_task()
+
+        # Test successful pull
+        docker_fetcher.pull_image("hello-world", mock_task_obj)
+
+        # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
+        docker_fetcher.pull_image("docker.io/bschiffthaler/sed", mock_task_obj)
+
+        # Test successful pull from wave
+        docker_fetcher.pull_image(
+            "community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6", mock_task_obj
+        )
+
+        # test image not found for several registries
+        with pytest.raises(DockerError.ImageNotFoundError):
+            docker_fetcher.pull_image("ghcr.io/not-a-real-registry/this-container-does-not-exist", mock_task_obj)
+
+        with pytest.raises(DockerError.ImageNotFoundError):
+            docker_fetcher.pull_image("docker.io/not-a-real-registry/this-container-does-not-exist", mock_task_obj)
+
+        # test image not found for absolute URI.
+        with pytest.raises(DockerError.ImageNotFoundError):
+            docker_fetcher.pull_image("docker.io/bschiffthaler/nothingtopullhere", mock_task_obj)
+
+        # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
+        with pytest.raises(DockerError.InvalidTagError):
+            docker_fetcher.pull_image("ghcr.io/ewels/multiqc:go-rewrite", mock_task_obj)
+
+    #
+    # Tests for 'SingularityFetcher.pull_image'
+    #
     @pytest.mark.skipif(
         shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
@@ -844,6 +901,52 @@ class DownloadTest(unittest.TestCase):
         singularity_fetcher.progress = mock_progress()
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
+    #
+    # Tests for 'DockerFetcher.pull_and_save_image'
+    #
+    @pytest.mark.skipif(
+        shutil.which("docker") is None,
+        reason="Can't test what Docker does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.pipelines.download.docker.DockerProgress")
+    def test_docker_pull_image_successfully(self, tmp_dir, mock_progress):
+        tmp_dir = Path(tmp_dir)
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+        )
+        docker_fetcher.progress = mock_progress()
+        docker_fetcher.pull_and_save_image("hello-world", f"{tmp_dir}/hello-world.tar")
+
+    #
+    # Tests for 'DockerFetcher.save_image'
+    #
+    @pytest.mark.skipif(
+        shutil.which("docker") is None,
+        reason="Can't test what Docker does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.pipelines.download.docker.DockerProgress")
+    @mock.patch("rich.progress.Task")
+    def test_docker_save_image(self, tmp_dir, mock_progress, mock_task):
+        tmp_dir = Path(tmp_dir)
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+        )
+        docker_fetcher.progress = mock_progress()
+        mock_task_obj = mock_task()
+        with pytest.raises(DockerError.ImageNotPulledError):
+            docker_fetcher.save_image(
+                "this-image-cannot-possibly-be-pulled-to-this-machine:latest",
+                f"{tmp_dir}/this-image-cannot-possibly-be-pulled-to-this-machine.tar",
+                mock_task_obj,
+            )
+
+    #
     #
     # Tests for 'SingularityFetcher.fetch_containers'
     #
@@ -877,6 +980,41 @@ class DownloadTest(unittest.TestCase):
             container_cache_index=None,
         )
         singularity_fetcher.fetch_containers(
+            download_obj.containers,
+            download_obj.containers_remote,
+        )
+
+    #
+    #
+    # Tests for 'DockerFetcher.fetch_containers'
+    #
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_fetch_containers_docker(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=None,
+            container_system="docker",
+        )
+        download_obj.containers = [
+            "helloworld",
+            "helloooooooworld",
+            "ewels/multiqc:gorewrite",
+        ]
+        # This list of fake container images should produce all kinds of ContainerErrors.
+        # Test that they are all caught inside DockerFetcher.fetch_containers().
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_path,
+            container_library=download_obj.container_library,
+            registry_set=download_obj.registry_set,
+        )
+        docker_fetcher.fetch_containers(
             download_obj.containers,
             download_obj.containers_remote,
         )
@@ -1034,6 +1172,19 @@ class DownloadTest(unittest.TestCase):
             mock_open.assert_called_once_with(tmp_path / "path/to", os.O_RDONLY)
 
     #
+    # Test for DockerFetcher.write_docker_load_command
+    #
+    def test_docker_write_docker_load_message(self):
+        docker_fetcher = DockerFetcher(
+            outdir=Path("dummydir"),
+            container_library=[],
+            registry_set=[],
+        )
+        with redirect_stderr(StringIO()) as f:
+            docker_fetcher.write_docker_load_message()
+        assert "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i" in f.getvalue()
+        assert "dummydir/docker-images" in f.getvalue()
+
     # Test for gather_registries'
     #
     @with_temporary_folder

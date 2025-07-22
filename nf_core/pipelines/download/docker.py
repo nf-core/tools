@@ -1,6 +1,8 @@
 import concurrent
 import concurrent.futures
+import itertools
 import logging
+import re
 import select
 import shutil
 import subprocess
@@ -127,7 +129,16 @@ class DockerFetcher(ContainerFetcher):
             status="Pulling",
         )
 
-        self.pull_image(container, task)
+        try:
+            self.pull_image(container, task)
+        except (DockerError.InvalidTagError, DockerError.ImageNotFoundError) as e:
+            log.error(e.message)
+            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
+        except DockerError.OtherError as e:
+            # Try other registries
+            log.error(e.message)
+            log.error(e.helpmessage)
+            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
 
         # Update progress bar
         self.progress.advance(task)
@@ -158,19 +169,10 @@ class DockerFetcher(ContainerFetcher):
             prev_pull_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
         """
         # Try pulling the image from the specified address
-        try:
-            pull_command = self.construct_pull_command(container)
-            log.debug(f"Pulling docker image: {container}")
-            log.debug(f"Docker command: {' '.join(pull_command)}")
-            self._run_docker_command(pull_command, container, None, container, progress_task)
-        except (DockerError.InvalidTagError, DockerError.ImageNotFoundError) as e:
-            log.error(e.message)
-            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
-        except DockerError.OtherError as e:
-            # Try other registries
-            log.error(e.message)
-            log.error(e.helpmessage)
-            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
+        pull_command = self.construct_pull_command(container)
+        log.debug(f"Pulling docker image: {container}")
+        log.debug(f"Docker command: {' '.join(pull_command)}")
+        self._run_docker_command(pull_command, container, None, container, progress_task)
 
     def construct_save_command(self, output_path: Path, address: str):
         save_command = [
@@ -313,11 +315,11 @@ class DockerError(Exception):
 
     def __init__(
         self,
-        container: str,
-        address: str,
-        out_path: Optional[Path],
-        command: list[str],
-        error_msg: list[str],
+        container,
+        address,
+        out_path,
+        command,
+        error_msg,
     ):
         self.container = container
         self.address = address
@@ -327,15 +329,16 @@ class DockerError(Exception):
         self.message = None
 
         error_patterns = {
-            "reference does not exist": self.ImageNotPulledError,
-            "repository does not exist": self.ImageNotFoundError,
-            "manifest unknown": self.InvalidTagError,
+            r"reference does not exist": self.ImageNotPulledError,
+            r"repository does not exist": self.ImageNotFoundError,
+            r"Error response from daemon: Head .*: denied": self.ImageNotFoundError,
+            r"manifest unknown": self.InvalidTagError,
         }
-        for line in error_msg:
-            for pattern, error_class in error_patterns.items():
-                if pattern in line:
-                    self.error_type = error_class(self)
-                    break
+
+        for line, (pattern, error_class) in itertools.product(error_msg, error_patterns.items()):
+            if re.search(pattern, line):
+                self.error_type = error_class(self)
+                break
         else:
             self.error_type = self.OtherError(self)
 
