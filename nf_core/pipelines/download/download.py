@@ -22,15 +22,10 @@ import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SingularityFetcher
-from nf_core.pipelines.download.utils import (
-    DownloadError,
-    prioritize_direct_download,
-    rectify_raw_container_matches,
-)
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
-    SingularityCacheFilePathValidator,
     check_nextflow_version,
     pretty_nf_version,
     run_cmd,
@@ -69,7 +64,7 @@ class DownloadWorkflow:
     def __init__(
         self,
         pipeline: Optional[str] = None,
-        revision: Optional[str] = None,
+        revision: Optional[Union[tuple[str], str]] = None,
         outdir=None,
         compress_type: Optional[str] = None,
         force: bool = False,
@@ -121,18 +116,20 @@ class DownloadWorkflow:
             self.additional_tags = None
 
         self.container_system = container_system
+        self.container_fetcher: Optional[ContainerFetcher] = None
         # Check if a cache or libraries were specfied even though singularity was not
-        if container_cache_index and self.container_system != "singularity":
-            log.warning("The flag '--container-cache-index' is set, but not selected to fetch singularity images")
-            self.prompt_use_singularity(
-                "The '--container-cache-index' flag is only applicable when fetching singularity images"
-            )
+        if self.container_system != "singularity":
+            if container_cache_index:
+                log.warning("The flag '--container-cache-index' is set, but not selected to fetch singularity images")
+                self.prompt_use_singularity(
+                    "The '--container-cache-index' flag is only applicable when fetching singularity images"
+                )
 
-        if container_library and self.container_system != "singularity":
-            log.warning("You have specified container libraries but not selected to fetch singularity image")
-            self.prompt_use_singularity(
-                "The '--container-library' flag is only applicable when fetching singularity images"
-            )  # Is this correct?
+            if container_library:
+                log.warning("You have specified container libraries but not selected to fetch singularity image")
+                self.prompt_use_singularity(
+                    "The '--container-library' flag is only applicable when fetching singularity images"
+                )  # Is this correct?
 
         # Manually specified container library (registry)
         if isinstance(container_library, str) and bool(len(container_library)):
@@ -179,27 +176,8 @@ class DownloadWorkflow:
             if self.container_system is None:
                 self.prompt_container_download()
 
-            log.warning(self.container_system)
-            # Check if we need to set up a cache directory for Singularity
-            if self.container_system == "singularity":
-                # Check if the env variable for the Singularity cache directory is set
-                if os.environ.get("NXF_SINGULARITY_CACHEDIR") is None and stderr.is_interactive:
-                    # Prompt for the Singularity cache directory
-                    self.prompt_singularity_cachedir_creation()
-
-                    if self.container_cache_utilisation is None:
-                        # No choice regarding singularity cache has been made.
-                        self.prompt_singularity_cachedir_utilization()
-
-                if self.container_cache_utilisation == "remote":
-                    # If we have a remote cache, we need to read it
-                    if self.container_cache_index is None and stderr.is_interactive:
-                        self.prompt_singularity_cachedir_remote()
-                    # If we have remote containers, we need to read them
-                    if self.container_cache_utilisation == "remote" and self.container_cache_index is not None:
-                        self.read_remote_singularity_containers()
-                    else:
-                        log.warning("[red]No remote cache index specified, skipping remote container download.[/]")
+            # Setup the appropriate ContainerFetcher object
+            self.setup_container_fetcher()
 
             # Nothing meaningful to compress here.
             if not self.platform:
@@ -463,145 +441,26 @@ class DownloadWorkflow:
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-    def prompt_singularity_cachedir_creation(self):
-        """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
-        stderr.print(
-            "\nNextflow and nf-core can use an environment variable called [blue]$NXF_SINGULARITY_CACHEDIR[/] that is a path to a directory where remote Singularity images are stored. "
-            "This allows downloaded images to be cached in a central location."
-        )
-        if rich.prompt.Confirm.ask(
-            "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
-        ):
-            if not self.container_cache_index:
-                self.container_cache_utilisation == "amend"  # retain "remote" choice.
-            # Prompt user for a cache directory path
-            cachedir_path = None
-            while cachedir_path is None:
-                prompt_cachedir_path = questionary.path(
-                    "Specify the path:",
-                    only_directories=True,
-                    style=nf_core.utils.nfcore_question_style,
-                ).unsafe_ask()
-                if prompt_cachedir_path == "":
-                    log.error("Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
-                    break
-                cachedir_path = Path(prompt_cachedir_path).expanduser().absolute()
-                if not cachedir_path.is_dir():
-                    log.error(f"'{cachedir_path}' is not a directory.")
-                    cachedir_path = None
-            if cachedir_path:
-                os.environ["NXF_SINGULARITY_CACHEDIR"] = str(cachedir_path)
-
-                """
-                Optionally, create a permanent entry for the NXF_SINGULARITY_CACHEDIR in the terminal profile.
-                Currently support for bash and zsh.
-                ToDo: "sh", "dash", "ash","csh", "tcsh", "ksh", "fish", "cmd", "powershell", "pwsh"?
-                """
-
-                if os.getenv("SHELL", "") == "/bin/bash":
-                    shellprofile_path = Path("~/~/.bash_profile").expanduser()
-                    if not shellprofile_path.is_file():
-                        shellprofile_path = Path("~/.bashrc").expanduser()
-                        if not shellprofile_path.is_file():
-                            shellprofile_path = None
-                elif os.getenv("SHELL", "") == "/bin/zsh":
-                    shellprofile_path = Path("~/.zprofile").expanduser()
-                    if not shellprofile_path.is_file():
-                        shellprofile_path = Path("~/.zshenv").expanduser()
-                        if not shellprofile_path.is_file():
-                            shellprofile_path = None
-                else:
-                    shellprofile_path = Path("~/.profile").expanduser()
-                    if not shellprofile_path.is_file():
-                        shellprofile_path = None
-
-                if shellprofile_path is not None:
-                    stderr.print(
-                        f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{shellprofile_path.name}[/] file ."
-                        "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
-                        f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
-                    )
-                    append_to_file = rich.prompt.Confirm.ask(
-                        f"[blue bold]?[/] [bold]Add to [blue not bold]~/{shellprofile_path.name}[/] ?[/]"
-                    )
-                    if append_to_file:
-                        with open(shellprofile_path.expanduser(), "a") as f:
-                            f.write(
-                                "\n\n#######################################\n"
-                                f"## Added by `nf-core pipelines download` v{nf_core.__version__} ##\n"
-                                + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
-                                + "\n#######################################\n"
-                            )
-                        log.info(f"Successfully wrote to [blue]{shellprofile_path}[/]")
-                        log.warning(
-                            "You will need reload your terminal after the download completes for this to take effect."
-                        )
-
-    def prompt_singularity_cachedir_utilization(self):
-        """Ask if we should *only* use $NXF_SINGULARITY_CACHEDIR without copying into target"""
-        stderr.print(
-            "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
-            "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them. "
-            "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
-        )
-        self.container_cache_utilisation = questionary.select(
-            "Copy singularity images from $NXF_SINGULARITY_CACHEDIR to the target folder or amend new images to the cache?",
-            choices=["amend", "copy"],
-            style=nf_core.utils.nfcore_question_style,
-        ).unsafe_ask()
-
-    def prompt_singularity_cachedir_remote(self):
-        """Prompt about the index of a remote $NXF_SINGULARITY_CACHEDIR"""
-        # Prompt user for a file listing the contents of the remote cache directory
-        cachedir_index = None
-        while cachedir_index is None:
-            prompt_cachedir_index = questionary.path(
-                "Specify a list of the container images that are already present on the remote system:",
-                validate=SingularityCacheFilePathValidator,
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask()
-            if prompt_cachedir_index == "":
-                log.error("Will disregard contents of a remote [blue]$NXF_SINGULARITY_CACHEDIR[/]")
-                self.container_cache_index = None
-                self.container_cache_utilisation = "copy"
-                break
-            cachedir_index = Path(prompt_cachedir_index).expanduser().absolute()
-            if not os.access(cachedir_index, os.R_OK):
-                log.error(f"'{cachedir_index}' is not a readable file.")
-                cachedir_index = None
-        if cachedir_index:
-            self.container_cache_index = cachedir_index
-
-    def read_remote_singularity_containers(self):
+    def setup_container_fetcher(self) -> None:
         """
-        Reads the file specified as index for the remote Singularity cache dir
-
-        NOTE: This is not supported for docker (yet)
+        Create the appropriate ContainerFetcher object
         """
-        n_total_images = 0
-        try:
-            with open(self.container_cache_index) as indexfile:
-                for line in indexfile.readlines():
-                    match = re.search(r"([^\/\\]+\.img)", line, re.S)
-                    if match:
-                        n_total_images += 1
-                        self.containers_remote.append(match.group(0))
-                if n_total_images == 0:
-                    raise LookupError("Could not find valid container names in the index file.")
-                self.containers_remote = sorted(list(set(self.containers_remote)))
-                log.debug(self.containers_remote)
-        except (FileNotFoundError, LookupError) as e:
-            log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
-            if stderr.is_interactive and rich.prompt.Confirm.ask("[blue]Specify a new index file and try again?"):
-                self.container_cache_index = None  # reset chosen path to index file.
-                self.prompt_singularity_cachedir_remote()
-            else:
-                log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
-                self.container_cache_index = None
-                if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                    self.container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
-                else:
-                    self.container_cache_utilisation = None
+        if self.container_system == "singularity":
+            self.container_fetcher = SingularityFetcher(
+                container_library=self.container_library,
+                registry_set=self.registry_set,
+                container_cache_utilisation=self.container_cache_utilisation,
+                container_cache_index=self.container_cache_index,
+                parallel=self.parallel,
+            )
+        elif self.container_system == "docker":
+            self.container_fetcher = DockerFetcher(
+                registry_set=self.registry_set,
+                container_library=self.container_library,
+                parallel=self.parallel,
+            )
+        else:
+            self.container_fetcher = None
 
     def prompt_use_singularity(self, fail_message) -> None:
         use_singularity = questionary.confirm(
@@ -733,154 +592,54 @@ class DownloadWorkflow:
             + "\n"
         )
 
-    def find_container_images(self, workflow_directory: Path) -> None:
-        """Find container image names for workflow using the `nextflow inspect` command.
+    def find_container_images(self, workflow_directory: Path, entrypoint="main.nf") -> None:
+        """
+        Find container image names for workflow using the `nextflow inspect` command.
 
-        ONLY WORKS FOR NEXTFLOW >= 25.04.4
+        Requires Nextflow >= 25.04.4
 
-        Falls back to using `find_container_images_legacy()` when `nextflow inspect` fails.
+        Args:
+            workflow_directory (Path): The directory containing the workflow files.
+            entrypoint (str): The entrypoint for the `nextflow inspect` command.
         """
         # Check if we have an outdated Nextflow version
         if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
-            log.warning(
-                "The `nextflow inspect` command requires Nextflow version >= "
-                + pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)
+            raise DownloadError(
+                f"The `nextflow inspect` command requires Nextflow version >= "
+                f"{pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}"
+                f"Please upgrade your Nextflow version"
             )
-            log.info("Falling back to legacy container extraction method.")
-            self.find_container_images_legacy(workflow_directory)
+
         else:
             log.info(
                 "Fetching container names for workflow using [blue bold]nextflow inspect[/]. This might take a while."
             )
             try:
-                self.find_container_images_nf_inspect(workflow_directory)
-                return
+                # TODO: Select container system via profile. Is this stable enough?
+                # NOTE: We will likely don't need this after the switch to Seqera containers
+                profile = f"-profile {self.container_system}" if self.container_system else ""
+
+                # Run nextflow inspect
+                executable = "nextflow"
+                cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
+                cmd_out = run_cmd(executable, cmd_params)
+                if cmd_out is None:
+                    raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+
+                out, _ = cmd_out
+                out_json = json.loads(out)
+                # NOTE: Should we save the container name too to have more meta information?
+                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+                # We only want to process unique containers
+                self.containers = list(set(named_containers.values()))
 
             except RuntimeError as e:
                 log.warning("Running 'nextflow inspect' failed with the following error")
-                log.warning(e)
+                raise DownloadError(e)
 
             except KeyError as e:
                 log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
-                log.debug(e)
-
-            self.find_container_images_legacy(workflow_directory)
-
-    def find_container_images_nf_inspect(self, workflow_directory: Path, entrypoint="main.nf"):
-        # TODO: Select container system via profile. Is this stable enough?
-        # NOTE: We will likely don't need this after the switch to Seqera containers
-        profile = f"-profile {self.container_system}" if self.container_system else ""
-
-        # Run nextflow inspect
-        executable = "nextflow"
-        cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
-        cmd_out = run_cmd(executable, cmd_params)
-        if cmd_out is None:
-            raise RuntimeError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
-
-        out, _ = cmd_out
-        out_json = json.loads(out)
-        # NOTE: We only save the container strings to comply with the legacy function.
-        named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-
-        self.containers = list(set(named_containers.values()))
-
-    def find_container_images_legacy(self, workflow_directory: Path) -> None:
-        """Find container image names for workflow.
-
-        DEPRECATION NOTE: USED FOR NEXTFLOW VERSIONS < 25.04.4
-
-        Starts by using `nextflow config` to pull out any process.container
-        declarations. This works for DSL1. It should return a simple string with resolved logic,
-        but not always, e.g. not for differentialabundance 1.2.0
-
-        Second, we look for DSL2 containers. These can't be found with
-        `nextflow config` at the time of writing, so we scrape the pipeline files.
-        This returns raw matches that will likely need to be cleaned.
-        """
-
-        log.warning("Using legacy container extraction method. This will be deprecated in the future.")
-        log.debug("Fetching container names for workflow ")
-        # since this is run for multiple revisions now, account for previously detected containers.
-        previous_findings = [] if not self.containers else self.containers
-        config_findings = []
-        module_findings = []
-
-        # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
-
-        # Find any config variables that look like a container
-        for k, v in self.nf_config.items():
-            if (k.startswith("process.") or k.startswith("params.")) and k.endswith(".container"):
-                """
-                Can be plain string / Docker URI or DSL2 syntax
-
-                Since raw parsing is done by Nextflow, single quotes will be (partially) escaped in DSL2.
-                Use cleaning regex on DSL2. Same as for modules, except that (?<![\\]) ensures that escaped quotes are ignored.
-                """
-
-                # for DSL2 syntax in process scope of configs
-                config_regex = re.compile(
-                    r"[\\s{}=$]*(?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1[\\s}]*"
-                )
-                config_findings_dsl2 = re.findall(config_regex, v)
-
-                if bool(config_findings_dsl2):
-                    # finding will always be a tuple of length 2, first the quote used and second the enquoted value.
-                    for finding in config_findings_dsl2:
-                        config_findings.append(finding + (self.nf_config, "Nextflow configs"))
-                else:  # no regex match, likely just plain string
-                    """
-                    Append string also as finding-like tuple for consistency
-                    because all will run through rectify_raw_container_matches()
-                    self.nf_config is needed, because we need to restart search over raw input
-                    if no proper container matches are found.
-                    """
-                    config_findings.append((k, v.strip("'\""), self.nf_config, "Nextflow configs"))
-
-        # rectify the container paths found in the config
-        # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?
-        config_findings = rectify_raw_container_matches(config_findings[:])
-
-        # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in os.walk(workflow_directory / "modules"):
-            for file in files:
-                if file.endswith(".nf"):
-                    file_path = Path(subdir) / file
-                    with open(file_path) as fh:
-                        # Look for any lines with container "xxx" or container 'xxx'
-                        search_space = fh.read()
-                        """
-                        Figure out which quotes were used and match everything until the closing quote.
-                        Since the other quote typically appears inside, a simple r"container\\s*[\"\']([^\"\']*)[\"\']" unfortunately abridges the matches.
-
-                        container\\s+[\\s{}$=]* matches the literal word "container" followed by whitespace, brackets, equal or variable names.
-                        (?P<quote>[\'\"]) The quote character is captured into the quote group \1.
-                        The pattern (?:.(?!\1))*.? is used to match any character (.) not followed by the closing quote character (?!\1).
-                        This capture happens greedy *, but we add a .? to ensure that we don't match the whole file until the last occurrence
-                        of the closing quote character, but rather stop at the first occurrence. \1 inserts the matched quote character into the regex, either " or '.
-                        It may be followed by whitespace or closing bracket [\\s}]*
-                        re.DOTALL is used to account for the string to be spread out across multiple lines.
-                        """
-                        container_regex = re.compile(
-                            r"container\s+[\\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\\s}]*",
-                            re.DOTALL,
-                        )
-
-                        local_module_findings = re.findall(container_regex, search_space)
-
-                        # finding fill always be a tuple of length 2, first the quote used and second the enquoted value.
-                        for finding in local_module_findings:
-                            # append finding since we want to collect them from all modules
-                            # also append search_space because we need to start over later if nothing was found.
-                            module_findings.append(finding + (search_space, file_path))
-
-        # Not sure if there will ever be multiple container definitions per module, but beware DSL3.
-        # Like above run on shallow copy, because length may change at runtime.
-        module_findings = rectify_raw_container_matches(module_findings[:])
-
-        # Again clean list, in case config declares Docker URI but module or previous finding already had the http:// download
-        self.containers = prioritize_direct_download(previous_findings + config_findings + module_findings)
+                raise DownloadError(e)
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
@@ -927,23 +686,6 @@ class DownloadWorkflow:
             )
             log.debug(f"Container names: {self.containers}")
 
-            # Find out what the library directory is
-            library_dir = Path(path_str) if (path_str := os.environ.get("NXF_SINGULARITY_LIBRARYDIR")) else None
-            if library_dir and not library_dir.is_dir():
-                # Since the library is read-only, if the directory isn't there, we can forget about it
-                library_dir = None
-
-            # Find out what the cache directory is
-            cache_dir = Path(path_str) if (path_str := os.environ.get("NXF_SINGULARITY_CACHEDIR")) else None
-            log.debug(f"NXF_SINGULARITY_CACHEDIR: {cache_dir}")
-            if self.container_cache_utilisation in ["amend", "copy"]:
-                if cache_dir:
-                    if not cache_dir.is_dir():
-                        log.debug(f"Cache directory not found, creating: {cache_dir}")
-                        cache_dir.mkdir()
-                else:
-                    raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
-
             out_path_dir = self.get_container_output_dir().absolute()
 
             # Check that the directories exist
@@ -951,31 +693,8 @@ class DownloadWorkflow:
                 log.debug(f"Output directory not found, creating: {out_path_dir}")
                 out_path_dir.mkdir()
 
-            container_fetcher: ContainerFetcher
-            args: tuple[Any, ...]
-            container_fetcher_constructor, args = {
-                "singularity": (
-                    SingularityFetcher,
-                    (
-                        self.container_library,
-                        self.registry_set,
-                        library_dir,
-                        cache_dir,
-                        self.container_cache_utilisation == "amend",
-                        self.parallel,
-                    ),
-                ),
-                "docker": (
-                    DockerFetcher,
-                    (
-                        self.container_library,
-                        self.registry_set,
-                        self.parallel,
-                    ),
-                ),
-            }[self.container_system]
-            with container_fetcher_constructor(*args) as container_fetcher:
-                container_fetcher.fetch_containers(
+            if self.container_fetcher is not None:
+                self.container_fetcher.fetch_containers(
                     self.containers,
                     out_path_dir,
                     self.containers_remote,

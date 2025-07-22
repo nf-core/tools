@@ -5,7 +5,7 @@ import shutil
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Container, Generator, Iterable
 from pathlib import Path
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 import rich.progress
 
@@ -94,7 +94,7 @@ class ContainerFetcher(ABC):
         self,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress_ctx: ContainerProgress,
+        progress_factory: Callable[[], ContainerProgress],
         library_dir: Optional[Path],
         cache_dir: Optional[Path],
         amend_cachedir: bool,
@@ -102,8 +102,6 @@ class ContainerFetcher(ABC):
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
-        self._progress_ctx = progress_ctx
-        self.progress: Optional[ContainerProgress] = None
         self.kill_with_fire = False
         self.implementation = None
         self.name = None
@@ -114,12 +112,8 @@ class ContainerFetcher(ABC):
 
         self.check_and_set_implementation()
 
-    def __enter__(self):
-        self.progress = self._progress_ctx.__enter__()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return self._progress_ctx.__exit__(exc_type, exc_val, exc_tb)
+        self.progress_factory = progress_factory
+        self.progress: Optional[ContainerProgress] = None
 
     @property
     def progress(self) -> rich.progress.Progress:
@@ -218,80 +212,88 @@ class ContainerFetcher(ABC):
         all the containers we find and does the appropriate action; copying
         from cache or fetching from a remote location
         """
-        self.progress.add_main_task(total=0)
 
-        # Check each container in the list and defer actions
-        containers_remote_fetch: list[tuple[str, Path]] = []
-        containers_copy: list[tuple[str, Path, Path]] = []
+        # Create a new progress bar
+        self.progress = self.progress_factory()
 
-        # We may add more tasks as containers need to be copied between the various caches
-        total_tasks = len(containers)
+        with self.progress:
+            self.progress.add_main_task(total=0)
 
-        for container in containers:
-            container_filename = self.get_container_filename(container)
+            # Check each container in the list and defer actions
+            containers_remote_fetch: list[tuple[str, Path]] = []
+            containers_copy: list[tuple[str, Path, Path]] = []
 
-            # Files in the remote cache are already downloaded and can be ignored
-            if container_filename in exclude_list:
-                log.debug(f"Skipping download of container '{container_filename}' as it is cached remotely.")
-                self.progress.update_main_task(advance=1, description=f"Skipping {container_filename}")
-                continue
+            # We may add more tasks as containers need to be copied between the various caches
+            total_tasks = len(containers)
 
-            # Generate file paths for all three locations
-            output_path = output_dir / container_filename
+            for container in containers:
+                container_filename = self.get_container_filename(container)
 
-            if output_path.exists():
-                log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
-                self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
-                continue
+                # Files in the remote cache are already downloaded and can be ignored
+                if container_filename in exclude_list:
+                    log.debug(f"Skipping download of container '{container_filename}' as it is cached remotely.")
+                    self.progress.update_main_task(advance=1, description=f"Skipping {container_filename}")
+                    continue
 
-            library_path = self.library_dir / container_filename if self.library_dir is not None else None
-            cache_path = self.cache_dir / container_filename if self.cache_dir is not None else None
+                # Generate file paths for all three locations
+                output_path = output_dir / container_filename
 
-            # Get the container from the library
-            if library_path and library_path.exists():
-                # Update the cache if needed
-                if cache_path and not cache_path.exists():
-                    containers_copy.append((container, library_path, cache_path))
-                    self.progress.update_main_task(total=total_tasks)
+                if output_path.exists():
+                    log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
+                    self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
+                    continue
 
-                if not self.amend_cachedir:
-                    # We are not just amending the cache directory, so the file should be copied to the output
-                    containers_copy.append((container, library_path, output_path))
+                library_path = self.library_dir / container_filename if self.library_dir is not None else None
+                cache_path = self.cache_dir / container_filename if self.cache_dir is not None else None
 
-            # Get the container from the cache
-            elif cache_path and cache_path.exists() and not self.amend_cachedir:
-                log.debug(f"Container '{container_filename}' found in cache at '{cache_path}'.")
-                containers_copy.append((container, cache_path, output_path))
+                # Get the container from the library
+                if library_path and library_path.exists():
+                    # Update the cache if needed
+                    if cache_path and not cache_path.exists():
+                        containers_copy.append((container, library_path, cache_path))
+                        self.progress.update_main_task(total=total_tasks)
 
-            # Image is not in library or cache
-            else:
-                # We treat downloading and pulling equivalently since this differs between docker and singularity.
-                # - Singularity images can either be downloaded from an http address, or pulled from a registry with `(singularity|apptainer) pull`
-                # - Docker images are always pulled, but needs the additional `docker image save` command for the image to be saved in the correct place
-                if cache_path:
-                    # Download into the cache
-                    containers_remote_fetch.append((container, cache_path))
-
-                    # Do not copy to the output directory "(docker|singularity)-images" if we solely amending the cache
                     if not self.amend_cachedir:
-                        containers_copy.append((container, cache_path, output_path))
+                        # We are not just amending the cache directory, so the file should be copied to the output
+                        containers_copy.append((container, library_path, output_path))
+
+                # Get the container from the cache
+                elif cache_path and cache_path.exists() and not self.amend_cachedir:
+                    log.debug(f"Container '{container_filename}' found in cache at '{cache_path}'.")
+                    containers_copy.append((container, cache_path, output_path))
+
+                # Image is not in library or cache
                 else:
-                    # There is no cache directory so download or pull directly to the output
-                    containers_remote_fetch.append((container, output_path))
+                    # Fetching of remote containers, either pulling or downloading, differs between docker and singularity:
+                    # - Singularity images can either be downloaded from an http address, or pulled from a registry with `(singularity|apptainer) pull`
+                    # - Docker images are always pulled, but needs the additional `docker image save` command for the image to be saved in the correct place
+                    if cache_path:
+                        # Download into the cache
+                        containers_remote_fetch.append((container, cache_path))
 
-        # Fetch containers from a remote location
-        if containers_remote_fetch:
-            self.progress.update_main_task(description=f"Fetching {self.implementation} images")
-            self.fetch_remote_containers(containers_remote_fetch, parallel=self.parallel)
+                        # Do not copy to the output directory "(docker|singularity)-images" if we solely amending the cache
+                        if not self.amend_cachedir:
+                            containers_copy.append((container, cache_path, output_path))
+                    else:
+                        # There is no cache directory so download or pull directly to the output
+                        containers_remote_fetch.append((container, output_path))
 
-        # Copy containers
-        if containers_copy:
-            self.progress.update_main_task(
-                description="Copying container images from/to cache", total=len(containers_copy), completed=0
-            )
-            for container, src_path, dest_path in containers_copy:
-                self.copy_image(container, src_path, dest_path)
-                self.progress.update_main_task(advance=1)
+            # Fetch containers from a remote location
+            if containers_remote_fetch:
+                self.progress.update_main_task(description=f"Fetching {self.implementation} images")
+                self.fetch_remote_containers(containers_remote_fetch, parallel=self.parallel)
+
+            # Copy containers
+            if containers_copy:
+                self.progress.update_main_task(
+                    description="Copying container images from/to cache", total=len(containers_copy), completed=0
+                )
+                for container, src_path, dest_path in containers_copy:
+                    self.copy_image(container, src_path, dest_path)
+                    self.progress.update_main_task(advance=1)
+
+        # Unset the progress bar, so that we get an AssertionError if we access it after it is closed
+        self.progress = None
 
     @abstractmethod
     def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:

@@ -30,11 +30,11 @@ class DockerFetcher(ContainerFetcher):
         Intialize the docker image fetcher
 
         """
-        progress_ctx = DockerProgress()
+
         super().__init__(
             container_library=container_library,
             registry_set=registry_set,
-            progress_ctx=progress_ctx,
+            progress_factory=DockerProgress,
             cache_dir=None,  # Docker does not use a cache directory
             library_dir=None,  # Docker does not use a library directory
             amend_cachedir=False,  # Docker does not use a cache directory
