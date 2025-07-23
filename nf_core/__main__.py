@@ -407,19 +407,19 @@ def command_pipelines_lint(
     "-l",
     "--container-library",
     multiple=True,
-    help="Container registry/library or mirror to pull images from.",
+    help="Container registry/library or mirror to pull images from. Not available for Docker containers.",
 )
 @click.option(
     "-u",
     "--container-cache-utilisation",
     type=click.Choice(["amend", "copy", "remote"]),
-    help="Utilise a `singularity.cacheDir` in the download process, if applicable.",
+    help="Utilise a `singularity.cacheDir` in the download process, if applicable. Not available for Docker containers.",
 )
 @click.option(
     "-i",
     "--container-cache-index",
     type=str,
-    help="List of images already available in a remote `singularity.cacheDir`.",
+    help="List of images already available in a remote `singularity.cacheDir`. Not available for Docker containers.",
 )
 @click.option(
     "-d",
