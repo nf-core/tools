@@ -772,6 +772,7 @@ class DownloadTest(unittest.TestCase):
             container_cache_utilisation="none",
             container_cache_index=None,
         )
+        singularity_fetcher.check_and_set_implementation()
         singularity_fetcher.progress = mock_progress()
         # Test successful pull
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
@@ -898,6 +899,7 @@ class DownloadTest(unittest.TestCase):
             container_cache_utilisation="none",
             container_cache_index=None,
         )
+        singularity_fetcher.check_and_set_implementation()
         singularity_fetcher.progress = mock_progress()
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
@@ -1234,14 +1236,15 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         tmp_dir = Path(tmp_dir)
+        fetcher = SingularityFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
         with pytest.raises(OSError):
-            SingularityFetcher(
-                outdir=tmp_dir,
-                container_library=[],
-                registry_set=[],
-                container_cache_utilisation="none",
-                container_cache_index=None,
-            )
+            fetcher.check_and_set_implementation()
 
     #
     # Test for 'singularity.get_container_filename' function

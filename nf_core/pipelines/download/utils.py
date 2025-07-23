@@ -51,7 +51,7 @@ def intermediate_file_no_creation(output_path: Path) -> Generator[Path, None, No
     if output_path.is_symlink():
         raise DownloadError(f"Output path '{output_path}' is a symbolic link")
 
-    tmp = tempfile.NamedTemporaryFile(dir=output_path.parent, delete=False)
+    tmp = tempfile.TemporaryDirectory(dir=output_path.parent, delete=False)
     tmp_fn = Path(tmp.name) / "tempfile"
     try:
         yield tmp_fn

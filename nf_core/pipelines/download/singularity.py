@@ -90,12 +90,7 @@ class SingularityFetcher(ContainerFetcher):
             library_dir = None
 
         # Find out what the cache directory is
-        cache_dir = (
-            Path(path_str)
-            if (path_str := os.environ.get("NXF_SINGULARITY_CACHEDIR"))
-            and container_cache_utilisation in {"amend", "copy"}
-            else None
-        )
+        cache_dir = Path(path_str) if (path_str := os.environ.get("NXF_SINGULARITY_CACHEDIR")) else None
         log.debug(f"NXF_SINGULARITY_CACHEDIR: {cache_dir}")
 
         if container_cache_utilisation in ["amend", "copy"]:

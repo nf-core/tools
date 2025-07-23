@@ -112,10 +112,9 @@ class ContainerFetcher(ABC):
         self.amend_cachedir = amend_cachedir
         self.parallel = parallel
 
-        self.check_and_set_implementation()
-
         self.progress_factory = progress_factory
         self.progress: Optional[ContainerProgress] = None
+        self.implementation = None
 
     @property
     def progress(self) -> rich.progress.Progress:
@@ -316,7 +315,11 @@ class ContainerFetcher(ABC):
 
     def copy_image(self, container: str, src_path: Path, dest_path: Path) -> None:
         """Copy container image from one directory to another."""
-        log.debug(f"Copying {container} from '{src_path.name}' to '{dest_path.name}'")
+        log.warning(f"Copying {container} from '{src_path.name}' to '{dest_path.name}'")
+        # Check that the source path exists
+        if not src_path.exists():
+            log.error(f"Image '{container}' does not exist")
+            return
 
         with intermediate_file(dest_path) as dest_path_tmp:
             shutil.copyfile(src_path, dest_path_tmp.name)

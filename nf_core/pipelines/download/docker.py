@@ -51,6 +51,7 @@ class DockerFetcher(ContainerFetcher):
             amend_cachedir=False,  # Docker does not use a cache directory
             parallel=parallel,
         )
+        self.check_and_set_implementation()
 
     def check_and_set_implementation(self):
         if not shutil.which("docker"):

@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/dsfafas",
-    "homePage": "https://github.com/nf-core/dsfafas",
+    "name": "nf-core/mock-pipeline",
+    "homePage": "https://github.com/nf-core/mock-pipeline",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
