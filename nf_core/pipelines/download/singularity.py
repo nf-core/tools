@@ -31,7 +31,7 @@ stderr = rich.console.Console(
 
 class SingularityFetcher(ContainerFetcher):
     """
-    Fetcher for Docker containers.
+    Fetcher for Singularity containers.
     """
 
     def __init__(
@@ -326,6 +326,7 @@ class SingularityFetcher(ContainerFetcher):
         if containers_pull:
             # We only need to set the implementation if we are pulling images
             # -- a user could download images without having singularity/apptainer installed
+            self.check_and_set_implementation()
             self.progress.update_main_task(description="Pulling singularity images")
             self.pull_images(containers_pull)
 

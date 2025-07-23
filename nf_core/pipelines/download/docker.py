@@ -133,12 +133,10 @@ class DockerFetcher(ContainerFetcher):
             self.pull_image(container, task)
         except (DockerError.InvalidTagError, DockerError.ImageNotFoundError) as e:
             log.error(e.message)
-            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
         except DockerError.OtherError as e:
             # Try other registries
             log.error(e.message)
             log.error(e.helpmessage)
-            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
 
         # Update progress bar
         self.progress.advance(task)
@@ -157,6 +155,7 @@ class DockerFetcher(ContainerFetcher):
 
     def construct_pull_command(self, address: str):
         pull_command = ["docker", "image", "pull", address]
+        log.debug(f"Docker command: {' '.join(pull_command)}")
         return pull_command
 
     def pull_image(self, container: str, progress_task: rich.progress.Task) -> None:
@@ -171,7 +170,6 @@ class DockerFetcher(ContainerFetcher):
         # Try pulling the image from the specified address
         pull_command = self.construct_pull_command(container)
         log.debug(f"Pulling docker image: {container}")
-        log.debug(f"Docker command: {' '.join(pull_command)}")
         self._run_docker_command(pull_command, container, None, container, progress_task)
 
     def construct_save_command(self, output_path: Path, address: str):
