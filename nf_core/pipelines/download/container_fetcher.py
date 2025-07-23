@@ -255,7 +255,7 @@ class ContainerFetcher(ABC):
                 # Get the container from the library
                 if library_path and library_path.exists():
                     # Update the cache if needed
-                    if cache_path and not cache_path.exists():
+                    if cache_path and not cache_path.exists() and self.amend_cachedir:
                         containers_copy.append((container, library_path, cache_path))
                         self.progress.update_main_task(total=total_tasks)
 
