@@ -8,6 +8,8 @@
 
 ### Modules
 
+- feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
+
 ### Subworkflows
 
 ### General
