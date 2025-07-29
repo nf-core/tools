@@ -47,6 +47,7 @@
 
 ### General
 
+- Add description of accepted enum values to `nf-core pipelines schema docs` output ([#3693](https://github.com/nf-core/tools/pull/3693))
 - update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
 - Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
