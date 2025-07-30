@@ -647,7 +647,7 @@ class PipelineSchema:
                     desc = param.get("description", "").replace("\n", "<br>")
                     if "enum" in param:
                         enum_values = "\\|".join(f"`{e}`" for e in param["enum"])
-                        desc += f" (Allowed values: {enum_values})"
+                        desc += f" (accepted: {enum_values})"
                     out += f"| {desc} "
                     if param.get("help_text", "") != "":
                         help_txt = param["help_text"].replace("\n", "<br>")
