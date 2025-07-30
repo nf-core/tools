@@ -205,7 +205,7 @@ class DownloadUtilsTest(unittest.TestCase):
             assert table.columns[3]._cells[0] == "•"
 
             assert isinstance(table.columns[4]._cells[0], str)
-            assert table.columns[4]._cells[0] == "[green]11/42 completed"
+            assert table.columns[4]._cells[0] == "[green]11/42 tasks completed"
 
         #
         # Test the SingularityProgress subclass
@@ -696,7 +696,7 @@ class DownloadTest(unittest.TestCase):
 
         # Run get containers with `nextflow inspect`
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images(mock_pipeline_dir, entrypoint=entrypoint)
+        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
 
         # Store the containers found by the new method
         found_containers = set(download_obj.containers)
@@ -736,7 +736,7 @@ class DownloadTest(unittest.TestCase):
 
         # Run get containers with `nextflow inspect`
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images(mock_pipeline_dir, entrypoint=entrypoint)
+        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
 
         # Store the containers found by the new method
         found_containers = set(download_obj.containers)

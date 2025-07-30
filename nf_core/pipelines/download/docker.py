@@ -79,12 +79,7 @@ class DockerFetcher(ContainerFetcher):
         Args:
             containers (Iterable[tuple[str, str]]): A list of tuples with the container name
         """
-        # Update the main task -- we both need to pull and save the images
-        self.progress.update_main_task(total=len(containers))
 
-        # We use a single thread pool to pull and save images. To ensure that only a single image is pulled at a time,
-        # we let the next pull task wait for the previous one to finish. Save tasks can run in parallel, but they need to
-        # wait for the pull task to finish before they can save the image.
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:
             futures = []
 
@@ -152,7 +147,7 @@ class DockerFetcher(ContainerFetcher):
         self.progress.remove_task(task)
 
         # Task should advance in any case. Failure to pull will not kill the pulling process.
-        self.progress.update_main_task(advance=1)
+        self.progress.advance_remote_fetch_task()
 
     def construct_pull_command(self, address: str):
         pull_command = ["docker", "image", "pull", address]

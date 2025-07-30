@@ -21,9 +21,15 @@ class ContainerProgress(rich.progress.Progress):
     Also provide helper functions to control the top-level task.
     """
 
+    main_task: Optional[rich.progress.TaskID] = None
+    remote_fetch_task: Optional[rich.progress.TaskID] = None
+    remote_fetch_task_containers: Optional[list[str]] = []
+    copy_task: Optional[rich.progress.TaskID] = None
+    copy_task_containers: Optional[list[str]] = []
+
     def get_task_types_and_columns(self):
         """
-        Gets the possible task types fo rthe
+        Gets the possible task types for the progress bar.
         """
         task_types_and_columns = {
             "summary": (
@@ -31,7 +37,21 @@ class ContainerProgress(rich.progress.Progress):
                 rich.progress.BarColumn(bar_width=None),
                 "[progress.percentage]{task.percentage:>3.0f}%",
                 "•",
-                "[green]{task.completed}/{task.total} completed",
+                "[green]{task.completed}/{task.total} tasks completed",
+            ),
+            "remote_fetch": (
+                "[cyan]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                "•",
+                "[green]{task.completed}/{task.total} tasks completed",
+            ),
+            "copy": (
+                "[steel_blue]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                "•",
+                "[green]{task.completed}/{task.total} tasks completed",
             ),
         }
         return task_types_and_columns
@@ -53,8 +73,8 @@ class ContainerProgress(rich.progress.Progress):
         This task will be used to track the overall progress of the container downloads.
         """
         self.main_task = self.add_task(
-            "Container download",
             progress_type="summary",
+            description="Processing container images",
             **kwargs,
         )
         return self.main_task
@@ -64,6 +84,75 @@ class ContainerProgress(rich.progress.Progress):
         Update the top-level task with new information.
         """
         self.update(self.main_task, **kwargs)
+
+    def remove_main_task(self) -> None:
+        """
+        Remove the top-level task
+        """
+        self.remove_task(self.main_task)
+
+    def add_remote_fetch_task(self, total: int, **kwargs) -> rich.progress.TaskID:
+        """
+        Add a task to the progress bar to track the progress of fetching remote containers.
+        """
+        self.remote_fetch_task = self.add_task(
+            progress_type="remote_fetch",
+            total=total,
+            completed=0,
+            **kwargs,
+        )
+        return self.remote_fetch_task
+
+    def advance_remote_fetch_task(self) -> None:
+        """
+        Advance the remote fetch task, and if the container should not
+        be copied then also advance the main task.
+        """
+        self.update(self.remote_fetch_task, advance=1)
+        self.update_main_task(advance=1)
+
+    def update_remote_fetch_task(self, **kwargs) -> None:
+        """
+        Update the remote fetch task with new information
+        """
+        self.update(self.remote_fetch_task, **kwargs)
+
+    def remove_remote_fetch_task(self) -> None:
+        """
+        Remove the remote fetch task
+        """
+        self.remove_task(self.remote_fetch_task)
+
+    def add_copy_task(self, total: int, **kwargs) -> rich.progress.TaskID:
+        """
+        Add a task to the progress bar to track the progress of copying containers.
+        """
+        self.copy_task = self.add_task(
+            progress_type="copy",
+            total=total,
+            completed=0,
+            **kwargs,
+        )
+        return self.copy_task
+
+    def advance_copy_task(self) -> None:
+        """
+        Advance the copy task, and with it the main task.
+        """
+        self.update(self.copy_task, advance=1)
+        self.update_main_task(advance=1)
+
+    def update_copy_task(self, **kwargs) -> None:
+        """
+        Update the remote fetch task with new information
+        """
+        self.update(self.copy_task, **kwargs)
+
+    def remove_copy_task(self) -> None:
+        """
+        Remove the copy task
+        """
+        self.remove_task(self.copy_task)
 
     @contextlib.contextmanager
     def sub_task(self, *args, **kwargs) -> Generator[rich.progress.TaskID, None, None]:
@@ -223,14 +312,13 @@ class ContainerFetcher(ABC):
         self.progress = self.progress_factory()
 
         with self.progress:
-            self.progress.add_main_task(total=0)
-
             # Check each container in the list and defer actions
             containers_remote_fetch: list[tuple[str, Path]] = []
             containers_copy: list[tuple[str, Path, Path]] = []
 
-            # We may add more tasks as containers need to be copied between the various caches
+            # The first task is to check what to do with each container
             total_tasks = len(containers)
+            self.progress.add_main_task(total=total_tasks)
 
             for container in containers:
                 container_filename = self.get_container_filename(container)
@@ -238,7 +326,7 @@ class ContainerFetcher(ABC):
                 # Files in the remote cache are already downloaded and can be ignored
                 if container_filename in exclude_list:
                     log.debug(f"Skipping download of container '{container_filename}' as it is cached remotely.")
-                    self.progress.update_main_task(advance=1, description=f"Skipping {container_filename}")
+                    self.progress.update_main_task(advance=1)
                     continue
 
                 # Generate file paths for all three locations
@@ -248,7 +336,7 @@ class ContainerFetcher(ABC):
                     log.debug(
                         f"Skipping download of container '{container_filename}' as it is already in `{self.get_container_output_dir()}`."
                     )
-                    self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
+                    self.progress.update_main_task(advance=1)
                     continue
 
                 library_path = self.library_dir / container_filename if self.library_dir is not None else None
@@ -259,7 +347,6 @@ class ContainerFetcher(ABC):
                     # Update the cache if needed
                     if cache_path and not cache_path.exists() and self.amend_cachedir:
                         containers_copy.append((container, library_path, cache_path))
-                        self.progress.update_main_task(total=total_tasks)
 
                     if not self.amend_cachedir:
                         # We are not just amending the cache directory, so the file should be copied to the output
@@ -282,24 +369,34 @@ class ContainerFetcher(ABC):
                         # Do not copy to the output directory "(docker|singularity)-images" if we are solely amending the cache
                         if not self.amend_cachedir:
                             containers_copy.append((container, cache_path, output_path))
+                            total_tasks += 1
                     else:
                         # There is no cache directory so download or pull directly to the output
                         containers_remote_fetch.append((container, output_path))
 
+            self.progress.update_main_task(total=total_tasks)
+
             # Fetch containers from a remote location
             if containers_remote_fetch:
-                self.progress.update_main_task(description=f"Fetching {self.implementation} images")
+                self.progress.add_remote_fetch_task(
+                    total=len(containers_remote_fetch),
+                    description=f"Fetch remote {self.implementation} images",
+                )
                 self.fetch_remote_containers(containers_remote_fetch, parallel=self.parallel)
+                self.progress.remove_remote_fetch_task()
 
             # Copy containers
             if containers_copy:
-                self.progress.update_main_task(
-                    description="Copying container images from/to cache", total=len(containers_copy), completed=0
+                self.progress.add_copy_task(
+                    total=len(containers_copy),
+                    description="Copy container images from/to cache",
                 )
                 for container, src_path, dest_path in containers_copy:
                     self.copy_image(container, src_path, dest_path)
-                    self.progress.update_main_task(advance=1)
+                    self.progress.advance_copy_task()
+                self.progress.remove_copy_task()
 
+            self.progress.remove_main_task()
         # Unset the progress bar, so that we get an AssertionError if we access it after it is closed
         self.progress = None
 
@@ -317,7 +414,6 @@ class ContainerFetcher(ABC):
 
     def copy_image(self, container: str, src_path: Path, dest_path: Path) -> None:
         """Copy container image from one directory to another."""
-        log.warning(f"Copying {container} from '{src_path.name}' to '{dest_path.name}'")
         # Check that the source path exists
         if not src_path.exists():
             log.error(f"Image '{container}' does not exist")

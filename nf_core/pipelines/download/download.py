@@ -46,35 +46,36 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (str): A nf-core pipeline name.
-        revision (List[str]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
-        outdir (str): Path to the local download directory. Defaults to None.
-        compress_type (str): Type of compression for the downloaded files. Defaults to None.
+        pipeline (Optional[str]): A nf-core pipeline name.
+        revision (Optional[Union[tuple[str], str]]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
+        outdir (Optional[Path]): Path to the local download directory. Defaults to None.
+        compress_type (Optional[str]): Type of compression for the downloaded files. Defaults to None.
         force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
         platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
-        download_configuration (str): Download the configuration files from nf-core/configs. Defaults to None.
-        tag (List[str]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
+        download_configuration (Optional[str]): Download the configuration files from nf-core/configs. Defaults to None.
+        additional_tags (Optional[Union[list[str], str]]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
         container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
-        container_library (List[str]): The container libraries (registries) to use. Defaults to None.
-        container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
-        container_cache_index (str): An index for the remote container cache. Defaults to None.
+        container_library (Optional[Union[tuple[str], str]]): The container libraries (registries) to use. Defaults to None.
+        container_cache_utilisation (Optional[str]): If a local or remote cache of already existing container images should be considered. Defaults to None.
+        container_cache_index (Optional[Path]): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
+        hide_progress (bool): Flag to hide the progress bar. Defaults to False.
     """
 
     def __init__(
         self,
         pipeline: Optional[str] = None,
-        revision: Optional[Union[tuple[str], str]] = None,
-        outdir=None,
+        revision: Optional[Union[tuple[str, ...], str]] = None,
+        outdir: Optional[Path] = None,
         compress_type: Optional[str] = None,
         force: bool = False,
         platform: bool = False,
-        download_configuration=None,
-        additional_tags: Optional[Union[list[str], str]] = None,
-        container_system=None,
-        container_library=None,
-        container_cache_utilisation=None,
-        container_cache_index=None,
+        download_configuration: Optional[str] = None,
+        additional_tags: Optional[Union[tuple[str, ...], str]] = None,
+        container_system: Optional[str] = None,
+        container_library: Optional[Union[tuple[str, ...], str]] = None,
+        container_cache_utilisation: Optional[str] = None,
+        container_cache_index: Optional[Path] = None,
         parallel: int = 4,
         hide_progress: bool = False,
     ):
@@ -176,6 +177,17 @@ class DownloadWorkflow:
             if self.container_system is None:
                 self.prompt_container_download()
 
+            # Check if we have an outdated Nextflow version
+            if (
+                self.container_system is not None
+                and self.container_system != "none"
+                and not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION)
+            ):
+                raise DownloadError(
+                    f"Container download requires Nextflow version >= {pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}. "
+                    f"Please upgrade your Nextflow version."
+                )
+
             # Setup the appropriate ContainerFetcher object
             self.setup_container_fetcher()
 
@@ -261,8 +273,8 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        for item in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
-            revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1], download_url=item[2])
+        for revision, wf_sha, download_url in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
+            revision_dirname = self.download_wf_files(revision=revision, wf_sha=wf_sha, download_url=download_url)
 
             if self.include_configs:
                 try:
@@ -272,11 +284,11 @@ class DownloadWorkflow:
 
             # Collect all required singularity images
             if self.container_system in {"singularity", "docker"}:
-                self.find_container_images(self.outdir / revision_dirname)
+                self.find_container_images(self.outdir / revision_dirname, revision)
                 self.gather_registries(self.outdir / revision_dirname)
 
                 try:
-                    self.download_container_images(current_revision=item[0])
+                    self.download_container_images(current_revision=revision)
                 except OSError as e:
                     raise DownloadError(f"[red]{e}[/]") from e
 
@@ -313,7 +325,7 @@ class DownloadWorkflow:
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
                 # Collect all required singularity images
-                self.find_container_images(self.workflow_repo.access())
+                self.find_container_images(self.workflow_repo.access(), revision)
                 self.gather_registries(self.workflow_repo.access())
 
                 try:
@@ -575,7 +587,9 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self, workflow_directory: Path, with_test_containers=True, entrypoint="main.nf") -> None:
+    def find_container_images(
+        self, workflow_directory: Path, revision: str, with_test_containers=True, entrypoint="main.nf"
+    ) -> None:
         """
         Find container image names for workflow using the `nextflow inspect` command.
 
@@ -585,47 +599,39 @@ class DownloadWorkflow:
             workflow_directory (Path): The directory containing the workflow files.
             entrypoint (str): The entrypoint for the `nextflow inspect` command.
         """
-        # Check if we have an outdated Nextflow version
-        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
-            raise DownloadError(
-                f"The `nextflow inspect` command requires Nextflow version >= "
-                f"{pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}"
-                f"Please upgrade your Nextflow version"
-            )
 
-        else:
-            log.info(
-                "Fetching container names for workflow using [blue bold]nextflow inspect[/]. This might take a while."
-            )
-            try:
-                # TODO: Select container system via profile. Is this stable enough?
-                # NOTE: We will likely don't need this after the switch to Seqera containers
-                profile_str = f"{self.container_system}"
-                if with_test_containers:
-                    profile_str += ",test,test_full"
-                profile = f"-profile {profile_str}" if self.container_system else ""
+        log.info(
+            f"Fetching container names for workflow revision {revision} using [blue bold]nextflow inspect[/]. This might take a while."
+        )
+        try:
+            # TODO: Select container system via profile. Is this stable enough?
+            # NOTE: We will likely don't need this after the switch to Seqera containers
+            profile_str = f"{self.container_system}"
+            if with_test_containers:
+                profile_str += ",test,test_full"
+            profile = f"-profile {profile_str}" if self.container_system else ""
 
-                # Run nextflow inspect
-                executable = "nextflow"
-                cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
-                cmd_out = run_cmd(executable, cmd_params)
-                if cmd_out is None:
-                    raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+            # Run nextflow inspect
+            executable = "nextflow"
+            cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
+            cmd_out = run_cmd(executable, cmd_params)
+            if cmd_out is None:
+                raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
-                out, _ = cmd_out
-                out_json = json.loads(out)
-                # NOTE: Should we save the container name too to have more meta information?
-                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-                # We only want to process unique containers
-                self.containers = list(set(named_containers.values()))
+            out, _ = cmd_out
+            out_json = json.loads(out)
+            # NOTE: Should we save the container name too to have more meta information?
+            named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+            # We only want to process unique containers
+            self.containers = list(set(named_containers.values()))
 
-            except RuntimeError as e:
-                log.warning("Running 'nextflow inspect' failed with the following error")
-                raise DownloadError(e)
+        except RuntimeError as e:
+            log.warning("Running 'nextflow inspect' failed with the following error")
+            raise DownloadError(e)
 
-            except KeyError as e:
-                log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
-                raise DownloadError(e)
+        except KeyError as e:
+            log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
+            raise DownloadError(e)
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.

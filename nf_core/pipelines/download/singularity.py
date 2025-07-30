@@ -305,7 +305,7 @@ class SingularityFetcher(ContainerFetcher):
 
     def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
         # There are always the same number of total tasks
-        self.progress.update_main_task(total=len(containers))
+        # self.progress.update_main_task(total=len(containers))
 
         # Split the list of containers depending on whether we want to pull them or download them
         containers_pull = []
@@ -322,11 +322,11 @@ class SingularityFetcher(ContainerFetcher):
             # We only need to set the implementation if we are pulling images
             # -- a user could download images without having singularity/apptainer installed
             self.check_and_set_implementation()
-            self.progress.update_main_task(description="Pulling singularity images")
+            self.progress.update_remote_fetch_task(description="Pulling singularity images")
             self.pull_images(containers_pull)
 
         if containers_download:
-            self.progress.update_main_task(description="Downloading singularity images")
+            self.progress.update_remote_fetch_task(description="Downloading singularity images")
             self.download_images(containers_download, parallel_downloads=parallel)
 
     def symlink_registries(self, image_path: Path) -> None:
@@ -385,13 +385,14 @@ class SingularityFetcher(ContainerFetcher):
         def update_file_progress(input_params: tuple[str, Path], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
+            container, output_path = input_params
             try:
-                self.progress.update_main_task(advance=1)
+                self.progress.advance_remote_fetch_task()
             except Exception as e:
                 log.error(f"Error updating progress bar: {e}")
 
             if status == FileDownloader.Status.DONE:
-                self.symlink_registries(input_params[1])
+                self.symlink_registries(output_path)
 
         downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
 
@@ -442,7 +443,7 @@ class SingularityFetcher(ContainerFetcher):
                     f"Not able to pull image of {container}. Service might be down or internet connection is dead."
                 )
             # Task should advance in any case. Failure to pull will not kill the download process.
-            self.progress.update_main_task(advance=1)
+            self.progress.update_remote_fetch_task(advance=1)
 
     def construct_pull_command(self, output_path: Path, address: str):
         singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
@@ -713,6 +714,15 @@ class FileDownloader:
             return self.Status.DONE
         return self.Status.PENDING
 
+    def nice_name(self, remote_path: str) -> str:
+        # The final part of a singularity image is a data directory, which is not very informative
+        # so we use the second to last part which is a hash
+        parts = remote_path.split("/")
+        if parts[-1] == "data":
+            return parts[-2][:50]
+        else:
+            return parts[-1][:50]
+
     def download_files_in_parallel(
         self,
         download_files: Iterable[tuple[str, Path]],
@@ -794,7 +804,8 @@ class FileDownloader:
         log.debug(f"Downloading '{remote_path}' to '{output_path}'")
 
         # Set up download progress bar as a new task
-        nice_name = remote_path.split("/")[-1][:50]
+        nice_name = self.nice_name(remote_path)
+
         with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
             # Open file handle and download
             # This temporary will be automatically renamed to the target if there are no errors
