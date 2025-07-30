@@ -245,7 +245,7 @@ class ContainerFetcher(ABC):
                 output_path = self.get_container_output_dir() / container_filename
 
                 if output_path.exists():
-                    log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
+                    log.debug(f"Skipping download of container '{container_filename}' as it is already in `{self.get_container_output_dir() }`.")
                     self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
                     continue
 
@@ -277,7 +277,7 @@ class ContainerFetcher(ABC):
                         # Download into the cache
                         containers_remote_fetch.append((container, cache_path))
 
-                        # Do not copy to the output directory "(docker|singularity)-images" if we solely amending the cache
+                        # Do not copy to the output directory "(docker|singularity)-images" if we are solely amending the cache
                         if not self.amend_cachedir:
                             containers_copy.append((container, cache_path, output_path))
                     else:

@@ -243,7 +243,7 @@ class DownloadWorkflow:
             log.info("Downloading workflow for Seqera Platform")
             self.download_workflow_platform()
         else:
-            log.info("Downloading workflow for static")
+            log.info("Downloading workflow")
             self.download_workflow_static()
 
         # The container fetcher might have some clean-up code, call it
