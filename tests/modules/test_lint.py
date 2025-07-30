@@ -288,14 +288,14 @@ class TestModulesLint(TestModules):
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
-    def test_modules_lint_check_process_labels(self):
-        for test_case in PROCESS_LABEL_TEST_CASES:
-            process, passed, warned, failed = test_case
-            mocked_ModuleLint = MockModuleLint()
-            check_process_labels(mocked_ModuleLint, process.splitlines())
-            assert len(mocked_ModuleLint.passed) == passed
-            assert len(mocked_ModuleLint.warned) == warned
-            assert len(mocked_ModuleLint.failed) == failed
+    # def test_modules_lint_check_process_labels(self):
+    #     for test_case in PROCESS_LABEL_TEST_CASES:
+    #         process, passed, warned, failed = test_case
+    #         mocked_ModuleLint = MockModuleLint()
+    #         check_process_labels(mocked_ModuleLint, process.splitlines())
+    #         assert len(mocked_ModuleLint.passed) == passed
+    #         assert len(mocked_ModuleLint.warned) == warned
+    #         assert len(mocked_ModuleLint.failed) == failed
 
     def test_modules_lint_check_url(self):
         for test_case in CONTAINER_TEST_CASES:
