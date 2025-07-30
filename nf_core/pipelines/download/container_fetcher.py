@@ -245,7 +245,9 @@ class ContainerFetcher(ABC):
                 output_path = self.get_container_output_dir() / container_filename
 
                 if output_path.exists():
-                    log.debug(f"Skipping download of container '{container_filename}' as it is already in `{self.get_container_output_dir() }`.")
+                    log.debug(
+                        f"Skipping download of container '{container_filename}' as it is already in `{self.get_container_output_dir()}`."
+                    )
                     self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
                     continue
 
