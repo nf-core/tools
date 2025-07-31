@@ -121,6 +121,43 @@ class SingularityFetcher(ContainerFetcher):
         else:
             raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
 
+    def gather_registries(self, workflow_directory: Path) -> set[str]:
+        """
+        Fetch the registries from the pipeline config and CLI arguments and store them in a set.
+        This is needed to symlink downloaded container images so Nextflow will find them.
+
+        Args:
+            workflow_directory (Path): The directory containing the pipeline files we are currently processing
+
+        Returns:
+            set[str]: The set of registries to use for the container fetching
+        """
+        registry_set = self.base_registry_set.copy()
+
+        # Select registries defined in pipeline config
+        configured_registry_keys = [
+            "apptainer.registry",
+            "docker.registry",
+            "podman.registry",
+            "singularity.registry",
+        ]
+
+        registry_set |= self.gather_config_registries(
+            workflow_directory,
+            configured_registry_keys,
+        )
+
+        # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
+        registry_set.add("depot.galaxyproject.org/singularity")
+
+        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
+        registry_set.add("community.wave.seqera.io/library")
+
+        # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
+        registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
+
+        return registry_set
+
     def get_cache_dir(self) -> Path:
         """
         Get the cache Singularity cache directory

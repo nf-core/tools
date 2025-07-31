@@ -774,6 +774,7 @@ class DownloadTest(unittest.TestCase):
         )
         singularity_fetcher.check_and_set_implementation()
         singularity_fetcher.progress = mock_progress()
+        singularity_fetcher.registry_set = {}
         # Test successful pull
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
 
@@ -901,6 +902,7 @@ class DownloadTest(unittest.TestCase):
         )
         singularity_fetcher.check_and_set_implementation()
         singularity_fetcher.progress = mock_progress()
+        singularity_fetcher.registry_set = {}
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
     #
@@ -958,7 +960,8 @@ class DownloadTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_fetch_containers_singularity(self, tmp_path, mock_fetch_wf_config):
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.gather_registries")
+    def test_fetch_containers_singularity(self, tmp_path, mock_gather_registries, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
@@ -984,6 +987,7 @@ class DownloadTest(unittest.TestCase):
         singularity_fetcher.fetch_containers(
             download_obj.containers,
             download_obj.containers_remote,
+            workflow_directory=Path("pipeline-dummy"),
         )
 
     #
@@ -996,7 +1000,8 @@ class DownloadTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_fetch_containers_docker(self, tmp_path, mock_fetch_wf_config):
+    @mock.patch("nf_core.pipelines.download.docker.DockerFetcher.gather_registries")
+    def test_fetch_containers_docker(self, tmp_path, mock_gather_registries, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
@@ -1019,6 +1024,7 @@ class DownloadTest(unittest.TestCase):
         docker_fetcher.fetch_containers(
             download_obj.containers,
             download_obj.containers_remote,
+            workflow_directory=Path("pipeline-dummy"),
         )
 
     #
@@ -1072,7 +1078,7 @@ class DownloadTest(unittest.TestCase):
                 container_cache_utilisation="none",
                 container_cache_index=None,
             )
-
+            fetcher.registry_set = registries
             fetcher.symlink_registries(tmp_path / "path/to/singularity-image.img")
 
             # Check that os.makedirs was called with the correct arguments
@@ -1152,6 +1158,7 @@ class DownloadTest(unittest.TestCase):
                 container_cache_utilisation="none",
                 container_cache_index=None,
             )
+            fetcher.registry_set = registries
             fetcher.symlink_registries(tmp_path / "path/to/quay.io-singularity-image.img")
 
             # Check that os.makedirs was called with the correct arguments
@@ -1191,12 +1198,15 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_gather_registries(self, tmp_path, mock_fetch_wf_config):
+    def test_gather_registries_singularity(self, tmp_path, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
-        download_obj = DownloadWorkflow(
-            pipeline="dummy",
+        container_library = ["quay.io"]
+        singularity_fetcher = SingularityFetcher(
             outdir=tmp_path,
-            container_library=None,
+            container_library=container_library,
+            registry_set=container_library,
+            container_cache_utilisation="none",
+            container_cache_index=None,
         )
         mock_fetch_wf_config.return_value = {
             "apptainer.registry": "apptainer-registry.io",
@@ -1205,25 +1215,25 @@ class DownloadTest(unittest.TestCase):
             "singularity.registry": "singularity-registry.io",
             "someother.registry": "fake-registry.io",
         }
-        download_obj.gather_registries(tmp_path)
-        assert download_obj.registry_set
-        assert isinstance(download_obj.registry_set, set)
-        assert len(download_obj.registry_set) == 8
+        singularity_fetcher.registry_set = singularity_fetcher.gather_registries(tmp_path)
+        assert singularity_fetcher.registry_set
+        assert isinstance(singularity_fetcher.registry_set, set)
+        assert len(singularity_fetcher.registry_set) == 8
 
-        assert "quay.io" in download_obj.registry_set  # default registry, if no container library is provided.
+        assert "quay.io" in singularity_fetcher.registry_set  # default registry, if no container library is provided.
         assert (
-            "depot.galaxyproject.org/singularity" in download_obj.registry_set
+            "depot.galaxyproject.org/singularity" in singularity_fetcher.registry_set
         )  # default registry, often hardcoded in modules
-        assert "community.wave.seqera.io/library" in download_obj.registry_set  # Seqera containers Docker
+        assert "community.wave.seqera.io/library" in singularity_fetcher.registry_set  # Seqera containers Docker
         assert (
-            "community-cr-prod.seqera.io/docker/registry/v2" in download_obj.registry_set
+            "community-cr-prod.seqera.io/docker/registry/v2" in singularity_fetcher.registry_set
         )  # Seqera containers Singularity https:// download
-        assert "apptainer-registry.io" in download_obj.registry_set
-        assert "docker.io" in download_obj.registry_set
-        assert "podman-registry.io" in download_obj.registry_set
-        assert "singularity-registry.io" in download_obj.registry_set
+        assert "apptainer-registry.io" in singularity_fetcher.registry_set
+        assert "docker.io" in singularity_fetcher.registry_set
+        assert "podman-registry.io" in singularity_fetcher.registry_set
+        assert "singularity-registry.io" in singularity_fetcher.registry_set
         # it should only pull the apptainer, docker, podman and singularity registry from the config, but not any registry.
-        assert "fake-registry.io" not in download_obj.registry_set
+        assert "fake-registry.io" not in singularity_fetcher.registry_set
 
     #
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
@@ -1267,6 +1277,8 @@ class DownloadTest(unittest.TestCase):
             container_cache_utilisation="none",
             container_cache_index=None,
         )
+
+        fetcher.registry_set = registries
         # Test --- galaxy URL #
         result = fetcher.get_container_filename(
             "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",

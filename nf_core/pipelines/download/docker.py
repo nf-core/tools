@@ -38,7 +38,6 @@ class DockerFetcher(ContainerFetcher):
     ):
         """
         Intialize the docker image fetcher
-
         """
         container_output_dir = outdir / "docker-images"
         super().__init__(
@@ -57,6 +56,29 @@ class DockerFetcher(ContainerFetcher):
         if not shutil.which("docker"):
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
         self.implementation = "docker"
+
+    def gather_registries(self, workflow_directory: Path) -> set[str]:
+        """
+        Gather the Docker registries
+
+        Args:
+            workflow_directory (Path): The directory containing the pipeline files we are currently processing
+
+        Returns:
+            set[str]: The set of registries to use for the container download
+        """
+        registry_set = self.base_registry_set.copy()
+        configured_registry_keys = ["docker.registry", "podman.registry"]
+
+        # Add the registries defined in the workflow config
+        registry_set |= self.gather_config_registries(
+            workflow_directory,
+            configured_registry_keys,
+        )
+
+        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
+        registry_set.add("community.wave.seqera.io/library")
+        return registry_set
 
     def clean_container_file_extension(self, container_fn):
         """
@@ -127,24 +149,23 @@ class DockerFetcher(ContainerFetcher):
 
         try:
             self.pull_image(container, task)
+            # Update progress bar
+            self.progress.advance(task)
+            self.progress.update(task, status="Saving")
+            # self.progress.update(task, description=f"Saving '{container_short_name}'")
+
+            # Save the image
+            self.save_image(container, output_path, task)
+
+            # Update progress bar
+            self.progress.advance(task)
+            self.progress.remove_task(task)
+
         except (DockerError.InvalidTagError, DockerError.ImageNotFoundError) as e:
             log.error(e.message)
         except DockerError.OtherError as e:
-            # Try other registries
             log.error(e.message)
             log.error(e.helpmessage)
-
-        # Update progress bar
-        self.progress.advance(task)
-        self.progress.update(task, status="Saving")
-        # self.progress.update(task, description=f"Saving '{container_short_name}'")
-
-        # Save the image
-        self.save_image(container, output_path, task)
-
-        # Update progress bar
-        self.progress.advance(task)
-        self.progress.remove_task(task)
 
         # Task should advance in any case. Failure to pull will not kill the pulling process.
         self.progress.advance_remote_fetch_task()
