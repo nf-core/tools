@@ -96,8 +96,8 @@ class DownloadWorkflow:
             self.revision = [*revision]
         else:
             self.revision = []
-        self._outdir = Path(outdir) if outdir is not None else None
-        self.output_filename: Path
+        self._outdir: Optional[Path] = Path(outdir) if outdir is not None else None
+        self.output_filename: Optional[Path] = None
 
         self.compress_type = compress_type
         self.force = force
@@ -750,6 +750,7 @@ class DownloadWorkflow:
 
         # .zip files
         if self.compress_type == "zip":
+            assert self.output_filename is not None  # mypy
             with ZipFile(self.output_filename, "w") as zip_file:
                 # Iterate over all the files in directory
                 for folder_name, _, filenames in os.walk(self.outdir):
