@@ -18,7 +18,7 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import DownloadError, intermediate_file
+from nf_core.pipelines.download.utils import DownloadError, intermediate_file, intermediate_file_no_creation
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -424,10 +424,7 @@ class SingularityFetcher(ContainerFetcher):
                     self.pull_image(container, output_path, library)
                     # Pulling the image was successful, no SingularityError was raised, break the library loop
                     break
-                except SingularityError.ImageExistsError:
-                    # Pulling not required
 
-                    break
                 except SingularityError.RegistryNotFoundError as e:
                     self.container_library.remove(library)
                     # The only library was removed
@@ -483,7 +480,7 @@ class SingularityFetcher(ContainerFetcher):
 
         return address, absolute_URI
 
-    def pull_image(self, container: str, output_path: Path, library: str) -> None:
+    def pull_image(self, container: str, output_path: Path, library: str) -> bool:
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.
@@ -496,7 +493,15 @@ class SingularityFetcher(ContainerFetcher):
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
+
         address, absolute_URI = self.get_address(container, library)
+
+        # Check if the image already exists in the output directory
+        # Since we are using a temporary file, need to do this explicitly.
+        if output_path.exists():
+            log.debug(f"Image {container} already exists at {output_path}, skipping pull.")
+            return False
+
         with self.progress.sub_task(
             container,
             start=False,
@@ -504,37 +509,39 @@ class SingularityFetcher(ContainerFetcher):
             progress_type="singularity_pull",
             current_log="",
         ) as task:
-            singularity_command = self.construct_pull_command(output_path, address)
-            log.debug(f"Building singularity image: {address}")
-            # Run the singularity pull command
-            with subprocess.Popen(
-                singularity_command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1,
-            ) as proc:
-                lines = []
-                if proc.stdout is not None:
-                    for line in proc.stdout:
-                        lines.append(line)
-                        self.progress.update(task, current_log=line.strip())
+            with intermediate_file_no_creation(output_path) as output_path_tmp:
+                singularity_command = self.construct_pull_command(output_path_tmp, address)
+                log.debug(f"Building singularity image: {address}")
+                # Run the singularity pull command
+                with subprocess.Popen(
+                    singularity_command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    bufsize=1,
+                ) as proc:
+                    lines = []
+                    if proc.stdout is not None:
+                        for line in proc.stdout:
+                            lines.append(line)
+                            self.progress.update(task, current_log=line.strip())
 
-            if lines:
-                # something went wrong with the container retrieval
-                log.debug(f"Singularity pull output: {lines}")
-                if any("FATAL: " in line for line in lines):
-                    raise SingularityError(
-                        container=container,
-                        registry=library,
-                        address=address,
-                        absolute_URI=absolute_URI,
-                        out_path=output_path,
-                        command=singularity_command,
-                        error_msg=lines,
-                    )
+                if lines:
+                    # something went wrong with the container retrieval
+                    log.debug(f"Singularity pull output: {lines}")
+                    if any("FATAL: " in line for line in lines):
+                        raise SingularityError(
+                            container=container,
+                            registry=library,
+                            address=address,
+                            absolute_URI=absolute_URI,
+                            out_path=output_path,
+                            command=singularity_command,
+                            error_msg=lines,
+                        )
 
             self.symlink_registries(output_path)
+        return True
 
 
 class SingularityProgress(ContainerProgress):
@@ -602,8 +609,6 @@ class SingularityError(Exception):
             r"manifest\sunknown": self.InvalidTagError,
             # The container image is no native Singularity Image Format.
             r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularityContainerError,
-            # The image file already exists in the output directory
-            r"Image\sfile\salready\sexists": self.ImageExistsError,
         }
         # Loop through the error messages and patterns. Since we want to have the option of
         # no matches at all, we use itertools.product to allow for the use of the for ... else construct.
@@ -659,17 +664,6 @@ class SingularityError(Exception):
             self.error_log = error_log
             self.message = f'[bold red]"{self.error_log.address.split(":")[-1]}" is not a valid tag of "{self.error_log.container}"[/]\n'
             self.helpmessage = f'Please chose a different library than {self.error_log.registry}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
-            super().__init__(self.message)
-
-    class ImageExistsError(FileExistsError):
-        """Image already exists in cache/output directory."""
-
-        def __init__(self, error_log):
-            self.error_log = error_log
-            self.message = (
-                f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
-            )
-            self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
             super().__init__(self.message)
 
     class NoSingularityContainerError(RuntimeError):
