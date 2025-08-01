@@ -275,23 +275,16 @@ def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
     return f"{version[0]}.{version[1]:02}.{version[2]}" + "-edge" if version[3] else ""
 
 
-# Check that the Nextflow version >= the minimal version required
-# This is used to ensure that we can run `nextflow inspect`
-def check_nextflow_version(minimal_nxf_version: tuple[int, int, int, bool], silent=False) -> bool:
-    """Check the version of Nextflow installed on the system.
-
-    Args:
-        tuple[int, int, int]: The version of Nextflow as a tuple of integers.
-    Returns:
-        bool: True if the installed version is greater than or equal to `minimal_nxf_version`
-    """
+def get_nf_version() -> Optional[tuple[int, int, int, bool]]:
+    """Get the version of Nextflow installed on the system."""
     try:
         cmd_out = run_cmd("nextflow", "-v")
         if cmd_out is None:
             raise RuntimeError("Failed to run Nextflow version check.")
         out, _ = cmd_out
         out_str = str(out, encoding="utf-8")  # Ensure we have a string
-        version_str = out_str.strip().split()[2]
+
+        version_str = out_str.strip().split()[-1]
 
         # Check if we are using an edge release
         is_edge = False
@@ -300,17 +293,42 @@ def check_nextflow_version(minimal_nxf_version: tuple[int, int, int, bool], sile
             is_edge = True
             version_str = edge_split[0]
 
-        parsed_version_str = ".".join(version_str.split(".")[:3]) + "-edge" if is_edge else ""
-        if silent:
-            log.debug(f"Detected Nextflow version {parsed_version_str}")
-        else:
-            log.info(f"Detected Nextflow version {parsed_version_str}")
-
-        return tuple([int(n) for n in version_str.split(".")] + [is_edge]) >= minimal_nxf_version
-
+        split_version_str = version_str.split(".")
+        parsed_version_tuple = (
+            int(split_version_str[0]),
+            int(split_version_str[1]),
+            int(split_version_str[2]),
+            is_edge,
+        )
+        return parsed_version_tuple
     except Exception as e:
-        log.warning(f"Error checking Nextflow version: {e}")
+        log.warning(f"Error getting Nextflow version: {e}")
+        return None
+
+
+# Check that the Nextflow version >= the minimal version required
+# This is used to ensure that we can run `nextflow inspect`
+def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silent=False) -> bool:
+    """Check the version of Nextflow installed on the system.
+
+    Args:
+        minimal_nf_version (tuple[int, int, int, bool]): The minimal version of Nextflow required.
+        silent (bool): Whether to log the version or not.
+    Returns:
+        bool: True if the installed version is greater than or equal to `minimal_nf_version`
+    """
+    nf_version = get_nf_version()
+    if nf_version is None:
         return False
+
+    parsed_version_str = pretty_nf_version(nf_version)
+
+    if silent:
+        log.debug(f"Detected Nextflow version {parsed_version_str}")
+    else:
+        log.info(f"Detected Nextflow version {parsed_version_str}")
+
+    return nf_version >= minimal_nf_version
 
 
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
