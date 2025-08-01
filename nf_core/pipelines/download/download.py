@@ -9,7 +9,7 @@ import shutil
 import tarfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 from zipfile import ZipFile
 
 import questionary
@@ -89,15 +89,16 @@ class DownloadWorkflow:
                 "Only the 'copy' option for --container-cache-utilisation is supported for Docker images. "
             )
 
-        self.pipeline = pipeline
+        self._pipeline = pipeline
         if isinstance(revision, str):
             self.revision = [revision]
         elif isinstance(revision, tuple):
             self.revision = [*revision]
         else:
             self.revision = []
-        self.outdir = Path(outdir) if outdir is not None else None
-        self.output_filename: Optional[Path] = None
+        self._outdir = Path(outdir) if outdir is not None else None
+        self.output_filename: Path
+
         self.compress_type = compress_type
         self.force = force
         self.hide_progress = hide_progress
@@ -159,7 +160,37 @@ class DownloadWorkflow:
         self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
-    def download_workflow(self):
+    @property
+    def pipeline(self) -> str:
+        """
+        Get the pipeline name.
+        """
+        assert self._pipeline is not None  # mypy
+        return self._pipeline
+
+    @pipeline.setter
+    def pipeline(self, pipeline: str) -> None:
+        """
+        Set the pipeline name.
+        """
+        self._pipeline = pipeline
+
+    @property
+    def outdir(self) -> Path:
+        """
+        Get the output directory for the download.
+        """
+        assert self._outdir is not None  # mypy
+        return self._outdir
+
+    @outdir.setter
+    def outdir(self, outdir: Path) -> None:
+        """
+        Set the output directory for the download.
+        """
+        self._outdir = outdir
+
+    def download_workflow(self) -> None:
         """Starts a nf-core workflow download."""
 
         # Get workflow details
@@ -170,6 +201,10 @@ class DownloadWorkflow:
             )
             self.prompt_revision()
             self.get_revision_hash()
+
+            # After this point the outdir should be set
+            assert self.outdir is not None  # mypy
+
             # Inclusion of configs is unnecessary for Seqera Platform.
             if not self.platform and self.include_configs is None:
                 self.prompt_config_inclusion()
@@ -229,7 +264,7 @@ class DownloadWorkflow:
             summary_log.append(f"Enabled for Seqera Platform: '{self.platform}'")
 
         # Check that the outdir doesn't already exist
-        if self.outdir is not None and self.outdir.exists():
+        if self.outdir.exists():
             if not self.force:
                 raise DownloadError(
                     f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"
@@ -264,7 +299,7 @@ class DownloadWorkflow:
         if self.container_fetcher:
             self.container_fetcher.cleanup()
 
-    def download_workflow_static(self):
+    def download_workflow_static(self) -> None:
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
 
         # Download the centralised configs first
@@ -299,9 +334,8 @@ class DownloadWorkflow:
             log.info("Compressing output into archive")
             self.compress_download()
 
-    def download_workflow_platform(self, location: Optional[Path] = None):
+    def download_workflow_platform(self, location: Optional[Path] = None) -> None:
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
-        assert self.outdir is not None  # mypy
         assert self.output_filename is not None  # mypy
 
         log.info("Collecting workflow from GitHub")
@@ -341,10 +375,10 @@ class DownloadWorkflow:
                 "Compression choice is ignored for Seqera Platform downloads since nothing can be reasonably compressed."
             )
 
-    def prompt_pipeline_name(self):
+    def prompt_pipeline_name(self) -> None:
         """Prompt for the pipeline name if not set with a flag"""
 
-        if self.pipeline is None:
+        if self._pipeline is None:
             stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
 
@@ -382,7 +416,7 @@ class DownloadWorkflow:
                 else:
                     raise AssertionError(f"No revisions of {self.pipeline} available for download.")
 
-    def get_revision_hash(self):
+    def get_revision_hash(self) -> None:
         """Find specified revision / branch / commit hash"""
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
@@ -416,7 +450,7 @@ class DownloadWorkflow:
                     )
 
         # Set the outdir
-        if not self.outdir:
+        if not self._outdir:
             if len(self.wf_sha) > 1:
                 self.outdir = Path(
                     f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
@@ -432,7 +466,7 @@ class DownloadWorkflow:
                     revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
                 }
 
-    def prompt_config_inclusion(self):
+    def prompt_config_inclusion(self) -> None:
         """Prompt for inclusion of institutional configurations"""
         if stderr.is_interactive:  # Use rich auto-detection of interactive shells
             self.include_configs = questionary.confirm(
@@ -443,7 +477,7 @@ class DownloadWorkflow:
             self.include_configs = False
             # do not include by default.
 
-    def prompt_container_download(self):
+    def prompt_container_download(self) -> None:
         """Prompt whether to download container images or not"""
 
         if self.container_system is None and stderr.is_interactive and not self.platform:
@@ -478,7 +512,7 @@ class DownloadWorkflow:
         else:
             self.container_fetcher = None
 
-    def prompt_use_singularity(self, fail_message) -> None:
+    def prompt_use_singularity(self, fail_message: str) -> None:
         use_singularity = questionary.confirm(
             "Do you want to download singularity images?",
             style=nf_core.utils.nfcore_question_style,
@@ -488,7 +522,7 @@ class DownloadWorkflow:
         else:
             raise DownloadError(fail_message)
 
-    def prompt_compression_type(self):
+    def prompt_compression_type(self) -> None:
         """Ask user if we should compress the downloaded files"""
         if self.compress_type is None:
             stderr.print(
@@ -513,7 +547,7 @@ class DownloadWorkflow:
         if self.compress_type == "none":
             self.compress_type = None
 
-    def download_wf_files(self, revision, wf_sha, download_url):
+    def download_wf_files(self, revision: str, wf_sha: str, download_url: str) -> str:
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
         log.debug(f"Downloading {download_url}")
 
@@ -539,7 +573,7 @@ class DownloadWorkflow:
 
         return revision_dirname
 
-    def download_configs(self):
+    def download_configs(self) -> None:
         """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
@@ -559,7 +593,7 @@ class DownloadWorkflow:
             for fname in filelist:
                 (Path(dirpath) / fname).chmod(0o775)
 
-    def wf_use_local_configs(self, revision_dirname: str):
+    def wf_use_local_configs(self, revision_dirname: str) -> None:
         """Edit the downloaded nextflow.config file to use the local config files"""
 
         assert self.outdir is not None  # mypy
@@ -590,7 +624,7 @@ class DownloadWorkflow:
             nfconfig_fh.write(nfconfig)
 
     def find_container_images(
-        self, workflow_directory: Path, revision: str, with_test_containers=True, entrypoint="main.nf"
+        self, workflow_directory: Path, revision: str, with_test_containers: bool = True, entrypoint: str = "main.nf"
     ) -> None:
         """
         Find container image names for workflow using the `nextflow inspect` command.
@@ -635,14 +669,14 @@ class DownloadWorkflow:
             log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
             raise DownloadError(e)
 
-    def gather_registries(self, workflow_directory: str) -> None:
+    def gather_registries(self, workflow_directory: Path) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
         This is needed to symlink downloaded container images so Nextflow will find them.
         """
 
         # should exist, because find_container_images() is always called before
         if not self.nf_config:
-            self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
+            self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
 
         # Select registries defined in pipeline config
         configured_registries = [
@@ -698,14 +732,18 @@ class DownloadWorkflow:
                     self.containers_remote,
                 )
 
-    def compress_download(self):
+    def compress_download(self) -> None:
         """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug(f"Creating archive: {self.output_filename}")
 
         # .tar.gz and .tar.bz2 files
         if self.compress_type in ["tar.gz", "tar.bz2"]:
-            ctype = self.compress_type.split(".")[1]
-            with tarfile.open(self.output_filename, f"w:{ctype}") as tar:
+            ctype_and_mode: dict[str, tuple[Literal["gz", "bz2"], Literal["w:gz", "w:bz2"]]] = {
+                "tar.gz": ("gz", "w:gz"),
+                "tar.bz2": ("bz2", "w:bz2"),
+            }  # This ugly thing is required for typing
+            ctype, mode = ctype_and_mode[self.compress_type]
+            with tarfile.open(self.output_filename, mode) as tar:
                 tar.add(self.outdir, arcname=self.outdir.name)
             tar_flags = "xzf" if ctype == "gz" else "xjf"
             log.info(f"Command to extract files: [bright_magenta]tar -{tar_flags} {self.output_filename}[/]")

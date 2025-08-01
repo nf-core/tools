@@ -51,9 +51,14 @@ class DockerFetcher(ContainerFetcher):
             amend_cachedir=False,  # Docker does not use a cache directory
             parallel=parallel,
         )
+
+        # We will always use Docker, so check if it is installed directly.
         self.check_and_set_implementation()
 
-    def check_and_set_implementation(self):
+    def check_and_set_implementation(self) -> None:
+        """
+        Check if Docker is installed and set the implementation.
+        """
         if not shutil.which("docker"):
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
         self.implementation = "docker"
@@ -72,13 +77,15 @@ class DockerFetcher(ContainerFetcher):
 
     def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
         """
-        Fetch remote containers in parallel:
-        - A single thread pulls the images using the `docker image pull` command,
-        - Multiple threads saves the pull images to tar archives using the `docker image save` command.
-        Args:
-            containers (Iterable[tuple[str, str]]): A list of tuples with the container name
-        """
+        Fetch a set of remote container images.
 
+        This is the main entry point for the subclass, and is called by
+        the `fetch_containers` method in the superclass.
+
+        Args:
+            containers (list[tuple[str, Path]]): A list of container names and output paths.
+            parallel (int): The number of containers to fetch in parallel.
+        """
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:
             futures = []
 
@@ -110,9 +117,13 @@ class DockerFetcher(ContainerFetcher):
                 # Re-raise exception on the main thread
                 raise
 
-    def pull_and_save_image(self, container: str, output_path: Path):
+    def pull_and_save_image(self, container: str, output_path: Path) -> None:
         """
         Pull a docker image and then save it
+
+        Args:
+            container (str): The container name.
+            output_path (Path): The path to save the container image.
         """
         # Progress bar to show that something is happening
         container_short_name = container.split("/")[-1][:50]
@@ -148,7 +159,13 @@ class DockerFetcher(ContainerFetcher):
         # Task should advance in any case. Failure to pull will not kill the pulling process.
         self.progress.advance_remote_fetch_task()
 
-    def construct_pull_command(self, address: str):
+    def construct_pull_command(self, address: str) -> list[str]:
+        """
+        Construct the command to pull a Docker image.
+
+        Args:
+            address (str): The address of the container to pull.
+        """
         pull_command = ["docker", "image", "pull", address]
         log.debug(f"Docker command: {' '.join(pull_command)}")
         return pull_command
@@ -167,7 +184,14 @@ class DockerFetcher(ContainerFetcher):
         log.debug(f"Pulling docker image: {container}")
         self._run_docker_command(pull_command, container, None, container, progress_task)
 
-    def construct_save_command(self, output_path: Path, address: str):
+    def construct_save_command(self, output_path: Path, address: str) -> list[str]:
+        """
+        Construct the command to save a Docker image.
+
+        Args:
+            output_path (Path): The path to save the container image.
+            address (str): The address of the container to save.
+        """
         save_command = [
             "docker",
             "image",
@@ -255,14 +279,14 @@ class DockerFetcher(ContainerFetcher):
                     error_msg=lines,
                 )
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Cleanup by writing the load message to the screen
         """
         super().cleanup()
         self.write_docker_load_message()
 
-    def write_docker_load_message(self):
+    def write_docker_load_message(self) -> None:
         """
         Write a message to the user about how to load the downloaded docker images into the offline docker daemon
         """

@@ -167,7 +167,11 @@ class ContainerProgress(rich.progress.Progress):
 
 
 class ContainerFetcher(ABC):
-    """Class to manage all Singularity operations for fetching containers.
+    """
+    Abstract class to manage all operations for fetching containers.
+
+    It is currently subclasses by the SingularityFetcher and DockerFetcher classes,
+    for fetching Singularity and Docker containers respectively.
 
     The guiding principles are that:
       - Container download/pull/copy methods are unaware of the concepts of
@@ -177,6 +181,16 @@ class ContainerFetcher(ABC):
         and "cache". It is a sort of orchestrator that decides where to fetch
         each container and calls the appropriate methods.
       - All methods are integrated with a progress bar
+
+    Args:
+        container_output_dir (Path): The final destination for the container images.
+        container_library (Iterable[str]): A collection of container libraries to use
+        registry_set (Iterable[str]): A collection of registries to consider
+        progress_factory (Callable[[], ContainerProgress]): A factory to create a progress bar.
+        library_dir (Optional[Path]): The directory to look for container images in.
+        cache_dir (Optional[Path]): A directory where container images might be cached.
+        amend_cachedir (bool): Whether to amend the cache directory with the container images.
+        parallel (int): The number of containers to fetch in parallel.
     """
 
     def __init__(
@@ -194,7 +208,7 @@ class ContainerFetcher(ABC):
         self.container_library = list(container_library)
         self.registry_set = registry_set
         self.kill_with_fire = False
-        self.implementation = None
+        self.implementation: Optional[str] = None
         self.name = None
         self.library_dir = library_dir
         self.cache_dir = cache_dir
@@ -203,7 +217,6 @@ class ContainerFetcher(ABC):
 
         self.progress_factory = progress_factory
         self.progress: Optional[ContainerProgress] = None
-        self.implementation = None
 
     @property
     def progress(self) -> rich.progress.Progress:

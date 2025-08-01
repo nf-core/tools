@@ -121,7 +121,13 @@ class SingularityFetcher(ContainerFetcher):
             parallel=parallel,
         )
 
-    def check_and_set_implementation(self):
+    def check_and_set_implementation(self) -> None:
+        """
+        Check if Singularity/Apptainer is installed and set the implementation.
+
+        Raises:
+            OSError: If Singularity/Apptainer is not installed or not in $PATH
+        """
         if shutil.which("singularity"):
             self.implementation = "singularity"
         elif shutil.which("apptainer"):
@@ -303,7 +309,7 @@ class SingularityFetcher(ContainerFetcher):
             log.debug(containers_remote)
             return containers_remote
 
-    def clean_container_file_extension(self, container_fn: str):
+    def clean_container_file_extension(self, container_fn: str) -> str:
         """
         This makes sure that the Singularity container filename has the right file extension
         """
@@ -323,9 +329,16 @@ class SingularityFetcher(ContainerFetcher):
         return container_fn
 
     def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
-        # There are always the same number of total tasks
-        # self.progress.update_main_task(total=len(containers))
+        """
+        Fetch a set of remote container images.
 
+        This is the main entry point for the subclass, and is called by
+        the `fetch_containers` method in the superclass.
+
+        Args:
+            containers (list[tuple[str, Path]]): A list of container names and output paths.
+            parallel (int): The number of containers to fetch in parallel.
+        """
         # Split the list of containers depending on whether we want to pull them or download them
         containers_pull = []
         containers_download = []
@@ -416,6 +429,13 @@ class SingularityFetcher(ContainerFetcher):
         downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
 
     def pull_images(self, containers_pull: Iterable[tuple[str, Path]]) -> None:
+        """
+        Pull a set of container images using `singularity pull`.
+
+        Args:
+            containers_pull (Iterable[tuple[str, Path]]): A list of container names and output paths.
+
+        """
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
@@ -481,9 +501,8 @@ class SingularityFetcher(ContainerFetcher):
         return address, absolute_URI
 
     def pull_image(self, container: str, output_path: Path, library: str) -> bool:
-        """Pull a singularity image using ``singularity pull``
-
-        Attempt to use a local installation of singularity to pull the image.
+        """
+        Pull a singularity image using `singularity pull`.
 
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
