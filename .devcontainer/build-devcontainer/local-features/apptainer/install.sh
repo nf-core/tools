@@ -12,8 +12,7 @@ apt-get install -y curl rpm2cpio cpio
 curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - /usr/local/apptainer
 
 # add /usr/local/apptainer/bin to path
-export PATH=/usr/local/apptainer/bin:$PATH
-echo "$PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc
+echo "PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc
 
 apt-get clean
 rm -rf /var/lib/apt/lists/*
