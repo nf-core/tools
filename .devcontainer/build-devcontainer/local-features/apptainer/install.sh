@@ -4,12 +4,16 @@
 
 apt-get update --quiet
 
-# installs add-apt-repository
-apt install --reinstall -y software-properties-common
+# apptainer installer dependencies
+apt-get install -y curl rpm2cpio cpio
 
-add-apt-repository -y ppa:apptainer/ppa
+# install from pre-built binaries
+# see: https://apptainer.org/docs/admin/main/installation.html#install-unprivileged-from-pre-built-binaries
+curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - /usr/local/apptainer
 
-apt install -y apptainer
+# add /usr/local/apptainer/bin to path
+export PATH=/usr/local/apptainer/bin:$PATH
+echo "$PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc
 
 apt-get clean
 rm -rf /var/lib/apt/lists/*
