@@ -10,13 +10,13 @@
 
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-            "version": "latest"
+            "version": "2.12.1"
         },
         "ghcr.io/devcontainers/features/java:1": {
             "version": "21.0.6-ms"
         },
         "ghcr.io/rocker-org/devcontainer-features/miniforge:2": {
-            "version": "latest"
+            "version": "2.0.1"
         },
         "./local-features/apptainer": {},
         "./local-features/nextflow": {}
