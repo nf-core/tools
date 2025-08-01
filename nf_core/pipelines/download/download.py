@@ -214,10 +214,10 @@ class DownloadWorkflow:
 
         # Set an output filename now that we have the outdir
         if self.platform:
-            self.output_filename = self.outdir.with_suffix(".git")
+            self.output_filename = self.outdir.parent / (self.outdir.name + ".git")
             summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
-            self.output_filename = self.outdir.with_suffix(self.compress_type)
+            self.output_filename = self.outdir.parent / (self.outdir.name + "." + self.compress_type)
             summary_log.append(f"Output file: '{self.output_filename}'")
         else:
             summary_log.append(f"Output directory: '{self.outdir}'")
