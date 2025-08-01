@@ -141,6 +141,7 @@ class NfcoreCreateTest(unittest.TestCase):
         """Test that all pipeline template files are included in a pipeline customisation group."""
         template_features_yml = load_features_yaml()
         base_required_files = [
+            ".devcontainer/setup.sh",
             ".gitignore",
             ".nf-core.yml",
             "README.md",

@@ -411,8 +411,11 @@ development_environments:
 
         Github Codespaces (https://github.com/features/codespaces) is an online developer environment that runs in your browser, complete with VSCode and a terminal.
       linting:
+        files_exist:
+          - ".devcontainer/devcontainer.json"
         files_unchanged:
           - ".github/CONTRIBUTING.md"
+          - ".devcontainer/devcontainer.json"
       nfcore_pipelines: False
       custom_pipelines: True
       default: true
