@@ -1,8 +1,8 @@
 {
     "name": "nfcore-devcontainer-build",
 
-    // installs python3.11, nf-core tools from current workspace
-    // based on mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+    // installs python3.13, nf-core tools from current workspace
+    // based on mcr.microsoft.com/devcontainers/miniconda image
     "build": {
         "dockerfile": "./Dockerfile",
         "context": "../.."
@@ -13,7 +13,6 @@
         "ghcr.io/devcontainers/features/java:1.6.3": {
             "version": "21.0.6-ms"
         },
-        "ghcr.io/rocker-org/devcontainer-features/miniforge:2.0.1": {},
         "./local-features/apptainer": {},
         "./local-features/nextflow": {}
     },
