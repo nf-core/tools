@@ -16,6 +16,7 @@
 
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.7 ([#3697](https://github.com/nf-core/tools/pull/3697))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
