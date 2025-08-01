@@ -400,20 +400,6 @@ configurations:
 development_environments:
   name: "Development Environments"
   features:
-    gitpod:
-      skippable_paths:
-        - ".gitpod.yml"
-      short_description: "Include a gitpod environment"
-      description: "Include the configuration required to use Gitpod."
-      help_text: |
-        Gitpod (https://www.gitpod.io/) provides standardized and automated development environments.
-
-        Including this to your pipeline will provide an environment with the latest version of nf-core/tools installed and all its requirements.
-        This is useful to have all the tools ready for pipeline development.
-      nfcore_pipelines: False
-      custom_pipelines: True
-      default: true
-
     codespaces:
       skippable_paths:
         - ".devcontainer/devcontainer.json"
