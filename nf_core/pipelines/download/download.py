@@ -21,7 +21,7 @@ import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
-from nf_core.pipelines.download.singularity import SingularityFetcher
+from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
@@ -203,11 +203,13 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if self.container_system == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
-            summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}'")
+        if self.container_system == "singularity" and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
+            summary_log.append(
+                f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
+            )
             if self.containers_remote:
                 summary_log.append(
-                    f"Successfully read {len(self.containers_remote)} containers from the remote '$NXF_SINGULARITY_CACHEDIR' contents."
+                    f"Successfully read {len(self.containers_remote)} containers from the remote '{SINGULARITY_CACHE_DIR_ENV_VAR}' contents."
                 )
 
         # Set an output filename now that we have the outdir
@@ -282,7 +284,7 @@ class DownloadWorkflow:
                 except FileNotFoundError as e:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
-            # Collect all required singularity images
+            # Collect all required container images
             if self.container_system in {"singularity", "docker"}:
                 self.find_container_images(self.outdir / revision_dirname, revision)
                 self.gather_registries(self.outdir / revision_dirname)
@@ -668,7 +670,12 @@ class DownloadWorkflow:
         return self.outdir / f"{self.container_system}-images"
 
     def download_container_images(self, current_revision: str = "") -> None:
-        """Loop through container names and download Singularity images"""
+        """
+        Fetch the container images with the appropriate ContainerFetcher
+
+        Args:
+            current_revision (str): The current revision of the workflow.
+        """
 
         if len(self.containers) == 0:
             log.info("No container names found in workflow")

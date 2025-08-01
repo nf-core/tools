@@ -63,8 +63,7 @@ class DockerFetcher(ContainerFetcher):
         This makes sure that the Docker container filename has a .tar extension
         """
         extension = ".tar"
-        if container_fn.endswith(".tar"):
-            container_fn.strip(".tar")
+        container_fn = container_fn.rstrip(extension)
         # Strip : and / characters
         container_fn = container_fn.replace("/", "-").replace(":", "-")
         # Add file extension
