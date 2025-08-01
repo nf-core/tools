@@ -23,7 +23,7 @@
     },
 
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/tools,type=bind",
-    "workspaceFolder": "$/workspace/tools",
+    "workspaceFolder": "/workspace/tools",
 
     "remoteUser": "root",
     "privileged": true,
