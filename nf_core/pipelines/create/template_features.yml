@@ -403,6 +403,7 @@ development_environments:
     codespaces:
       skippable_paths:
         - ".devcontainer/devcontainer.json"
+        - ".devcontainer/setup.sh"
       short_description: "Include GitHub Codespaces"
       description: "The pipeline will include a devcontainer configuration for GitHub Codespaces, providing a development environment with nf-core/tools and Nextflow installed."
       help_text: |
@@ -411,11 +412,8 @@ development_environments:
 
         Github Codespaces (https://github.com/features/codespaces) is an online developer environment that runs in your browser, complete with VSCode and a terminal.
       linting:
-        files_exist:
-          - ".devcontainer/devcontainer.json"
         files_unchanged:
           - ".github/CONTRIBUTING.md"
-          - ".devcontainer/devcontainer.json"
       nfcore_pipelines: False
       custom_pipelines: True
       default: true
