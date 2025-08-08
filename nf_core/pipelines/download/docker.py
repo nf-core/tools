@@ -14,11 +14,11 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
+from nf_core.pipelines.download.utils import copy_container_load_scripts
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
     stderr=True,
-    style="dim",
     highlight=False,
     force_terminal=nf_core.utils.rich_force_colors(),
 )
@@ -308,21 +308,22 @@ class DockerFetcher(ContainerFetcher):
         """
         Write a message to the user about how to load the downloaded docker images into the offline docker daemon
         """
-        # There is not direct Nextflow support for loading docker images like we do for Singularity
-        # Instead we give the user a `bash` command to load the downloaded docker images into the offline docker daemon
-        # Courtesy of @vmkalbskopf in https://github.com/nextflow-io/nextflow/discussions/4708
-        # TODO: Should we create a bash script instead?
-        docker_load_command = "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i"
-        indent_spaces = 4
+        # Original command courtesy of @vmkalbskopf in https://github.com/nextflow-io/nextflow/discussions/4708
         docker_img_dir = self.get_container_output_dir()
+        podman_load_script, _ = copy_container_load_scripts("podman", docker_img_dir)
+        docker_load_script, _ = copy_container_load_scripts("docker", docker_img_dir)
+        indent_spaces = 4
         stderr.print(
             "\n"
-            + (1 * indent_spaces * " " + f"Downloaded docker images written to [blue not bold]'{docker_img_dir}'[/]. ")
-            + (0 * indent_spaces * " " + "After copying the pipeline and images to the offline machine, run\n\n")
-            + (2 * indent_spaces * " " + f"[blue bold]{docker_load_command}[/]\n\n")
+            + (1 * indent_spaces * " " + f"Downloaded docker images written to [magenta]'{docker_img_dir}'[/].\n")
+            + (1 * indent_spaces * " " + "After copying the pipeline and images to the offline machine, run\n\n")
+            + (
+                2 * indent_spaces * " "
+                + f"[green]./{docker_load_script}[/] (or [green]./{podman_load_script}[/] (experimental))\n\n"
+            )
             + (
                 1 * indent_spaces * " "
-                + f"inside [blue not bold]'{docker_img_dir}'[/] to load the images into the offline docker daemon."
+                + f"inside [magenta]'{docker_img_dir}'[/] to load the images into the offline Docker (Podman) daemon."
             )
             + "\n"
         )
