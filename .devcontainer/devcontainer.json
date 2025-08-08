@@ -4,7 +4,7 @@
     "image": "mcr.microsoft.com/devcontainers/miniconda",
 
     "remoteEnv": {
-        // Workspace path on the host to mount local paths with docker-outside-of-docker
+        // Workspace path on the host for mounting with docker-outside-of-docker
         "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
     },
 
