@@ -1,7 +1,6 @@
 {
     "name": "nfcore",
-    //"image": "nfcore/devcontainer:latest", // ToDo: Add version hash once available
-    "image": "mcr.microsoft.com/devcontainers/miniconda",
+    "image": "nfcore/devcontainer:latest", // ToDo: Add version hash once available
 
     "remoteEnv": {
         // Workspace path on the host for mounting with docker-outside-of-docker
