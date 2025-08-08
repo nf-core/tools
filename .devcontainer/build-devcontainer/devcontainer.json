@@ -17,8 +17,9 @@
         "./local-features/nextflow": {}
     },
 
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/tools,type=bind",
-    "workspaceFolder": "/workspace/tools",
+    "remoteEnv": {
+        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+    },
 
     "remoteUser": "root",
     "privileged": true,
