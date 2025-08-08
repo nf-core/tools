@@ -24,6 +24,22 @@ stderr = rich.console.Console(
 )
 
 
+class DockerProgress(ContainerProgress):
+    def get_task_types_and_columns(self):
+        task_types_and_columns = super().get_task_types_and_columns()
+        task_types_and_columns.update(
+            {
+                "docker": (
+                    "[magenta]{task.description}",
+                    # "[blue]{task.fields[current_log]}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "([blue]{task.fields[status]})",
+                ),
+            }
+        )
+        return task_types_and_columns
+
+
 class DockerFetcher(ContainerFetcher):
     """
     Fetcher for Docker containers.
@@ -35,6 +51,7 @@ class DockerFetcher(ContainerFetcher):
         container_library: Iterable[str],
         registry_set: Iterable[str],
         parallel: int = 4,
+        hide_progress: bool = False,
     ):
         """
         Intialize the docker image fetcher
@@ -50,6 +67,7 @@ class DockerFetcher(ContainerFetcher):
             library_dir=None,  # Docker does not use a library directory
             amend_cachedir=False,  # Docker does not use a cache directory
             parallel=parallel,
+            hide_progress=hide_progress,
         )
 
         # We will always use Docker, so check if it is installed directly.
@@ -308,22 +326,6 @@ class DockerFetcher(ContainerFetcher):
             )
             + "\n"
         )
-
-
-class DockerProgress(ContainerProgress):
-    def get_task_types_and_columns(self):
-        task_types_and_columns = super().get_task_types_and_columns()
-        task_types_and_columns.update(
-            {
-                "docker": (
-                    "[magenta]{task.description}",
-                    # "[blue]{task.fields[current_log]}",
-                    rich.progress.BarColumn(bar_width=None),
-                    "([blue]{task.fields[status]})",
-                ),
-            }
-        )
-        return task_types_and_columns
 
 
 # Distinct errors for the docker container fetching, required for acting on the exceptions

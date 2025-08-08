@@ -27,6 +27,9 @@ class ContainerProgress(rich.progress.Progress):
     copy_task: Optional[rich.progress.TaskID] = None
     copy_task_containers: Optional[list[str]] = []
 
+    def __init__(self, disable=False):
+        super().__init__(disable=disable)
+
     def get_task_types_and_columns(self):
         """
         Gets the possible task types for the progress bar.
@@ -198,11 +201,12 @@ class ContainerFetcher(ABC):
         container_output_dir: Path,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress_factory: Callable[[], ContainerProgress],
+        progress_factory: Callable[[bool], ContainerProgress],
         library_dir: Optional[Path],
         cache_dir: Optional[Path],
         amend_cachedir: bool,
         parallel: int = 4,
+        hide_progress: bool = False,
     ) -> None:
         self._container_output_dir = container_output_dir
         self.container_library = list(container_library)
@@ -215,6 +219,7 @@ class ContainerFetcher(ABC):
         self.amend_cachedir = amend_cachedir
         self.parallel = parallel
 
+        self.hide_progress = hide_progress
         self.progress_factory = progress_factory
         self.progress: Optional[ContainerProgress] = None
 
@@ -322,7 +327,7 @@ class ContainerFetcher(ABC):
         """
 
         # Create a new progress bar
-        self.progress = self.progress_factory()
+        self.progress = self.progress_factory(self.hide_progress)
 
         with self.progress:
             # Check each container in the list and defer actions

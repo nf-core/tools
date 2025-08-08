@@ -32,6 +32,30 @@ SINGULARITY_CACHE_DIR_ENV_VAR = "NXF_SINGULARITY_CACHEDIR"
 SINGULARITY_LIBRARY_DIR_ENV_VAR = "NXF_SINGULARITY_LIBRARYDIR"
 
 
+class SingularityProgress(ContainerProgress):
+    def get_task_types_and_columns(self):
+        task_types_and_columns = super().get_task_types_and_columns()
+        task_types_and_columns.update(
+            {
+                "download": (
+                    "[blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "•",
+                    rich.progress.DownloadColumn(),
+                    "•",
+                    rich.progress.TransferSpeedColumn(),
+                ),
+                "singularity_pull": (
+                    "[magenta]{task.description}",
+                    "[blue]{task.fields[current_log]}",
+                    rich.progress.BarColumn(bar_width=None),
+                ),
+            }
+        )
+        return task_types_and_columns
+
+
 class SingularityFetcher(ContainerFetcher):
     """
     Fetcher for Singularity containers.
@@ -45,6 +69,7 @@ class SingularityFetcher(ContainerFetcher):
         container_cache_utilisation=None,
         container_cache_index=None,
         parallel: int = 4,
+        hide_progress: bool = False,
     ):
         # Check if the env variable for the Singularity cache directory is set
         has_cache_dir = os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None
@@ -119,6 +144,7 @@ class SingularityFetcher(ContainerFetcher):
             library_dir=library_dir,
             amend_cachedir=container_cache_utilisation == "amend",
             parallel=parallel,
+            hide_progress=hide_progress,
         )
 
     def check_and_set_implementation(self) -> None:
@@ -561,30 +587,6 @@ class SingularityFetcher(ContainerFetcher):
 
             self.symlink_registries(output_path)
         return True
-
-
-class SingularityProgress(ContainerProgress):
-    def get_task_types_and_columns(self):
-        task_types_and_columns = super().get_task_types_and_columns()
-        task_types_and_columns.update(
-            {
-                "download": (
-                    "[blue]{task.description}",
-                    rich.progress.BarColumn(bar_width=None),
-                    "[progress.percentage]{task.percentage:>3.1f}%",
-                    "•",
-                    rich.progress.DownloadColumn(),
-                    "•",
-                    rich.progress.TransferSpeedColumn(),
-                ),
-                "singularity_pull": (
-                    "[magenta]{task.description}",
-                    "[blue]{task.fields[current_log]}",
-                    rich.progress.BarColumn(bar_width=None),
-                ),
-            }
-        )
-        return task_types_and_columns
 
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions

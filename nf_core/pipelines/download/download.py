@@ -26,6 +26,7 @@ from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
+    NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
     check_nextflow_version,
     pretty_nf_version,
     run_cmd,
@@ -218,10 +219,12 @@ class DownloadWorkflow:
                 and self.container_system != "none"
                 and not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION)
             ):
-                raise DownloadError(
-                    f"Container download requires Nextflow version >= {pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}. "
-                    f"Please upgrade your Nextflow version."
+                log.error(
+                    f"Container download requires Nextflow version >= {pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}\n"
+                    f"Please update your Nextflow version with [magenta]'nextflow self-update'[/] "
+                    f"or use a legacy version of 'nf-core/tools' <= {'.'.join([str(i) for i in NFCORE_VER_LAST_WITHOUT_NF_INSPECT])}"
                 )
+                return
 
             # Setup the appropriate ContainerFetcher object
             self.setup_container_fetcher()
@@ -501,6 +504,7 @@ class DownloadWorkflow:
                 container_cache_utilisation=self.container_cache_utilisation,
                 container_cache_index=self.container_cache_index,
                 parallel=self.parallel,
+                hide_progress=self.hide_progress,
             )
         elif self.container_system == "docker":
             self.container_fetcher = DockerFetcher(
@@ -508,6 +512,7 @@ class DownloadWorkflow:
                 registry_set=self.registry_set,
                 container_library=self.container_library,
                 parallel=self.parallel,
+                hide_progress=self.hide_progress,
             )
         else:
             self.container_fetcher = None
