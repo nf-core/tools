@@ -269,10 +269,13 @@ def is_pipeline_directory(wf_path):
 # This is the minimal version of Nextflow required to fetch containers with `nextflow inspect`
 NF_INSPECT_MIN_NF_VERSION = (25, 4, 4, False)
 
+# This is the maximal version of nf-core/tools that does not require `nextflow inspect` for downloads
+NFCORE_VER_LAST_WITHOUT_NF_INSPECT = (3, 3, 2)
+
 
 # Pretty print a Nextflow version tuple
 def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
-    return f"{version[0]}.{version[1]:02}.{version[2]}" + "-edge" if version[3] else ""
+    return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
 
 
 def get_nf_version() -> Optional[tuple[int, int, int, bool]]:

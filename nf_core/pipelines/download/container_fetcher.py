@@ -28,6 +28,9 @@ class ContainerProgress(rich.progress.Progress):
     copy_task: Optional[rich.progress.TaskID] = None
     copy_task_containers: Optional[list[str]] = []
 
+    def __init__(self, disable=False):
+        super().__init__(disable=disable)
+
     def get_task_types_and_columns(self):
         """
         Gets the possible task types for the progress bar.
@@ -168,7 +171,11 @@ class ContainerProgress(rich.progress.Progress):
 
 
 class ContainerFetcher(ABC):
-    """Class to manage all Singularity operations for fetching containers.
+    """
+    Abstract class to manage all operations for fetching containers.
+
+    It is currently subclasses by the SingularityFetcher and DockerFetcher classes,
+    for fetching Singularity and Docker containers respectively.
 
     The guiding principles are that:
       - Container download/pull/copy methods are unaware of the concepts of
@@ -178,6 +185,16 @@ class ContainerFetcher(ABC):
         and "cache". It is a sort of orchestrator that decides where to fetch
         each container and calls the appropriate methods.
       - All methods are integrated with a progress bar
+
+    Args:
+        container_output_dir (Path): The final destination for the container images.
+        container_library (Iterable[str]): A collection of container libraries to use
+        registry_set (Iterable[str]): A collection of registries to consider
+        progress_factory (Callable[[], ContainerProgress]): A factory to create a progress bar.
+        library_dir (Optional[Path]): The directory to look for container images in.
+        cache_dir (Optional[Path]): A directory where container images might be cached.
+        amend_cachedir (bool): Whether to amend the cache directory with the container images.
+        parallel (int): The number of containers to fetch in parallel.
     """
 
     def __init__(
@@ -185,11 +202,12 @@ class ContainerFetcher(ABC):
         container_output_dir: Path,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress_factory: Callable[[], ContainerProgress],
+        progress_factory: Callable[[bool], ContainerProgress],
         library_dir: Optional[Path],
         cache_dir: Optional[Path],
         amend_cachedir: bool,
         parallel: int = 4,
+        hide_progress: bool = False,
     ) -> None:
         self._container_output_dir = container_output_dir
         self.container_library = list(container_library)
@@ -197,16 +215,16 @@ class ContainerFetcher(ABC):
         self._registry_set: Optional[set[str]] = None
 
         self.kill_with_fire = False
-        self.implementation = None
+        self.implementation: Optional[str] = None
         self.name = None
         self.library_dir = library_dir
         self.cache_dir = cache_dir
         self.amend_cachedir = amend_cachedir
         self.parallel = parallel
 
+        self.hide_progress = hide_progress
         self.progress_factory = progress_factory
         self.progress: Optional[ContainerProgress] = None
-        self.implementation = None
 
     @property
     def progress(self) -> rich.progress.Progress:
@@ -356,7 +374,7 @@ class ContainerFetcher(ABC):
         """
 
         # Create a new progress bar
-        self.progress = self.progress_factory()
+        self.progress = self.progress_factory(self.hide_progress)
 
         # Collect registries defined in the workflow directory
         self.registry_set = self.gather_registries(workflow_directory)
