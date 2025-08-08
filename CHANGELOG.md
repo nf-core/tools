@@ -24,6 +24,7 @@
   - Add support for downloading docker images into tar archives
   - Change long flag `--parallel-downloads` to `--parallel`. Short flag remains `-d`.
   - Add pipeline to test data to be compatible with `nextflow inspect`
+- Add container load scripts for Docker and Podman (#3634 follow up) ([#3706](https://github.com/nf-core/tools/pull/3706))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
