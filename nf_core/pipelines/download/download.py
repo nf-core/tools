@@ -221,8 +221,8 @@ class DownloadWorkflow:
             ):
                 log.error(
                     f"Container download requires Nextflow version >= {pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)}\n"
-                    f"Please update your Nextflow version with [magenta]'nextflow self-update'[/] "
-                    f"or use a legacy version of 'nf-core/tools' <= {'.'.join([str(i) for i in NFCORE_VER_LAST_WITHOUT_NF_INSPECT])}"
+                    f"Please update your Nextflow version with [magenta]'nextflow self-update'[/]\n"
+                    f"or use a version of 'nf-core/tools' <= {'.'.join([str(i) for i in NFCORE_VER_LAST_WITHOUT_NF_INSPECT])}"
                 )
                 return
 
@@ -285,10 +285,8 @@ class DownloadWorkflow:
             self.output_filename.unlink()
 
         # Summary log
-        indent = 2
-        sep = "\n" + " " * indent
-        log_lines = sep.join(summary_log)
-        log.info(f"Saving '{self.pipeline}'{sep}{log_lines}")
+        log_lines = "\n".join(summary_log)
+        log.info(f"Saving '{self.pipeline}'\n{log_lines}")
 
         # Perform the actual download
         if self.platform:
@@ -642,7 +640,7 @@ class DownloadWorkflow:
         """
 
         log.info(
-            f"Fetching container names for workflow revision {revision} using [blue bold]nextflow inspect[/]. This might take a while."
+            f"Fetching container names for workflow revision {revision} using [magenta bold]nextflow inspect[/]. This might take a while."
         )
         try:
             # TODO: Select container system via profile. Is this stable enough?
