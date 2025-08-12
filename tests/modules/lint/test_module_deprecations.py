@@ -1,42 +1,68 @@
-import pytest
+import nf_core.modules.lint
 
 from ...test_modules import TestModules
-
-
-# A skeleton object with the passed/warned/failed list attrs
-# Use this in place of a ModuleLint object to test behaviour of
-# linting methods which don't need the full setup
-class MockModuleLint:
-    def __init__(self):
-        self.passed = []
-        self.warned = []
-        self.failed = []
-        self.main_nf = "main_nf"
 
 
 class TestModuleDeprecations(TestModules):
     """Test module_deprecations.py functionality"""
 
-    @pytest.mark.skip(reason="Test implementation pending")
     def test_module_deprecations_none(self):
         """Test module deprecations when no deprecations exist"""
-        # Test the functionality of module_deprecations.py when no deprecated files exist
-        pass
+        # Install a standard module that shouldn't have deprecated files
+        assert self.mods_install.install("samtools/sort")
 
-    @pytest.mark.skip(reason="Test implementation pending")
-    def test_module_deprecations_found(self):
-        """Test module deprecations when deprecations are found"""
-        # Test the functionality of module_deprecations.py when deprecated files are found
-        pass
+        # Run lint on the module
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="samtools/sort", key=["module_deprecations"])
 
-    @pytest.mark.skip(reason="Test implementation pending")
+        # Should not have any failures from deprecations
+        failed_test_names = [test.lint_test for test in module_lint.failed]
+        assert "module_deprecations" not in failed_test_names
+
     def test_module_deprecations_functions_nf(self):
         """Test module deprecations when functions.nf exists"""
-        # Test when deprecated functions.nf file is found
-        pass
+        # Install a module first
+        assert self.mods_install.install("samtools/sort")
 
-    @pytest.mark.skip(reason="Test implementation pending")
+        # Create a deprecated functions.nf file
+        module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
+        functions_nf_path = module_dir / "functions.nf"
+
+        # Create the deprecated functions.nf file
+        with open(functions_nf_path, "w") as fh:
+            fh.write("// Deprecated functions.nf file\n")
+
+        # Run lint on the module
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="samtools/sort", key=["module_deprecations"])
+
+        # Should have failure for deprecated functions.nf file
+        assert len(module_lint.failed) > 0, "Expected linting to fail due to deprecated functions.nf file"
+        failed_test_names = [test.lint_test for test in module_lint.failed]
+        assert "module_deprecations" in failed_test_names
+
+        # Check the specific failure message
+        deprecation_failure = [test for test in module_lint.failed if test.lint_test == "module_deprecations"][0]
+        assert "functions.nf" in deprecation_failure.message
+        assert "Deprecated" in deprecation_failure.message
+
     def test_module_deprecations_no_functions_nf(self):
         """Test module deprecations when no functions.nf exists"""
-        # Test when no deprecated files are found
-        pass
+        # Install a module
+        assert self.mods_install.install("samtools/sort")
+
+        # Ensure no functions.nf file exists (should be default)
+        module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
+        functions_nf_path = module_dir / "functions.nf"
+
+        # Remove functions.nf if it somehow exists
+        if functions_nf_path.exists():
+            functions_nf_path.unlink()
+
+        # Run lint on the module
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="samtools/sort", key=["module_deprecations"])
+
+        # Should not have any failures from deprecations
+        failed_test_names = [test.lint_test for test in module_lint.failed]
+        assert "module_deprecations" not in failed_test_names

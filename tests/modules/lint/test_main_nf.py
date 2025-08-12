@@ -86,8 +86,16 @@ def test_container_links(content, passed, warned, failed):
     assert len(mock_lint.failed) == failed
 
 
-class TestMainNf(TestModules):
-    """Test main.nf functionality"""
+class TestMainNfLinting(TestModules):
+    """
+    Test main.nf linting functionality.
+
+    This class tests various aspects of main.nf file linting including:
+    - Process label validation and standards compliance
+    - Container definition syntax and URL validation
+    - Integration testing with alternative registries
+    - General module linting workflow
+    """
 
     def test_modules_lint_registry(self):
         """Test linting the samtools module and alternative registry"""
