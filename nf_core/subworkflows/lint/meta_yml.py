@@ -115,7 +115,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         # join included modules and included subworkflows in a single list
         included_components_names = [component["name"] for component in included_components]
         if "components" in meta_yaml:
-            meta_components = [x for x in meta_yaml["components"]]
+            meta_components = [x if isinstance(x, str) else list(x)[0] for x in meta_yaml["components"]]
             for component in set(included_components_names):
                 if component in meta_components:
                     subworkflow.passed.append(
