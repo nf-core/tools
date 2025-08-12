@@ -8,6 +8,7 @@
 
 ### Modules
 
+- Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
 - feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
 
 ### Subworkflows
@@ -17,6 +18,8 @@
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.17.1 ([#3698](https://github.com/nf-core/tools/pull/3698))
+- Update python:3.13-slim Docker digest to 4c2cf99 ([#3700](https://github.com/nf-core/tools/pull/3700))
+- Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
@@ -48,6 +51,7 @@
 
 ### General
 
+- Add description of accepted enum values to `nf-core pipelines schema docs` output ([#3693](https://github.com/nf-core/tools/pull/3693))
 - update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
 - Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
