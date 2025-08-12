@@ -665,11 +665,11 @@ class DownloadWorkflow:
             self.containers = list(set(named_containers.values()))
 
         except RuntimeError as e:
-            log.warning("Running 'nextflow inspect' failed with the following error")
+            log.error("Running 'nextflow inspect' failed with the following error")
             raise DownloadError(e)
 
         except KeyError as e:
-            log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
+            log.error("Failed to parse output of 'nextflow inspect' to extract containers")
             raise DownloadError(e)
 
     def gather_registries(self, workflow_directory: Path) -> None:
