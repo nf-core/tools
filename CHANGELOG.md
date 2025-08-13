@@ -46,6 +46,7 @@
 ### Modules
 
 - Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
+- Allow GitHub usernames with dots (`.`), hyphens (`-`), and underscores (`_`) in `nf-core modules create` to support usernames from GitLab and other providers. ([#3658](https://github.com/nf-core/tools/pull/3658))
 - Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
 - Fix wrong key when updating module outputs ([#3665](https://github.com/nf-core/tools/pull/3665))
 
