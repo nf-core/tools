@@ -423,7 +423,7 @@ def command_pipelines_lint(
 )
 @click.option(
     "-d",
-    "--parallel",
+    "--parallel-downloads",
     type=int,
     default=4,
     help="Number of allowed parallel tasks",
@@ -443,7 +443,7 @@ def command_pipelines_download(
     container_library,
     container_cache_utilisation,
     container_cache_index,
-    parallel,
+    parallel_downloads,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -462,7 +462,7 @@ def command_pipelines_download(
         container_library,
         container_cache_utilisation,
         container_cache_index,
-        parallel,
+        parallel_downloads,
     )
 
 
