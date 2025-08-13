@@ -54,7 +54,8 @@ class DockerFetcher(ContainerFetcher):
         hide_progress: bool = False,
     ):
         """
-        Intialize the docker image fetcher
+        Intialize the Docker image fetcher
+
         """
         container_output_dir = outdir / "docker-images"
         super().__init__(
