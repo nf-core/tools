@@ -727,7 +727,7 @@ class DownloadWorkflow:
             # Check that the directories exist
             if not out_path_dir.is_dir():
                 log.debug(f"Output directory not found, creating: {out_path_dir}")
-                out_path_dir.mkdir()
+                out_path_dir.mkdir(parents=True)
 
             if self.container_fetcher is not None:
                 self.container_fetcher.fetch_containers(
