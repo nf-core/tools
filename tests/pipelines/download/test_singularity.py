@@ -441,7 +441,10 @@ class SingularityTest(unittest.TestCase):
     #
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_gather_registries_singularity(self, tmp_path, mock_fetch_wf_config):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_gather_registries_singularity(self, tmp_path, mock_cachedir_prompt, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
         container_library = ["quay.io"]
         singularity_fetcher = SingularityFetcher(
