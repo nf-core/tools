@@ -416,7 +416,10 @@ class SingularityTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
-    def test_singularity_pull_image_successfully(self, tmp_dir, mock_progress):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_pull_image_successfully(self, tmp_dir, mock_cachedir_prompt, mock_progress):
         tmp_dir = Path(tmp_dir)
         singularity_fetcher = SingularityFetcher(
             outdir=tmp_dir,
