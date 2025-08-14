@@ -65,7 +65,7 @@ class DownloadUtilsTest(unittest.TestCase):
             with intermediate_file(output_path) as tmp:
                 tmp_path = Path(tmp.name)
                 subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
-                subprocess.cggheck_call(["ls", "/dummy"])
+                subprocess.check_call(["ls", "/dummy"])
 
         assert not (output_path).exists()
         assert not (tmp_path).exists()

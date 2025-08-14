@@ -252,6 +252,9 @@ class SingularityTest(unittest.TestCase):
     @mock.patch(
         "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
     @mock.patch("pathlib.Path.mkdir")
     @mock.patch("pathlib.Path.symlink_to")
     @mock.patch("os.symlink")
@@ -269,6 +272,7 @@ class SingularityTest(unittest.TestCase):
         mock_os_symlink,
         mock_symlink,
         mock_makedirs,
+        mock_prompt_singularity_cachedir_creation,
         mock_check_and_set_implementation,
     ):
         # Setup
@@ -281,6 +285,7 @@ class SingularityTest(unittest.TestCase):
             mock_basename.return_value = "singularity-image.img"
             mock_open.return_value = 12  # file descriptor
             mock_close.return_value = 12  # file descriptor
+            mock_prompt_singularity_cachedir_creation.return_value = False
 
             registries = [
                 "quay.io",
@@ -328,6 +333,9 @@ class SingularityTest(unittest.TestCase):
     @mock.patch(
         "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
     @mock.patch("pathlib.Path.mkdir")
     @mock.patch("pathlib.Path.symlink_to")
     @mock.patch("os.symlink")
@@ -347,6 +355,7 @@ class SingularityTest(unittest.TestCase):
         mock_os_symlink,
         mock_symlink,
         mock_makedirs,
+        mock_prompt_singularity_cachedir_creation,
         mock_check_and_set_implementation,
     ):
         tmp_path = Path(tmp_path)
@@ -360,6 +369,7 @@ class SingularityTest(unittest.TestCase):
             mock_basename.return_value = "quay.io-singularity-image.img"
             mock_open.return_value = 12  # file descriptor
             mock_close.return_value = 12  # file descriptor
+            mock_prompt_singularity_cachedir_creation.return_value = False
 
             # Call the method with registry name included - should not happen, but preserve it then.
 
@@ -467,7 +477,12 @@ class SingularityTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_pull_image_singularity_not_installed(
+        self, tmp_dir, mock_rich_progress, mock_prompt_singularity_cachedir_creation
+    ):
         tmp_dir = Path(tmp_dir)
         fetcher = SingularityFetcher(
             outdir=tmp_dir,
