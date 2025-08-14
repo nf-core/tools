@@ -24,7 +24,7 @@ from nf_core.pipelines.download.utils import (
     intermediate_file,
 )
 
-from ..utils import with_temporary_folder
+from ...utils import with_temporary_folder
 
 
 class DownloadUtilsTest(unittest.TestCase):
