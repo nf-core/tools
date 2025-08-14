@@ -8,14 +8,47 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import rich.progress_bar
+import rich.table
+import rich.text
 
 from nf_core.pipelines.download import DownloadWorkflow
 from nf_core.pipelines.download.docker import (
     DockerError,
     DockerFetcher,
+    DockerProgress,
 )
 
 from ...utils import with_temporary_folder
+
+
+#
+# Test the DockerProgress subclass
+#
+class DockerProgressTest(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def use_caplog(self, caplog):
+        self._caplog = caplog
+
+    def test_docker_progress_pull(self):
+        with DockerProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task(
+                "Task 1", progress_type="docker", total=2, completed=1, current_log="example log", status="Pulling"
+            )
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "([blue]Pulling)"
 
 
 class DockerTest(unittest.TestCase):
