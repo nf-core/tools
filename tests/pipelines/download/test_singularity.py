@@ -130,7 +130,10 @@ class SingularityTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
-    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_progress):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_cachedir_prompt, mock_progress):
         tmp_dir = Path(tmp_dir)
         singularity_fetcher = SingularityFetcher(
             outdir=tmp_dir,
@@ -203,7 +206,6 @@ class SingularityTest(unittest.TestCase):
             )
 
     #
-    #
     # Tests for 'fetch_containers': this will test fetch remote containers automatically
     #
     @pytest.mark.skipif(
@@ -212,7 +214,10 @@ class SingularityTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_fetch_containers_singularity(self, tmp_path, mock_fetch_wf_config):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_fetch_containers_singularity(self, tmp_path, mock_cachedir_prompt, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
@@ -473,9 +478,7 @@ class SingularityTest(unittest.TestCase):
     @mock.patch(
         "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
     )  # This is to make sure that we do not prompt for a Singularity cachedir
-    def test_singularity_pull_image_singularity_not_installed(
-        self, tmp_dir, mock_rich_progress, mock_prompt_singularity_cachedir_creation
-    ):
+    def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress, mock_cachedir_prompt):
         tmp_dir = Path(tmp_dir)
         fetcher = SingularityFetcher(
             outdir=tmp_dir,
@@ -492,7 +495,10 @@ class SingularityTest(unittest.TestCase):
     #
 
     @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation")
-    def test_singularity_get_container_filename(self, mock_check_and_set_implementation):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_get_container_filename(self, mock_cachedir_prompt, mock_check_and_set_implementation):
         registries = [
             "docker.io",
             "quay.io",
