@@ -202,8 +202,7 @@ class DownloadTest(unittest.TestCase):
             assert wf_config["params.custom_config_base"] == f"{test_outdir}/workflow/../configs/"
 
     #
-    # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
-    # produces the same results
+    # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Docker images
     #
     @pytest.mark.skipif(
         shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
@@ -242,8 +241,7 @@ class DownloadTest(unittest.TestCase):
         )
 
     #
-    # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
-    # produces the same results
+    # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Docker images
     #
     @pytest.mark.skipif(
         shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),

@@ -51,6 +51,9 @@ class DockerProgressTest(unittest.TestCase):
             assert table.columns[2]._cells[0] == "([blue]Pulling)"
 
 
+#
+# Test the DockerFetcher class
+#
 class DockerTest(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def use_caplog(self, caplog):
@@ -71,7 +74,7 @@ class DockerTest(unittest.TestCase):
         return any(record.message == item for record in self._caplog.records if self._caplog)
 
     #
-    # Tests for 'DockerFetcher.pull_image'
+    # Tests for 'pull_image'
     #
     # If Docker is installed, but the container can't be accessed because it does not exist or there are access
     # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
@@ -119,7 +122,7 @@ class DockerTest(unittest.TestCase):
             docker_fetcher.pull_image("ghcr.io/ewels/multiqc:go-rewrite", mock_task_obj)
 
     #
-    # Tests for 'DockerFetcher.pull_and_save_image'
+    # Tests for 'pull_and_save_image'
     #
     @pytest.mark.skipif(
         shutil.which("docker") is None,
@@ -138,7 +141,7 @@ class DockerTest(unittest.TestCase):
         docker_fetcher.pull_and_save_image("hello-world", tmp_dir / "hello-world.tar")
 
     #
-    # Tests for 'DockerFetcher.save_image'
+    # Tests for 'save_image'
     #
     @pytest.mark.skipif(
         shutil.which("docker") is None,
@@ -165,7 +168,7 @@ class DockerTest(unittest.TestCase):
 
     #
     #
-    # Tests for 'DockerFetcher.fetch_containers'
+    # Tests for 'fetch_containers': this will test fetch remote containers automatically
     #
     @pytest.mark.skipif(
         shutil.which("singularity") is None and shutil.which("apptainer") is None,
@@ -199,7 +202,7 @@ class DockerTest(unittest.TestCase):
         )
 
     #
-    # Test for DockerFetcher.write_docker_load_command
+    # Test for 'write_docker_load_command'
     #
     def test_docker_write_docker_load_message(self):
         docker_fetcher = DockerFetcher(

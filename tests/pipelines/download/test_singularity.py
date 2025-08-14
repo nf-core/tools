@@ -97,6 +97,9 @@ class SingularityProgressTest(unittest.TestCase):
             assert table.columns[6]._cells[0]._text == ["?"]
 
 
+#
+# Test the SingularityFetcher class
+#
 class SingularityTest(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def use_caplog(self, caplog):
@@ -201,7 +204,7 @@ class SingularityTest(unittest.TestCase):
 
     #
     #
-    # Tests for 'SingularityFetcher.fetch_containers'
+    # Tests for 'fetch_containers': this will test fetch remote containers automatically
     #
     @pytest.mark.skipif(
         shutil.which("singularity") is None and shutil.which("apptainer") is None,
@@ -238,7 +241,7 @@ class SingularityTest(unittest.TestCase):
         )
 
     #
-    # Tests for 'singularity.symlink_registries' function
+    # Tests for the 'symlink_registries' function
     #
 
     # Simple file name with no registry in it
@@ -390,7 +393,7 @@ class SingularityTest(unittest.TestCase):
             mock_open.assert_called_once_with(tmp_path / "path/to", os.O_RDONLY)
 
     #
-    # Tests for 'SingularityFetcher.pull_image'
+    # Tests for 'pull_image'
     #
     @pytest.mark.skipif(
         shutil.which("singularity") is None and shutil.which("apptainer") is None,
@@ -470,7 +473,7 @@ class SingularityTest(unittest.TestCase):
             fetcher.check_and_set_implementation()
 
     #
-    # Test for 'singularity.get_container_filename' function
+    # Test for 'get_container_filename' function
     #
 
     @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation")
@@ -586,8 +589,17 @@ class SingularityTest(unittest.TestCase):
         assert "depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img" in containers_remote
         assert "MV Rena" not in containers_remote  # decoy in test file
 
+
+#
+# Tests for the FileDownloader class
+#
+class FileDownloaderTest(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def use_caplog(self, caplog):
+        self._caplog = caplog
+
     #
-    # Test for 'singularity.FileDownloader.download_file'
+    # Test for 'download_file'
     #
     @with_temporary_folder
     def test_file_download(self, outdir):
@@ -659,14 +671,8 @@ class SingularityTest(unittest.TestCase):
                 downloader.download_file(src_url, output_path)
             assert not (output_path).exists()
 
-
-class FileDownloaderTest(unittest.TestCase):
-    @pytest.fixture(autouse=True)
-    def use_caplog(self, caplog):
-        self._caplog = caplog
-
     #
-    # Test for 'singularity.FileDownloader.download_files_in_parallel'
+    # Test for 'download_files_in_parallel'
     #
     @with_temporary_folder
     def test_parallel_downloads(self, outdir):
