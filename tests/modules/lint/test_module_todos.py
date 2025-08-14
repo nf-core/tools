@@ -6,11 +6,14 @@ from ...test_modules import TestModules
 class TestModuleTodos(TestModules):
     """Test module_todos.py functionality"""
 
-    def test_module_todos_none(self):
-        """Test module todos when no TODOs exist"""
-        # Install a module and remove any TODO statements
+    def setUp(self):
+        """Set up test fixtures by installing required modules"""
+        super().setUp()
+        # Install samtools/sort module for all tests in this class
         assert self.mods_install.install("samtools/sort")
 
+    def test_module_todos_none(self):
+        """Test module todos when no TODOs exist"""
         # Clean any TODO statements from files (they should be clean by default)
         module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
 
@@ -34,9 +37,6 @@ class TestModuleTodos(TestModules):
 
     def test_module_todos_found_in_main_nf(self):
         """Test module todos when TODOs are found in main.nf"""
-        # Install a module
-        assert self.mods_install.install("samtools/sort")
-
         # Add a TODO statement to main.nf
         module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
         main_nf_path = module_dir / "main.nf"
@@ -59,9 +59,6 @@ class TestModuleTodos(TestModules):
 
     def test_module_todos_found_in_meta_yml(self):
         """Test module todos when TODOs are found in meta.yml"""
-        # Install a module
-        assert self.mods_install.install("samtools/sort")
-
         # Add a TODO comment to meta.yml
         module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
         meta_yml_path = module_dir / "meta.yml"
@@ -80,9 +77,6 @@ class TestModuleTodos(TestModules):
 
     def test_module_todos_multiple_found(self):
         """Test module todos when multiple TODOs are found"""
-        # Install a module
-        assert self.mods_install.install("samtools/sort")
-
         # Add multiple TODO statements to different files
         module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
 

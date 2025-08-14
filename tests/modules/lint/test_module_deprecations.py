@@ -6,11 +6,14 @@ from ...test_modules import TestModules
 class TestModuleDeprecations(TestModules):
     """Test module_deprecations.py functionality"""
 
-    def test_module_deprecations_none(self):
-        """Test module deprecations when no deprecations exist"""
-        # Install a standard module that shouldn't have deprecated files
+    def setUp(self):
+        """Set up test fixtures by installing required modules"""
+        super().setUp()
+        # Install samtools/sort module for all tests in this class
         assert self.mods_install.install("samtools/sort")
 
+    def test_module_deprecations_none(self):
+        """Test module deprecations when no deprecations exist"""
         # Run lint on the module
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort", key=["module_deprecations"])
@@ -21,9 +24,6 @@ class TestModuleDeprecations(TestModules):
 
     def test_module_deprecations_functions_nf(self):
         """Test module deprecations when functions.nf exists"""
-        # Install a module first
-        assert self.mods_install.install("samtools/sort")
-
         # Create a deprecated functions.nf file
         module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
         functions_nf_path = module_dir / "functions.nf"
@@ -48,9 +48,6 @@ class TestModuleDeprecations(TestModules):
 
     def test_module_deprecations_no_functions_nf(self):
         """Test module deprecations when no functions.nf exists"""
-        # Install a module
-        assert self.mods_install.install("samtools/sort")
-
         # Ensure no functions.nf file exists (should be default)
         module_dir = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort"
         functions_nf_path = module_dir / "functions.nf"

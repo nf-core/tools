@@ -8,11 +8,14 @@ from ...test_modules import TestModules
 class TestModuleVersion(TestModules):
     """Test module_version.py functionality"""
 
-    def test_module_version_with_git_sha(self):
-        """Test module version when git_sha is present in modules.json"""
-        # Install a module
+    def setUp(self):
+        """Set up test fixtures by installing required modules"""
+        super().setUp()
+        # Install samtools/sort module for all tests in this class
         assert self.mods_install.install("samtools/sort")
 
+    def test_module_version_with_git_sha(self):
+        """Test module version when git_sha is present in modules.json"""
         # Run lint on the module - should have a git_sha entry
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort", key=["module_version"])
@@ -27,9 +30,6 @@ class TestModuleVersion(TestModules):
 
     def test_module_version_up_to_date(self):
         """Test module version when module is up to date"""
-        # Install a module (should be latest by default)
-        assert self.mods_install.install("samtools/sort")
-
         # Run lint on the module
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort", key=["module_version"])

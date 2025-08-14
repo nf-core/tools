@@ -97,10 +97,14 @@ class TestMainNfLinting(TestModules):
     - General module linting workflow
     """
 
-    def test_modules_lint_registry(self):
-        """Test linting the samtools module and alternative registry"""
+    def setUp(self):
+        """Set up test fixtures by installing required modules"""
+        super().setUp()
+        # Install samtools/sort module for all tests in this class
         assert self.mods_install.install("samtools/sort")
 
+    def test_main_nf_lint_with_alternative_registry(self):
+        """Test main.nf linting with alternative container registry"""
         # Test with alternative registry
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, registry="public.ecr.aws")
         module_lint.lint(print_results=False, module="samtools/sort")

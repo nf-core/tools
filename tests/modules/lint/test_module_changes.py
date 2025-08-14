@@ -8,11 +8,14 @@ from ...test_modules import TestModules
 class TestModuleChanges(TestModules):
     """Test module_changes.py functionality"""
 
-    def test_module_changes_unchanged(self):
-        """Test module changes when module is unchanged"""
-        # Install a module that should be unchanged from the repository
+    def setUp(self):
+        """Set up test fixtures by installing required modules"""
+        super().setUp()
+        # Install samtools/sort module for all tests in this class
         assert self.mods_install.install("samtools/sort")
 
+    def test_module_changes_unchanged(self):
+        """Test module changes when module is unchanged"""
         # Run lint on the unchanged module
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort", key=["module_changes"])
@@ -26,9 +29,6 @@ class TestModuleChanges(TestModules):
 
     def test_module_changes_modified_main_nf(self):
         """Test module changes when main.nf is modified"""
-        # Install a module
-        assert self.mods_install.install("samtools/sort")
-
         # Modify the main.nf file
         main_nf_path = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort" / "main.nf"
         with open(main_nf_path, "a") as fh:
@@ -47,9 +47,6 @@ class TestModuleChanges(TestModules):
 
     def test_module_changes_modified_meta_yml(self):
         """Test module changes when meta.yml is modified"""
-        # Install a module
-        assert self.mods_install.install("samtools/sort")
-
         # Modify the meta.yml file
         meta_yml_path = self.pipeline_dir / "modules" / "nf-core" / "samtools" / "sort" / "meta.yml"
         with open(meta_yml_path, "a") as fh:
