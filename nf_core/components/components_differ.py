@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Union
 
+import questionary
 from rich import box
 from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
@@ -227,10 +228,34 @@ class ComponentsDiffer:
                     fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
                 elif diff_status == ComponentsDiffer.DiffEnum.TO_DECODE_FAIL:
                     # We failed to decode the file
-                    log.warning(f"'{Path(dsp_to_dir, file)}' failed to be decoded\n")
+                    log.warning(
+                        f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
+                    )
+                    ans = questionary.select(
+                        "Do you still want to proceed with constructing the diff?",
+                        choices=["Abort diff creation", "Ignore file", "Warn in diff"],
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
+                    if ans == "Warn in diff":
+                        fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
+                    elif ans == "Abort diff creation":
+                        raise OSError from diff
+
                 elif diff_status == ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL:
                     # We failed to decode the file
-                    log.warning(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
+                    log.warning(
+                        f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
+                    )
+                    ans = questionary.select(
+                        "Do you still want to proceed with constructing the diff?",
+                        choices=["Abort diff creation", "Ignore file", "Warn in diff"],
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
+                    if ans == "Warn in diff":
+                        fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
+                    elif ans == "Abort diff creation":
+                        raise OSError from diff
+
                 elif limit_output and not file.suffix == ".nf":
                     # Skip printing the diff for files other than main.nf
                     fh.write(f"Changes in '{Path(component, file)}' but not shown\n")
@@ -336,13 +361,12 @@ class ComponentsDiffer:
             elif diff_status == ComponentsDiffer.DiffEnum.TO_DECODE_FAIL:
                 # We failed to decode the file
                 log.debug(f"'{Path(dsp_to_dir, file)}' failed to be decoded")
-                file_content = (
-                    "[bold red]Failed to decode[/]. Please check if the file should be present in the directory"
-                )
+                file_content = "[bold red]Failed to decode[/]"
+                file_content = "[bold red]Failed to decode new file[/]"
             elif diff_status == ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL:
                 # We failed to decode the file
                 log.debug(f"'{Path(dsp_from_dir, file)}' failed to be decoded")
-                file_content = "[bold red]Failed to decode[/]. Please check the original file"
+                file_content = "[bold red]Failed to decode old file[/]"
             elif limit_output and not file.suffix == ".nf":
                 # Skip printing the diff for files other than main.nf
                 log.debug(f"Changes in '{Path(component, file)}' but not shown")

@@ -93,14 +93,13 @@ class ComponentPatch(ComponentCommand):
         component_current_dir = Path(self.directory, component_relpath)
         patch_path = Path(self.directory, patch_relpath)
 
+        should_remove = False
         if patch_path.exists():
-            remove = questionary.confirm(
+            should_remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Do you want to regenerate it?",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-            if remove:
-                os.remove(patch_path)
-            else:
+            if not should_remove:
                 return
 
         # Create a temporary directory for storing the unchanged version of the module
@@ -127,6 +126,9 @@ class ComponentPatch(ComponentCommand):
             log.debug(f"Patch file wrote to a temporary directory {patch_temp_path}")
         except UserWarning:
             raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
+        except OSError:
+            log.info("Patch creation aborted by user")
+            return
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(
@@ -143,6 +145,10 @@ class ComponentPatch(ComponentCommand):
             dsp_from_dir=component_current_dir,
             dsp_to_dir=component_current_dir,
         )
+
+        # Check if we should remove an old patch file
+        if should_remove:
+            os.remove(patch_path)
 
         # Finally move the created patch file to its final location
         shutil.move(patch_temp_path, patch_path)
