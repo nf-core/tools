@@ -22,6 +22,7 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.17.1 ([#3698](https://github.com/nf-core/tools/pull/3698))
 - Update python:3.13-slim Docker digest to 4c2cf99 ([#3700](https://github.com/nf-core/tools/pull/3700))
 - Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
+- Patch patch command ([#3714](https://github.com/nf-core/tools/pull/3714))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
