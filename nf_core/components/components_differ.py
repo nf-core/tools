@@ -38,7 +38,7 @@ class ComponentsDiffer:
         TO_DECODE_FAIL = enum.auto()
 
     @staticmethod
-    def get_component_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None):
+    def get_component_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None, ignore_files={}):
         """
         Compute the diff between the current component version
         and the new version.
@@ -86,6 +86,7 @@ class ComponentsDiffer:
                 from_dir=from_dir,
                 dsp_to_dir=dsp_to_dir,
                 dsp_from_dir=dsp_from_dir,
+                ignore_files=ignore_files,
             )
             if diff is not None:
                 diffs[file] = diff
@@ -93,24 +94,39 @@ class ComponentsDiffer:
         return diffs
 
     @staticmethod
-    def handle_decode_error(file, base_dir, type: DiffEnum, e: UnicodeDecodeError):
-        log.warning(
-            f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
-        )
-        ans = questionary.select(
-            "Do you still want to proceed with constructing the diff?",
-            choices=["Abort diff creation", "Ignore file", "Warn in diff"],
-            style=nf_core.utils.nfcore_question_style,
-        ).unsafe_ask()
-        if ans == "Warn in diff":
-            return type, iter(())
-        elif ans == "Abort diff creation":
-            raise OSError from e
+    def handle_decode_error(file, base_dir, type: DiffEnum, e: UnicodeDecodeError, ignore_files: dict[Path, bool]):
+        if file in ignore_files:
+            # We have already seen this file, so do not prompt again
+            ans = "i" if ignore_files[file] else "w"
         else:
+            log.warning(
+                f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
+            )
+            ans = questionary.select(
+                "Do you still want to proceed with constructing the diff?",
+                choices=[
+                    questionary.Choice("Abort diff creation", "a"),
+                    questionary.Choice("Ignore file", "i"),
+                    questionary.Choice("Warn in diff", "w"),
+                ],
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+
+        if ans == "w":
+            ignore_files[file] = False
+            return type, iter(())
+        elif ans == "a":
+            raise OSError from e
+        elif ans == "i":
+            ignore_files[file] = True
             return None
+        else:
+            raise UserWarning("This should never occur")
 
     @staticmethod
-    def get_file_diff(file, to_dir, from_dir, dsp_to_dir, dsp_from_dir) -> Optional[tuple[DiffEnum, Iterator[str]]]:
+    def get_file_diff(
+        file, to_dir, from_dir, dsp_to_dir, dsp_from_dir, ignore_files=[]
+    ) -> Optional[tuple[DiffEnum, Iterator[str]]]:
         temp_path = Path(to_dir, file)
         curr_path = Path(from_dir, file)
         if temp_path.exists() and curr_path.exists() and temp_path.is_file():
@@ -119,7 +135,7 @@ class ComponentsDiffer:
                     new_lines = fh.readlines()
             except UnicodeDecodeError as e:
                 return ComponentsDiffer.handle_decode_error(
-                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e
+                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e, ignore_files
                 )
 
             try:
@@ -127,7 +143,7 @@ class ComponentsDiffer:
                     old_lines = fh.readlines()
             except UnicodeDecodeError as e:
                 return ComponentsDiffer.handle_decode_error(
-                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e
+                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e, ignore_files
                 )
 
             if new_lines == old_lines:
@@ -149,7 +165,7 @@ class ComponentsDiffer:
                     new_lines = fh.readlines()
             except UnicodeDecodeError as e:
                 return ComponentsDiffer.handle_decode_error(
-                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e
+                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e, ignore_files
                 )
 
             # The file was created
@@ -169,7 +185,7 @@ class ComponentsDiffer:
                     old_lines = fh.readlines()
             except UnicodeDecodeError as e:
                 return ComponentsDiffer.handle_decode_error(
-                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e
+                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e, ignore_files
                 )
 
             diff = difflib.unified_diff(
@@ -196,6 +212,7 @@ class ComponentsDiffer:
         dsp_from_dir=None,
         dsp_to_dir=None,
         limit_output=False,
+        ignore_files={},
     ):
         """
         Writes the diffs of a component to the diff file.
@@ -223,7 +240,9 @@ class ComponentsDiffer:
         if dsp_to_dir is None:
             dsp_to_dir = to_dir
 
-        diffs = ComponentsDiffer.get_component_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
+        diffs = ComponentsDiffer.get_component_diffs(
+            from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir, ignore_files=ignore_files
+        )
         if all(diff_status == ComponentsDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
             raise UserWarning("Component is unchanged")
         log.debug(f"Writing diff of '{component}' to '{diff_path}'")
@@ -312,6 +331,7 @@ class ComponentsDiffer:
         dsp_from_dir=None,
         dsp_to_dir=None,
         limit_output=False,
+        ignore_files={},
     ):
         """
         Prints the diffs between two component versions to the terminal
@@ -333,7 +353,7 @@ class ComponentsDiffer:
             dsp_to_dir = to_dir
 
         diffs = ComponentsDiffer.get_component_diffs(
-            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir
+            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir, ignore_files=ignore_files
         )
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:

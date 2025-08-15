@@ -112,6 +112,7 @@ class ComponentPatch(ComponentCommand):
 
         # Write the patch to a temporary location (otherwise it is printed to the screen later)
         patch_temp_path = tempfile.mktemp()
+        ignore_files = {}  # This dict carries files which we have failed to read, and what we should do with them. Very hacky
         try:
             ComponentsDiffer.write_diff_file(
                 patch_temp_path,
@@ -122,6 +123,7 @@ class ComponentPatch(ComponentCommand):
                 for_git=False,
                 dsp_from_dir=component_relpath,
                 dsp_to_dir=component_relpath,
+                ignore_files=ignore_files,
             )
             log.debug(f"Patch file wrote to a temporary directory {patch_temp_path}")
         except UserWarning:
@@ -144,6 +146,7 @@ class ComponentPatch(ComponentCommand):
             component_current_dir,
             dsp_from_dir=component_current_dir,
             dsp_to_dir=component_current_dir,
+            ignore_files=ignore_files,
         )
 
         # Check if we should remove an old patch file
