@@ -5,7 +5,7 @@ import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import questionary
 from rich import box
@@ -75,29 +75,42 @@ class ComponentsDiffer:
             )
         )
         files = list(files)
+        log.info(files)
 
         # Loop through all the component files and compute their diffs if needed
         for file in files:
-            try:
-                diffs[file] = ComponentsDiffer.get_file_diff(
-                    file=file,
-                    to_dir=to_dir,
-                    from_dir=from_dir,
-                    dsp_to_dir=dsp_to_dir,
-                    dsp_from_dir=dsp_from_dir,
-                )
-
-            except UnicodeDecodeError as e:
-                # We tried to decode a file we cannot decode, such as a vim .swp file
-                # Let's fail gracefully
-                diffs[file] = (ComponentsDiffer.FAILED, e)
+            log.info(file)
+            diff = ComponentsDiffer.get_file_diff(
+                file=file,
+                to_dir=to_dir,
+                from_dir=from_dir,
+                dsp_to_dir=dsp_to_dir,
+                dsp_from_dir=dsp_from_dir,
+            )
+            if diff is not None:
+                diffs[file] = diff
 
         return diffs
 
     @staticmethod
-    def get_file_diff(
-        file, to_dir, from_dir, dsp_to_dir, dsp_from_dir
-    ) -> tuple[DiffEnum, Union[Iterator[str], UnicodeDecodeError]]:
+    def handle_decode_error(file, base_dir, type: DiffEnum, e: UnicodeDecodeError):
+        log.warning(
+            f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
+        )
+        ans = questionary.select(
+            "Do you still want to proceed with constructing the diff?",
+            choices=["Abort diff creation", "Ignore file", "Warn in diff"],
+            style=nf_core.utils.nfcore_question_style,
+        ).unsafe_ask()
+        if ans == "Warn in diff":
+            return type, iter(())
+        elif ans == "Abort diff creation":
+            raise OSError from e
+        else:
+            return None
+
+    @staticmethod
+    def get_file_diff(file, to_dir, from_dir, dsp_to_dir, dsp_from_dir) -> Optional[tuple[DiffEnum, Iterator[str]]]:
         temp_path = Path(to_dir, file)
         curr_path = Path(from_dir, file)
         if temp_path.exists() and curr_path.exists() and temp_path.is_file():
@@ -105,13 +118,17 @@ class ComponentsDiffer:
                 with open(temp_path) as fh:
                     new_lines = fh.readlines()
             except UnicodeDecodeError as e:
-                return ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e
+                )
 
             try:
                 with open(curr_path) as fh:
                     old_lines = fh.readlines()
             except UnicodeDecodeError as e:
-                return ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e
+                )
 
             if new_lines == old_lines:
                 # The files are identical
@@ -131,7 +148,9 @@ class ComponentsDiffer:
                 with open(temp_path) as fh:
                     new_lines = fh.readlines()
             except UnicodeDecodeError as e:
-                return ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e
+                )
 
             # The file was created
             # Show file against /dev/null
@@ -149,7 +168,9 @@ class ComponentsDiffer:
                 with open(curr_path) as fh:
                     old_lines = fh.readlines()
             except UnicodeDecodeError as e:
-                return ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e
+                )
 
             diff = difflib.unified_diff(
                 old_lines,
@@ -228,33 +249,11 @@ class ComponentsDiffer:
                     fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
                 elif diff_status == ComponentsDiffer.DiffEnum.TO_DECODE_FAIL:
                     # We failed to decode the file
-                    log.warning(
-                        f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
-                    )
-                    ans = questionary.select(
-                        "Do you still want to proceed with constructing the diff?",
-                        choices=["Abort diff creation", "Ignore file", "Warn in diff"],
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask()
-                    if ans == "Warn in diff":
-                        fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
-                    elif ans == "Abort diff creation":
-                        raise OSError from diff
+                    fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
 
                 elif diff_status == ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL:
                     # We failed to decode the file
-                    log.warning(
-                        f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
-                    )
-                    ans = questionary.select(
-                        "Do you still want to proceed with constructing the diff?",
-                        choices=["Abort diff creation", "Ignore file", "Warn in diff"],
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask()
-                    if ans == "Warn in diff":
-                        fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
-                    elif ans == "Abort diff creation":
-                        raise OSError from diff
+                    fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
 
                 elif limit_output and not file.suffix == ".nf":
                     # Skip printing the diff for files other than main.nf
