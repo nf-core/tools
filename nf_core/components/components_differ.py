@@ -3,9 +3,11 @@ import enum
 import json
 import logging
 import os
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
+import questionary
 from rich import box
 from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
@@ -32,9 +34,11 @@ class ComponentsDiffer:
         CHANGED = enum.auto()
         CREATED = enum.auto()
         REMOVED = enum.auto()
+        FROM_DECODE_FAIL = enum.auto()
+        TO_DECODE_FAIL = enum.auto()
 
     @staticmethod
-    def get_component_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None):
+    def get_component_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None, ignore_files={}):
         """
         Compute the diff between the current component version
         and the new version.
@@ -71,57 +75,127 @@ class ComponentsDiffer:
             )
         )
         files = list(files)
+        log.info(files)
 
         # Loop through all the component files and compute their diffs if needed
         for file in files:
-            temp_path = Path(to_dir, file)
-            curr_path = Path(from_dir, file)
-            if temp_path.exists() and curr_path.exists() and temp_path.is_file():
-                with open(temp_path) as fh:
-                    new_lines = fh.readlines()
-                with open(curr_path) as fh:
-                    old_lines = fh.readlines()
-
-                if new_lines == old_lines:
-                    # The files are identical
-                    diffs[file] = (ComponentsDiffer.DiffEnum.UNCHANGED, ())
-                else:
-                    # Compute the diff
-                    diff = difflib.unified_diff(
-                        old_lines,
-                        new_lines,
-                        fromfile=str(Path(dsp_from_dir, file)),
-                        tofile=str(Path(dsp_to_dir, file)),
-                    )
-                    diffs[file] = (ComponentsDiffer.DiffEnum.CHANGED, diff)
-
-            elif temp_path.exists():
-                with open(temp_path) as fh:
-                    new_lines = fh.readlines()
-                # The file was created
-                # Show file against /dev/null
-                diff = difflib.unified_diff(
-                    [],
-                    new_lines,
-                    fromfile=str(Path("/dev", "null")),
-                    tofile=str(Path(dsp_to_dir, file)),
-                )
-                diffs[file] = (ComponentsDiffer.DiffEnum.CREATED, diff)
-
-            elif curr_path.exists():
-                # The file was removed
-                # Show file against /dev/null
-                with open(curr_path) as fh:
-                    old_lines = fh.readlines()
-                diff = difflib.unified_diff(
-                    old_lines,
-                    [],
-                    fromfile=str(Path(dsp_from_dir, file)),
-                    tofile=str(Path("/dev", "null")),
-                )
-                diffs[file] = (ComponentsDiffer.DiffEnum.REMOVED, diff)
+            diff = ComponentsDiffer.get_file_diff(
+                file=file,
+                to_dir=to_dir,
+                from_dir=from_dir,
+                dsp_to_dir=dsp_to_dir,
+                dsp_from_dir=dsp_from_dir,
+                ignore_files=ignore_files,
+            )
+            if diff is not None:
+                diffs[file] = diff
 
         return diffs
+
+    @staticmethod
+    def handle_decode_error(file, base_dir, type: DiffEnum, e: UnicodeDecodeError, ignore_files: dict[Path, bool]):
+        if file in ignore_files:
+            # We have already seen this file, so do not prompt again
+            ans = "i" if ignore_files[file] else "w"
+        else:
+            log.warning(
+                f"We failed to read the file: [bold red]{file}[/]. Please check that the component's directory contains only text files."
+            )
+            ans = questionary.select(
+                "Do you still want to proceed with constructing the diff?",
+                choices=[
+                    questionary.Choice("Abort diff creation", "a"),
+                    questionary.Choice("Ignore file", "i"),
+                    questionary.Choice("Warn in diff", "w"),
+                ],
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+
+        if ans == "w":
+            ignore_files[file] = False
+            return type, iter(())
+        elif ans == "a":
+            raise OSError from e
+        elif ans == "i":
+            ignore_files[file] = True
+            return None
+        else:
+            raise UserWarning("This should never occur")
+
+    @staticmethod
+    def get_file_diff(
+        file, to_dir, from_dir, dsp_to_dir, dsp_from_dir, ignore_files=[]
+    ) -> Optional[tuple[DiffEnum, Iterator[str]]]:
+        temp_path = Path(to_dir, file)
+        curr_path = Path(from_dir, file)
+        if temp_path.exists() and curr_path.exists() and temp_path.is_file():
+            try:
+                with open(temp_path) as fh:
+                    new_lines = fh.readlines()
+            except UnicodeDecodeError as e:
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e, ignore_files
+                )
+
+            try:
+                with open(curr_path) as fh:
+                    old_lines = fh.readlines()
+            except UnicodeDecodeError as e:
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e, ignore_files
+                )
+
+            if new_lines == old_lines:
+                # The files are identical
+                return ComponentsDiffer.DiffEnum.UNCHANGED, iter(())
+            else:
+                # Compute the diff
+                diff = difflib.unified_diff(
+                    old_lines,
+                    new_lines,
+                    fromfile=str(Path(dsp_from_dir, file)),
+                    tofile=str(Path(dsp_to_dir, file)),
+                )
+                return ComponentsDiffer.DiffEnum.CHANGED, diff
+
+        elif temp_path.exists():
+            try:
+                with open(temp_path) as fh:
+                    new_lines = fh.readlines()
+            except UnicodeDecodeError as e:
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_to_dir, ComponentsDiffer.DiffEnum.TO_DECODE_FAIL, e, ignore_files
+                )
+
+            # The file was created
+            # Show file against /dev/null
+            diff = difflib.unified_diff(
+                [],
+                new_lines,
+                fromfile=str(Path("/dev", "null")),
+                tofile=str(Path(dsp_to_dir, file)),
+            )
+            return ComponentsDiffer.DiffEnum.CREATED, diff
+        elif curr_path.exists():
+            # The file was removed
+            # Show file against /dev/null
+            try:
+                with open(curr_path) as fh:
+                    old_lines = fh.readlines()
+            except UnicodeDecodeError as e:
+                return ComponentsDiffer.handle_decode_error(
+                    file, dsp_from_dir, ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL, e, ignore_files
+                )
+
+            diff = difflib.unified_diff(
+                old_lines,
+                [],
+                fromfile=str(Path(dsp_from_dir, file)),
+                tofile=str(Path("/dev", "null")),
+            )
+            return ComponentsDiffer.DiffEnum.REMOVED, diff
+        else:
+            raise LookupError(f"The file {file} is missing both before and after the patch")
 
     @staticmethod
     def write_diff_file(
@@ -137,6 +211,7 @@ class ComponentsDiffer:
         dsp_from_dir=None,
         dsp_to_dir=None,
         limit_output=False,
+        ignore_files={},
     ):
         """
         Writes the diffs of a component to the diff file.
@@ -164,7 +239,9 @@ class ComponentsDiffer:
         if dsp_to_dir is None:
             dsp_to_dir = to_dir
 
-        diffs = ComponentsDiffer.get_component_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
+        diffs = ComponentsDiffer.get_component_diffs(
+            from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir, ignore_files=ignore_files
+        )
         if all(diff_status == ComponentsDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
             raise UserWarning("Component is unchanged")
         log.debug(f"Writing diff of '{component}' to '{diff_path}'")
@@ -188,6 +265,14 @@ class ComponentsDiffer:
                 elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                     # The file was removed between the commits
                     fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
+                elif diff_status == ComponentsDiffer.DiffEnum.TO_DECODE_FAIL:
+                    # We failed to decode the file
+                    fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
+
+                elif diff_status == ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL:
+                    # We failed to decode the file
+                    fh.write(f"'{Path(dsp_from_dir, file)}' failed to be decoded\n")
+
                 elif limit_output and not file.suffix == ".nf":
                     # Skip printing the diff for files other than main.nf
                     fh.write(f"Changes in '{Path(component, file)}' but not shown\n")
@@ -245,6 +330,7 @@ class ComponentsDiffer:
         dsp_from_dir=None,
         dsp_to_dir=None,
         limit_output=False,
+        ignore_files={},
     ):
         """
         Prints the diffs between two component versions to the terminal
@@ -266,7 +352,7 @@ class ComponentsDiffer:
             dsp_to_dir = to_dir
 
         diffs = ComponentsDiffer.get_component_diffs(
-            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir
+            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir, ignore_files=ignore_files
         )
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
@@ -280,32 +366,44 @@ class ComponentsDiffer:
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ComponentsDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
-                log.info(f"'{Path(dsp_from_dir, file)}' is unchanged")
+                log.debug(f"'{Path(dsp_from_dir, file)}' is unchanged")
+                file_content = "Unchanged"
             elif diff_status == ComponentsDiffer.DiffEnum.CREATED:
                 # The file was created between the commits
-                log.info(f"'{Path(dsp_from_dir, file)}' was created")
+                log.debug(f"'{Path(dsp_from_dir, file)}' was created")
+                file_content = "[green]Created[/]"
             elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
-                log.info(f"'{Path(dsp_from_dir, file)}' was removed")
+                log.debug(f"'{Path(dsp_from_dir, file)}' was removed")
+                file_content = "[red]Removed[/]"
+            elif diff_status == ComponentsDiffer.DiffEnum.TO_DECODE_FAIL:
+                # We failed to decode the file
+                log.debug(f"'{Path(dsp_to_dir, file)}' failed to be decoded")
+                file_content = "[bold red]Failed to decode new file[/]"
+            elif diff_status == ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL:
+                # We failed to decode the file
+                log.debug(f"'{Path(dsp_from_dir, file)}' failed to be decoded")
+                file_content = "[bold red]Failed to decode old file[/]"
             elif limit_output and not file.suffix == ".nf":
                 # Skip printing the diff for files other than main.nf
-                log.info(f"Changes in '{Path(component, file)}' but not shown")
+                log.debug(f"Changes in '{Path(component, file)}' but not shown")
+                file_content = Panel(f"Changes in '{Path(component, file)}' but not shown")
             else:
                 # The file has changed
-                log.info(f"Changes in '{Path(component, file)}':")
+                log.debug(f"Changes in '{Path(component, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
-                panel_group.append(Panel(syntax, title=str(file), title_align="left", padding=0))
-            console.print(
-                Panel(
-                    Group(*panel_group),
-                    title=f"[white]{str(component)}[/white]",
-                    title_align="left",
-                    padding=0,
-                    border_style="blue",
-                    box=box.HEAVY,
-                )
+                file_content = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
+            panel_group.append(Panel(file_content, title=str(file), title_align="left", padding=0))
+        console.print(
+            Panel(
+                Group(*panel_group),
+                title=f"[white]{str(component)}[/white]",
+                title_align="left",
+                padding=0,
+                border_style="blue",
+                box=box.HEAVY,
             )
+        )
 
     @staticmethod
     def per_file_patch(patch_fn: Union[str, Path]) -> dict[str, list[str]]:
