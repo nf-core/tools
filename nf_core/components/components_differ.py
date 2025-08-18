@@ -79,7 +79,6 @@ class ComponentsDiffer:
 
         # Loop through all the component files and compute their diffs if needed
         for file in files:
-            log.info(file)
             diff = ComponentsDiffer.get_file_diff(
                 file=file,
                 to_dir=to_dir,
@@ -100,7 +99,7 @@ class ComponentsDiffer:
             ans = "i" if ignore_files[file] else "w"
         else:
             log.warning(
-                f"We failed to read the [bold red]{file}[/] file. Please check that the component's directory contains only text files."
+                f"We failed to read the file: [bold red]{file}[/]. Please check that the component's directory contains only text files."
             )
             ans = questionary.select(
                 "Do you still want to proceed with constructing the diff?",
@@ -380,7 +379,6 @@ class ComponentsDiffer:
             elif diff_status == ComponentsDiffer.DiffEnum.TO_DECODE_FAIL:
                 # We failed to decode the file
                 log.debug(f"'{Path(dsp_to_dir, file)}' failed to be decoded")
-                file_content = "[bold red]Failed to decode[/]"
                 file_content = "[bold red]Failed to decode new file[/]"
             elif diff_status == ComponentsDiffer.DiffEnum.FROM_DECODE_FAIL:
                 # We failed to decode the file
