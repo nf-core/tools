@@ -1,6 +1,6 @@
 {
     "name": "nfcore",
-    "image": "nfcore/devcontainer:latest", // ToDo: Add version hash once available
+    "image": "nfcore/devcontainer:latest",
 
     "remoteEnv": {
         // Workspace path on the host for mounting with docker-outside-of-docker

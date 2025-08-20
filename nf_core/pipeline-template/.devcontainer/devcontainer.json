@@ -1,6 +1,6 @@
 {
     "name": "nfcore",
-    "image": "nfcore/devcontainer", // ToDo: Add version hash once available
+    "image": "nfcore/devcontainer:latest",
 
     "remoteUser": "root",
     "privileged": true,
