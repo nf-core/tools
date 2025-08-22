@@ -6,6 +6,8 @@
 
 ### Linting
 
+- ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
+
 ### Modules
 
 - Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
