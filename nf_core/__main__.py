@@ -1905,7 +1905,7 @@ def test_datasets(ctx):
     "--generate-dl-url",
     is_flag=True,
     default=False,
-    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 @click.argument("query", required=False)
 def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
@@ -1932,7 +1932,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, 
     "--generate-dl-url",
     is_flag=True,
     default=False,
-    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     """
