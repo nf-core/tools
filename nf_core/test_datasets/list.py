@@ -66,17 +66,12 @@ def list_datasets(
             else:
                 out.append(f)
 
-    if plain_text_output:
+    if plain_text_output or generate_nf_path or generate_dl_url:
         stdout.print(os.linesep.join(out))
 
     else:
         table = rich.table.Table()
-        if generate_nf_path:
-            table.add_column("Nextflow Import", overflow="fold")
-        elif generate_dl_url:
-            table.add_column("Download URL", overflow="fold")
-        else:
-            table.add_column("File", overflow="fold")
+        table.add_column("File", overflow="fold")
 
         for el in out:
             table.add_row(el)
