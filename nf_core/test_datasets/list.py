@@ -1,3 +1,4 @@
+import logging
 import os
 
 import rich
@@ -14,6 +15,7 @@ from nf_core.test_datasets.test_datasets_utils import (
 from nf_core.utils import rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
+log = logging.getLogger(__name__)
 
 
 def list_dataset_branches(plain_text_output: bool = False) -> None:
@@ -51,6 +53,9 @@ def list_datasets(
 
     Ignores files with prefixes given in ignored_file_prefixes.
     """
+    if generate_nf_path and generate_dl_url:
+        log.warning("Ignoring url output as nextflow path output is enabled.")
+
     branch, all_branches = get_or_prompt_branch(maybe_branch)
 
     tree = list_files_by_branch(branch, all_branches, ignored_file_prefixes)
