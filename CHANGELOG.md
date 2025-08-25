@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
+
 ### Linting
 
 ### Modules
