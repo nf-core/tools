@@ -6,6 +6,8 @@
 
 ### Linting
 
+- ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
+
 ### Modules
 
 - Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
@@ -24,6 +26,7 @@
 - Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
 - Replace arm profile with arm64 and emulate_amd64 profiles ([#3689](https://github.com/nf-core/tools/pull/3689))
 - Update test-datasets list subcommand to output plain text urls and paths for easy copying [#3720](https://github.com/nf-core/tools/pull/3720)
+- Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
