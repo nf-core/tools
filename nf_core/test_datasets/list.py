@@ -18,7 +18,7 @@ stdout = rich.console.Console(force_terminal=rich_force_colors())
 log = logging.getLogger(__name__)
 
 
-def list_dataset_branches(plain_text_output: bool = False) -> None:
+def list_dataset_branches() -> None:
     """
     List all branches on the nf-core/test-datasets repository.
     Only lists test data and module test data based on the curated list
@@ -26,15 +26,11 @@ def list_dataset_branches(plain_text_output: bool = False) -> None:
     """
     remote_branches = get_remote_branch_names()
 
-    if plain_text_output:
-        out = os.linesep.join(remote_branches)
-        stdout.print(out)
-    else:
-        table = rich.table.Table()
-        table.add_column("Test-Dataset Branches")
-        for b in remote_branches:
-            table.add_row(b)
-        stdout.print(table)
+    table = rich.table.Table()
+    table.add_column("Test-Dataset Branches")
+    for b in remote_branches:
+        table.add_row(b)
+    stdout.print(table)
 
 
 def list_datasets(
@@ -42,7 +38,6 @@ def list_datasets(
     generate_nf_path: bool = False,
     generate_dl_url: bool = False,
     ignored_file_prefixes: list[str] = IGNORED_FILE_PREFIXES,
-    plain_text_output: bool = False,
 ) -> None:
     """
     List all datasets for the given branch on the nf-core/test-datasets repository.
@@ -71,7 +66,8 @@ def list_datasets(
             else:
                 out.append(f)
 
-    if plain_text_output or generate_nf_path or generate_dl_url:
+    plain_text_output = generate_nf_path or generate_dl_url
+    if plain_text_output:
         stdout.print(os.linesep.join(out))
 
     else:
