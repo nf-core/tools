@@ -6,6 +6,12 @@ on:
 jobs:
   prepare-matrix:
     name: Retrieve all template features
+    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
+    if: >
+      contains(github.event.comment.html_url, '/pull/') &&
+      contains(github.event.comment.body, '@nf-core-bot') &&
+      contains(github.event.comment.body, 'update template snapshots') &&
+      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
     outputs:
       all_features: ${{ steps.create_matrix.outputs.matrix }}
@@ -19,10 +25,12 @@ jobs:
           yq 'flatten | tojson(0)' -)" >> $GITHUB_OUTPUT
 
   update-snapshots:
+    needs: [prepare-matrix]
     # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
     if: >
       contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot update template snapshots') &&
+      contains(github.event.comment.body, '@nf-core-bot') &&
+      contains(github.event.comment.body, 'update template snapshots') &&
       github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
     strategy:
