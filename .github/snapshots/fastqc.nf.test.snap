@@ -1,7 +1,6 @@
 {
     "-profile test": {
         "content": [
-            1,
             {
                 "Workflow": {
                     "my-prefix/testpipeline": "v1.0.0dev"
