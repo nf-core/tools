@@ -1574,9 +1574,12 @@ def get_wf_files(wf_path: Path):
 
     wf_files = []
 
-    with open(Path(wf_path, ".gitignore")) as f:
-        lines = f.read().splitlines()
-    ignore = [line for line in lines if line and not line.startswith("#")]
+    try:
+        with open(Path(wf_path, ".gitignore")) as f:
+            lines = f.read().splitlines()
+        ignore = [line for line in lines if line and not line.startswith("#")]
+    except FileNotFoundError:
+        ignore = []
 
     for path in Path(wf_path).rglob("*"):
         if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
