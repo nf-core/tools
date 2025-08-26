@@ -135,12 +135,20 @@ class TestModuleTests(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="kallisto/quant")
 
-        assert len(module_lint.failed) == 2, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.failed) == 4, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) >= 0
         assert len(module_lint.warned) >= 0
-        assert module_lint.failed[0].lint_test == "meta_yml_valid"
-        assert module_lint.failed[1].lint_test == "test_main_tags"
-        assert "kallisto/index" in module_lint.failed[1].message
+
+        # Check for expected failure types
+        failed_tests = [x.lint_test for x in module_lint.failed]
+        assert "meta_yml_valid" in failed_tests
+        assert "test_main_tags" in failed_tests
+        assert failed_tests.count("test_snap_version_content") == 2  # Should appear twice for the two version entries
+
+        # Check test_main_tags failure contains the expected message
+        main_tags_failures = [x for x in module_lint.failed if x.lint_test == "test_main_tags"]
+        assert len(main_tags_failures) == 1
+        assert "kallisto/index" in main_tags_failures[0].message
 
     def test_modules_absent_version(self):
         """Test linting a nf-test module if the versions is absent in the snapshot file `"""
