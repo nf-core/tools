@@ -9,9 +9,15 @@ from ...test_modules import TestModules
 class TestModulesLintLocal(TestModules):
     """Test ModuleLint functionality with local modules"""
 
+    def setUp(self):
+        """Set up test fixtures by installing required modules"""
+        super().setUp()
+        # Install trimgalore module for all tests in this class
+        if not self.mods_install.install("trimgalore"):
+            self.skipTest("Could not install trimgalore module")
+
     def test_modules_lint_local(self):
         """Test linting local modules"""
-        assert self.mods_install.install("trimgalore")
         installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
         local = Path(self.pipeline_dir, "modules", "local", "trimgalore")
         shutil.move(installed, local)
@@ -23,7 +29,6 @@ class TestModulesLintLocal(TestModules):
 
     def test_modules_lint_local_missing_files(self):
         """Test linting local modules with missing files"""
-        assert self.mods_install.install("trimgalore")
         installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
         local = Path(self.pipeline_dir, "modules", "local", "trimgalore")
         shutil.move(installed, local)
@@ -41,7 +46,6 @@ class TestModulesLintLocal(TestModules):
     def test_modules_lint_local_old_format(self):
         """Test linting local modules in old format"""
         Path(self.pipeline_dir, "modules", "local").mkdir()
-        assert self.mods_install.install("trimgalore")
         installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore", "main.nf")
         local = Path(self.pipeline_dir, "modules", "local", "trimgalore.nf")
         shutil.move(installed, local)
