@@ -15,6 +15,59 @@ from nf_core.components.nfcore_component import NFCoreComponent
 log = logging.getLogger(__name__)
 
 
+def _check_version_content_format(snap_content, test_name, snap_file):
+    """
+    Check if version content uses actual YAML data vs hash format.
+
+    Args:
+        snap_content: Parsed JSON snapshot content
+        test_name: Name of the test being checked
+        snap_file: Path to snapshot file (for error reporting)
+
+    Returns:
+        Tuple for passed test if valid, None if invalid or no version data found
+    """
+    # Check if this test contains version data and if it's in hash format
+    if _contains_version_hash(snap_content[test_name]):
+        return None  # Invalid - contains hash format
+
+    # Valid - either contains actual content or no version hash detected
+    return (
+        "test_snap_version_content",
+        "version information contains actual content instead of hash",
+        snap_file,
+    )
+
+
+def _contains_version_hash(test_content):
+    """
+    Check if test content contains version information in hash format.
+
+    Uses precise regex patterns to detect version hash formats while avoiding
+    false positives from similar strings.
+
+    Args:
+        test_content: Content of a single test from snapshot
+
+    Returns:
+        bool: True if hash format detected, False otherwise
+    """
+    # More precise regex patterns with proper boundaries
+    version_hash_patterns = [
+        r"\bversions\.yml:md5,[a-f0-9]{32}\b",  # Exact MD5 format (32 hex chars)
+        r"\bversions\.yml:sha[0-9]*,[a-f0-9]+\b",  # SHA format with variable length
+    ]
+
+    # Convert to string only once and search efficiently
+    content_str = str(test_content)
+
+    for pattern in version_hash_patterns:
+        if re.search(pattern, content_str):
+            return True
+
+    return False
+
+
 def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
     """
     Lint the tests of a module in ``nf-core/modules``
@@ -170,36 +223,22 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                         snap_file,
                                     )
                                 )
-                                # Check if version content is actual content vs MD5 hash
+                                # Check if version content is actual content vs MD5/SHA hash
                                 # Related to: https://github.com/nf-core/modules/issues/6505
                                 # Ensures version snapshots contain actual content instead of hash values
-                                version_content_valid = True
-                                version_hash_patterns = [
-                                    r"versions\.yml:md5,[\da-f]+",  # MD5 hash pattern
-                                    r"versions\.yml:sha[\d]*,[\da-f]+",  # SHA hash pattern
-                                ]
-
-                                for pattern in version_hash_patterns:
-                                    if re.search(pattern, str(snap_content[test_name])):
-                                        version_content_valid = False
-                                        break
-
-                                if version_content_valid:
-                                    module.passed.append(
-                                        (
-                                            "test_snap_version_content",
-                                            "version information contains actual content instead of hash",
-                                            snap_file,
-                                        )
-                                    )
+                                version_check_result = _check_version_content_format(snap_content, test_name, snap_file)
+                                if version_check_result:
+                                    module.passed.append(version_check_result)
                                 else:
-                                    module.failed.append(
-                                        (
-                                            "test_snap_version_content",
-                                            "version information should contain actual content, not MD5/SHA hash",
-                                            snap_file,
+                                    # Only add failure if we found hash patterns
+                                    if _contains_version_hash(snap_content[test_name]):
+                                        module.failed.append(
+                                            (
+                                                "test_snap_version_content",
+                                                "Version information should contain actual YAML content (e.g., {'tool': {'version': '1.0'}}), not hash format like 'versions.yml:md5,hash'",
+                                                snap_file,
+                                            )
                                         )
-                                    )
                             else:
                                 module.failed.append(
                                     (
