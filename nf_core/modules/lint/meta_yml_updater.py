@@ -11,6 +11,7 @@ This module provides specialized classes for different aspects of meta.yml file 
 
 import logging
 import re
+from functools import lru_cache
 from typing import Any, Union
 
 import ruamel.yaml
@@ -21,6 +22,46 @@ from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
+
+# Global cache for EDAM formats to avoid repeated network calls
+_edam_cache = None
+
+
+def get_cached_edam_formats() -> dict[str, list[str]]:
+    """
+    Get EDAM formats with caching to avoid repeated network calls.
+
+    This optimization addresses the performance issue where each module
+    would load EDAM formats independently, causing significant slowdown.
+
+    Returns:
+        dict: Cached EDAM format mappings
+    """
+    global _edam_cache
+    if _edam_cache is None:
+        log.debug("Loading EDAM formats (first time, will be cached)")
+        _edam_cache = nf_core.modules.modules_utils.load_edam()
+    else:
+        log.debug("Using cached EDAM formats")
+    return _edam_cache
+
+
+@lru_cache(maxsize=256)
+def get_biotools_response_cached(tool_name: str) -> dict | None:
+    """
+    Get bio.tools response with LRU caching to avoid repeated API calls.
+
+    This optimization caches bio.tools API responses to prevent the same
+    tool from being queried multiple times during a linting session.
+
+    Args:
+        tool_name: Name of the tool to query
+
+    Returns:
+        dict: Bio.tools API response or None if not found
+    """
+    log.debug(f"Getting bio.tools response for {tool_name} (with caching)")
+    return get_biotools_response(tool_name)
 
 
 class MetaInfoFinder:
@@ -179,7 +220,7 @@ class BiotoolsIdentifierManager:
         for i, tool in enumerate(tools_section):
             tool_name = list(tool.keys())[0]
             if "identifier" not in tool[tool_name]:
-                biotools_data = get_biotools_response(tool_name)
+                biotools_data = get_biotools_response_cached(tool_name)
                 if biotools_data is not None:
                     tools_section[i][tool_name]["identifier"] = get_biotools_id(biotools_data, tool_name)
 
@@ -269,8 +310,8 @@ class MetaYmlUpdater:
         self.meta_info_finder = MetaInfoFinder()
         self.input_output_corrector = InputOutputCorrector(self.meta_info_finder)
 
-        # Load EDAM formats and initialize ontology manager
-        edam_formats = nf_core.modules.modules_utils.load_edam()
+        # Load EDAM formats with caching and initialize ontology manager
+        edam_formats = get_cached_edam_formats()
         self.edam_ontology_manager = EdamOntologyManager(edam_formats)
 
     def update_meta_yml_file(self, read_meta_yml_func, obtain_inputs_func, obtain_outputs_func) -> None:
