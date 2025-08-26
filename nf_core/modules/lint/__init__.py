@@ -113,176 +113,87 @@ class ModuleLint(ComponentLint):
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
         """
-        # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
-        # Prompt for module or all
-        if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
-            questions = [
-                {
-                    "type": "list",
-                    "name": "all_modules",
-                    "message": "Lint all modules or a single named module?",
-                    "choices": ["All modules", "Named module"],
-                },
-                {
-                    "type": "autocomplete",
-                    "name": "tool_name",
-                    "message": "Tool name:",
-                    "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.component_name for m in self.all_remote_components],
-                },
-            ]
-            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
-            all_modules = answers["all_modules"] == "All modules"
-            module = answers.get("tool_name")
-
-        # Only lint the given module
-        if module:
-            if all_modules:
-                raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
-            local_modules = []
-            remote_modules = [m for m in self.all_remote_components if m.component_name == module]
-            if len(remote_modules) == 0:
-                raise LintExceptionError(f"Could not find the specified module: '{module}'")
-        else:
-            local_modules = self.all_local_components
-            remote_modules = self.all_remote_components
-
-        if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
-        else:
-            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
-        if module:
-            log.info(f"Linting module: [magenta]'{module}'")
-
-        # Filter the tests by the key if one is supplied
-        if key:
-            self.filter_tests_by_key(key)
-            log.info("Only running tests: '{}'".format("', '".join(key)))
-
-        # If it is a pipeline, load the lint config file and the modules.json file
-        if self.repo_type == "pipeline":
-            self.set_up_pipeline_files()
-
-        # Lint local modules
-        if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
-
-        # Lint nf-core modules
-        if not local and len(remote_modules) > 0:
-            self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
-
-        if print_results:
-            self._print_results(show_passed=show_passed, sort_by=sort_by)
-            self.print_summary()
+        # Use the base class unified lint method
+        return super().lint(
+            component=module,
+            registry=registry,
+            key=key,
+            all_components=all_modules,
+            print_results=print_results,
+            show_passed=show_passed,
+            sort_by=sort_by,
+            local=local,
+            fix_version=fix_version,
+        )
 
     def lint_modules(
         self, modules: list[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
     ) -> None:
         """
-        Lint a list of modules
-
-        Args:
-            modules ([NFCoreComponent]): A list of module objects
-            registry (str): The container registry to use. Should be quay.io in most situations.
-            local (boolean): Whether the list consist of local or nf-core modules
-            fix_version (boolean): Fix the module version if a newer version is available
+        Lint a list of modules (alias to base class method for backward compatibility)
         """
-        # TODO: consider unifying modules and subworkflows lint_modules() function and add it to the ComponentLint class
-        progress_bar = rich.progress.Progress(
-            "[bold blue]{task.description}",
-            rich.progress.BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
-            transient=True,
-            console=console,
-            disable=self.hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
-        )
-        with progress_bar:
-            lint_progress = progress_bar.add_task(
-                f"Linting {'local' if local else 'nf-core'} modules",
-                total=len(modules),
-                test_name=modules[0].component_name,
-            )
-
-            for mod in modules:
-                progress_bar.update(lint_progress, advance=1, test_name=mod.component_name)
-                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
+        return self.lint_components(modules, registry=registry, local=local, fix_version=fix_version)
 
     def lint_module(
         self,
         mod: NFCoreComponent,
-        progress_bar: rich.progress.Progress,
+        progress_bar,
         local: bool = False,
         fix_version: bool = False,
+        registry: str = "quay.io",
     ):
         """
-        Perform linting on one module
-
-        If the module is a local module we only check the `main.nf` file,
-        and issue warnings instead of failures.
-
-        If the module is a nf-core module we check for existence of the files
-        - main.nf
-        - meta.yml
-        And verify that their content conform to the nf-core standards.
-
-        If the linting is run for modules in the central nf-core/modules repo
-        (repo_type==modules), files that are relevant for module testing are
-        also examined
+        Perform linting on one module (alias to base class method for backward compatibility)
         """
-        # TODO: consider unifying modules and subworkflows lint_module() function and add it to the ComponentLint class
-        # Only check the main script in case of a local module
-        if local:
-            mod.get_inputs_from_main_nf()
-            mod.get_outputs_from_main_nf()
-            # Update meta.yml file if requested
-            if self.fix and mod.meta_yml is not None:
-                self.update_meta_yml_file(mod)
+        return self.lint_component(mod, progress_bar, local=local, fix_version=fix_version, registry=registry)
 
-            for test_name in self.lint_tests:
-                if test_name in self.local_module_exclude_tests:
-                    continue
-                if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
-                elif test_name in ["meta_yml", "environment_yml"]:
-                    # Allow files to be missing for local
-                    getattr(self, test_name)(mod, allow_missing=True)
-                else:
-                    getattr(self, test_name)(mod)
+    def _lint_local_component(self, component: NFCoreComponent, **kwargs):
+        """Lint a local module"""
+        self._is_local_linting = True
+        fix_version = kwargs.get("fix_version", False)
+        progress_bar = kwargs.get("progress_bar")
 
-            self.passed += [LintResult(mod, *m) for m in mod.passed]
-            warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
-            if not self.fail_warned:
-                self.warned += warned
+        component.get_inputs_from_main_nf()
+        component.get_outputs_from_main_nf()
+
+        # Update meta.yml file if requested
+        if self.fix and component.meta_yml is not None:
+            self.update_meta_yml_file(component)
+
+        for test_name in self.lint_tests:
+            if test_name in self.local_module_exclude_tests:
+                continue
+            if test_name == "main_nf":
+                getattr(self, test_name)(component, fix_version, self.registry, progress_bar)
+            elif test_name in ["meta_yml", "environment_yml"]:
+                # Allow files to be missing for local
+                getattr(self, test_name)(component, allow_missing=True)
             else:
-                self.failed += warned
+                getattr(self, test_name)(component)
 
-        # Otherwise run all the lint tests
-        else:
-            mod.get_inputs_from_main_nf()
-            mod.get_outputs_from_main_nf()
-            # Update meta.yml file if requested
-            if self.fix:
-                self.update_meta_yml_file(mod)
+    def _lint_remote_component(self, component: NFCoreComponent, **kwargs):
+        """Lint a remote/nf-core module"""
+        self._is_local_linting = False
+        fix_version = kwargs.get("fix_version", False)
+        progress_bar = kwargs.get("progress_bar")
 
-            if self.repo_type == "pipeline" and self.modules_json and mod.repo_url:
-                # Set correct sha
-                version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
-                mod.git_sha = version
+        component.get_inputs_from_main_nf()
+        component.get_outputs_from_main_nf()
 
-            for test_name in self.lint_tests:
-                if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
-                else:
-                    getattr(self, test_name)(mod)
+        # Update meta.yml file if requested
+        if self.fix:
+            self.update_meta_yml_file(component)
 
-            self.passed += [LintResult(mod, *m) for m in mod.passed]
-            warned = [LintResult(mod, *m) for m in mod.warned]
-            if not self.fail_warned:
-                self.warned += warned
+        if self.repo_type == "pipeline" and self.modules_json and component.repo_url:
+            # Set correct sha
+            version = self.modules_json.get_module_version(component.component_name, component.repo_url, component.org)
+            component.git_sha = version
+
+        for test_name in self.lint_tests:
+            if test_name == "main_nf":
+                getattr(self, test_name)(component, fix_version, self.registry, progress_bar)
             else:
-                self.failed += warned
-
-            self.failed += [LintResult(mod, *m) for m in mod.failed]
+                getattr(self, test_name)(component)
 
     def update_meta_yml_file(self, mod):
         """

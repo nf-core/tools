@@ -6,9 +6,11 @@ in nf-core pipelines
 import logging
 import operator
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Union
 
+import questionary
 import rich.box
 import rich.console
 import rich.panel
@@ -46,7 +48,7 @@ class LintResult:
         self.component_name: str = component.component_name
 
 
-class ComponentLint(ComponentCommand):
+class ComponentLint(ComponentCommand, ABC):
     """
     An object for linting modules and subworkflows either in a clone of the 'nf-core/modules'
     repository or in any nf-core pipeline directory
@@ -354,3 +356,196 @@ class ComponentLint(ComponentCommand):
         table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
         table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
         console.print(table)
+
+    def lint(
+        self,
+        component=None,
+        registry="quay.io",
+        key=(),
+        all_components=False,
+        print_results=True,
+        show_passed=False,
+        sort_by="test",
+        local=False,
+        fix_version=False,
+    ):
+        """
+        Lint all or one specific component (unified method for modules and subworkflows)
+
+        First gets a list of all local components and all components
+        installed from nf-core.
+
+        For all nf-core components, the correct file structure is assured and important
+        file content is verified. If directory subject to linting is a clone of 'nf-core/modules',
+        the files necessary for testing the components are also inspected.
+
+        For all local components, the '.nf' file is checked for some important flags, and warnings
+        are issued if untypical content is found.
+
+        :param component:       A specific component to lint
+        :param print_results:   Whether to print the linting results
+        :param show_passed:     Whether passed tests should be shown as well
+        :param fix_version:     Update the component version if a newer version is available (modules only)
+        :param hide_progress:   Don't show progress bars
+
+        :returns:               A ComponentLint object containing information of
+                                the passed, warned and failed tests
+        """
+        # Prompt for component or all
+        if component is None and not (local or all_components) and len(self.all_remote_components) > 0:
+            component_singular = self.component_type[:-1]  # modules -> module, subworkflows -> subworkflow
+            questions = [
+                {
+                    "type": "list",
+                    "name": f"all_{self.component_type}",
+                    "message": f"Lint all {self.component_type} or a single named {component_singular}?",
+                    "choices": [f"All {self.component_type}", f"Named {component_singular}"],
+                },
+                {
+                    "type": "autocomplete",
+                    "name": "component_name",
+                    "message": f"{component_singular.title()} name:",
+                    "when": lambda x: x[f"all_{self.component_type}"] == f"Named {component_singular}",
+                    "choices": [m.component_name for m in self.all_remote_components],
+                },
+            ]
+            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
+            all_components = answers[f"all_{self.component_type}"] == f"All {self.component_type}"
+            component = answers.get("component_name")
+
+        # Only lint the given component
+        if component:
+            if all_components:
+                raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
+            local_components = []
+            remote_components = [c for c in self.all_remote_components if c.component_name == component]
+            if len(remote_components) == 0:
+                raise LintExceptionError(f"Could not find the specified {self.component_type[:-1]}: '{component}'")
+        else:
+            local_components = self.all_local_components
+            remote_components = self.all_remote_components
+
+        if self.repo_type == "modules":
+            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
+        else:
+            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
+        if component:
+            log.info(f"Linting {self.component_type[:-1]}: [magenta]'{component}'")
+
+        # Filter the tests by the key if one is supplied
+        if key:
+            self.filter_tests_by_key(key)
+            log.info("Only running tests: '{}'".format("', '".join(key)))
+
+        # If it is a pipeline, load the lint config file and the modules.json file
+        if self.repo_type == "pipeline":
+            self.set_up_pipeline_files()
+
+        # Lint local components
+        if local and len(local_components) > 0:
+            self.lint_components(local_components, registry=registry, local=True, fix_version=fix_version)
+
+        # Lint nf-core components
+        if not local and len(remote_components) > 0:
+            self.lint_components(remote_components, registry=registry, local=False, fix_version=fix_version)
+
+        if print_results:
+            self._print_results(show_passed=show_passed, sort_by=sort_by)
+            self.print_summary()
+
+    def lint_components(
+        self,
+        components: list[NFCoreComponent],
+        registry: str = "quay.io",
+        local: bool = False,
+        fix_version: bool = False,
+    ) -> None:
+        """
+        Lint a list of components
+
+        Args:
+            components ([NFCoreComponent]): A list of component objects
+            registry (str): The container registry to use. Should be quay.io in most situations.
+            local (boolean): Whether the list consist of local or nf-core components
+            fix_version (boolean): Fix the component version if a newer version is available (modules only)
+        """
+        import rich.progress
+
+        progress_bar = rich.progress.Progress(
+            "[bold blue]{task.description}",
+            rich.progress.BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+            transient=True,
+            console=console,
+            disable=self.hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
+        )
+        with progress_bar:
+            lint_progress = progress_bar.add_task(
+                f"Linting {'local' if local else 'nf-core'} {self.component_type}",
+                total=len(components),
+                test_name=components[0].component_name,
+            )
+
+            for component in components:
+                progress_bar.update(lint_progress, advance=1, test_name=component.component_name)
+                self.lint_component(component, progress_bar, local=local, fix_version=fix_version, registry=registry)
+
+    def lint_component(
+        self,
+        component: NFCoreComponent,
+        progress_bar,
+        local: bool = False,
+        fix_version: bool = False,
+        registry: str = "quay.io",
+    ):
+        """
+        Perform linting on one component (template method)
+
+        If the component is a local component we only check the `main.nf` file,
+        and issue warnings instead of failures.
+
+        If the component is a nf-core component we check for existence of the files
+        - main.nf
+        - meta.yml
+        And verify that their content conform to the nf-core standards.
+
+        If the linting is run for components in the central nf-core/modules repo
+        (repo_type==modules), files that are relevant for component testing are
+        also examined
+        """
+        if local:
+            self._lint_local_component(component, fix_version=fix_version, registry=registry, progress_bar=progress_bar)
+        else:
+            self._lint_remote_component(
+                component, fix_version=fix_version, registry=registry, progress_bar=progress_bar
+            )
+
+        # Aggregate results
+        self._aggregate_component_results(component)
+
+    def _aggregate_component_results(self, component: NFCoreComponent):
+        """Aggregate component results into the main results lists"""
+        self.passed += [LintResult(component, *m) for m in component.passed]
+
+        # Handle warnings differently for local vs remote components
+        if hasattr(self, "_is_local_linting") and self._is_local_linting:
+            warned = [LintResult(component, *m) for m in (component.warned + component.failed)]
+        else:
+            warned = [LintResult(component, *m) for m in component.warned]
+            self.failed += [LintResult(component, *m) for m in component.failed]
+
+        if not self.fail_warned:
+            self.warned += warned
+        else:
+            self.failed += warned
+
+    # Abstract methods for child classes to implement
+    @abstractmethod
+    def _lint_local_component(self, component: NFCoreComponent, **kwargs):
+        """Lint a local component. Must be implemented by child classes."""
+        pass
+
+    @abstractmethod
+    def _lint_remote_component(self, component: NFCoreComponent, **kwargs):
+        """Lint a remote component. Must be implemented by child classes."""
+        pass
