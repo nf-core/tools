@@ -212,10 +212,10 @@ class TestUtils(TestPipelines):
 
     def test_set_wd_revert_on_raise(self):
         wd_before_context = Path().resolve()
-        with pytest.raises(Exception):
-            with nf_core.utils.set_wd(self.tmp_dir):
-                raise Exception
-        assert wd_before_context == Path().resolve()
+        with mock.patch("nf_core.utils.set_wd", side_effect=Exception("mocked exception")):
+            with pytest.raises(Exception):
+                with nf_core.utils.set_wd(self.tmp_dir):
+                    assert wd_before_context == Path().resolve()
 
     @mock.patch("nf_core.utils.run_cmd")
     def test_fetch_wf_config(self, mock_run_cmd):
@@ -224,3 +224,11 @@ class TestUtils(TestPipelines):
         config = nf_core.utils.fetch_wf_config(".", False)
         assert len(config.keys()) == 1
         assert "params.param2" in list(config.keys())
+
+    def test_get_wf_files(self):
+        files = nf_core.utils.get_wf_files(self.pipeline_obj.wf_path)
+        assert str(Path(self.pipeline_dir, "main.nf")) in files
+
+    def test_get_wf_files_no_gitignore(self):
+        files = nf_core.utils.get_wf_files(Path("random/path"))
+        assert files == []
