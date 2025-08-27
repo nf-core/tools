@@ -36,6 +36,14 @@ class DummyLint(ComponentLint):
         self.passed = []
         self.failed = []
 
+    def _lint_local_component(self, component, **kwargs):
+        """Dummy implementation for testing"""
+        pass
+
+    def _lint_remote_component(self, component, **kwargs):
+        """Dummy implementation for testing"""
+        pass
+
 
 def setup_test_environment(tmp_path, content, filename="environment.yml"):
     test_file = tmp_path / filename
