@@ -120,3 +120,6 @@ snapshot_report.html
 # Nextflow inspect
 tests/pipelines/null
 tests/pipelines/.nextflow
+
+# AI
+CLAUDE.md
