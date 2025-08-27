@@ -1573,13 +1573,18 @@ def get_wf_files(wf_path: Path):
     """Return a list of all files in a directory (ignores .gitigore files)"""
 
     wf_files = []
-
     try:
         with open(Path(wf_path, ".gitignore")) as f:
             lines = f.read().splitlines()
-        ignore = [line for line in lines if line and not line.startswith("#")]
+            print(lines)
+        ignore = [
+            (str(wf_path / line) + "*" if line.endswith("/") else str(wf_path / line))
+            for line in lines
+            if line and not line.startswith("#")
+        ]
     except FileNotFoundError:
         ignore = []
+    print(ignore)
 
     for path in Path(wf_path).rglob("*"):
         if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):

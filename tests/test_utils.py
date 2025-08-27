@@ -226,8 +226,13 @@ class TestUtils(TestPipelines):
         assert "params.param2" in list(config.keys())
 
     def test_get_wf_files(self):
+        (self.pipeline_obj.wf_path / "work").mkdir()
+        (self.pipeline_obj.wf_path / "work" / "file.txt").touch()
+        (self.pipeline_obj.wf_path / ".nextflow.log").touch()
         files = nf_core.utils.get_wf_files(self.pipeline_obj.wf_path)
         assert str(Path(self.pipeline_dir, "main.nf")) in files
+        assert str(Path(self.pipeline_dir, "work", "file.txt")) not in files
+        assert str(Path(self.pipeline_dir, ".nextflow.log")) not in files
 
     def test_get_wf_files_no_gitignore(self):
         files = nf_core.utils.get_wf_files(Path("random/path"))
