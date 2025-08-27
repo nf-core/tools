@@ -14,7 +14,7 @@ class TestModulesLintLocal(TestModules):
         super().setUp()
         # Install trimgalore module for all tests in this class
         if not self.mods_install.install("trimgalore"):
-            self.skipTest("Could not install trimgalore module")
+            self.fail("Failed to install trimgalore module - this indicates a test infrastructure problem")
 
     def test_modules_lint_local(self):
         """Test linting local modules"""

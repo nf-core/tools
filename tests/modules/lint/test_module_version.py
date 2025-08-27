@@ -12,7 +12,7 @@ class TestModuleVersion(TestModules):
         """Test module version when git_sha is present in modules.json"""
         # Install a module
         if not self.mods_install.install("samtools/sort"):
-            self.skipTest("Could not install samtools/sort module")
+            self.fail("Failed to install samtools/sort module - this indicates a test infrastructure problem")
         # Run lint on the module - should have a git_sha entry
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort", key=["module_version"])
@@ -29,7 +29,7 @@ class TestModuleVersion(TestModules):
         """Test module version when module is up to date"""
         # Install a module
         if not self.mods_install.install("samtools/sort"):
-            self.skipTest("Could not install samtools/sort module")
+            self.fail("Failed to install samtools/sort module - this indicates a test infrastructure problem")
         # Run lint on the module
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort", key=["module_version"])
