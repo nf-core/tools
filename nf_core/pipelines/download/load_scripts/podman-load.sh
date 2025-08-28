@@ -12,8 +12,7 @@ PODMAN_LOAD_SINGLE_IMAGE() {
     # Look for the full image name in the mainfest.json
     # inside the image tar archive. It is contained in
     # this RepoTags field
-    REPO_TAG=$(tar -O -xf "$TARFILE" manifest.json \
-        | jq -r '.[0].RepoTags[0]')
+    REPO_TAG=$(tar -O -xf "$TARFILE" manifest.json | python -c 'import json, sys; print(json.load(sys.stdin)[0]["RepoTags"][0])')
 
     if [[ -z "$REPO_TAG" || "$REPO_TAG" == "null" ]]; then
         echo "Error: Could not find RepoTags in $TARFILE" >&2
