@@ -1,10 +1,24 @@
 import contextlib
+import importlib.resources
 import logging
+import shutil
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+
+def copy_container_load_scripts(container_system: str, dest_dir: Path, make_exec: bool = True) -> tuple[str, Path]:
+    container_load_scripts_subpackage = "nf_core.pipelines.download.load_scripts"
+    script_name = f"{container_system}-load.sh"
+    dest_path = dest_dir / script_name
+    with importlib.resources.open_text(container_load_scripts_subpackage, script_name) as src:
+        with open(dest_path, "w") as dest:
+            shutil.copyfileobj(src, dest)
+    if make_exec:
+        dest_path.chmod(0o775)
+    return script_name, dest_path
 
 
 class DownloadError(RuntimeError):
