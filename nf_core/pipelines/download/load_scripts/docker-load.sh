@@ -6,6 +6,12 @@ LOGFILE="podman-load.log"
 # Clear log
 > "$LOGFILE"
 
+if ! command -v docker &> /dev/null
+then
+    echo "Error: Docker is not installed. Please install it to continue." >&2
+    exit 1
+fi
+
 if ! docker info &> /dev/null; then
   echo "Error: Docker daemon is not running." >&2
   exit 1
