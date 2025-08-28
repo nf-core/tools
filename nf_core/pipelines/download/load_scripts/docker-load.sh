@@ -6,6 +6,11 @@ LOGFILE="podman-load.log"
 # Clear log
 > "$LOGFILE"
 
+if ! docker info &> /dev/null; then
+  echo "Error: Docker daemon is not running." >&2
+  exit 1
+fi
+
 echo "Loading tar archives into docker"
 for tarfile in $(ls -1 *.tar); do
     if output=$(docker load -i $tarfile); then
