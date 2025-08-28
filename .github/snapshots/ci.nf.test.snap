@@ -1,7 +1,6 @@
 {
     "-profile test": {
         "content": [
-            4,
             {
                 "FASTQC": {
                     "fastqc": "0.12.1"

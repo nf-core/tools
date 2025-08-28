@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 import rich.console
@@ -15,6 +16,7 @@ from nf_core.test_datasets.test_datasets_utils import (
 from nf_core.utils import rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
+log = logging.getLogger(__name__)
 
 
 def search_datasets(
@@ -34,6 +36,10 @@ def search_datasets(
 
     The resulting file can optionally be parsed as a nextflow path or a url for downloading
     """
+
+    if generate_nf_path and generate_dl_url:
+        log.warning("Ignoring url output as nextflow path output is enabled.")
+
     branch, all_branches = get_or_prompt_branch(maybe_branch)
 
     stdout.print("Searching files on branch: ", branch)
