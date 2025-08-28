@@ -1,24 +1,501 @@
 """Tests for the download subcommand of nf-core tools"""
 
+import json
 import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
 import pytest
+import requests
+import rich.progress_bar
+import rich.table
+import rich.text
 
 import nf_core.pipelines.create.create
+import nf_core.pipelines.download
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.download import ContainerError, DownloadWorkflow, WorkflowRepo
+from nf_core.pipelines.download import DownloadWorkflow
+from nf_core.pipelines.download.container_fetcher import ContainerProgress
+from nf_core.pipelines.download.docker import (
+    DockerError,
+    DockerFetcher,
+    DockerProgress,
+)
+from nf_core.pipelines.download.singularity import (
+    FileDownloader,
+    SingularityError,
+    SingularityFetcher,
+    SingularityProgress,
+)
+from nf_core.pipelines.download.utils import (
+    DownloadError,
+    intermediate_file,
+)
+from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import run_cmd
+from nf_core.utils import (
+    NF_INSPECT_MIN_NF_VERSION,
+    check_nextflow_version,
+)
 
 from ..utils import TEST_DATA_DIR, with_temporary_folder
+
+
+class DownloadUtilsTest(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def use_caplog(self, caplog):
+        self._caplog = caplog
+
+    #
+    # Test for 'utils.intermediate_file'
+    #
+    @with_temporary_folder
+    def test_intermediate_file(self, outdir):
+        outdir = Path(outdir)
+        # Code that doesn't fail. The file shall exist
+
+        # Directly write to the file, as in download_image
+        output_path = outdir / "testfile1"
+        with intermediate_file(output_path) as tmp:
+            tmp_path = Path(tmp.name)
+            tmp.write(b"Hello, World!")
+
+        assert output_path.exists()
+        assert os.path.getsize(output_path) == 13
+        assert not tmp_path.exists()
+
+        # Run an external command as in pull_image
+        output_path = outdir / "testfile2"
+        with intermediate_file(output_path) as tmp:
+            tmp_path = Path(tmp.name)
+            subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
+
+        assert (output_path).exists()
+        assert os.path.getsize(output_path) == 14  # Extra \n !
+        assert not (tmp_path).exists()
+
+        # Code that fails. The file shall not exist
+
+        # Directly write to the file and raise an exception
+        output_path = outdir / "testfile3"
+        with pytest.raises(ValueError):
+            with intermediate_file(output_path) as tmp:
+                tmp_path = Path(tmp.name)
+                tmp.write(b"Hello, World!")
+                raise ValueError("This is a test error")
+
+        assert not (output_path).exists()
+        assert not (tmp_path).exists()
+
+        # Run an external command and raise an exception
+        output_path = outdir / "testfile4"
+        with pytest.raises(subprocess.CalledProcessError):
+            with intermediate_file(output_path) as tmp:
+                tmp_path = Path(tmp.name)
+                subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
+                subprocess.check_call(["ls", "/dummy"])
+
+        assert not (output_path).exists()
+        assert not (tmp_path).exists()
+
+        # Test for invalid output paths
+        with pytest.raises(DownloadError):
+            with intermediate_file(outdir) as tmp:
+                pass
+
+        output_path = outdir / "testfile5"
+        os.symlink("/dummy", output_path)
+        with pytest.raises(DownloadError):
+            with intermediate_file(output_path) as tmp:
+                pass
+
+    #
+    # Test for 'utils.DownloadProgress.add/update_main_task'
+    #
+    def test_download_progress_main_task(self):
+        with ContainerProgress() as progress:
+            # No task initially
+            assert progress.tasks == []
+
+            # Add a task, it should be there
+            task_id = progress.add_main_task(total=42)
+            assert task_id == 0
+            assert len(progress.tasks) == 1
+            assert progress.task_ids[0] == task_id
+            assert progress.tasks[0].total == 42
+
+            # Add another task, there should now be two
+            other_task_id = progress.add_task("Another task", total=28)
+            assert other_task_id == 1
+            assert len(progress.tasks) == 2
+            assert progress.task_ids[1] == other_task_id
+            assert progress.tasks[1].total == 28
+
+            progress.update_main_task(total=35)
+            assert progress.tasks[0].total == 35
+            assert progress.tasks[1].total == 28
+
+    #
+    # Test for 'utils.DownloadProgress.sub_task'
+    #
+    def test_download_progress_sub_task(self):
+        with ContainerProgress() as progress:
+            # No task initially
+            assert progress.tasks == []
+
+            # Add a sub-task, it should be there
+            with progress.sub_task("Sub-task", total=42) as sub_task_id:
+                assert sub_task_id == 0
+                assert len(progress.tasks) == 1
+                assert progress.task_ids[0] == sub_task_id
+                assert progress.tasks[0].total == 42
+
+            # The sub-task should be gone now
+            assert progress.tasks == []
+
+            # Add another sub-task, this time that raises an exception
+            with pytest.raises(ValueError):
+                with progress.sub_task("Sub-task", total=28) as sub_task_id:
+                    assert sub_task_id == 1
+                    assert len(progress.tasks) == 1
+                    assert progress.task_ids[0] == sub_task_id
+                    assert progress.tasks[0].total == 28
+                    raise ValueError("This is a test error")
+
+            # The sub-task should also be gone now
+            assert progress.tasks == []
+
+    #
+    # Test for 'utils.DownloadProgress.get_renderables'
+    #
+    def test_download_progress_renderables(self):
+        # Test the "summary" progress type
+        with ContainerProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task("Task 1", progress_type="summary", total=42, completed=11)
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[1]._cells[0].completed == 11
+            assert table.columns[1]._cells[0].total == 42
+
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "[progress.percentage] 26%"
+
+            assert isinstance(table.columns[3]._cells[0], str)
+            assert table.columns[3]._cells[0] == "•"
+
+            assert isinstance(table.columns[4]._cells[0], str)
+            assert table.columns[4]._cells[0] == "[green]11/42 tasks completed"
+
+        #
+        # Test the SingularityProgress subclass
+        #
+
+        # Test the "singularity_pull" progress type
+        with SingularityProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task(
+                "Task 1", progress_type="singularity_pull", total=42, completed=11, current_log="example log"
+            )
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], str)
+            assert table.columns[1]._cells[0] == "[blue]example log"
+
+            assert isinstance(table.columns[2]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[2]._cells[0].completed == 11
+            assert table.columns[2]._cells[0].total == 42
+
+        # Test the "download" progress type
+        with SingularityProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task("Task 1", progress_type="download", total=42, completed=11)
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[blue]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[1]._cells[0].completed == 11
+            assert table.columns[1]._cells[0].total == 42
+
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "[progress.percentage]26.2%"
+
+            assert isinstance(table.columns[3]._cells[0], str)
+            assert table.columns[3]._cells[0] == "•"
+
+            assert isinstance(table.columns[4]._cells[0], rich.text.Text)
+            assert table.columns[4]._cells[0]._text == ["11/42 bytes"]
+
+            assert isinstance(table.columns[5]._cells[0], str)
+            assert table.columns[5]._cells[0] == "•"
+
+            assert isinstance(table.columns[6]._cells[0], rich.text.Text)
+            assert table.columns[6]._cells[0]._text == ["?"]
+
+        #
+        # Test the DockerProgress subclass
+        #
+        with DockerProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task(
+                "Task 1", progress_type="docker", total=2, completed=1, current_log="example log", status="Pulling"
+            )
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "([blue]Pulling)"
+
+    #
+    # Test for 'singularity.FileDownloader.download_file'
+    #
+    @with_temporary_folder
+    def test_file_download(self, outdir):
+        outdir = Path(outdir)
+        with ContainerProgress() as progress:
+            downloader = FileDownloader(progress)
+
+            # Activate the caplog: all download attempts must be logged (even failed ones)
+            self._caplog.clear()
+            with self._caplog.at_level(logging.DEBUG):
+                # No task initially
+                assert progress.tasks == []
+                assert progress._task_index == 0
+
+                # Download a file
+                src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+                output_path = outdir / Path(src_url).name
+                downloader.download_file(src_url, output_path)
+                assert (output_path).exists()
+                assert os.path.getsize(output_path) == 27
+                assert (
+                    "nf_core.pipelines.download.singularity",
+                    logging.DEBUG,
+                    f"Downloading '{src_url}' to '{output_path}'",
+                ) in self._caplog.record_tuples
+
+                # A task was added but is now gone
+                assert progress._task_index == 1
+                assert progress.tasks == []
+
+                # No content at the URL
+                src_url = "http://www.google.com/generate_204"
+                output_path = outdir / Path(src_url).name
+                with pytest.raises(DownloadError):
+                    downloader.download_file(src_url, output_path)
+                assert not (output_path).exists()
+                assert (
+                    "nf_core.pipelines.download.singularity",
+                    logging.DEBUG,
+                    f"Downloading '{src_url}' to '{output_path}'",
+                ) in self._caplog.record_tuples
+
+                # A task was added but is now gone
+                assert progress._task_index == 2
+                assert progress.tasks == []
+
+                # Invalid URL (schema)
+                src_url = "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
+                output_path = outdir / Path(src_url).name
+                with pytest.raises(requests.exceptions.InvalidSchema):
+                    downloader.download_file(src_url, output_path)
+                assert not (output_path).exists()
+                assert (
+                    "nf_core.pipelines.download.singularity",
+                    logging.DEBUG,
+                    f"Downloading '{src_url}' to '{output_path}'",
+                ) in self._caplog.record_tuples
+
+                # A task was added but is now gone
+                assert progress._task_index == 3
+                assert progress.tasks == []
+
+            # Fire in the hole ! The download will be aborted and no output file will be created
+            src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+            output_path = outdir / Path(src_url).name
+            os.unlink(output_path)
+            downloader.kill_with_fire = True
+            with pytest.raises(KeyboardInterrupt):
+                downloader.download_file(src_url, output_path)
+            assert not (output_path).exists()
+
+    #
+    # Test for 'singularity.FileDownloader.download_files_in_parallel'
+    #
+    @with_temporary_folder
+    def test_parallel_downloads(self, outdir):
+        outdir = Path(outdir)
+
+        # Prepare the download paths
+        def make_tuple(url):
+            return (url, (outdir / Path(url).name))
+
+        download_fai = make_tuple(
+            "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+        )
+        download_dict = make_tuple(
+            "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.dict"
+        )
+        download_204 = make_tuple("http://www.google.com/generate_204")
+        download_schema = make_tuple(
+            "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
+        )
+
+        with ContainerProgress() as progress:
+            downloader = FileDownloader(progress)
+
+            # Download two files
+            assert downloader.kill_with_fire is False
+            downloads = [download_fai, download_dict]
+            downloaded_files = downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert len(downloaded_files) == 2
+            assert downloaded_files == downloads
+            assert (download_fai[1]).exists()
+            assert (download_dict[1]).exists()
+            assert downloader.kill_with_fire is False
+            (download_fai[1]).unlink()
+            (download_dict[1]).unlink()
+
+            # This time, the second file will raise an exception
+            assert downloader.kill_with_fire is False
+            downloads = [download_fai, download_204]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert downloader.kill_with_fire is False
+            assert (download_fai[1]).exists()
+            assert not (download_204[1]).exists()
+            (download_fai[1]).unlink()
+
+            # Now we swap the two files. The first one will raise an exception but the
+            # second one will still be downloaded because only KeyboardInterrupt can
+            # stop everything altogether.
+            assert downloader.kill_with_fire is False
+            downloads = [download_204, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert downloader.kill_with_fire is False
+            assert (download_fai[1]).exists()
+            assert not (download_204[1]).exists()
+            (download_fai[1]).unlink()
+
+            # We check that there's the same behaviour with `requests` errors.
+            assert downloader.kill_with_fire is False
+            downloads = [download_schema, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert downloader.kill_with_fire is False
+            assert (download_fai[1]).exists()
+            assert not (download_schema[1]).exists()
+            (download_fai[1]).unlink()
+
+            # Now we check the callback method
+            callbacks = []
+
+            def callback(*args):
+                callbacks.append(args)
+
+            # We check the same scenarios as above
+            callbacks = []
+            downloads = [download_fai, download_dict]
+            downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_fai, FileDownloader.Status.DONE),
+                (download_dict, FileDownloader.Status.DONE),
+            ]
+
+            callbacks = []
+            downloads = [download_fai, download_204]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_fai, FileDownloader.Status.DONE),
+                (download_204, FileDownloader.Status.ERROR),
+            ]
+
+            callbacks = []
+            downloads = [download_204, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_204, FileDownloader.Status.ERROR),
+                (download_fai, FileDownloader.Status.DONE),
+            ]
+
+            callbacks = []
+            downloads = [download_schema, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_schema, FileDownloader.Status.ERROR),
+                (download_fai, FileDownloader.Status.DONE),
+            ]
+
+            # Finally, we check how the function behaves when a KeyboardInterrupt is raised
+            with mock.patch("concurrent.futures.wait", side_effect=KeyboardInterrupt):
+                callbacks = []
+                downloads = [download_fai, download_204, download_dict]
+                with pytest.raises(KeyboardInterrupt):
+                    downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+                assert len(callbacks) == 3
+                # Note: whn the KeyboardInterrupt is raised, download_204 and download_dict are not yet started.
+                # They are therefore cancelled and pushed to the callback list immediately. download_fai is last
+                # because it is running and can't be cancelled.
+                assert callbacks == [
+                    (download_204, FileDownloader.Status.CANCELLED),
+                    (download_dict, FileDownloader.Status.CANCELLED),
+                    (download_fai, FileDownloader.Status.ERROR),
+                ]
 
 
 class DownloadTest(unittest.TestCase):
@@ -55,7 +532,7 @@ class DownloadTest(unittest.TestCase):
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        assert download_obj.outdir == "nf-core-methylseq_1.6"
+        assert download_obj.outdir == Path("nf-core-methylseq_1.6")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
@@ -74,7 +551,7 @@ class DownloadTest(unittest.TestCase):
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
-        assert download_obj.outdir == "nf-core-exoseq_dev"
+        assert download_obj.outdir == Path("nf-core-exoseq_dev")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
@@ -95,7 +572,7 @@ class DownloadTest(unittest.TestCase):
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == revision
-        assert download_obj.outdir == f"nf-core-exoseq_{revision}"
+        assert download_obj.outdir == Path(f"nf-core-exoseq_{revision}")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
@@ -118,7 +595,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.get_revision_hash()
         print(download_obj)
         assert download_obj.wf_sha[download_obj.revision[0]] == revision
-        assert download_obj.outdir == f"nf-core-exoseq_{short_rev}"
+        assert download_obj.outdir == Path(f"nf-core-exoseq_{short_rev}")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
@@ -142,6 +619,7 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_download_wf_files(self, outdir):
+        outdir = Path(outdir)
         download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.wf_sha = {"1.6": "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"}
@@ -153,25 +631,28 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_sha[download_obj.revision[0]],
             download_obj.wf_download_url[download_obj.revision[0]],
         )
-        assert os.path.exists(os.path.join(outdir, rev, "main.nf"))
+
+        assert ((outdir / rev) / "main.nf").exists()
 
     #
     # Tests for 'download_configs'
     #
     @with_temporary_folder
     def test_download_configs(self, outdir):
+        outdir = Path(outdir)
         download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.download_configs()
-        assert os.path.exists(os.path.join(outdir, "configs", "nfcore_custom.config"))
+        assert (outdir / "configs") / "nfcore_custom.config"
 
     #
     # Tests for 'wf_use_local_configs'
     #
     @with_temporary_folder
     def test_wf_use_local_configs(self, tmp_path):
+        tmp_path = Path(tmp_path)
         # Get a workflow and configs
-        test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
+        test_pipeline_dir = tmp_path / "nf-core-testpipeline"
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline",
             "This is a test pipeline",
@@ -192,256 +673,84 @@ class DownloadTest(unittest.TestCase):
             assert wf_config["params.custom_config_base"] == f"{test_outdir}/workflow/../configs/"
 
     #
-    # Tests for 'find_container_images'
-    #
-    @with_temporary_folder
-    @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_find_container_images_config_basic(self, tmp_path, mock_fetch_wf_config):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        mock_fetch_wf_config.return_value = {
-            "process.mapping.container": "cutting-edge-container",
-            "process.nocontainer": "not-so-cutting-edge",
-        }
-        download_obj.find_container_images("workflow")
-        assert len(download_obj.containers) == 1
-        assert download_obj.containers[0] == "cutting-edge-container"
-
-    #
-    # Test for 'find_container_images' in config with nextflow
+    # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
+    # produces the same results
     #
     @pytest.mark.skipif(
-        shutil.which("nextflow") is None,
+        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
         reason="Can't run test that requires nextflow to run if not installed.",
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test__find_container_images_config_nextflow(self, tmp_path, mock_fetch_wf_config):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        result = run_cmd("nextflow", f"config -flat {TEST_DATA_DIR}'/mock_config_containers'")
-        if result is not None:
-            nfconfig_raw, _ = result
-            config = {}
-            nfconfig = nfconfig_raw.decode("utf-8")
-            multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
+    def test_containers_pipeline_singularity(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
 
-            for match in multiline_key_value_pattern.finditer(nfconfig):
-                k = match.group(2).strip()
-                v = match.group(3).strip().strip("'\"")
-                if k and v:
-                    config[k] = v
-            mock_fetch_wf_config.return_value = config
-            download_obj.find_container_images("workflow")
-            assert "nfcore/methylseq:1.0" in download_obj.containers
-            assert "nfcore/methylseq:1.4" in download_obj.containers
-            assert "nfcore/sarek:dev" in download_obj.containers
-            assert (
-                "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
-            )
-            assert (
-                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/06/06beccfa4d48e5daf30dd8cee4f7e06fd51594963db0d5087ab695365b79903b/data"
-                in download_obj.containers
-            )
-            assert (
-                "community.wave.seqera.io/library/last_samtools_open-fonts:176a6ab0c8171057" in download_obj.containers
-            )
-            assert "singularity" not in download_obj.containers
-            # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
+        # Set up test
+        container_system = "singularity"
+        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
+        refererence_json_dir = mock_pipeline_dir / "per_profile_output"
+        # First check that `-profile singularity` produces the same output as the reference
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
+        mock_fetch_wf_config.return_value = {}
+
+        # Run get containers with `nextflow inspect`
+        entrypoint = "main_passing_test.nf"
+        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
+
+        # Store the containers found by the new method
+        found_containers = set(download_obj.containers)
+
+        # Load the reference containers
+        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+            ref_containers = json.load(fh)
+            ref_container_strs = set(ref_containers.values())
+
+        # Now check that they contain the same containers
+        assert found_containers == ref_container_strs, (
+            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+            f"Containers that should've been found: {ref_container_strs}"
+        )
 
     #
-    # Test for 'find_container_images' in modules
+    # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
+    # produces the same results
     #
+    @pytest.mark.skipif(
+        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
+        reason=f"Can't run test that requires Nextflow >= {NF_INSPECT_MIN_NF_VERSION} to run if not installed.",
+    )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+    def test_containers_pipeline_docker(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
+
+        # Set up test
+        container_system = "docker"
+        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
+        refererence_json_dir = mock_pipeline_dir / "per_profile_output"
+        # First check that `-profile singularity` produces the same output as the reference
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
         mock_fetch_wf_config.return_value = {}
-        download_obj.find_container_images(str(Path(TEST_DATA_DIR, "mock_module_containers")))
 
-        # mock_docker_single_quay_io.nf
-        assert "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0" in download_obj.containers
+        # Run get containers with `nextflow inspect`
+        entrypoint = "main_passing_test.nf"
+        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
 
-        # mock_dsl2_apptainer_var1.nf (possible future convention?)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwoapptainervarone:1.1.0--py38h7be5676_2"
-            in download_obj.containers
+        # Store the containers found by the new method
+        found_containers = set(download_obj.containers)
+
+        # Load the reference containers
+        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+            ref_containers = json.load(fh)
+            ref_container_strs = set(ref_containers.values())
+
+        # Now check that they contain the same containers
+        assert found_containers == ref_container_strs, (
+            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+            f"Containers that should've been found: {ref_container_strs}"
         )
-        assert "biocontainers/dsltwoapptainervarone:1.1.0--py38h7be5676_2" not in download_obj.containers
-
-        # mock_dsl2_apptainer_var2.nf (possible future convention?)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwoapptainervartwo:1.1.0--hdfd78af_0"
-            in download_obj.containers
-        )
-        assert "biocontainers/dsltwoapptainervartwo:1.1.0--hdfd78af_0" not in download_obj.containers
-
-        # mock_dsl2_current_inverted.nf (new implementation supports if the direct download URL is listed after Docker URI)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwocurrentinv:3.3.2--h1b792b2_1" in download_obj.containers
-        )
-        assert "biocontainers/dsltwocurrentinv:3.3.2--h1b792b2_1" not in download_obj.containers
-
-        # mock_dsl2_current.nf (main nf-core convention, should be the one in far the most modules)
-        assert (
-            "https://depot.galaxyproject.org/singularity/dsltwocurrent:1.2.1--pyhdfd78af_0" in download_obj.containers
-        )
-        assert "biocontainers/dsltwocurrent:1.2.1--pyhdfd78af_0" not in download_obj.containers
-
-        # mock_dsl2_old.nf (initial DSL2 convention)
-        assert "https://depot.galaxyproject.org/singularity/dsltwoold:0.23.0--0" in download_obj.containers
-        assert "quay.io/biocontainers/dsltwoold:0.23.0--0" not in download_obj.containers
-
-        # mock_dsl2_variable.nf (currently the edgiest edge case supported)
-        assert (
-            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
-            in download_obj.containers
-        )
-        assert (
-            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0"
-            in download_obj.containers
-        )
-        assert (
-            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
-            not in download_obj.containers
-        )
-        assert (
-            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0"
-            not in download_obj.containers
-        )
-
-        # mock_seqera_container_oras.nf
-        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in download_obj.containers
-        assert "community.wave.seqera.io/library/umi-transfer:1.0.0--d30e8812ea280fa1" not in download_obj.containers
-
-        # mock_seqera_container_oras_mulled.nf
-        assert (
-            "oras://community.wave.seqera.io/library/umi-transfer_umicollapse:796a995ff53da9e3"
-            in download_obj.containers
-        )
-        assert (
-            "community.wave.seqera.io/library/umi-transfer_umicollapse:3298d4f1b49e33bd" not in download_obj.containers
-        )
-
-        # mock_seqera_container_http.nf
-        assert (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
-            in download_obj.containers
-        )
-
-        # ToDO: This URI should actually NOT be in there, but prioritize_direct_download() can not handle this case.
-        #
-        # It works purely by comparing the strings, thus can establish the equivalence of 'https://depot.galaxyproject.org/singularity/umi_tools:1.1.5--py39hf95cd2a_0'
-        # and 'biocontainers/umi_tools:1.1.5--py39hf95cd2a_0' because of the identical string 'umi_tools:1.1.5--py39hf95cd2a_0', but has no means to establish that
-        # 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data' and
-        # 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264' are the equivalent container. It would need to query an API at Seqera for that.
-
-        assert "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264" in download_obj.containers
-
-    #
-    # Test for 'prioritize_direct_download'
-    #
-    @with_temporary_folder
-    def test_prioritize_direct_download(self, tmp_path):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-
-        # tests deduplication and https priority as well as Seqera Container exception
-
-        test_container = [
-            "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "biocontainers/umi-transfer:1.5.0--h715e4b3_0",
-            "https://depot.galaxyproject.org/singularity/umi-transfer:1.5.0--h715e4b3_0",
-            "biocontainers/umi-transfer:1.5.0--h715e4b3_0",
-            "quay.io/nf-core/sortmerna:4.3.7--6502243397c065ba",
-            "nf-core/sortmerna:4.3.7--6502243397c065ba",
-            "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_1",
-            "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0",
-            "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1",
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data",
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
-        ]
-
-        result = download_obj.prioritize_direct_download(test_container)
-
-        # Verify that the priority works for regular https downloads (https encountered first)
-        assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
-        assert "nf-core/ubuntu:22.04" not in result
-
-        # Verify that the priority works for regular https downloads (https encountered second)
-        assert "biocontainers/umi-transfer:1.5.0--h715e4b3_0" not in result
-        assert "https://depot.galaxyproject.org/singularity/umi-transfer:1.5.0--h715e4b3_0" in result
-
-        # Verify that the priority works for images with and without explicit registry
-        # No priority here, though - the first is retained.
-        assert "nf-core/sortmerna:4.3.7--6502243397c065ba" in result
-        assert "quay.io/nf-core/sortmerna:4.3.7--6502243397c065ba" not in result
-
-        # Verify that different versions of the same tool and different build numbers are retained
-        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_1" in result
-        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0" in result
-        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1" in result
-
-        # Verify that Seqera containers are not deduplicated...
-        assert (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data"
-            in result
-        )
-        assert (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
-            in result
-        )
-        # ...but identical ones are.
-        assert (
-            result.count(
-                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
-            )
-            == 1
-        )
-
-    #
-    # Test for 'reconcile_seqera_container_uris'
-    #
-    @with_temporary_folder
-    def test_reconcile_seqera_container_uris(self, tmp_path):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-
-        prioritized_container = [
-            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
-            "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649",
-        ]
-
-        test_container = [
-            "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "nf-core/ubuntu:22.04",
-            "community.wave.seqera.io/library/umi-transfer:1.5.0--73c1a6b65e5b0b81",
-            "community.wave.seqera.io/library/sylph:0.6.1--a21713a57a65a373",
-            "biocontainers/sylph:0.6.1--b97274cdc1caa649",
-        ]
-
-        # test that the test_container list is returned as it is, if no prioritized_containers are specified
-        result_empty = download_obj.reconcile_seqera_container_uris([], test_container)
-        assert result_empty == test_container
-
-        result = download_obj.reconcile_seqera_container_uris(prioritized_container, test_container)
-
-        # Verify that unrelated images are retained
-        assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
-        assert "nf-core/ubuntu:22.04" in result
-
-        # Verify that the priority works for regular Seqera container (Native Singularity over Docker, but only for Seqera registry)
-        assert "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649" in result
-        assert "community.wave.seqera.io/library/sylph:0.6.1--a21713a57a65a373" not in result
-        assert "biocontainers/sylph:0.6.1--b97274cdc1caa649" in result
-
-        # Verify that version strings are respected: Version 1.0.0 does not replace version 1.5.0
-        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in result
-        assert "community.wave.seqera.io/library/umi-transfer:1.5.0--73c1a6b65e5b0b81" in result
-
-        # assert that the deduplication works
-        assert test_container.count("nf-core/ubuntu:22.04") == 3
-        assert result.count("nf-core/ubuntu:22.04") == 1
 
     #
     # Tests for 'singularity_pull_image'
@@ -449,140 +758,299 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is installed, but the container can't be accessed because it does not exist or there are access
     # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
     @pytest.mark.skipif(
-        shutil.which("singularity") is None,
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-
-        # Test successful pull
-        download_obj.singularity_pull_image(
-            "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_cachedir_prompt, mock_progress):
+        tmp_dir = Path(tmp_dir)
+        singularity_fetcher = SingularityFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+            container_cache_utilisation="none",
+            container_cache_index=None,
         )
+        singularity_fetcher.check_and_set_implementation()
+        singularity_fetcher.progress = mock_progress()
+        # Test successful pull
+        assert singularity_fetcher.pull_image("hello-world", tmp_dir / "hello-world.sif", "docker.io") is True
 
         # Pull again, but now the image already exists
-        with pytest.raises(ContainerError.ImageExistsError):
-            download_obj.singularity_pull_image(
-                "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
-            )
+        assert singularity_fetcher.pull_image("hello-world", tmp_dir / "hello-world.sif", "docker.io") is False
 
         # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
-        download_obj.singularity_pull_image(
-            "docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", None, "docker.io", mock_rich_progress
-        )
+        assert singularity_fetcher.pull_image("docker.io/bschiffthaler/sed", tmp_dir / "sed.sif", "docker.io") is True
 
         # Test successful pull with absolute oras:// URI
-        download_obj.singularity_pull_image(
-            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
-            f"{tmp_dir}/umi-transfer-oras.sif",
-            None,
-            "docker.io",
-            mock_rich_progress,
+        assert (
+            singularity_fetcher.pull_image(
+                "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+                tmp_dir / "umi-transfer-oras.sif",
+                "docker.io",
+            )
+            is True
         )
 
         # try pulling Docker container image with oras://
-        with pytest.raises(ContainerError.NoSingularityContainerError):
-            download_obj.singularity_pull_image(
+        with pytest.raises(SingularityError.NoSingularityContainerError):
+            singularity_fetcher.pull_image(
                 "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
-                f"{tmp_dir}/umi-transfer-oras_impostor.sif",
-                None,
+                tmp_dir / "umi-transfer-oras_impostor.sif",
                 "docker.io",
-                mock_rich_progress,
             )
 
         # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
-        with pytest.raises(ContainerError.RegistryNotFoundError):
-            download_obj.singularity_pull_image(
+        with pytest.raises(SingularityError.RegistryNotFoundError):
+            singularity_fetcher.pull_image(
                 "hello-world",
-                f"{tmp_dir}/break_the_registry_test.sif",
-                None,
+                tmp_dir / "break_the_registry_test.sif",
                 "register-this-domain-to-break-the-test.io",
-                mock_rich_progress,
             )
 
         # test Image not found for several registries
-        with pytest.raises(ContainerError.ImageNotFoundError):
-            download_obj.singularity_pull_image(
-                "a-container", f"{tmp_dir}/acontainer.sif", None, "quay.io", mock_rich_progress
-            )
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image("a-container", tmp_dir / "acontainer.sif", "quay.io")
 
-        with pytest.raises(ContainerError.ImageNotFoundError):
-            download_obj.singularity_pull_image(
-                "a-container", f"{tmp_dir}/acontainer.sif", None, "docker.io", mock_rich_progress
-            )
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image("a-container", tmp_dir / "acontainer.sif", "docker.io")
 
-        with pytest.raises(ContainerError.ImageNotFoundError):
-            download_obj.singularity_pull_image(
-                "a-container", f"{tmp_dir}/acontainer.sif", None, "ghcr.io", mock_rich_progress
-            )
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image("a-container", tmp_dir / "acontainer.sif", "ghcr.io")
 
         # test Image not found for absolute URI.
-        with pytest.raises(ContainerError.ImageNotFoundError):
-            download_obj.singularity_pull_image(
+        with pytest.raises(SingularityError.ImageNotFoundError):
+            singularity_fetcher.pull_image(
                 "docker.io/bschiffthaler/nothingtopullhere",
-                f"{tmp_dir}/nothingtopullhere.sif",
-                None,
+                tmp_dir / "nothingtopullhere.sif",
                 "docker.io",
-                mock_rich_progress,
             )
 
         # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
-        with pytest.raises(ContainerError.InvalidTagError):
-            download_obj.singularity_pull_image(
+        with pytest.raises(SingularityError.InvalidTagError):
+            singularity_fetcher.pull_image(
                 "ewels/multiqc:go-rewrite",
-                f"{tmp_dir}/multiqc-go.sif",
-                None,
+                tmp_dir / "multiqc-go.sif",
                 "ghcr.io",
-                mock_rich_progress,
             )
 
+    #
+    # Tests for 'DockerFetcher.pull_image'
+    #
+    # If Docker is installed, but the container can't be accessed because it does not exist or there are access
+    # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
     @pytest.mark.skipif(
-        shutil.which("singularity") is None,
+        shutil.which("docker") is None,
+        reason="Can't test what Docker does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.pipelines.download.docker.DockerProgress")
+    @mock.patch("rich.progress.Task")
+    def test_docker_pull_image_docker_installed(self, tmp_dir, mock_progress, mock_task):
+        tmp_dir = Path(tmp_dir)
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+        )
+        docker_fetcher.progress = mock_progress()
+        mock_task_obj = mock_task()
+
+        # Test successful pull
+        docker_fetcher.pull_image("hello-world", mock_task_obj)
+
+        # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
+        docker_fetcher.pull_image("docker.io/bschiffthaler/sed", mock_task_obj)
+
+        # Test successful pull from wave
+        docker_fetcher.pull_image(
+            "community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6", mock_task_obj
+        )
+
+        # test image not found for several registries
+        with pytest.raises(DockerError.ImageNotFoundError):
+            docker_fetcher.pull_image("ghcr.io/not-a-real-registry/this-container-does-not-exist", mock_task_obj)
+
+        with pytest.raises(DockerError.ImageNotFoundError):
+            docker_fetcher.pull_image("docker.io/not-a-real-registry/this-container-does-not-exist", mock_task_obj)
+
+        # test image not found for absolute URI.
+        with pytest.raises(DockerError.ImageNotFoundError):
+            docker_fetcher.pull_image("docker.io/bschiffthaler/nothingtopullhere", mock_task_obj)
+
+        # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
+        with pytest.raises(DockerError.InvalidTagError):
+            docker_fetcher.pull_image("ghcr.io/ewels/multiqc:go-rewrite", mock_task_obj)
+
+    #
+    # Tests for 'SingularityFetcher.pull_image'
+    #
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_pull_image_successfully(self, tmp_dir, mock_rich_progress):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        download_obj.singularity_pull_image(
-            "hello-world", f"{tmp_dir}/yet-another-hello-world.sif", None, "docker.io", mock_rich_progress
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityProgress")
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_pull_image_successfully(self, tmp_dir, mock_cachedir_prompt, mock_progress):
+        tmp_dir = Path(tmp_dir)
+        singularity_fetcher = SingularityFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+            container_cache_utilisation="none",
+            container_cache_index=None,
         )
+        singularity_fetcher.check_and_set_implementation()
+        singularity_fetcher.progress = mock_progress()
+        singularity_fetcher.pull_image("hello-world", tmp_dir / "yet-another-hello-world.sif", "docker.io")
 
     #
-    # Tests for 'get_singularity_images'
+    # Tests for 'DockerFetcher.pull_and_save_image'
     #
     @pytest.mark.skipif(
-        shutil.which("singularity") is None,
+        shutil.which("docker") is None,
+        reason="Can't test what Docker does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.pipelines.download.docker.DockerProgress")
+    def test_docker_pull_image_successfully(self, tmp_dir, mock_progress):
+        tmp_dir = Path(tmp_dir)
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+        )
+        docker_fetcher.progress = mock_progress()
+        docker_fetcher.pull_and_save_image("hello-world", tmp_dir / "hello-world.tar")
+
+    #
+    # Tests for 'DockerFetcher.save_image'
+    #
+    @pytest.mark.skipif(
+        shutil.which("docker") is None,
+        reason="Can't test what Docker does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.pipelines.download.docker.DockerProgress")
+    @mock.patch("rich.progress.Task")
+    def test_docker_save_image(self, tmp_dir, mock_progress, mock_task):
+        tmp_dir = Path(tmp_dir)
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+        )
+        docker_fetcher.progress = mock_progress()
+        mock_task_obj = mock_task()
+        with pytest.raises(DockerError.ImageNotPulledError):
+            docker_fetcher.save_image(
+                "this-image-cannot-possibly-be-pulled-to-this-machine:latest",
+                tmp_dir / "this-image-cannot-possibly-be-pulled-to-this-machine.tar",
+                mock_task_obj,
+            )
+
+    #
+    #
+    # Tests for 'SingularityFetcher.fetch_containers'
+    #
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_get_singularity_images(self, tmp_path, mock_fetch_wf_config):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_fetch_containers_singularity(self, tmp_path, mock_cachedir_prompt, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
             container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
+            container_system="singularity",
         )
-        mock_fetch_wf_config.return_value = {
-            "process.helloworld.container": "helloworld",
-            "process.hellooworld.container": "helloooooooworld",
-            "process.mapping.container": "ewels/multiqc:gorewrite",
-        }
-        download_obj.find_container_images("workflow")
+        download_obj.containers = [
+            "helloworld",
+            "helloooooooworld",
+            "ewels/multiqc:gorewrite",
+        ]
         assert len(download_obj.container_library) == 4
         # This list of fake container images should produce all kinds of ContainerErrors.
-        # Test that they are all caught inside get_singularity_images().
-        download_obj.get_singularity_images()
+        # Test that they are all caught inside SingularityFetcher.fetch_containers().
+        singularity_fetcher = SingularityFetcher(
+            outdir=tmp_path,
+            container_library=download_obj.container_library,
+            registry_set=download_obj.registry_set,
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
+        singularity_fetcher.fetch_containers(
+            download_obj.containers,
+            download_obj.containers_remote,
+        )
 
+    #
+    #
+    # Tests for 'DockerFetcher.fetch_containers'
+    #
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
     @with_temporary_folder
-    @mock.patch("os.makedirs")
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_fetch_containers_docker(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=None,
+            container_system="docker",
+        )
+        download_obj.containers = [
+            "helloworld",
+            "helloooooooworld",
+            "ewels/multiqc:gorewrite",
+        ]
+        # This list of fake container images should produce all kinds of ContainerErrors.
+        # Test that they are all caught inside DockerFetcher.fetch_containers().
+        docker_fetcher = DockerFetcher(
+            outdir=tmp_path,
+            container_library=download_obj.container_library,
+            registry_set=download_obj.registry_set,
+        )
+        docker_fetcher.fetch_containers(
+            download_obj.containers,
+            download_obj.containers_remote,
+        )
+
+    #
+    # Tests for 'singularity.symlink_registries' function
+    #
+
+    # Simple file name with no registry in it
+    @with_temporary_folder
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.symlink_to")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
     @mock.patch("os.close")
-    @mock.patch("os.path.basename")
-    @mock.patch("os.path.dirname")
+    @mock.patch("pathlib.Path.name")
+    @mock.patch("pathlib.Path.parent")
     def test_symlink_singularity_images(
         self,
         tmp_path,
@@ -590,63 +1058,82 @@ class DownloadTest(unittest.TestCase):
         mock_basename,
         mock_close,
         mock_open,
+        mock_os_symlink,
         mock_symlink,
         mock_makedirs,
+        mock_prompt_singularity_cachedir_creation,
+        mock_check_and_set_implementation,
     ):
         # Setup
-        mock_dirname.return_value = f"{tmp_path}/path/to"
-        mock_basename.return_value = "singularity-image.img"
-        mock_open.return_value = 12  # file descriptor
-        mock_close.return_value = 12  # file descriptor
+        tmp_path = Path(tmp_path)
+        with (
+            mock.patch.object(Path, "name", new_callable=mock.PropertyMock) as mock_basename,
+            mock.patch.object(Path, "parent", new_callable=mock.PropertyMock) as mock_dirname,
+        ):
+            mock_dirname.return_value = tmp_path / "path/to"
+            mock_basename.return_value = "singularity-image.img"
+            mock_open.return_value = 12  # file descriptor
+            mock_close.return_value = 12  # file descriptor
+            mock_prompt_singularity_cachedir_creation.return_value = False
 
-        download_obj = DownloadWorkflow(
-            pipeline="dummy",
-            outdir=tmp_path,
-            container_library=(
+            registries = [
                 "quay.io",
                 "community-cr-prod.seqera.io/docker/registry/v2",
                 "depot.galaxyproject.org/singularity",
-            ),
-        )
+            ]
+            fetcher = SingularityFetcher(
+                outdir=tmp_path,
+                container_library=[],
+                registry_set=registries,
+                container_cache_utilisation="none",
+                container_cache_index=None,
+            )
 
-        # Call the method
-        download_obj.symlink_singularity_images(f"{tmp_path}/path/to/singularity-image.img")
+            fetcher.symlink_registries(tmp_path / "path/to/singularity-image.img")
 
-        # Check that os.makedirs was called with the correct arguments
-        mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+            # Check that os.makedirs was called with the correct arguments
+            mock_makedirs.assert_any_call(exist_ok=True)
 
-        # Check that os.open was called with the correct arguments
-        mock_open.assert_any_call(f"{tmp_path}/path/to", os.O_RDONLY)
+            # Check that os.open was called with the correct arguments
+            mock_open.assert_any_call(tmp_path / "path/to", os.O_RDONLY)
 
-        # Check that os.symlink was called with the correct arguments
-        expected_calls = [
-            mock.call(
-                "./singularity-image.img",
-                "./quay.io-singularity-image.img",
-                dir_fd=12,
-            ),
-            mock.call(
-                "./singularity-image.img",
-                "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",
-                dir_fd=12,
-            ),
-            mock.call(
-                "./singularity-image.img",
-                "./depot.galaxyproject.org-singularity-singularity-image.img",
-                dir_fd=12,
-            ),
-        ]
-        mock_symlink.assert_has_calls(expected_calls, any_order=True)
+            # Check that os.symlink was called with the correct arguments
+            expected_calls = [
+                mock.call(
+                    Path("./singularity-image.img"),
+                    Path("./quay.io-singularity-image.img"),
+                    dir_fd=12,
+                ),
+                mock.call(
+                    Path("./singularity-image.img"),
+                    Path("./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img"),
+                    dir_fd=12,
+                ),
+                mock.call(
+                    Path("./singularity-image.img"),
+                    Path("./depot.galaxyproject.org-singularity-singularity-image.img"),
+                    dir_fd=12,
+                ),
+            ]
+            mock_os_symlink.assert_has_calls(expected_calls, any_order=True)
 
+    # File name with registry in it
     @with_temporary_folder
-    @mock.patch("os.makedirs")
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.symlink_to")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
     @mock.patch("os.close")
     @mock.patch("re.sub")
-    @mock.patch("os.path.basename")
-    @mock.patch("os.path.dirname")
-    def test_symlink_singularity_images_registry(
+    @mock.patch("pathlib.Path.name")
+    @mock.patch("pathlib.Path.parent")
+    def test_symlink_singularity_symlink_registries(
         self,
         tmp_path,
         mock_dirname,
@@ -654,53 +1141,79 @@ class DownloadTest(unittest.TestCase):
         mock_resub,
         mock_close,
         mock_open,
+        mock_os_symlink,
         mock_symlink,
         mock_makedirs,
+        mock_prompt_singularity_cachedir_creation,
+        mock_check_and_set_implementation,
     ):
+        tmp_path = Path(tmp_path)
         # Setup
-        mock_resub.return_value = "singularity-image.img"
-        mock_dirname.return_value = f"{tmp_path}/path/to"
-        mock_basename.return_value = "quay.io-singularity-image.img"
-        mock_open.return_value = 12  # file descriptor
-        mock_close.return_value = 12  # file descriptor
+        with (
+            mock.patch.object(Path, "name", new_callable=mock.PropertyMock) as mock_basename,
+            mock.patch.object(Path, "parent", new_callable=mock.PropertyMock) as mock_dirname,
+        ):
+            mock_resub.return_value = "singularity-image.img"
+            mock_dirname.return_value = tmp_path / "path/to"
+            mock_basename.return_value = "quay.io-singularity-image.img"
+            mock_open.return_value = 12  # file descriptor
+            mock_close.return_value = 12  # file descriptor
+            mock_prompt_singularity_cachedir_creation.return_value = False
 
-        download_obj = DownloadWorkflow(
-            pipeline="dummy",
-            outdir=tmp_path,
-            container_library=("quay.io", "community-cr-prod.seqera.io/docker/registry/v2"),
-        )
+            # Call the method with registry name included - should not happen, but preserve it then.
 
-        download_obj.registry_set = {"quay.io", "community-cr-prod.seqera.io/docker/registry/v2"}
+            registries = [
+                "quay.io",  # Same as in the filename
+                "community-cr-prod.seqera.io/docker/registry/v2",
+            ]
+            fetcher = SingularityFetcher(
+                outdir=tmp_path,
+                container_library=[],
+                registry_set=registries,
+                container_cache_utilisation="none",
+                container_cache_index=None,
+            )
+            fetcher.symlink_registries(tmp_path / "path/to/quay.io-singularity-image.img")
 
-        # Call the method with registry - should not happen, but preserve it then.
-        download_obj.symlink_singularity_images(f"{tmp_path}/path/to/quay.io-singularity-image.img")
-        print(mock_resub.call_args)
+            # Check that os.makedirs was called with the correct arguments
+            mock_makedirs.assert_called_once_with(exist_ok=True)
 
-        # Check that os.makedirs was called with the correct arguments
-        mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+            # Check that os.symlink was called with the correct arguments
+            # assert_called_once_with also tells us that there was no attempt to
+            # - symlink to itself
+            # - symlink to the same registry
+            mock_os_symlink.assert_called_once_with(
+                Path("./quay.io-singularity-image.img"),
+                Path(
+                    "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img"
+                ),  # "quay.io-" has been trimmed
+                dir_fd=12,
+            )
 
-        # Check that os.symlink was called with the correct arguments
-        mock_symlink.assert_called_with(
-            "./quay.io-singularity-image.img",
-            "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",
-            dir_fd=12,
-        )
-        # Check that there is no attempt to symlink to itself (test parameters would result in that behavior if not checked in the function)
-        assert (
-            unittest.mock.call("./quay.io-singularity-image.img", "./quay.io-singularity-image.img", dir_fd=12)
-            not in mock_symlink.call_args_list
-        )
-
-        # Normally it would be called for each registry, but since quay.io is part of the name, it
-        # will only be called once, as no symlink to itself must be created.
-        mock_open.assert_called_once_with(f"{tmp_path}/path/to", os.O_RDONLY)
+            # Normally it would be called for each registry, but since quay.io is part of the name, it
+            # will only be called once, as no symlink to itself must be created.
+            mock_open.assert_called_once_with(tmp_path / "path/to", os.O_RDONLY)
 
     #
+    # Test for DockerFetcher.write_docker_load_command
+    #
+    def test_docker_write_docker_load_message(self):
+        docker_fetcher = DockerFetcher(
+            outdir=Path("dummydir"),
+            container_library=[],
+            registry_set=[],
+        )
+        with redirect_stderr(StringIO()) as f:
+            docker_fetcher.write_docker_load_message()
+        assert "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i" in f.getvalue()
+        assert "dummydir/docker-images" in f.getvalue()
+
     # Test for gather_registries'
     #
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_gather_registries(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
@@ -737,125 +1250,133 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     #
     @pytest.mark.skipif(
-        shutil.which("singularity") is not None,
+        shutil.which("singularity") is not None or shutil.which("apptainer") is not None,
         reason="Can't test how the code behaves when singularity is not installed if it is.",
     )
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress, mock_cachedir_prompt):
+        tmp_dir = Path(tmp_dir)
+        fetcher = SingularityFetcher(
+            outdir=tmp_dir,
+            container_library=[],
+            registry_set=[],
+            container_cache_utilisation="none",
+            container_cache_index=None,
+        )
         with pytest.raises(OSError):
-            download_obj.singularity_pull_image(
-                "a-container", f"{tmp_dir}/anothercontainer.sif", None, "quay.io", mock_rich_progress
-            )
+            fetcher.check_and_set_implementation()
 
     #
-    # Test for 'singularity_image_filenames' function
+    # Test for 'singularity.get_container_filename' function
     #
-    @with_temporary_folder
-    def test_singularity_image_filenames(self, tmp_path):
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = f"{tmp_path}/cachedir"
 
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        download_obj.outdir = tmp_path
-        download_obj.container_cache_utilisation = "amend"
-
-        download_obj.registry_set = {
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation")
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+    )  # This is to make sure that we do not prompt for a Singularity cachedir
+    def test_singularity_get_container_filename(self, mock_cachedir_prompt, mock_check_and_set_implementation):
+        registries = [
             "docker.io",
             "quay.io",
             "depot.galaxyproject.org/singularity",
             "community.wave.seqera.io/library",
             "community-cr-prod.seqera.io/docker/registry/v2",
-        }
+        ]
 
-        ## Test phase I: Container not yet cached, should be amended to cache
-        # out_path: str, Path to cache
-        # cache_path: None
-
-        result = download_obj.singularity_image_filenames(
-            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        fetcher = SingularityFetcher(
+            outdir=Path("test_singularity_get_container_filename"),
+            container_library=[],
+            registry_set=registries,
+            container_cache_utilisation="none",
+            container_cache_index=None,
         )
-
-        # Assert that the result is a tuple of length 2
-        self.assertIsInstance(result, tuple)
-        self.assertEqual(len(result), 2)
-
-        # Assert that the types of the elements are (str, None)
-        self.assertTrue(all((isinstance(element, str), element is None) for element in result))
-
-        # assert that the correct out_path is returned that points to the cache
-        assert result[0].endswith("/cachedir/bbmap-38.93--he522d1c_0.img")
-
-        ## Test phase II: Test various container names
-        # out_path: str, Path to cache
-        # cache_path: None
+        # Test --- galaxy URL #
+        result = fetcher.get_container_filename(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",
+        )
+        assert result == "bbmap-38.93--he522d1c_0.img"
 
         # Test --- mulled containers #
-        result = download_obj.singularity_image_filenames(
-            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
+        result = fetcher.get_container_filename(
+            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0",
         )
-        assert result[0].endswith(
-            "/cachedir/biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
+        assert (
+            result
+            == "biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
         )
 
         # Test --- Docker containers without registry #
-        result = download_obj.singularity_image_filenames("nf-core/ubuntu:20.04")
-        assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
+        result = fetcher.get_container_filename("nf-core/ubuntu:20.04")
+        assert result == "nf-core-ubuntu-20.04.img"
 
         # Test --- Docker container with explicit registry -> should be trimmed #
-        result = download_obj.singularity_image_filenames("docker.io/nf-core/ubuntu:20.04")
-        assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
+        result = fetcher.get_container_filename("docker.io/nf-core/ubuntu:20.04")
+        assert result == "nf-core-ubuntu-20.04.img"
 
-        # Test --- Docker container with explicit registry not in registry set -> can't be trimmed
-        result = download_obj.singularity_image_filenames("mirage-the-imaginative-registry.io/nf-core/ubuntu:20.04")
-        assert result[0].endswith("/cachedir/mirage-the-imaginative-registry.io-nf-core-ubuntu-20.04.img")
+        # Test --- Docker container with explicit registry not in registry list -> can't be trimmed
+        result = fetcher.get_container_filename("mirage-the-imaginative-registry.io/nf-core/ubuntu:20.04")
+        assert result == "mirage-the-imaginative-registry.io-nf-core-ubuntu-20.04.img"
 
         # Test --- Seqera Docker containers: Trimmed, because it is hard-coded in the registry set.
-        result = download_obj.singularity_image_filenames(
-            "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264"
-        )
-        assert result[0].endswith("/cachedir/coreutils-9.5--ae99c88a9b28c264.img")
+        result = fetcher.get_container_filename("community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264")
+        assert result == "coreutils-9.5--ae99c88a9b28c264.img"
 
         # Test --- Seqera Singularity containers: Trimmed, because it is hard-coded in the registry set.
-        result = download_obj.singularity_image_filenames(
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
+        result = fetcher.get_container_filename(
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
         )
-        assert result[0].endswith(
-            "cachedir/blobs-sha256-c2-c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975-data.img"
+        assert result == "blobs-sha256-c2-c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975-data.img"
+
+        # Test --- Seqera Oras containers: Trimmed, because it is hard-coded in the registry set.
+        result = fetcher.get_container_filename(
+            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+        )
+        assert result == "umi-transfer-1.0.0--e5b0c1a65b8173b6.img"
+
+        # Test --- SIF Singularity container with explicit registry -> should be trimmed #
+        result = fetcher.get_container_filename(
+            "docker.io-hashicorp-vault-1.16-sha256:e139ff28c23e1f22a6e325696318141259b177097d8e238a3a4c5b84862fadd8.sif",
+        )
+        assert (
+            result == "hashicorp-vault-1.16-sha256-e139ff28c23e1f22a6e325696318141259b177097d8e238a3a4c5b84862fadd8.sif"
         )
 
-        ## Test phase III: Container will be cached but also copied to out_path
-        # out_path: str, Path to cache
-        # cache_path: str, Path to cache
-        download_obj.container_cache_utilisation = "copy"
-        result = download_obj.singularity_image_filenames(
-            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        # Test --- SIF Singularity container without registry #
+        result = fetcher.get_container_filename(
+            "singularity-hpc/shpc/tests/testdata/salad_latest.sif",
         )
+        assert result == "singularity-hpc-shpc-tests-testdata-salad_latest.sif"
 
-        self.assertTrue(all(isinstance(element, str) for element in result))
-        assert result[0].endswith("/singularity-images/bbmap-38.93--he522d1c_0.img")
-        assert result[1].endswith("/cachedir/bbmap-38.93--he522d1c_0.img")
+        # Test --- Singularity container from a Singularity registry (and version tag) #
+        result = fetcher.get_container_filename(
+            "library://pditommaso/foo/bar.sif:latest",
+        )
+        assert result == "pditommaso-foo-bar-latest.sif"
 
-        ## Test phase IV: Expect an error if no NXF_SINGULARITY_CACHEDIR is defined
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = ""
-        with self.assertRaises(FileNotFoundError):
-            download_obj.singularity_image_filenames(
-                "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
-            )
+        # Test --- galaxy URL but no registry given #
+        fetcher.registry_set = []
+        result = fetcher.get_container_filename("https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0")
+        assert result == "depot.galaxyproject.org-singularity-bbmap-38.93--he522d1c_0.img"
 
     #
     # Test for '--singularity-cache remote --singularity-cache-index'. Provide a list of containers already available in a remote location.
     #
     @with_temporary_folder
     def test_remote_container_functionality(self, tmp_dir):
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = "foo"
+        tmp_dir = Path(tmp_dir)
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = str(tmp_dir / "foo")
 
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
-            outdir=os.path.join(tmp_dir, "new"),
+            outdir=(tmp_dir / "new"),
             revision="3.9",
             compress_type="none",
-            container_cache_index=str(Path(TEST_DATA_DIR, "testdata_remote_containers.txt")),
+            container_cache_index=Path(TEST_DATA_DIR, "testdata_remote_containers.txt"),
+            container_system="singularity",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
@@ -864,27 +1385,36 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.container_cache_utilisation == "remote" and download_obj.container_system == "singularity"
         assert isinstance(download_obj.containers_remote, list) and len(download_obj.containers_remote) == 0
         # read in the file
-        download_obj.read_remote_containers()
-        assert len(download_obj.containers_remote) == 33
-        assert "depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img" in download_obj.containers_remote
-        assert "MV Rena" not in download_obj.containers_remote  # decoy in test file
+        containers_remote = SingularityFetcher.read_remote_singularity_containers(download_obj.container_cache_index)
+        assert len(containers_remote) == 33
+        assert "depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img" in containers_remote
+        assert "MV Rena" not in containers_remote  # decoy in test file
 
     #
     # Tests for the main entry method 'download_workflow'
     #
+
+    # We do not want to download all containers, so we mock the download by just touching the singularity files
+    def mock_download_file(self, remote_path: str, output_path: str):
+        Path(output_path).touch()  # Create an empty file at the output path
+
     @with_temporary_folder
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.singularity_pull_image")
-    @mock.patch("shutil.which")
-    def test_download_workflow_with_success(self, tmp_dir, mock_download_image, mock_singularity_installed):
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = "foo"
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
+    @mock.patch.object(nf_core.pipelines.download.singularity.FileDownloader, "download_file", new=mock_download_file)
+    def test_download_workflow_with_success(self, tmp_dir, mock_check_and_set_implementation):
+        tmp_dir = Path(tmp_dir)
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = str(tmp_dir / "foo")
 
         download_obj = DownloadWorkflow(
-            pipeline="nf-core/methylseq",
-            outdir=os.path.join(tmp_dir, "new"),
+            pipeline="nf-core/bamtofastq",
+            outdir=tmp_dir / "new",
             container_system="singularity",
-            revision="1.6",
+            revision="2.2.0",
             compress_type="none",
             container_cache_utilisation="copy",
+            parallel=1,
         )
 
         download_obj.include_configs = True  # suppress prompt, because stderr.is_interactive doesn't.
@@ -894,11 +1424,20 @@ class DownloadTest(unittest.TestCase):
     # Test Download for Seqera Platform
     #
     @with_temporary_folder
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
-    def test_download_workflow_for_platform(self, tmp_dir, _):
+    @mock.patch(
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
+    def test_download_workflow_for_platform(
+        self,
+        tmp_dir,
+        mock_fetch_containers,
+        mock_check_and_set_implementation,
+    ):
+        tmp_dir = Path(tmp_dir)
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
-            revision=("3.7", "3.9"),
+            revision=("3.19.0", "3.17.0"),
             compress_type="none",
             platform=True,
             container_system="singularity",
@@ -925,9 +1464,10 @@ class DownloadTest(unittest.TestCase):
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
         # The outdir for multiple revisions is the pipeline name and date: e.g. nf-core-rnaseq_2023-04-27_18-54
-        assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", download_obj.outdir, re.S))
+        assert isinstance(download_obj.outdir, Path)
+        assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", str(download_obj.outdir), re.S))
 
-        download_obj.output_filename = f"{download_obj.outdir}.git"
+        download_obj.output_filename = download_obj.outdir.with_suffix(".git")
         download_obj.download_workflow_platform(location=tmp_dir)
 
         assert download_obj.workflow_repo
@@ -942,15 +1482,12 @@ class DownloadTest(unittest.TestCase):
         # assert that the download has a "latest" branch.
         assert "latest" in all_heads
 
-        # download_obj.download_workflow_platform(location=tmp_dir) will run container image detection for all requested revisions
-        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 33
+        # download_obj.download_workflow_platform(location=tmp_dir) will run `nextflow inspect` for each revision
+        # This means that the containers in download_obj.containers are the containers the last specified revision i.e. 3.17
+        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 39
         assert (
-            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0" in download_obj.containers
+            "https://depot.galaxyproject.org/singularity/bbmap:39.10--h92535d8_0" in download_obj.containers
         )  # direct definition
-        assert (
-            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
-            in download_obj.containers
-        )  # indirect definition via $container variable.
 
         # clean-up
         # remove "nf-core-rnaseq*" directories
@@ -960,9 +1497,10 @@ class DownloadTest(unittest.TestCase):
     #
     # Brief test adding a single custom tag to Seqera Platform download
     #
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
+        tmp_dir = Path(tmp_dir)
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
             revision=("3.9"),
@@ -981,9 +1519,10 @@ class DownloadTest(unittest.TestCase):
     #
     # Test adding custom tags to Seqera Platform download (full test)
     #
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_custom_tags(self, _, tmp_dir):
+        tmp_dir = Path(tmp_dir)
         with self._caplog.at_level(logging.INFO):
             from git.refs.tag import TagReference
 

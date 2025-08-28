@@ -61,7 +61,7 @@ from nf_core.commands_test_datasets import (
 )
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download import DownloadError
+from nf_core.pipelines.download.download import DownloadError
 from nf_core.pipelines.list import autocomplete_pipelines
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
@@ -400,33 +400,33 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(
     "-l",
     "--container-library",
     multiple=True,
-    help="Container registry/library or mirror to pull images from.",
+    help="Container registry/library or mirror to pull images from. Not available for Docker containers.",
 )
 @click.option(
     "-u",
     "--container-cache-utilisation",
     type=click.Choice(["amend", "copy", "remote"]),
-    help="Utilise a `singularity.cacheDir` in the download process, if applicable.",
+    help="Utilise a `singularity.cacheDir` in the download process, if applicable. Not available for Docker containers.",
 )
 @click.option(
     "-i",
     "--container-cache-index",
     type=str,
-    help="List of images already available in a remote `singularity.cacheDir`.",
+    help="List of images already available in a remote `singularity.cacheDir`. Not available for Docker containers.",
 )
 @click.option(
     "-d",
     "--parallel-downloads",
     type=int,
     default=4,
-    help="Number of parallel image downloads",
+    help="Number of allowed parallel tasks",
 )
 @click.pass_context
 def command_pipelines_download(
@@ -2360,7 +2360,7 @@ def command_create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(
