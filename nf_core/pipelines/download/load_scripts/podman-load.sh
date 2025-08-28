@@ -6,6 +6,17 @@ LOGFILE="podman-load.log"
 # Clear log
 > "$LOGFILE"
 
+if ! command -v podman &> /dev/null
+then
+    echo "Error: Podman is not installed. Please install it to continue." >&2
+    exit 1
+fi
+
+if ! podman info &> /dev/null; then
+  echo "Error: No Podman machine is ready. Make sure it's installed and configured." >&2
+  exit 1
+fi
+
 PODMAN_LOAD_SINGLE_IMAGE() {
     local TARFILE="$1"
 
