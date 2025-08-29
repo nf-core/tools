@@ -101,7 +101,7 @@ class DockerFetcher(ContainerFetcher):
         )
 
         # add the new Seqera Docker container registry
-        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER)
+        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER.value)
         return registry_set
 
     def clean_container_file_extension(self, container_fn):
