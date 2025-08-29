@@ -1,5 +1,6 @@
 """Tests for the download subcommand of nf-core tools"""
 
+import os
 import shutil
 import unittest
 from contextlib import redirect_stderr
@@ -202,15 +203,28 @@ class DockerTest(unittest.TestCase):
         )
 
     #
-    # Test for 'write_docker_load_command'
+    # Test for DockerFetcher.write_docker_load_command
     #
-    def test_docker_write_docker_load_message(self):
+    @with_temporary_folder
+    def test_docker_write_docker_load_message(self, tmp_path):
+        tmp_path = Path(tmp_path)
         docker_fetcher = DockerFetcher(
-            outdir=Path("dummydir"),
+            outdir=tmp_path,
             container_library=[],
             registry_set=[],
         )
+        docker_output_dir = docker_fetcher.get_container_output_dir()
+        docker_output_dir.mkdir()
         with redirect_stderr(StringIO()) as f:
             docker_fetcher.write_docker_load_message()
-        assert "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i" in f.getvalue()
-        assert "dummydir/docker-images" in f.getvalue()
+
+        # Check that the message looks ok
+        assert str(docker_output_dir) in f.getvalue()
+        assert "podman-load.sh" in f.getvalue()
+        assert "docker-load.sh" in f.getvalue()
+
+        # Check that the files were written and are executable
+        assert (docker_output_dir / "docker-load.sh").exists()
+        assert (docker_output_dir / "podman-load.sh").exists()
+        assert os.access(docker_output_dir / "docker-load.sh", os.X_OK)
+        assert os.access(docker_output_dir / "podman-load.sh", os.X_OK)
