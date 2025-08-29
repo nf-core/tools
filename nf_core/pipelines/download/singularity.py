@@ -193,13 +193,13 @@ class SingularityFetcher(ContainerFetcher):
         )
 
         # add the default glaxy registry for singularity (hardcoded in modules) to the set
-        registry_set.add(ContainerRegistryUrls.GALAXY_SINGULARITY)
+        registry_set.add(ContainerRegistryUrls.GALAXY_SINGULARITY.value)
 
         # add the new Seqera Docker container registry to the set to support
-        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER)
+        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER.value)
 
         # add the new Seqera Singularity container registry to the set
-        registry_set.add(ContainerRegistryUrls.SEQERA_SINGULARITY)
+        registry_set.add(ContainerRegistryUrls.SEQERA_SINGULARITY.value)
 
         return registry_set
 
