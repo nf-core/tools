@@ -7,7 +7,7 @@ include { MINIMAP2_INDEX             } from '../../modules/nf-core/minimap2/inde
 include { MINIMAP2_ALIGN             } from '../../modules/nf-core/minimap2/align/main'
 include { BAM_SORT_STATS_SAMTOOLS    } from '../nf-core/bam_sort_stats_samtools/main'
 
-workflow LONGREAD_SCREENPATHOGEN {
+workflow MAPPING_LONGREAD {
     take:
     reads     // [ [ meta ], [ reads ] ]
     reference // [ [ meta ], [ reference ] ]

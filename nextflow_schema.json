@@ -153,6 +153,13 @@
                     "help_text": "Specify the maximum expected value for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `max_evalue=`",
                     "fa_icon": "filter"
                 },
+                "taxid2genome": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to a file containing taxonomic IDs and their corresponding genome paths.",
+                    "help_text": "Please check https://github.com/LilyAnderssonLee/download_genomes_taxid for details on how to prepare this file.",
+                    "fa_icon": "fas fa-file-alt"
+                },
                 "perform_shortread_denovo": {
                     "type": "boolean",
                     "description": "Turn on de novo assembly for short reads",

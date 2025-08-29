@@ -12,8 +12,8 @@ process FILTER_BLAST {
     path header
 
     output:
-    tuple val(meta), path('*_filtered.txt')        , emit: filtered_blast
-    tuple val(meta), path('*_summary.txt'), emit: summary
+    tuple val(meta), path('*_filtered.txt')        , emit: filtered_blast, optional: true
+    tuple val(meta), path('*_summary.txt')         , emit: summary       , optional: true
     path "versions.yml"                            , emit: versions
 
     when:
