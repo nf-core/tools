@@ -322,11 +322,11 @@ class DownloadWorkflow:
 
             # Collect all required container images
             if self.container_system in {"singularity", "docker"}:
-                self.find_container_images(self.outdir / revision_dirname, revision)
-                self.gather_registries(self.outdir / revision_dirname)
+                workflow_directory = self.outdir / revision_dirname
+                self.find_container_images(workflow_directory, revision)
 
                 try:
-                    self.download_container_images(current_revision=revision)
+                    self.download_container_images(workflow_directory, revision)
                 except OSError as e:
                     raise DownloadError(f"[red]{e}[/]") from e
 
@@ -362,11 +362,11 @@ class DownloadWorkflow:
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
                 # Collect all required singularity images
-                self.find_container_images(self.workflow_repo.access(), revision)
-                self.gather_registries(self.workflow_repo.access())
+                workflow_directory = self.workflow_repo.access()
+                self.find_container_images(workflow_directory, revision)
 
                 try:
-                    self.download_container_images(current_revision=revision)
+                    self.download_container_images(workflow_directory, revision)
                 except OSError as e:
                     raise DownloadError(f"[red]{e}[/]") from e
 
@@ -672,41 +672,11 @@ class DownloadWorkflow:
             log.error("Failed to parse output of 'nextflow inspect' to extract containers")
             raise DownloadError(e)
 
-    def gather_registries(self, workflow_directory: Path) -> None:
-        """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
-        This is needed to symlink downloaded container images so Nextflow will find them.
-        """
-
-        # should exist, because find_container_images() is always called before
-        if not self.nf_config:
-            self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
-
-        # Select registries defined in pipeline config
-        configured_registries = [
-            "apptainer.registry",
-            "docker.registry",
-            "podman.registry",
-            "singularity.registry",
-        ]
-
-        for registry in configured_registries:
-            if registry in self.nf_config:
-                self.registry_set.add(self.nf_config[registry])
-
-        # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
-        self.registry_set.add("depot.galaxyproject.org/singularity")
-
-        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
-        self.registry_set.add("community.wave.seqera.io/library")
-
-        # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
-        self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
-
     def get_container_output_dir(self) -> Path:
         assert self.outdir is not None  # mypy
         return self.outdir / f"{self.container_system}-images"
 
-    def download_container_images(self, current_revision: str = "") -> None:
+    def download_container_images(self, workflow_directory: Path, current_revision: str = "") -> None:
         """
         Fetch the container images with the appropriate ContainerFetcher
 
@@ -730,10 +700,7 @@ class DownloadWorkflow:
                 out_path_dir.mkdir(parents=True)
 
             if self.container_fetcher is not None:
-                self.container_fetcher.fetch_containers(
-                    self.containers,
-                    self.containers_remote,
-                )
+                self.container_fetcher.fetch_containers(self.containers, self.containers_remote, workflow_directory)
 
     def compress_download(self) -> None:
         """Take the downloaded files and make a compressed .tar.gz archive."""

@@ -9,6 +9,7 @@ from typing import Callable, Optional, Union
 
 import rich.progress
 
+import nf_core.utils
 from nf_core.pipelines.download.utils import intermediate_file
 
 log = logging.getLogger(__name__)
@@ -210,7 +211,9 @@ class ContainerFetcher(ABC):
     ) -> None:
         self._container_output_dir = container_output_dir
         self.container_library = list(container_library)
-        self.registry_set = registry_set
+        self.base_registry_set: set[str] = set(registry_set)
+        self._registry_set: Optional[set[str]] = None
+
         self.kill_with_fire = False
         self.implementation: Optional[str] = None
         self.name = None
@@ -232,6 +235,18 @@ class ContainerFetcher(ABC):
     def progress(self, progress: Optional[ContainerProgress]) -> None:
         self._progress = progress
 
+    @property
+    def registry_set(self) -> set[str]:
+        """
+        Get the set of registries to use for the container download
+        """
+        assert self._registry_set is not None  # mypy
+        return self._registry_set
+
+    @registry_set.setter
+    def registry_set(self, registry_set: set[str]) -> None:
+        self._registry_set = registry_set
+
     def get_container_output_dir(self) -> Path:
         """
         Get the output directory for the container images.
@@ -249,6 +264,37 @@ class ContainerFetcher(ABC):
             OSError: If the container system is not installed or not in $PATH.
         """
         pass
+
+    @abstractmethod
+    def gather_registries(self, workflow_directory: Path) -> set[str]:
+        """
+        Gather the registries from the pipeline config and CLI arguments and store them in a set.
+
+        Returns:
+            set[str]: The set of registries.
+        """
+        pass
+
+    def gather_config_registries(self, workflow_directory: Path, registry_keys: list[str] = []) -> set[str]:
+        """
+        Gather the registries from the pipeline config and store them in a set.
+
+        Args:
+            workflow_directory (Path): The directory containing the pipeline files we are currently processing
+            registry_keys (list[str]): The list of registry keys to fetch from the pipeline config
+
+        Returns:
+            set[str]: The set of registries defined in the pipeline config
+        """
+        # Fetch the pipeline config
+        nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+
+        config_registries = set()
+        for registry_key in registry_keys:
+            if registry_key in nf_config:
+                config_registries.add(nf_config[registry_key])
+
+        return config_registries
 
     @abstractmethod
     def clean_container_file_extension(self, container_fn: str) -> str:
@@ -319,6 +365,7 @@ class ContainerFetcher(ABC):
         self,
         containers: Collection[str],
         exclude_list: Container[str],
+        workflow_directory: Path,
     ):
         """
         This is the main entrypoint of the container fetcher. It goes through
@@ -328,6 +375,9 @@ class ContainerFetcher(ABC):
 
         # Create a new progress bar
         self.progress = self.progress_factory(self.hide_progress)
+
+        # Collect registries defined in the workflow directory
+        self.registry_set = self.gather_registries(workflow_directory)
 
         with self.progress:
             # Check each container in the list and defer actions

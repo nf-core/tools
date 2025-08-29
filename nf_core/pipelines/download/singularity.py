@@ -18,7 +18,12 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import DownloadError, intermediate_file, intermediate_file_no_creation
+from nf_core.pipelines.download.utils import (
+    ContainerRegistryUrls,
+    DownloadError,
+    intermediate_file,
+    intermediate_file_no_creation,
+)
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -160,6 +165,43 @@ class SingularityFetcher(ContainerFetcher):
             self.implementation = "apptainer"
         else:
             raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
+
+    def gather_registries(self, workflow_directory: Path) -> set[str]:
+        """
+        Fetch the registries from the pipeline config and CLI arguments and store them in a set.
+        This is needed to symlink downloaded container images so Nextflow will find them.
+
+        Args:
+            workflow_directory (Path): The directory containing the pipeline files we are currently processing
+
+        Returns:
+            set[str]: The set of registries to use for the container fetching
+        """
+        registry_set = self.base_registry_set.copy()
+
+        # Select registries defined in pipeline config
+        configured_registry_keys = [
+            "apptainer.registry",
+            "docker.registry",
+            "podman.registry",
+            "singularity.registry",
+        ]
+
+        registry_set |= self.gather_config_registries(
+            workflow_directory,
+            configured_registry_keys,
+        )
+
+        # add the default glaxy registry for singularity (hardcoded in modules) to the set
+        registry_set.add(ContainerRegistryUrls.GALAXY_SINGULARITY)
+
+        # add the new Seqera Docker container registry to the set to support
+        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER)
+
+        # add the new Seqera Singularity container registry to the set
+        registry_set.add(ContainerRegistryUrls.SEQERA_SINGULARITY)
+
+        return registry_set
 
     def get_cache_dir(self) -> Path:
         """

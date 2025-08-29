@@ -4,9 +4,16 @@ import logging
 import shutil
 import tempfile
 from collections.abc import Generator
+from enum import StrEnum
 from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+
+class ContainerRegistryUrls(StrEnum):
+    SEQERA_DOCKER = "community.wave.seqera.io/library"
+    SEQERA_SINGULARITY = "community-cr-prod.seqera.io/docker/registry/v2"
+    GALAXY_SINGULARITY = "depot.galaxyproject.org/singularity"
 
 
 def copy_container_load_scripts(container_system: str, dest_dir: Path, make_exec: bool = True) -> tuple[str, Path]:
