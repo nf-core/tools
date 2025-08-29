@@ -4,7 +4,11 @@
 
 ### Template
 
+- Update the `download_pipeline` workflow to remove dependency on `dev` branch of tools ([#3734](https://github.com/nf-core/tools/pull/3734))
+
 ### Linting
+
+- ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
 
 ### Modules
 
@@ -23,7 +27,18 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.17.1 ([#3698](https://github.com/nf-core/tools/pull/3698))
 - Update python:3.13-slim Docker digest to 4c2cf99 ([#3700](https://github.com/nf-core/tools/pull/3700))
 - Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
+- Refactor downloads command ([#3634](https://github.com/nf-core/tools/pull/3634))
+  - Split `download.py` into subdirectory `download/`
+  - Use `nextflow inspect` for container discovery and remove legacy regex container discovery (requires Nextflow >= 25.04.04)
+  - Add support for downloading docker images into tar archives
+  - Change long flag `--parallel-downloads` to `--parallel`. Short flag remains `-d`.
+  - Add pipeline to test data to be compatible with `nextflow inspect`
+- Move `gather_registries` function to `ContainerFetcher` subclasses (#3634 follow-up) ([#3696](https://github.com/nf-core/tools/pull/3696))
+- Add container load scripts for Docker and Podman (#3634 follow up) ([#3706](https://github.com/nf-core/tools/pull/3706))
 - Replace arm profile with arm64 and emulate_amd64 profiles ([#3689](https://github.com/nf-core/tools/pull/3689))
+- Update test-datasets list subcommand to output plain text urls and paths for easy copying [#3720](https://github.com/nf-core/tools/pull/3720)
+- Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
+- Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
