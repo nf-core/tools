@@ -4,13 +4,13 @@ import logging
 import shutil
 import tempfile
 from collections.abc import Generator
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 log = logging.getLogger(__name__)
 
 
-class ContainerRegistryUrls(Enum):
+class ContainerRegistryUrls(StrEnum):
     SEQERA_DOCKER = "community.wave.seqera.io/library"
     SEQERA_SINGULARITY = "community-cr-prod.seqera.io/docker/registry/v2"
     GALAXY_SINGULARITY = "depot.galaxyproject.org/singularity"

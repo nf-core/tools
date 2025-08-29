@@ -18,7 +18,12 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import ContainerRegistryUrls, DownloadError, intermediate_file, intermediate_file_no_creation
+from nf_core.pipelines.download.utils import (
+    ContainerRegistryUrls,
+    DownloadError,
+    intermediate_file,
+    intermediate_file_no_creation,
+)
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
