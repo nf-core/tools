@@ -14,7 +14,7 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import copy_container_load_scripts
+from nf_core.pipelines.download.utils import copy_container_load_scripts, ContainerRegistryUrls
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -100,8 +100,8 @@ class DockerFetcher(ContainerFetcher):
             configured_registry_keys,
         )
 
-        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
-        registry_set.add("community.wave.seqera.io/library")
+        # add the new Seqera Docker container registry
+        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER)
         return registry_set
 
     def clean_container_file_extension(self, container_fn):

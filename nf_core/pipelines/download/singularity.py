@@ -18,7 +18,7 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import DownloadError, intermediate_file, intermediate_file_no_creation
+from nf_core.pipelines.download.utils import ContainerRegistryUrls, DownloadError, intermediate_file, intermediate_file_no_creation
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -187,14 +187,14 @@ class SingularityFetcher(ContainerFetcher):
             configured_registry_keys,
         )
 
-        # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
-        registry_set.add("depot.galaxyproject.org/singularity")
+        # add the default glaxy registry for singularity (hardcoded in modules) to the set
+        registry_set.add(ContainerRegistryUrls.GALAXY_SINGULARITY)
 
-        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
-        registry_set.add("community.wave.seqera.io/library")
+        # add the new Seqera Docker container registry to the set to support
+        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER)
 
-        # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
-        registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
+        # add the new Seqera Singularity container registry to the set
+        registry_set.add(ContainerRegistryUrls.SEQERA_SINGULARITY)
 
         return registry_set
 
