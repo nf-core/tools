@@ -27,7 +27,7 @@ RUN apt-get update --quiet && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM "mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d3633338558a2078ce66d3abde55c130f0d5da94f"
+FROM "mcr.microsoft.com/devcontainers/base:debian@sha256:ce2e9e611939e611b737362c045bb6d3449bb3efb84898525d724aace1737b90" AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda
