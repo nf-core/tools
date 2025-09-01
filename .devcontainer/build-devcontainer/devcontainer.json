@@ -10,11 +10,11 @@
     "image": "nfcore/devcontainer:base-2stage",
 
     "features": {
-        "ghcr.io/devcontainers/features/docker-outside-of-docker:1.6.3": {},
-        "ghcr.io/devcontainers/features/java:1.6.3": {
-            "version": "21.0.6-ms"
-        },
-        "./local-features/apptainer": {}
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1.6.3": {}
+        //"ghcr.io/devcontainers/features/java:1.6.3": {
+        //    "version": "21.0.6-ms"
+        //},
+        //"./local-features/apptainer": {}
         //"./local-features/nextflow": {}
     },
 

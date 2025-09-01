@@ -18,8 +18,21 @@ RUN cd /root/nfcore-tools/ && \
 RUN conda install -c bioconda -y nextflow nf-test && \
     conda clean -afy
 
+# Install dependencies for apptainer build and apptainer and run apt clean
+RUN apt-get update --quiet && \
+    apt-get install -y curl rpm2cpio cpio && \
+    curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - /usr/local/apptainer && \
+    echo "PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Final stage to copy only the required files after installation
 FROM "mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d3633338558a2078ce66d3abde55c130f0d5da94f"
 
-# Copy only the conda environment and site-packages from builder
+# Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda
 COPY --from=build /root/nfcore-tools/nf_core /root/nfcore-tools/nf_core
+
+# Copy aptainer install from build stage
+COPY --from=build /usr/local/apptainer /usr/local/apptainer
+COPY --from=build /root/.bashrc /root/.bashrc
