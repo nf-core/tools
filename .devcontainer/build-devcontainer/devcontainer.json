@@ -1,21 +1,15 @@
 {
     "name": "nfcore-devcontainer-build",
 
-    // installs python3.13, nf-core tools from current workspace
-    // based on mcr.microsoft.com/devcontainers/miniconda image
-    //"build": {
-    //   "dockerfile": "./Dockerfile",
-    //    "context": "../.."
-    //},
-    "image": "nfcore/devcontainer:base-2stage",
+    // installs python3.13, nf-core tools from current workspace, nextflow, nf-test,
+    // and apptainer based on mcr.microsoft.com/devcontainers/miniconda image
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "context": "../.."
+    },
 
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1.6.3": {}
-        //"ghcr.io/devcontainers/features/java:1.6.3": {
-        //    "version": "21.0.6-ms"
-        //},
-        //"./local-features/apptainer": {}
-        //"./local-features/nextflow": {}
     },
 
     "remoteEnv": {
