@@ -4,10 +4,15 @@
 
 ### Template
 
+- Update the `download_pipeline` workflow to remove dependency on `dev` branch of tools ([#3734](https://github.com/nf-core/tools/pull/3734))
+
 ### Linting
+
+- ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
 
 ### Modules
 
+- Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
 - feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
 
 ### Subworkflows
@@ -16,6 +21,24 @@
 
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
+- Update dependency textual to v5 ([#3699](https://github.com/nf-core/tools/pull/3699))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.7 ([#3697](https://github.com/nf-core/tools/pull/3697))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.17.1 ([#3698](https://github.com/nf-core/tools/pull/3698))
+- Update python:3.13-slim Docker digest to 4c2cf99 ([#3700](https://github.com/nf-core/tools/pull/3700))
+- Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
+- Refactor downloads command ([#3634](https://github.com/nf-core/tools/pull/3634))
+  - Split `download.py` into subdirectory `download/`
+  - Use `nextflow inspect` for container discovery and remove legacy regex container discovery (requires Nextflow >= 25.04.04)
+  - Add support for downloading docker images into tar archives
+  - Change long flag `--parallel-downloads` to `--parallel`. Short flag remains `-d`.
+  - Add pipeline to test data to be compatible with `nextflow inspect`
+- Move `gather_registries` function to `ContainerFetcher` subclasses (#3634 follow-up) ([#3696](https://github.com/nf-core/tools/pull/3696))
+- Add container load scripts for Docker and Podman (#3634 follow up) ([#3706](https://github.com/nf-core/tools/pull/3706))
+- Replace arm profile with arm64 and emulate_amd64 profiles ([#3689](https://github.com/nf-core/tools/pull/3689))
+- Update test-datasets list subcommand to output plain text urls and paths for easy copying [#3720](https://github.com/nf-core/tools/pull/3720)
+- Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
+- Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
+- Fix backwards compatibility with python 3.9 in use of Enum ([#3736](https://github.com/nf-core/tools/pull/3736))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
@@ -47,6 +70,7 @@
 
 ### General
 
+- Add description of accepted enum values to `nf-core pipelines schema docs` output ([#3693](https://github.com/nf-core/tools/pull/3693))
 - update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
 - Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))

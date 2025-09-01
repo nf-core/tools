@@ -199,6 +199,7 @@ def pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        ctx.obj["hide_progress"],
     )
     dl.download_workflow()
 
