@@ -13,4 +13,9 @@ RUN cd /root/nfcore-tools/ && \
     pip install -r requirements.txt --no-cache-dir -e . && \
     pre-commit install --install-hooks && \
     rm -rf /root/.cache/pip && \
+    pre-commit install --install-hooks && \
+    rm -rf /root/.cache/pip
+
+# Install nextflow and nf-test via conda and run conda clean
+RUN conda install -c bioconda -y nextflow nf-test && \
     conda clean -afy
