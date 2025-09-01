@@ -10,5 +10,7 @@ COPY . /root/nfcore-tools/
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
     pip install --no-cache-dir --upgrade pip setuptools wheel pre-commit && \
-    pip install -r requirements.txt -e . --no-cache-dir && \
-    pre-commit install --install-hooks
+    pip install -r requirements.txt --no-cache-dir -e . && \
+    pre-commit install --install-hooks && \
+    rm -rf /root/.cache/pip && \
+    conda clean -afy
