@@ -38,14 +38,14 @@ workflow PIPELINE_INITIALISATION {
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
-    {%- if nf_schema %}help              // boolean: Display help message and exit
+    {% if nf_schema %}help              // boolean: Display help message and exit
     help_full         // boolean: Show the full help message
     show_hidden       // boolean: Show hidden parameters in the help message{% endif %}
 
     main:
 
     ch_versions = Channel.empty()
-    {%- if nf_schema %}
+    {% if nf_schema %}
 
     //
     // Print help message
@@ -67,25 +67,25 @@ workflow PIPELINE_INITIALISATION {
 
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
-"""{% endif %}
+"""{%- endif %}
     command = "nextflow run {${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     if(help || help_full) {
         log.info paramsHelp(
             params.help instanceof String ? params.help : "",
             {%- if is_nfcore %}beforeText: before_text,
-            afterText: after_text,{% endif %}
+            afterText: after_text,{%- endif %}
             command: command,
             showHidden: show_hidden,
             fullHelp: full_help
         )
         exit 0
     } else {
-        {%- if is_nfcore %}log.info(before_text){% endif %}
+        {%- if is_nfcore %}log.info(before_text){%- endif %}
         log.info paramsSummaryLog(workflow)
-        {%- if is_nfcore %}log.info(after_text){% endif %}
+        {%- if is_nfcore %}log.info(after_text){%- endif %}
     }
-    {%- endif %}
+    {% endif %}
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
