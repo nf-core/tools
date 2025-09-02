@@ -448,7 +448,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         return docker_tag == singularity_tag
 
 
-def check_process_labels(self, lines):
+def check_process_labels(self, mod):
     correct_process_labels = [
         "process_single",
         "process_low",
@@ -457,14 +457,13 @@ def check_process_labels(self, lines):
         "process_long",
         "process_high_memory",
     ]
-    all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
+    label = mod.processes[0].labels[0]
+    all_labels = label.split()
     bad_labels = []
     good_labels = []
     if len(all_labels) > 0:
         for label in all_labels:
-            try:
-                label = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label).group(1)
-            except AttributeError:
+            if not label.replace("_", "").isalnum():
                 self.warned.append(
                     (
                         "process_standard_label",

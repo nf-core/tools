@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import pytest
+from reftrace import Module, ParseError
 
 import nf_core.modules.lint
 import nf_core.modules.patch
@@ -7,33 +10,58 @@ from nf_core.modules.lint.main_nf import check_container_link_line, check_proces
 from ...test_modules import TestModules
 from .test_lint_utils import MockModuleLint
 
+# @pytest.mark.parametrize(
+#     "content,passed,warned,failed",
+#     [
+#         # Valid process label
+#         ("label 'process_high'\ncpus 12", 1, 0, 0),
+#         # Non-alphanumeric characters in label
+#         ("label 'a:label:with:colons'\ncpus 12", 0, 2, 0),
+#         # Conflicting labels
+#         ("label 'process_high'\nlabel 'process_low'\ncpus 12", 0, 1, 0),
+#         # Duplicate labels
+#         ("label 'process_high'\nlabel 'process_high'\ncpus 12", 0, 2, 0),
+#         # Valid and non-standard labels
+#         ("label 'process_high'\nlabel 'process_extra_label'\ncpus 12", 1, 1, 0),
+#         # Non-standard label only
+#         ("label 'process_extra_label'\ncpus 12", 0, 2, 0),
+#         # Non-standard duplicates without quotes
+#         ("label process_extra_label\nlabel process_extra_label\ncpus 12", 0, 3, 0),
+#         # No label found
+#         ("cpus 12", 0, 1, 0),
+#     ],
+# )
+
 
 @pytest.mark.parametrize(
     "content,passed,warned,failed",
     [
         # Valid process label
-        ("label 'process_high'\ncpus 12", 1, 0, 0),
+        ("process_high", 1, 0, 0),
         # Non-alphanumeric characters in label
-        ("label 'a:label:with:colons'\ncpus 12", 0, 2, 0),
+        ("a:label:with:colons", 0, 2, 0),
         # Conflicting labels
-        ("label 'process_high'\nlabel 'process_low'\ncpus 12", 0, 1, 0),
+        ("process_high process_low", 0, 1, 0),
         # Duplicate labels
-        ("label 'process_high'\nlabel 'process_high'\ncpus 12", 0, 2, 0),
+        ("process_high process_high", 0, 2, 0),
         # Valid and non-standard labels
-        ("label 'process_high'\nlabel 'process_extra_label'\ncpus 12", 1, 1, 0),
+        ("process_high process_extra_label", 1, 1, 0),
         # Non-standard label only
-        ("label 'process_extra_label'\ncpus 12", 0, 2, 0),
+        ("process_extra_label", 0, 2, 0),
         # Non-standard duplicates without quotes
-        ("label process_extra_label\nlabel process_extra_label\ncpus 12", 0, 3, 0),
+        ("process_extra_label process_extra_label", 0, 3, 0),
         # No label found
-        ("cpus 12", 0, 1, 0),
+        (" ", 0, 1, 0),
     ],
 )
 def test_process_labels(content, passed, warned, failed):
     """Test process label validation"""
     mock_lint = MockModuleLint()
-    check_process_labels(mock_lint, content.splitlines())
-
+    module = Module.from_file(str(Path(mock_lint.main_nf)))
+    assert not isinstance(module, ParseError)
+    assert len(module.processes) == 1
+    module.processes[0].labels[0] = content
+    check_process_labels(mock_lint, module)
     assert len(mock_lint.passed) == passed
     assert len(mock_lint.warned) == warned
     assert len(mock_lint.failed) == failed
