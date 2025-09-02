@@ -1,7 +1,0 @@
-
-=== Error correction and assembling warnings:
- * 0:00:00.541     1M / 336M  WARN    General                 (pair_info_count.cpp       : 177)   Unable to estimate insert size for paired library #0
- * 0:00:00.543     1M / 336M  WARN    General                 (pair_info_count.cpp       : 183)   None of paired reads aligned properly. Please, check orientation of your read pairs.
- * 0:00:00.543     1M / 336M  WARN    General                 (repeat_resolving.cpp      :  82)   Insert size was not estimated for any of the paired libraries, repeat resolution module will not run.
- * 0:00:00.767     1M / 336M  WARN    General                 (pair_info_count.cpp       :  93)   Single reads are not used in metagenomic mode
-======= Warnings saved to /home/lili.li/metaval_proj/repo/metaval_fetchgenome/.nf-test/tests/cba84daa84806d00e20d342e94b106b8/work/8d/720cfbe630b7b914d2e5cd2b516984/warnings.log

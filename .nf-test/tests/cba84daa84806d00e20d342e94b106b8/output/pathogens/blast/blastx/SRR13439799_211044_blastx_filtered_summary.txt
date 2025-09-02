@@ -1,4 +1,0 @@
-qseqid	staxid	ssciname	count	min_pident	max_pident	median_pident	min_length	max_length	median_length	min_bitscore	max_bitscore	median_bitscore
-NC_002019.1_0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	62.6	62.6	62.6	265	265	265.0	305.0	305.0	305.0
-NC_002020.1_0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	2	78.3	84.3	81.3	60	89	74.5	89.0	141.0	115.0
-NC_002022.1_0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	2	60.0	68.0	64.0	115	359	237.0	112.0	445.0	278.5

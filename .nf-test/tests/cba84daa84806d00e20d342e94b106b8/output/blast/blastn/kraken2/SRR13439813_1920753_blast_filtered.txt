@@ -1,7 +1,0 @@
-qseqid	sseqid	slen	pident	qlen	length	qcovs	nident	evalue	bitscore	staxid	ssciname
-NODE_1_length_520_cov_4.264516	ref|NC_070850.1|	72458	85.902	520	532	100	457	1.2900000000000001e-157	553	2886042	Shigella virus Moo19
-NODE_2_length_457_cov_5.684080	ref|NC_070850.1|	72458	92.325	457	456	99	421	0.0	643	2886042	Shigella virus Moo19
-NODE_4_length_301_cov_6.500000	ref|NC_070850.1|	72458	92.691	301	301	100	279	2.75e-122	435	2886042	Shigella virus Moo19
-NODE_5_length_285_cov_3.791304	ref|NC_070850.1|	72458	91.103	285	281	99	256	3.42e-106	381	2886042	Shigella virus Moo19
-NODE_6_length_275_cov_6.095455	ref|NC_070850.1|	72458	89.455	275	275	100	246	3.34e-96	348	2886042	Shigella virus Moo19
-NODE_7_length_243_cov_4.446809	ref|NC_070850.1|	72458	87.654	243	243	100	213	8.340000000000001e-77	283	2886042	Shigella virus Moo19

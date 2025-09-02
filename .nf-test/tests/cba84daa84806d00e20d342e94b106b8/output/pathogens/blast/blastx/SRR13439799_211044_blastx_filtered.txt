@@ -1,6 +1,0 @@
-qseqid	sseqid	slen	pident	qlen	length	qcovs	nident	evalue	bitscore	staxid	ssciname
-NC_002022.1_0	NP_040986.1	716	68.0	2157	359	49.1	244	1.74e-147	445.0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))
-NC_002022.1_0	YP_006495785.1	252	60.0	2157	115	15.6	69	3.12e-28	112.0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))
-NC_002020.1_0	NP_040983.1	121	84.3	806	89	32.8	75	3.630000000000001e-43	141.0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))
-NC_002020.1_0	NP_040984.1	230	78.3	806	60	22.0	47	7.96e-22	89.0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))
-NC_002019.1_0	NP_040982.1	498	62.6	1165	265	68.0	166	1.43e-100	305.0	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))
