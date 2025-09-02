@@ -1,0 +1,9 @@
+qseqid	staxid	ssciname	count	min_pident	max_pident	median_pident	min_length	max_length	median_length	min_bitscore	max_bitscore	median_bitscore
+SRR13439799.12525	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	2	78.3	84.3	81.3	60	89	74.5	89.0	141.0	115.0
+SRR13439799.14052	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	50.5	50.5	50.5	198	198	198.0	135.0	135.0	135.0
+SRR13439799.15594	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	68.2	68.2	68.2	66	66	66.0	75.5	75.5	75.5
+SRR13439799.4016	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	55.6	55.6	55.6	126	126	126.0	97.4	97.4	97.4
+SRR13439799.4544	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	2	62.2	62.2	62.2	98	98	98.0	102.0	102.0	102.0
+SRR13439799.5372	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	67.9	67.9	67.9	84	84	84.0	99.8	99.8	99.8
+SRR13439799.5783	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	91.7	91.7	91.7	60	60	60.0	112.0	112.0	112.0
+SRR13439799.743	211044	Influenza A virus (A/Puerto Rico/8/1934(H1N1))	1	50.5	50.5	50.5	107	107	107.0	85.9	85.9	85.9

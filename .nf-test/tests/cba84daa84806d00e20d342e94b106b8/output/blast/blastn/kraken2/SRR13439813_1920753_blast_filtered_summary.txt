@@ -1,0 +1,7 @@
+qseqid	staxid	ssciname	count	min_pident	max_pident	median_pident	min_length	max_length	median_length	min_bitscore	max_bitscore	median_bitscore
+NODE_1_length_520_cov_4.264516	2886042	Shigella virus Moo19	1	85.902	85.902	85.902	532	532	532.0	553	553	553.0
+NODE_2_length_457_cov_5.684080	2886042	Shigella virus Moo19	1	92.325	92.325	92.325	456	456	456.0	643	643	643.0
+NODE_4_length_301_cov_6.500000	2886042	Shigella virus Moo19	1	92.691	92.691	92.691	301	301	301.0	435	435	435.0
+NODE_5_length_285_cov_3.791304	2886042	Shigella virus Moo19	1	91.103	91.103	91.103	281	281	281.0	381	381	381.0
+NODE_6_length_275_cov_6.095455	2886042	Shigella virus Moo19	1	89.455	89.455	89.455	275	275	275.0	348	348	348.0
+NODE_7_length_243_cov_4.446809	2886042	Shigella virus Moo19	1	87.654	87.654	87.654	243	243	243.0	283	283	283.0

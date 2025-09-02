@@ -190,6 +190,27 @@ The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sse
 
 Map Illumina short reads to genomes using `bowtie2` and map Nanopore long reads to genomes using `minimap2`
 
+#### Verify identified species
+
+Map reads to genomes with BLAST hits or genomes of identified species if skipping BLAST steps (`params.skip_blastn` and `params.skip_blastx`).
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `mapping/`
+  - `bowtie2/`
+    - `align/`
+      - `<sample_id>_<taxid>_aligned_genome_sorted.bam`: BAM file containing short reads that aligned against the genomes with BLAST hits.
+      - `<sample_id>_<taxid>_aligned_genome_sorted.bam.bai`: Index of the bam file.
+    - `build/`
+      - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
+  - `minimap2/`
+    - `align/`
+      - `<sample_id>_aligned_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
+      - `<sample_id>_aligned_genome_sorted.bam.bai`: Index of the bam file.
+    - `index/`
+      - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+
 #### Pathogen screening
 
 Map reads to the pathogen genomes databases.

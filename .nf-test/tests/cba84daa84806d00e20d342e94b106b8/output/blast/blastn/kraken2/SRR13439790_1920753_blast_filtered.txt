@@ -1,0 +1,3 @@
+qseqid	sseqid	slen	pident	qlen	length	qcovs	nident	evalue	bitscore	staxid	ssciname
+SRR13439790.852355	ref|NC_070850.1|	72458	91.333	150	150	100	137	5.04e-52	200	2886042	Shigella virus Moo19
+SRR13439790.852355	ref|NC_070850.1|	72458	93.333	150	150	100	140	1.0800000000000001e-58	222	2886042	Shigella virus Moo19

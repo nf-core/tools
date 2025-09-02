@@ -3,6 +3,8 @@ nextflow_pipeline {
     name "Test pipeline"
     script "../main.nf"
     tag "pipeline"
+    tag "gms_metaval"
+    tag "test_taxid"
     profile "test_taxid"
 
 

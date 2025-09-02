@@ -1,0 +1,5 @@
+qseqid	staxid	ssciname	count	min_pident	max_pident	median_pident	min_length	max_length	median_length	min_bitscore	max_bitscore	median_bitscore
+SRR13439790.1090618	878220	Chryseobacterium sp. StRB126	12	97.241	98.0	97.931	145	150	147.5	246	261	253.5
+SRR13439790.4814236	878220	Chryseobacterium sp. StRB126	12	97.333	97.887	97.61	142	150	146.0	244	255	249.5
+SRR13439790.5680151	878220	Chryseobacterium sp. StRB126	12	92.0	98.667	95.0065	150	151	150.0	207	267	234.0
+SRR13439790.7619897	878220	Chryseobacterium sp. StRB126	12	95.775	97.333	96.554	142	150	146.0	228	255	241.5

@@ -1,0 +1,77 @@
+qseqid	staxid	ssciname	count	min_pident	max_pident	median_pident	min_length	max_length	median_length	min_bitscore	max_bitscore	median_bitscore
+NODE_10_length_378_cov_1.055728	878220	Chryseobacterium sp. StRB126	2	56.5	95.2	75.85	124	125	124.5	125.0	226.0	175.5
+NODE_11_length_367_cov_2.740385	878220	Chryseobacterium sp. StRB126	1	90.0	90.0	90.0	120	120	120.0	198.0	198.0	198.0
+NODE_12_length_360_cov_1.147541	878220	Chryseobacterium sp. StRB126	1	93.3	93.3	93.3	119	119	119.0	229.0	229.0	229.0
+NODE_13_length_357_cov_1.887417	59732	Chryseobacterium	1	98.3	98.3	98.3	118	118	118.0	235.0	235.0	235.0
+NODE_14_length_354_cov_2.541806	878220	Chryseobacterium sp. StRB126	1	94.3	94.3	94.3	53	53	53.0	100.0	100.0	100.0
+NODE_15_length_353_cov_3.825503	59732	Chryseobacterium	1	100.0	100.0	100.0	117	117	117.0	244.0	244.0	244.0
+NODE_16_length_340_cov_1.992982	878220	Chryseobacterium sp. StRB126	1	90.2	90.2	90.2	112	112	112.0	210.0	210.0	210.0
+NODE_17_length_339_cov_3.295775	878220	Chryseobacterium sp. StRB126	1	91.1	91.1	91.1	112	112	112.0	213.0	213.0	213.0
+NODE_18_length_318_cov_2.159696	878220	Chryseobacterium sp. StRB126	1	98.1	98.1	98.1	106	106	106.0	227.0	227.0	227.0
+NODE_19_length_310_cov_1.490196	878220	Chryseobacterium sp. StRB126	1	80.4	80.4	80.4	102	102	102.0	182.0	182.0	182.0
+NODE_1_length_801_cov_2.140751	878220	Chryseobacterium sp. StRB126	2	90.8	92.4	91.6	76	170	123.0	151.0	337.0	244.0
+NODE_20_length_304_cov_3.052209	878220	Chryseobacterium sp. StRB126	1	93.1	93.1	93.1	101	101	101.0	194.0	194.0	194.0
+NODE_21_length_302_cov_1.153846	878220	Chryseobacterium sp. StRB126	1	96.0	96.0	96.0	100	100	100.0	206.0	206.0	206.0
+NODE_22_length_300_cov_4.073469	878220	Chryseobacterium sp. StRB126	1	99.0	99.0	99.0	99	99	99.0	201.0	201.0	201.0
+NODE_23_length_295_cov_1.583333	878220	Chryseobacterium sp. StRB126	3	61.4	86.7	75.0	57	84	83.0	72.8	152.0	131.0
+NODE_24_length_291_cov_2.415254	878220	Chryseobacterium sp. StRB126	1	93.8	93.8	93.8	96	96	96.0	183.0	183.0	183.0
+NODE_25_length_290_cov_4.025532	878220	Chryseobacterium sp. StRB126	1	95.8	95.8	95.8	96	96	96.0	187.0	187.0	187.0
+NODE_26_length_286_cov_1.645022	878220	Chryseobacterium sp. StRB126	1	77.5	77.5	77.5	80	80	80.0	140.0	140.0	140.0
+NODE_27_length_280_cov_3.377778	878220	Chryseobacterium sp. StRB126	1	98.7	98.7	98.7	77	77	77.0	146.0	146.0	146.0
+NODE_28_length_278_cov_0.852018	59732	Chryseobacterium	1	100.0	100.0	100.0	92	92	92.0	189.0	189.0	189.0
+NODE_29_length_278_cov_0.852018	878220	Chryseobacterium sp. StRB126	1	93.3	93.3	93.3	75	75	75.0	139.0	139.0	139.0
+NODE_2_length_678_cov_1.478331	878220	Chryseobacterium sp. StRB126	1	95.5	95.5	95.5	221	221	221.0	419.0	419.0	419.0
+NODE_30_length_277_cov_0.855856	878220	Chryseobacterium sp. StRB126	5	56.3	100.0	63.0	80	81	81.0	95.9	153.0	106.0
+NODE_31_length_276_cov_0.859729	878220	Chryseobacterium sp. StRB126	1	87.6	87.6	87.6	89	89	89.0	157.0	157.0	157.0
+NODE_33_length_271_cov_3.518519	878220	Chryseobacterium sp. StRB126	1	88.9	88.9	88.9	90	90	90.0	165.0	165.0	165.0
+NODE_34_length_271_cov_0.879630	878220	Chryseobacterium sp. StRB126	2	57.1	94.4	75.75	90	91	90.5	102.0	164.0	133.0
+NODE_35_length_270_cov_2.651163	878220	Chryseobacterium sp. StRB126	1	91.0	91.0	91.0	89	89	89.0	168.0	168.0	168.0
+NODE_36_length_270_cov_0.883721	878220	Chryseobacterium sp. StRB126	1	97.8	97.8	97.8	89	89	89.0	171.0	171.0	171.0
+NODE_37_length_266_cov_1.800948	878220	Chryseobacterium sp. StRB126	2	59.1	95.5	77.3	88	88	88.0	105.0	170.0	137.5
+NODE_38_length_266_cov_0.900474	878220	Chryseobacterium sp. StRB126	1	93.2	93.2	93.2	88	88	88.0	158.0	158.0	158.0
+NODE_39_length_264_cov_0.909091	878220	Chryseobacterium sp. StRB126	1	96.5	96.5	96.5	86	86	86.0	166.0	166.0	166.0
+NODE_3_length_644_cov_1.741935	878220	Chryseobacterium sp. StRB126	1	85.1	85.1	85.1	154	154	154.0	287.0	287.0	287.0
+NODE_41_length_261_cov_1.844660	878220	Chryseobacterium sp. StRB126	1	94.2	94.2	94.2	86	86	86.0	164.0	164.0	164.0
+NODE_42_length_259_cov_0.921569	878220	Chryseobacterium sp. StRB126	1	91.8	91.8	91.8	85	85	85.0	165.0	165.0	165.0
+NODE_43_length_258_cov_1.871921	878220	Chryseobacterium sp. StRB126	1	98.8	98.8	98.8	86	86	86.0	176.0	176.0	176.0
+NODE_44_length_257_cov_2.301980	878220	Chryseobacterium sp. StRB126	1	88.0	88.0	88.0	75	75	75.0	137.0	137.0	137.0
+NODE_46_length_256_cov_2.527363	878220	Chryseobacterium sp. StRB126	1	78.8	78.8	78.8	85	85	85.0	137.0	137.0	137.0
+NODE_47_length_256_cov_1.671642	878220	Chryseobacterium sp. StRB126	2	85.7	94.0	89.85	84	84	84.0	146.0	158.0	152.0
+NODE_48_length_255_cov_1.425000	878220	Chryseobacterium sp. StRB126	3	74.7	97.6	75.9	79	84	83.0	121.0	159.0	129.0
+NODE_49_length_255_cov_0.950000	878220	Chryseobacterium sp. StRB126	4	55.0	91.8	62.3	60	61	61.0	64.3	115.0	79.9
+NODE_4_length_575_cov_2.453846	878220	Chryseobacterium sp. StRB126	2	92.2	96.9	94.55000000000001	51	191	121.0	107.0	360.0	233.5
+NODE_50_length_254_cov_1.909548	878220	Chryseobacterium sp. StRB126	1	97.6	97.6	97.6	84	84	84.0	178.0	178.0	178.0
+NODE_52_length_252_cov_0.964467	878220	Chryseobacterium sp. StRB126	1	69.9	69.9	69.9	83	83	83.0	125.0	125.0	125.0
+NODE_54_length_251_cov_1.938776	878220	Chryseobacterium sp. StRB126	1	100.0	100.0	100.0	83	83	83.0	171.0	171.0	171.0
+NODE_55_length_249_cov_0.979381	878220	Chryseobacterium sp. StRB126	1	98.8	98.8	98.8	83	83	83.0	166.0	166.0	166.0
+NODE_58_length_246_cov_0.994764	878220	Chryseobacterium sp. StRB126	1	83.5	83.5	83.5	79	79	79.0	134.0	134.0	134.0
+NODE_59_length_246_cov_0.994764	878220	Chryseobacterium sp. StRB126	1	100.0	100.0	100.0	81	81	81.0	167.0	167.0	167.0
+NODE_5_length_526_cov_2.420382	878220	Chryseobacterium sp. StRB126	1	87.7	87.7	87.7	114	114	114.0	207.0	207.0	207.0
+NODE_60_length_243_cov_3.031915	878220	Chryseobacterium sp. StRB126	1	91.3	91.3	91.3	80	80	80.0	155.0	155.0	155.0
+NODE_61_length_239_cov_2.065217	878220	Chryseobacterium sp. StRB126	1	89.9	89.9	89.9	79	79	79.0	149.0	149.0	149.0
+NODE_62_length_239_cov_1.032609	878220	Chryseobacterium sp. StRB126	2	73.1	87.3	80.19999999999999	78	79	78.5	119.0	153.0	136.0
+NODE_63_length_238_cov_1.387978	878220	Chryseobacterium sp. StRB126	6	58.1	74.0	71.4	53	77	77.0	71.2	123.0	118.5
+NODE_64_length_238_cov_1.038251	878220	Chryseobacterium sp. StRB126	1	98.6	98.6	98.6	72	72	72.0	142.0	142.0	142.0
+NODE_65_length_237_cov_1.417582	878220	Chryseobacterium sp. StRB126	1	96.2	96.2	96.2	78	78	78.0	157.0	157.0	157.0
+NODE_66_length_237_cov_1.043956	878220	Chryseobacterium sp. StRB126	1	93.6	93.6	93.6	78	78	78.0	162.0	162.0	162.0
+NODE_67_length_236_cov_1.574586	59732	Chryseobacterium	1	97.4	97.4	97.4	78	78	78.0	150.0	150.0	150.0
+NODE_68_length_236_cov_1.519337	878220	Chryseobacterium sp. StRB126	1	94.9	94.9	94.9	78	78	78.0	147.0	147.0	147.0
+NODE_69_length_236_cov_1.049724	878220	Chryseobacterium sp. StRB126	1	91.0	91.0	91.0	78	78	78.0	143.0	143.0	143.0
+NODE_6_length_523_cov_2.025641	878220	Chryseobacterium sp. StRB126	1	96.1	96.1	96.1	77	77	77.0	155.0	155.0	155.0
+NODE_70_length_234_cov_1.061453	878220	Chryseobacterium sp. StRB126	1	90.9	90.9	90.9	77	77	77.0	143.0	143.0	143.0
+NODE_71_length_233_cov_0.926966	878220	Chryseobacterium sp. StRB126	1	96.1	96.1	96.1	77	77	77.0	150.0	150.0	150.0
+NODE_72_length_232_cov_2.367232	878220	Chryseobacterium sp. StRB126	1	66.7	66.7	66.7	54	54	54.0	68.9	68.9	68.9
+NODE_74_length_230_cov_2.171429	878220	Chryseobacterium sp. StRB126	1	82.7	82.7	82.7	52	52	52.0	95.1	95.1	95.1
+NODE_75_length_229_cov_2.183908	878220	Chryseobacterium sp. StRB126	1	98.7	98.7	98.7	76	76	76.0	153.0	153.0	153.0
+NODE_76_length_228_cov_2.745665	878220	Chryseobacterium sp. StRB126	2	52.9	86.3	69.6	51	51	51.0	56.2	92.8	74.5
+NODE_77_length_228_cov_1.404624	59732	Chryseobacterium	1	96.1	96.1	96.1	76	76	76.0	155.0	155.0	155.0
+NODE_78_length_228_cov_1.098266	878220	Chryseobacterium sp. StRB126	3	74.1	86.7	77.3	58	75	75.0	90.5	130.0	115.0
+NODE_79_length_227_cov_1.656977	878220	Chryseobacterium sp. StRB126	1	74.7	74.7	74.7	75	75	75.0	115.0	115.0	115.0
+NODE_7_length_453_cov_1.907035	878220	Chryseobacterium sp. StRB126	1	96.0	96.0	96.0	151	151	151.0	305.0	305.0	305.0
+NODE_80_length_223_cov_2.541667	878220	Chryseobacterium sp. StRB126	3	63.6	84.9	75.3	66	73	73.0	95.1	139.0	117.0
+NODE_81_length_216_cov_2.360248	878220	Chryseobacterium sp. StRB126	1	94.4	94.4	94.4	71	71	71.0	139.0	139.0	139.0
+NODE_82_length_213_cov_2.405063	878220	Chryseobacterium sp. StRB126	1	94.2	94.2	94.2	69	69	69.0	140.0	140.0	140.0
+NODE_83_length_209_cov_2.305195	878220	Chryseobacterium sp. StRB126	1	92.8	92.8	92.8	69	69	69.0	136.0	136.0	136.0
+NODE_84_length_209_cov_1.850649	878220	Chryseobacterium sp. StRB126	2	54.4	97.1	75.75	68	69	68.5	84.7	131.0	107.85
+NODE_8_length_446_cov_1.700767	878220	Chryseobacterium sp. StRB126	1	98.5	98.5	98.5	65	65	65.0	139.0	139.0	139.0
+NODE_9_length_427_cov_0.900538	878220	Chryseobacterium sp. StRB126	1	94.4	94.4	94.4	142	142	142.0	268.0	268.0	268.0
