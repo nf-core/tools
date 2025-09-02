@@ -44,21 +44,22 @@ workflow PIPELINE_INITIALISATION {
     main:
 
     ch_versions = Channel.empty()
-    {% if nf_schema %}
+    {%- if nf_schema %}
 
     //
     // Print help message
     //
 
-    {% if is_nfcore -%}before_text = """
--\\033[2m----------------------------------------------------\\033[0m-
-                                        \\033[0;32m,--.\\033[0;30m/\\033[0;32m,-.\\033[0m
-\\033[0;34m        ___     __   __   __   ___     \\033[0;32m/,-._.--~\'\\033[0m
-\\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \\033[0;33m}  {\\033[0m
-\\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \\033[0;32m\\`-._,-`-,\\033[0m
-                                        \\033[0;32m`._,._,\'\\033[0m
-\\033[0;35m  {{ name }} ${workflow.manifest.version}\\033[0m
--\\033[2m----------------------------------------------------\\033[0m-
+    {%- if is_nfcore %}
+    before_text = """
+-\033[2m----------------------------------------------------\033[0m-
+                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
+\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
+\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
+\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
+                                        \033[0;32m`._,._,\'\033[0m
+\033[0;35m  {{ name }} ${workflow.manifest.version}\033[0m
+-\033[2m----------------------------------------------------\033[0m-
 """
     after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { "    https://doi.org/${it.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
 * The nf-core framework
@@ -66,21 +67,22 @@ workflow PIPELINE_INITIALISATION {
 
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
-"""{%- endif %}
+"""{% endif %}
     command = "nextflow run {${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     if(help || help_full) {
         log.info paramsHelp(
             params.help instanceof String ? params.help : "",
-            {%- if is_nfcore %}beforeText: before_text,
-            afterText: after_text,{%- endif %}
+            {%- if is_nfcore %}
+            beforeText: before_text,
+            afterText: after_text,{% endif %}
             command: command,
             showHidden: show_hidden,
             fullHelp: full_help
         )
         exit 0
     }
-    {% endif %}
+    {%- endif %}
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file

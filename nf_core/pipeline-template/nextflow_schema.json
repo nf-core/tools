@@ -235,7 +235,7 @@
                     "fa_icon": "far calendar",
                     "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
                     "hidden": true
-                }{%- if nf_schema %},
+                }{% if nf_schema %},
                 "help": {
                     "type": ["boolean", "string"],
                     "description": "Display the help message.",
