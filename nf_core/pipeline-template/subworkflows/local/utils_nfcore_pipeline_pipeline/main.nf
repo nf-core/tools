@@ -45,13 +45,14 @@ workflow PIPELINE_INITIALISATION {
     main:
 
     ch_versions = Channel.empty()
-    {% if nf_schema %}
+    {%- if nf_schema %}
 
     //
     // Print help message
     //
 
-    {%- if is_nfcore %}before_text = """
+    {%- if is_nfcore %}
+    before_text = """
 -\033[2m----------------------------------------------------\033[0m-
                                         \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
 \033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
@@ -67,25 +68,28 @@ workflow PIPELINE_INITIALISATION {
 
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
-"""{%- endif %}
+"""{% endif %}
     command = "nextflow run {${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     if(help || help_full) {
         log.info paramsHelp(
             params.help instanceof String ? params.help : "",
-            {%- if is_nfcore %}beforeText: before_text,
-            afterText: after_text,{%- endif %}
+            {%- if is_nfcore %}
+            beforeText: before_text,
+            afterText: after_text,{% endif %}
             command: command,
             showHidden: show_hidden,
             fullHelp: full_help
         )
         exit 0
     } else {
-        {%- if is_nfcore %}log.info(before_text){%- endif %}
+        {%- if is_nfcore %}
+        log.info(before_text){% endif %}
         log.info paramsSummaryLog(workflow)
-        {%- if is_nfcore %}log.info(after_text){%- endif %}
+        {%- if is_nfcore %}
+        log.info(after_text){% endif %}
     }
-    {% endif %}
+    {%- endif %}
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
