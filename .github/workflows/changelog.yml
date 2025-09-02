@@ -1,24 +1,21 @@
 name: Update CHANGELOG.md
 on:
   issue_comment:
-    types: [created]
-  pull_request_target:
-    types: [opened]
-    branches:
-      - dev
+    types: [created]  # Add "@nf-core-bot changelog" as a PR comment to trigger this workflow.
 
 jobs:
   update_changelog:
     runs-on: ubuntu-latest
-    # Run if comment is on a PR with the main repo, and if it contains the magic keywords.
-    # Or run on PR creation, unless asked otherwise in the title.
-    if: |
-      github.repository_owner == 'nf-core' && (
-        github.event_name == 'pull_request_target' ||
-        github.event.issue.pull_request && startsWith(github.event.comment.body, '@nf-core-bot changelog')
-      )
 
     steps:
+      - name: branch-deploy
+        id: branch-deploy
+        uses: github/branch-deploy@c9fcc362bdcea69eecac6578dde245cd5e3a55bf # v10.4.3
+        with:
+          trigger: "@nf-core-bot changelog"
+          reaction: "eyes"
+          stable_branch: "dev"
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           token: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
