@@ -10,7 +10,9 @@
 
 {% if nf_schema %}include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
-include { samplesheetToList         } from 'plugin/nf-schema'{% endif %}
+include { samplesheetToList         } from 'plugin/nf-schema'
+include { paramsHelp                } from 'plugin/nf-schema'
+include { paramsSummaryLog          } from 'plugin/nf-schema'{% endif %}
 {%- if email %}
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
 {%- endif %}
@@ -36,10 +38,54 @@ workflow PIPELINE_INITIALISATION {
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
+    {%- if nf_schema %}help              // boolean: Display help message and exit
+    help_full         // boolean: Show the full help message
+    show_hidden       // boolean: Show hidden parameters in the help message{% endif %}
 
     main:
 
     ch_versions = Channel.empty()
+    {%- if nf_schema %}
+
+    //
+    // Print help message
+    //
+
+    {%- if is_nfcore %}before_text = """
+-\033[2m----------------------------------------------------\033[0m-
+                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
+\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
+\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
+\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
+                                        \033[0;32m`._,._,\'\033[0m
+\033[0;35m  {{ name }} ${workflow.manifest.version}\033[0m
+-\033[2m----------------------------------------------------\033[0m-
+"""
+    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { "    https://doi.org/${it.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
+* The nf-core framework
+    https://doi.org/10.1038/s41587-020-0439-x
+
+* Software dependencies
+    https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
+"""{% endif %}
+    command = "nextflow run {${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
+
+    if(help || help_full) {
+        log.info paramsHelp(
+            params.help instanceof String ? params.help : "",
+            {%- if is_nfcore %}beforeText: before_text,
+            afterText: after_text,{% endif %}
+            command: command,
+            showHidden: show_hidden,
+            fullHelp: full_help
+        )
+        exit 0
+    } else {
+        {%- if is_nfcore %}log.info(before_text){% endif %}
+        log.info paramsSummaryLog(workflow)
+        {%- if is_nfcore %}log.info(after_text){% endif %}
+    }
+    {%- endif %}
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file

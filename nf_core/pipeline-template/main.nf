@@ -82,7 +82,10 @@ workflow {
         params.monochrome_logs,
         args,
         params.outdir,
-        params.input
+        params.input{%- if nf_schema %},
+        params.help,
+        params.help_full,
+        params.show_hidden{% endif %}
     )
     {%- endif %}
 
