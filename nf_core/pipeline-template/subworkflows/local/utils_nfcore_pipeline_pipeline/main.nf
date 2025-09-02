@@ -11,8 +11,7 @@
 {% if nf_schema %}include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'
-include { paramsHelp                } from 'plugin/nf-schema'
-include { paramsSummaryLog          } from 'plugin/nf-schema'{% endif %}
+include { paramsHelp                } from 'plugin/nf-schema'{% endif %}
 {%- if email %}
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
 {%- endif %}
@@ -51,15 +50,15 @@ workflow PIPELINE_INITIALISATION {
     // Print help message
     //
 
-    {%- if is_nfcore %}before_text = """
--\033[2m----------------------------------------------------\033[0m-
-                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
-\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
-\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
-\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
-                                        \033[0;32m`._,._,\'\033[0m
-\033[0;35m  {{ name }} ${workflow.manifest.version}\033[0m
--\033[2m----------------------------------------------------\033[0m-
+    {% if is_nfcore -%}before_text = """
+-\\033[2m----------------------------------------------------\\033[0m-
+                                        \\033[0;32m,--.\\033[0;30m/\\033[0;32m,-.\\033[0m
+\\033[0;34m        ___     __   __   __   ___     \\033[0;32m/,-._.--~\'\\033[0m
+\\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \\033[0;33m}  {\\033[0m
+\\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \\033[0;32m\\`-._,-`-,\\033[0m
+                                        \\033[0;32m`._,._,\'\\033[0m
+\\033[0;35m  {{ name }} ${workflow.manifest.version}\\033[0m
+-\\033[2m----------------------------------------------------\\033[0m-
 """
     after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { "    https://doi.org/${it.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
 * The nf-core framework
@@ -80,10 +79,6 @@ workflow PIPELINE_INITIALISATION {
             fullHelp: full_help
         )
         exit 0
-    } else {
-        {%- if is_nfcore %}log.info(before_text){%- endif %}
-        log.info paramsSummaryLog(workflow)
-        {%- if is_nfcore %}log.info(after_text){%- endif %}
     }
     {% endif %}
 
@@ -102,11 +97,13 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
+    {% if is_nfcore -%}log.info(before_text){%- endif %}
     UTILS_NFSCHEMA_PLUGIN (
         workflow,
         validate_params,
         null
     )
+    {% if is_nfcore -%}log.info(after_text){%- endif %}
     {%- endif %}
 
     //
