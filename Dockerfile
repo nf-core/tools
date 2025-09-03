@@ -32,7 +32,7 @@ RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
     && chmod a+rx /usr/local/bin/nextflow
 # Install nf-test
-RUN curl -fsSL https://code.askimed.com/install/nf-test | bash \
+RUN curl -fsSL https://get.nf-test.com | bash \
     && mv nf-test /usr/local/bin \
     && chmod a+rx /usr/local/bin/nf-test
 
