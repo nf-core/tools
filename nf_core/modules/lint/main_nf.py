@@ -268,8 +268,16 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     else:
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
-    # Check that process labels are correct
-    check_process_labels(self, lines)
+    # Check that process labels are correct using Reftrace
+    from reftrace import Module, ParseError
+
+    reftrace_mod = Module.from_file(str(self.main_nf))
+    if not isinstance(reftrace_mod, ParseError):
+        check_process_labels(self, reftrace_mod)
+    else:
+        self.failed.append(
+            ("process_standard_label", f"Failed to parse module with Reftrace: {reftrace_mod.error}", self.main_nf)
+        )
 
     # Deprecated enable_conda
     for i, raw_line in enumerate(lines):
@@ -449,6 +457,16 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
 
 def check_process_labels(self, mod):
+    """
+    Check process labels using Reftrace parsing.
+
+    This function validates that process labels conform to nf-core standards using
+    structured parsing via the Reftrace library.
+
+    Args:
+        self: ModuleLint object with passed/warned/failed lists and main_nf path
+        mod: Reftrace Module object containing parsed Nextflow processes
+    """
     correct_process_labels = [
         "process_single",
         "process_low",
@@ -457,10 +475,27 @@ def check_process_labels(self, mod):
         "process_long",
         "process_high_memory",
     ]
-    label = mod.processes[0].labels[0]
-    all_labels = label.split()
+
+    # Defensive checks for Reftrace module structure
+    if not mod.processes:
+        self.warned.append(("process_standard_label", "No processes found in module", self.main_nf))
+        return
+
+    process = mod.processes[0]
+    if not process.labels:
+        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
+        return
+
+    # Extract label values from all label directives
+    all_labels = []
+    for label_directive in process.labels:
+        # Get the label value from Reftrace Label objects
+        if hasattr(label_directive, "value") and label_directive.value:
+            label_value = label_directive.value
+            all_labels.append(label_value)
     bad_labels = []
     good_labels = []
+    invalid_labels_count = 0
     if len(all_labels) > 0:
         for label in all_labels:
             if not label.replace("_", "").isalnum():
@@ -471,11 +506,13 @@ def check_process_labels(self, mod):
                         self.main_nf,
                     )
                 )
+                invalid_labels_count += 1
                 continue
             if label not in correct_process_labels:
                 bad_labels.append(label)
             else:
                 good_labels.append(label)
+
         if len(good_labels) > 1:
             self.warned.append(
                 (
