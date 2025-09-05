@@ -15,6 +15,7 @@ from nf_core.configs.create import utils
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.final import FinalScreen
+from nf_core.configs.create.finalinfradetails import FinalInfraDetails
 from nf_core.configs.create.hpccustomisation import HpcCustomisation
 from nf_core.configs.create.hpcquestion import ChooseHpc
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
@@ -58,6 +59,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "final": FinalScreen,
         "hpc_question": ChooseHpc,
         "hpc_customisation": HpcCustomisation,
+        "final_infra_details": FinalInfraDetails,
     }
 
     # Initialise config as empty
@@ -98,6 +100,10 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             self.push_screen("basic_details")
         elif event.button.id == "type_hpc":
             self.push_screen("hpc_customisation")
+        elif event.button.id == "toconfiguration":
+            self.push_screen("final_infra_details")
+        elif event.button.id == "finish":
+            self.push_screen("final")
         ## General options
         if event.button.id == "close_app":
             self.exit(return_code=0)
