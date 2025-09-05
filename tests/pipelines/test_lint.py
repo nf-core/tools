@@ -129,7 +129,8 @@ class TestPipelinesLint(TestLint):
 
     def test_sphinx_md_files(self):
         """Check that we have .md files for all lint module code,
-        and that there are no unexpected files (eg. deleted lint tests)"""
+        and that there are no unexpected files (eg. deleted lint tests)
+        To auto-generate the doc files for linting, you can run: `python docs/api/make_lint_md.py`"""
 
         docs_basedir = Path(Path(__file__).parent.parent.parent, "docs", "api", "_src", "pipeline_lint_tests")
 

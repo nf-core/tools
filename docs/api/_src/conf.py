@@ -13,7 +13,6 @@
 #
 import os
 import sys
-from typing import Dict
 
 import nf_core
 
@@ -114,7 +113,7 @@ htmlhelp_basename = "nf-coredoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
-latex_elements: Dict[str, str] = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',

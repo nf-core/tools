@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 from nf_core.modules.modules_json import ModulesJson, ModulesJsonType
 
 
-def modules_json(self) -> Dict[str, List[str]]:
+def modules_json(self) -> dict[str, list[str]]:
     """Make sure all modules described in the ``modules.json`` file are actually installed
 
     Every module installed from ``nf-core/modules`` must have an entry in the ``modules.json`` file

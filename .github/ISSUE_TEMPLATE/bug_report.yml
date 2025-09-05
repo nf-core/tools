@@ -38,4 +38,4 @@ body:
         * Executor _(eg. slurm, local, awsbatch)_
         * OS _(eg. CentOS Linux, macOS, Linux Mint)_
         * Version of nf-core/tools _(eg. 1.10, 1.12.1, 1.13)_
-        * Python version _(eg. 3.11, 3.12)_
+        * Python version _(eg. 3.12, 3.13)_

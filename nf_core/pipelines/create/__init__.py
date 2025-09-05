@@ -105,7 +105,7 @@ class PipelineCreateApp(App[utils.PipelinesCreateConfig]):
 
     def action_toggle_all(self) -> None:
         """An action to toggle all Switches."""
-        switches = self.query(Switch)
+        switches = self.screen.query("Switch")
         if not switches:
             return  # No Switches widgets found
         # Determine the new state based on the first switch

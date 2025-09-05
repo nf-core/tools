@@ -160,6 +160,9 @@ class TestModules(unittest.TestCase):
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
+        # Common path to the bpipe/test module used in tests
+        self.bpipe_test_module_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test")
+
     def test_modulesrepo_class(self):
         """Initialise a modules repo object"""
         modrepo = nf_core.modules.modules_repo.ModulesRepo()

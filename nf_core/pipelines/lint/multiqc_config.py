@@ -1,12 +1,11 @@
 from pathlib import Path
-from typing import Dict, List
 
 import yaml
 
 from nf_core.pipelines.lint_utils import ignore_file
 
 
-def multiqc_config(self) -> Dict[str, List[str]]:
+def multiqc_config(self) -> dict[str, list[str]]:
     """Make sure basic multiQC plugins are installed and plots are exported
     Basic template:
 
@@ -42,9 +41,9 @@ def multiqc_config(self) -> Dict[str, List[str]]:
 
     """
 
-    passed: List[str] = []
-    failed: List[str] = []
-    ignored: List[str] = []
+    passed: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
 
     fn = Path(self.wf_path, "assets", "multiqc_config.yml")
     file_path = fn.relative_to(self.wf_path)

@@ -6,7 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import git
 import questionary
@@ -80,12 +80,13 @@ class PipelineSync:
         self.merge_branch = self.original_merge_branch
         self.made_changes = False
         self.make_pr = make_pr
-        self.gh_pr_returned_data: Dict = {}
+        self.gh_pr_returned_data: dict = {}
         self.required_config_vars = [
             "manifest.name",
             "manifest.description",
             "manifest.version",
-        ]  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
+            "manifest.contributors",
+        ]
         self.force_pr = force_pr
 
         self.gh_username = gh_username
@@ -478,7 +479,7 @@ class PipelineSync:
             return False
 
     @staticmethod
-    def _parse_json_response(response) -> Tuple[Any, str]:
+    def _parse_json_response(response) -> tuple[Any, str]:
         """Helper method to parse JSON response and create pretty-printed string.
 
         Args:

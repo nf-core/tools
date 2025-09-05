@@ -15,6 +15,7 @@ from tests.utils import (
     GITLAB_URL,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
+    mock_biotools_api_calls,
 )
 
 from ..test_modules import TestModules
@@ -162,3 +163,487 @@ class TestModulesCreate(TestModules):
 
         # Check that symlink is deleted
         assert not symlink_file.is_symlink()
+
+    def test_modules_meta_yml_structure_biotools_meta(self):
+        """Test the structure of the module meta.yml file when it was generated with INFORMATION from bio.tools and WITH a meta."""
+        with responses.RequestsMock() as rsps:
+            mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biotools_api_calls(rsps, "bpipe")
+            module_create = nf_core.modules.create.ModuleCreate(
+                self.nfcore_modules, "bpipe/test", "@author", "process_single", has_meta=True, force=True
+            )
+            module_create.create()
+
+        expected_yml = {
+            "name": "bpipe_test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "bpipe": {
+                        "description": "",
+                        "homepage": "http://test",
+                        "documentation": "http://test",
+                        "tool_dev_url": "http://test",
+                        "doi": "",
+                        "licence": ["MIT"],
+                        "identifier": "biotools:bpipe",
+                    }
+                }
+            ],
+            "input": [
+                [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                        }
+                    },
+                    {
+                        "raw_sequence": {
+                            "type": "file",
+                            "description": "raw_sequence file",
+                            "pattern": "*.{fastq-like,sam}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/data_0848"},
+                                {"edam": "http://edamontology.org/format_2182"},
+                                {"edam": "http://edamontology.org/format_2573"},
+                            ],
+                        }
+                    },
+                ]
+            ],
+            "output": {
+                "sequence_report": [
+                    [
+                        {
+                            "meta": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                            }
+                        },
+                        {
+                            "*.{html}": {
+                                "type": "file",
+                                "description": "sequence_report file",
+                                "pattern": "*.{html}",
+                                "ontologies": [
+                                    {"edam": "http://edamontology.org/data_2955"},
+                                    {"edam": "http://edamontology.org/format_2331"},
+                                ],
+                            }
+                        },
+                    ]
+                ],
+                "versions": [
+                    {
+                        "versions.yml": {
+                            "type": "file",
+                            "description": "File containing software versions",
+                            "pattern": "versions.yml",
+                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
+                        }
+                    }
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    def test_modules_meta_yml_structure_biotools_nometa(self):
+        """Test the structure of the module meta.yml file when it was generated with INFORMATION from bio.tools and WITHOUT a meta."""
+        with responses.RequestsMock() as rsps:
+            mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biotools_api_calls(rsps, "bpipe")
+            module_create = nf_core.modules.create.ModuleCreate(
+                self.nfcore_modules, "bpipe/test", "@author", "process_single", has_meta=False, force=True
+            )
+            module_create.create()
+
+        expected_yml = {
+            "name": "bpipe_test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "bpipe": {
+                        "description": "",
+                        "homepage": "http://test",
+                        "documentation": "http://test",
+                        "tool_dev_url": "http://test",
+                        "doi": "",
+                        "licence": ["MIT"],
+                        "identifier": "biotools:bpipe",
+                    }
+                }
+            ],
+            "input": [
+                {
+                    "raw_sequence": {
+                        "type": "file",
+                        "description": "raw_sequence file",
+                        "pattern": "*.{fastq-like,sam}",
+                        "ontologies": [
+                            {"edam": "http://edamontology.org/data_0848"},
+                            {"edam": "http://edamontology.org/format_2182"},
+                            {"edam": "http://edamontology.org/format_2573"},
+                        ],
+                    }
+                }
+            ],
+            "output": {
+                "sequence_report": [
+                    {
+                        "*.{html}": {
+                            "type": "file",
+                            "description": "sequence_report file",
+                            "pattern": "*.{html}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/data_2955"},
+                                {"edam": "http://edamontology.org/format_2331"},
+                            ],
+                        }
+                    }
+                ],
+                "versions": [
+                    {
+                        "versions.yml": {
+                            "type": "file",
+                            "description": "File containing software versions",
+                            "pattern": "versions.yml",
+                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
+                        }
+                    }
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
+    @mock.patch("rich.prompt.Confirm.ask")
+    def test_modules_meta_yml_structure_template_meta(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with TEMPLATE data and WITH a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=True, empty_template=False
+        )
+        module_create.create()
+
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [
+                [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information\ne.g. `[ id:'sample1' ]`\n",
+                        }
+                    },
+                    {
+                        "bam": {
+                            "type": "file",
+                            "description": "Sorted BAM/CRAM/SAM file",
+                            "pattern": "*.{bam,cram,sam}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/format_2572"},
+                                {"edam": "http://edamontology.org/format_2573"},
+                                {"edam": "http://edamontology.org/format_3462"},
+                            ],
+                        }
+                    },
+                ]
+            ],
+            "output": {
+                "bam": [
+                    [
+                        {
+                            "meta": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information\ne.g. `[ id:'sample1' ]`\n",
+                            }
+                        },
+                        {
+                            "*.bam": {
+                                "type": "file",
+                                "description": "Sorted BAM/CRAM/SAM file",
+                                "pattern": "*.{bam,cram,sam}",
+                                "ontologies": [
+                                    {"edam": "http://edamontology.org/format_2572"},
+                                    {"edam": "http://edamontology.org/format_2573"},
+                                    {"edam": "http://edamontology.org/format_3462"},
+                                ],
+                            }
+                        },
+                    ]
+                ],
+                "versions": [
+                    {
+                        "versions.yml": {
+                            "type": "file",
+                            "description": "File containing software versions",
+                            "pattern": "versions.yml",
+                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
+                        }
+                    }
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
+    @mock.patch("rich.prompt.Confirm.ask")
+    def test_modules_meta_yml_structure_template_nometa(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with TEMPLATE data and WITHOUT a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=False, empty_template=False
+        )
+        module_create.create()
+
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [
+                {
+                    "bam": {
+                        "type": "file",
+                        "description": "Sorted BAM/CRAM/SAM file",
+                        "pattern": "*.{bam,cram,sam}",
+                        "ontologies": [
+                            {"edam": "http://edamontology.org/format_2572"},
+                            {"edam": "http://edamontology.org/format_2573"},
+                            {"edam": "http://edamontology.org/format_3462"},
+                        ],
+                    }
+                }
+            ],
+            "output": {
+                "bam": [
+                    {
+                        "*.bam": {
+                            "type": "file",
+                            "description": "Sorted BAM/CRAM/SAM file",
+                            "pattern": "*.{bam,cram,sam}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/format_2572"},
+                                {"edam": "http://edamontology.org/format_2573"},
+                                {"edam": "http://edamontology.org/format_3462"},
+                            ],
+                        }
+                    }
+                ],
+                "versions": [
+                    {
+                        "versions.yml": {
+                            "type": "file",
+                            "description": "File containing software versions",
+                            "pattern": "versions.yml",
+                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
+                        }
+                    }
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
+    @mock.patch("rich.prompt.Confirm.ask")
+    def test_modules_meta_yml_structure_empty_meta(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with an EMPTY template and WITH a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=True, empty_template=True
+        )
+        module_create.create()
+
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [
+                [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                        }
+                    },
+                    {"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}},
+                ]
+            ],
+            "output": {
+                "output": [
+                    [
+                        {
+                            "meta": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                            }
+                        },
+                        {"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}},
+                    ]
+                ],
+                "versions": [
+                    {
+                        "versions.yml": {
+                            "type": "file",
+                            "description": "File containing software versions",
+                            "pattern": "versions.yml",
+                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
+                        }
+                    }
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
+    @mock.patch("rich.prompt.Confirm.ask")
+    def test_modules_meta_yml_structure_empty_nometa(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with an EMPTY template and WITHOUT a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=False, empty_template=True
+        )
+        module_create.create()
+
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [{"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}],
+            "output": {
+                "output": [{"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}],
+                "versions": [
+                    {
+                        "versions.yml": {
+                            "type": "file",
+                            "description": "File containing software versions",
+                            "pattern": "versions.yml",
+                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
+                        }
+                    }
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml

@@ -87,16 +87,16 @@ Vertical{
     display: block;
     height: 12;
 }
-#show_help {
+.show_help {
     display: block;
 }
-#hide_help {
+.hide_help {
     display: none;
 }
-.displayed #show_help {
+.displayed .show_help {
     display: none;
 }
-.displayed #hide_help {
+.displayed .hide_help {
     display: block;
 }
 

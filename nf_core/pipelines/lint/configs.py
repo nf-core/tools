@@ -1,7 +1,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List
 
 from nf_core.pipelines.lint_utils import ignore_file
 
@@ -9,17 +8,17 @@ log = logging.getLogger(__name__)
 
 
 class LintConfig:
-    def __init__(self, wf_path: str, lint_config: Dict[str, List[str]]):
+    def __init__(self, wf_path: str, lint_config: dict[str, list[str]]):
         self.wf_path = wf_path
         self.lint_config = lint_config
 
-    def lint_file(self, lint_name: str, file_path: Path) -> Dict[str, List[str]]:
+    def lint_file(self, lint_name: str, file_path: Path) -> dict[str, list[str]]:
         """Lint a file and add the result to the passed or failed list."""
 
-        passed: List[str] = []
-        failed: List[str] = []
-        ignored: List[str] = []
-        ignore_configs: List[str] = []
+        passed: list[str] = []
+        failed: list[str] = []
+        ignored: list[str] = []
+        ignore_configs: list[str] = []
 
         fn = Path(self.wf_path, file_path)
 
@@ -57,7 +56,7 @@ class LintConfig:
         return {"passed": passed, "failed": failed, "ignored": ignored}
 
 
-def modules_config(self) -> Dict[str, List[str]]:
+def modules_config(self) -> dict[str, list[str]]:
     """Make sure the conf/modules.config file follows the nf-core template, especially removed sections.
 
     .. note:: You can choose to ignore this lint tests by editing the file called
@@ -83,7 +82,7 @@ def modules_config(self) -> Dict[str, List[str]]:
     return result
 
 
-def base_config(self) -> Dict[str, List[str]]:
+def base_config(self) -> dict[str, list[str]]:
     """Make sure the conf/base.config file follows the nf-core template, especially removed sections.
 
     .. note:: You can choose to ignore this lint tests by editing the file called

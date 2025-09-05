@@ -4,7 +4,7 @@ import json
 import logging
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Literal, Optional
 
 import questionary
 
@@ -171,7 +171,7 @@ class ParamsFileBuilder:
         return out
 
     def format_param(
-        self, name: str, properties: Dict, required_properties: List[str] = [], show_hidden: bool = False
+        self, name: str, properties: dict, required_properties: list[str] = [], show_hidden: bool = False
     ) -> Optional[str]:
         """
         Format a single parameter of the schema as commented YAML

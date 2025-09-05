@@ -6,7 +6,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import git
 import questionary
@@ -28,14 +28,14 @@ log = logging.getLogger(__name__)
 class ModulesJsonModuleEntry(TypedDict):
     branch: str
     git_sha: str
-    installed_by: List[str]
+    installed_by: list[str]
     patch: NotRequired[str]
 
 
 class ModulesJsonType(TypedDict):
     name: str
     homePage: str
-    repos: Dict[str, Dict[str, Dict[str, Dict[str, ModulesJsonModuleEntry]]]]
+    repos: dict[str, dict[str, dict[str, dict[str, ModulesJsonModuleEntry]]]]
 
 
 class ModulesJson:
@@ -57,7 +57,7 @@ class ModulesJson:
         self.modules_json: Optional[ModulesJsonType] = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
-        self.pipeline_components: Optional[Dict[str, List[Tuple[str, str]]]] = None
+        self.pipeline_components: Optional[dict[str, list[tuple[str, str]]]] = None
 
     def __str__(self):
         if self.modules_json is None:
@@ -116,8 +116,8 @@ class ModulesJson:
         self.dump()
 
     def get_component_names_from_repo(
-        self, repos: Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]], directory: Path
-    ) -> List[Tuple[str, List[str], str]]:
+        self, repos: dict[str, dict[str, dict[str, dict[str, dict[str, Union[str, list[str]]]]]]], directory: Path
+    ) -> list[tuple[str, list[str], str]]:
         """
         Get component names from repositories in a pipeline.
 
@@ -148,8 +148,8 @@ class ModulesJson:
         return names
 
     def get_pipeline_module_repositories(
-        self, component_type: str, directory: Path, repos: Optional[Dict] = None
-    ) -> Tuple[Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]], Dict[Path, Path]]:
+        self, component_type: str, directory: Path, repos: Optional[dict] = None
+    ) -> tuple[dict[str, dict[str, dict[str, dict[str, dict[str, Union[str, list[str]]]]]]], dict[Path, Path]]:
         """
         Finds all module repositories in the modules and subworkflows directory.
         Ignores the local modules/subworkflows.
@@ -270,8 +270,8 @@ class ModulesJson:
         component_type: str,
         install_dir: Union[str, Path],
         remote_url: str,
-        components: List[str],
-    ) -> Dict[str, ModulesJsonModuleEntry]:
+        components: list[str],
+    ) -> dict[str, ModulesJsonModuleEntry]:
         """
         Determines what branch and commit sha each module/subworkflow in the pipeline belongs to
 
@@ -298,7 +298,7 @@ class ModulesJson:
         available_branches = ModulesRepo.get_remote_branches(remote_url)
         sb_local = []
         dead_components = []
-        repo_entry: Dict[str, ModulesJsonModuleEntry] = {}
+        repo_entry: dict[str, ModulesJsonModuleEntry] = {}
         for component in sorted(components):
             modules_repo = default_modules_repo
             component_path = Path(repo_path, component)
@@ -435,7 +435,7 @@ class ModulesJson:
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
         shutil.move(str(current_path), local_dir / to_name)
 
-    def unsynced_components(self) -> Tuple[List[str], List[str], Dict]:
+    def unsynced_components(self) -> tuple[list[str], list[str], dict]:
         """
         Compute the difference between the modules/subworkflows in the directory and the
         modules/subworkflows in the 'modules.json' file. This is done by looking at all
@@ -470,7 +470,7 @@ class ModulesJson:
 
         return untracked_dirs_modules, untracked_dirs_subworkflows, missing_installation
 
-    def parse_dirs(self, dirs: List[Path], missing_installation: Dict, component_type: str) -> Tuple[List[str], Dict]:
+    def parse_dirs(self, dirs: list[Path], missing_installation: dict, component_type: str) -> tuple[list[str], dict]:
         """
         Parse directories and check if they are tracked in the modules.json file
 
@@ -709,8 +709,8 @@ class ModulesJson:
         modules_repo: ModulesRepo,
         component_name: str,
         component_version: str,
-        installed_by: Optional[List[str]],
-        installed_by_log: Optional[List[str]] = None,
+        installed_by: Optional[list[str]],
+        installed_by_log: Optional[list[str]] = None,
         write_file: bool = True,
     ) -> bool:
         """
@@ -1017,7 +1017,7 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_all_components(self, component_type: str) -> Dict[str, List[Tuple[(str, str)]]]:
+    def get_all_components(self, component_type: str) -> dict[str, list[tuple[(str, str)]]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
 
@@ -1043,7 +1043,7 @@ class ModulesJson:
         component_type,
         name,
         dependent_components,
-    ) -> Dict[str, Tuple[str, str, str]]:
+    ) -> dict[str, tuple[str, str, str]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
         as being installed by the given component
@@ -1139,7 +1139,7 @@ class ModulesJson:
                 with open(self.modules_json_path, "w") as fh:
                     json.dump(self.modules_json, fh, indent=4)
 
-    def resolve_missing_installation(self, missing_installation: Dict, component_type: str) -> None:
+    def resolve_missing_installation(self, missing_installation: dict, component_type: str) -> None:
         missing_but_in_mod_json = [
             f"'{component_type}/{install_dir}/{component}'"
             for repo_url, contents in missing_installation.items()

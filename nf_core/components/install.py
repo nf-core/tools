@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import questionary
 from rich import print
@@ -38,7 +38,7 @@ class ComponentInstall(ComponentCommand):
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
-        installed_by: Optional[List[str]] = None,
+        installed_by: Optional[list[str]] = None,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -52,7 +52,7 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: Union[str, Dict[str, str]], silent: bool = False) -> bool:
+    def install(self, component: Union[str, dict[str, str]], silent: bool = False) -> bool:
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)

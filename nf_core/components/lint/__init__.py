@@ -7,7 +7,7 @@ import logging
 import operator
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import rich.box
 import rich.console
@@ -75,10 +75,10 @@ class ComponentLint(ComponentCommand):
 
         self.fail_warned = fail_warned
         self.fix = fix
-        self.passed: List[LintResult] = []
-        self.warned: List[LintResult] = []
-        self.failed: List[LintResult] = []
-        self.all_local_components: List[NFCoreComponent] = []
+        self.passed: list[LintResult] = []
+        self.warned: list[LintResult] = []
+        self.failed: list[LintResult] = []
+        self.all_local_components: list[NFCoreComponent] = []
 
         self.lint_config: Optional[NFCoreYamlLintConfig] = None
         self.modules_json: Optional[ModulesJson] = None
@@ -96,7 +96,7 @@ class ComponentLint(ComponentCommand):
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.directory)
             modules_json.check_up_to_date()
-            self.all_remote_components: List[NFCoreComponent] = []
+            self.all_remote_components: list[NFCoreComponent] = []
             for repo_url, components in modules_json.get_all_components(self.component_type).items():
                 if remote_url is not None and remote_url != repo_url:
                     continue

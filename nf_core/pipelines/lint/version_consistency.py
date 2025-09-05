@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+
+from ruamel.yaml import YAML
 
 
 def version_consistency(self):
@@ -7,14 +10,15 @@ def version_consistency(self):
     .. note:: This test only runs when the ``--release`` flag is set for ``nf-core pipelines lint``,
               or ``$GITHUB_REF`` is equal to ``main``.
 
-    This lint fetches the pipeline version number from three possible locations:
+    This lint fetches the pipeline version number from four possible locations:
 
     * The pipeline config, ``manifest.version``
     * The docker container in the pipeline config, ``process.container``
 
-        * Some pipelines may not have this set on a pipeline level. If it is not found, it is ignored.
+        Some pipelines may not have this set on a pipeline level. If it is not found, it is ignored.
 
     * ``$GITHUB_REF``, if it looks like a release tag (``refs/tags/<something>``)
+    * The YAML file .nf-core.yml
 
     The test then checks that:
 
@@ -45,6 +49,12 @@ def version_consistency(self):
     ):
         versions["GITHUB_REF"] = os.path.basename(os.environ["GITHUB_REF"].strip(" '\""))
 
+    # Get version from the .nf-core.yml template
+    yaml = YAML()
+    nfcore_yml = yaml.load(Path(self.wf_path) / ".nf-core.yml")
+    if nfcore_yml["template"] and "version" in nfcore_yml["template"]:
+        versions["nfcore_yml.version"] = nfcore_yml["template"]["version"].strip(" '\"")
+
     # Check if they are all numeric
     for v_type, version in versions.items():
         if not version.replace(".", "").isdigit():
@@ -57,7 +67,7 @@ def version_consistency(self):
                 ", ".join([f"{k} = {v}" for k, v in versions.items()])
             )
         )
-
-    passed.append("Version tags are numeric and consistent between container, release tag and config.")
+    else:
+        passed.append("Version tags are consistent: {}".format(", ".join([f"{k} = {v}" for k, v in versions.items()])))
 
     return {"passed": passed, "failed": failed}
