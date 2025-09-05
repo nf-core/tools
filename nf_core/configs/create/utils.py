@@ -1,15 +1,17 @@
 """Config creation specific functions and classes"""
 
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, field_validator
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Grid
+from textual.suggester import SuggestFromList
 from textual.validation import ValidationResult, Validator
 from textual.widgets import Input, Static
 
@@ -18,7 +20,7 @@ _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
 
 
 @contextmanager
-def init_context(value: Dict[str, Any]) -> Iterator[None]:
+def init_context(value: dict[str, Any]) -> Iterator[None]:
     token = _init_context_var.set(value)
     try:
         yield
@@ -149,7 +151,9 @@ class TextInput(Static):
     and validation messages.
     """
 
-    def __init__(self, field_id, placeholder, description, default=None, password=None, **kwargs) -> None:
+    def __init__(
+        self, field_id, placeholder, description, default=None, password=None, suggestions=[], **kwargs
+    ) -> None:
         """Initialise the widget with our values.
 
         Pass on kwargs upstream for standard usage."""
@@ -160,6 +164,7 @@ class TextInput(Static):
         self.description: str = description
         self.default: str = default
         self.password: bool = password
+        self.suggestions: list[str] = suggestions
 
     def compose(self) -> ComposeResult:
         yield Grid(
@@ -169,6 +174,7 @@ class TextInput(Static):
                 validators=[ValidateConfig(self.field_id)],
                 value=self.default,
                 password=self.password,
+                suggester=SuggestFromList(self.suggestions, case_sensitive=False),
             ),
             Static(classes="validation_msg"),
             classes="text-input-grid",
