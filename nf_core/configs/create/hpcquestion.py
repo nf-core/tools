@@ -12,10 +12,10 @@ markdown_type_hpc = """
 
 You want to create a config file for an HPC.
 """
-markdown_type_pc = """
-## Choose _"PC"_ if:
+markdown_type_local = """
+## Choose _"local"_ if:
 
-You want to create a config file to run your pipeline on a personal computer.
+You want to create a config file to run your pipeline on a local computer.
 """
 
 markdown_details = """
@@ -43,8 +43,8 @@ class ChooseHpc(Screen):
                 Center(Button("HPC", id="type_hpc", variant="success")),
             ),
             Center(
-                Markdown(markdown_type_pc),
-                Center(Button("PC", id="type_pc", variant="primary")),
+                Markdown(markdown_type_local),
+                Center(Button("local", id="type_local", variant="primary")),
             ),
             classes="col-2 pipeline-type-grid",
         )
