@@ -9,6 +9,7 @@
 ### Linting
 
 - ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
+- do not check pytest_modules.yml file, deprecating ([#3748](https://github.com/nf-core/tools/pull/3748))
 
 ### Modules
 
