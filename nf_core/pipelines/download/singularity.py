@@ -907,3 +907,6 @@ class FileDownloader:
                     # Check that we actually downloaded something
                     if not has_content:
                         raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+
+                # Set image file permissions to user=read,write,execute group/all=read,execute
+                os.chmod(fh, 0x755)
