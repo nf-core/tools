@@ -7,8 +7,6 @@ import logging
 import re
 from pathlib import Path
 
-import yaml
-
 from nf_core.components.lint import LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
@@ -255,37 +253,6 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                         subworkflow.nftest_main_nf,
                     )
                 )
-
-    # Check pytest_modules.yml does not contain entries for subworkflows with nf-test
-    pytest_yml_path = subworkflow.base_dir / "tests" / "config" / "pytest_modules.yml"
-    if pytest_yml_path.is_file() and not is_pytest:
-        try:
-            with open(pytest_yml_path) as fh:
-                pytest_yml = yaml.safe_load(fh)
-                if "subworkflows/" + subworkflow.component_name in pytest_yml.keys():
-                    subworkflow.failed.append(
-                        (
-                            "test_pytest_yml",
-                            "subworkflow with nf-test should not be listed in pytest_modules.yml",
-                            pytest_yml_path,
-                        )
-                    )
-                else:
-                    subworkflow.passed.append(
-                        (
-                            "test_pytest_yml",
-                            "subworkflow with  nf-test not in pytest_modules.yml",
-                            pytest_yml_path,
-                        )
-                    )
-        except FileNotFoundError:
-            subworkflow.warned.append(
-                (
-                    "test_pytest_yml",
-                    "Could not open pytest_modules.yml file",
-                    pytest_yml_path,
-                )
-            )
 
     # Check that the old test directory does not exist
     if not is_pytest:
