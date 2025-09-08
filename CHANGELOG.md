@@ -41,6 +41,7 @@
 - Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
 - Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
 - Fix backwards compatibility with python 3.9 in use of Enum ([#3736](https://github.com/nf-core/tools/pull/3736))
+- impr: Add hostRequirements to run with 4CPUs and 16GB ram by default … ([#3746](https://github.com/nf-core/tools/pull/3746))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
