@@ -483,7 +483,7 @@ def check_process_labels(self, mod):
 
     process = mod.processes[0]
     if not process.labels:
-        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
+        self.warned.append(("process_standard_label", "No label found for process", self.main_nf))
         return
 
     # Extract label values from all label directives

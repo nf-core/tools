@@ -39,15 +39,15 @@ from .test_lint_utils import MockModuleLint
         # Non-alphanumeric characters in label
         ("label 'a:label:with:colons'", 0, 2, 0),
         # Conflicting labels (multiple label lines)
-        ("label 'process_high'\\n    label 'process_low'", 0, 1, 0),
+        ("label 'process_low'\nlabel 'process_high'", 0, 1, 0),
         # Duplicate labels
-        ("label 'process_high'\\n    label 'process_high'", 0, 2, 0),
+        ("label 'process_high'\nlabel 'process_high'", 0, 2, 0),
         # Valid and non-standard labels
-        ("label 'process_high'\\n    label 'process_extra_label'", 1, 1, 0),
+        ("label 'process_high'\nlabel 'process_extra_label'", 1, 1, 0),
         # Non-standard label only
         ("label 'process_extra_label'", 0, 2, 0),
         # Duplicate non-standard labels
-        ("label 'process_extra_label'\\n    label 'process_extra_label'", 0, 3, 0),
+        ("label 'process_extra_label'\nlabel 'process_extra_label'", 0, 3, 0),
         # No label found
         ("cpus 2", 0, 1, 0),
     ],
@@ -88,7 +88,6 @@ def test_process_labels(label_content, passed, warned, failed):
         # Parse with Reftrace
         module = Module.from_file(temp_file.name)
         assert not isinstance(module, ParseError), f"Failed to parse test file: {module}"
-
         # Run the check_process_labels function
         check_process_labels(mock_lint, module)
 
