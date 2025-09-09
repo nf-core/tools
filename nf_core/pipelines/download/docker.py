@@ -77,8 +77,17 @@ class DockerFetcher(ContainerFetcher):
         """
         Check if Docker is installed and set the implementation.
         """
-        if not shutil.which("docker"):
+        docker_binary = shutil.which("docker")
+        if not docker_binary:
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
+
+        try:
+            nf_core.utils.run_cmd(docker_binary, "info")
+        except RuntimeError:
+            raise OSError(
+                "Docker daemon is required to pull images, but it is not running or unavailable to the docker client"
+            )
+
         self.implementation = "docker"
 
     def gather_registries(self, workflow_directory: Path) -> set[str]:
