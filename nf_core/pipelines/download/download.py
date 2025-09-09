@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import tarfile
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Optional, Union
@@ -650,19 +651,22 @@ class DownloadWorkflow:
                 profile_str += ",test,test_full"
             profile = f"-profile {profile_str}" if self.container_system else ""
 
-            # Run nextflow inspect
-            executable = "nextflow"
-            cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
-            cmd_out = run_cmd(executable, cmd_params)
-            if cmd_out is None:
-                raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+            with tempfile.TemporaryDirectory(dir=".", delete=True) as temp:
+                os.chdir(temp)
+                # Run nextflow inspect
+                executable = "nextflow"
+                cmd_params = f"inspect -format json {profile} {Path('..') / workflow_directory / entrypoint}"
+                cmd_out = run_cmd(executable, cmd_params)
+                if cmd_out is None:
+                    raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
-            out, _ = cmd_out
-            out_json = json.loads(out)
-            # NOTE: Should we save the container name too to have more meta information?
-            named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-            # We only want to process unique containers
-            self.containers = list(set(named_containers.values()))
+                out, _ = cmd_out
+                out_json = json.loads(out)
+                # NOTE: Should we save the container name too to have more meta information?
+                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+                # We only want to process unique containers
+                self.containers = list(set(named_containers.values()))
+                os.chdir("..")
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error")
