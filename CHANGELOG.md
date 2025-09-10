@@ -11,6 +11,7 @@
 ### Linting
 
 - ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
+- do not check pytest_modules.yml file, deprecating ([#3748](https://github.com/nf-core/tools/pull/3748))
 
 ### Modules
 
@@ -23,6 +24,7 @@
 
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
+- Stop using Gitpod in favor of devcontainer for codespaces ([#3569](https://github.com/nf-core/tools/pull/3569))
 - Update dependency textual to v5 ([#3699](https://github.com/nf-core/tools/pull/3699))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.7 ([#3697](https://github.com/nf-core/tools/pull/3697))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.17.1 ([#3698](https://github.com/nf-core/tools/pull/3698))
@@ -41,6 +43,8 @@
 - Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
 - Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
 - Fix backwards compatibility with python 3.9 in use of Enum ([#3736](https://github.com/nf-core/tools/pull/3736))
+- Fix downloads: temporary files not moved and cleaned up correctly after singularity pull ([#3749](https://github.com/nf-core/tools/pull/3749))
+- impr devcontainer: Add hostRequirements to run with 4CPUs and 16GB ram by default ([#3746](https://github.com/nf-core/tools/pull/3746))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 

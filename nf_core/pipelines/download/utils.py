@@ -76,7 +76,7 @@ def intermediate_file_no_creation(output_path: Path) -> Generator[Path, None, No
     tmp_fn = Path(tmp.name) / "tempfile"
     try:
         yield tmp_fn
-        Path(tmp.name).rename(output_path)
+        tmp_fn.rename(output_path)
         tmp.cleanup()
     except:
         tmp.cleanup()
