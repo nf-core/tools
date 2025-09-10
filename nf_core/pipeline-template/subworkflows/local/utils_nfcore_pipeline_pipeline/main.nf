@@ -78,7 +78,7 @@ workflow PIPELINE_INITIALISATION {
             afterText: after_text,{% endif %}
             command: command,
             showHidden: show_hidden,
-            fullHelp: full_help
+            fullHelp: help_full
         )
         exit 0
     }
