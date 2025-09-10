@@ -188,15 +188,6 @@ def nextflow_config(self) -> dict[str, list[str]]:
                     "The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages"
                 )
             config_fail.extend([["validation.help.enabled"]])
-            config_warn.extend(
-                [
-                    ["validation.help.beforeText"],
-                    ["validation.help.afterText"],
-                    ["validation.help.command"],
-                    ["validation.summary.beforeText"],
-                    ["validation.summary.afterText"],
-                ]
-            )
             config_fail_ifdefined.extend(
                 [
                     "params.validationFailUnrecognisedParams",
