@@ -20,7 +20,7 @@
 
 ### Subworkflows
 
-- Subworkflow patch ([#3755](https://github.com/nf-core/tools/pull/3755))
+- Linting of patched subworkflows ([#3755](https://github.com/nf-core/tools/pull/3755))
 
 ### General
 
