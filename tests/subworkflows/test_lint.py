@@ -482,7 +482,7 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         diff_file = Path(
             self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools", "bam_sort_stats_samtools.diff"
         )
-        subprocess.check_call(["sed", "-i''", "4,6d", str(diff_file)])
+        subprocess.check_call(["sed", "-i''", "s/...$//", str(diff_file)])
 
         subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         subworkflow_lint.lint(print_results=False, subworkflow="bam_sort_stats_samtools")
