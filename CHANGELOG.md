@@ -20,6 +20,8 @@
 
 ### Subworkflows
 
+- Subworkflow patch ([#3755](https://github.com/nf-core/tools/pull/3755))
+
 ### General
 
 - don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
