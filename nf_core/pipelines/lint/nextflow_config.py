@@ -183,26 +183,14 @@ def nextflow_config(self) -> dict[str, list[str]]:
 
         if "nf-schema" in found_plugins:
             passed.append("Found nf-schema plugin")
-            if self.nf_config.get("validation.help.enabled", "false") == "false":
-                failed.append(
-                    "The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages"
-                )
-            config_fail.extend([["validation.help.enabled"]])
-            config_warn.extend(
-                [
-                    ["validation.help.beforeText"],
-                    ["validation.help.afterText"],
-                    ["validation.help.command"],
-                    ["validation.summary.beforeText"],
-                    ["validation.summary.afterText"],
-                ]
-            )
             config_fail_ifdefined.extend(
                 [
                     "params.validationFailUnrecognisedParams",
                     "params.validationLenientMode",
                     "params.validationSchemaIgnoreParams",
                     "params.validationShowHiddenParams",
+                    "validation.failUnrecognisedParams",
+                    "validation.failUnrecognisedHeaders",
                 ]
             )
 

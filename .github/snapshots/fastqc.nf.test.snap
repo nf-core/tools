@@ -1,7 +1,6 @@
 {
     "-profile test": {
         "content": [
-            1,
             {
                 "Workflow": {
                     "my-prefix/testpipeline": "v1.0.0dev"
@@ -11,6 +10,7 @@
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/BETA-multiqc.parquet",
+                "multiqc/multiqc_data/llms-full.txt",
                 "multiqc/multiqc_data/multiqc.log",
                 "multiqc/multiqc_data/multiqc_citations.txt",
                 "multiqc/multiqc_data/multiqc_data.json",
