@@ -16,13 +16,14 @@ include { SEQKIT_FQ2FA                                          } from '../modul
 include { BLAST                                                 } from '../subworkflows/local/blast.nf'
 include { BLAST as BLAST_PATHOGEN                               } from '../subworkflows/local/blast.nf'
 
-// Maping subworkflow
+// Mapping
 include { MAPPING_SHORTREAD                                     } from '../subworkflows/local/mapping_shortread'
 include { MAPPING_LONGREAD                                      } from '../subworkflows/local/mapping_longread'
 include { MAPPING_SHORTREAD as MAPPING_SHORTREAD_PATHOGEN       } from '../subworkflows/local/mapping_shortread'
 include { MAPPING_LONGREAD as MAPPING_LONGREAD_PATHOGEN         } from '../subworkflows/local/mapping_longread'
 include { FETCH_BLAST_GENOMES                                   } from '../subworkflows/local/fetch_blast_genomes'
-
+include { IGV as IGV_SHORTREAD                                  } from '../subworkflows/local/igv'
+include { IGV as IGV_LONGREAD                                   } from '../subworkflows/local/igv'
 // Calling consensus
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_SHORTREAD          } from '../subworkflows/local/taxid_bam_fasta'
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_LONGREAD           } from '../subworkflows/local/taxid_bam_fasta'
@@ -193,11 +194,25 @@ workflow METAVAL {
         // SUBWORKFLOW: MAPPING
         //
 
-        FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
-        MAPPING_SHORTREAD ( FETCH_BLAST_GENOMES.out.shortreads, FETCH_BLAST_GENOMES.out.shortreads_genome )
-        MAPPING_LONGREAD ( FETCH_BLAST_GENOMES.out.longreads, FETCH_BLAST_GENOMES.out.longreads_genome )
-        ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
-        ch_versions = ch_versions.mix ( MAPPING_LONGREAD.out.versions )
+        if (params.perform_mapping) {
+            FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
+            FETCH_BLAST_GENOMES.out.shortreads_genome.dump(tag:"sr")
+            FETCH_BLAST_GENOMES.out.longreads_genome.dump(tag:"lr")
+
+            MAPPING_SHORTREAD ( FETCH_BLAST_GENOMES.out.shortreads, FETCH_BLAST_GENOMES.out.shortreads_genome )
+            MAPPING_LONGREAD ( FETCH_BLAST_GENOMES.out.longreads, FETCH_BLAST_GENOMES.out.longreads_genome )
+            ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
+            ch_versions = ch_versions.mix ( MAPPING_LONGREAD.out.versions )
+
+            //
+            // SUBWORKFLOW: IGV
+            //
+            IGV_SHORTREAD( MAPPING_SHORTREAD.out.bam, MAPPING_SHORTREAD.out.bai, FETCH_BLAST_GENOMES.shortreads_genome )
+            IGV_LONGREAD( MAPPING_LONGREAD.out.bam, MAPPING_LONGREAD.out.bai, FETCH_BLAST_GENOMES.longreads_genome )
+            ch_versions = ch_versions.mix ( IGV_SHORTREAD.out.versions )
+            ch_versions = ch_versions.mix ( IGV_LONGREAD.out.versions )
+        }
+
     }
 
     //
@@ -251,7 +266,6 @@ workflow METAVAL {
             ch_longread_pathogen_blast,
             CONSENSUS.out.consensus.ifEmpty([])
         )
-
         BLAST_PATHOGEN ( ch_blast_query_pathogen, params.blastn_db, params.blastx_db, params.blast_header )
         ch_versions = ch_versions.mix( BLAST_PATHOGEN.out.versions )
     }
@@ -315,7 +329,8 @@ workflow METAVAL {
         []
     )
 
-    emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    emit:
+    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 
 }

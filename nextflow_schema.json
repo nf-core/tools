@@ -160,6 +160,11 @@
                     "help_text": "Please check https://github.com/LilyAnderssonLee/download_genomes_taxid for details on how to prepare this file.",
                     "fa_icon": "fas fa-file-alt"
                 },
+                "perform_mapping": {
+                    "type": "boolean",
+                    "description": "Turn on mapping",
+                    "fa-icon": "fa fa-times"
+                },
                 "perform_shortread_denovo": {
                     "type": "boolean",
                     "description": "Turn on de novo assembly for short reads",
