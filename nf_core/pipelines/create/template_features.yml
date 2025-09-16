@@ -362,10 +362,6 @@ configurations:
         nextflow_config:
           - "manifest.name"
           - "manifest.homePage"
-          - "validation.help.beforeText"
-          - "validation.help.afterText"
-          - "validation.summary.beforeText"
-          - "validation.summary.afterText"
         multiqc_config:
           - "report_comment"
       nfcore_pipelines: False
