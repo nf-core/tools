@@ -196,8 +196,6 @@ workflow METAVAL {
 
         if (params.perform_mapping) {
             FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
-            FETCH_BLAST_GENOMES.out.shortreads_genome.dump(tag:"sr")
-            FETCH_BLAST_GENOMES.out.longreads_genome.dump(tag:"lr")
 
             MAPPING_SHORTREAD ( FETCH_BLAST_GENOMES.out.shortreads, FETCH_BLAST_GENOMES.out.shortreads_genome )
             MAPPING_LONGREAD ( FETCH_BLAST_GENOMES.out.longreads, FETCH_BLAST_GENOMES.out.longreads_genome )
@@ -207,8 +205,8 @@ workflow METAVAL {
             //
             // SUBWORKFLOW: IGV
             //
-            IGV_SHORTREAD( MAPPING_SHORTREAD.out.bam, MAPPING_SHORTREAD.out.bai, FETCH_BLAST_GENOMES.shortreads_genome )
-            IGV_LONGREAD( MAPPING_LONGREAD.out.bam, MAPPING_LONGREAD.out.bai, FETCH_BLAST_GENOMES.longreads_genome )
+            IGV_SHORTREAD( MAPPING_SHORTREAD.out.bam, MAPPING_SHORTREAD.out.bai, FETCH_BLAST_GENOMES.out.shortreads_genome )
+            IGV_LONGREAD( MAPPING_LONGREAD.out.bam, MAPPING_LONGREAD.out.bai, FETCH_BLAST_GENOMES.out.longreads_genome )
             ch_versions = ch_versions.mix ( IGV_SHORTREAD.out.versions )
             ch_versions = ch_versions.mix ( IGV_LONGREAD.out.versions )
         }

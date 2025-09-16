@@ -19,7 +19,7 @@ workflow IGV {
     ch_versions = Channel.empty()
 
     // Extract and index mapped reads
-    SAMTOOLS_VIEW ( bam.join( bai ), [], [], 'bai' )
+    SAMTOOLS_VIEW ( bam.join( bai ), [ [],[] ], [], 'bai' )
     ch_versions = ch_versions.mix( SAMTOOLS_VIEW.out.versions )
     SAMTOOLS_INDEX ( SAMTOOLS_VIEW.out.bam )
     ch_versions = ch_versions.mix( SAMTOOLS_INDEX.out.versions )
@@ -38,7 +38,7 @@ workflow IGV {
     // IGV report
     ch_bam_bai = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
     ch_bed_bam_bai = BEDTOOLS_GENOMECOV.out.genomecov.join( ch_bam_bai )
-    ch_fasta_fai = SAMTOOLS_FAIDX.out.fa.mix( SAMTOOLS_FAIDX.out.fai )
+    ch_fasta_fai = PIGZ_UNCOMPRESS.out.file.join( SAMTOOLS_FAIDX.out.fai )
 
     IGVREPORTS ( ch_bed_bam_bai, ch_fasta_fai )
     ch_versions = ch_versions.mix(IGVREPORTS.out.versions)

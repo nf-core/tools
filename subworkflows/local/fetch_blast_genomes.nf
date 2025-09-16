@@ -48,16 +48,15 @@ workflow FETCH_BLAST_GENOMES {
     ch_mapping_shortreads = ch_genomes_reads_branched.shortreads
         .multiMap { taxid, meta, reads, genome ->
             reads: [ meta, reads ]
-            genome: [ taxid, genome ]
+            genome: [ [ id: taxid ], genome ]
         }
 
     // Long reads - combine both mapping operations
     ch_mapping_longreads = ch_genomes_reads_branched.longreads
         .multiMap { taxid, meta, reads, genome ->
             reads: [ meta, reads ]
-            genome: [ taxid, genome ]
+            genome: [ [ id: taxid ], genome ]
         }
-
 
     emit:
     shortreads         = ch_mapping_shortreads.reads          // [ meta, reads ]
