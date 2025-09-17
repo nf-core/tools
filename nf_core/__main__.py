@@ -59,8 +59,10 @@ from nf_core.commands_test_datasets import (
     test_datasets_list_remote,
     test_datasets_search,
 )
+from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download import DownloadError
+from nf_core.pipelines.download.download import DownloadError
+from nf_core.pipelines.list import autocomplete_pipelines
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
@@ -354,7 +356,12 @@ def command_pipelines_lint(
 
 # nf-core pipelines download
 @pipelines.command("download")
-@click.argument("pipeline", required=False, metavar="<pipeline name>")
+@click.argument(
+    "pipeline",
+    required=False,
+    metavar="<pipeline name>",
+    shell_complete=autocomplete_pipelines,
+)
 @click.option(
     "-r",
     "--revision",
@@ -393,33 +400,33 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(
     "-l",
     "--container-library",
     multiple=True,
-    help="Container registry/library or mirror to pull images from.",
+    help="Container registry/library or mirror to pull images from. Not available for Docker containers.",
 )
 @click.option(
     "-u",
     "--container-cache-utilisation",
     type=click.Choice(["amend", "copy", "remote"]),
-    help="Utilise a `singularity.cacheDir` in the download process, if applicable.",
+    help="Utilise a `singularity.cacheDir` in the download process, if applicable. Not available for Docker containers.",
 )
 @click.option(
     "-i",
     "--container-cache-index",
     type=str,
-    help="List of images already available in a remote `singularity.cacheDir`.",
+    help="List of images already available in a remote `singularity.cacheDir`. Not available for Docker containers.",
 )
 @click.option(
     "-d",
     "--parallel-downloads",
     type=int,
     default=4,
-    help="Number of parallel image downloads",
+    help="Number of allowed parallel tasks",
 )
 @click.pass_context
 def command_pipelines_download(
@@ -461,7 +468,12 @@ def command_pipelines_download(
 
 # nf-core pipelines create-params-file
 @pipelines.command("create-params-file")
-@click.argument("pipeline", required=False, metavar="<pipeline name>")
+@click.argument(
+    "pipeline",
+    required=False,
+    metavar="<pipeline name>",
+    shell_complete=autocomplete_pipelines,
+)
 @click.option("-r", "--revision", help="Release/branch/SHA of the pipeline (if remote)")
 @click.option(
     "-o",
@@ -489,7 +501,12 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 
 # nf-core pipelines launch
 @pipelines.command("launch")
-@click.argument("pipeline", required=False, metavar="<pipeline name>")
+@click.argument(
+    "pipeline",
+    required=False,
+    metavar="<pipeline name>",
+    shell_complete=autocomplete_pipelines,
+)
 @click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
 @click.option("-i", "--id", help="ID for web-gui launch parameter set")
 @click.option(
@@ -745,7 +762,12 @@ def pipeline_schema():
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.argument(
+    "pipeline",
+    required=False,
+    metavar="<pipeline name>",
+    shell_complete=autocomplete_pipelines,
+)
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def command_pipelines_schema_validate(directory, pipeline, params):
     """
@@ -944,7 +966,14 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
 # nf-core modules install
 @modules.command("install")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -978,7 +1007,14 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
 # nf-core modules update
 @modules.command("update")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1055,7 +1091,14 @@ def command_modules_update(
 # nf-core modules patch
 @modules.command("patch")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1075,7 +1118,14 @@ def command_modules_patch(ctx, tool, directory, remove):
 # nf-core modules remove
 @modules.command("remove")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1194,7 +1244,14 @@ def command_modules_create(
 # nf-core modules test
 @modules.command("test")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-v",
     "--verbose",
@@ -1249,7 +1306,14 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
 # nf-core modules lint
 @modules.command("lint")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1303,7 +1367,14 @@ def command_modules_lint(
 # nf-core modules info
 @modules.command("info")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1322,7 +1393,14 @@ def command_modules_info(ctx, tool, directory):
 # nf-core modules bump-versions
 @modules.command("bump-versions")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>. Module to bump versions for. If <tool> is provided and <tool/subtool> exists, all subtools will be bumped.",
+    shell_complete=autocomplete_modules,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1333,12 +1411,13 @@ def command_modules_info(ctx, tool, directory):
 )
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
-def command_modules_bump_versions(ctx, tool, directory, all, show_all):
+@click.option("-r", "--dry-run", is_flag=True, help="Dry run the command")
+def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
     """
-    modules_bump_versions(ctx, tool, directory, all, show_all)
+    modules_bump_versions(ctx, tool, directory, all, show_all, dry_run)
 
 
 # nf-core subworkflows click command
@@ -1414,7 +1493,14 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
 # nf-core subworkflows test
 @subworkflows.command("test")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1502,7 +1588,14 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
 # nf-core subworkflows lint
 @subworkflows.command("lint")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1551,7 +1644,14 @@ def command_subworkflows_lint(
 # nf-core subworkflows info
 @subworkflows.command("info")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1570,7 +1670,14 @@ def command_subworkflows_info(ctx, subworkflow, directory):
 # nf-core subworkflows install
 @subworkflows.command("install")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1610,7 +1717,14 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
 # nf-core subworkflows patch
 @subworkflows.command("patch")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1619,7 +1733,7 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
-def subworkflows_patch(ctx, tool, dir, remove):
+def subworkflows_patch(ctx, subworkflow, dir, remove):
     """
     Create a patch file for minor changes in a subworkflow
 
@@ -1636,9 +1750,9 @@ def subworkflows_patch(ctx, tool, dir, remove):
             ctx.obj["modules_repo_no_pull"],
         )
         if remove:
-            subworkflow_patch.remove(tool)
+            subworkflow_patch.remove(subworkflow)
         else:
-            subworkflow_patch.patch(tool)
+            subworkflow_patch.patch(subworkflow)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -1647,7 +1761,14 @@ def subworkflows_patch(ctx, tool, dir, remove):
 # nf-core subworkflows remove
 @subworkflows.command("remove")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1666,7 +1787,14 @@ def command_subworkflows_remove(ctx, directory, subworkflow):
 # nf-core subworkflows update
 @subworkflows.command("update")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
+)
 @click.option(
     "-d",
     "--dir",
@@ -1777,7 +1905,7 @@ def test_datasets(ctx):
     "--generate-dl-url",
     is_flag=True,
     default=False,
-    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 @click.argument("query", required=False)
 def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
@@ -1804,7 +1932,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, 
     "--generate-dl-url",
     is_flag=True,
     default=False,
-    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     """
@@ -2232,7 +2360,7 @@ def command_create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(
