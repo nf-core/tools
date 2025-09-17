@@ -24,6 +24,9 @@ include { MAPPING_LONGREAD as MAPPING_LONGREAD_PATHOGEN         } from '../subwo
 include { FETCH_BLAST_GENOMES                                   } from '../subworkflows/local/fetch_blast_genomes'
 include { IGV as IGV_SHORTREAD                                  } from '../subworkflows/local/igv'
 include { IGV as IGV_LONGREAD                                   } from '../subworkflows/local/igv'
+include { IGV as IGV_SHORTREAD_PATHOGEN                         } from '../subworkflows/local/igv'
+include { IGV as IGV_LONGREAD_PATHOGEN                          } from '../subworkflows/local/igv'
+
 // Calling consensus
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_SHORTREAD          } from '../subworkflows/local/taxid_bam_fasta'
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_LONGREAD           } from '../subworkflows/local/taxid_bam_fasta'
@@ -210,7 +213,6 @@ workflow METAVAL {
             ch_versions = ch_versions.mix ( IGV_SHORTREAD.out.versions )
             ch_versions = ch_versions.mix ( IGV_LONGREAD.out.versions )
         }
-
     }
 
     //
@@ -227,7 +229,6 @@ workflow METAVAL {
         MAPPING_SHORTREAD_PATHOGEN ( ch_input.short_reads, [ [], ch_reference ] )
         ch_versions = ch_versions.mix( MAPPING_SHORTREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_SHORTREAD_PATHOGEN.out.mqc)
-
         // Map long reads to the pathogens genome
         MAPPING_LONGREAD_PATHOGEN ( ch_input.long_reads, [ [], ch_reference ] )
         ch_versions = ch_versions.mix( MAPPING_LONGREAD_PATHOGEN.out.versions )
@@ -241,6 +242,10 @@ workflow METAVAL {
 
         TAXID_BAM_FASTA_LONGREAD( MAPPING_LONGREAD_PATHOGEN.out.bam, MAPPING_LONGREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_LONGREAD.out.versions )
+
+        // IGV
+        IGV_SHORTREAD_PATHOGEN ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, TAXID_BAM_FASTA_LONGREAD.out.taxid_bai, [ [], ch_reference ] )
+        IGV_LONGREAD_PATHOGEN ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, TAXID_BAM_FASTA_LONGREAD.out.taxid_bai, [ [], ch_reference ] )
 
         //
         // SUBWORKFLOW: CONSENSUS - BAM file with the number of mapped reads > params.min_read_counts
