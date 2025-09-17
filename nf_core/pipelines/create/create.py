@@ -327,7 +327,7 @@ class PipelineCreate:
         short_name = self.jinja_params["short_name"]
         rename_files: dict[str, str] = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
-            "subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
+            "subworkflows/local/utils_nfcore_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
         }
 
         # Set the paths to skip according to customization
