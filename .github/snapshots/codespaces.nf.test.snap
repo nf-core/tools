@@ -25,7 +25,7 @@
                 "fastqc/SAMPLE3_SE_2_fastqc.zip",
                 "multiqc",
                 "multiqc/multiqc_data",
-                "multiqc/multiqc_data/BETA-multiqc.parquet",
+                "multiqc/multiqc_data/multiqc.parquet",
                 "multiqc/multiqc_data/fastqc-status-check-heatmap.txt",
                 "multiqc/multiqc_data/fastqc_overrepresented_sequences_plot.txt",
                 "multiqc/multiqc_data/fastqc_per_base_n_content_plot.txt",
