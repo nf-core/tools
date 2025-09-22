@@ -8,6 +8,7 @@
 - Bump nf-schema to 2.5.0 and update the help message creation to be compatible with future Nextflow versions ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Bump minimum Nextflow version to 25.04.0 ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
+- Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 
 ### Linting
 
@@ -46,7 +47,6 @@
 - Fix backwards compatibility with python 3.9 in use of Enum ([#3736](https://github.com/nf-core/tools/pull/3736))
 - Fix downloads: temporary files not moved and cleaned up correctly after singularity pull ([#3749](https://github.com/nf-core/tools/pull/3749))
 - impr devcontainer: Add hostRequirements to run with 4CPUs and 16GB ram by default ([#3746](https://github.com/nf-core/tools/pull/3746))
-- Update usage.md charliecloud url ([#3757](https://github.com/nf-core/tools/pull/3757))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
