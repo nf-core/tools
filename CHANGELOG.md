@@ -9,6 +9,7 @@
 - Bump minimum Nextflow version to 25.04.0 ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
 - Update multiqc to 1.31 ([#3766](https://github.com/nf-core/tools/pull/3766))
+- Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 
 ### Linting
 
