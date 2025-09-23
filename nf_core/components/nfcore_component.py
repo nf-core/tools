@@ -181,8 +181,11 @@ class NFCoreComponent:
         return included_components
 
     def _get_process_name(self):
-        return Module.from_file(str(self.main_nf)).processes[0].name
-
+        try:
+            return Module.from_file(str(self.main_nf)).processes[0].name
+        except IndexError:
+            return ""
+        
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
