@@ -60,4 +60,4 @@ class TestModulesLint(TestModules):
         assert isinstance(mock_lint.passed, list)
         assert isinstance(mock_lint.warned, list)
         assert isinstance(mock_lint.failed, list)
-        assert mock_lint.main_nf == "main_nf"
+        assert mock_lint.main_nf == mock_lint._temp_file.name
