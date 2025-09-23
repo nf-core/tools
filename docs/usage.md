@@ -76,10 +76,10 @@ The example commands for running each workflow are as follows:
 nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_screen_pathogens --pathogens_genomes /path/to/reference.fna --accession2taxid /path/to/accession2taxid.map
 
 # Orange Workflow - Verify Identified Viruses
-nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_extract_reads --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
+nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_verify_species --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
 
 # Blue Workflow - Verify User-Defined TaxIDs
-nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --taxid 211044 2886042 --perform_extract_reads --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
+nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --taxid 211044 2886042 --perform_verify_species --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
 
 ```
 
@@ -124,7 +124,7 @@ Filtering the output files from metagenomics classifiers like `Kraken2`, `Centri
 
 ### Extract Viral TaxIDs
 
-This step involves extracting all taxonomic IDs of viral species predicted by classifiers by enabling `--perform_extract_reads`and the `--taxid` should be empty.
+This step involves extracting all taxonomic IDs of viral species predicted by classifiers by enabling `--perform_verify_species`and the `--taxid` should be empty.
 
 ### Extract Reads
 

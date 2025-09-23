@@ -105,7 +105,7 @@ workflow METAVAL {
     }
 
     // Verify whether the taxonomic IDs identified by classification are true or false positives.
-    if ( params.perform_extract_reads ) {
+    if ( params.perform_verify_species ) {
         //
         // SUBWORKFLOW: TAXID_READS - extract reads
         //
