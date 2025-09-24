@@ -244,7 +244,7 @@ workflow METAVAL {
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_LONGREAD.out.versions )
 
         // IGV
-        IGV_SHORTREAD_PATHOGEN ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, TAXID_BAM_FASTA_LONGREAD.out.taxid_bai, [ [], ch_reference ] )
+        IGV_SHORTREAD_PATHOGEN ( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam, TAXID_BAM_FASTA_SHORTREAD.out.taxid_bai, [ [], ch_reference ] )
         IGV_LONGREAD_PATHOGEN ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, TAXID_BAM_FASTA_LONGREAD.out.taxid_bai, [ [], ch_reference ] )
 
         //
