@@ -243,7 +243,7 @@ Generate an IGV report to visualize the variants and coverage of mapped reads ac
 
 #### Verify identified species
 
-IGV visualization of reads assigned to specific species by classifiers.
+IGV visualization of reads that classifiers assigned to specific species.
 
 <details markdown="1">
 <summary>Output files</summary>
