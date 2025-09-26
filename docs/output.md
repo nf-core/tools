@@ -19,7 +19,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [BLAST](#BLAST) - Run BLASTN or BLASTX
 - [Bowtie2](#Mapping) - Map raw Illumina reads to a pathogen genome database or map Illumina reads of specific taxIDs to genomes with positive BLAST hits.
 - [minimap2](#Mapping) - Map raw Nanopore reads to a pathogen genome database or map Nanopore reads of specific taxIDs to genomes with positive BLAST hits.
-- [IGV](#IGV) - Report for visualizing reads mapped to the genome
+- [IGV](#IGV) - Report for visualizing reads mapped to the genomes identified.
 - [Pathogen reads](#Pathogen-reads) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
 - [Call Consensus](#Call-Consensus) - Call consensus sequences for reads mapped to pathogen genomes
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
@@ -193,7 +193,7 @@ Map Illumina short reads to genomes using `bowtie2` and map Nanopore long reads 
 
 #### Verify identified species
 
-Map reads to genomes with BLAST hits or genomes of identified species if skipping BLAST steps (`params.skip_blastn` and `params.skip_blastx`).
+Map reads to genomes based on BLAST hits or to genomes of identified species if the BLAST steps are skipped.(`params.skip_blastn` and `params.skip_blastx`).
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -201,18 +201,18 @@ Map reads to genomes with BLAST hits or genomes of identified species if skippin
 - `mapping/`
   - `bowtie2/`
     - `align/`
-      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing short reads that aligned against the genomes with BLAST hits.
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing short reads that were aligned against the genomes based on BLAST hits.
       - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam.bai`: Index of the bam file.
     - `build/`
       - `mappingtaxid_<mapping_taxID>/`
         - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
   - `minimap2/`
     - `align/`
-      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing long reads that were aligned against the user-supplied pathogens genomes
       - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam.bai`: Index of the bam file.
     - `index/`
       - `mappingtaxid_<mapping_taxID>`
-        - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+        - `*.mmi`: Minimap2 indices of the reference pathogens' genomes
 
 #### Pathogen screening
 
@@ -245,7 +245,7 @@ Generate an IGV report to visualize the variants and coverage of mapped reads ac
 
 #### Verify identified species
 
-IGV visualization of reads assigned to specific species by classifiers.
+IGV visualization of reads that classifiers assigned to specific species.
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -255,7 +255,7 @@ IGV visualization of reads assigned to specific species by classifiers.
 
 #### Pathogen screening
 
-IGV visualization of reads mapped to pathogen genome databases.
+IGV visualization of reads mapped to pathogen genome database.
 
 <details markdown="1">
 <summary>Output files</summary>
