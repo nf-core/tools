@@ -210,7 +210,7 @@ Map reads to genomes based on BLAST hits or to genomes of identified species if 
       - `<sample_id>_aligned_genome_sorted.bam`: BAM file containing long reads that were aligned against the user-supplied pathogens genomes
       - `<sample_id>_aligned_genome_sorted.bam.bai`: Index of the bam file.
     - `index/`
-      - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+      - `*.mmi`: Minimap2 indices of the reference pathogens' genomes
 
 #### Pathogen screening
 
