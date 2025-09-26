@@ -19,7 +19,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [BLAST](#BLAST) - Run BLASTN or BLASTX
 - [Bowtie2](#Mapping) - Map raw Illumina reads to a pathogen genome database or map Illumina reads of specific taxIDs to genomes with positive BLAST hits.
 - [minimap2](#Mapping) - Map raw Nanopore reads to a pathogen genome database or map Nanopore reads of specific taxIDs to genomes with positive BLAST hits.
-- [IGV](#IGV) - Report for visualizing reads mapped to the genome
+- [IGV](#IGV) - Report for visualizing reads mapped to the genomes identified.
 - [Pathogen reads](#Pathogen-reads) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
 - [Call Consensus](#Call-Consensus) - Call consensus sequences for reads mapped to pathogen genomes
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
