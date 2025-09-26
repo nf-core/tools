@@ -253,7 +253,7 @@ IGV visualization of reads that classifiers assigned to specific species.
 
 #### Pathogen screening
 
-IGV visualization of reads mapped to pathogen genome databases.
+IGV visualization of reads mapped to pathogen genome database.
 
 <details markdown="1">
 <summary>Output files</summary>
