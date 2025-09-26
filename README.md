@@ -86,7 +86,7 @@ This workflow is activated by enabling the `--perform_verify_species` option and
 
 7. **Visualisation using IGV**
 
-   - Visualize the mapped reads using `IGV`.
+   - Visualize the mapped reads using [igv-reports](https://github.com/igvteam/igv-reports)
 
 8. **Perform quality check**
    - Conduct quality checks on the classified reads using [FastQC](<(https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)>) and [MultiQC](<(http://multiqc.info/)>) to ensure the accuracy of the data.

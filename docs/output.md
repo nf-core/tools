@@ -201,16 +201,18 @@ Map reads to genomes with BLAST hits or genomes of identified species if skippin
 - `mapping/`
   - `bowtie2/`
     - `align/`
-      - `<sample_id>_<taxid>_aligned_genome_sorted.bam`: BAM file containing short reads that aligned against the genomes with BLAST hits.
-      - `<sample_id>_<taxid>_aligned_genome_sorted.bam.bai`: Index of the bam file.
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing short reads that aligned against the genomes with BLAST hits.
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam.bai`: Index of the bam file.
     - `build/`
-      - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
+      - `mappingtaxid_<mapping_taxID>/`
+        - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
   - `minimap2/`
     - `align/`
-      - `<sample_id>_aligned_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
-      - `<sample_id>_aligned_genome_sorted.bam.bai`: Index of the bam file.
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam.bai`: Index of the bam file.
     - `index/`
-      - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+      - `mappingtaxid_<mapping_taxID>`
+        - `*.mmi`: Minimap2 indicies of reference pathogens genomes
 
 #### Pathogen screening
 
@@ -249,7 +251,7 @@ IGV visualization of reads assigned to specific species by classifiers.
 <summary>Output files</summary>
 
 - `IGV/`
-  - `<sample_id>_<taxID>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
+  - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
 
 #### Pathogen screening
 
