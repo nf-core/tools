@@ -28,9 +28,7 @@ workflow MAPPING_SHORTREAD {
         reference
     )
     ch_versions = ch_versions.mix ( FASTQ_ALIGN_BOWTIE2.out.versions )
-    ch_multiqc_files = ch_multiqc_files.mix ( FASTQ_ALIGN_BOWTIE2.out.stats.collect{it[1]}.ifEmpty([]) )
     ch_multiqc_files = ch_multiqc_files.mix ( FASTQ_ALIGN_BOWTIE2.out.flagstat.collect{it[1]}.ifEmpty([]) )
-    ch_multiqc_files = ch_multiqc_files.mix ( FASTQ_ALIGN_BOWTIE2.out.idxstats.collect{it[1]}.ifEmpty([]) )
 
 
     emit:

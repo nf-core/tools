@@ -11,15 +11,18 @@ include { IGVREPORTS          } from '../../modules/nf-core/igvreports/main'
 
 workflow IGV {
     take:
-    bam            // [ [ meta ], [ bam ] ]
-    bai            // [ [ meta ], [ bai ] ]
-    reference     // [ [ meta ], [ reference ] ]
+    ch_bam_bai_reference   // [ [ meta ], [ bam ], [bai], [ref] ]
 
     main:
     ch_versions = Channel.empty()
 
     // Extract and index mapped reads
-    SAMTOOLS_VIEW ( bam.join( bai ), [ [],[] ], [], 'bai' )
+    SAMTOOLS_VIEW (
+        ch_bam_bai_reference.map {it -> [ it[0], it[1], it[2]]},
+        [ [],[] ],
+        [],
+        'bai'
+    )
     ch_versions = ch_versions.mix( SAMTOOLS_VIEW.out.versions )
     SAMTOOLS_INDEX ( SAMTOOLS_VIEW.out.bam )
     ch_versions = ch_versions.mix( SAMTOOLS_INDEX.out.versions )
@@ -30,7 +33,7 @@ workflow IGV {
     ch_versions = ch_versions.mix( BEDTOOLS_GENOMECOV.out.versions )
 
     // Uncompress and index the reference genome
-    PIGZ_UNCOMPRESS ( reference )
+    PIGZ_UNCOMPRESS ( ch_bam_bai_reference.map { it -> [ it[0], it[3] ]} )
     SAMTOOLS_FAIDX ( PIGZ_UNCOMPRESS.out.file, [ [],[] ], false )
     ch_versions = ch_versions.mix( PIGZ_UNCOMPRESS.out.versions )
     ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )

@@ -56,5 +56,5 @@ workflow CONSENSUS {
 
     emit:
     consensus = ch_consensus // channel: [ val(meta), path(consensus) ]
-    versions = ch_versions   // channel: [ versions.yml ]
+    versions  = ch_versions   // channel: [ versions.yml ]
 }

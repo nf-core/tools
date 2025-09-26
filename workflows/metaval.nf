@@ -22,10 +22,8 @@ include { MAPPING_LONGREAD                                      } from '../subwo
 include { MAPPING_SHORTREAD as MAPPING_SHORTREAD_PATHOGEN       } from '../subworkflows/local/mapping_shortread'
 include { MAPPING_LONGREAD as MAPPING_LONGREAD_PATHOGEN         } from '../subworkflows/local/mapping_longread'
 include { FETCH_BLAST_GENOMES                                   } from '../subworkflows/local/fetch_blast_genomes'
-include { IGV as IGV_SHORTREAD                                  } from '../subworkflows/local/igv'
-include { IGV as IGV_LONGREAD                                   } from '../subworkflows/local/igv'
-include { IGV as IGV_SHORTREAD_PATHOGEN                         } from '../subworkflows/local/igv'
-include { IGV as IGV_LONGREAD_PATHOGEN                          } from '../subworkflows/local/igv'
+include { IGV                                                   } from '../subworkflows/local/igv'
+include { IGV as IGV_PATHOGEN                                   } from '../subworkflows/local/igv'
 
 // Calling consensus
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_SHORTREAD          } from '../subworkflows/local/taxid_bam_fasta'
@@ -199,7 +197,6 @@ workflow METAVAL {
 
         if (params.perform_mapping) {
             FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
-
             MAPPING_SHORTREAD ( FETCH_BLAST_GENOMES.out.shortreads, FETCH_BLAST_GENOMES.out.shortreads_genome )
             MAPPING_LONGREAD ( FETCH_BLAST_GENOMES.out.longreads, FETCH_BLAST_GENOMES.out.longreads_genome )
             ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
@@ -208,10 +205,18 @@ workflow METAVAL {
             //
             // SUBWORKFLOW: IGV
             //
-            IGV_SHORTREAD( MAPPING_SHORTREAD.out.bam, MAPPING_SHORTREAD.out.bai, FETCH_BLAST_GENOMES.out.shortreads_genome )
-            IGV_LONGREAD( MAPPING_LONGREAD.out.bam, MAPPING_LONGREAD.out.bai, FETCH_BLAST_GENOMES.out.longreads_genome )
-            ch_versions = ch_versions.mix ( IGV_SHORTREAD.out.versions )
-            ch_versions = ch_versions.mix ( IGV_LONGREAD.out.versions )
+
+            // Prepare IGV input channels
+            ch_igv_input_shortread = MAPPING_SHORTREAD.out.bam
+                .join ( MAPPING_SHORTREAD.out.bai, by:0)
+                .join ( FETCH_BLAST_GENOMES.out.shortreads_genome, by:0 )
+            ch_igv_input_longread = MAPPING_LONGREAD.out.bam
+                .join ( MAPPING_LONGREAD.out.bai)
+                .join ( FETCH_BLAST_GENOMES.out.longreads_genome, by:0 )
+            ch_igv_input = ch_igv_input_shortread.mix ( ch_igv_input_longread )
+
+            IGV( ch_igv_input )
+            ch_versions = ch_versions.mix ( IGV.out.versions )
         }
     }
 
@@ -244,8 +249,20 @@ workflow METAVAL {
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_LONGREAD.out.versions )
 
         // IGV
-        IGV_SHORTREAD_PATHOGEN ( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam, TAXID_BAM_FASTA_SHORTREAD.out.taxid_bai, [ [], ch_reference ] )
-        IGV_LONGREAD_PATHOGEN ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, TAXID_BAM_FASTA_LONGREAD.out.taxid_bai, [ [], ch_reference ] )
+        ch_igv_input_pathogen_shortread = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam
+            .join( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bai )
+            .map { meta, bam, bai ->
+                [ meta, bam, bai, ch_reference ]
+            }
+        ch_igv_input_pathogen_longread = TAXID_BAM_FASTA_LONGREAD.out.taxid_bam
+            .join( TAXID_BAM_FASTA_LONGREAD.out.taxid_bai )
+            .map { meta, bam, bai ->
+                [ meta, bam, bai, ch_reference ]
+            }
+        ch_igv_input_pathogen = ch_igv_input_pathogen_shortread.mix( ch_igv_input_pathogen_longread )
+
+        IGV_PATHOGEN ( ch_igv_input_pathogen )
+        ch_versions = ch_versions.mix( IGV_PATHOGEN.out.versions )
 
         //
         // SUBWORKFLOW: CONSENSUS - BAM file with the number of mapped reads > params.min_read_counts

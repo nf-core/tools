@@ -18,44 +18,55 @@ workflow FETCH_BLAST_GENOMES {
         ch_genomes_blast = blast_taxid.join ( ch_taxid2genome, failOnMismatch: false )
             .filter { blast_taxid, meta, genome ->
                 if ( genome == null ) {
-                    log.warn "WARNING: Taxid ${taxid} not found in params.taxid2genome - skipping genome fetching!"
+                    log.warn "WARNING: Taxid ${blast_taxid} not found in params.taxid2genome - skipping genome fetching!"
                     return false
                 }
                 return true
             }
         ch_genomes_reads = ch_genomes_blast
-            .map { blast_taxid, meta, genome -> [ "${meta.id}_${meta.taxid}_${meta.tool}", blast_taxid, meta, genome ] }
-            .join ( ch_reads.map { meta, reads -> [ "${meta.id}_${meta.taxid}_${meta.tool}", meta, reads ]}, by: 0 )
-            .map { meta_joined, blast_taxid, meta1, genome, meta2, reads -> [ blast_taxid, meta2, reads, genome ] }
+            .map { blast_taxid, meta, genome ->
+                [ "${meta.id}_${meta.taxid}_${meta.tool}", blast_taxid, meta, genome ] }
+            .join(
+                ch_reads.map { meta, reads -> [ "${meta.id}_${meta.taxid}_${meta.tool}", meta, reads ]},
+                by: 0
+            )
+            .map { meta_joined, blast_taxid, meta1, genome, meta2, reads ->
+                def new_meta = meta2.clone()
+                new_meta.mapping_taxid = blast_taxid
+                [ new_meta, reads, genome ]
+            }
     }
     // Skip BLAST — Fetch genomes based on taxids predicted by classifiers
     if ( params.skip_blastn && params.skip_blastx ) {
         ch_genomes_reads = ch_reads
             .map { meta, reads -> [ meta.taxid, meta, reads ] }
             .join( ch_taxid2genome, by:0 )
-            .map { taxid, meta, reads, genome -> [ taxid, meta, reads, genome ]}
+            .map { meta, reads, genome ->
+                def new_meta = meta.clone()
+                new_meta.mapping_taxid = taxid
+                [ new_meta, reads, genome ]}
     }
 
     ch_genomes_reads_branched = ch_genomes_reads
-        .branch { taxid, meta, reads, genome ->
+        .branch { meta, reads, genome ->
             shortreads: meta.instrument_platform != 'OXFORD_NANOPORE'
-                return [ taxid, meta, reads, genome ]
+                return [ meta, reads, genome ]
             longreads: meta.instrument_platform == 'OXFORD_NANOPORE'
-                return [ taxid, meta, reads, genome ]
+                return [ meta, reads, genome ]
         }
 
     // Short reads - combine both mapping operations
     ch_mapping_shortreads = ch_genomes_reads_branched.shortreads
-        .multiMap { taxid, meta, reads, genome ->
+        .multiMap { meta, reads, genome ->
             reads: [ meta, reads ]
-            genome: [ [ id: taxid ], genome ]
+            genome: [ meta, genome ]
         }
 
     // Long reads - combine both mapping operations
     ch_mapping_longreads = ch_genomes_reads_branched.longreads
-        .multiMap { taxid, meta, reads, genome ->
+        .multiMap { meta, reads, genome ->
             reads: [ meta, reads ]
-            genome: [ [ id: taxid ], genome ]
+            genome: [ meta, genome ]
         }
 
     emit:
