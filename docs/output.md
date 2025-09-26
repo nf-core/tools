@@ -193,7 +193,7 @@ Map Illumina short reads to genomes using `bowtie2` and map Nanopore long reads 
 
 #### Verify identified species
 
-Map reads to genomes with BLAST hits or genomes of identified species if skipping BLAST steps (`params.skip_blastn` and `params.skip_blastx`).
+Map reads to genomes based on BLAST hits or to genomes of identified species if the BLAST steps are skipped.(`params.skip_blastn` and `params.skip_blastx`).
 
 <details markdown="1">
 <summary>Output files</summary>
