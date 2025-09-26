@@ -15,6 +15,7 @@
 - ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
 - do not check pytest_modules.yml file, deprecating ([#3748](https://github.com/nf-core/tools/pull/3748))
 - Use the org from the .nf-core.yml when linting manifest name and homePage. ([#3767](https://github.com/nf-core/tools/pull/3767))
+- Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 
 ### Modules
 
