@@ -44,7 +44,7 @@
             }
         },
         "verify_identified_species_options": {
-            "title": "Very identified species options",
+            "title": "Verify identified species options",
             "type": "object",
             "description": "Options for verifying species identified by nf-core/taxprofiler classification",
             "properties": {
