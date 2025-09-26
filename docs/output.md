@@ -201,7 +201,7 @@ Map reads to genomes based on BLAST hits or to genomes of identified species if 
 - `mapping/`
   - `bowtie2/`
     - `align/`
-      - `<sample_id>_<taxid>_aligned_genome_sorted.bam`: BAM file containing short reads that aligned against the genomes with BLAST hits.
+      - `<sample_id>_<taxid>_aligned_genome_sorted.bam`: BAM file containing short reads that were aligned against the genomes based on BLAST hits.
       - `<sample_id>_<taxid>_aligned_genome_sorted.bam.bai`: Index of the bam file.
     - `build/`
       - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
