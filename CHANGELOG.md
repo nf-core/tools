@@ -1,5 +1,34 @@
 # nf-core/tools: Changelog
 
+## v3.4.0dev
+
+### Template
+
+### Linting
+
+- ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
+
+### Modules
+
+- Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
+- feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
+- Lint for version captures in modules - detect hash format instead of actual YAML content ([#3676](https://github.com/nf-core/tools/pull/3676))
+
+### Subworkflows
+
+### General
+
+- don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
+- Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
+- Update dependency textual to v5 ([#3699](https://github.com/nf-core/tools/pull/3699))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.7 ([#3697](https://github.com/nf-core/tools/pull/3697))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.17.1 ([#3698](https://github.com/nf-core/tools/pull/3698))
+- Update python:3.13-slim Docker digest to 4c2cf99 ([#3700](https://github.com/nf-core/tools/pull/3700))
+- Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
+- Replace arm profile with arm64 and emulate_amd64 profiles ([#3689](https://github.com/nf-core/tools/pull/3689))
+- Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
+- Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
+
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
 ### Template
@@ -30,6 +59,7 @@
 
 ### General
 
+- Add description of accepted enum values to `nf-core pipelines schema docs` output ([#3693](https://github.com/nf-core/tools/pull/3693))
 - update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
 - Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
@@ -40,6 +70,7 @@
 - Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
 - Update `nf-core modules info` command after `meta.yml` restructuring ([#3659](https://github.com/nf-core/tools/pull/3659))
 - Enable parsing of multi-line config values ([#3629](https://github.com/nf-core/tools/pull/3629))
+- Add modules / subworkflows and pipelines names autocompletion to the CLI ([#3660](https://github.com/nf-core/tools/pull/3660))
 
 #### Version updates
 

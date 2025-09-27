@@ -1,7 +1,6 @@
 {
     "-profile test": {
         "content": [
-            3,
             null,
             [
                 "fastqc",

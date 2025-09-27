@@ -1,7 +1,6 @@
 {
     "-profile test": {
         "content": [
-            0,
             null,
             [
                 "pipeline_info"

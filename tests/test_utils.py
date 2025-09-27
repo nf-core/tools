@@ -216,3 +216,11 @@ class TestUtils(TestPipelines):
             with nf_core.utils.set_wd(self.tmp_dir):
                 raise Exception
         assert wd_before_context == Path().resolve()
+
+    @mock.patch("nf_core.utils.run_cmd")
+    def test_fetch_wf_config(self, mock_run_cmd):
+        """Test the fetch_wf_config() regular expression to read config params."""
+        mock_run_cmd.return_value = (b"params.param1 ? 'a=b' : ''\nparams.param2 = foo", b"mock")
+        config = nf_core.utils.fetch_wf_config(".", False)
+        assert len(config.keys()) == 1
+        assert "params.param2" in list(config.keys())

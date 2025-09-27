@@ -313,12 +313,18 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
         cache_path = Path(cache_basedir, cache_fn)
         if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path) as fh:
-                try:
+            try:
+                with open(cache_path) as fh:
                     config = json.load(fh)
-                except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
-            return config
+                return config
+            except json.JSONDecodeError as e:
+                # Log warning but don't raise - just regenerate the cache
+                log.warning(f"Unable to load cached JSON file '{cache_path}' due to error: {e}")
+                log.debug("Removing corrupted cache file and regenerating...")
+                try:
+                    cache_path.unlink()
+                except OSError:
+                    pass  # If we can't delete it, just continue
     log.debug("No config cache found")
 
     # Call `nextflow config`
@@ -326,7 +332,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     if result is not None:
         nfconfig_raw, _ = result
         nfconfig = nfconfig_raw.decode("utf-8")
-        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
+        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=\s]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
 
         for config_match in multiline_key_value_pattern.finditer(nfconfig):
             k = config_match.group(2).strip()
@@ -1574,9 +1580,12 @@ def get_wf_files(wf_path: Path):
 
     wf_files = []
 
-    with open(Path(wf_path, ".gitignore")) as f:
-        lines = f.read().splitlines()
-    ignore = [line for line in lines if line and not line.startswith("#")]
+    try:
+        with open(Path(wf_path, ".gitignore")) as f:
+            lines = f.read().splitlines()
+        ignore = [line for line in lines if line and not line.startswith("#")]
+    except FileNotFoundError:
+        ignore = []
 
     for path in Path(wf_path).rglob("*"):
         if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
