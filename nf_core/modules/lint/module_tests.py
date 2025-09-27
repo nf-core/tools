@@ -16,30 +16,33 @@ log = logging.getLogger(__name__)
 
 
 def _contains_version_hash(test_content):
-    """
-    Check if test content contains version information in hash format.
-
-    Uses precise regex patterns to detect version hash formats while avoiding
-    false positives from similar strings.
-
-    Args:
-        test_content: Content of a single test from snapshot
-
-    Returns:
-        bool: True if hash format detected, False otherwise
-    """
-    # More precise regex patterns with proper boundaries
+    """Check if test content contains version information in hash format rather than actual YAML content."""
     version_hash_patterns = [
-        r"\bversions\.yml:md5,[a-f0-9]{32}\b",  # Exact MD5 format (32 hex chars)
-        r"\bversions\.yml:sha[0-9]*,[a-f0-9]+\b",  # SHA format with variable length
+        r"\bversions\.yml:md5,[a-f0-9]{32}\b",
+        r"\bversions\.yml:sha[0-9]*,[a-f0-9]+\b",
     ]
 
-    # Convert to string only once and search efficiently
     content_str = str(test_content)
 
     for pattern in version_hash_patterns:
         if re.search(pattern, content_str):
             return True
+
+    return False
+
+
+def _check_snapshot_for_version_hash(snap_content, test_name):
+    """Check both snapshot content and keys for version hash patterns."""
+    # Check test content for version hashes
+    if _contains_version_hash(snap_content[test_name]):
+        return True
+
+    # Check specific test's keys for version hashes
+    test_data = snap_content.get(test_name, {})
+    if isinstance(test_data, dict):
+        for key in test_data.keys():
+            if _contains_version_hash(str(key)):
+                return True
 
     return False
 
@@ -199,11 +202,8 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                             snap_file,
                                         )
                                     )
-                                    # Check if version content is actual content vs MD5/SHA hash
-                                    # Related to: https://github.com/nf-core/modules/issues/6505
-                                    # Ensures version snapshots contain actual content instead of hash values
-                                    if _contains_version_hash(snap_content[test_name]):
-                                        # Invalid - contains hash format
+                                    # Check if version content contains hash instead of actual YAML content
+                                    if _check_snapshot_for_version_hash(snap_content, test_name):
                                         module.failed.append(
                                             (
                                                 "test_snap_version_content",
@@ -212,7 +212,6 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                             )
                                         )
                                     else:
-                                        # Valid - either contains actual content or no version hash detected
                                         module.passed.append(
                                             (
                                                 "test_snap_version_content",

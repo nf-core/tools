@@ -12,6 +12,7 @@
 
 - Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
 - feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
+- Lint for version captures in modules - detect hash format instead of actual YAML content ([#3676](https://github.com/nf-core/tools/pull/3676))
 
 ### Subworkflows
 
