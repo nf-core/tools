@@ -1,0 +1,40 @@
+{
+    "name": "nfcore-devcontainer-build",
+
+    // installs python3.13, nf-core tools from current workspace, nextflow, nf-test,
+    // and apptainer based on mcr.microsoft.com/devcontainers/miniconda image
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "context": "../.."
+    },
+
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1.6.3": {}
+    },
+
+    "remoteEnv": {
+        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+    },
+
+    "remoteUser": "root",
+    "privileged": true,
+
+    // Configure tool-specific properties.
+    "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            // Set *default* container specific settings.json values on container create.
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/conda/bin/python"
+            },
+
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "charliermarsh.ruff",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "nf-core.nf-core-extensionpack"
+            ]
+        }
+    }
+}
