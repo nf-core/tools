@@ -46,13 +46,16 @@ output:
             - edam: "http://edamontology.org/format_2572" # BAM
             - edam: "http://edamontology.org/format_2573" # CRAM
             - edam: "http://edamontology.org/format_3462" # SAM
-  versions:
-    - "versions.yml":
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
-        ontologies:
-          - edam: "http://edamontology.org/format_3750" # YAML
+  versions1:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "{{ component }}":
+          type: string
+          description: The name of the tool
+      - "{{ component }} --version":
+          type: string
+          description: The version of the tool
 
 authors:
   - "{{ author }}"
