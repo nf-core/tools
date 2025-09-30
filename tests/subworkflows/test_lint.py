@@ -438,14 +438,16 @@ class TestSubworkflowsLint(TestSubworkflows):
 
 
 class TestSubworkflowsLintPatch(TestSubworkflows):
-    def setup_patch(self, pipeline_dir):
+    def setUp(self) -> None:
+        super().setUp()
+
         # Install the subworkflow bam_sort_stats_samtools
         self.subworkflow_install.install("bam_sort_stats_samtools")
 
         # Modify the subworkflow by inserting a new input channel
         new_line = "    ch_dummy // channel: [ path ]\n"
 
-        subworkflow_path = Path(pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools", "main.nf")
+        subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools", "main.nf")
 
         with open(subworkflow_path) as fh:
             lines = fh.readlines()
@@ -455,13 +457,12 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         with open(subworkflow_path, "w") as fh:
             fh.writelines(lines)
 
+        # Create a patch file
+        self.patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir)
+        self.patch_obj.patch("bam_sort_stats_samtools")
+
     def test_lint_clean_patch(self):
         """Test linting a patched subworkflow"""
-        self.setup_patch(self.pipeline_dir)
-
-        # Create a patch file
-        patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir)
-        patch_obj.patch("bam_sort_stats_samtools")
 
         subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         subworkflow_lint.lint(print_results=False, subworkflow="bam_sort_stats_samtools")
@@ -472,11 +473,6 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
 
     def test_lint_broken_patch(self):
         """Test linting a patched subworkflow when the patch is broken"""
-        self.setup_patch(self.pipeline_dir)
-
-        # Create a patch file
-        patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir)
-        patch_obj.patch("bam_sort_stats_samtools")
 
         # Now modify the diff
         diff_file = Path(
