@@ -18,7 +18,7 @@ def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pyte
     'subworkflows/local/<subworkflow_name>.nf'
 
     If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'subworkflows/', 'tests/subworkflows' and 'tests/config/pytest_modules.yml'
+    in 'subworkflows/' and 'tests/subworkflows'
     """
     from nf_core.subworkflows import SubworkflowCreate
 
