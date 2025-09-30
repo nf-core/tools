@@ -1,7 +1,7 @@
 name: Update Textual snapshots from a comment
 on:
   issue_comment:
-    types: [created]  # Add "@nf-core-bot update textual snapshots" as a PR comment to trigger this workflow.
+    types: [created] # Add "@nf-core-bot update textual snapshots" as a PR comment to trigger this workflow.
 
 jobs:
   update-snapshots:

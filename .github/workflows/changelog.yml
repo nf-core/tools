@@ -1,7 +1,7 @@
 name: Update CHANGELOG.md
 on:
   issue_comment:
-    types: [created]  # Add "@nf-core-bot changelog" as a PR comment to trigger this workflow.
+    types: [created] # Add "@nf-core-bot changelog" as a PR comment to trigger this workflow.
 
 jobs:
   update_changelog:
