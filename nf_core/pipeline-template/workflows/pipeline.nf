@@ -12,8 +12,8 @@ include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endi
 {%- if nf_schema %}
 include { paramsSummaryMap       } from 'plugin/nf-schema'{% endif %}
 {%- if multiqc %}
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { paramsSummaryMultiqc   } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+include { softwareVersionsToYAML } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {%- if citations or multiqc %}
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
 {%- endif %}
