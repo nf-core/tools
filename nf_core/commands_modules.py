@@ -183,7 +183,7 @@ def modules_create(
     'modules/local/tool_subtool.nf'
 
     If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'modules/', 'tests/modules' and 'tests/config/pytest_modules.yml'
+    in 'modules/' and 'tests/modules'
     """
     # Combine two bool flags into one variable
     has_meta = None
