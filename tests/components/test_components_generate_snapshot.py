@@ -136,5 +136,5 @@ class TestTestComponentsUtils(TestComponents):
             test_file.rename(test_file.parent / "main.nf.test.bak")
             with pytest.raises(UserWarning) as e:
                 snap_generator.run()
-            assert "Test file 'main.nf.test' not found" in str(e.value)
+            assert "Nothing to execute. Is the file 'main.nf.test' missing?" in str(e.value)
             Path(test_file.parent / "main.nf.test.bak").rename(test_file)

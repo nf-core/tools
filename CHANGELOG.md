@@ -10,6 +10,7 @@
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
 - Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 - Fix: Add NXF_VERSION environment variable to nf-test workflow ([#3770](https://github.com/nf-core/tools/pull/3770))
+- Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
 
 ### Linting
 
