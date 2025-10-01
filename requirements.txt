@@ -8,7 +8,7 @@ markdown>=3.3
 packaging
 pillow
 pre-commit
-prompt_toolkit<=3.0.51
+prompt_toolkit<=3.0.52
 pydantic>=2.2.1
 pyyaml
 questionary>=2.0.1
