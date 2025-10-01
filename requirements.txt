@@ -15,7 +15,7 @@ questionary>=2.0.1
 refgenie
 requests
 requests_cache
-rich-click==1.8.*
+rich-click==1.9.*
 rich>=13.3.1
 rocrate
 repo2rocrate
