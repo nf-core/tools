@@ -8,18 +8,24 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-{% if nf_schema %}include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
+{% if nf_schema %}include { paramsSummaryLog          } from 'plugin/nf-schema'
+include { validateParameters        } from 'plugin/nf-schema'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'{% endif %}
 {%- if email %}
-include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
+include { completionEmail           } from 'plugin/nf-core-utils'
 {%- endif %}
-include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
+include { completionSummary         } from 'plugin/nf-core-utils'
 {%- if adaptivecard or slackreport %}
-include { imNotification            } from '../../nf-core/utils_nfcore_pipeline'
+include { imNotification            } from 'plugin/nf-core-utils'
 {%- endif %}
-include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
-include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
+include { checkConfigProvided       } from 'plugin/nf-core-utils'
+include { checkProfileProvided      } from 'plugin/nf-core-utils'
+include { getWorkflowVersion        } from 'plugin/nf-core-utils'
+include { dumpParametersToJSON      } from 'plugin/nf-core-utils'
+include { checkCondaChannels        } from 'plugin/nf-core-utils'
+include { processVersionsFromFile   } from 'plugin/nf-core-utils'
+include { workflowVersionToChannel  } from 'plugin/nf-core-utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,31 +50,36 @@ workflow PIPELINE_INITIALISATION {
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
     //
-    UTILS_NEXTFLOW_PIPELINE (
-        version,
-        true,
-        outdir,
-        workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1
-    )
+    if (version) {
+        log.info("${workflow.manifest.name} ${getWorkflowVersion(workflow.manifest.version, workflow.commitId)}")
+        System.exit(0)
+    }
+
+    if (outdir) {
+        dumpParametersToJSON(outdir, params)
+    }
+
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        checkCondaChannels()
+    }
 
     {%- if nf_schema %}
 
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    UTILS_NFSCHEMA_PLUGIN (
-        workflow,
-        validate_params,
-        null
-    )
+    log.info paramsSummaryLog(workflow)
+
+    if (validate_params) {
+        validateParameters()
+    }
     {%- endif %}
 
     //
     // Check config provided to the pipeline
     //
-    UTILS_NFCORE_PIPELINE (
-        nextflow_cli_args
-    )
+    checkConfigProvided()
+    checkProfileProvided(nextflow_cli_args, monochrome_logs)
 
     {%- if igenomes %}
 
@@ -157,7 +168,7 @@ workflow PIPELINE_COMPLETION {
                 plaintext_email,
                 outdir,
                 monochrome_logs,
-                {% if multiqc %}multiqc_reports.getVal(),{% else %}[]{% endif %}
+                {% if multiqc %}multiqc_reports.getVal(){% else %}[]{% endif %}
             )
         }
         {%- endif %}
@@ -181,6 +192,55 @@ workflow PIPELINE_COMPLETION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// Get channel of software versions used in pipeline in YAML format
+//
+def softwareVersionsToYAML(ch_versions) {
+    return ch_versions.unique()
+        .map { version -> processVersionsFromFile([version.toString()]) }
+        .unique()
+        .mix(Channel.fromList(workflowVersionToChannel(workflow.session)).map { it ->
+            """
+    Workflow:
+        ${it[1]}: ${it[2]}
+            """.stripIndent().trim()
+        })
+}
+
+//
+// Get workflow summary for MultiQC
+//
+def paramsSummaryMultiqc(summary_params) {
+    def summary_section = ''
+    summary_params
+        .keySet()
+        .each { group ->
+            def group_params = summary_params.get(group)
+            // This gets the parameters of that particular group
+            if (group_params) {
+                summary_section += "    <p style=\"font-size:110%\"><b>${group}</b></p>\n"
+                summary_section += "    <dl class=\"dl-horizontal\">\n"
+                group_params
+                    .keySet()
+                    .sort()
+                    .each { param ->
+                        summary_section += "        <dt>${param}</dt><dd><samp>${group_params.get(param) ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>\n"
+                    }
+                summary_section += "    </dl>\n"
+            }
+        }
+
+    def yaml_file_text = "id: '${workflow.manifest.name.replace('/', '-')}-summary'\n" as String
+    yaml_file_text     += "description: ' - this information is collected when the pipeline is started.'\n"
+    yaml_file_text     += "section_name: '${workflow.manifest.name} Workflow Summary'\n"
+    yaml_file_text     += "section_href: 'https://github.com/${workflow.manifest.name}'\n"
+    yaml_file_text     += "plot_type: 'html'\n"
+    yaml_file_text     += "data: |\n"
+    yaml_file_text     += "${summary_section}"
+
+    return yaml_file_text
+}
 
 {%- if igenomes %}
 //
