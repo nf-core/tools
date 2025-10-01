@@ -176,10 +176,7 @@ def run_nf_core():
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
-@tui(
-    command="interface",
-    help="Launch the nf-core interface"
-)
+@tui(command="interface", help="Launch the nf-core interface")
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
 @click.option(
@@ -230,7 +227,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 
 
 # nf-core pipelines subcommands
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["p"])
 @click.pass_context
 def pipelines(ctx):
     """
@@ -875,7 +872,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
 
 
 # nf-core modules subcommands
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["m"])
 @click.option(
     "-g",
     "--git-remote",
@@ -1412,7 +1409,7 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
 
 
 # nf-core subworkflows click command
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["sw", "swf"])
 @click.option(
     "-g",
     "--git-remote",
@@ -1869,7 +1866,7 @@ def command_subworkflows_update(
 
 
 # nf-core test-dataset subcommands
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["tds"])
 @click.pass_context
 def test_datasets(ctx):
     """
