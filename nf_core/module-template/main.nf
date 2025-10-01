@@ -67,7 +67,7 @@ process {{ component_name_underscore|upper }} {
     {%- endif %}
     {% if not_empty_template -%}
     // TODO nf-core: Update the command here to obtain the version number of the software used in this module
-    // TODO nf-core: If multiple software packages are used in this module then each MUST be added here
+    // TODO nf-core: If multiple software packages are used in this module, all MUST be added here
     //               by copying the line below and replacing the current tool with the extra tool(s)
     {%- endif %}
     tuple val("${task.process}"), val('{{ component }}'), eval("{{ component }} --version"), topic: versions, emit: versions1
