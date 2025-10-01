@@ -53,6 +53,7 @@
 - Fix downloads: temporary files not moved and cleaned up correctly after singularity pull ([#3749](https://github.com/nf-core/tools/pull/3749))
 - impr devcontainer: Add hostRequirements to run with 4CPUs and 16GB ram by default ([#3746](https://github.com/nf-core/tools/pull/3746))
 - Add .nf-test/ to prettier ignore list ([#3776](https://github.com/nf-core/tools/pull/3776))
+- Update dependency textual to v5.3.0 ([#3785](https://github.com/nf-core/tools/pull/3785))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
