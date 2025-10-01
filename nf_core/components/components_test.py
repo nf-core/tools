@@ -208,13 +208,12 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             obsolete_snapshots = compiled_pattern.search(nftest_out.decode())
             if obsolete_snapshots:
                 self.obsolete_snapshots = True
-
             # check if nf-test was successful
             if "Assertion failed:" in nftest_out.decode():
                 return False
-            elif "no valid tests found." in nftest_out.decode():
-                log.error("Test file 'main.nf.test' not found")
-                self.errors.append("Test file 'main.nf.test' not found")
+            elif "No tests to execute." in nftest_out.decode():
+                log.error("Nothing to execute. Is the file 'main.nf.test' missing?")
+                self.errors.append("Nothing to execute. Is the file 'main.nf.test' missing?")
                 return False
             else:
                 log.debug("nf-test successful")

@@ -55,7 +55,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
             self.modify_main_nf(subworkflow_path / "main.nf")
 
     def test_create_patch_no_change(self):
-        """Test creating a patch when there is a change to the module"""
+        """Test creating a patch when there is no change to the subworkflow"""
         self.setup_patch(self.pipeline_dir, False)
 
         # Try creating a patch file
@@ -69,7 +69,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         assert not (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
     def test_create_patch_change(self):
-        """Test creating a patch when there is no change to the subworkflow"""
+        """Test creating a patch when there is a change to the subworkflow"""
         self.setup_patch(self.pipeline_dir, True)
 
         # Try creating a patch file
