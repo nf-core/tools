@@ -5,6 +5,7 @@
 ### Template
 
 - Update the `download_pipeline` workflow to remove dependency on `dev` branch of tools ([#3734](https://github.com/nf-core/tools/pull/3734))
+- Update mastodon announcement to include pipeline description ([#3741](https://github.com/nf-core/tools/pull/3741))
 - Bump nf-schema to 2.5.0 and update the help message creation to be compatible with future Nextflow versions ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Bump minimum Nextflow version to 25.04.0 ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
