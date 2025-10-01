@@ -11,6 +11,7 @@ import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
+import rich_click.rich_click as rc
 from trogon import tui
 
 from nf_core import __version__
@@ -73,8 +74,6 @@ log = logging.getLogger()
 setup_nfcore_dir()
 
 # Set up nicer formatting of click cli help messages
-click.rich_click.MAX_WIDTH = 100
-click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
@@ -118,6 +117,9 @@ click.rich_click.COMMAND_GROUPS = {
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
 }
+rc.MAX_WIDTH = 100
+rc.USE_RICH_MARKUP = True
+rc.COMMANDS_BEFORE_OPTIONS = True
 
 # Set up rich stderr console
 stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
@@ -149,17 +151,6 @@ def normalize_case(ctx, param, component_name):
         return component_name.casefold()
 
 
-# Define a custom click group class to sort options and commands in the help message
-# TODO: Remove this class and use COMMANDS_BEFORE_OPTIONS when rich-click is updated
-# See https://github.com/ewels/rich-click/issues/200 for more information
-class CustomRichGroup(click.RichGroup):
-    def format_options(self, ctx, formatter) -> None:
-        from rich_click.rich_help_rendering import get_rich_options
-
-        self.format_commands(ctx, formatter)
-        get_rich_options(self, ctx, formatter)
-
-
 def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
@@ -187,9 +178,9 @@ def run_nf_core():
 
 @tui(
     command="interface",
-    help="Launch the nf-core interface",
+    help="Launch the nf-core interface"
 )
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]), cls=CustomRichGroup)
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
 @click.option(
     "-v",
