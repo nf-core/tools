@@ -165,7 +165,7 @@ class ComponentInfo(ComponentCommand):
             self.meta = self.get_remote_yaml()
 
         # Could not find the meta
-        if self.meta is False:
+        if self.meta is None:
             raise UserWarning(f"Could not find {self.component_type[:-1]} '{self.component}'")
 
         return self.generate_component_info_help()
