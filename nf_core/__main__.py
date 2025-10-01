@@ -186,7 +186,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 
 
 # nf-core pipelines subcommands
-@nf_core_cli.group(aliases=["p"])
+@nf_core_cli.group(aliases=["p", "pipeline"])
 @click.command_panel("For users", commands=["download", "create-params-file", "launch", "list"])
 @click.command_panel(
     "For developers", commands=["bump-version", "create", "create-logo", "lint", "rocrate", "schema", "sync"]
@@ -835,7 +835,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
 
 
 # nf-core modules subcommands
-@nf_core_cli.group(aliases=["m"])
+@nf_core_cli.group(aliases=["m", "module"])
 @click.option(
     "-g",
     "--git-remote",
@@ -1374,7 +1374,7 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
 
 
 # nf-core subworkflows click command
-@nf_core_cli.group(aliases=["s", "swf"])
+@nf_core_cli.group(aliases=["s", "swf", "subworkflow"])
 @click.option(
     "-g",
     "--git-remote",
