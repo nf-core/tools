@@ -70,7 +70,7 @@ process {{ component_name_underscore|upper }} {
     // TODO nf-core: If multiple software packages are used in this module, all MUST be added here
     //               by copying the line below and replacing the current tool with the extra tool(s)
     {%- endif %}
-    tuple val("${task.process}"), val('{{ component }}'), eval("{{ component }} --version"), topic: versions, emit: versions1
+    tuple val("${task.process}"), val('{{ component }}'), eval("{{ component }} --version"), topic: versions, emit: versions_{{ component }}
 
     when:
     task.ext.when == null || task.ext.when

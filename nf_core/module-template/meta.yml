@@ -46,7 +46,7 @@ output:
             - edam: "http://edamontology.org/format_2572" # BAM
             - edam: "http://edamontology.org/format_2573" # CRAM
             - edam: "http://edamontology.org/format_3462" # SAM
-  versions1:
+  versions_{{ component }}:
     - - "${task.process}":
           type: string
           description: The name of the process
@@ -56,6 +56,18 @@ output:
       - "{{ component }} --version":
           type: string
           description: The version of the tool
+
+topics:
+  - versions:
+      - - process:
+            type: string
+            description: The process the versions were collected from
+        - tool:
+            type: string
+            description: The tool name the version was collected for
+        - version:
+            type: string
+            description: The version of the tool
 
 authors:
   - "{{ author }}"
