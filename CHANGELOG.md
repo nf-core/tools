@@ -12,6 +12,7 @@
 - Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 - Fix: Add NXF_VERSION environment variable to nf-test workflow ([#3770](https://github.com/nf-core/tools/pull/3770))
 - Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
+- update release checklist to battle test pipeline template more ([#3788](https://github.com/nf-core/tools/pull/3788))
 
 ### Linting
 
