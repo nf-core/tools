@@ -147,7 +147,7 @@ def run_nf_core():
 @click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 @click.pass_context
-@click.rich_config({"theme": "cargo-nu"})
+@click.rich_config({"theme": "default-nu"})
 def nf_core_cli(ctx, verbose, hide_progress, log_file):
     """
     nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
