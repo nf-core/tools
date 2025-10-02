@@ -5,12 +5,15 @@
 ### Template
 
 - Update the `download_pipeline` workflow to remove dependency on `dev` branch of tools ([#3734](https://github.com/nf-core/tools/pull/3734))
+- Update mastodon announcement to include pipeline description ([#3741](https://github.com/nf-core/tools/pull/3741))
 - Bump nf-schema to 2.5.0 and update the help message creation to be compatible with future Nextflow versions ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Bump minimum Nextflow version to 25.04.0 ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
 - Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 - Fix: Add NXF_VERSION environment variable to nf-test workflow ([#3770](https://github.com/nf-core/tools/pull/3770))
+- Template: Update nextflow.config to use environment variable for `hook_url` ([#3756](https://github.com/nf-core/tools/pull/3756))
 - Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
+- update release checklist to battle test pipeline template more ([#3788](https://github.com/nf-core/tools/pull/3788))
 
 ### Linting
 
@@ -46,6 +49,7 @@
 - Move `gather_registries` function to `ContainerFetcher` subclasses (#3634 follow-up) ([#3696](https://github.com/nf-core/tools/pull/3696))
 - Add container load scripts for Docker and Podman (#3634 follow up) ([#3706](https://github.com/nf-core/tools/pull/3706))
 - Replace arm profile with arm64 and emulate_amd64 profiles ([#3689](https://github.com/nf-core/tools/pull/3689))
+- Fix paths to logos ([#3715](https://github.com/nf-core/tools/pull/3715))
 - Update test-datasets list subcommand to output plain text urls and paths for easy copying [#3720](https://github.com/nf-core/tools/pull/3720)
 - Remove workflow.trace from nf-test snapshot ([#3721](https://github.com/nf-core/tools/pull/3721))
 - Add GHA to update template nf-test snapshots ([#3723](https://github.com/nf-core/tools/pull/3723))
@@ -54,6 +58,9 @@
 - impr devcontainer: Add hostRequirements to run with 4CPUs and 16GB ram by default ([#3746](https://github.com/nf-core/tools/pull/3746))
 - Add .nf-test/ to prettier ignore list ([#3776](https://github.com/nf-core/tools/pull/3776))
 - Update dependency prompt_toolkit to <=3.0.52 ([#3783](https://github.com/nf-core/tools/pull/3783))
+- Update python:3.13-slim Docker digest to 3a6ead7 ([#3786](https://github.com/nf-core/tools/pull/3786))
+- Update dependency textual to v5.3.0 ([#3785](https://github.com/nf-core/tools/pull/3785))
+- update rich-click to 1.9 and use new styling options ([#3787](https://github.com/nf-core/tools/pull/3787))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
