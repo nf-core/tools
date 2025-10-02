@@ -55,14 +55,14 @@ workflow FETCH_BLAST_GENOMES {
                 return [ meta, reads, genome ]
         }
 
-    // Short reads - combine both mapping operations
+    // Short reads - split into reads and genomes channels
     ch_mapping_shortreads = ch_genomes_reads_branched.shortreads
         .multiMap { meta, reads, genome ->
             reads: [ meta, reads ]
             genome: [ meta, genome ]
         }
 
-    // Long reads - combine both mapping operations
+    // Long reads - split into reads and genomes channels
     ch_mapping_longreads = ch_genomes_reads_branched.longreads
         .multiMap { meta, reads, genome ->
             reads: [ meta, reads ]
