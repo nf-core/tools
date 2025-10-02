@@ -5,8 +5,7 @@ from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static
 
-from nf_core.pipelines.create.utils import add_hide_class
-from nf_core.utils import nfcore_logo
+from nf_core.utils import add_hide_class, nfcore_logo
 
 
 class LoggingScreen(Screen):
