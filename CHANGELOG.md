@@ -63,6 +63,11 @@
 - Update dependency textual to v5.3.0 ([#3785](https://github.com/nf-core/tools/pull/3785))
 - update rich-click to 1.9 and use new styling options ([#3787](https://github.com/nf-core/tools/pull/3787))
 - Update dependency textual to v6 ([#3793](https://github.com/nf-core/tools/pull/3793))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.18.2 ([#3792](https://github.com/nf-core/tools/pull/3792))
+- Update python:3.13-slim Docker digest to 5f55cdf ([#3796](https://github.com/nf-core/tools/pull/3796))
+- Update GitHub Actions ([#3795](https://github.com/nf-core/tools/pull/3795))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.13.3 ([#3791](https://github.com/nf-core/tools/pull/3791))
+- Update pre-commit hook pre-commit/pre-commit-hooks to v6 ([#3797](https://github.com/nf-core/tools/pull/3797))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
