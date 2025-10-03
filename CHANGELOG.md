@@ -14,6 +14,7 @@
 - Template: Update nextflow.config to use environment variable for `hook_url` ([#3756](https://github.com/nf-core/tools/pull/3756))
 - Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
 - update release checklist to battle test pipeline template more ([#3788](https://github.com/nf-core/tools/pull/3788))
+- add a fallback for new outputdir parameter ([#3798](https://github.com/nf-core/tools/pull/3798))
 
 ### Linting
 
