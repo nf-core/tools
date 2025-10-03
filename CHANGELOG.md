@@ -57,6 +57,7 @@
 - Fix backwards compatibility with python 3.9 in use of Enum ([#3736](https://github.com/nf-core/tools/pull/3736))
 - Fix downloads: temporary files not moved and cleaned up correctly after singularity pull ([#3749](https://github.com/nf-core/tools/pull/3749))
 - impr devcontainer: Add hostRequirements to run with 4CPUs and 16GB ram by default ([#3746](https://github.com/nf-core/tools/pull/3746))
+- Fix diff printing to terminal ([#3759](https://github.com/nf-core/tools/pull/3759))
 - Add .nf-test/ to prettier ignore list ([#3776](https://github.com/nf-core/tools/pull/3776))
 - Update dependency prompt_toolkit to <=3.0.52 ([#3783](https://github.com/nf-core/tools/pull/3783))
 - Update python:3.13-slim Docker digest to 3a6ead7 ([#3786](https://github.com/nf-core/tools/pull/3786))
