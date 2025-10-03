@@ -42,7 +42,13 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
                 with open(tempdir / file, "w") as fh:
                     fh.writelines(lines)
         except LookupError:
-            # This error is already reported by subworkflow_patch, so just return
+            subworkflow.failed.append(
+                (
+                    "subworkflow_patch",
+                    "Subworkflow patch cannot be cleanly applied",
+                    f"{subworkflow.component_dir}",
+                )
+            )
             return
     else:
         tempdir = subworkflow.component_dir
