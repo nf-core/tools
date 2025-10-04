@@ -20,6 +20,7 @@
 - ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
 - do not check pytest_modules.yml file, deprecating ([#3748](https://github.com/nf-core/tools/pull/3748))
 - Use the org from the .nf-core.yml when linting manifest name and homePage. ([#3767](https://github.com/nf-core/tools/pull/3767))
+- Use the org from .nf-core.yml when linting multiqc_config report_comment ([#3800](https://github.com/nf-core/tools/pull/3800))
 
 ### Modules
 
