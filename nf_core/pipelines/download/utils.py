@@ -99,7 +99,5 @@ def intermediate_dir_with_cd(original_dir: Path, base_dir: Path = Path(".")):
         os.chdir(tmp.name)
         yield tmp
         os.chdir(original_dir)
-        tmp.cleanup()
     except:  # noqa: E722
         os.chdir(original_dir)
-        tmp.cleanup()
