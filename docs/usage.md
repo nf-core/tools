@@ -49,7 +49,19 @@ sample1,run1,ILLUMINA,sample1.unmapped_1.fastq.gz,sample1.unmapped_2.fastq.gz,sa
 sample2,run1,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sample2.kraken2.kraken2.report.txt,sample2.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample2.centrifuge.txt,sample2.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample2.diamond.tsv,diamond_diamond-db.tsv
 ```
 
-### Optional input
+#### BLASTn database
+
+Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `nt_viruses` instead of the `nt` database for BLASTn.
+
+#### BLASTx (DIAMOND) database
+
+Use a pre-built `DIAMOND` database as described in the [DIAMOND tutorial](https://github.com/bbuchfink/diamond_docs/blob/master/Documentation.MD). DIAMOND is quite demanding in terms of memory and computation time. To speed up the BLAST process, choose the database carefully. For example, when working with viruses, you can construct the database using only viral genomes downloaded from RefSeq.
+
+### taxid2genome
+
+A map file containing taxonomic IDs and their corresponding genome paths, including all GenBank and/or RefSeq genome assemblies.
+
+### Extra input for Pathogen screening
 
 #### Pathogen genome database
 
@@ -58,14 +70,6 @@ A concatenated FASTA file containing all the pathogen genomes a user is interest
 #### accession2taxid
 
 Users need to prepare a file containing accession IDs of pathogens and their corresponding taxonomic IDs
-
-#### BLASTn database
-
-Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `nt_viruses` instead of the `nt` database for BLASTn.
-
-#### BLASTx (DIAMOND) database
-
-Use a pre-built `DIAMOND` database as described in the [DIAMOND tutorial](https://github.com/bbuchfink/diamond_docs/blob/master/Documentation.MD). DIAMOND is quite demanding in terms of memory and computation time. To speed up the BLAST process, choose the database carefully. For example, when working with viruses, you can construct the database using only viral genomes downloaded from RefSeq.
 
 ## Running the pipeline
 
@@ -76,10 +80,10 @@ The example commands for running each workflow are as follows:
 nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_screen_pathogens --pathogens_genomes /path/to/reference.fna --accession2taxid /path/to/accession2taxid.map
 
 # Orange Workflow - Verify Identified Viruses
-nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_extract_reads --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
+nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_verify_species --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads --perform_mapping --taxid2genome /path/to/taxid2genome.map --perform_shortread_denovo --perform_longread_denovo
 
 # Blue Workflow - Verify User-Defined TaxIDs
-nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --taxid 211044 2886042 --perform_extract_reads --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
+nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --taxid 211044 2886042 --perform_verify_species --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads --perform_mapping --taxid2genome /path/to/taxid2genome.map --perform_shortread_denovo --perform_longread_denovo --perform_shortread_consensus --perform_longread_consensus --longread_consensus_tool 'medaka'
 
 ```
 
@@ -124,7 +128,7 @@ Filtering the output files from metagenomics classifiers like `Kraken2`, `Centri
 
 ### Extract Viral TaxIDs
 
-This step involves extracting all taxonomic IDs of viral species predicted by classifiers by enabling `--perform_extract_reads`and the `--taxid` should be empty.
+This step involves extracting all taxonomic IDs of viral species predicted by classifiers by enabling `--perform_verify_species`and the `--taxid` should be empty.
 
 ### Extract Reads
 

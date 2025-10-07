@@ -22,10 +22,13 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
     # Load the header of BLASTn results
     with open(blast_header) as f:
         header_line = f.readline().strip()
-        column_names = header_line.split(",")
+        column_names = header_line.split("\t")
 
     # Load BLASTn results
-    raw_results = pd.read_csv(input, sep=",", header=None, names=column_names)
+    raw_results = pd.read_csv(input, sep="\t", header=None, names=column_names)
+
+    # Explicitly cast staxid to integer
+    raw_results["staxid"] = pd.to_numeric(raw_results["staxid"]).astype("Int64")
 
     # Apply filtering
     filtered = raw_results[
@@ -38,8 +41,13 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
     # Remove entries with missing scientific name
     filtered = filtered[filtered["ssciname"].notna()]
 
+    # Check if any blast hits pass the filtering threshold
+    if filtered.empty:
+        print("No BLAST hits pass the filtering threshold. Output files not created.")
+        return
+
     # Save filtered DataFrame
-    filtered.to_csv(filtered_output, index=False)
+    filtered.to_csv(filtered_output, index=False, sep="\t")
 
     # Summarize filtered results
     summary = (
@@ -60,7 +68,7 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
     )
 
     # Save summary DataFrame
-    summary.to_csv(summary_output, index=False)
+    summary.to_csv(summary_output, index=False, sep="\t")
 
 def main(args=None):
     args = parse_args(args)

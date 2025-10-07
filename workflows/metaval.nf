@@ -12,30 +12,23 @@ include { SPADES                                                } from '../modul
 include { FLYE                                                  } from '../modules/nf-core/flye/main'
 
 // BLAST
-include { UNTAR  as UNTAR_BLASTN                                } from '../modules/nf-core/untar/main'
-include { UNTAR  as UNTAR_BLASTX                                } from '../modules/nf-core/untar/main'
 include { SEQKIT_FQ2FA                                          } from '../modules/nf-core/seqkit/fq2fa/main'
-include { BLAST_BLASTN                                          } from '../modules/nf-core/blast/blastn/main'
-include { BLAST_BLASTN as BLAST_BLASTN_PATHOGEN                 } from '../modules/nf-core/blast/blastn/main'
-include { FILTER_BLAST as FILTER_BLASTN                         } from '../modules/local/filter_blast/main'
-include { FILTER_BLAST as FILTER_BLASTN_PATHOGEN                } from '../modules/local/filter_blast/main'
-include { DIAMOND_BLASTX                                        } from '../modules/nf-core/diamond/blastx/main'
-include { DIAMOND_BLASTX as DIAMOND_BLASTX_PATHOGEN             } from '../modules/nf-core/diamond/blastx/main'
-include { FILTER_BLAST as FILTER_BLASTX                         } from '../modules/local/filter_blast/main'
-include { FILTER_BLAST as FILTER_BLASTX_PATHOGEN                } from '../modules/local/filter_blast/main'
+include { BLAST                                                 } from '../subworkflows/local/blast.nf'
+include { BLAST as BLAST_PATHOGEN                               } from '../subworkflows/local/blast.nf'
 
-// Maping subworkflow
-include { BOWTIE2_BUILD as BOWTIE2_BUILD_PATHOGEN               } from '../modules/nf-core/bowtie2/build/main'
-include { FASTQ_ALIGN_BOWTIE2                                   } from '../subworkflows/nf-core/fastq_align_bowtie2/main'
-include { LONGREAD_SCREENPATHOGEN                               } from '../subworkflows/local/longread_screenpathogen'
-include { SAMTOOLS_CONSENSUS as SHORTREAD_SAMTOOLS_CONSENSUS    } from '../modules/nf-core/samtools/consensus/main'
+// Mapping
+include { MAPPING_SHORTREAD                                     } from '../subworkflows/local/mapping_shortread'
+include { MAPPING_LONGREAD                                      } from '../subworkflows/local/mapping_longread'
+include { MAPPING_SHORTREAD as MAPPING_SHORTREAD_PATHOGEN       } from '../subworkflows/local/mapping_shortread'
+include { MAPPING_LONGREAD as MAPPING_LONGREAD_PATHOGEN         } from '../subworkflows/local/mapping_longread'
+include { FETCH_BLAST_GENOMES                                   } from '../subworkflows/local/fetch_blast_genomes'
+include { IGV                                                   } from '../subworkflows/local/igv'
+include { IGV as IGV_PATHOGEN                                   } from '../subworkflows/local/igv'
 
 // Calling consensus
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_SHORTREAD          } from '../subworkflows/local/taxid_bam_fasta'
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_LONGREAD           } from '../subworkflows/local/taxid_bam_fasta'
-include { LONGREAD_CONSENSUS                                    } from '../subworkflows/local/longread_consensus'
-include { FILTER_CONSENSUS as FILTER_CONSENSUS_SHORTREAD        } from '../modules/local/filter_consensus'
-include { FILTER_CONSENSUS as FILTER_CONSENSUS_LONGREAD         } from '../modules/local/filter_consensus'
+include { CONSENSUS                                             } from '../subworkflows/local/consensus'
 
 // Summary subworkflow
 include { FASTQC                                                } from '../modules/nf-core/fastqc/main'
@@ -45,6 +38,21 @@ include { paramsSummaryMultiqc                                  } from '../subwo
 include { softwareVersionsToYAML                                } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText                                } from '../subworkflows/local/utils_nfcore_metaval_pipeline'
 
+// Check input path parameters to see if they exist
+def checkPathParamList = [ params.input, params.pathogens_genomes,
+                            params.accession2taxid,
+                            params.blastn_db, params.blast_header,
+                            params.blastx_db,params.multiqc_config,
+                            params.multiqc_logo, params.multiqc_methods_description
+                        ]
+for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
+
+// Check mandatory parameters
+if ( params.input ) {
+    ch_input              = file(params.input, checkIfExists: true)
+} else {
+    error("Input samplesheet not specified")
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,6 +68,7 @@ workflow METAVAL {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
+    ch_fastqc_files = Channel.empty()
 
     // Create input channels
     ch_input = ch_samplesheet.branch { meta, fastq_1, fastq_2, kraken2_report, kraken2_result, kraken2_taxpasta, centrifuge_report, centrifuge_result, centrifuge_taxpasta, diamond, diamond_taxpasta ->
@@ -75,6 +84,10 @@ workflow METAVAL {
             return [ meta, [ fastq_1 ] ]
     }
 
+    //
+    // Workflow: Extract reads and verification
+    //
+
     // Channels for extracting kraken2/centrifuge/diamond reads
     ch_extract_reads = ch_samplesheet.multiMap { meta, fastq_1, fastq_2, kraken2_report, kraken2_result, kraken2_taxpasta, centrifuge_report, centrifuge_result, centrifuge_taxpasta, diamond, diamond_taxpasta ->
         meta.single_end = ( fastq_1 && !fastq_2 )
@@ -89,34 +102,11 @@ workflow METAVAL {
         diamond_tsv: [ meta + [ tool: "diamond" ], diamond ]
     }
 
-    // Prepare the blastn database channel
-    if ( !params.skip_blastn ) {
-        if (params.blastn_db.endsWith('.tar.gz')) {
-            UNTAR_BLASTN (
-                [ [:],file( params.blastn_db, checkIfExists: true )]
-            )
-            ch_blastn_db = UNTAR_BLASTN.out.untar
-            ch_versions = ch_versions.mix( UNTAR_BLASTN.out.versions )
-        } else {
-            ch_blastn_db = [ [:], file( params.blastn_db, checkIfExists: true ) ]
-        }
-    }
-    // Prepare the blastx database channel
-    if ( !params.skip_blastx ) {
-        if (params.blastx_db.endsWith('.tar.gz')) {
-            UNTAR_BLASTX (
-                [ [:],file( params.blastx_db, checkIfExists: true )]
-            )
-            ch_blastx_db = UNTAR_BLASTX.out.untar
-            ch_versions = ch_versions.mix( UNTAR_BLASTX.out.versions )
-        } else {
-            ch_blastx_db = [ [:], file( params.blastx_db, checkIfExists: true ) ]
-        }
-    }
     // Verify whether the taxonomic IDs identified by classification are true or false positives.
-    if ( params.perform_extract_reads ) {
-
+    if ( params.perform_verify_species ) {
+        //
         // SUBWORKFLOW: TAXID_READS - extract reads
+        //
         TAXID_READS (
         ch_extract_reads.reads,
         ch_extract_reads.kraken2_taxpasta,
@@ -138,16 +128,9 @@ workflow METAVAL {
             }
 
         //
-        // MODULE: Run FastQC
+        // MODULE: DE NOVO - SPADES/FLYE
         //
 
-        FASTQC (
-            ch_taxid_reads.nonempty
-        )
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-
-        // SUBWORKFLOW: DE NOVO
         // Run de novo assembly if the number of reads exceeds the params.min_read_counts
         ch_taxid_reads_filter = ch_taxid_reads.nonempty
             .branch { it ->
@@ -162,97 +145,132 @@ workflow METAVAL {
                 longreads: meta.instrument_platform == 'OXFORD_NANOPORE'
                     return [ meta, reads ]
             }
-        // short reads de novo assembly
+        // Short reads de novo assembly
+        ch_contigs_denovo = Channel.empty()
         if ( params.perform_shortread_denovo ) {
             SPADES( ch_denovo.shortreads, [], [] )
-            ch_versions             = ch_versions.mix( SPADES.out.versions.first() )
+            ch_versions = ch_versions.mix( SPADES.out.versions.first() )
+            ch_contigs_denovo = ch_contigs_denovo.mix( SPADES.out.contigs )
         }
-        // long reads de novo assembly
+        // Long reads de novo assembly
         if ( params.perform_longread_denovo ) {
             FLYE( ch_denovo.longreads, params.flye_mode )
-            ch_versions             = ch_versions.mix( FLYE.out.versions.first() )
+            ch_versions = ch_versions.mix( FLYE.out.versions.first() )
+            ch_contigs_denovo = ch_contigs_denovo.mix( FLYE.out.fasta )
         }
 
-        // BLAST
+        //
+        // SUBWORKFLOW: BLAST
+        //
+
         // Prepare the query fasta file
-        SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
-        ch_blast_query = SEQKIT_FQ2FA.out.fasta.mix( SPADES.out.contigs, FLYE.out.fasta )
-        ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
-        // BLASTN
-        if ( !params.skip_blastn ) {
-            BLAST_BLASTN ( ch_blast_query, ch_blastn_db )
-            ch_versions = ch_versions.mix( BLAST_BLASTN.out.versions.first() )
-            // Filter BLASTN hits
-            ch_blastn_hits = BLAST_BLASTN.out.txt
-                .filter { meta, blastn_file -> blastn_file.size() > 0 }
-
-            FILTER_BLASTN ( ch_blastn_hits, file( params.blast_header, checkIfExists: true))
-            ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
-        }
-        // BLASTX:DIAMOND
-        if ( !params.skip_blastx ) {
-            DIAMOND_BLASTX (
-                ch_blast_query,
-                ch_blastx_db,
-                'txt',
-                'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames' )
-            ch_versions = ch_versions.mix( DIAMOND_BLASTX.out.versions.first() )
-            // Filter BLASTX hits
-            ch_blastx_hits = DIAMOND_BLASTX.out.txt
-                .filter { meta, blastx_file -> blastx_file.size() > 0 }
-            FILTER_BLASTX ( ch_blastx_hits, file( params.blast_header, checkIfExists: true))
-            ch_versions = ch_versions.mix( FILTER_BLASTX.out.versions.first() )
-        }
+        if ( (!params.skip_blastn) || (!params.skip_blastx)) {
+            SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
+            // Build ch_blast_query fasta file
+            ch_blast_query = SEQKIT_FQ2FA.out.fasta
+            if ( params.perform_shortread_denovo ) {
+                ch_blast_query = ch_blast_query.mix( SPADES.out.contigs )
+            }
+            if ( params.perform_longread_denovo ) {
+                ch_blast_query = ch_blast_query.mix( FLYE.out.fasta )
+            }
+            ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
         }
 
-    // Screen pathogens
+        BLAST(ch_blast_query, params.blastn_db, params.blastx_db, params.blast_header )
+        ch_versions = ch_versions.mix( BLAST.out.versions )
+
+        // Perform FASTQC for reads with BLASTN hits
+        ch_fastqc_blastn = ch_taxid_reads.nonempty
+            .join( BLAST.out.blastn_filtered, by: 0 )
+            .map { meta, reads, filtered_blast -> [ meta, reads ] }
+
+        ch_fastqc_blastx = ch_taxid_reads.nonempty
+            .join( BLAST.out.blastx_filtered, by: 0 )
+            .map { meta, reads, filtered_blast -> [ meta, reads ] }
+
+        ch_fastqc_files = ch_fastqc_files.mix( ch_fastqc_blastn, ch_fastqc_blastx )
+
+        //
+        // SUBWORKFLOW: MAPPING
+        //
+
+        if (params.perform_mapping) {
+            FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
+            MAPPING_SHORTREAD ( FETCH_BLAST_GENOMES.out.shortreads, FETCH_BLAST_GENOMES.out.shortreads_genome )
+            MAPPING_LONGREAD ( FETCH_BLAST_GENOMES.out.longreads, FETCH_BLAST_GENOMES.out.longreads_genome )
+            ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
+            ch_versions = ch_versions.mix ( MAPPING_LONGREAD.out.versions )
+
+            //
+            // SUBWORKFLOW: IGV
+            //
+
+            // Prepare IGV input channels
+            ch_igv_input_shortread = MAPPING_SHORTREAD.out.bam
+                .join ( MAPPING_SHORTREAD.out.bai, by:0)
+                .join ( FETCH_BLAST_GENOMES.out.shortreads_genome, by:0 )
+            ch_igv_input_longread = MAPPING_LONGREAD.out.bam
+                .join ( MAPPING_LONGREAD.out.bai)
+                .join ( FETCH_BLAST_GENOMES.out.longreads_genome, by:0 )
+            ch_igv_input = ch_igv_input_shortread.mix ( ch_igv_input_longread )
+
+            IGV( ch_igv_input )
+            ch_versions = ch_versions.mix ( IGV.out.versions )
+        }
+    }
+
+    //
+    // WORKFLOW: Screen pathogens
+    //
+
+    //
+    // SUBWORKFLOW: MAPPING
+    //
     ch_reference = file( params.pathogens_genomes, checkIfExists: true)
 
     if ( params.perform_screen_pathogens ) {
         // Map short reads to the pathogens genome
-        BOWTIE2_BUILD_PATHOGEN ( [ [], ch_reference ] )
-        ch_versions = ch_versions.mix( BOWTIE2_BUILD_PATHOGEN.out.versions )
-        FASTQ_ALIGN_BOWTIE2 (
-            ch_input.short_reads,                              // ch_reads
-            BOWTIE2_BUILD_PATHOGEN.out.index,                  // ch_index
-            false,                                             // save unaligned
-            false,                                             // sort bam
-            [ [], ch_reference ]
-        )
-        ch_versions = ch_versions.mix( FASTQ_ALIGN_BOWTIE2.out.versions )
-        ch_multiqc_files = ch_multiqc_files.mix (FASTQ_ALIGN_BOWTIE2.out.stats.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix (FASTQ_ALIGN_BOWTIE2.out.flagstat.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix (FASTQ_ALIGN_BOWTIE2.out.idxstats.collect{it[1]}.ifEmpty([]))
-
+        MAPPING_SHORTREAD_PATHOGEN ( ch_input.short_reads, [ [], ch_reference ] )
+        ch_versions = ch_versions.mix( MAPPING_SHORTREAD_PATHOGEN.out.versions )
+        ch_multiqc_files = ch_multiqc_files.mix(MAPPING_SHORTREAD_PATHOGEN.out.mqc)
         // Map long reads to the pathogens genome
-        LONGREAD_SCREENPATHOGEN ( ch_input.long_reads, [ [], ch_reference ] )
-        ch_versions = ch_versions.mix( LONGREAD_SCREENPATHOGEN.out.versions )
-        ch_multiqc_files = ch_multiqc_files.mix(LONGREAD_SCREENPATHOGEN.out.mqc)
+        MAPPING_LONGREAD_PATHOGEN ( ch_input.long_reads, [ [], ch_reference ] )
+        ch_versions = ch_versions.mix( MAPPING_LONGREAD_PATHOGEN.out.versions )
+        ch_multiqc_files = ch_multiqc_files.mix(MAPPING_LONGREAD_PATHOGEN.out.mqc)
 
         // Subset BAM file for each taxID
         ch_accession2taxid = Channel.fromPath ( params.accession2taxid, checkIfExists: true )
 
-        TAXID_BAM_FASTA_SHORTREAD ( FASTQ_ALIGN_BOWTIE2.out.bam, FASTQ_ALIGN_BOWTIE2.out.bai, ch_accession2taxid, params.min_read_counts )
+        TAXID_BAM_FASTA_SHORTREAD ( MAPPING_SHORTREAD_PATHOGEN.out.bam, MAPPING_SHORTREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_SHORTREAD.out.versions )
 
-        TAXID_BAM_FASTA_LONGREAD( LONGREAD_SCREENPATHOGEN.out.bam, LONGREAD_SCREENPATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
+        TAXID_BAM_FASTA_LONGREAD( MAPPING_LONGREAD_PATHOGEN.out.bam, MAPPING_LONGREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_LONGREAD.out.versions )
 
-        // Calling consensus: BAM file with the number of mapped reads > params.min_read_counts
-        if (params.perform_shortread_consensus) {
-            SHORTREAD_SAMTOOLS_CONSENSUS ( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam )
-            ch_versions = ch_versions.mix(SHORTREAD_SAMTOOLS_CONSENSUS.out.versions)
-            // Remove consensus sequences shorter than params.consensus_min_bases (default: 50 bp)
-            FILTER_CONSENSUS_SHORTREAD ( SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta, params.consensus_min_bases )
-            ch_versions = ch_versions.mix(FILTER_CONSENSUS_SHORTREAD.out.versions)
-        }
-        if ( params.perform_longread_consensus ) {
-            // Skip the consensus calling if the number of mapped reads is lower than params.min_read_counts
-            LONGREAD_CONSENSUS ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, [ [], ch_reference ] )
-            ch_versions = ch_versions.mix( LONGREAD_CONSENSUS.out.versions )
-            FILTER_CONSENSUS_LONGREAD ( LONGREAD_CONSENSUS.out.consensus, params.consensus_min_bases)
-            ch_versions = ch_versions.mix( FILTER_CONSENSUS_LONGREAD.out.versions )
-        }
+        // IGV
+        ch_igv_input_pathogen_shortread = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam
+            .join( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bai )
+            .map { meta, bam, bai ->
+                [ meta, bam, bai, ch_reference ]
+            }
+        ch_igv_input_pathogen_longread = TAXID_BAM_FASTA_LONGREAD.out.taxid_bam
+            .join( TAXID_BAM_FASTA_LONGREAD.out.taxid_bai )
+            .map { meta, bam, bai ->
+                [ meta, bam, bai, ch_reference ]
+            }
+        ch_igv_input_pathogen = ch_igv_input_pathogen_shortread.mix( ch_igv_input_pathogen_longread )
+
+        IGV_PATHOGEN ( ch_igv_input_pathogen )
+        ch_versions = ch_versions.mix( IGV_PATHOGEN.out.versions )
+
+        //
+        // SUBWORKFLOW: CONSENSUS - BAM file with the number of mapped reads > params.min_read_counts
+        //
+
+        ch_bam_filtered = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam.mix( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam )
+        CONSENSUS ( ch_bam_filtered, [ [], ch_reference ], params.consensus_min_bases )
+
         // BLAST
         // For pair-end reads, only use read1 for BLAST
         ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
@@ -260,45 +278,24 @@ workflow METAVAL {
                 reads[0].countFasta() >= 1 && reads[1].countFasta() >= 1
             }
             .map { meta, reads -> [ meta, reads[0]] }
-
         ch_longread_pathogen_blast = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
             .filter { meta, reads ->
                 reads.countFasta() >= 1
             }
-
         ch_blast_query_pathogen = ch_shortread_pathogen_blast_read1.mix(
             ch_longread_pathogen_blast,
-            FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus.ifEmpty([]),
-            FILTER_CONSENSUS_LONGREAD.out.filtered_consensus.ifEmpty([])
+            CONSENSUS.out.consensus.ifEmpty([])
         )
-
-        if (!params.skip_blastn) {
-            // BLASTN
-            BLAST_BLASTN_PATHOGEN ( ch_blast_query_pathogen, ch_blastn_db )
-            ch_versions = ch_versions.mix( BLAST_BLASTN_PATHOGEN.out.versions.first() )
-
-            // Filter BLASTN hits
-            ch_blastn_hits_pathogen = BLAST_BLASTN_PATHOGEN.out.txt
-                .filter { meta, blastn_file -> blastn_file.size() > 0 }
-            FILTER_BLASTN_PATHOGEN ( ch_blastn_hits_pathogen, file( params.blast_header, checkIfExists: true))
-            ch_versions = ch_versions.mix( FILTER_BLASTN_PATHOGEN.out.versions.first() )
-
-        }
-        // BLASTX:DIAMOND
-        if ( !params.skip_blastx ) {
-            DIAMOND_BLASTX_PATHOGEN (
-                ch_blast_query_pathogen,
-                ch_blastx_db,
-                'txt',
-                'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames' )
-            ch_versions = ch_versions.mix( DIAMOND_BLASTX_PATHOGEN.out.versions.first() )
-            // Filter BLASTX hits
-            ch_blastx_hits_pathogen = DIAMOND_BLASTX_PATHOGEN.out.txt
-                .filter { meta, blastx_file -> blastx_file.size() > 0 }
-            FILTER_BLASTX_PATHOGEN ( ch_blastx_hits_pathogen, file( params.blast_header, checkIfExists: true))
-            ch_versions = ch_versions.mix( FILTER_BLASTX_PATHOGEN.out.versions.first() )
-        }
+        BLAST_PATHOGEN ( ch_blast_query_pathogen, params.blastn_db, params.blastx_db, params.blast_header )
+        ch_versions = ch_versions.mix( BLAST_PATHOGEN.out.versions )
     }
+
+    //
+    // MODULE: FASTQC
+    //
+        FASTQC( ch_fastqc_files )
+        ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{it[1]} )
+        ch_versions = ch_versions.mix( FASTQC.out.versions.first() )
 
     //
     // Collate and save software versions
@@ -352,7 +349,8 @@ workflow METAVAL {
         []
     )
 
-    emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    emit:
+    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 
 }

@@ -36,7 +36,7 @@ process BLAST_BLASTN {
         DB=`find -L ./ -name "*.nin" | sed 's/\\.nin\$//'`
     fi
     echo Using \$DB
-    
+
     blastn \\
         -num_threads ${task.cpus} \\
         -db \$DB \\

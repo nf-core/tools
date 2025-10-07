@@ -53,7 +53,7 @@ This workflow is activated by enabling the `--perform_screen_pathogens` option.
 
 ### Orange Workflow - Verify Identified Viruses
 
-This workflow is activated by enabling the `--perform_extract_reads` option and disabling the `--taxid`.
+This workflow is activated by enabling the `--perform_verify_species` option and disabling the `--taxid`.
 
 1. **Decontamination**
    - Filter the output files from metagenomics classifiers like [Kraken2](https://ccb.jhu.edu/software/kraken2/), [Centrifuge](https://ccb.jhu.edu/software/centrifuge/), or [DIAMOND](https://github.com/bbuchfink/diamond) to remove false positives and background contaminations. This step compares results to the negative control and identifies likely present species based on user-defined thresholds.
@@ -74,14 +74,14 @@ This workflow is activated by enabling the `--perform_extract_reads` option and 
    - Map the reads of TaxIDs to the closest reference genomes identified by `BLAST`. Use [Bowtie2](<(http://bowtie-bio.sourceforge.net/bowtie2/)>) for Illumina reads and [minimap2](https://github.com/lh3/minimap2) for Nanopore reads.
 
 7. **Visualisation using IGV**
-   - Visualize the mapped reads using `IGV`.
+   - Visualize the mapped reads using [igv-reports](https://github.com/igvteam/igv-reports)
 
 8. **Perform quality check**
    - Conduct quality checks on the classified reads using [FastQC](<(https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)>) and [MultiQC](<(http://multiqc.info/)>) to ensure the accuracy of the data.
 
 ## Blue Workflow - Verify User-Defined TaxIDs
 
-This workflow is activated by enabling the `--perform_extract_reads` option and the `--taxid` option, allowing users to define a list of TaxIDs. It is not limited to `viral` TaxIDs and can include `bacteria`, `fungi`, `archaea`, `parasites`, or `plasmids`.
+This workflow is activated by enabling the `--perform_verify_species` option and the `--taxid` option, allowing users to define a list of TaxIDs. It is not limited to `viral` TaxIDs and can include `bacteria`, `fungi`, `archaea`, `parasites`, or `plasmids`.
 
 All steps are the same as the **Orange Workflow** except using user-defined TaxIDs instead of extracting predefined viral TaxIDs.
 
@@ -111,7 +111,7 @@ nextflow run genomic-medicine-sweden/metaval \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --perform_extract_reads --extract_kraken2_reads
+   --perform_verify_species --extract_kraken2_reads
 ```
 
 > [!WARNING]
@@ -182,9 +182,11 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-genomic-medicine-sweden/metaval was originally written by [LilyAnderssonLee](https://github.com/LilyAnderssonLee).All PRs were reviewed by [sofstam](https://github.com/sofstam), with additional contributions from [lokeshbio](https://github.com/lokeshbio).
+genomic-medicine-sweden/metaval was originally written by [LilyAnderssonLee](https://github.com/LilyAnderssonLee). Most of PRs were reviewed by [sofstam](https://github.com/sofstam).
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+We thank the following people for their assistance in the development of this pipeline:
+[maxulysse](https://github.com/maxulysse)
+[mashehu](https://github.com/mashehu)
 
 <!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 

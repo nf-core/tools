@@ -19,6 +19,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [BLAST](#BLAST) - Run BLASTN or BLASTX
 - [Bowtie2](#Mapping) - Map raw Illumina reads to a pathogen genome database or map Illumina reads of specific taxIDs to genomes with positive BLAST hits.
 - [minimap2](#Mapping) - Map raw Nanopore reads to a pathogen genome database or map Nanopore reads of specific taxIDs to genomes with positive BLAST hits.
+- [IGV](#IGV) - Report for visualizing reads mapped to the genomes identified.
 - [Pathogen reads](#Pathogen-reads) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
 - [Call Consensus](#Call-Consensus) - Call consensus sequences for reads mapped to pathogen genomes
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
@@ -53,7 +54,7 @@ Extract all taxonomic IDs of viral species predicted by classifiers.
 
 </details>
 
-This directory will only be present if `--perform_extract_reads` is supplied, while `--taxid` is not specified.
+This directory will only be present if `--perform_verify_species` is supplied, while `--taxid` is not specified.
 
 ### Extract Reads
 
@@ -72,7 +73,7 @@ Retrieve the reads of all viral TaxIDs predicted by classifiers or extracts read
 
 </details>
 
-The `extracted_reads` directory will only be present if `--perform_extract_reads` is supplied. The `centrifuge` folder will only be present if `--extract_centrifuge_reads` is specified. Similarly, the `diamond` folder will appear only if `--extract_diamond_reads` is used, and the `kraken2` folder will be created only if `--extract_kraken2_reads` is activated.
+The `extracted_reads` directory will only be present if `--perform_verify_species` is supplied. The `centrifuge` folder will only be present if `--extract_centrifuge_reads` is specified. Similarly, the `diamond` folder will appear only if `--extract_diamond_reads` is used, and the `kraken2` folder will be created only if `--extract_kraken2_reads` is activated.
 
 ### De novo assembly
 
@@ -184,6 +185,29 @@ The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sse
 
 Map Illumina short reads to genomes using `bowtie2` and map Nanopore long reads to genomes using `minimap2`
 
+#### Verify identified species
+
+Map reads to genomes based on BLAST hits or to genomes of identified species if the BLAST steps are skipped.(`params.skip_blastn` and `params.skip_blastx`).
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `mapping/`
+  - `bowtie2/`
+    - `align/`
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing short reads that were aligned against the genomes based on BLAST hits.
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam.bai`: Index of the bam file.
+    - `build/`
+      - `mappingtaxid_<mapping_taxID>/`
+        - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
+  - `minimap2/`
+    - `align/`
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam`: BAM file containing long reads that were aligned against the user-supplied pathogens genomes
+      - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>.bam.bai`: Index of the bam file.
+    - `index/`
+      - `mappingtaxid_<mapping_taxID>`
+        - `*.mmi`: Minimap2 indices of the reference pathogens' genomes
+
 #### Pathogen screening
 
 Map reads to the pathogen genomes databases.
@@ -208,6 +232,34 @@ Map reads to the pathogen genomes databases.
 </details>
 
 The `pathogens` directory will only be present if `--perform_screen_pathogens` is supplied.
+
+### IGV
+
+Generate an IGV report to visualize the variants and coverage of mapped reads across genomes.
+
+#### Verify identified species
+
+IGV visualization of reads that classifiers assigned to specific species.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `IGV/`
+  - `<sample_id>_taxid_<taxID>_mappingtaxid_<mapping_taxID>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
+
+#### Pathogen screening
+
+IGV visualization of reads mapped to pathogen genome database.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `pathogens/`
+  - `IGV/`
+    - `<sample_id>_<taxID>_report.html`: The IGV report shows the variants and coverage of reads mapped to the genomes.
+
+</details>
+The `IGV` directory will only be present if `perform_mapping` is provided.
 
 ### Pathogen reads
 

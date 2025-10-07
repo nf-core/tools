@@ -23,30 +23,41 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
-                "taxid": {
+                "outdir": {
                     "type": "string",
-                    "description": "The taxonomy ID identified in the classification results, or a list of taxIDs separated by spaces.",
-                    "fa_icon": "fas fa-list-alt"
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
                 },
-                "pathogens_genomes": {
+                "email": {
                     "type": "string",
-                    "format": "file-path",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to a concatenated genome file containing complete genomes from a list of viral pathogens.",
-                    "fa_icon": "fas fa-dna"
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 },
-                "accession2taxid": {
+                "multiqc_title": {
                     "type": "string",
-                    "format": "file-path",
-                    "pattern": "^\\S+\\.map$",
-                    "description": "Path to a file containing the accession IDs and corresponding taxIDs for each pathogen genome.",
-                    "fa_icon": "fas fa-file-alt"
-                },
-                "perform_extract_reads": {
+                    "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
+                    "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "verify_identified_species_options": {
+            "title": "Verify identified species options",
+            "type": "object",
+            "description": "Options for verifying species identified by nf-core/taxprofiler classification",
+            "properties": {
+                "perform_verify_species": {
                     "type": "boolean",
                     "description": "Extract reads assigned to taxonomic IDs.",
                     "help_text": "Enable the option to extract reads assigned to taxonomic IDs based on results from `Kraken2`, `Centrifuge`, and `DIAMOND` classifiers.",
                     "fa_icon": "fas fa-toggle-on"
+                },
+                "taxid": {
+                    "type": "string",
+                    "description": "The taxonomy ID identified in the classification results, or a list of taxIDs separated by spaces.",
+                    "fa_icon": "fas fa-list-alt"
                 },
                 "extract_kraken2_reads": {
                     "type": "boolean",
@@ -69,6 +80,89 @@
                     "help_text": "This value is used to filter classification results produced by DIAMOND/BLASTX. The default e-value is 0.001 (high sensitivity, lower specificity) when running DIAMOND/BLASTX. An e-value between 1e-10 and 1e-5 represents moderate filtering (balanced sensitivity and specificity). An e-value < 1e-20 is considered strict filtering (high specificity, lower sensitivity). \n\n> Modifies tool parameter(s):\n> - extractdiamondreads.py: `evalue=",
                     "fa_icon": "filter"
                 },
+                "taxid2genome": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to a file containing taxonomic IDs and their corresponding genome paths.",
+                    "help_text": "Please check https://github.com/LilyAnderssonLee/download_genomes_taxid for details on how to prepare this file.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "perform_shortread_denovo": {
+                    "type": "boolean",
+                    "description": "Turn on de novo assembly for short reads",
+                    "fa_icon": "fas fa-times"
+                },
+                "perform_longread_denovo": {
+                    "type": "boolean",
+                    "description": "Turn on de novo assembly for long reads",
+                    "fa_icon": "fas fa-times"
+                },
+                "flye_mode": {
+                    "type": "string",
+                    "description": "It provides `Flye` assembly modes. Our ONT reads were pre-processed by Guppy, so `--nano-corr` is the appropriate mode to use, as it is designed for ONT reads that have been corrected with other methods (with <3% error)",
+                    "fa_icon": "fas fa-cogs"
+                }
+            }
+        },
+        "pathogen_screening_options": {
+            "title": "Pathogen screening options",
+            "type": "object",
+            "description": "Options for pathogen screening",
+            "properties": {
+                "perform_screen_pathogens": {
+                    "type": "boolean",
+                    "default": "--nano-corr",
+                    "description": "Screen viral pathogens for each sample",
+                    "help_text": "Turn on the option to screen viral pathogens by mapping reads against genomes of a list of viral pathogens. `Bowtie2` is used for mapping of short reads and `minimap2` for long reads.",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "pathogens_genomes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to a concatenated genome file containing complete genomes from a list of viral pathogens.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "accession2taxid": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.map$",
+                    "description": "Path to a file containing the accession IDs and corresponding taxIDs for each pathogen genome.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "perform_longread_consensus": {
+                    "type": "boolean",
+                    "description": "Call consensus for long reads mapped to a pathogen genome.",
+                    "help_text": "Turn on the option to call consensus for long reads mapped to a pathogen genome.",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "longread_consensus_tool": {
+                    "type": "string",
+                    "enum": ["medaka", "samtools"],
+                    "default": "medaka",
+                    "description": "Specify the tool used for consensus calling of long reads.",
+                    "help_text": "`medaka` is a tool designed for generating consensus sequences from nanopore sequencing data, and it uses a neural network to correct sequencing errors, improving the accuracy of consensus sequences. However `samtools consensus` does not have a specific algorithm tailored for nanopore reads.",
+                    "fa_icon": "fas fa-tools"
+                },
+                "perform_shortread_consensus": {
+                    "type": "boolean",
+                    "description": "Call consensus for short reads mapped to a pathogen genome.",
+                    "help_text": "Turn on the option to call consensus for short reads mapped to a pathogen genome using `samtools consensus`",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "consensus_min_bases": {
+                    "type": "number",
+                    "default": 50,
+                    "description": "The minimum number of bases used to filter consensus sequences. The default is 50.",
+                    "fa-icon": "filter"
+                }
+            }
+        },
+        "general_options": {
+            "title": "General options",
+            "type": "object",
+            "description": "General options for both verifying identified species and pathogen screening.",
+            "properties": {
                 "skip_blastn": {
                     "type": "boolean",
                     "description": "Skip BLASTN of extracted reads.",
@@ -153,77 +247,16 @@
                     "help_text": "Specify the maximum expected value for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `max_evalue=`",
                     "fa_icon": "filter"
                 },
-                "perform_shortread_denovo": {
+                "perform_mapping": {
                     "type": "boolean",
-                    "description": "Turn on de novo assembly for short reads",
-                    "fa_icon": "fas fa-times"
-                },
-                "perform_longread_denovo": {
-                    "type": "boolean",
-                    "description": "Turn on de novo assembly for long reads",
-                    "fa_icon": "fas fa-times"
-                },
-                "flye_mode": {
-                    "type": "string",
-                    "description": "It provides `Flye` assembly modes. Our ONT reads were pre-processed by Guppy, so `--nano-corr` is the appropriate mode to use, as it is designed for ONT reads that have been corrected with other methods (with <3% error)",
-                    "fa_icon": "fas fa-cogs"
-                },
-                "perform_screen_pathogens": {
-                    "type": "boolean",
-                    "default": "--nano-corr",
-                    "description": "Screen viral pathogens for each sample",
-                    "help_text": "Turn on the option to screen viral pathogens by mapping reads against genomes of a list of viral pathogens. `Bowtie2` is used for mapping of short reads and `minimap2` for long reads.",
-                    "fa_icon": "fas fa-toggle-on"
+                    "description": "Turn on mapping",
+                    "fa-icon": "fa fa-times"
                 },
                 "min_read_counts": {
                     "type": "integer",
                     "description": "Set the read count threshold for performing de novo assembly or consensus calling.",
                     "help_text": "The recommended default should be > 100, as de novo assembly will fail with too few reads or reads.",
                     "fa_icon": "filter"
-                },
-                "perform_longread_consensus": {
-                    "type": "boolean",
-                    "description": "Call consensus for long reads mapped to a pathogen genome.",
-                    "help_text": "Turn on the option to call consensus for long reads mapped to a pathogen genome.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "longread_consensus_tool": {
-                    "type": "string",
-                    "enum": ["medaka", "samtools"],
-                    "default": "medaka",
-                    "description": "Specify the tool used for consensus calling of long reads.",
-                    "help_text": "`medaka` is a tool designed for generating consensus sequences from nanopore sequencing data, and it uses a neural network to correct sequencing errors, improving the accuracy of consensus sequences. However `samtools consensus` does not have a specific algorithm tailored for nanopore reads.",
-                    "fa_icon": "fas fa-tools"
-                },
-                "perform_shortread_consensus": {
-                    "type": "boolean",
-                    "description": "Call consensus for short reads mapped to a pathogen genome.",
-                    "help_text": "Turn on the option to call consensus for short reads mapped to a pathogen genome using `samtools consensus`",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "consensus_min_bases": {
-                    "type": "number",
-                    "default": 50,
-                    "description": "The minimum number of bases used to filter consensus sequences. The default is 50.",
-                    "fa-icon": "filter"
-                },
-                "outdir": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open"
-                },
-                "email": {
-                    "type": "string",
-                    "description": "Email address for completion summary.",
-                    "fa_icon": "fas fa-envelope",
-                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                },
-                "multiqc_title": {
-                    "type": "string",
-                    "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
-                    "fa_icon": "fas fa-file-signature"
                 }
             }
         },
@@ -376,6 +409,15 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/verify_identified_species_options"
+        },
+        {
+            "$ref": "#/$defs/general_options"
+        },
+        {
+            "$ref": "#/$defs/pathogen_screening_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

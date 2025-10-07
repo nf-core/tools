@@ -1,0 +1,18 @@
+Sep-02 10:44:18.215 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.2
+Sep-02 10:44:18.229 [main] INFO  com.askimed.nf.test.App - Arguments: [test, --tag, test_taxid, --profile=+singularity, --verbose, --debug, --update-snapshot]
+Sep-02 10:44:19.501 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 25.04.2
+Sep-02 10:44:19.504 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /home/lili.li/metaval_proj/repo/metaval_fetchgenome/nf-test.config...
+Sep-02 10:47:07.973 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 46 files from directory /home/lili.li/metaval_proj/repo/metaval_fetchgenome in 167.944 sec
+Sep-02 10:47:07.978 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
+Sep-02 10:47:07.978 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/home/lili.li/metaval_proj/repo/metaval_fetchgenome/tests/default.nf.test]
+Sep-02 10:47:08.183 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 1 tests to execute.
+Sep-02 10:47:08.185 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+Sep-02 10:47:08.185 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Test pipeline' from file '/home/lili.li/metaval_proj/repo/metaval_fetchgenome/tests/default.nf.test'.
+Sep-02 10:47:08.186 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'cba84daa: -profile test_taxid'. type: com.askimed.nf.test.lang.pipeline.PipelineTest
+Sep-02 10:57:08.938 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/lili.li/metaval_proj/repo/metaval_fetchgenome/tests/default.nf.test.snap'
+Sep-02 10:57:08.979 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots '-profile test_taxid' do not match. Update snapshots flag set.
+Sep-02 10:57:08.979 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Updated snapshot '-profile test_taxid'
+Sep-02 10:57:08.988 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Wrote snapshots to file '/home/lili.li/metaval_proj/repo/metaval_fetchgenome/tests/default.nf.test.snap'
+Sep-02 10:57:08.989 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'cba84daa: -profile test_taxid' finished. status: PASSED
+Sep-02 10:57:08.991 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Test pipeline' finished. snapshot file: true, skipped tests: false, failed tests: false
+Sep-02 10:57:08.994 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 1 tests. 0 tests failed. Done!

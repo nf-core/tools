@@ -7,7 +7,7 @@ include { MINIMAP2_INDEX             } from '../../modules/nf-core/minimap2/inde
 include { MINIMAP2_ALIGN             } from '../../modules/nf-core/minimap2/align/main'
 include { BAM_SORT_STATS_SAMTOOLS    } from '../nf-core/bam_sort_stats_samtools/main'
 
-workflow LONGREAD_SCREENPATHOGEN {
+workflow MAPPING_LONGREAD {
     take:
     reads     // [ [ meta ], [ reads ] ]
     reference // [ [ meta ], [ reference ] ]
@@ -24,9 +24,7 @@ workflow LONGREAD_SCREENPATHOGEN {
 
     BAM_SORT_STATS_SAMTOOLS ( MINIMAP2_ALIGN.out.bam, reference )
     ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
-    ch_multiqc_files = ch_multiqc_files.mix (BAM_SORT_STATS_SAMTOOLS.out.stats.collect{it[1]}.ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix (BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix (BAM_SORT_STATS_SAMTOOLS.out.idxstats.collect{it[1]}.ifEmpty([]))
 
 
     emit:

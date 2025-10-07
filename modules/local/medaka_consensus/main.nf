@@ -23,13 +23,18 @@ process MEDAKA_PARALLEL {
     def args3 = task.ext.args3 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    # Export prefix to bash so it always exists
+    prefix='${prefix}'
+
     mkdir -p tmp
     export TMPDIR=./tmp
 
-    assembly=${assembly}
-    if [[ ${assembly} == *.gz ]]; then
-        gunzip ${assembly}
-        assembly=\$(basename \$assembly .gz)
+    # Safe decompression of input assembly
+    assembly_path="${assembly}"
+    if [[ "\$assembly_path" == *.gz ]]; then
+        # Decompress to a temporary file without touching original
+        gunzip -c "\$assembly_path" > "\${prefix}_assembly.fa"
+        assembly="\${prefix}_assembly.fa"
     fi
 
     mini_align \\
@@ -61,7 +66,8 @@ process MEDAKA_PARALLEL {
         ${args3} \\
         inference/*.hdf \$assembly ${prefix}.fa
 
-    gzip -n ${prefix}.fa
+    gzip -c ${prefix}.fa > ${prefix}.fa.gz
+    rm -f ${prefix}.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

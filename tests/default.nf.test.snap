@@ -1,12 +1,12 @@
 {
     "-profile test_taxid": {
         "content": [
-            170,
+            253,
             {
-                "BLAST_BLASTN": {
-                    "blast": "2.16.0+"
+                "BEDTOOLS_GENOMECOV": {
+                    "bedtools": "2.31.1"
                 },
-                "BLAST_BLASTN_PATHOGEN": {
+                "BLAST_BLASTN": {
                     "blast": "2.16.0+"
                 },
                 "BOWTIE2_ALIGN": {
@@ -14,13 +14,10 @@
                     "samtools": 1.21,
                     "pigz": 2.8
                 },
-                "BOWTIE2_BUILD_PATHOGEN": {
+                "BOWTIE2_BUILD": {
                     "bowtie2": "2.5.4"
                 },
                 "DIAMOND_BLASTX": {
-                    "diamond": "2.1.12"
-                },
-                "DIAMOND_BLASTX_PATHOGEN": {
                     "diamond": "2.1.12"
                 },
                 "EXTRACTCDIAMONDREADS": {
@@ -38,26 +35,14 @@
                 "FILTER_BLASTN": {
                     "python": "3.12.3"
                 },
-                "FILTER_BLASTN_PATHOGEN": {
-                    "python": "3.12.3"
-                },
                 "FILTER_BLASTX": {
                     "python": "3.12.3"
                 },
-                "FILTER_BLASTX_PATHOGEN": {
-                    "python": "3.12.3"
-                },
-                "FILTER_CONSENSUS_LONGREAD": {
-                    "python": "3.13.2"
-                },
-                "FILTER_CONSENSUS_SHORTREAD": {
-                    "python": "3.13.2"
+                "IGVREPORTS": {
+                    "igvreports": "0.1.0"
                 },
                 "KRAKENTOOLS_EXTRACTKRAKENREADS": {
                     "extract_kraken_reads.py": 1.2
-                },
-                "MEDAKA": {
-                    "medaka": "2.0.1"
                 },
                 "MINIMAP2_ALIGN": {
                     "minimap2": "2.29-r1283",
@@ -65,6 +50,12 @@
                 },
                 "MINIMAP2_INDEX": {
                     "minimap2": "2.29-r1283"
+                },
+                "PIGZ_UNCOMPRESS": {
+                    "pigz": 2.8
+                },
+                "SAMTOOLS_FAIDX": {
+                    "samtools": 1.21
                 },
                 "SAMTOOLS_FASTA": {
                     "samtools": 1.21
@@ -90,11 +81,11 @@
                 "SAMTOOLS_STATS": {
                     "samtools": 1.21
                 },
+                "SAMTOOLS_VIEW": {
+                    "samtools": 1.21
+                },
                 "SEQKIT_FQ2FA": {
                     "seqkit": "2.9.0"
-                },
-                "SHORTREAD_SAMTOOLS_CONSENSUS": {
-                    "samtools": 1.21
                 },
                 "SPADES": {
                     "spades": "4.1.0"
@@ -115,8 +106,8 @@
         ],
         "meta": {
             "nf-test": "0.9.2",
-            "nextflow": "25.04.6"
+            "nextflow": "25.04.2"
         },
-        "timestamp": "2025-07-18T09:01:17.204157338"
+        "timestamp": "2025-09-17T15:06:10.407442165"
     }
 }
