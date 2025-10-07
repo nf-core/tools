@@ -18,6 +18,7 @@ from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core import __version__
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_json import ModulesJson
@@ -253,7 +254,7 @@ class ComponentLint(ComponentCommand):
         # Helper function to format test links nicely
         def format_result(test_results, table):
             """
-            Given an list of error message IDs and the message texts, return a nicely formatted
+            Given a LintResult object, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
             # TODO: Row styles don't work current as table-level style overrides.
@@ -276,10 +277,16 @@ class ComponentLint(ComponentCommand):
                 file_path = os.path.relpath(lint_result.file_path, self.directory)
                 file_path_link = f"[link=vscode://file/{os.path.abspath(file_path)}]{file_path}[/link]"
 
+                # Add link to the test documentation
+                tools_version = __version__
+                if "dev" in __version__:
+                    tools_version = "latest"
+                test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.lint_test}): {lint_result.message}"
+
                 table.add_row(
                     module_name,
                     file_path_link,
-                    Markdown(f"{lint_result.message}"),
+                    Markdown(test_link_message),
                     style="dim" if even_row else None,
                 )
             return table
