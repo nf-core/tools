@@ -9,6 +9,7 @@
 - Bump nf-schema to 2.5.0 and update the help message creation to be compatible with future Nextflow versions ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Bump minimum Nextflow version to 25.04.0 ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
+- Update multiqc to 1.31 ([#3766](https://github.com/nf-core/tools/pull/3766))
 - Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 - Fix: Add NXF_VERSION environment variable to nf-test workflow ([#3770](https://github.com/nf-core/tools/pull/3770))
 - Template: Update nextflow.config to use environment variable for `hook_url` ([#3756](https://github.com/nf-core/tools/pull/3756))
