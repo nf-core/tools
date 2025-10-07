@@ -516,7 +516,6 @@ class DownloadWorkflow:
             else:
                 self.container_fetcher = None
         except OSError as e:
-            log.error(e)
             raise DownloadError(e)
 
     def prompt_use_singularity(self, fail_message: str) -> None:
