@@ -28,6 +28,7 @@
 - Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
 - feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
 - Override example keywords in modules test ([#3801](https://github.com/nf-core/tools/pull/3801))
+- update test assertions in modules to current recommendations ([#3815](https://github.com/nf-core/tools/pull/3815))
 
 ### Subworkflows
 
