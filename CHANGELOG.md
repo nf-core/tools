@@ -9,6 +9,7 @@
 - Bump nf-schema to 2.5.0 and update the help message creation to be compatible with future Nextflow versions ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Bump minimum Nextflow version to 25.04.0 ([#3743](https://github.com/nf-core/tools/pull/3743))
 - Explicitly declare conda-forge as a channel in the conda setup for GitHub CI for nf-test ([#3764](https://github.com/nf-core/tools/pull/3764))
+- Update multiqc to 1.31 ([#3766](https://github.com/nf-core/tools/pull/3766))
 - Update charliecloud URL ([#3757](https://github.com/nf-core/tools/pull/3757))
 - Fix: Add NXF_VERSION environment variable to nf-test workflow ([#3770](https://github.com/nf-core/tools/pull/3770))
 - Template: Update nextflow.config to use environment variable for `hook_url` ([#3756](https://github.com/nf-core/tools/pull/3756))
@@ -20,11 +21,13 @@
 - ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
 - do not check pytest_modules.yml file, deprecating ([#3748](https://github.com/nf-core/tools/pull/3748))
 - Use the org from the .nf-core.yml when linting manifest name and homePage. ([#3767](https://github.com/nf-core/tools/pull/3767))
+- Use the org from .nf-core.yml when linting multiqc_config report_comment ([#3800](https://github.com/nf-core/tools/pull/3800))
 
 ### Modules
 
 - Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
 - feat: nf-core modules bump-version supports specifying the toolkit ([#3608](https://github.com/nf-core/tools/pull/3608))
+- Override example keywords in modules test ([#3801](https://github.com/nf-core/tools/pull/3801))
 
 ### Subworkflows
 
@@ -63,6 +66,7 @@
 - Update python:3.13-slim Docker digest to 3a6ead7 ([#3786](https://github.com/nf-core/tools/pull/3786))
 - Update dependency textual to v5.3.0 ([#3785](https://github.com/nf-core/tools/pull/3785))
 - update rich-click to 1.9 and use new styling options ([#3787](https://github.com/nf-core/tools/pull/3787))
+- Update dependency textual to v6 ([#3793](https://github.com/nf-core/tools/pull/3793))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.18.2 ([#3792](https://github.com/nf-core/tools/pull/3792))
 - Update python:3.13-slim Docker digest to 5f55cdf ([#3796](https://github.com/nf-core/tools/pull/3796))
 - Update GitHub Actions ([#3795](https://github.com/nf-core/tools/pull/3795))
