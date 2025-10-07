@@ -98,6 +98,5 @@ def intermediate_dir_with_cd(original_dir: Path, base_dir: Path = Path(".")):
     try:
         os.chdir(tmp.name)
         yield tmp
-        os.chdir(original_dir)
-    except:  # noqa: E722
+    finally:
         os.chdir(original_dir)
