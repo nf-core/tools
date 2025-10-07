@@ -66,6 +66,7 @@
 - Update python:3.13-slim Docker digest to 3a6ead7 ([#3786](https://github.com/nf-core/tools/pull/3786))
 - Update dependency textual to v5.3.0 ([#3785](https://github.com/nf-core/tools/pull/3785))
 - update rich-click to 1.9 and use new styling options ([#3787](https://github.com/nf-core/tools/pull/3787))
+- Update dependency textual to v6 ([#3793](https://github.com/nf-core/tools/pull/3793))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.18.2 ([#3792](https://github.com/nf-core/tools/pull/3792))
 - Update python:3.13-slim Docker digest to 5f55cdf ([#3796](https://github.com/nf-core/tools/pull/3796))
 - Update GitHub Actions ([#3795](https://github.com/nf-core/tools/pull/3795))
