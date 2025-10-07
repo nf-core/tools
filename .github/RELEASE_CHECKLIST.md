@@ -7,17 +7,19 @@
 5. Create a PR to `dev` to bump the version in `CHANGELOG.md` and `setup.py` and change the gitpod container to `nfcore/gitpod:latest`.
 6. Make sure all CI tests are passing!
 7. Create a PR from `dev` to `main`
-8. Make sure all CI tests are passing again (additional tests are run on PRs to `main`)
-9. Request review (2 approvals required)
-10. Merge the PR into `main`
-11. Wait for CI tests on the commit to passed
-12. (Optional but a good idea) Run a manual sync on `nf-core/testpipeline` and check that CI is passing on the resulting PR.
-13. Create a new release copying the `CHANGELOG` for that release into the description section.
+8. Run a manual sync on `nf-core/testpipeline` and check that CI is passing on the resulting PR: use the `Sync template` GitHub Action from the tools repository specifying the pipeline name and running from the `dev` branch.
+9. Warn someone from Seqera to make sure that the Seqera Platform is working as expected with the new template: use the `nf-core/testpipeline` new branch with the template updates.
+10. Make sure all CI tests are passing again (additional tests are run on PRs to `main`)
+11. Request review (2 approvals required)
+12. Merge the PR into `main`
+13. Wait for CI tests on the commit to passed
+14. Create a new release copying the `CHANGELOG` for that release into the description section.
 
 ## After release
 
-1. Check the automated template synchronisation has been triggered properly. This should automatically open PRs directly to individual pipeline repos with the appropriate changes to update the pipeline template.
-2. Check that the automatic `PyPi` deployment has worked: [pypi.org/project/nf-core](https://pypi.org/project/nf-core/)
-3. Check `BioConda` has an automated PR to bump the version, and merge. eg. [bioconda/bioconda-recipes #20065](https://github.com/bioconda/bioconda-recipes/pull/20065)
-4. Create a tools PR to `dev` to bump back to the next development version in `CHANGELOG.md` and `setup.py` and change the gitpod container to `nfcore/gitpod:dev`.
-5. Run `rich-codex` on the [tools/website repo](https://github.com/nf-core/website/actions/workflows/rich-codex.yml) to regenerate docs screengrabs (actions `workflow_dispatch` button)
+1. Run the `Sync template` GitHub Action to trigger the template update PR to some selected pipelines (sarek, createtaxdb, proteinfold, mag, #team-maintainers channel) and ask the pipeline maintainers to make the update and report any issues/comments.
+2. Run `rich-codex` to regenerate docs screengrabs: `Generate images for docs` GitHub Action on the [tools/website repo](https://github.com/nf-core/website/actions/workflows/rich-codex.yml).
+3. Manually trigger the `Sync template` GitHub Action for all pipelines.
+4. Check that the automatic `PyPi` deployment has worked: [pypi.org/project/nf-core](https://pypi.org/project/nf-core/)
+5. Check `BioConda` has an automated PR to bump the version, and merge. eg. [bioconda/bioconda-recipes #20065](https://github.com/bioconda/bioconda-recipes/pull/20065)
+6. Create a tools PR to `dev` to bump back to the next development version in `CHANGELOG.md` and `setup.py` and change the gitpod container to `nfcore/gitpod:dev`.
