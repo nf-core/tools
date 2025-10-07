@@ -19,6 +19,7 @@
 - Update marocchino/sticky-pull-request-comment digest to 7737449 ([#3681](https://github.com/nf-core/tools/pull/3681))
 - Update python:3.13-slim Docker digest to 4c2cf99 ([#3700](https://github.com/nf-core/tools/pull/3700))
 - Validation of meta.yaml in cross-org repos ([#3680](https://github.com/nf-core/tools/pull/3680))
+- Update actions/checkout to v5 ([#3809](https://github.com/nf-core/tools/pull/3809))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
