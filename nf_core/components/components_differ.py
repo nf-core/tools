@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Union
 
 from rich import box
 from rich.console import Console, Group, RenderableType
@@ -308,7 +307,7 @@ class ComponentsDiffer:
         )
 
     @staticmethod
-    def per_file_patch(patch_fn: Union[str, Path]) -> dict[str, list[str]]:
+    def per_file_patch(patch_fn: str | Path) -> dict[str, list[str]]:
         """
         Splits a patch file for several files into one patch per file.
 
@@ -466,8 +465,8 @@ class ComponentsDiffer:
     def try_apply_patch(
         component_type: str,
         component: str,
-        repo_path: Union[str, Path],
-        patch_path: Union[str, Path],
+        repo_path: str | Path,
+        patch_path: str | Path,
         component_dir: Path,
         reverse: bool = False,
     ) -> dict[str, list[str]]:

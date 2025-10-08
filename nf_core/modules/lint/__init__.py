@@ -61,13 +61,13 @@ class ModuleLint(ComponentLint):
 
     def __init__(
         self,
-        directory: Union[str, Path],
+        directory: str | Path,
         fail_warned: bool = False,
         fix: bool = False,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
-        registry: Optional[str] = None,
+        registry: str | None = None,
         hide_progress: bool = False,
     ):
         super().__init__(

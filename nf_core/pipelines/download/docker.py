@@ -8,7 +8,6 @@ import shutil
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Optional
 
 import rich.progress
 
@@ -261,7 +260,7 @@ class DockerFetcher(ContainerFetcher):
         self,
         command: list[str],
         container: str,
-        output_path: Optional[Path],
+        output_path: Path | None,
         address: str,
         progress_task: rich.progress.Task,
     ) -> None:

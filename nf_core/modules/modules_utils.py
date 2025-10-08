@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 import requests
@@ -54,7 +53,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
     # initialize lists
     local_modules: list[str] = []
     nfcore_modules_names: list[str] = []
-    local_modules_dir: Optional[Path] = None
+    local_modules_dir: Path | None = None
     nfcore_modules_dir = Path(directory, "modules", "nf-core")
 
     # Get local modules

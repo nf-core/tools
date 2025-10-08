@@ -5,7 +5,6 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import rich.console
 from ruamel.yaml import YAML
@@ -195,11 +194,11 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
 
 
 def update_file_version(
-    filename: Union[str, Path],
+    filename: str | Path,
     pipeline_obj: Pipeline,
     patterns: list[tuple[str, str]],
     required: bool = True,
-    yaml_key: Optional[list[str]] = None,
+    yaml_key: list[str] | None = None,
 ) -> None:
     """
     Updates a file with a new version number.

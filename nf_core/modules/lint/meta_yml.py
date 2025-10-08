@@ -1,7 +1,6 @@
 import json
 import logging
 from pathlib import Path
-from typing import Union
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
@@ -198,7 +197,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                 )
 
 
-def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> Union[dict, None]:
+def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
     """
     Read a `meta.yml` file and return it as a dictionary
 
@@ -255,7 +254,7 @@ def obtain_inputs(_, inputs: list) -> list:
     return formatted_inputs
 
 
-def obtain_outputs(_, outputs: Union[dict, list]) -> Union[dict, list]:
+def obtain_outputs(_, outputs: dict | list) -> dict | list:
     """
     Obtain the dictionary of outputs and elements of each output channel.
 

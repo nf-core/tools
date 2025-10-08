@@ -7,9 +7,8 @@ import os
 import re
 import shutil
 import subprocess
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Callable, Optional
 
 import questionary
 import requests
@@ -252,7 +251,7 @@ class SingularityFetcher(ContainerFetcher):
         return False
 
     @staticmethod
-    def prompt_singularity_cachedir_path() -> Optional[Path]:
+    def prompt_singularity_cachedir_path() -> Path | None:
         """Prompt for the name of the Singularity cache directory"""
         # Prompt user for a cache directory path
         cachedir_path = None
@@ -286,7 +285,7 @@ class SingularityFetcher(ContainerFetcher):
         }
         shell = Path(os.getenv("SHELL", "")).name
         shellprofile_paths = shells_profile_paths.get(shell, [Path("~/.profile")])
-        shellprofile_path: Optional[Path] = None
+        shellprofile_path: Path | None = None
         for profile_path in shellprofile_paths:
             if profile_path.is_file():
                 shellprofile_path = profile_path
@@ -329,7 +328,7 @@ class SingularityFetcher(ContainerFetcher):
         ).unsafe_ask()
 
     @staticmethod
-    def prompt_singularity_cachedir_remote() -> Optional[Path]:
+    def prompt_singularity_cachedir_remote() -> Path | None:
         """Prompt about the index of a remote singularity cache directory"""
         # Prompt user for a file listing the contents of the remote cache directory
         cachedir_index = None
@@ -803,7 +802,7 @@ class FileDownloader:
         self,
         download_files: Iterable[tuple[str, Path]],
         parallel_downloads: int,
-        callback: Optional[Callable[[tuple[str, Path], Status], None]] = None,
+        callback: Callable[[tuple[str, Path], Status], None] | None = None,
     ) -> list[tuple[str, Path]]:
         """Download multiple files in parallel.
 
