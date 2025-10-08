@@ -1,3 +1,4 @@
+import fnmatch
 import logging
 import os
 import re
@@ -26,12 +27,21 @@ def pipeline_if_empty_null(self, root_dir=None):
     if root_dir is None:
         root_dir = self.wf_path
 
+    ignore = [".git"]
+    if Path(root_dir, ".gitignore").is_file():
+        with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
+            for line in fh:
+                ignore.append(Path(line.strip().rstrip("/")).name)
     for root, dirs, files in os.walk(root_dir, topdown=True):
+        for i_base in ignore:
+            i = str(Path(root, i_base))
+            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(str(Path(root, d)), i)]
+            files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
         for fname in files:
             try:
                 with open(Path(root, fname), encoding="latin1") as fh:
                     for line in fh:
-                        if re.findall(pattern, line):
+                        if pattern.findall(line):
                             warned.append(f"`ifEmpty(null)` found in `{fname}`: _{line}_")
                             file_paths.append(Path(root, fname))
             except FileNotFoundError:
