@@ -39,9 +39,12 @@ class LintExceptionError(Exception):
 class LintResult:
     """An object to hold the results of a lint test"""
 
-    def __init__(self, component: NFCoreComponent, lint_test: str, message: str, file_path: Path):
+    def __init__(
+        self, component: NFCoreComponent, parent_lint_test: str, lint_test: str, message: str, file_path: Path
+    ):
         self.component = component
         self.lint_test = lint_test
+        self.parent_lint_test = parent_lint_test
         self.message = message
         self.file_path = file_path
         self.component_name: str = component.component_name
@@ -281,7 +284,7 @@ class ComponentLint(ComponentCommand):
                 tools_version = __version__
                 if "dev" in __version__:
                     tools_version = "latest"
-                test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.lint_test}): {lint_result.message}"
+                test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}): {lint_result.message}"
 
                 table.add_row(
                     module_name,

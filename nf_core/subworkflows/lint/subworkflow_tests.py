@@ -26,6 +26,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         if allow_missing:
             subworkflow.warned.append(
                 (
+                    "subworkflow_tests",
                     "test_dir_exists",
                     "nf-test directory is missing",
                     Path(subworkflow.component_dir, "tests"),
@@ -38,6 +39,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         if allow_missing:
             subworkflow.warned.append(
                 (
+                    "subworkflow_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
                     Path(subworkflow.component_dir, "tests", "main.nf.test"),
@@ -62,6 +64,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
     if subworkflow.nftest_testdir.is_dir():
         subworkflow.passed.append(
             (
+                "subworkflow_tests",
                 "test_dir_exists",
                 "nf-test test directory exists",
                 subworkflow.nftest_testdir,
@@ -71,6 +74,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         if is_pytest:
             subworkflow.warned.append(
                 (
+                    "subworkflow_tests",
                     "test_dir_exists",
                     "Migrate pytest-workflow to nf-test",
                     subworkflow.nftest_testdir,
@@ -79,6 +83,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         else:
             subworkflow.failed.append(
                 (
+                    "subworkflow_tests",
                     "test_dir_exists",
                     "nf-test directory is missing",
                     subworkflow.nftest_testdir,
@@ -90,6 +95,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
     if subworkflow.nftest_main_nf.is_file():
         subworkflow.passed.append(
             (
+                "subworkflow_tests",
                 "test_main_nf_exists",
                 "test `main.nf.test` exists",
                 subworkflow.nftest_main_nf,
@@ -99,6 +105,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         if is_pytest:
             subworkflow.warned.append(
                 (
+                    "subworkflow_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
                     subworkflow.nftest_main_nf,
@@ -107,6 +114,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         else:
             subworkflow.failed.append(
                 (
+                    "subworkflow_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
                     subworkflow.nftest_main_nf,
@@ -121,6 +129,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                 if snap_file.is_file():
                     subworkflow.passed.append(
                         (
+                            "subworkflow_tests",
                             "test_snapshot_exists",
                             "test `main.nf.test.snap` exists",
                             snap_file,
@@ -135,6 +144,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                     if "stub" not in test_name:
                                         subworkflow.failed.append(
                                             (
+                                                "subworkflow_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
                                                 snap_file,
@@ -143,6 +153,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                     else:
                                         subworkflow.passed.append(
                                             (
+                                                "subworkflow_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for empty file found, but it is a stub test",
                                                 snap_file,
@@ -151,6 +162,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                 else:
                                     subworkflow.passed.append(
                                         (
+                                            "subworkflow_tests",
                                             "test_snap_md5sum",
                                             "no md5sum for empty file found",
                                             snap_file,
@@ -160,6 +172,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                     if "stub" not in test_name:
                                         subworkflow.failed.append(
                                             (
+                                                "subworkflow_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
                                                 snap_file,
@@ -168,6 +181,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                     else:
                                         subworkflow.failed.append(
                                             (
+                                                "subworkflow_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for compressed empty file found, but it is a stub test",
                                                 snap_file,
@@ -176,6 +190,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                 else:
                                     subworkflow.passed.append(
                                         (
+                                            "subworkflow_tests",
                                             "test_snap_md5sum",
                                             "no md5sum for compressed empty file found",
                                             snap_file,
@@ -184,6 +199,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                             if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
                                 subworkflow.passed.append(
                                     (
+                                        "subworkflow_tests",
                                         "test_snap_versions",
                                         "versions found in snapshot file",
                                         snap_file,
@@ -192,6 +208,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                             else:
                                 subworkflow.warned.append(
                                     (
+                                        "subworkflow_tests",
                                         "test_snap_versions",
                                         "versions not found in snapshot file",
                                         snap_file,
@@ -200,6 +217,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                         except json.decoder.JSONDecodeError as e:
                             subworkflow.failed.append(
                                 (
+                                    "subworkflow_tests",
                                     "test_snapshot_exists",
                                     f"snapshot file `main.nf.test.snap` can't be read: {e}",
                                     snap_file,
@@ -208,6 +226,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                 else:
                     subworkflow.failed.append(
                         (
+                            "subworkflow_tests",
                             "test_snapshot_exists",
                             "test `main.nf.test.snap` does not exist",
                             snap_file,
@@ -240,6 +259,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
             if len(missing_tags) == 0:
                 subworkflow.passed.append(
                     (
+                        "subworkflow_tests",
                         "test_main_tags",
                         "Tags adhere to guidelines",
                         subworkflow.nftest_main_nf,
@@ -248,6 +268,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
             else:
                 subworkflow.failed.append(
                     (
+                        "subworkflow_tests",
                         "test_main_tags",
                         f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: {missing_tags}",
                         subworkflow.nftest_main_nf,
@@ -257,6 +278,10 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
     # Check that the old test directory does not exist
     if not is_pytest:
         if pytest_dir.is_dir():
-            subworkflow.failed.append(("test_old_test_dir", "old test directory exists", pytest_dir))
+            subworkflow.failed.append(
+                ("subworkflow_tests", "test_old_test_dir", "old test directory exists", pytest_dir)
+            )
         else:
-            subworkflow.passed.append(("test_old_test_dir", "old test directory does not exist", pytest_dir))
+            subworkflow.passed.append(
+                ("subworkflow_tests", "test_old_test_dir", "old test directory does not exist", pytest_dir)
+            )

@@ -45,7 +45,12 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     if module.meta_yml is None:
         if allow_missing:
             module.warned.append(
-                ("meta_yml_exists", "Module `meta.yml` does not exist", Path(module.component_dir, "meta.yml"))
+                (
+                    "meta_yml",
+                    "meta_yml_exists",
+                    "Module `meta.yml` does not exist",
+                    Path(module.component_dir, "meta.yml"),
+                )
             )
             return
         raise LintExceptionError("Module does not have a `meta.yml` file")
@@ -64,10 +69,10 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             yaml = ruamel.yaml.YAML()
             meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
-        module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
+        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
         return
     else:
-        module.passed.append(("meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+        module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
 
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
@@ -75,7 +80,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
             schema = json.load(fh)
         validators.validate(instance=meta_yaml, schema=schema)
-        module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
+        module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
     except exceptions.ValidationError as e:
         hint = ""
@@ -92,6 +97,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             hint = hint + f"\nThe current value is `{incorrect_value}`."
         module.failed.append(
             (
+                "meta_yml",
                 "meta_yml_valid",
                 f"The `meta.yml` of the module {module.component_name} is not valid: {e.message}.{hint}",
                 module.meta_yml,
@@ -104,6 +110,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         if meta_yaml["name"].upper() == module.process_name:
             module.passed.append(
                 (
+                    "meta_yml",
                     "meta_name",
                     "Correct name specified in `meta.yml`.",
                     module.meta_yml,
@@ -112,6 +119,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         else:
             module.failed.append(
                 (
+                    "meta_yml",
                     "meta_name",
                     f"Conflicting `process` name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{module.process_name}`)",
                     module.meta_yml,
@@ -121,6 +129,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         if len(module.inputs) > 0 and "input" not in meta_yaml:
             module.failed.append(
                 (
+                    "meta_yml",
                     "meta_input",
                     "Inputs not specified in module `meta.yml`",
                     module.meta_yml,
@@ -129,6 +138,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         elif len(module.inputs) > 0:
             module.passed.append(
                 (
+                    "meta_yml",
                     "meta_input",
                     "Inputs specified in module `meta.yml`",
                     module.meta_yml,
@@ -144,6 +154,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             if correct_inputs == meta_inputs:
                 module.passed.append(
                     (
+                        "meta_yml",
                         "correct_meta_inputs",
                         "Correct inputs specified in module `meta.yml`",
                         module.meta_yml,
@@ -152,6 +163,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             else:
                 module.failed.append(
                     (
+                        "meta_yml",
                         "correct_meta_inputs",
                         f"Module `meta.yml` does not match `main.nf`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
@@ -162,6 +174,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         if len(module.outputs) > 0 and "output" not in meta_yaml:
             module.failed.append(
                 (
+                    "meta_yml",
                     "meta_output",
                     "Outputs not specified in module `meta.yml`",
                     module.meta_yml,
@@ -170,6 +183,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         elif len(module.outputs) > 0:
             module.passed.append(
                 (
+                    "meta_yml",
                     "meta_output",
                     "Outputs specified in module `meta.yml`",
                     module.meta_yml,
@@ -183,6 +197,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             if correct_outputs == meta_outputs:
                 module.passed.append(
                     (
+                        "meta_yml",
                         "correct_meta_outputs",
                         "Correct outputs specified in module `meta.yml`",
                         module.meta_yml,
@@ -191,6 +206,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             else:
                 module.failed.append(
                     (
+                        "meta_yml",
                         "correct_meta_outputs",
                         f"Module `meta.yml` does not match `main.nf`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
