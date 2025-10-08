@@ -50,7 +50,19 @@ workflow {{ short_name|upper }} {
     //
     // Collate and save software versions
     //
+    def topic_versions = Channel.topic("versions")
+        .unique()
+        .map { process, tool, version ->
+            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+        }
+        .groupTuple(by:0)
+        .map { process, tool_versions ->
+            tool_versions.unique()
+            "${process}:\n${tool_versions.join('\n')}"
+        }
+
     softwareVersionsToYAML(ch_versions)
+        .mix(topic_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
             name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
