@@ -40,28 +40,30 @@ workflow TAXID_BAM_FASTA {
     ch_accession_taxid = ch_accession2taxidmap
         .join( ch_accession )
         .map { it ->
-            def num_reads = it[3].toInteger()
-            [ it[0], it[1], num_reads ]
+            def num_reads = it[4].toInteger()
+            [ it[0], it[1], it[2], num_reads ]
         }
-        .filter { accessions, taxid, num_reads -> num_reads > 0 }
+        .filter { accessions, taxid, organism, num_reads -> num_reads > 0 }
         .groupTuple( by: 1 )
-        .map { accession_list, taxid, num_reads ->
+        .map { accession_list, taxid, organism, num_reads ->
             def total_reads = num_reads.sum()
-            [ accession_list, taxid, total_reads ]
+            def organism_uniq = organism[0]
+            [ accession_list, taxid, organism_uniq, total_reads ]
         }
         .branch {
-            pass: it[2] >= min_read_counts // The number of mapped reads to a taxID greater than params.min_read_counts
-                return [it[0], it[1]]
-            fail: it[2] < min_read_counts  // The number of mapped reads to a taxID smaller than params.min_read_counts
-                return [ it[0], it[1] ]
+            pass: it[3] >= min_read_counts // The number of mapped reads to a taxID greater than params.min_read_counts
+                return [it[0], it[1], it[2]]
+            fail: it[3] < min_read_counts  // The number of mapped reads to a taxID smaller than params.min_read_counts
+                return [ it[0], it[1], it[2] ]
         }
 
     // Prepare individual BAM files for each taxID with the number of mapped reads greater than params.min_read_counts
     ch_consensus_input = ch_accession_taxid.pass
         .combine( input_bam )
-        .map { accession_list, taxid, meta, bam, bam_index ->
+        .map { accession_list, taxid, organism, meta, bam, bam_index ->
             def new_meta = meta.clone()
             new_meta.taxid = taxid
+            new_meta.organism = organism
             return [ new_meta, bam, bam_index, accession_list ]
         }
         .multiMap {
@@ -69,7 +71,7 @@ workflow TAXID_BAM_FASTA {
                 bam: [ meta, bam, bam_index ]
                 accession: accession_list.flatten()
         }
-
+    //ch_consensus_input.bam.dump(tag:"input_bam")
     // BAM files will be used to call consensus sequences
     SUBSET_BAM_PASS( ch_consensus_input.bam, ch_consensus_input.accession )
     ch_versions = ch_versions.mix( SUBSET_BAM_PASS.out.versions.first() )
@@ -81,9 +83,10 @@ workflow TAXID_BAM_FASTA {
     // Prepare individual FASTA files for each taxID with the number of mapped reads less than params.min_read_counts
     ch_blast_input = ch_accession_taxid.fail
         .combine(input_bam)
-        .map { accession_list, taxid, meta, bam, bam_index ->
+        .map { accession_list, taxid, organism, meta, bam, bam_index ->
             def new_meta = meta.clone()
             new_meta.taxid = taxid
+            new_meta.organism = organism
             return [ new_meta, bam, bam_index, accession_list ]
         }
         .multiMap {

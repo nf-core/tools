@@ -83,7 +83,7 @@
                 "taxid2genome": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to a file containing taxonomic IDs and their corresponding genome paths.",
+                    "description": "Path to a file containing taxonomic IDs, organism name and corresponding genome paths.",
                     "help_text": "Please check https://github.com/LilyAnderssonLee/download_genomes_taxid for details on how to prepare this file.",
                     "fa_icon": "fas fa-file-alt"
                 },
@@ -127,7 +127,7 @@
                     "type": "string",
                     "format": "file-path",
                     "pattern": "^\\S+\\.map$",
-                    "description": "Path to a file containing the accession IDs and corresponding taxIDs for each pathogen genome.",
+                    "description": "Path to a file containing the accession IDs, corresponding taxIDs and organism names for each pathogen genome.",
                     "fa_icon": "fas fa-file-alt"
                 },
                 "perform_longread_consensus": {

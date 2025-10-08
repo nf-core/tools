@@ -53,8 +53,8 @@ curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/
 curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/metaval/testdata/SRR13439790_SRR13439790.unmapped_2.fastq.gz
 curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/metaval/testdata/SRR13439799_SRR13439799.unmapped_other.fastq.gz
 # reference
-curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/333a4af341ac9cba6106e6ebd295fc64e28d58bd/reference/reference.fasta
-curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/333a4af341ac9cba6106e6ebd295fc64e28d58bd/reference/accession2taxid.map
+curl -O https://github.com/genomic-medicine-sweden/test-datasets/blob/metaval/reference/reference.fasta.gz
+curl -O https://github.com/genomic-medicine-sweden/test-datasets/blob/metaval/reference/accession2taxid.map
 # kraken2
 curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/metaval/testdata/SRR13439790_pe_SRR13439790_k2_pluspf.kraken2.kraken2.report.txt
 curl -O https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/metaval/testdata/SRR13439790_pe_SRR13439790_k2_pluspf.kraken2.kraken2.classifiedreads.txt
