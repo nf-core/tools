@@ -24,7 +24,6 @@
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 - Use the org from .nf-core.yml when linting multiqc_config report_comment ([#3800](https://github.com/nf-core/tools/pull/3800))
 
-
 ### Modules
 
 - Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))

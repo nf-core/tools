@@ -59,15 +59,15 @@ output:
 
 topics:
   - versions:
-      - - process:
-            type: string
-            description: The process the versions were collected from
-        - tool:
-            type: string
-            description: The tool name the version was collected for
-        - version:
-            type: string
-            description: The version of the tool
+    - - process:
+          type: string
+          description: The process the versions were collected from
+      - tool:
+          type: string
+          description: The tool name the version was collected for
+      - version:
+          type: string
+          description: The version of the tool
 
 authors:
   - "{{ author }}"

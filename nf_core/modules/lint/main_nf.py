@@ -192,7 +192,9 @@ def main_nf(
         if "versions" in topics:
             module.passed.append(("main_nf_version_topic", "Module emits software versions as topic", module.main_nf))
         else:
-            module.failed.append(("main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf))
+            module.failed.append(
+                ("main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
+            )
 
     if emits:
         topic_versions_amount = sum(1 for t in topics if t == "versions")
@@ -200,8 +202,13 @@ def main_nf(
         if topic_versions_amount == emit_versions_amount:
             module.passed.append(("main_nf_version_emit", "Module emits each software version", module.main_nf))
         else:
-            module.failed.append(("main_nf_version_emit", "Module does not have an `emit:` and `topic:` for each software version", module.main_nf))
-
+            module.failed.append(
+                (
+                    "main_nf_version_emit",
+                    "Module does not have an `emit:` and `topic:` for each software version",
+                    module.main_nf,
+                )
+            )
 
     return inputs, emits
 
@@ -623,7 +630,8 @@ def _parse_output_emits(self, line):
         output.append(emit_regex.group(1).strip())
     return output
 
-def _parse_output_topics(self,line):
+
+def _parse_output_topics(self, line):
     output = []
     if "meta" in line:
         output.append("meta")
@@ -633,9 +641,21 @@ def _parse_output_topics(self,line):
         output.append(topic_name)
         if topic_name == "versions":
             if not re.search(r'tuple\s+val\("\${\s*task\.process\s*}"\),\s*val\(.*\),\s*eval\(.*\)', line):
-                self.failed.append(("wrong_version_output", 'Versions topic output is not correctly formatted, expected `tuple val("${task.process}"), val(\'<tool>\'), eval("<version_command>")`', self.main_nf))
-            if not re.search(r'emit:\s*versions_[\d\w]+', line):
-                self.failed.append(("wrong_version_emit", 'Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`', self.main_nf))
+                self.failed.append(
+                    (
+                        "wrong_version_output",
+                        'Versions topic output is not correctly formatted, expected `tuple val("${task.process}"), val(\'<tool>\'), eval("<version_command>")`',
+                        self.main_nf,
+                    )
+                )
+            if not re.search(r"emit:\s*versions_[\d\w]+", line):
+                self.failed.append(
+                    (
+                        "wrong_version_emit",
+                        "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                        self.main_nf,
+                    )
+                )
     return output
 
 
