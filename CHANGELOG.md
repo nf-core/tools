@@ -33,6 +33,7 @@
 ### Subworkflows
 
 - Linting of patched subworkflows ([#3755](https://github.com/nf-core/tools/pull/3755))
+- Update the utils_nfschema_plugin subworkflow to the latest version ([#3814](https://github.com/nf-core/tools/pull/3814))
 
 ### General
 
