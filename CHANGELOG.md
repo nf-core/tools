@@ -73,6 +73,7 @@
 - Update GitHub Actions ([#3795](https://github.com/nf-core/tools/pull/3795))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.13.3 ([#3791](https://github.com/nf-core/tools/pull/3791))
 - Update pre-commit hook pre-commit/pre-commit-hooks to v6 ([#3797](https://github.com/nf-core/tools/pull/3797))
+- Improve file ignores in workflow file enumeration ([#3820](https://github.com/nf-core/tools/pull/3820))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
