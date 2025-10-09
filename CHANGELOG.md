@@ -18,11 +18,14 @@
 
 ### Linting
 
+- Add .nf-test folder to prettierignore list ([#3625](https://github.com/nf-core/tools/pull/3625))
 - ignore files in gitignore also for pipeline_if_empty_null lint test ([#3722](https://github.com/nf-core/tools/pull/3722))
 - do not check pytest_modules.yml file, deprecating ([#3748](https://github.com/nf-core/tools/pull/3748))
 - Use the org from the .nf-core.yml when linting manifest name and homePage. ([#3767](https://github.com/nf-core/tools/pull/3767))
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 - Use the org from .nf-core.yml when linting multiqc_config report_comment ([#3800](https://github.com/nf-core/tools/pull/3800))
+- Linting of patched subworkflows ([#3755](https://github.com/nf-core/tools/pull/3755))
+- Add link to modules and subworkflows linting error docs ([#3818](https://github.com/nf-core/tools/pull/3818))
 
 ### Modules
 
@@ -32,7 +35,7 @@
 
 ### Subworkflows
 
-- Linting of patched subworkflows ([#3755](https://github.com/nf-core/tools/pull/3755))
+- Update the utils_nfschema_plugin subworkflow to the latest version ([#3814](https://github.com/nf-core/tools/pull/3814))
 
 ### General
 
@@ -74,6 +77,8 @@
 - Update GitHub Actions ([#3795](https://github.com/nf-core/tools/pull/3795))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.13.3 ([#3791](https://github.com/nf-core/tools/pull/3791))
 - Update pre-commit hook pre-commit/pre-commit-hooks to v6 ([#3797](https://github.com/nf-core/tools/pull/3797))
+- Update dependency python to 3.14 ([#3817](https://github.com/nf-core/tools/pull/3817))
+- update Dockerfile to python 3.14 ([#3822](https://github.com/nf-core/tools/pull/3822))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 

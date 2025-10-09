@@ -17,8 +17,6 @@ import rich
 import rich.progress
 import ruamel.yaml
 
-import nf_core.components
-import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml

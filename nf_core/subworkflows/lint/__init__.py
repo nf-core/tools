@@ -13,7 +13,6 @@ import questionary
 import rich
 import ruamel.yaml
 
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file

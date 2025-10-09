@@ -1,7 +1,7 @@
 {
     "name": "nfcore-devcontainer-build",
 
-    // installs python3.13, nf-core tools from current workspace, nextflow, nf-test,
+    // installs python3.14, nf-core tools from current workspace, nextflow, nf-test,
     // and apptainer based on mcr.microsoft.com/devcontainers/miniconda image
     "build": {
         "dockerfile": "./Dockerfile",
