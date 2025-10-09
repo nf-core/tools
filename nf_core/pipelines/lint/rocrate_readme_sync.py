@@ -64,7 +64,7 @@ def rocrate_readme_sync(self):
             fixed.append("Mismatch fixed: RO-Crate description updated from `README.md`.")
         else:
             failed.append(
-                "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix rocrate_readme_sync` to update."
+                "The RO-Crate descriptions do not match the README.md content. Use `nf-core pipelines lint --fix rocrate_readme_sync` to update."
             )
             could_fix = True
     else:

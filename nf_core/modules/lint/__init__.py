@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 from .environment_yml import environment_yml
 from .main_nf import main_nf
-from .meta_yml import meta_yml, obtain_correct_and_specified_inputs, obtain_correct_and_specified_outputs, read_meta_yml
+from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, read_meta_yml
 from .module_changes import module_changes
 from .module_deprecations import module_deprecations
 from .module_patch import module_patch
@@ -49,8 +49,8 @@ class ModuleLint(ComponentLint):
     environment_yml = environment_yml
     main_nf = main_nf
     meta_yml = meta_yml
-    obtain_correct_and_specified_inputs = obtain_correct_and_specified_inputs
-    obtain_correct_and_specified_outputs = obtain_correct_and_specified_outputs
+    obtain_inputs = obtain_inputs
+    obtain_outputs = obtain_outputs
     read_meta_yml = read_meta_yml
     module_changes = module_changes
     module_deprecations = module_deprecations
@@ -298,81 +298,78 @@ class ModuleLint(ComponentLint):
         # Used to compare only the structure of channels and elements
         # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
         if "input" in meta_yml:
-            correct_inputs, meta_inputs = self.obtain_correct_and_specified_inputs(mod, meta_yml)
+            correct_inputs = self.obtain_inputs(mod.inputs)
+            meta_inputs = self.obtain_inputs(meta_yml["input"])
         if "output" in meta_yml:
-            correct_outputs, meta_outputs = self.obtain_correct_and_specified_outputs(mod, meta_yml)
+            correct_outputs = self.obtain_outputs(mod.outputs)
+            meta_outputs = self.obtain_outputs(meta_yml["output"])
+
+        def _find_meta_info(meta_yml, element_name, is_output=False) -> dict:
+            """Find the information specified in the meta.yml file to update the corrected meta.yml content"""
+            if is_output and isinstance(meta_yml, list):
+                # Convert old meta.yml structure for outputs (list) to dict
+                meta_yml = {k: v for d in meta_yml for k, v in d.items()}
+            if isinstance(meta_yml, list):
+                for k, meta_channel in enumerate(meta_yml):
+                    if isinstance(meta_channel, list):
+                        for x, meta_element in enumerate(meta_channel):
+                            if element_name == list(meta_element.keys())[0]:
+                                return meta_yml[k][x][element_name]
+                    elif isinstance(meta_channel, dict):
+                        if element_name == list(meta_channel.keys())[0]:
+                            return meta_yml[k][element_name]
+            elif isinstance(meta_yml, dict):
+                for ch_name, channels in meta_yml.items():
+                    for k, meta_channel in enumerate(channels):
+                        if isinstance(meta_channel, list):
+                            for x, meta_element in enumerate(meta_channel):
+                                if element_name == list(meta_element.keys())[0]:
+                                    return meta_yml[ch_name][k][x][element_name]
+                        elif isinstance(meta_channel, dict):
+                            if element_name == list(meta_channel.keys())[0]:
+                                return meta_yml[ch_name][k][element_name]
+            return {}
 
         if "input" in meta_yml and correct_inputs != meta_inputs:
             log.debug(
                 f"Correct inputs: '{correct_inputs}' differ from current inputs: '{meta_inputs}' in '{mod.meta_yml}'"
             )
-            corrected_meta_yml["input"] = mod.inputs.copy()  # list of lists (channels) of dicts (elements)
+            corrected_meta_yml["input"] = (
+                mod.inputs.copy()
+            )  # eg. [ [{meta:{}}, {bam:{}}], {reference:{}}] -> 2 channels, a tupple (list) and a single path (dict)
             for i, channel in enumerate(corrected_meta_yml["input"]):
-                for j, element in enumerate(channel):
-                    element_name = list(element.keys())[0]
-                    for k, meta_element in enumerate(meta_yml["input"]):
-                        try:
-                            # Handle old format of meta.yml: list of dicts (channels)
-                            if element_name in meta_element.keys():
-                                # Copy current features of that input element form meta.yml
-                                for feature in meta_element[element_name].keys():
-                                    if feature not in element[element_name].keys():
-                                        corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[
-                                            element_name
-                                        ][feature]
-                                break
-                        except AttributeError:
-                            # Handle new format of meta.yml: list of lists (channels) of elements (dicts)
-                            for x, meta_ch_element in enumerate(meta_element):
-                                if element_name in meta_ch_element.keys():
-                                    # Copy current features of that input element form meta.yml
-                                    for feature in meta_element[x][element_name].keys():
-                                        if feature not in element[element_name].keys():
-                                            corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[x][
-                                                element_name
-                                            ][feature]
-                                    break
+                if isinstance(channel, list):
+                    for j, element in enumerate(channel):
+                        element_name = list(element.keys())[0]
+                        corrected_meta_yml["input"][i][j][element_name] = _find_meta_info(
+                            meta_yml["input"], element_name
+                        )
+                elif isinstance(channel, dict):
+                    element_name = list(channel.keys())[0]
+                    corrected_meta_yml["input"][i][element_name] = _find_meta_info(meta_yml["input"], element_name)
 
         if "output" in meta_yml and correct_outputs != meta_outputs:
             log.debug(
                 f"Correct outputs: '{correct_outputs}' differ from current outputs: '{meta_outputs}' in '{mod.meta_yml}'"
             )
-            corrected_meta_yml["output"] = mod.outputs.copy()  # list of dicts (channels) with list of dicts (elements)
-            for i, channel in enumerate(corrected_meta_yml["output"]):
-                ch_name = list(channel.keys())[0]
-                for j, element in enumerate(channel[ch_name]):
-                    element_name = list(element.keys())[0]
-                    for k, meta_element in enumerate(meta_yml["output"]):
-                        if element_name in meta_element.keys():
-                            # Copy current features of that output element form meta.yml
-                            for feature in meta_element[element_name].keys():
-                                if feature not in element[element_name].keys():
-                                    corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = meta_element[
-                                        element_name
-                                    ][feature]
-                            break
-                        elif ch_name in meta_element.keys():
-                            # When the previous output element was using the name of the channel
-                            # Copy current features of that output element form meta.yml
-                            try:
-                                # Handle old format of meta.yml
-                                for feature in meta_element[ch_name].keys():
-                                    if feature not in element[element_name].keys():
-                                        corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = (
-                                            meta_element[ch_name][feature]
-                                        )
-                            except AttributeError:
-                                # Handle new format of meta.yml
-                                for x, meta_ch_element in enumerate(meta_element[ch_name]):
-                                    for meta_ch_element_name in meta_ch_element.keys():
-                                        for feature in meta_ch_element[meta_ch_element_name].keys():
-                                            if feature not in element[element_name].keys():
-                                                corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = (
-                                                    meta_ch_element[meta_ch_element_name][feature]
-                                                )
-                            break
+            corrected_meta_yml["output"] = (
+                mod.outputs.copy()
+            )  # eg. { bam: [[ {meta:{}}, {*.bam:{}} ]], reference: [ {*.fa:{}} ] } -> 2 channels, a tuple (list) and a single path (dict)
+            for ch_name in corrected_meta_yml["output"].keys():
+                for i, ch_content in enumerate(corrected_meta_yml["output"][ch_name]):
+                    if isinstance(ch_content, list):
+                        for j, element in enumerate(ch_content):
+                            element_name = list(element.keys())[0]
+                            corrected_meta_yml["output"][ch_name][i][j][element_name] = _find_meta_info(
+                                meta_yml["output"], element_name, is_output=True
+                            )
+                    elif isinstance(ch_content, dict):
+                        element_name = list(ch_content.keys())[0]
+                        corrected_meta_yml["output"][ch_name][i][element_name] = _find_meta_info(
+                            meta_yml["output"], element_name, is_output=True
+                        )
 
-        def add_edam_ontologies(section, edam_formats, desc):
+        def _add_edam_ontologies(section, edam_formats, desc):
             expected_ontologies = []
             current_ontologies = []
             if "pattern" in section:
@@ -387,10 +384,15 @@ class ModuleLint(ComponentLint):
                         extension = pattern.split(".")[-1]
                         if extension in edam_formats:
                             expected_ontologies.append((edam_formats[extension][0], extension))
+                # remove duplicated entries
+                expected_ontologies = list({k: v for k, v in expected_ontologies}.items())
             if "ontologies" in section:
                 for ontology in section["ontologies"]:
-                    current_ontologies.append(ontology["edam"])
-            elif section["type"] == "file":
+                    try:
+                        current_ontologies.append(ontology["edam"])
+                    except KeyError:
+                        log.warning(f"Could not add ontologies in {desc}: {ontology}")
+            elif "type" in section and section["type"] == "file":
                 section["ontologies"] = []
             log.debug(f"expected ontologies for {desc}: {expected_ontologies}")
             log.debug(f"current ontologies for {desc}: {current_ontologies}")
@@ -406,19 +408,33 @@ class ModuleLint(ComponentLint):
         edam_formats = nf_core.modules.modules_utils.load_edam()
         if "input" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["input"]):
-                for j, element in enumerate(channel):
-                    element_name = list(element.keys())[0]
-                    add_edam_ontologies(
-                        corrected_meta_yml["input"][i][j][element_name], edam_formats, f"input - {element_name}"
+                if isinstance(channel, list):
+                    for j, element in enumerate(channel):
+                        element_name = list(element.keys())[0]
+                        _add_edam_ontologies(
+                            corrected_meta_yml["input"][i][j][element_name], edam_formats, f"input - {element_name}"
+                        )
+                elif isinstance(channel, dict):
+                    element_name = list(channel.keys())[0]
+                    _add_edam_ontologies(
+                        corrected_meta_yml["input"][i][element_name], edam_formats, f"input - {element_name}"
                     )
 
         if "output" in meta_yml:
-            for i, channel in enumerate(corrected_meta_yml["output"]):
-                ch_name = list(channel.keys())[0]
-                for j, element in enumerate(channel[ch_name]):
-                    element_name = list(element.keys())[0]
-                    add_edam_ontologies(
-                        corrected_meta_yml["output"][i][ch_name][j][element_name],
+            for ch_name in corrected_meta_yml["output"].keys():
+                ch_content = corrected_meta_yml["output"][ch_name][0]
+                if isinstance(ch_content, list):
+                    for i, element in enumerate(ch_content):
+                        element_name = list(element.keys())[0]
+                        _add_edam_ontologies(
+                            corrected_meta_yml["output"][ch_name][0][i][element_name],
+                            edam_formats,
+                            f"output - {ch_name} - {element_name}",
+                        )
+                elif isinstance(ch_content, dict):
+                    element_name = list(ch_content.keys())[0]
+                    _add_edam_ontologies(
+                        corrected_meta_yml["output"][ch_name][0][element_name],
                         edam_formats,
                         f"output - {ch_name} - {element_name}",
                     )

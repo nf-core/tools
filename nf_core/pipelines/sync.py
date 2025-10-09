@@ -85,7 +85,8 @@ class PipelineSync:
             "manifest.name",
             "manifest.description",
             "manifest.version",
-        ]  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
+            "manifest.contributors",
+        ]
         self.force_pr = force_pr
 
         self.gh_username = gh_username

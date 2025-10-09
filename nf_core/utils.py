@@ -266,6 +266,74 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(warning)
 
 
+# This is the minimal version of Nextflow required to fetch containers with `nextflow inspect`
+NF_INSPECT_MIN_NF_VERSION = (25, 4, 4, False)
+
+# This is the maximal version of nf-core/tools that does not require `nextflow inspect` for downloads
+NFCORE_VER_LAST_WITHOUT_NF_INSPECT = (3, 3, 2)
+
+
+# Pretty print a Nextflow version tuple
+def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
+    return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
+
+
+def get_nf_version() -> Optional[tuple[int, int, int, bool]]:
+    """Get the version of Nextflow installed on the system."""
+    try:
+        cmd_out = run_cmd("nextflow", "-v")
+        if cmd_out is None:
+            raise RuntimeError("Failed to run Nextflow version check.")
+        out, _ = cmd_out
+        out_str = str(out, encoding="utf-8")  # Ensure we have a string
+
+        version_str = out_str.strip().split()[-1]
+
+        # Check if we are using an edge release
+        is_edge = False
+        edge_split = version_str.split("-")
+        if len(edge_split) > 1:
+            is_edge = True
+            version_str = edge_split[0]
+
+        split_version_str = version_str.split(".")
+        parsed_version_tuple = (
+            int(split_version_str[0]),
+            int(split_version_str[1]),
+            int(split_version_str[2]),
+            is_edge,
+        )
+        return parsed_version_tuple
+    except Exception as e:
+        log.warning(f"Error getting Nextflow version: {e}")
+        return None
+
+
+# Check that the Nextflow version >= the minimal version required
+# This is used to ensure that we can run `nextflow inspect`
+def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silent=False) -> bool:
+    """Check the version of Nextflow installed on the system.
+
+    Args:
+        minimal_nf_version (tuple[int, int, int, bool]): The minimal version of Nextflow required.
+        silent (bool): Whether to log the version or not.
+    Returns:
+        bool: True if the installed version is greater than or equal to `minimal_nf_version`
+    """
+    nf_version = get_nf_version()
+    if nf_version is None:
+        return False
+
+    parsed_version_str = pretty_nf_version(nf_version)
+
+    if silent:
+        log.debug(f"Detected Nextflow version {parsed_version_str}")
+    else:
+        log.info(f"Detected Nextflow version {parsed_version_str}")
+
+    return nf_version >= minimal_nf_version
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -313,25 +381,39 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
         cache_path = Path(cache_basedir, cache_fn)
         if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path) as fh:
-                try:
+            try:
+                with open(cache_path) as fh:
                     config = json.load(fh)
-                except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
-            return config
+                return config
+            except json.JSONDecodeError as e:
+                # Log warning but don't raise - just regenerate the cache
+                log.warning(f"Unable to load cached JSON file '{cache_path}' due to error: {e}")
+                log.debug("Removing corrupted cache file and regenerating...")
+                try:
+                    cache_path.unlink()
+                except OSError:
+                    pass  # If we can't delete it, just continue
     log.debug("No config cache found")
 
     # Call `nextflow config`
     result = run_cmd("nextflow", f"config -flat {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        for line in nfconfig_raw.splitlines():
-            ul = line.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v.strip("'\"")
-            except ValueError:
-                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+        nfconfig = nfconfig_raw.decode("utf-8")
+        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=\s]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
+
+        for config_match in multiline_key_value_pattern.finditer(nfconfig):
+            k = config_match.group(2).strip()
+            v = config_match.group(3).strip().strip("'\"")
+            if k and v == "":
+                config[k] = "null"
+                log.debug(f"Config key: {k}, value: empty string")
+            elif k and v:
+                config[k] = v
+                log.debug(f"Config key: {k}, value: {v}")
+            else:
+                log.debug(f"Couldn't find key=value config pair:\n  {config_match.group(0)}")
+            del config_match
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -341,8 +423,9 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             for line in fh:
                 line_str = line.decode("utf-8")
                 match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
-                if match:
+                if match and match.group(1):
                     config[match.group(1)] = "null"
+
     except FileNotFoundError as e:
         log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
 
@@ -1565,9 +1648,12 @@ def get_wf_files(wf_path: Path):
 
     wf_files = []
 
-    with open(Path(wf_path, ".gitignore")) as f:
-        lines = f.read().splitlines()
-    ignore = [line for line in lines if line and not line.startswith("#")]
+    try:
+        with open(Path(wf_path, ".gitignore")) as f:
+            lines = f.read().splitlines()
+        ignore = [line for line in lines if line and not line.startswith("#")]
+    except FileNotFoundError:
+        ignore = []
 
     for path in Path(wf_path).rglob("*"):
         if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
