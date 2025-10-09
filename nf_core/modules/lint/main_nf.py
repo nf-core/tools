@@ -717,6 +717,7 @@ def _parse_output_emits(self, line):
         output.append(emit_regex.group(1).strip())
     return output
 
+
 def _parse_output_topics(self, line):
     output = []
     if "meta" in line:
