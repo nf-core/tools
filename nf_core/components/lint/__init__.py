@@ -254,14 +254,14 @@ class ComponentLint(ComponentCommand):
                 pass
 
         # Helper function to format test links nicely
-        def format_result(test_results, table):
+        def format_result(test_results: list[LintResult], table: Table) -> Table:
             """
             Given a LintResult object, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
             # TODO: Row styles don't work current as table-level style overrides.
             # Leaving it here in case there is a future fix
-            last_modname = False
+            last_modname = ""
             even_row = False
             for lint_result in test_results:
                 if last_modname and lint_result.component_name != last_modname:
@@ -282,7 +282,7 @@ class ComponentLint(ComponentCommand):
                 # Add link to the test documentation
                 tools_version = __version__
                 if "dev" in __version__:
-                    tools_version = "latest"
+                    tools_version = "dev"
                 test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}): {lint_result.message}"
 
                 table.add_row(
@@ -352,7 +352,7 @@ class ComponentLint(ComponentCommand):
                 )
             )
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         """Print a summary table to the console."""
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)

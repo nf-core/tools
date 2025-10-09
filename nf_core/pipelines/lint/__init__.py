@@ -311,7 +311,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             """
             tools_version = __version__
             if "dev" in __version__:
-                tools_version = "latest"
+                tools_version = "dev"
             for eid, msg in test_results:
                 yield Markdown(f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}): {msg}")
 
