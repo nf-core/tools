@@ -173,7 +173,7 @@ class ComponentInfo(ComponentCommand):
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
-            Optional[dict]: Parsed meta.yml if found, None otherwise
+            dict | None: Parsed meta.yml if found, None otherwise
         """
 
         if self.repo_type == "pipeline":

@@ -190,8 +190,8 @@ class ContainerFetcher(ABC):
         container_library (Iterable[str]): A collection of container libraries to use
         registry_set (Iterable[str]): A collection of registries to consider
         progress_factory (Callable[[], ContainerProgress]): A factory to create a progress bar.
-        library_dir (Optional[Path]): The directory to look for container images in.
-        cache_dir (Optional[Path]): A directory where container images might be cached.
+        library_dir (Path | None): The directory to look for container images in.
+        cache_dir (Path | None): A directory where container images might be cached.
         amend_cachedir (bool): Whether to amend the cache directory with the container images.
         parallel (int): The number of containers to fetch in parallel.
     """

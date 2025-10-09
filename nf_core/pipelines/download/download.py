@@ -47,18 +47,18 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (Optional[str]): A nf-core pipeline name.
-        revision (Optional[Union[tuple[str], str]]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
-        outdir (Optional[Path]): Path to the local download directory. Defaults to None.
-        compress_type (Optional[str]): Type of compression for the downloaded files. Defaults to None.
+        pipeline (str | None): A nf-core pipeline name.
+        revision (tuple[str] | str | None): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
+        outdir (Path | None): Path to the local download directory. Defaults to None.
+        compress_type (str | None): Type of compression for the downloaded files. Defaults to None.
         force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
         platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
-        download_configuration (Optional[str]): Download the configuration files from nf-core/configs. Defaults to None.
-        additional_tags (Optional[Union[list[str], str]]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
+        download_configuration (str | None): Download the configuration files from nf-core/configs. Defaults to None.
+        additional_tags (list[str] | str | None): Specify additional tags to add to the downloaded pipeline. Defaults to None.
         container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
-        container_library (Optional[Union[tuple[str], str]]): The container libraries (registries) to use. Defaults to None.
-        container_cache_utilisation (Optional[str]): If a local or remote cache of already existing container images should be considered. Defaults to None.
-        container_cache_index (Optional[Path]): An index for the remote container cache. Defaults to None.
+        container_library (tuple[str] | str | None): The container libraries (registries) to use. Defaults to None.
+        container_cache_utilisation (str | None): If a local or remote cache of already existing container images should be considered. Defaults to None.
+        container_cache_index (Path | None): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
     """

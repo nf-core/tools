@@ -210,7 +210,7 @@ def update_file_version(
         patterns (List[Tuple[str, str]]): A list of tuples containing the regex patterns to
             match and the replacement strings.
         required (bool, optional): Whether the file is required to exist. Defaults to `True`.
-        yaml_key (Optional[List[str]], optional): The YAML key to update. Defaults to `None`.
+        yaml_key (List[str] | None, optional): The YAML key to update. Defaults to `None`.
     """
     fn: Path = pipeline_obj._fp(filename)
 
