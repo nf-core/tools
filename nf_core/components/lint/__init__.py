@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Optional, Union
 
 import rich.box
-import rich.console
 import rich.panel
 import rich.repr
 from rich.markdown import Markdown
