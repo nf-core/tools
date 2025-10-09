@@ -133,5 +133,4 @@ def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> 
     if exact_matches:
         return exact_matches
     # If no exact match, look for modules that start with the given name (subtools)
-    print(modules)
     return [m for m in modules if m.component_name.startswith(module_name)]
