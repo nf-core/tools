@@ -7,16 +7,13 @@ import logging
 import operator
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import rich.box
-import rich.console
 import rich.panel
 import rich.repr
 from rich.markdown import Markdown
 from rich.table import Table
 
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
