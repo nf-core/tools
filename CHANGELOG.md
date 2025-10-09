@@ -126,7 +126,6 @@
 - Update dependency textual to v3.5.0 ([#3636](https://github.com/nf-core/tools/pull/3636))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.16.1 ([#3624](https://github.com/nf-core/tools/pull/3624))
 
-
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
 ### Template
