@@ -247,7 +247,6 @@ workflow METAVAL {
 
         TAXID_BAM_FASTA_LONGREAD( MAPPING_LONGREAD_PATHOGEN.out.bam, MAPPING_LONGREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_LONGREAD.out.versions )
-        //TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam.dump(tag: "taxid_bam")
 
         // IGV
         ch_igv_input_pathogen_shortread = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam

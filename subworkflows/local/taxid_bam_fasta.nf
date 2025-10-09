@@ -71,7 +71,7 @@ workflow TAXID_BAM_FASTA {
                 bam: [ meta, bam, bam_index ]
                 accession: accession_list.flatten()
         }
-    //ch_consensus_input.bam.dump(tag:"input_bam")
+
     // BAM files will be used to call consensus sequences
     SUBSET_BAM_PASS( ch_consensus_input.bam, ch_consensus_input.accession )
     ch_versions = ch_versions.mix( SUBSET_BAM_PASS.out.versions.first() )

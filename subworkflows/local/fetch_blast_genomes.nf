@@ -37,17 +37,6 @@ workflow FETCH_BLAST_GENOMES {
                 [ new_meta, reads, genome ]
             }
     }
-    // Skip BLAST — Fetch genomes based on taxids predicted by classifiers
-//    if ( params.skip_blastn && params.skip_blastx ) {
-//        ch_genomes_reads = ch_reads
-//            .map { meta, reads -> [ meta.taxid, meta, reads ] }
-//            .join( ch_taxid2genome, by:0 )
-//            .map { meta, reads, genome ->
-//                def new_meta = meta.clone()
-//                new_meta.mapping_taxid = taxid
-//                [ new_meta, reads, genome ]}
-//    }
-//
     ch_genomes_reads_branched = ch_genomes_reads
         .branch { meta, reads, genome ->
             shortreads: meta.instrument_platform != 'OXFORD_NANOPORE'
