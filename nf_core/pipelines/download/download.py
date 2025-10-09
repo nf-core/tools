@@ -494,26 +494,29 @@ class DownloadWorkflow:
         Create the appropriate ContainerFetcher object
         """
         assert self.outdir is not None  # mypy
-        if self.container_system == "singularity":
-            self.container_fetcher = SingularityFetcher(
-                outdir=self.outdir,
-                container_library=self.container_library,
-                registry_set=self.registry_set,
-                container_cache_utilisation=self.container_cache_utilisation,
-                container_cache_index=self.container_cache_index,
-                parallel=self.parallel,
-                hide_progress=self.hide_progress,
-            )
-        elif self.container_system == "docker":
-            self.container_fetcher = DockerFetcher(
-                outdir=self.outdir,
-                registry_set=self.registry_set,
-                container_library=self.container_library,
-                parallel=self.parallel,
-                hide_progress=self.hide_progress,
-            )
-        else:
-            self.container_fetcher = None
+        try:
+            if self.container_system == "singularity":
+                self.container_fetcher = SingularityFetcher(
+                    outdir=self.outdir,
+                    container_library=self.container_library,
+                    registry_set=self.registry_set,
+                    container_cache_utilisation=self.container_cache_utilisation,
+                    container_cache_index=self.container_cache_index,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            elif self.container_system == "docker":
+                self.container_fetcher = DockerFetcher(
+                    outdir=self.outdir,
+                    registry_set=self.registry_set,
+                    container_library=self.container_library,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            else:
+                self.container_fetcher = None
+        except OSError as e:
+            raise DownloadError(e)
 
     def prompt_use_singularity(self, fail_message: str) -> None:
         use_singularity = questionary.confirm(
