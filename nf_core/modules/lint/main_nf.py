@@ -217,20 +217,25 @@ def main_nf(
     # Check that a software version is emitted
     if topics:
         if "versions" in topics:
-            module.passed.append(("main_nf_version_topic", "Module emits software versions as topic", module.main_nf))
+            module.passed.append(
+                ("main_nf", "main_nf_version_topic", "Module emits software versions as topic", module.main_nf)
+            )
         else:
             module.failed.append(
-                ("main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
+                ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
             )
 
     if emits:
         topic_versions_amount = sum(1 for t in topics if t == "versions")
         emit_versions_amount = sum(1 for e in emits if e.startswith("versions"))
         if topic_versions_amount == emit_versions_amount:
-            module.passed.append(("main_nf_version_emit", "Module emits each software version", module.main_nf))
+            module.passed.append(
+                ("main_nf", "main_nf_version_emit", "Module emits each software version", module.main_nf)
+            )
         else:
             module.failed.append(
                 (
+                    "main_nf",
                     "main_nf_version_emit",
                     "Module does not have an `emit:` and `topic:` for each software version",
                     module.main_nf,
