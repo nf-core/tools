@@ -57,6 +57,7 @@ def check_patch_valid(module, patch_path):
                 if not line.startswith("+++"):
                     module.failed.append(
                         (
+                            "module_patch",
                             "patch_valid",
                             "Patch file invalid. Line starting with '---' should always be followed by line starting with '+++'",
                             patch_path,
@@ -74,6 +75,7 @@ def check_patch_valid(module, patch_path):
                 else:
                     module.failed.append(
                         (
+                            "module_patch",
                             "patch_valid",
                             f"Patch file invaldi. From file '{frompath}' mismatched with to path '{topath}'",
                             patch_path,
@@ -85,6 +87,7 @@ def check_patch_valid(module, patch_path):
                 if not line.startswith("@@"):
                     module.failed.append(
                         (
+                            "module_patch",
                             "patch_valid",
                             "Patch file invalid. File declarations should be followed by hunk",
                             patch_path,
@@ -98,7 +101,7 @@ def check_patch_valid(module, patch_path):
         return False
 
     if len(paths_in_patch) == 0:
-        module.failed.append(("patch_valid", "Patch file invalid. Found no patches", patch_path))
+        module.failed.append(("module_patch", "patch_valid", "Patch file invalid. Found no patches", patch_path))
         return False
 
     # Go through the files and check that they exist
@@ -109,6 +112,7 @@ def check_patch_valid(module, patch_path):
             if not Path(module.base_dir, path).exists():
                 module.failed.append(
                     (
+                        "module_patch",
                         "patch_valid",
                         f"Patch file invalid. Path '{path}' does not exist but is reported in patch file.",
                         patch_path,
@@ -120,6 +124,7 @@ def check_patch_valid(module, patch_path):
             if not Path(module.base_dir, path).exists():
                 module.failed.append(
                     (
+                        "module_patch",
                         "patch_valid",
                         f"Patch file invalid. Path '{path}' does not exist but is reported in patch file.",
                         patch_path,
@@ -128,12 +133,14 @@ def check_patch_valid(module, patch_path):
                 passed = False
                 continue
             module.warned.append(
-                ("patch", f"Patch file performs file creation of {path}. This is discouraged."), patch_path
+                ("module_patch", "patch", f"Patch file performs file creation of {path}. This is discouraged."),
+                patch_path,
             )
         elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
             if Path(module.base_dir, path).exists():
                 module.failed.append(
                     (
+                        "module_patch",
                         "patch_valid",
                         f"Patch file invalid. Path '{path}' is reported as deleted but exists.",
                         patch_path,
@@ -142,10 +149,15 @@ def check_patch_valid(module, patch_path):
                 passed = False
                 continue
             module.warned.append(
-                ("patch", f"Patch file performs file deletion of {path}. This is discouraged.", patch_path)
+                (
+                    "module_patch",
+                    "patch",
+                    f"Patch file performs file deletion of {path}. This is discouraged.",
+                    patch_path,
+                )
             )
         if passed:
-            module.passed.append(("patch_valid", "Patch file is valid", patch_path))
+            module.passed.append(("module_patch", "patch_valid", "Patch file is valid", patch_path))
         return passed
 
 
@@ -171,8 +183,8 @@ def patch_reversible(module_lint_object, module, patch_path):
         )
     except LookupError:
         # Patch failed. Save the patch file by moving to the install dir
-        module.failed.append(("patch_reversible", "Patch file is outdated or edited", patch_path))
+        module.failed.append(("module_patch", "patch_reversible", "Patch file is outdated or edited", patch_path))
         return False
 
-    module.passed.append(("patch_reversible", "Patch agrees with module files", patch_path))
+    module.passed.append(("module_patch", "patch_reversible", "Patch agrees with module files", patch_path))
     return True

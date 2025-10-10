@@ -48,7 +48,7 @@ class ComponentCreate(ComponentCommand):
         conda_name: Optional[str] = None,
         conda_version: Optional[str] = None,
         empty_template: bool = False,
-        migrate_pytest: bool = False,
+        migrate_pytest: bool = False,  # TODO: Deprecate this flag in the future
     ):
         super().__init__(component_type, directory)
         self.directory = directory
