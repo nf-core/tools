@@ -458,6 +458,3 @@ def pipelines_schema_docs(schema_path, output, format, force, columns):
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
     schema_obj.print_documentation(output, format, force, columns.split(","))
-    schema_obj.get_schema_path(schema_path)
-    schema_obj.load_schema()
-    schema_obj.print_documentation(output, format, force, columns.split(","))
