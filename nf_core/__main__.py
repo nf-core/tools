@@ -54,11 +54,7 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
-from nf_core.commands_test_datasets import (
-    test_datasets_list_branches,
-    test_datasets_list_remote,
-    test_datasets_search,
-)
+from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download.download import DownloadError
@@ -433,7 +429,7 @@ def command_pipelines_lint(
     "--authenticated",
     is_flag=True,
     default=False,
-    help="Enable authenticated download (with better rate limits, access to private repos, etc.).",
+    help="Enable authenticated download via the API of the SCM provider (with better rate limits, access to private repos, etc.). Requires e.g., GITHUB_TOKEN to be set in the environment.",
 )
 @click.pass_context
 def command_pipelines_download(

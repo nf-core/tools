@@ -48,7 +48,7 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (Optional[str]): A nf-core pipeline name.
+        pipeline (Optional[str]): The name of an nf-core-compatible pipeline in the form org/repo
         revision (Optional[Union[tuple[str], str]]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
         outdir (Optional[Path]): Path to the local download directory. Defaults to None.
         compress_type (Optional[str]): Type of compression for the downloaded files. Defaults to None.
@@ -62,7 +62,7 @@ class DownloadWorkflow:
         container_cache_index (Optional[Path]): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
-        authenticated (bool): If True, use the GitHub API to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
+        authenticated (bool): If True, use the API of the SCM provider to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
     """
 
     def __init__(
@@ -466,11 +466,19 @@ class DownloadWorkflow:
 
         if not self.platform:
             for revision, wf_sha in self.wf_sha.items():
-                # Set the download URL and return - only applicable for classic downloads
-                self.wf_download_url = {
-                    **self.wf_download_url,
-                    revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
-                }
+                # Set the download URL - only applicable for classic downloads
+                if self.authenticated:
+                    # For authenticated downloads, use the GitHub API
+                    self.wf_download_url = {
+                        **self.wf_download_url,
+                        revision: f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}",
+                    }
+                else:
+                    # For unauthenticated downloads, use the archive URL
+                    self.wf_download_url = {
+                        **self.wf_download_url,
+                        revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
+                    }
 
     def prompt_config_inclusion(self) -> None:
         """Prompt for inclusion of institutional configurations"""
@@ -558,29 +566,25 @@ class DownloadWorkflow:
     def download_wf_files(self, revision: str, wf_sha: str, download_url: str) -> str:
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
 
-        # Determine which URL to use and fetch the content
+        log.debug(f"Downloading {download_url}")
+        
+        # Fetch content and determine top-level directory based on authentication method
         if self.authenticated:
-            api_url = f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}"
-            log.debug(f"Downloading from API {api_url}")
-            content = gh_api.get(api_url).content
+            # GitHub API download: fetch via API and get topdir from zip contents
+            content = gh_api.get(download_url).content
+            with ZipFile(io.BytesIO(content)) as zipfile:
+                topdir = zipfile.namelist()[0]  # API zipballs have a generated directory name
+                zipfile.extractall(self.outdir)
         else:
-            log.debug(f"Downloading {download_url}")
+            # Direct URL download: fetch and construct expected topdir name
             content = requests.get(download_url).content
+            topdir = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
+            with ZipFile(io.BytesIO(content)) as zipfile:
+                zipfile.extractall(self.outdir)
 
-        # Extract the zip file and determine the top-level directory
-        with ZipFile(io.BytesIO(content)) as zipfile:
-            if self.authenticated:
-                # API download: top directory name is in the zip
-                topdir = zipfile.namelist()[0]
-            else:
-                # URL download: construct the expected top directory name
-                topdir = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-            
-            zipfile.extractall(self.outdir)
-
-        # create a filesystem-safe version of the revision name for the directory
+        # Create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
-        # account for name collisions, if there is a branch / release named "configs" or container output dir
+        # Account for name collisions, if there is a branch / release named "configs" or container output dir
         if revision_dirname in ["configs", self.get_container_output_dir()]:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
