@@ -116,13 +116,7 @@ class ModuleVersionBumper(ComponentCommand):
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
-            # First try to find an exact match
-            exact_matches = [m for m in nfcore_modules if m.component_name == module]
-            if exact_matches:
-                nfcore_modules = exact_matches
-            else:
-                # If no exact match, look for modules that start with the given name (subtools)
-                nfcore_modules = [m for m in nfcore_modules if m.component_name.startswith(module + "/")]
+            nfcore_modules = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, module)
 
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
