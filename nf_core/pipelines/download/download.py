@@ -62,7 +62,7 @@ class DownloadWorkflow:
         container_cache_index (Optional[Path]): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
-        api_download (bool): If True, use the GitHub API to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
+        authenticated (bool): If True, use the GitHub API to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
     """
 
     def __init__(
@@ -81,7 +81,7 @@ class DownloadWorkflow:
         container_cache_index: Optional[Path] = None,
         parallel: int = 4,
         hide_progress: bool = False,
-        api_download: bool = False,
+        authenticated: bool = False,
     ):
         # Verify that the flags provided make sense together
         if (
@@ -152,7 +152,7 @@ class DownloadWorkflow:
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel = parallel
         self.hide_progress = hide_progress
-        self.api_download = api_download
+        self.authenticated = authenticated
 
         self.wf_revisions: list[dict[str, Any]] = []
         self.wf_branches: dict[str, Any] = {}
@@ -558,23 +558,25 @@ class DownloadWorkflow:
     def download_wf_files(self, revision: str, wf_sha: str, download_url: str) -> str:
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
 
-        if not self.api_download:
-            log.debug(f"Downloading {download_url}")
-            # Download GitHub zip file into memory and extract
-            url = requests.get(download_url)
-            with ZipFile(io.BytesIO(url.content)) as zipfile:
-                zipfile.extractall(self.outdir)
-            topdir = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-        else:
+        # Determine which URL to use and fetch the content
+        if self.authenticated:
             api_url = f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}"
             log.debug(f"Downloading from API {api_url}")
-
-            # Download GitHub zip file into memory and extract
             content = gh_api.get(api_url).content
+        else:
+            log.debug(f"Downloading {download_url}")
+            content = requests.get(download_url).content
 
-            with ZipFile(io.BytesIO(content)) as zipfile:
+        # Extract the zip file and determine the top-level directory
+        with ZipFile(io.BytesIO(content)) as zipfile:
+            if self.authenticated:
+                # API download: top directory name is in the zip
                 topdir = zipfile.namelist()[0]
-                zipfile.extractall(self.outdir)
+            else:
+                # URL download: construct the expected top directory name
+                topdir = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
+            
+            zipfile.extractall(self.outdir)
 
         # create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
@@ -583,10 +585,7 @@ class DownloadWorkflow:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
-        os.rename(
-            os.path.join(self.outdir, topdir),
-            os.path.join(self.outdir, revision_dirname),
-        )
+        (self.outdir / topdir).rename(self.outdir / revision_dirname)
 
         # Make downloaded files executable
         for dirpath, _, filelist in os.walk(self.outdir / revision_dirname):

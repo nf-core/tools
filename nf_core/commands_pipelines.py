@@ -166,7 +166,7 @@ def pipelines_download(
     pipeline,
     revision,
     outdir,
-    compress,
+    compress_type,
     force,
     platform,
     download_configuration,
@@ -176,7 +176,7 @@ def pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
-    api_download,
+    authenticated,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -190,7 +190,7 @@ def pipelines_download(
         pipeline,
         revision,
         outdir,
-        compress_type=compress,
+        compress_type=compress_type,
         force=force,
         platform=platform,
         download_configuration=download_configuration,
@@ -201,7 +201,7 @@ def pipelines_download(
         container_cache_index=container_cache_index,
         parallel=parallel_downloads,
         hide_progress=ctx.obj["hide_progress"],
-        api_download=api_download,
+        authenticated=authenticated,
     )
     dl.download_workflow()
 

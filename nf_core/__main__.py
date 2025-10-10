@@ -430,10 +430,10 @@ def command_pipelines_lint(
 )
 @click.option(
     "-a",
-    "--api-download",
+    "--authenticated",
     is_flag=True,
     default=False,
-    help="Download repos via GitHub API (allows for authentication).",
+    help="Enable authenticated download (with better rate limits, access to private repos, etc.).",
 )
 @click.pass_context
 def command_pipelines_download(
@@ -451,7 +451,7 @@ def command_pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
-    api_download,
+    authenticated,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -471,7 +471,7 @@ def command_pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
-        api_download,
+        authenticated,
     )
 
 
@@ -2436,6 +2436,7 @@ def command_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        authenticated=False,
     )
 
 
