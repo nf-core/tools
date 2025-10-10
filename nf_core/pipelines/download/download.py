@@ -567,7 +567,7 @@ class DownloadWorkflow:
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
 
         log.debug(f"Downloading {download_url}")
-        
+
         # Fetch content and determine top-level directory based on authentication method
         if self.authenticated:
             # GitHub API download: fetch via API and get topdir from zip contents
