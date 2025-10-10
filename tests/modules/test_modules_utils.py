@@ -44,8 +44,7 @@ class TestModulesUtils(TestModules):
 
         # Test filtering by tool family (super-tool)
         filtered = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "samtools")
-        assert len(filtered) == 3
-        assert all(m.component_name.startswith("samtools") for m in filtered)
+
         assert set(m.component_name for m in filtered) == {"samtools/view", "samtools/sort", "samtools/index"}
 
     def test_filter_modules_by_name_exact_match_preferred(self):
