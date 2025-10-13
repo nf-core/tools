@@ -529,13 +529,19 @@ class ComponentCreate(ComponentCommand):
         with open(self.file_paths["meta.yml"]) as fh:
             meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
 
-        versions: dict[str, list[dict[str, dict]]] = {
+        versions: dict[str, list[list[dict[str, dict]]]] = {
             f"versions_{self.component}": [
-                {
-                    "${task.process}": {"type": "string", "description": "The name of the process"},
-                    f"{self.component}": {"type": "string", "description": "The name of the tool"},
-                    f"{self.component} --version": {"type": "string", "description": "The version of the tool"},
-                }
+                [
+                    {
+                        "${task.process}": {"type": "string", "description": "The name of the process"}
+                    },
+                    {
+                        f"{self.component}": {"type": "string", "description": "The name of the tool"}
+                    },
+                    {
+                        f"{self.component} --version": {"type": "string", "description": "The version of the tool"},
+                    }
+                ]
             ]
         }
 
