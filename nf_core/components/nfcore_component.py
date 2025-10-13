@@ -47,9 +47,9 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed: list[tuple[str, str, Path]] = []
-        self.warned: list[tuple[str, str, Path]] = []
-        self.failed: list[tuple[str, str, Path]] = []
+        self.passed: list[tuple[str, str, str, Path]] = []
+        self.warned: list[tuple[str, str, str, Path]] = []
+        self.failed: list[tuple[str, str, str, Path]] = []
         self.inputs: list[list[dict[str, dict[str, str]]]] = []
         self.outputs: list[str] = []
         self.has_meta: bool = False

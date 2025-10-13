@@ -114,3 +114,22 @@ def load_edam():
                     if extension not in edam_formats:
                         edam_formats[extension] = (fields[0], fields[1])  # URL, name
     return edam_formats
+
+
+def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> list[NFCoreComponent]:
+    """
+    Filter modules by name, supporting exact matches and tool family matching.
+
+    Args:
+        modules (list[NFCoreComponent]): List of modules to filter
+        module_name (str): The module name or prefix to match
+
+    Returns:
+        list[NFCoreComponent]: List of matching modules
+    """
+    # First try to find an exact match
+    exact_matches = [m for m in modules if m.component_name == module_name]
+    if exact_matches:
+        return exact_matches
+    # If no exact match, look for modules that start with the given name (subtools)
+    return [m for m in modules if m.component_name.startswith(module_name)]

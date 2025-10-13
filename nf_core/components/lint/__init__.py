@@ -15,6 +15,7 @@ from rich.markdown import Markdown
 from rich.table import Table
 
 import nf_core.utils
+from nf_core import __version__
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_json import ModulesJson
@@ -35,9 +36,12 @@ class LintExceptionError(Exception):
 class LintResult:
     """An object to hold the results of a lint test"""
 
-    def __init__(self, component: NFCoreComponent, lint_test: str, message: str, file_path: Path):
+    def __init__(
+        self, component: NFCoreComponent, parent_lint_test: str, lint_test: str, message: str, file_path: Path
+    ):
         self.component = component
         self.lint_test = lint_test
+        self.parent_lint_test = parent_lint_test
         self.message = message
         self.file_path = file_path
         self.component_name: str = component.component_name
@@ -248,14 +252,14 @@ class ComponentLint(ComponentCommand):
                 pass
 
         # Helper function to format test links nicely
-        def format_result(test_results, table):
+        def format_result(test_results: list[LintResult], table: Table) -> Table:
             """
-            Given an list of error message IDs and the message texts, return a nicely formatted
+            Given a LintResult object, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
             # TODO: Row styles don't work current as table-level style overrides.
             # Leaving it here in case there is a future fix
-            last_modname = False
+            last_modname = ""
             even_row = False
             for lint_result in test_results:
                 if last_modname and lint_result.component_name != last_modname:
@@ -273,10 +277,16 @@ class ComponentLint(ComponentCommand):
                 file_path = os.path.relpath(lint_result.file_path, self.directory)
                 file_path_link = f"[link=vscode://file/{os.path.abspath(file_path)}]{file_path}[/link]"
 
+                # Add link to the test documentation
+                tools_version = __version__
+                if "dev" in __version__:
+                    tools_version = "dev"
+                test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}): {lint_result.message}"
+
                 table.add_row(
                     module_name,
                     file_path_link,
-                    Markdown(f"{lint_result.message}"),
+                    Markdown(test_link_message),
                     style="dim" if even_row else None,
                 )
             return table
@@ -340,7 +350,7 @@ class ComponentLint(ComponentCommand):
                 )
             )
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         """Print a summary table to the console."""
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)

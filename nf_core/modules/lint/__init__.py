@@ -16,8 +16,6 @@ import rich
 import rich.progress
 import ruamel.yaml
 
-import nf_core.components
-import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml
@@ -142,7 +140,7 @@ class ModuleLint(ComponentLint):
             if all_modules:
                 raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            remote_modules = [m for m in self.all_remote_components if m.component_name == module]
+            remote_modules = nf_core.modules.modules_utils.filter_modules_by_name(self.all_remote_components, module)
             if len(remote_modules) == 0:
                 raise LintExceptionError(f"Could not find the specified module: '{module}'")
         else:

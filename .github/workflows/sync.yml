@@ -72,10 +72,10 @@ jobs:
           path: nf-core/${{ matrix.pipeline }}
           fetch-depth: "0"
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.14
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install python dependencies
         run: |

@@ -22,7 +22,7 @@ import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
-from nf_core.pipelines.download.utils import DownloadError
+from nf_core.pipelines.download.utils import DownloadError, intermediate_dir_with_cd
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
@@ -494,26 +494,29 @@ class DownloadWorkflow:
         Create the appropriate ContainerFetcher object
         """
         assert self.outdir is not None  # mypy
-        if self.container_system == "singularity":
-            self.container_fetcher = SingularityFetcher(
-                outdir=self.outdir,
-                container_library=self.container_library,
-                registry_set=self.registry_set,
-                container_cache_utilisation=self.container_cache_utilisation,
-                container_cache_index=self.container_cache_index,
-                parallel=self.parallel,
-                hide_progress=self.hide_progress,
-            )
-        elif self.container_system == "docker":
-            self.container_fetcher = DockerFetcher(
-                outdir=self.outdir,
-                registry_set=self.registry_set,
-                container_library=self.container_library,
-                parallel=self.parallel,
-                hide_progress=self.hide_progress,
-            )
-        else:
-            self.container_fetcher = None
+        try:
+            if self.container_system == "singularity":
+                self.container_fetcher = SingularityFetcher(
+                    outdir=self.outdir,
+                    container_library=self.container_library,
+                    registry_set=self.registry_set,
+                    container_cache_utilisation=self.container_cache_utilisation,
+                    container_cache_index=self.container_cache_index,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            elif self.container_system == "docker":
+                self.container_fetcher = DockerFetcher(
+                    outdir=self.outdir,
+                    registry_set=self.registry_set,
+                    container_library=self.container_library,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            else:
+                self.container_fetcher = None
+        except OSError as e:
+            raise DownloadError(e)
 
     def prompt_use_singularity(self, fail_message: str) -> None:
         use_singularity = questionary.confirm(
@@ -650,19 +653,21 @@ class DownloadWorkflow:
                 profile_str += ",test,test_full"
             profile = f"-profile {profile_str}" if self.container_system else ""
 
-            # Run nextflow inspect
-            executable = "nextflow"
-            cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
-            cmd_out = run_cmd(executable, cmd_params)
-            if cmd_out is None:
-                raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+            working_dir = Path().absolute()
+            with intermediate_dir_with_cd(working_dir):
+                # Run nextflow inspect
+                executable = "nextflow"
+                cmd_params = f"inspect -format json {profile} {working_dir / workflow_directory / entrypoint}"
+                cmd_out = run_cmd(executable, cmd_params)
+                if cmd_out is None:
+                    raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
-            out, _ = cmd_out
-            out_json = json.loads(out)
-            # NOTE: Should we save the container name too to have more meta information?
-            named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-            # We only want to process unique containers
-            self.containers = list(set(named_containers.values()))
+                out, _ = cmd_out
+                out_json = json.loads(out)
+                # NOTE: Should we save the container name too to have more meta information?
+                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+                # We only want to process unique containers
+                self.containers = list(set(named_containers.values()))
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error")
