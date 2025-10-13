@@ -4,7 +4,7 @@ import json
 import logging
 import textwrap
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import questionary
 
@@ -94,13 +94,13 @@ class ParamsFileBuilder:
         """
         self.pipeline = pipeline
         self.pipeline_revision = revision
-        self.schema_obj: Optional[PipelineSchema] = None
+        self.schema_obj: PipelineSchema | None = None
 
         # Fetch remote workflows
         self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
-    def get_pipeline(self) -> Optional[bool]:
+    def get_pipeline(self) -> bool | None:
         """
         Prompt the user for a pipeline name and get the schema
         """
@@ -172,7 +172,7 @@ class ParamsFileBuilder:
 
     def format_param(
         self, name: str, properties: dict, required_properties: list[str] = [], show_hidden: bool = False
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Format a single parameter of the schema as commented YAML
 

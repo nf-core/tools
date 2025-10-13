@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import rich.console
 import rich.table
@@ -25,7 +24,7 @@ def search_datasets(
     generate_dl_url: bool = False,
     ignored_file_prefixes: list[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
-    query: Optional[str] = "",
+    query: str | None = "",
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github

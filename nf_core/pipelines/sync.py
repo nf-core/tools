@@ -6,7 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import git
 import questionary
@@ -63,12 +63,12 @@ class PipelineSync:
 
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
-        from_branch: Optional[str] = None,
+        pipeline_dir: str | Path,
+        from_branch: str | None = None,
         make_pr: bool = False,
-        gh_repo: Optional[str] = None,
-        gh_username: Optional[str] = None,
-        template_yaml_path: Optional[str] = None,
+        gh_repo: str | None = None,
+        gh_username: str | None = None,
+        template_yaml_path: str | None = None,
         force_pr: bool = False,
     ):
         """Initialise syncing object"""

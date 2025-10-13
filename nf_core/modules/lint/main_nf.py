@@ -63,9 +63,9 @@ def main_nf(
             # Check whether file exists and load it
             with open(module.main_nf) as fh:
                 lines = fh.readlines()
-            module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
+            module.passed.append(("main_nf", "main_nf_exists", "Module file exists", module.main_nf))
         except FileNotFoundError:
-            module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
+            module.failed.append(("main_nf", "main_nf_exists", "Module file does not exist", module.main_nf))
             raise FileNotFoundError(f"Module file does not exist: {module.main_nf}")
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
@@ -78,11 +78,15 @@ def main_nf(
         if i in lines_j:
             module.failed.append(
                 (
+                    "main_nf",
                     "deprecated_dsl2",
                     f"`{i}` specified. No longer required for the latest nf-core/modules syntax!",
                     module.main_nf,
                 )
             )
+            break
+    else:
+        module.passed.append(("main_nf", "deprecated_dsl2", "No deprecated DSL2 syntax found", module.main_nf))
 
     # Go through module main.nf file and switch state according to current section
     # Perform section-specific linting
@@ -141,15 +145,15 @@ def main_nf(
 
     # Check that we have required sections
     if not len(outputs):
-        module.failed.append(("main_nf_script_outputs", "No process 'output' block found", module.main_nf))
+        module.failed.append(("main_nf", "main_nf_script_outputs", "No process 'output' block found", module.main_nf))
     else:
-        module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
+        module.passed.append(("main_nf", "main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
     if check_process_section(module, process_lines, registry, fix_version, progress_bar):
-        module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
+        module.passed.append(("main_nf", "main_nf_container", "Container versions match", module.main_nf))
     else:
-        module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
+        module.warned.append(("main_nf", "main_nf_container", "Container versions do not match", module.main_nf))
 
     # Check the when statement
     check_when_section(module, when_lines)
@@ -157,7 +161,16 @@ def main_nf(
     # Check that we have script or shell, not both
     if sum(bool(block_lines) for block_lines in (script_lines, shell_lines, exec_lines)) > 1:
         module.failed.append(
-            ("main_nf_script_shell", "Multiple script:/shell:/exec: blocks found, should use only one", module.main_nf)
+            (
+                "main_nf",
+                "main_nf_script_shell",
+                "Multiple script:/shell:/exec: blocks found, should use only one",
+                module.main_nf,
+            )
+        )
+    else:
+        module.passed.append(
+            ("main_nf", "main_nf_script_shell", "Only one script:/shell:/exec: block found", module.main_nf)
         )
 
     # Check the script definition
@@ -167,9 +180,13 @@ def main_nf(
     # Check that shell uses a template
     if len(shell_lines):
         if any("template" in line for line in shell_lines):
-            module.passed.append(("main_nf_shell_template", "`template` found in `shell` block", module.main_nf))
+            module.passed.append(
+                ("main_nf", "main_nf_shell_template", "`template` found in `shell` block", module.main_nf)
+            )
         else:
-            module.failed.append(("main_nf_shell_template", "No `template` found in `shell` block", module.main_nf))
+            module.failed.append(
+                ("main_nf", "main_nf_shell_template", "No `template` found in `shell` block", module.main_nf)
+            )
 
     # Check whether 'meta' is emitted when given as input
     if inputs:
@@ -178,19 +195,38 @@ def main_nf(
             if outputs:
                 if "meta" in outputs:
                     module.passed.append(
-                        ("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf)
+                        (
+                            "main_nf",
+                            "main_nf_meta_output",
+                            "'meta' map emitted in output channel(s)",
+                            module.main_nf,
+                        )
                     )
                 else:
                     module.failed.append(
-                        ("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf)
+                        (
+                            "main_nf",
+                            "main_nf_meta_output",
+                            "'meta' map not emitted in output channel(s)",
+                            module.main_nf,
+                        )
                     )
 
     # Check that a software version is emitted
     if outputs:
         if "versions" in outputs:
-            module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
+            module.passed.append(
+                ("main_nf", "main_nf_version_emitted", "Module emits software version", module.main_nf)
+            )
         else:
-            module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
+            module.warned.append(
+                (
+                    "main_nf",
+                    "main_nf_version_emitted",
+                    "Module does not emit software version",
+                    module.main_nf,
+                )
+            )
 
     return inputs, outputs
 
@@ -204,16 +240,20 @@ def check_script_section(self, lines):
 
     # check that process name is used for `versions.yml`
     if re.search(r"\$\{\s*task\.process\s*\}", script):
-        self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
+        self.passed.append(("main_nf", "main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
-        self.warned.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
+        self.warned.append(
+            ("main_nf", "main_nf_version_script", "Process name not used for versions.yml", self.main_nf)
+        )
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
-            self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
+            self.passed.append(("main_nf", "main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
-            self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
+            self.failed.append(
+                ("main_nf", "main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf)
+            )
 
 
 def check_when_section(self, lines):
@@ -222,18 +262,18 @@ def check_when_section(self, lines):
     Checks whether the line is modified from 'task.ext.when == null || task.ext.when'
     """
     if len(lines) == 0:
-        self.failed.append(("when_exist", "when: condition has been removed", self.main_nf))
+        self.failed.append(("main_nf", "when_exist", "when: condition has been removed", self.main_nf))
         return
     if len(lines) > 1:
-        self.failed.append(("when_exist", "when: condition has too many lines", self.main_nf))
+        self.failed.append(("main_nf", "when_exist", "when: condition has too many lines", self.main_nf))
         return
-    self.passed.append(("when_exist", "when: condition is present", self.main_nf))
+    self.passed.append(("main_nf", "when_exist", "when: condition is present", self.main_nf))
 
     # Check the condition hasn't been changed.
     if lines[0].strip() != "task.ext.when == null || task.ext.when":
-        self.failed.append(("when_condition", "when: condition has been altered", self.main_nf))
+        self.failed.append(("main_nf", "when_condition", "when: condition has been altered", self.main_nf))
         return
-    self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
+    self.passed.append(("main_nf", "when_condition", "when: condition is unchanged", self.main_nf))
 
 
 def check_process_section(self, lines, registry, fix_version, progress_bar):
@@ -249,13 +289,13 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         progress_bar (ProgressBar): Progress bar to update.
 
     Returns:
-        Optional[bool]: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
+        bool | None: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
     """
     # Check that we have a process section
     if len(lines) == 0:
-        self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
+        self.failed.append(("main_nf", "process_exist", "Process definition does not exist", self.main_nf))
         return
-    self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+    self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
     singularity_tag = None
@@ -264,9 +304,9 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
     # Process name should be all capital letters
     if all(x.upper() for x in self.process_name):
-        self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
+        self.passed.append(("main_nf", "process_capitals", "Process name is in capital letters", self.main_nf))
     else:
-        self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
+        self.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
     check_process_labels(self, lines)
@@ -287,6 +327,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             if match is None:
                 self.passed.append(
                     (
+                        "main_nf",
                         "deprecated_enable_conda",
                         "Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
                         self.main_nf,
@@ -295,6 +336,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(
                     (
+                        "main_nf",
                         "deprecated_enable_conda",
                         "Found deprecated parameter 'params.enable_conda' in the conda definition",
                         self.main_nf,
@@ -307,9 +349,11 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", line)
             if match is not None:
                 singularity_tag = match.group(1)
-                self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
+                self.passed.append(
+                    ("main_nf", "singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf)
+                )
             else:
-                self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
+                self.failed.append(("main_nf", "singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
             url = urlparse(line.split("'")[0])
 
@@ -319,21 +363,22 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             match = re.search(r":([A-Za-z\d\-_.]+)$", line)
             if match is not None:
                 docker_tag = match.group(1)
-                self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
+                self.passed.append(("main_nf", "docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
             else:
-                self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
+                self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
             if line.startswith(registry):
                 l_stripped = re.sub(r"\W+$", "", line)
                 self.failed.append(
                     (
+                        "main_nf",
                         "container_links",
                         f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("container_links", "Container prefix is correct", self.main_nf))
+                self.passed.append(("main_nf", "container_links", "Container prefix is correct", self.main_nf))
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
@@ -361,11 +406,12 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             )
         except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
             log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
-            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+            self.failed.append(("main_nf", "container_links", "Unable to connect to container URL", self.main_nf))
             continue
         if not response.ok:
             self.warned.append(
                 (
+                    "main_nf",
                     "container_links",
                     f"Unable to connect to container registry, code:  {response.status_code}, url: {response.url}",
                     self.main_nf,
@@ -392,15 +438,27 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             bioconda_version = bp.split("=")[1]
             # response = _bioconda_package(bp)
             response = nf_core.utils.anaconda_package(bp)
+            self.passed.append(
+                ("main_nf", "bioconda_version", f"Conda version specified correctly: {bp}", self.main_nf)
+            )
         except LookupError:
-            self.warned.append(("bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf))
+            self.warned.append(
+                ("main_nf", "bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf)
+            )
         except ValueError:
-            self.failed.append(("bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf))
+            self.failed.append(
+                ("main_nf", "bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf)
+            )
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
                 self.failed.append(
-                    ("bioconda_version", f"Conda package {bp} had unknown version: `{bioconda_version}`", self.main_nf)
+                    (
+                        "main_nf",
+                        "bioconda_version",
+                        f"Conda package {bp} had unknown version: `{bioconda_version}`",
+                        self.main_nf,
+                    )
                 )
                 continue  # No need to test for latest version, continue linting
             # Check version is latest available
@@ -420,6 +478,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                             log.debug(f"Updating package {package} {ver} -> {last_ver}")
                             self.passed.append(
                                 (
+                                    "main_nf",
                                     "bioconda_latest",
                                     f"Conda package has been updated to the latest available: `{bp}`",
                                     self.main_nf,
@@ -431,15 +490,32 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                             )
                             log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
                             self.warned.append(
-                                ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                                (
+                                    "main_nf",
+                                    "bioconda_latest",
+                                    f"Conda update: {package} `{ver}` -> `{last_ver}`",
+                                    self.main_nf,
+                                )
                             )
                 # Add available update as a warning
                 else:
                     self.warned.append(
-                        ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                        (
+                            "main_nf",
+                            "bioconda_latest",
+                            f"Conda update: {package} `{ver}` -> `{last_ver}`",
+                            self.main_nf,
+                        )
                     )
             else:
-                self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
+                self.passed.append(
+                    (
+                        "main_nf",
+                        "bioconda_latest",
+                        f"Conda package is the latest available: `{bp}`",
+                        self.main_nf,
+                    )
+                )
 
     # Check if a tag exists at all. If not, return None.
     if singularity_tag is None or docker_tag is None:
@@ -467,6 +543,7 @@ def check_process_labels(self, lines):
             except AttributeError:
                 self.warned.append(
                     (
+                        "main_nf",
                         "process_standard_label",
                         f"Specified label appears to contain non-alphanumerics: {label}",
                         self.main_nf,
@@ -480,29 +557,36 @@ def check_process_labels(self, lines):
         if len(good_labels) > 1:
             self.warned.append(
                 (
+                    "main_nf",
                     "process_standard_label",
                     f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
                     self.main_nf,
                 )
             )
         elif len(good_labels) == 1:
-            self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
+            self.passed.append(("main_nf", "process_standard_label", "Correct process label", self.main_nf))
         else:
-            self.warned.append(("process_standard_label", "Standard process label not found", self.main_nf))
+            self.warned.append(("main_nf", "process_standard_label", "Standard process label not found", self.main_nf))
         if len(bad_labels) > 0:
             self.warned.append(
-                ("process_standard_label", f"Non-standard labels found: `{'`,`'.join(bad_labels)}`", self.main_nf)
+                (
+                    "main_nf",
+                    "process_standard_label",
+                    f"Non-standard labels found: `{'`,`'.join(bad_labels)}`",
+                    self.main_nf,
+                )
             )
         if len(all_labels) > len(set(all_labels)):
             self.warned.append(
                 (
+                    "main_nf",
                     "process_standard_label",
                     f"Duplicate labels found: `{'`,`'.join(sorted(all_labels))}`",
                     self.main_nf,
                 )
             )
     else:
-        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
+        self.warned.append(("main_nf", "process_standard_label", "Process label not specified", self.main_nf))
 
 
 def check_container_link_line(self, raw_line, registry):
@@ -514,6 +598,7 @@ def check_container_link_line(self, raw_line, registry):
     if line.count('"') > 2:
         self.failed.append(
             (
+                "main_nf",
                 "container_links",
                 f"Too many double quotes found when specifying container: {line.lstrip('container ')}",
                 self.main_nf,
@@ -522,6 +607,7 @@ def check_container_link_line(self, raw_line, registry):
     else:
         self.passed.append(
             (
+                "main_nf",
                 "container_links",
                 f"Correct number of double quotes found when specifying container: {line.lstrip('container ')}",
                 self.main_nf,
@@ -542,6 +628,7 @@ def check_container_link_line(self, raw_line, registry):
         if " " in container_link:
             self.failed.append(
                 (
+                    "main_nf",
                     "container_links",
                     f"Space character found in container: '{container_link}'",
                     self.main_nf,
@@ -550,6 +637,7 @@ def check_container_link_line(self, raw_line, registry):
         else:
             self.passed.append(
                 (
+                    "main_nf",
                     "container_links",
                     f"No space characters found in container: '{container_link}'",
                     self.main_nf,
@@ -562,6 +650,7 @@ def check_container_link_line(self, raw_line, registry):
         ):
             self.warned.append(
                 (
+                    "main_nf",
                     "container_links",
                     "Docker and Singularity containers specified in the same line. Only first one checked.",
                     self.main_nf,
@@ -588,9 +677,18 @@ def _parse_input(self, line_raw):
         matches = re.findall(r"\((\w+)\)", line)
         if matches:
             inputs.extend(matches)
+            self.passed.append(
+                (
+                    "main_nf",
+                    "main_nf_input_tuple",
+                    f"Channel names for tuple found: `{line}`",
+                    self.main_nf,
+                )
+            )
         else:
             self.failed.append(
                 (
+                    "main_nf",
                     "main_nf_input_tuple",
                     f"Found tuple but no channel names: `{line}`",
                     self.main_nf,
@@ -612,9 +710,10 @@ def _parse_output(self, line):
     if "meta" in line:
         output.append("meta")
     if "emit:" not in line:
-        self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
+        self.failed.append(("main_nf", "missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
     else:
         output.append(line.split("emit:")[1].strip())
+        self.passed.append(("main_nf", "missing_emit", f"Emit statement found: {line.strip()}", self.main_nf))
 
     return output
 

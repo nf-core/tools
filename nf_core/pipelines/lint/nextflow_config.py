@@ -2,9 +2,9 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
+from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -255,30 +255,35 @@ def nextflow_config(self) -> dict[str, list[str]]:
         else:
             failed.append(f"Config ``{k}`` did not have correct value: ``{self.nf_config.get(k)}``")
 
+    _, nf_core_yaml_config = load_tools_config(self.wf_path)
+    org_name = "nf-core"
+    if nf_core_yaml_config and getattr(nf_core_yaml_config, "template", None):
+        org_name = getattr(nf_core_yaml_config.template, "org", org_name) or org_name
+
     if "manifest.name" not in ignore_configs:
         # Check that the pipeline name starts with nf-core
         try:
             manifest_name = self.nf_config.get("manifest.name", "").strip("'\"")
-            if not manifest_name.startswith("nf-core/"):
+            if not manifest_name.startswith(f"{org_name}/"):
                 raise AssertionError()
         except (AssertionError, IndexError):
-            failed.append(f"Config ``manifest.name`` did not begin with ``nf-core/``:\n    {manifest_name}")
+            failed.append(f"Config ``manifest.name`` did not begin with ``{org_name}/``:\n    {manifest_name}")
         else:
-            passed.append("Config ``manifest.name`` began with ``nf-core/``")
+            passed.append(f"Config ``manifest.name`` began with ``{org_name}/``")
 
     if "manifest.homePage" not in ignore_configs:
         # Check that the homePage is set to the GitHub URL
         try:
             manifest_homepage = self.nf_config.get("manifest.homePage", "").strip("'\"")
-            if not manifest_homepage.startswith("https://github.com/nf-core/"):
+            if not manifest_homepage.startswith(f"https://github.com/{org_name}/"):
                 raise AssertionError()
         except (AssertionError, IndexError):
             failed.append(
-                f"Config variable ``manifest.homePage`` did not begin with https://github.com/nf-core/:\n    {manifest_homepage}"
+                f"Config variable ``manifest.homePage`` did not begin with https://github.com/{org_name}/:\n    {manifest_homepage}"
             )
 
         else:
-            passed.append("Config variable ``manifest.homePage`` began with https://github.com/nf-core/")
+            passed.append(f"Config variable ``manifest.homePage`` began with https://github.com/{org_name}/")
 
     # Check that the DAG filename ends in ``.svg``
     if "dag.file" in self.nf_config:
@@ -415,8 +420,8 @@ def nextflow_config(self) -> dict[str, list[str]]:
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
         elif param in self.nf_config.keys():
-            config_default: Optional[Union[str, float, int]] = None
-            schema_default: Optional[Union[str, float, int]] = None
+            config_default: str | float | int | None = None
+            schema_default: str | float | int | None = None
             if schema.schema_types[param_name] == "boolean":
                 schema_default = str(schema.schema_defaults[param_name]).lower()
                 config_default = str(self.nf_config[param]).lower()

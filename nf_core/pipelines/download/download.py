@@ -9,7 +9,7 @@ import shutil
 import tarfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 from zipfile import ZipFile
 
 import questionary
@@ -22,7 +22,7 @@ import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
-from nf_core.pipelines.download.utils import DownloadError
+from nf_core.pipelines.download.utils import DownloadError, intermediate_dir_with_cd
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
@@ -48,18 +48,18 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (Optional[str]): The name of an nf-core-compatible pipeline in the form org/repo
-        revision (Optional[Union[tuple[str], str]]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
-        outdir (Optional[Path]): Path to the local download directory. Defaults to None.
-        compress_type (Optional[str]): Type of compression for the downloaded files. Defaults to None.
+        pipeline (str | None): The name of an nf-core-compatible pipeline in the form org/repo
+        revision (tuple[str] | str | None): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
+        outdir (Path | None): Path to the local download directory. Defaults to None.
+        compress_type (str | None): Type of compression for the downloaded files. Defaults to None.
         force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
         platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
-        download_configuration (Optional[str]): Download the configuration files from nf-core/configs. Defaults to None.
-        additional_tags (Optional[Union[list[str], str]]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
+        download_configuration (str | None): Download the configuration files from nf-core/configs. Defaults to None.
+        additional_tags (list[str] | str | None): Specify additional tags to add to the downloaded pipeline. Defaults to None.
         container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
-        container_library (Optional[Union[tuple[str], str]]): The container libraries (registries) to use. Defaults to None.
-        container_cache_utilisation (Optional[str]): If a local or remote cache of already existing container images should be considered. Defaults to None.
-        container_cache_index (Optional[Path]): An index for the remote container cache. Defaults to None.
+        container_library (tuple[str] | str | None): The container libraries (registries) to use. Defaults to None.
+        container_cache_utilisation (str | None): If a local or remote cache of already existing container images should be considered. Defaults to None.
+        container_cache_index (Path | None): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
         authenticated (bool): If True, use the API of the SCM provider to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
@@ -67,18 +67,18 @@ class DownloadWorkflow:
 
     def __init__(
         self,
-        pipeline: Optional[str] = None,
-        revision: Optional[Union[tuple[str, ...], str]] = None,
-        outdir: Optional[Path] = None,
-        compress_type: Optional[str] = None,
+        pipeline: str | None = None,
+        revision: tuple[str, ...] | str | None = None,
+        outdir: Path | None = None,
+        compress_type: str | None = None,
         force: bool = False,
         platform: bool = False,
-        download_configuration: Optional[str] = None,
-        additional_tags: Optional[Union[tuple[str, ...], str]] = None,
-        container_system: Optional[str] = None,
-        container_library: Optional[Union[tuple[str, ...], str]] = None,
-        container_cache_utilisation: Optional[str] = None,
-        container_cache_index: Optional[Path] = None,
+        download_configuration: str | None = None,
+        additional_tags: tuple[str, ...] | str | None = None,
+        container_system: str | None = None,
+        container_library: tuple[str, ...] | str | None = None,
+        container_cache_utilisation: str | None = None,
+        container_cache_index: Path | None = None,
         parallel: int = 4,
         hide_progress: bool = False,
         authenticated: bool = False,
@@ -100,20 +100,20 @@ class DownloadWorkflow:
             self.revision = [*revision]
         else:
             self.revision = []
-        self._outdir: Optional[Path] = Path(outdir) if outdir is not None else None
-        self.output_filename: Optional[Path] = None
+        self._outdir: Path | None = Path(outdir) if outdir is not None else None
+        self.output_filename: Path | None = None
 
         self.compress_type = compress_type
         self.force = force
         self.hide_progress = hide_progress
         self.platform = platform
-        self.fullname: Optional[str] = None
+        self.fullname: str | None = None
         # downloading configs is not supported for Seqera Platform downloads.
         self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
-        self.additional_tags: Optional[list[str]]
+        self.additional_tags: list[str] | None
         if isinstance(additional_tags, str) and bool(len(additional_tags)) and self.platform:
             self.additional_tags = [additional_tags]
         elif isinstance(additional_tags, tuple) and bool(len(additional_tags)) and self.platform:
@@ -122,7 +122,7 @@ class DownloadWorkflow:
             self.additional_tags = None
 
         self.container_system = container_system
-        self.container_fetcher: Optional[ContainerFetcher] = None
+        self.container_fetcher: ContainerFetcher | None = None
         # Check if a cache or libraries were specfied even though singularity was not
         if self.container_system != "singularity":
             if container_cache_index:
@@ -340,7 +340,7 @@ class DownloadWorkflow:
             log.info("Compressing output into archive")
             self.compress_download()
 
-    def download_workflow_platform(self, location: Optional[Path] = None) -> None:
+    def download_workflow_platform(self, location: Path | None = None) -> None:
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
         assert self.output_filename is not None  # mypy
 
@@ -507,26 +507,29 @@ class DownloadWorkflow:
         Create the appropriate ContainerFetcher object
         """
         assert self.outdir is not None  # mypy
-        if self.container_system == "singularity":
-            self.container_fetcher = SingularityFetcher(
-                outdir=self.outdir,
-                container_library=self.container_library,
-                registry_set=self.registry_set,
-                container_cache_utilisation=self.container_cache_utilisation,
-                container_cache_index=self.container_cache_index,
-                parallel=self.parallel,
-                hide_progress=self.hide_progress,
-            )
-        elif self.container_system == "docker":
-            self.container_fetcher = DockerFetcher(
-                outdir=self.outdir,
-                registry_set=self.registry_set,
-                container_library=self.container_library,
-                parallel=self.parallel,
-                hide_progress=self.hide_progress,
-            )
-        else:
-            self.container_fetcher = None
+        try:
+            if self.container_system == "singularity":
+                self.container_fetcher = SingularityFetcher(
+                    outdir=self.outdir,
+                    container_library=self.container_library,
+                    registry_set=self.registry_set,
+                    container_cache_utilisation=self.container_cache_utilisation,
+                    container_cache_index=self.container_cache_index,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            elif self.container_system == "docker":
+                self.container_fetcher = DockerFetcher(
+                    outdir=self.outdir,
+                    registry_set=self.registry_set,
+                    container_library=self.container_library,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            else:
+                self.container_fetcher = None
+        except OSError as e:
+            raise DownloadError(e)
 
     def prompt_use_singularity(self, fail_message: str) -> None:
         use_singularity = questionary.confirm(
@@ -672,19 +675,21 @@ class DownloadWorkflow:
                 profile_str += ",test,test_full"
             profile = f"-profile {profile_str}" if self.container_system else ""
 
-            # Run nextflow inspect
-            executable = "nextflow"
-            cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
-            cmd_out = run_cmd(executable, cmd_params)
-            if cmd_out is None:
-                raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+            working_dir = Path().absolute()
+            with intermediate_dir_with_cd(working_dir):
+                # Run nextflow inspect
+                executable = "nextflow"
+                cmd_params = f"inspect -format json {profile} {working_dir / workflow_directory / entrypoint}"
+                cmd_out = run_cmd(executable, cmd_params)
+                if cmd_out is None:
+                    raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
-            out, _ = cmd_out
-            out_json = json.loads(out)
-            # NOTE: Should we save the container name too to have more meta information?
-            named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-            # We only want to process unique containers
-            self.containers = list(set(named_containers.values()))
+                out, _ = cmd_out
+                out_json = json.loads(out)
+                # NOTE: Should we save the container name too to have more meta information?
+                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+                # We only want to process unique containers
+                self.containers = list(set(named_containers.values()))
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error")
