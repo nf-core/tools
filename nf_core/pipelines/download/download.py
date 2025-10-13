@@ -9,7 +9,7 @@ import shutil
 import tarfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 from zipfile import ZipFile
 
 import questionary
@@ -47,36 +47,36 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (Optional[str]): A nf-core pipeline name.
-        revision (Optional[Union[tuple[str], str]]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
-        outdir (Optional[Path]): Path to the local download directory. Defaults to None.
-        compress_type (Optional[str]): Type of compression for the downloaded files. Defaults to None.
+        pipeline (str | None): A nf-core pipeline name.
+        revision (tuple[str] | str | None): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
+        outdir (Path | None): Path to the local download directory. Defaults to None.
+        compress_type (str | None): Type of compression for the downloaded files. Defaults to None.
         force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
         platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
-        download_configuration (Optional[str]): Download the configuration files from nf-core/configs. Defaults to None.
-        additional_tags (Optional[Union[list[str], str]]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
+        download_configuration (str | None): Download the configuration files from nf-core/configs. Defaults to None.
+        additional_tags (list[str] | str | None): Specify additional tags to add to the downloaded pipeline. Defaults to None.
         container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
-        container_library (Optional[Union[tuple[str], str]]): The container libraries (registries) to use. Defaults to None.
-        container_cache_utilisation (Optional[str]): If a local or remote cache of already existing container images should be considered. Defaults to None.
-        container_cache_index (Optional[Path]): An index for the remote container cache. Defaults to None.
+        container_library (tuple[str] | str | None): The container libraries (registries) to use. Defaults to None.
+        container_cache_utilisation (str | None): If a local or remote cache of already existing container images should be considered. Defaults to None.
+        container_cache_index (Path | None): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
     """
 
     def __init__(
         self,
-        pipeline: Optional[str] = None,
-        revision: Optional[Union[tuple[str, ...], str]] = None,
-        outdir: Optional[Path] = None,
-        compress_type: Optional[str] = None,
+        pipeline: str | None = None,
+        revision: tuple[str, ...] | str | None = None,
+        outdir: Path | None = None,
+        compress_type: str | None = None,
         force: bool = False,
         platform: bool = False,
-        download_configuration: Optional[str] = None,
-        additional_tags: Optional[Union[tuple[str, ...], str]] = None,
-        container_system: Optional[str] = None,
-        container_library: Optional[Union[tuple[str, ...], str]] = None,
-        container_cache_utilisation: Optional[str] = None,
-        container_cache_index: Optional[Path] = None,
+        download_configuration: str | None = None,
+        additional_tags: tuple[str, ...] | str | None = None,
+        container_system: str | None = None,
+        container_library: tuple[str, ...] | str | None = None,
+        container_cache_utilisation: str | None = None,
+        container_cache_index: Path | None = None,
         parallel: int = 4,
         hide_progress: bool = False,
     ):
@@ -97,20 +97,20 @@ class DownloadWorkflow:
             self.revision = [*revision]
         else:
             self.revision = []
-        self._outdir: Optional[Path] = Path(outdir) if outdir is not None else None
-        self.output_filename: Optional[Path] = None
+        self._outdir: Path | None = Path(outdir) if outdir is not None else None
+        self.output_filename: Path | None = None
 
         self.compress_type = compress_type
         self.force = force
         self.hide_progress = hide_progress
         self.platform = platform
-        self.fullname: Optional[str] = None
+        self.fullname: str | None = None
         # downloading configs is not supported for Seqera Platform downloads.
         self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
-        self.additional_tags: Optional[list[str]]
+        self.additional_tags: list[str] | None
         if isinstance(additional_tags, str) and bool(len(additional_tags)) and self.platform:
             self.additional_tags = [additional_tags]
         elif isinstance(additional_tags, tuple) and bool(len(additional_tags)) and self.platform:
@@ -119,7 +119,7 @@ class DownloadWorkflow:
             self.additional_tags = None
 
         self.container_system = container_system
-        self.container_fetcher: Optional[ContainerFetcher] = None
+        self.container_fetcher: ContainerFetcher | None = None
         # Check if a cache or libraries were specfied even though singularity was not
         if self.container_system != "singularity":
             if container_cache_index:
@@ -335,7 +335,7 @@ class DownloadWorkflow:
             log.info("Compressing output into archive")
             self.compress_download()
 
-    def download_workflow_platform(self, location: Optional[Path] = None) -> None:
+    def download_workflow_platform(self, location: Path | None = None) -> None:
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
         assert self.output_filename is not None  # mypy
 

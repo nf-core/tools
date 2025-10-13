@@ -289,7 +289,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         progress_bar (ProgressBar): Progress bar to update.
 
     Returns:
-        Optional[bool]: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
+        bool | None: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
     """
     # Check that we have a process section
     if len(lines) == 0:

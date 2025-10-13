@@ -7,7 +7,6 @@ import logging
 import operator
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import rich.box
 import rich.panel
@@ -15,7 +14,6 @@ import rich.repr
 from rich.markdown import Markdown
 from rich.table import Table
 
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core import __version__
 from nf_core.components.components_command import ComponentCommand
@@ -58,13 +56,13 @@ class ComponentLint(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        directory: Union[str, Path],
+        directory: str | Path,
         fail_warned: bool = False,
         fix: bool = False,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
-        registry: Optional[str] = None,
+        registry: str | None = None,
         hide_progress: bool = False,
     ):
         super().__init__(
@@ -83,8 +81,8 @@ class ComponentLint(ComponentCommand):
         self.failed: list[LintResult] = []
         self.all_local_components: list[NFCoreComponent] = []
 
-        self.lint_config: Optional[NFCoreYamlLintConfig] = None
-        self.modules_json: Optional[ModulesJson] = None
+        self.lint_config: NFCoreYamlLintConfig | None = None
+        self.modules_json: ModulesJson | None = None
 
         if self.component_type == "modules":
             self.lint_tests = self.get_all_module_lint_tests(self.repo_type == "pipeline")
