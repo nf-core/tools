@@ -63,7 +63,7 @@ workflow {{ short_name|upper }} {
         }
         .groupTuple(by:0)
         .map { process, tool_versions ->
-            tool_versions.unique()
+            tool_versions.unique().sort()
             "${process}:\n${tool_versions.join('\n')}"
         }
 
