@@ -9,7 +9,6 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional, Union
 
 import jinja2
 import questionary
@@ -41,12 +40,12 @@ class ComponentCreate(ComponentCommand):
         component_type: str,
         directory: Path = Path("."),
         component: str = "",
-        author: Optional[str] = None,
-        process_label: Optional[str] = None,
-        has_meta: Optional[str] = None,
+        author: str | None = None,
+        process_label: str | None = None,
+        has_meta: str | None = None,
         force: bool = False,
-        conda_name: Optional[str] = None,
-        conda_version: Optional[str] = None,
+        conda_name: str | None = None,
+        conda_version: str | None = None,
         empty_template: bool = False,
         migrate_pytest: bool = False,  # TODO: Deprecate this flag in the future
     ):
@@ -293,7 +292,7 @@ class ComponentCreate(ComponentCommand):
                 default=True,
             )
 
-    def _render_template(self) -> Optional[bool]:
+    def _render_template(self) -> bool | None:
         """
         Create new module/subworkflow files with Jinja2.
         """
@@ -578,8 +577,8 @@ class ComponentCreate(ComponentCommand):
                 "### TODO nf-core: Add a description of all of the variables used as topics", indent=2
             )
 
-            if hasattr(self, "inputs") and len(self.inputs) > 0:
-                inputs_array: list[Union[dict, list[dict]]] = []
+            if hasattr(self, "inputs"):
+                inputs_array: list[dict | list[dict]] = []
                 for i, (input_name, ontologies) in enumerate(self.inputs.items()):
                     channel_entry: dict[str, dict] = {
                         input_name: {
@@ -627,10 +626,10 @@ class ComponentCreate(ComponentCommand):
                 meta_yml["input"][0]["bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
                 meta_yml["input"][0]["bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
 
-            if hasattr(self, "outputs") and len(self.outputs) > 0:
-                outputs_dict: dict[str, Union[list, dict]] = {}
+            if hasattr(self, "outputs"):
+                outputs_dict: dict[str, list | dict] = {}
                 for i, (output_name, ontologies) in enumerate(self.outputs.items()):
-                    channel_contents: list[Union[list[dict], dict]] = []
+                    channel_contents: list[list[dict] | dict] = []
                     if self.has_meta:
                         channel_contents.append(
                             [

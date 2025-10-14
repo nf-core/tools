@@ -9,7 +9,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import git
 import rich
@@ -121,7 +120,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Initialise the parent object
         super().__init__(wf_path)
 
-        self.lint_config: Optional[NFCoreYamlLintConfig] = None
+        self.lint_config: NFCoreYamlLintConfig | None = None
         self.release_mode = release_mode
         self.fail_ignored = fail_ignored
         self.fail_warned = fail_warned
@@ -530,7 +529,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         with open(json_fn, "w") as fh:
             json.dump(results, fh, indent=4)
 
-    def _wrap_quotes(self, files: Union[list[str], list[Path], Path]) -> str:
+    def _wrap_quotes(self, files: list[str] | list[Path] | Path) -> str:
         """Helper function to take a list of filenames and format with markdown.
 
         Args:
@@ -561,7 +560,7 @@ def run_linting(
     md_fn=None,
     json_fn=None,
     hide_progress: bool = False,
-) -> tuple[PipelineLint, Optional[ComponentLint], Optional[ComponentLint]]:
+) -> tuple[PipelineLint, ComponentLint | None, ComponentLint | None]:
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.

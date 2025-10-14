@@ -6,7 +6,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Optional
 
 import questionary
 from rich import print
@@ -65,15 +64,15 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
     def __init__(
         self,
         component_type: str,
-        component_name: Optional[str] = None,
+        component_name: str | None = None,
         directory: str = ".",
         no_prompts: bool = False,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         verbose: bool = False,
         update: bool = False,
         once: bool = False,
-        profile: Optional[str] = None,
+        profile: str | None = None,
     ):
         super().__init__(component_type, directory, remote_url, branch, no_prompts=no_prompts)
         self.component_name = component_name
