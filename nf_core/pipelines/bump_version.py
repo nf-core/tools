@@ -237,6 +237,7 @@ def update_yaml_file(fn: Path, patterns: list[tuple[str, str]], yaml_key: list[s
     """
     yaml = YAML()
     yaml.preserve_quotes = True
+    yaml.width = 4096  # Prevent line wrapping
     with open(fn) as file:
         yaml_content = yaml.load(file)
 
