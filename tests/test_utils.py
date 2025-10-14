@@ -98,12 +98,12 @@ class TestUtils(TestPipelines):
         files = pipeline_obj.list_files()
         assert tmp_fn in files
 
-    @mock.patch("os.path.exists")
-    @mock.patch("os.makedirs")
-    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.exists")
+    def test_request_cant_create_cache(self, mock_exists, mock_mkdir):
         """Test that we don't get an error when we can't create cachedirs"""
-        mock_mkd.side_effect = PermissionError()
         mock_exists.return_value = False
+        mock_mkdir.side_effect = PermissionError()
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):
