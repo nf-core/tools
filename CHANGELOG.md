@@ -16,6 +16,7 @@
 - Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
 - update release checklist to battle test pipeline template more ([#3788](https://github.com/nf-core/tools/pull/3788))
 - update pipeline template subworkflows ([#3826](https://github.com/nf-core/tools/pull/3826))
+- fix AWS tests launch action ([#3827](https://github.com/nf-core/tools/pull/3827))
 
 ### Linting
 
