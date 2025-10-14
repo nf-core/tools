@@ -15,6 +15,7 @@
 - Template: Update nextflow.config to use environment variable for `hook_url` ([#3756](https://github.com/nf-core/tools/pull/3756))
 - Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
 - update release checklist to battle test pipeline template more ([#3788](https://github.com/nf-core/tools/pull/3788))
+- update pipeline template subworkflows ([#3826](https://github.com/nf-core/tools/pull/3826))
 
 ### Linting
 
@@ -37,7 +38,6 @@
 ### Subworkflows
 
 - Update the utils_nfschema_plugin subworkflow to the latest version ([#3814](https://github.com/nf-core/tools/pull/3814))
-- update pipeline template subworkflows ([#3826](https://github.com/nf-core/tools/pull/3826))
 
 ### General
 
