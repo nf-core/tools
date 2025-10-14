@@ -37,6 +37,7 @@
 ### Subworkflows
 
 - Update the utils_nfschema_plugin subworkflow to the latest version ([#3814](https://github.com/nf-core/tools/pull/3814))
+- update pipeline template subworkflows ([#3826](https://github.com/nf-core/tools/pull/3826))
 
 ### General
 
