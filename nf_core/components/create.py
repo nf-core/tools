@@ -577,7 +577,7 @@ class ComponentCreate(ComponentCommand):
                 "### TODO nf-core: Add a description of all of the variables used as topics", indent=2
             )
 
-            if hasattr(self, "inputs"):
+            if hasattr(self, "inputs") and len(self.inputs) > 0:
                 inputs_array: list[dict | list[dict]] = []
                 for i, (input_name, ontologies) in enumerate(self.inputs.items()):
                     channel_entry: dict[str, dict] = {
@@ -626,7 +626,7 @@ class ComponentCreate(ComponentCommand):
                 meta_yml["input"][0]["bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
                 meta_yml["input"][0]["bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
 
-            if hasattr(self, "outputs"):
+            if hasattr(self, "outputs") and len(self.outputs) > 0:
                 outputs_dict: dict[str, list | dict] = {}
                 for i, (output_name, ontologies) in enumerate(self.outputs.items()):
                     channel_contents: list[list[dict] | dict] = []
