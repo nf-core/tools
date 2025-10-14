@@ -110,7 +110,7 @@ class TestBumpVersion(TestPipelines):
     def test_bump_pipeline_version_nf_core_yml_prettier(self):
         """Test that lists in .nf-core.yml have correct formatting after version bump."""
 
-        nf_core_yml_path = Path(self.pipeline_dir / "nf-core.yml")
+        nf_core_yml_path = Path(self.pipeline_dir / ".nf-core.yml")
 
         # Add a list to the .nf-core.yml file to test list indentation
         with open(nf_core_yml_path) as fh:
