@@ -529,7 +529,7 @@ class ComponentCreate(ComponentCommand):
         with open(self.file_paths["meta.yml"]) as fh:
             meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
 
-        versions: dict[str, list[list[dict[str, dict]]]] = {
+        versions: dict[str, Union[list, dict]] = {
             f"versions_{self.component}": [
                 [
                     {
@@ -545,13 +545,19 @@ class ComponentCreate(ComponentCommand):
             ]
         }
 
-        versions_topic: dict[str, list[dict[str, dict]]] = {
+        versions_topic: dict[str, Union[list, dict]] = {
             "versions": [
-                {
-                    "process": {"type": "string", "description": "The process the versions were collected from"},
-                    "tool": {"type": "string", "description": "The tool name the version was collected for"},
-                    "version": {"type": "string", "description": "The version of the tool"},
-                }
+                [
+                    {
+                        "process": {"type": "string", "description": "The process the versions were collected from"}
+                    },
+                    {
+                        "tool": {"type": "string", "description": "The tool name the version was collected for"},
+                    },
+                    {
+                        "version": {"type": "string", "description": "The version of the tool"},
+                    }
+                ]
             ]
         }
 
@@ -572,7 +578,7 @@ class ComponentCreate(ComponentCommand):
                 "### TODO nf-core: Add a description of all of the variables used as topics", indent=2
             )
 
-            if hasattr(self, "inputs"):
+            if hasattr(self, "inputs") and len(self.inputs) > 0:
                 inputs_array: list[Union[dict, list[dict]]] = []
                 for i, (input_name, ontologies) in enumerate(self.inputs.items()):
                     channel_entry: dict[str, dict] = {
@@ -621,7 +627,7 @@ class ComponentCreate(ComponentCommand):
                 meta_yml["input"][0]["bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
                 meta_yml["input"][0]["bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
 
-            if hasattr(self, "outputs"):
+            if hasattr(self, "outputs") and len(self.outputs) > 0:
                 outputs_dict: dict[str, Union[list, dict]] = {}
                 for i, (output_name, ontologies) in enumerate(self.outputs.items()):
                     channel_contents: list[Union[list[dict], dict]] = []
