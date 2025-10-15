@@ -4,7 +4,8 @@
 
 ### Template
 
-- Fix devcontainer configuration for pipeline template [3835](https://github.com/nf-core/tools/pull/3835)
+- Fix devcontainer configuration for pipeline template ([#3835](https://github.com/nf-core/tools/pull/3835))
+- Fix Jinja2 template formatting in nextflow.config ([#3836](https://github.com/nf-core/tools/pull/3836))
 
 ## [v3.4.0 - Ducol Dingo](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-10-10]
 
