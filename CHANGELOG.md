@@ -27,6 +27,7 @@
 - Use the org from .nf-core.yml when linting multiqc_config report_comment ([#3800](https://github.com/nf-core/tools/pull/3800))
 - Linting of patched subworkflows ([#3755](https://github.com/nf-core/tools/pull/3755))
 - Add link to modules and subworkflows linting error docs ([#3818](https://github.com/nf-core/tools/pull/3818))
+- fix ternary container linting ([#3830](https://github.com/nf-core/tools/pull/3830))
 
 ### Modules
 
