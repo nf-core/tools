@@ -83,6 +83,7 @@
 - Update pre-commit hook pre-commit/pre-commit-hooks to v6 ([#3797](https://github.com/nf-core/tools/pull/3797))
 - Update dependency python to 3.14 ([#3817](https://github.com/nf-core/tools/pull/3817))
 - update Dockerfile to python 3.14 ([#3822](https://github.com/nf-core/tools/pull/3822))
+- downgrade python version to 3.13 in devcontainer ([#3834](https://github.com/nf-core/tools/pull/3834))
 - Update GitHub Actions ([#3795](https://github.com/nf-core/tools/pull/3795))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
