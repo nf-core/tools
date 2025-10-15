@@ -314,11 +314,11 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     # Deprecated enable_conda
     for i, raw_line in enumerate(lines):
         url = None
-        line = raw_line.strip(" \n'\"}:")
+        line = raw_line.strip(" \n'\"}:?")
 
         # Catch preceding "container "
         if line.startswith("container"):
-            line = line.replace("container", "").strip(" \n'\"}:")
+            line = line.replace("container", "").strip(" \n'\"}:?")
 
         if _container_type(line) == "conda":
             if "bioconda::" in line:
@@ -592,7 +592,7 @@ def check_process_labels(self, lines):
 def check_container_link_line(self, raw_line, registry):
     """Look for common problems in the container name / URL, for docker and singularity."""
 
-    line = raw_line.strip(" \n'\"}:")
+    line = raw_line.strip(" \n'\"}:?")
 
     # lint double quotes
     if line.count('"') > 2:
