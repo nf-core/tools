@@ -4,7 +4,7 @@
 
 ### Template
 
-- Fix devcontainer configuration for pipeline template
+- Fix devcontainer configuration for pipeline template [3835](https://github.com/nf-core/tools/pull/3835)
 
 ## [v3.4.0 - Ducol Dingo](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-10-10]
 
