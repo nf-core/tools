@@ -5,7 +5,7 @@ FROM "mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d3
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
 
-# Explicitly reinstall python 3.14 via conda
+# Explicitly reinstall python 3.13 via conda
 # install local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
