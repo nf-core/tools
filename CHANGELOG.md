@@ -82,7 +82,6 @@
 - Update pre-commit hook pre-commit/pre-commit-hooks to v6 ([#3797](https://github.com/nf-core/tools/pull/3797))
 - Update dependency python to 3.14 ([#3817](https://github.com/nf-core/tools/pull/3817))
 - update Dockerfile to python 3.14 ([#3822](https://github.com/nf-core/tools/pull/3822))
-- Revert "Add .nf-test folder to prettierignore list" ([#3831](https://github.com/nf-core/tools/pull/3831))
 
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
