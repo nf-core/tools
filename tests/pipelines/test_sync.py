@@ -3,7 +3,6 @@
 import json
 import os
 from pathlib import Path
-from typing import Union
 from unittest import mock
 
 import git
@@ -19,12 +18,12 @@ from ..utils import with_temporary_folder
 
 
 class MockResponse:
-    def __init__(self, data: Union[dict, list[dict]], status_code: int, url: str):
+    def __init__(self, data: dict | list[dict], status_code: int, url: str):
         self.url: str = url
         self.status_code: int = status_code
         self.from_cache: bool = False
         self.reason: str = "Mocked response"
-        self.data: Union[dict, list[dict]] = data
+        self.data: dict | list[dict] = data
         self.content: str = json.dumps(data)
         self.headers: dict[str, str] = {"content-encoding": "test", "connection": "fake"}
 
@@ -342,7 +341,7 @@ class TestModules(TestPipelines):
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr: dict[str, Union[str, dict[str, str]]] = {
+        pr: dict[str, str | dict[str, str]] = {
             "state": "open",
             "head": {"ref": "nf-core-template-merge-3"},
             "base": {"ref": "main"},

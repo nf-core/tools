@@ -7,8 +7,6 @@ import logging
 import re
 from pathlib import Path
 
-import yaml
-
 from nf_core.components.lint import LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
@@ -27,6 +25,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         if allow_missing:
             module.warned.append(
                 (
+                    "module_tests",
                     "test_dir_exists",
                     "nf-test directory is missing",
                     Path(module.component_dir, "tests"),
@@ -39,6 +38,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         if allow_missing:
             module.warned.append(
                 (
+                    "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
                     Path(module.component_dir, "tests", "main.nf.test"),
@@ -52,11 +52,14 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
     pytest_main_nf = Path(test_dir, "main.nf")
     is_pytest = pytest_main_nf.is_file()
     if module.nftest_testdir.is_dir():
-        module.passed.append(("test_dir_exists", "nf-test test directory exists", module.nftest_testdir))
+        module.passed.append(
+            ("module_tests", "test_dir_exists", "nf-test test directory exists", module.nftest_testdir)
+        )
     else:
         if is_pytest:
             module.warned.append(
                 (
+                    "module_tests",
                     "test_dir_exists",
                     "nf-test directory is missing",
                     module.nftest_testdir,
@@ -65,6 +68,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         else:
             module.failed.append(
                 (
+                    "module_tests",
                     "test_dir_exists",
                     "nf-test directory is missing",
                     module.nftest_testdir,
@@ -74,11 +78,14 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
 
     # Lint the test main.nf file
     if module.nftest_main_nf.is_file():
-        module.passed.append(("test_main_nf_exists", "test `main.nf.test` exists", module.nftest_main_nf))
+        module.passed.append(
+            ("module_tests", "test_main_nf_exists", "test `main.nf.test` exists", module.nftest_main_nf)
+        )
     else:
         if is_pytest:
             module.warned.append(
                 (
+                    "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
                     module.nftest_main_nf,
@@ -87,6 +94,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         else:
             module.failed.append(
                 (
+                    "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
                     module.nftest_main_nf,
@@ -102,6 +110,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                 if snap_file.is_file():
                     module.passed.append(
                         (
+                            "module_tests",
                             "test_snapshot_exists",
                             "snapshot file `main.nf.test.snap` exists",
                             snap_file,
@@ -116,6 +125,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                     if "stub" not in test_name:
                                         module.failed.append(
                                             (
+                                                "module_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
                                                 snap_file,
@@ -124,6 +134,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                     else:
                                         module.passed.append(
                                             (
+                                                "module_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for empty file found, but it is a stub test",
                                                 snap_file,
@@ -132,6 +143,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                 else:
                                     module.passed.append(
                                         (
+                                            "module_tests",
                                             "test_snap_md5sum",
                                             "no md5sum for empty file found",
                                             snap_file,
@@ -141,6 +153,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                     if "stub" not in test_name:
                                         module.failed.append(
                                             (
+                                                "module_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
                                                 snap_file,
@@ -149,6 +162,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                     else:
                                         module.passed.append(
                                             (
+                                                "module_tests",
                                                 "test_snap_md5sum",
                                                 "md5sum for compressed empty file found, but it is a stub test",
                                                 snap_file,
@@ -157,6 +171,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                 else:
                                     module.passed.append(
                                         (
+                                            "module_tests",
                                             "test_snap_md5sum",
                                             "no md5sum for compressed empty file found",
                                             snap_file,
@@ -165,6 +180,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                             if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
                                 module.passed.append(
                                     (
+                                        "module_tests",
                                         "test_snap_versions",
                                         "versions found in snapshot file",
                                         snap_file,
@@ -173,6 +189,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                             else:
                                 module.failed.append(
                                     (
+                                        "module_tests",
                                         "test_snap_versions",
                                         "versions not found in snapshot file",
                                         snap_file,
@@ -181,6 +198,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                         except json.decoder.JSONDecodeError as e:
                             module.failed.append(
                                 (
+                                    "module_tests",
                                     "test_snapshot_exists",
                                     f"snapshot file `main.nf.test.snap` can't be read: {e}",
                                     snap_file,
@@ -189,6 +207,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                 else:
                     module.failed.append(
                         (
+                            "module_tests",
                             "test_snapshot_exists",
                             "snapshot file `main.nf.test.snap` does not exist",
                             snap_file,
@@ -212,6 +231,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
             if len(missing_tags) == 0:
                 module.passed.append(
                     (
+                        "module_tests",
                         "test_main_tags",
                         "Tags adhere to guidelines",
                         module.nftest_main_nf,
@@ -220,42 +240,12 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
             else:
                 module.failed.append(
                     (
+                        "module_tests",
                         "test_main_tags",
                         f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: `{','.join(missing_tags)}`",
                         module.nftest_main_nf,
                     )
                 )
-
-    # Check pytest_modules.yml does not contain entries for modules with nf-test
-    pytest_yml_path = module.base_dir / "tests" / "config" / "pytest_modules.yml"
-    if pytest_yml_path.is_file() and not is_pytest:
-        try:
-            with open(pytest_yml_path) as fh:
-                pytest_yml = yaml.safe_load(fh)
-                if module.component_name in pytest_yml.keys():
-                    module.failed.append(
-                        (
-                            "test_pytest_yml",
-                            "module with nf-test should not be listed in pytest_modules.yml",
-                            pytest_yml_path,
-                        )
-                    )
-                else:
-                    module.passed.append(
-                        (
-                            "test_pytest_yml",
-                            "module with  nf-test not in pytest_modules.yml",
-                            pytest_yml_path,
-                        )
-                    )
-        except FileNotFoundError:
-            module.warned.append(
-                (
-                    "test_pytest_yml",
-                    "Could not open pytest_modules.yml file",
-                    pytest_yml_path,
-                )
-            )
 
     # Check that the old test directory does not exist
     if not is_pytest:
@@ -263,6 +253,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         if old_test_dir.is_dir():
             module.failed.append(
                 (
+                    "module_tests",
                     "test_old_test_dir",
                     f"Pytest files are still present at `{Path('tests', 'modules', module.component_name)}`. Please remove this directory and its contents.",
                     old_test_dir,
@@ -271,6 +262,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         else:
             module.passed.append(
                 (
+                    "module_tests",
                     "test_old_test_dir",
                     "Old pytests don't exist for this module",
                     old_test_dir,

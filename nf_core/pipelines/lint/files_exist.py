@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Union
 
 log = logging.getLogger(__name__)
 
@@ -215,7 +214,7 @@ def files_exist(self) -> dict[str, list[str]]:
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
 
-    def pf(file_path: Union[str, Path]) -> Path:
+    def pf(file_path: str | Path) -> Path:
         return Path(self.wf_path, file_path)
 
     # First - critical files. Check that this is actually a Nextflow pipeline

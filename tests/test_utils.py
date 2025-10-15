@@ -98,12 +98,12 @@ class TestUtils(TestPipelines):
         files = pipeline_obj.list_files()
         assert tmp_fn in files
 
-    @mock.patch("os.path.exists")
-    @mock.patch("os.makedirs")
-    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.exists")
+    def test_request_cant_create_cache(self, mock_exists, mock_mkdir):
         """Test that we don't get an error when we can't create cachedirs"""
-        mock_mkd.side_effect = PermissionError()
         mock_exists.return_value = False
+        mock_mkdir.side_effect = PermissionError()
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):
@@ -216,3 +216,11 @@ class TestUtils(TestPipelines):
             with nf_core.utils.set_wd(self.tmp_dir):
                 raise Exception
         assert wd_before_context == Path().resolve()
+
+    @mock.patch("nf_core.utils.run_cmd")
+    def test_fetch_wf_config(self, mock_run_cmd):
+        """Test the fetch_wf_config() regular expression to read config params."""
+        mock_run_cmd.return_value = (b"params.param1 ? 'a=b' : ''\nparams.param2 = foo", b"mock")
+        config = nf_core.utils.fetch_wf_config(".", False)
+        assert len(config.keys()) == 1
+        assert "params.param2" in list(config.keys())

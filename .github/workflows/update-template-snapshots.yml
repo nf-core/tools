@@ -1,0 +1,160 @@
+name: Update Template snapshots from a comment
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  prepare-matrix:
+    name: Retrieve all template features
+    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
+    if: >
+      contains(github.event.comment.html_url, '/pull/') &&
+      contains(github.event.comment.body, '@nf-core-bot') &&
+      contains(github.event.comment.body, 'update template snapshots') &&
+      github.repository == 'nf-core/tools'
+    runs-on: ubuntu-latest
+    outputs:
+      all_features: ${{ steps.create_matrix.outputs.matrix }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Create Matrix
+        id: create_matrix
+        run: |
+          echo "matrix=$(yq '.[].features | keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config")' nf_core/pipelines/create/template_features.yml | \
+          yq 'flatten | tojson(0)' -)" >> $GITHUB_OUTPUT
+
+  update-snapshots:
+    needs: [prepare-matrix]
+    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
+    if: >
+      contains(github.event.comment.html_url, '/pull/') &&
+      contains(github.event.comment.body, '@nf-core-bot') &&
+      contains(github.event.comment.body, 'update template snapshots') &&
+      github.repository == 'nf-core/tools'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
+        include:
+          - TEMPLATE: all
+      fail-fast: false
+    steps:
+      # Use the @nf-core-bot token to check out so we can push later
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          token: ${{ secrets.nf_core_bot_auth_token }}
+
+      # indication that the command is running
+      - name: React on comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: eyes
+
+      # Action runs on the issue comment, so we don't get the PR by default
+      # Use the gh cli to check out the PR
+      - name: Checkout Pull Request
+        run: gh pr checkout ${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+
+      # Install dependencies and run pytest
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        with:
+          python-version: "3.14"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip -r requirements-dev.txt
+          pip install -e .
+
+      # Create template files
+      - name: Create template skip ${{ matrix.TEMPLATE }}
+        run: |
+          mkdir create-test-lint-wf
+          export NXF_WORK=$(pwd)
+          if [ ${{ matrix.TEMPLATE }} == "all" ]
+          then
+            printf "org: my-prefix\nskip_features: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
+          else
+            printf "org: my-prefix\nskip_features: [${{ matrix.TEMPLATE }}]" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
+          fi
+
+      # Create a pipeline from the template
+      - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
+        run: |
+          cd create-test-lint-wf
+          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
+
+      # Copy snapshot file
+      - name: copy snapshot file
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        run: |
+          if [ ! -f ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap ]; then
+              echo "Generate a snapshot when creating a pipeline and skipping the feature ${{ matrix.TEMPLATE }}."
+              echo "Then, copy it to the directory .github/snapshots"
+          else
+            cp ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+          fi
+
+      # Run pipeline with nf-test
+      - name: run pipeline nf-test
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        id: nf-test
+        shell: bash
+        run: |
+          cd create-test-lint-wf/my-prefix-testpipeline
+          nf-test test \
+            --profile=+docker \
+            --verbose
+
+      - name: Update nf-test snapshot
+        if: steps.nf-test.outcome == 'success'
+        run: |
+          cp ${{ github.workspace }}/create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap
+
+      # indication that the run has finished
+      - name: react if finished succesfully
+        if: steps.nf-test.outcome == 'success'
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: "+1"
+
+      - name: Commit & push changes
+        id: commit-and-push
+        if: steps.nf-test.outcome == 'success'
+        run: |
+          git config user.email "core@nf-co.re"
+          git config user.name "nf-core-bot"
+          git config push.default upstream
+          git add .
+          git status
+          git commit -m "[automated] Update Template snapshots"
+          git push
+
+      - name: react if snapshots were updated
+        id: react-if-updated
+        if: steps.commit-and-push.outcome == 'success'
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: hooray
+
+      - name: react if snapshots were not updated
+        if: steps.commit-and-push.outcome == 'failure'
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: confused
+
+      - name: react if snapshots were not updated
+        if: steps.commit-and-push.outcome  == 'failure'
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            @${{ github.actor }} I tried to update the snapshots, but it didn't work. Please update them manually.

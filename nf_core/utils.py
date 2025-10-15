@@ -18,10 +18,10 @@ import shlex
 import subprocess
 import sys
 import time
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import git
 import prompt_toolkit.styles
@@ -165,13 +165,13 @@ class Pipeline:
         self.conda_package_info: dict = {}
         self.nf_config: dict = {}
         self.files: list[Path] = []
-        self.git_sha: Optional[str] = None
-        self.minNextflowVersion: Optional[str] = None
+        self.git_sha: str | None = None
+        self.minNextflowVersion: str | None = None
         self.wf_path = Path(wf_path)
-        self.pipeline_name: Optional[str] = None
-        self.pipeline_prefix: Optional[str] = None
-        self.schema_obj: Optional[PipelineSchema] = None
-        self.repo: Optional[git.Repo] = None
+        self.pipeline_name: str | None = None
+        self.pipeline_prefix: str | None = None
+        self.schema_obj: PipelineSchema | None = None
+        self.repo: git.Repo | None = None
 
         try:
             self.repo = git.Repo(self.wf_path)
@@ -201,7 +201,7 @@ class Pipeline:
             log.debug("No conda `environment.yml` file found.")
             return False
 
-    def _fp(self, fn: Union[str, Path]) -> Path:
+    def _fp(self, fn: str | Path) -> Path:
         """Convenience function to get full path to a file in the pipeline"""
         return Path(self.wf_path, fn)
 
@@ -266,6 +266,74 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(warning)
 
 
+# This is the minimal version of Nextflow required to fetch containers with `nextflow inspect`
+NF_INSPECT_MIN_NF_VERSION = (25, 4, 4, False)
+
+# This is the maximal version of nf-core/tools that does not require `nextflow inspect` for downloads
+NFCORE_VER_LAST_WITHOUT_NF_INSPECT = (3, 3, 2)
+
+
+# Pretty print a Nextflow version tuple
+def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
+    return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
+
+
+def get_nf_version() -> tuple[int, int, int, bool] | None:
+    """Get the version of Nextflow installed on the system."""
+    try:
+        cmd_out = run_cmd("nextflow", "-v")
+        if cmd_out is None:
+            raise RuntimeError("Failed to run Nextflow version check.")
+        out, _ = cmd_out
+        out_str = str(out, encoding="utf-8")  # Ensure we have a string
+
+        version_str = out_str.strip().split()[-1]
+
+        # Check if we are using an edge release
+        is_edge = False
+        edge_split = version_str.split("-")
+        if len(edge_split) > 1:
+            is_edge = True
+            version_str = edge_split[0]
+
+        split_version_str = version_str.split(".")
+        parsed_version_tuple = (
+            int(split_version_str[0]),
+            int(split_version_str[1]),
+            int(split_version_str[2]),
+            is_edge,
+        )
+        return parsed_version_tuple
+    except Exception as e:
+        log.warning(f"Error getting Nextflow version: {e}")
+        return None
+
+
+# Check that the Nextflow version >= the minimal version required
+# This is used to ensure that we can run `nextflow inspect`
+def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silent=False) -> bool:
+    """Check the version of Nextflow installed on the system.
+
+    Args:
+        minimal_nf_version (tuple[int, int, int, bool]): The minimal version of Nextflow required.
+        silent (bool): Whether to log the version or not.
+    Returns:
+        bool: True if the installed version is greater than or equal to `minimal_nf_version`
+    """
+    nf_version = get_nf_version()
+    if nf_version is None:
+        return False
+
+    parsed_version_str = pretty_nf_version(nf_version)
+
+    if silent:
+        log.debug(f"Detected Nextflow version {parsed_version_str}")
+    else:
+        log.info(f"Detected Nextflow version {parsed_version_str}")
+
+    return nf_version >= minimal_nf_version
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -313,12 +381,18 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
         cache_path = Path(cache_basedir, cache_fn)
         if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path) as fh:
-                try:
+            try:
+                with open(cache_path) as fh:
                     config = json.load(fh)
-                except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
-            return config
+                return config
+            except json.JSONDecodeError as e:
+                # Log warning but don't raise - just regenerate the cache
+                log.warning(f"Unable to load cached JSON file '{cache_path}' due to error: {e}")
+                log.debug("Removing corrupted cache file and regenerating...")
+                try:
+                    cache_path.unlink()
+                except OSError:
+                    pass  # If we can't delete it, just continue
     log.debug("No config cache found")
 
     # Call `nextflow config`
@@ -326,7 +400,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     if result is not None:
         nfconfig_raw, _ = result
         nfconfig = nfconfig_raw.decode("utf-8")
-        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
+        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=\s]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
 
         for config_match in multiline_key_value_pattern.finditer(nfconfig):
             k = config_match.group(2).strip()
@@ -368,7 +442,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     return config
 
 
-def run_cmd(executable: str, cmd: str) -> Union[tuple[bytes, bytes], None]:
+def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     """Run a specified command and capture the output. Handle errors nicely."""
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
@@ -402,7 +476,7 @@ def setup_nfcore_dir() -> bool:
     return True
 
 
-def setup_requests_cachedir() -> dict[str, Union[Path, datetime.timedelta, str]]:
+def setup_requests_cachedir() -> dict[str, Path | datetime.timedelta | str]:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -413,7 +487,7 @@ def setup_requests_cachedir() -> dict[str, Union[Path, datetime.timedelta, str]]
     """
     pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config: dict[str, Union[Path, datetime.timedelta, str]] = {
+    config: dict[str, Path | datetime.timedelta | str] = {
         "cache_name": Path(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
         "backend": "sqlite",
@@ -423,7 +497,7 @@ def setup_requests_cachedir() -> dict[str, Union[Path, datetime.timedelta, str]]
     return config
 
 
-def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+def setup_nfcore_cachedir(cache_fn: str | Path) -> Path:
     """Sets up local caching for caching files between sessions."""
 
     cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
@@ -461,7 +535,7 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
         raise AssertionError("Cancelled!")
 
 
-def poll_nfcore_web_api(api_url: str, post_data: Optional[dict] = None) -> dict:
+def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
     """
     Poll the nf-core website API
 
@@ -518,7 +592,7 @@ class GitHubAPISession(requests_cache.CachedSession):
     """
 
     def __init__(self) -> None:
-        self.auth_mode: Optional[str] = None
+        self.auth_mode: str | None = None
         self.return_ok: list[int] = [200, 201]
         self.return_retry: list[int] = [403]
         self.return_unauthorised: list[int] = [401]
@@ -1133,29 +1207,29 @@ DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 class NFCoreTemplateConfig(BaseModel):
     """Template configuration schema"""
 
-    org: Optional[str] = None
+    org: str | None = None
     """ Organisation name """
-    name: Optional[str] = None
+    name: str | None = None
     """ Pipeline name """
-    description: Optional[str] = None
+    description: str | None = None
     """ Pipeline description """
-    author: Optional[str] = None
+    author: str | None = None
     """ Pipeline author """
-    version: Optional[str] = None
+    version: str | None = None
     """ Pipeline version """
-    force: Optional[bool] = True
+    force: bool | None = True
     """ Force overwrite of existing files """
-    outdir: Optional[Union[str, Path]] = None
+    outdir: str | Path | None = None
     """ Output directory """
-    skip_features: Optional[list] = None
+    skip_features: list | None = None
     """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
-    is_nfcore: Optional[bool] = None
+    is_nfcore: bool | None = None
     """ Whether the pipeline is an nf-core pipeline. """
 
     # convert outdir to str
     @field_validator("outdir")
     @classmethod
-    def outdir_to_str(cls, v: Optional[Union[str, Path]]) -> Optional[str]:
+    def outdir_to_str(cls, v: str | Path | None) -> str | None:
         if v is not None:
             v = str(v)
         return v
@@ -1208,65 +1282,65 @@ class NFCoreYamlLintConfig(BaseModel):
             - nf-test.config
     """
 
-    files_unchanged: Optional[Union[bool, list[str]]] = None
+    files_unchanged: bool | list[str] | None = None
     """ List of files that should not be changed """
-    modules_config: Optional[Optional[Union[bool, list[str]]]] = None
+    modules_config: bool | list[str] | None = None
     """ List of modules that should not be changed """
-    merge_markers: Optional[Optional[Union[bool, list[str]]]] = None
+    merge_markers: bool | list[str] | None = None
     """ List of files that should not contain merge markers """
-    nextflow_config: Optional[Optional[Union[bool, list[Union[str, dict[str, list[str]]]]]]] = None
+    nextflow_config: bool | list[str | dict[str, list[str]]] | None = None
     """ List of Nextflow config files that should not be changed """
-    nf_test_content: Optional[Union[bool, list[str]]] = None
+    nf_test_content: bool | list[str] | None = None
     """ List of nf-test content that should not be changed """
-    multiqc_config: Optional[Union[bool, list[str]]] = None
+    multiqc_config: bool | list[str] | None = None
     """ List of MultiQC config options that be changed """
-    files_exist: Optional[Union[bool, list[str]]] = None
+    files_exist: bool | list[str] | None = None
     """ List of files that can not exist """
-    template_strings: Optional[Optional[Union[bool, list[str]]]] = None
+    template_strings: bool | list[str] | None = None
     """ List of files that can contain template strings """
-    readme: Optional[Union[bool, list[str]]] = None
+    readme: bool | list[str] | None = None
     """ Lint the README.md file """
-    nfcore_components: Optional[bool] = None
+    nfcore_components: bool | None = None
     """ Lint all required files to use nf-core modules and subworkflows """
-    actions_nf_test: Optional[bool] = None
+    actions_nf_test: bool | None = None
     """ Lint all required files to use GitHub Actions CI """
-    actions_awstest: Optional[bool] = None
+    actions_awstest: bool | None = None
     """ Lint all required files to run tests on AWS """
-    actions_awsfulltest: Optional[bool] = None
+    actions_awsfulltest: bool | None = None
     """ Lint all required files to run full tests on AWS """
-    pipeline_todos: Optional[bool] = None
+    pipeline_todos: bool | None = None
     """ Lint for TODOs statements"""
-    pipeline_if_empty_null: Optional[bool] = None
+    pipeline_if_empty_null: bool | None = None
     """ Lint for ifEmpty(null) statements"""
-    plugin_includes: Optional[bool] = None
+    plugin_includes: bool | None = None
     """ Lint for nextflow plugin """
-    pipeline_name_conventions: Optional[bool] = None
+    pipeline_name_conventions: bool | None = None
     """ Lint for pipeline name conventions """
-    schema_lint: Optional[bool] = None
+    schema_lint: bool | None = None
     """ Lint nextflow_schema.json file"""
-    schema_params: Optional[bool] = None
+    schema_params: bool | None = None
     """ Lint schema for all params """
-    system_exit: Optional[bool] = None
+    system_exit: bool | None = None
     """ Lint for System.exit calls in groovy/nextflow code """
-    schema_description: Optional[bool] = None
+    schema_description: bool | None = None
     """ Check that every parameter in the schema has a description. """
-    actions_schema_validation: Optional[bool] = None
+    actions_schema_validation: bool | None = None
     """ Lint GitHub Action workflow files with schema"""
-    modules_json: Optional[bool] = None
+    modules_json: bool | None = None
     """ Lint modules.json file """
-    modules_structure: Optional[bool] = None
+    modules_structure: bool | None = None
     """ Lint modules structure """
-    base_config: Optional[bool] = None
+    base_config: bool | None = None
     """ Lint base.config file """
-    nfcore_yml: Optional[bool] = None
+    nfcore_yml: bool | None = None
     """ Lint nf-core.yml """
-    version_consistency: Optional[bool] = None
+    version_consistency: bool | None = None
     """ Lint for version consistency """
-    included_configs: Optional[bool] = None
+    included_configs: bool | None = None
     """ Lint for included configs """
-    local_component_structure: Optional[bool] = None
+    local_component_structure: bool | None = None
     """ Lint local components use correct structure mirroring remote"""
-    rocrate_readme_sync: Optional[bool] = None
+    rocrate_readme_sync: bool | None = None
     """ Lint for README.md and rocrate.json sync """
 
     def __getitem__(self, item: str) -> Any:
@@ -1284,19 +1358,19 @@ class NFCoreYamlLintConfig(BaseModel):
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
-    repository_type: Optional[Literal["pipeline", "modules"]] = None
+    repository_type: Literal["pipeline", "modules"] | None = None
     """ Type of repository """
-    nf_core_version: Optional[str] = None
+    nf_core_version: str | None = None
     """ Version of nf-core/tools used to create/update the pipeline """
-    org_path: Optional[str] = None
+    org_path: str | None = None
     """ Path to the organisation's modules repository (used for modules repo_type only) """
-    lint: Optional[NFCoreYamlLintConfig] = None
+    lint: NFCoreYamlLintConfig | None = None
     """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
-    template: Optional[NFCoreTemplateConfig] = None
+    template: NFCoreTemplateConfig | None = None
     """ Pipeline template configuration """
-    bump_version: Optional[dict[str, bool]] = None
+    bump_version: dict[str, bool] | None = None
     """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
-    update: Optional[dict[str, Union[str, bool, dict[str, Union[str, dict[str, Union[str, bool]]]]]]] = None
+    update: dict[str, str | bool | dict[str, str | dict[str, str | bool]]] | None = None
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
 
     def __getitem__(self, item: str) -> Any:
@@ -1326,7 +1400,7 @@ class NFCoreYamlConfig(BaseModel):
         return config
 
 
-def load_tools_config(directory: Union[str, Path] = ".") -> tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
+def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreYamlConfig | None]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1408,7 +1482,7 @@ def load_tools_config(directory: Union[str, Path] = ".") -> tuple[Optional[Path]
     return config_fn, nf_core_yaml_config
 
 
-def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
+def determine_base_dir(directory: Path | str = ".") -> Path:
     base_dir = start_dir = Path(directory).absolute()
     # Only iterate up the tree if the start dir doesn't have a config
     while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
@@ -1419,7 +1493,7 @@ def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
     return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
-def get_first_available_path(directory: Union[Path, str], paths: list[str]) -> Union[Path, None]:
+def get_first_available_path(directory: Path | str, paths: list[str]) -> Path | None:
     for p in paths:
         if Path(directory, p).is_file():
             return Path(directory, p)
@@ -1574,9 +1648,12 @@ def get_wf_files(wf_path: Path):
 
     wf_files = []
 
-    with open(Path(wf_path, ".gitignore")) as f:
-        lines = f.read().splitlines()
-    ignore = [line for line in lines if line and not line.startswith("#")]
+    try:
+        with open(Path(wf_path, ".gitignore")) as f:
+            lines = f.read().splitlines()
+        ignore = [line for line in lines if line and not line.startswith("#")]
+    except FileNotFoundError:
+        ignore = []
 
     for path in Path(wf_path).rglob("*"):
         if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):

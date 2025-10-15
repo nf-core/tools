@@ -2,7 +2,6 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Union
 
 import rich
 import yaml
@@ -79,7 +78,7 @@ def check_git_repo() -> bool:
         return False
 
 
-def run_prettier_on_file(file: Union[Path, str, list[str]]) -> None:
+def run_prettier_on_file(file: Path | str | list[str]) -> None:
     """Run the pre-commit hook prettier on a file.
 
     Args:
@@ -129,7 +128,7 @@ def dump_json_with_prettier(file_name, file_content):
     run_prettier_on_file(file_name)
 
 
-def dump_yaml_with_prettier(file_name: Union[Path, str], file_content: dict) -> None:
+def dump_yaml_with_prettier(file_name: Path | str, file_content: dict) -> None:
     """Dump a YAML file and run prettier on it.
 
     Args:

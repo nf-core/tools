@@ -7,7 +7,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 import yaml
@@ -31,9 +30,9 @@ log = logging.getLogger(__name__)
 class ModuleVersionBumper(ComponentCommand):
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        pipeline_dir: str | Path,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
     ):
         super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
@@ -42,14 +41,20 @@ class ModuleVersionBumper(ComponentCommand):
         self.updated: list[tuple[str, str]] = []
         self.failed: list[tuple[str, str]] = []
         self.ignored: list[tuple[str, str]] = []
-        self.show_up_to_date: Optional[bool] = None
-        self.tools_config: Optional[NFCoreYamlConfig]
+        self.show_up_to_date: bool | None = None
+        self.tools_config: NFCoreYamlConfig | None
 
     def bump_versions(
-        self, module: Union[str, None] = None, all_modules: bool = False, show_uptodate: bool = False
-    ) -> None:
+        self,
+        module: str | None = None,
+        all_modules: bool = False,
+        show_up_to_date: bool = False,
+        dry_run: bool = False,
+    ) -> list[NFCoreComponent]:
         """
-        Bump the container and conda version of single module or all modules
+        Bump the container and conda version of single module or all modules.
+
+        If module is the name of a directory in the modules directory, all modules in that directory will be bumped.
 
         Looks for a bioconda tool version in the `main.nf` file of the module and checks whether
         are more recent version is available. If yes, then tries to get docker/singularity
@@ -59,12 +64,17 @@ class ModuleVersionBumper(ComponentCommand):
         Args:
             module: a specific module to update
             all_modules: whether to bump versions for all modules
+            show_up_to_date: whether to show up-to-date modules as well
+            dry_run: whether to dry run the command
+
+        Returns:
+            list[NFCoreComponent]: the updated modules
         """
         self.up_to_date = []
         self.updated = []
         self.failed = []
         self.ignored = []
-        self.show_up_to_date = show_uptodate
+        self.show_up_to_date = show_up_to_date
 
         # Check modules directory structure
         self.check_modules_structure()
@@ -105,11 +115,16 @@ class ModuleVersionBumper(ComponentCommand):
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
-            nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
+            nfcore_modules = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, module)
+
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     f"Could not find the specified module: '{module}'"
                 )
+
+        # mainly used for testing, return the list of nfcore_modules selected
+        if dry_run:
+            return nfcore_modules
 
         progress_bar = Progress(
             "[bold blue]{task.description}",
@@ -129,6 +144,8 @@ class ModuleVersionBumper(ComponentCommand):
                 self.bump_module_version(mod)
 
         self._print_results()
+
+        return nfcore_modules
 
     def bump_module_version(self, module: NFCoreComponent) -> bool:
         """
@@ -160,9 +177,9 @@ class ModuleVersionBumper(ComponentCommand):
             return False
 
         # Don't update if blocked in blacklist
-        self.bump_versions_config = getattr(self.tools_config, "bump-versions", {}) or {}
-        if module.component_name in self.bump_versions_config:
-            config_version = self.bump_versions_config[module.component_name]
+        bump_versions_config: dict[str, str] = getattr(self.tools_config, "bump-versions", {}) or {}
+        if module.component_name in bump_versions_config:
+            config_version = bump_versions_config[module.component_name]
             if not config_version:
                 self.ignored.append(("Omitting module due to config.", module.component_name))
                 return False
