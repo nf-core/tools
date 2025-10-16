@@ -14,9 +14,6 @@ workflow {{ component_name_underscore|upper }} {
     ch_bam // channel: [ val(meta), [ bam ] ]
 
     main:
-
-    ch_versions = Channel.empty()
-
     // TODO nf-core: substitute modules here for the modules of your subworkflow
 
     SAMTOOLS_SORT ( ch_bam )
@@ -30,6 +27,4 @@ workflow {{ component_name_underscore|upper }} {
     bam      = SAMTOOLS_SORT.out.bam           // channel: [ val(meta), [ bam ] ]
     bai      = SAMTOOLS_INDEX.out.bai          // channel: [ val(meta), [ bai ] ]
     csi      = SAMTOOLS_INDEX.out.csi          // channel: [ val(meta), [ csi ] ]
-
-    versions = ch_versions                     // channel: [ versions.yml ]
 }

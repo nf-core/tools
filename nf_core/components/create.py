@@ -528,21 +528,31 @@ class ComponentCreate(ComponentCommand):
         with open(self.file_paths["meta.yml"]) as fh:
             meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
 
-        versions: dict[str, list[dict[str, dict]]] = {
-            "versions": [
-                {
-                    "versions.yml": {
-                        "type": "file",
-                        "description": "File containing software versions",
-                        "pattern": "versions.yml",
-                        "ontologies": [
-                            ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3750"})
-                        ],
-                    }
-                }
+        versions: dict[str, list | dict] = {
+            f"versions_{self.component}": [
+                [
+                    {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                    {f"{self.component}": {"type": "string", "description": "The name of the tool"}},
+                    {
+                        f"{self.component} --version": {"type": "string", "description": "The version of the tool"},
+                    },
+                ]
             ]
         }
-        versions["versions"][0]["versions.yml"]["ontologies"][0].yaml_add_eol_comment("YAML", "edam")
+
+        versions_topic: dict[str, list | dict] = {
+            "versions": [
+                [
+                    {"process": {"type": "string", "description": "The process the versions were collected from"}},
+                    {
+                        "tool": {"type": "string", "description": "The tool name the version was collected for"},
+                    },
+                    {
+                        "version": {"type": "string", "description": "The version of the tool"},
+                    },
+                ]
+            ]
+        }
 
         if self.not_empty_template:
             meta_yml.yaml_set_comment_before_after_key(
@@ -557,8 +567,11 @@ class ComponentCreate(ComponentCommand):
             meta_yml["output"].yaml_set_start_comment(
                 "### TODO nf-core: Add a description of all of the variables used as output", indent=2
             )
+            meta_yml["topics"].yaml_set_start_comment(
+                "### TODO nf-core: Add a description of all of the variables used as topics", indent=2
+            )
 
-            if hasattr(self, "inputs"):
+            if hasattr(self, "inputs") and len(self.inputs) > 0:
                 inputs_array: list[dict | list[dict]] = []
                 for i, (input_name, ontologies) in enumerate(self.inputs.items()):
                     channel_entry: dict[str, dict] = {
@@ -607,7 +620,7 @@ class ComponentCreate(ComponentCommand):
                 meta_yml["input"][0]["bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
                 meta_yml["input"][0]["bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
 
-            if hasattr(self, "outputs"):
+            if hasattr(self, "outputs") and len(self.outputs) > 0:
                 outputs_dict: dict[str, list | dict] = {}
                 for i, (output_name, ontologies) in enumerate(self.outputs.items()):
                     channel_contents: list[list[dict] | dict] = []
@@ -668,6 +681,8 @@ class ComponentCreate(ComponentCommand):
                 meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
                 meta_yml["output"].update(versions)
 
+            meta_yml["topics"] = versions_topic
+
         else:
             input_entry: list[dict] = [
                 {"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}
@@ -690,6 +705,7 @@ class ComponentCreate(ComponentCommand):
                 meta_yml["input"] = input_entry
                 meta_yml["output"] = {"output": output_entry}
             meta_yml["output"].update(versions)
+            meta_yml["topics"] = versions_topic
 
         with open(self.file_paths["meta.yml"], "w") as fh:
             yaml.dump(meta_yml, fh)
