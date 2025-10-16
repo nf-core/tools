@@ -36,6 +36,26 @@ class DummyLint(ComponentLint):
         self.passed = []
         self.failed = []
 
+    def _lint_local_component(self, component, **kwargs):
+        """Dummy implementation for testing - simulates linting a local component"""
+        # Add basic validation behavior for testing
+        if hasattr(component, "environment_yml") and component.environment_yml.exists():
+            component.passed.append(("environment_yml", "Environment YAML found", component.environment_yml))
+        else:
+            component.failed.append(("environment_yml", "Environment YAML not found", component.component_dir))
+
+    def _lint_remote_component(self, component, **kwargs):
+        """Dummy implementation for testing - simulates linting a remote component"""
+        # Add basic validation behavior for testing
+        if hasattr(component, "environment_yml") and component.environment_yml.exists():
+            component.passed.append(
+                ("environment_yml", "Remote environment YAML accessible", component.environment_yml)
+            )
+        else:
+            component.failed.append(
+                ("environment_yml", "Remote environment YAML not accessible", component.component_dir)
+            )
+
 
 def setup_test_environment(tmp_path, content, filename="environment.yml"):
     test_file = tmp_path / filename

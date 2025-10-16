@@ -111,7 +111,7 @@ class TestMainNfLinting(TestModules):
         super().setUp()
         # Install samtools/sort module for all tests in this class
         if not self.mods_install.install("samtools/sort"):
-            self.skipTest("Could not install samtools/sort module")
+            self.fail("Failed to install samtools/sort module - this indicates a test infrastructure problem")
 
     def test_main_nf_lint_with_alternative_registry(self):
         """Test main.nf linting with alternative container registry"""
