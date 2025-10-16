@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+## v3.5.0dev
+
+### General
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
 ## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.1) - [2025-10-16]
 
 ### Template
