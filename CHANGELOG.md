@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-10-10]
+## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.1) - [2025-10-16]
 
 ### Template
 
