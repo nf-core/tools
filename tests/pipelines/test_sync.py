@@ -31,8 +31,8 @@ class MockResponse:
         return self.data
 
 
-def mocked_requests_get(url) -> MockResponse:
-    """Helper function to emulate POST requests responses from the web"""
+def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
+    """Helper function to emulate GET request responses from the web"""
 
     url_template = "https://api.github.com/repos/{}/response/"
     if url == Path(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
@@ -120,6 +120,17 @@ class TestModules(TestPipelines):
         finally:
             os.remove(test_fn)
 
+    def test_inspect_sync_ignored_files(self):
+        """
+        Try inspecting the repo for syncing with untracked changes that are ignored.
+        No assertions, we are checking that no exception is raised in the process.
+        """
+        test_fn = Path(self.pipeline_dir) / "ignored.txt"
+        self._make_ignored_file(test_fn)
+
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+
     def test_get_wf_config_no_branch(self):
         """Try getting a workflow config when the branch doesn't exist"""
         # Try to sync, check we halt with the right error
@@ -161,23 +172,87 @@ class TestModules(TestPipelines):
             psync.checkout_template_branch()
         assert exc_info.value.args[0] == "Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'"
 
-    def test_delete_template_branch_files(self):
-        """Confirm that we can delete all files in the TEMPLATE branch"""
+    def test_delete_tracked_template_branch_files(self):
+        """Confirm that we can delete all tracked files in the TEMPLATE branch"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
         psync.checkout_template_branch()
-        psync.delete_template_branch_files()
+        psync.delete_tracked_template_branch_files()
         assert os.listdir(self.pipeline_dir) == [".git"]
 
+    def test_delete_staged_template_branch_files_ignored(self):
+        """Confirm that files in .gitignore are not deleted by delete_staged_template_branch_files"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+        ignored_file = Path(self.pipeline_dir) / "ignored.txt"
+        self._make_ignored_file(ignored_file)
+
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_tracked_template_branch_files()
+
+        # Ignored file should still exist
+        assert ignored_file.exists()
+
+        # .git directory should still exist
+        assert (Path(self.pipeline_dir) / ".git").exists()
+
+    def test_delete_staged_template_branch_files_ignored_nested_dir(self):
+        """Confirm that deletion of ignored files respects directory structure"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        repo = git.Repo(self.pipeline_dir)
+
+        # Create this structure:
+        # dir
+        # ├── subdirA                   # (should be kept)
+        # │   └── subdirB               # (should be kept)
+        # │       └── ignored.txt       # add to .gitignore (should be kept)
+        # └── subdirC                   # (should be deleted)
+        #     └── subdirD               # (should be deleted)
+        #         └── not_ignored.txt   # commit this file (should be deleted)
+        parent_dir = Path(self.pipeline_dir) / "dir"
+        to_be_kept_dir = parent_dir / "subdirA" / "subdirB"
+        ignored_file = to_be_kept_dir / "ignored.txt"
+        to_be_deleted_dir = parent_dir / "subdirC" / "subdirD"
+        non_ignored_file = to_be_deleted_dir / "not_ignored.txt"
+
+        to_be_kept_dir.mkdir(parents=True)
+        to_be_deleted_dir.mkdir(parents=True)
+        non_ignored_file.touch()
+
+        repo.git.add(non_ignored_file)
+        repo.index.commit("Add non-ignored file")
+
+        self._make_ignored_file(ignored_file)
+
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_tracked_template_branch_files()
+
+        # Ignored file and its parent directory should still exist
+        assert ignored_file.exists()
+        assert to_be_kept_dir.exists()  # subdirB
+        assert to_be_kept_dir.parent.exists()  # subdirA
+
+        # Non-ignored file and its parent directory should be deleted
+        assert not non_ignored_file.exists()
+        assert not to_be_deleted_dir.exists()  # subdirD
+        assert not to_be_deleted_dir.parent.exists()  # subdirC
+
+        # .git directory should still exist
+        assert (Path(self.pipeline_dir) / ".git").exists()
+
     def test_create_template_pipeline(self):
-        """Confirm that we can delete all files in the TEMPLATE branch"""
+        """Confirm that we can create a new template pipeline in an empty directory"""
         # First, delete all the files
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
         psync.checkout_template_branch()
-        psync.delete_template_branch_files()
+        psync.delete_tracked_template_branch_files()
         assert os.listdir(self.pipeline_dir) == [".git"]
         # Now create the new template
         psync.make_template_pipeline()
@@ -210,6 +285,22 @@ class TestModules(TestPipelines):
         assert psync.commit_template_changes() is True
         # Check that we don't have any uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is False
+
+    def test_commit_template_preserves_ignored(self):
+        """Try to commit the TEMPLATE branch, but no changes were made"""
+        # Check out the TEMPLATE branch but skip making the new template etc.
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+        ignored_file = Path(self.pipeline_dir) / "ignored.txt"
+
+        self._make_ignored_file(ignored_file)
+
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.commit_template_changes()
+
+        assert ignored_file.exists()
 
     def test_push_template_branch_error(self):
         """Try pushing the changes, but without a remote (should fail)"""
@@ -430,3 +521,34 @@ class TestModules(TestPipelines):
         with self.assertRaises(nf_core.pipelines.sync.PullRequestExceptionError) as exc_info:
             psync.sync()
         self.assertIn("GITHUB_AUTH_TOKEN not set!", str(exc_info.exception))
+
+    def test_sync_preserves_ignored_files(self):
+        """Test that sync preserves files and directories specified in .gitignore"""
+        with (
+            mock.patch("requests.get", side_effect=mocked_requests_get),
+        ):
+            psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+            ignored_file = Path(self.pipeline_dir) / "ignored.txt"
+            self._make_ignored_file(ignored_file)
+
+            psync.made_changes = True
+
+            psync.sync()
+
+            self.assertTrue(ignored_file.exists())
+
+    def _make_ignored_file(self, file_path: Path):
+        """Helper function to create an ignored file."""
+        if not self.pipeline_dir:
+            raise ValueError("Instantiate a pipeline before adding ignored files.")
+
+        file_path.touch()
+
+        gitignore_path = Path(self.pipeline_dir) / ".gitignore"
+        with open(gitignore_path, "a") as f:
+            f.write(f"{file_path.name}\n")
+
+        repo = git.Repo(self.pipeline_dir)
+        repo.git.add(".gitignore")
+        repo.index.commit("Add .gitignore")
