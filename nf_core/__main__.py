@@ -55,11 +55,7 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
-from nf_core.commands_test_datasets import (
-    test_datasets_list_branches,
-    test_datasets_list_remote,
-    test_datasets_search,
-)
+from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download.download import DownloadError
@@ -384,6 +380,13 @@ def command_pipelines_lint(
     default=4,
     help="Number of allowed parallel tasks",
 )
+@click.option(
+    "-a",
+    "--authenticated",
+    is_flag=True,
+    default=False,
+    help="Enable authenticated download via the API of the SCM provider (with better rate limits, access to private repos, etc.). Requires e.g., GITHUB_TOKEN to be set in the environment.",
+)
 @click.pass_context
 def command_pipelines_download(
     ctx,
@@ -400,6 +403,7 @@ def command_pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
+    authenticated,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -419,6 +423,7 @@ def command_pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        authenticated,
     )
 
 
@@ -2387,6 +2392,7 @@ def command_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        authenticated=False,
     )
 
 
