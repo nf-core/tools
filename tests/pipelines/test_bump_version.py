@@ -1,11 +1,13 @@
 """Some tests covering the bump_version code."""
 
 import logging
+from pathlib import Path
 
 import yaml
 
 import nf_core.pipelines.bump_version
 import nf_core.utils
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 from ..test_pipelines import TestPipelines
 
@@ -104,3 +106,43 @@ class TestBumpVersion(TestPipelines):
         self.caplog.set_level(logging.INFO)
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
         assert "Could not find version number in " in self.caplog.text
+
+    def test_bump_pipeline_version_nf_core_yml_prettier(self):
+        """Test that lists in .nf-core.yml have correct formatting after version bump."""
+
+        nf_core_yml_path = Path(self.pipeline_dir / ".nf-core.yml")
+
+        # Add a list to the .nf-core.yml file to test list indentation
+        with open(nf_core_yml_path) as fh:
+            nf_core_yml = yaml.safe_load(fh)
+
+        # Add a lint section with a list
+        if "lint" not in nf_core_yml:
+            nf_core_yml["lint"] = {}
+        nf_core_yml["lint"]["files_exist"] = ["assets/multiqc_config.yml", "conf/base.config"]
+
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.dump(nf_core_yml, fh, default_flow_style=False)
+
+        # Run prettier to ensure the file is properly formatted before the test
+        run_prettier_on_file(nf_core_yml_path)
+
+        # Bump the version
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Read the file before prettier to store it
+        with open(nf_core_yml_path) as fh:
+            content_before = fh.read()
+
+        # Run prettier on the file
+        run_prettier_on_file(nf_core_yml_path)
+
+        # Read the file after prettier
+        with open(nf_core_yml_path) as fh:
+            content_after = fh.read()
+
+        # If prettier changed the file, the formatting was wrong
+        assert content_before == content_after, (
+            "The .nf-core.yml file formatting changed after running prettier. "
+            "This means the YAML dumping did not use correct indentation settings."
+        )
