@@ -68,7 +68,7 @@ workflow {{ short_name|upper }} {
         }
 
     softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
-        .mix(topic_versions)
+        .mix(topic_versions_string)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
             name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
