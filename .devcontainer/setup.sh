@@ -10,7 +10,7 @@ export PS1='\[\e[3;36m\]\w ->\[\e[0m\\] '
 nextflow self-update
 
 # Install specifically the version of tools from the workspace
-pip install --upgrade -r requirements-dev.txt -e .
+pip install --upgrade  -r requirements.txt -r requirements-dev.txt -e .
 
 # Update welcome message
 echo "Welcome to the nf-core devcontainer!" > /usr/local/etc/vscode-dev-containers/first-run-notice.txt
