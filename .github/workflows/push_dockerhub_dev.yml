@@ -49,3 +49,13 @@ jobs:
             --platform ${{ env.TARGET_PLATFORM }} \
             -t nfcore/tools:dev \
             --push --no-cache .
+
+      - name: Build and push nfcore/devcontainer:dev image (dev)
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
+        with:
+          configFile: .devcontainer/build-devcontainer/devcontainer.json
+          imageName: nfcore/devcontainer
+          imageTag: dev
+          platform: ${{ env.TARGET_PLATFORM }}
+          push: always
+          noCache: true
