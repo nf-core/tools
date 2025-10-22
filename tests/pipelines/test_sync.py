@@ -181,6 +181,50 @@ class TestModules(TestPipelines):
         psync.delete_tracked_template_branch_files()
         assert os.listdir(self.pipeline_dir) == [".git"]
 
+    def test_delete_tracked_template_branch_files_unlink_throws_error(self):
+        """Test that SyncExceptionError is raised when os.unlink throws an exception"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+
+        # Create a test file that would normally be deleted
+        test_file = Path(self.pipeline_dir) / "test_file.txt"
+        test_file.touch()
+
+        # Mock os.unlink to raise an exception
+        with mock.patch("os.unlink", side_effect=OSError("Permission denied")) as mock_unlink:
+            with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
+                psync.delete_tracked_template_branch_files()
+
+            # Verify the exception contains the original error
+            assert "Permission denied" in str(exc_info.value)
+
+            # Verify os.unlink was called
+            mock_unlink.assert_called()
+
+    def test_delete_tracked_template_branch_rmdir_throws_error(self):
+        """Test that SyncExceptionError is raised when os.rmdir throws an exception"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+
+        # Create an empty directory that would normally be deleted
+        empty_dir = Path(self.pipeline_dir) / "empty_test_dir"
+        empty_dir.mkdir()
+
+        # Mock os.rmdir to raise an exception
+        with mock.patch("os.rmdir", side_effect=OSError("Permission denied")) as mock_rmdir:
+            with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
+                psync.delete_tracked_template_branch_files()
+
+            # Verify the exception contains the original error
+            assert "Permission denied" in str(exc_info.value)
+
+            # Verify os.rmdir was called
+            mock_rmdir.assert_called()
+
     def test_delete_staged_template_branch_files_ignored(self):
         """Confirm that files in .gitignore are not deleted by delete_staged_template_branch_files"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
