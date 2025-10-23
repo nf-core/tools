@@ -1,7 +1,7 @@
 {
     "-profile test_taxid": {
         "content": [
-            267,
+            213,
             {
                 "BEDTOOLS_GENOMECOV": {
                     "bedtools": "2.31.1"
@@ -93,9 +93,6 @@
                 "SEQKIT_FQ2FA": {
                     "seqkit": "2.9.0"
                 },
-                "SPADES": {
-                    "spades": "4.1.0"
-                },
                 "SUBSET_BAM_FAIL": {
                     "samtools": 1.21
                 },
@@ -112,8 +109,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.2"
         },
-        "timestamp": "2025-10-23T07:29:20.070982579"
+        "timestamp": "2025-10-23T10:27:15.706125225"
     }
 }
