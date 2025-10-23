@@ -1,5 +1,6 @@
 .DS_Store
 multiqc/multiqc_data/fastqc_top_overrepresented_sequences_table.txt
+multiqc/multiqc_data/multiqc.parquet
 multiqc/multiqc_data/multiqc.log
 multiqc/multiqc_data/multiqc_data.json
 multiqc/multiqc_data/multiqc_sources.txt
@@ -10,9 +11,11 @@ multiqc/multiqc_data/*.txt
 fastqc/*_fastqc.{html,zip}
 pipeline_info/*.{html,json,txt,yml}
 blast/{blastn,blastx}/{centrifuge,diamond,kraken2}/*.txt
+igv/*.html
 pathogens/blast/{blastn,blastx}/*.txt
 spades/{centrifuge,diamond,kraken2}/*
-pathogens/bowtie2/align/*
-pathogens/minimap2/align/*
+pathogens/{bowtie2,minimap2}/align/*
 pathogens/consensus/*
 pathogens/pathogen_reads/{consensus_input,blast_input}/*
+pathogens/igv/*.html
+mapping/{bowtie2,minimap2}/align/*

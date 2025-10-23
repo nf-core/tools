@@ -1,7 +1,7 @@
 {
     "-profile test_taxid": {
         "content": [
-            253,
+            267,
             {
                 "BEDTOOLS_GENOMECOV": {
                     "bedtools": "2.31.1"
@@ -69,6 +69,12 @@
                 "SAMTOOLS_INDEX": {
                     "samtools": 1.21
                 },
+                "SAMTOOLS_INDEX_FAIL": {
+                    "samtools": 1.21
+                },
+                "SAMTOOLS_INDEX_PASS": {
+                    "samtools": 1.21
+                },
                 "SAMTOOLS_SORT": {
                     "samtools": 1.21
                 },
@@ -105,9 +111,9 @@
             }
         ],
         "meta": {
-            "nf-test": "0.9.2",
-            "nextflow": "25.04.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.0"
         },
-        "timestamp": "2025-09-17T15:06:10.407442165"
+        "timestamp": "2025-10-23T11:11:53.640144491"
     }
 }
