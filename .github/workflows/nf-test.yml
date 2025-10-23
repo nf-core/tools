@@ -117,7 +117,7 @@ jobs:
   confirm-pass:
     needs: [nf-test]
     if: always()
-    runs-on:  # use GitHub runners
+    runs-on: # use GitHub runners
       - "ubuntu-latest"
     steps:
       - name: One or more tests failed (excluding latest-everything)
