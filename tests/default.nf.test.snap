@@ -1,7 +1,7 @@
 {
     "-profile test_taxid": {
         "content": [
-            281,
+            267,
             {
                 "BEDTOOLS_GENOMECOV": {
                     "bedtools": "2.31.1"
@@ -114,6 +114,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.0"
         },
-        "timestamp": "2025-10-23T07:13:29.786727987"
+        "timestamp": "2025-10-23T07:29:20.070982579"
     }
 }
