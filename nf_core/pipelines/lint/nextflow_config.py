@@ -2,7 +2,6 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
 from nf_core.utils import load_tools_config
@@ -421,8 +420,8 @@ def nextflow_config(self) -> dict[str, list[str]]:
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
         elif param in self.nf_config.keys():
-            config_default: Optional[Union[str, float, int]] = None
-            schema_default: Optional[Union[str, float, int]] = None
+            config_default: str | float | int | None = None
+            schema_default: str | float | int | None = None
             if schema.schema_types[param_name] == "boolean":
                 schema_default = str(schema.schema_defaults[param_name]).lower()
                 config_default = str(self.nf_config[param]).lower()
