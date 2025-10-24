@@ -1,13 +1,26 @@
 # nf-core/tools: Changelog
 
-## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-10-10]
+## v3.5.0dev
+
+### General
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.1) - [2025-10-16]
 
 ### Template
 
 - Fix devcontainer configuration for pipeline template ([#3835](https://github.com/nf-core/tools/pull/3835))
 - Fix Jinja2 template formatting in nextflow.config ([#3836](https://github.com/nf-core/tools/pull/3836))
+- Add codespaces badge to template README ([#3824](https://github.com/nf-core/tools/pull/3824))
 
-## [v3.4.0 - Ducol Dingo](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-10-10]
+## [v3.4.0 - Ducol Dingo](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-10-15]
 
 **Highlights**
 
