@@ -4,6 +4,8 @@
 
 ### General
 
+- Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
+
 ### Template
 
 ### Linting
