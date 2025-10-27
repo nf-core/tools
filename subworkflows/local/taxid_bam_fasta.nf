@@ -10,6 +10,8 @@ include { SAMTOOLS_INDEX as  SAMTOOLS_INDEX_PASS            } from '../../module
 include { SAMTOOLS_INDEX as  SAMTOOLS_INDEX_FAIL            } from '../../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_IDXSTATS                                 } from '../../modules/nf-core/samtools/idxstats/main'
 include { SAMTOOLS_FASTA                                    } from '../../modules/nf-core/samtools/fasta/main'
+include { SAMTOOLS_FLAGSTAT                                 } from '../../modules/nf-core/samtools/flagstat/main'
+include { getFlagstatMappedReads                            } from '../../subworkflows/local/utils_nfcore_metaval_pipeline'
 
 workflow TAXID_BAM_FASTA {
     take:
@@ -19,8 +21,12 @@ workflow TAXID_BAM_FASTA {
     min_read_counts   // Value: minimum number of reads to keep a BAM file
 
     main:
-    ch_versions       = Channel.empty()
-    ch_multiqc_files  = Channel.empty()
+    ch_versions        = Channel.empty()
+    ch_multiqc_files   = Channel.empty()
+    ch_taxid_bam       = Channel.empty()
+    ch_taxid_bai       = Channel.empty()
+    ch_consensus_input = Channel.empty()
+    ch_blast_input     = Channel.empty()
 
     // Combine BAM and BAI files
     input_bam = bam.join( bai, by: 0 )
@@ -58,7 +64,7 @@ workflow TAXID_BAM_FASTA {
         }
 
     // Prepare individual BAM files for each taxID with the number of mapped reads greater than params.min_read_counts
-    ch_consensus_input = ch_accession_taxid.pass
+    ch_consensus_input = ch_consensus_input.mix(ch_accession_taxid.pass)
         .combine( input_bam )
         .map { accession_list, taxid, organism, meta, bam, bam_index ->
             def new_meta = meta.clone()
@@ -80,8 +86,22 @@ workflow TAXID_BAM_FASTA {
     SAMTOOLS_INDEX_PASS( SAMTOOLS_SORT_PASS.out.bam )
     ch_versions = ch_versions.mix( SAMTOOLS_INDEX_PASS.out.versions.first() )
 
+    // samtools flagstat check if there are any reads mapped to the genome
+    SAMTOOLS_FLAGSTAT (SAMTOOLS_SORT_PASS.out.bam.join(SAMTOOLS_INDEX_PASS.out.bai))
+    ch_versions = ch_versions.mix(SAMTOOLS_FLAGSTAT.out.versions.first())
+
+    ch_mapped_reads = SAMTOOLS_FLAGSTAT.out.flagstat
+        .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
+
+    ch_taxid_bam = ch_taxid_bam.mix(SAMTOOLS_SORT_PASS.out.bam)
+        .join (ch_mapped_reads, by: [0])
+        .map { meta, bam, mapped, pass -> if (pass) [meta, bam]}
+    ch_taxid_bai = ch_taxid_bai.mix(SAMTOOLS_INDEX_PASS.out.bai)
+        .join(ch_mapped_reads, by:[0])
+        .map { meta, bai, mapped, pass -> if(pass) [meta, bai]}
+
     // Prepare individual FASTA files for each taxID with the number of mapped reads less than params.min_read_counts
-    ch_blast_input = ch_accession_taxid.fail
+    ch_blast_input = ch_blast_input.mix(ch_accession_taxid.fail)
         .combine(input_bam)
         .map { accession_list, taxid, organism, meta, bam, bam_index ->
             def new_meta = meta.clone()
@@ -96,21 +116,27 @@ workflow TAXID_BAM_FASTA {
         }
 
     // FASTA files will be used as BLAST input, bam file will be used in IGV
+    ch_taxid_bam_fail = Channel.empty()
+    ch_taxid_bai_fail = Channel.empty()
     SUBSET_BAM_FAIL(ch_blast_input.bam, ch_blast_input.accession)
+    ch_taxid_bam_fail = ch_taxid_bam_fail.mix(SUBSET_BAM_FAIL.out.bam)
     ch_versions = ch_versions.mix(SUBSET_BAM_FAIL.out.versions.first())
     SAMTOOLS_SORT_FAIL(SUBSET_BAM_FAIL.out.bam, [[],[]])
     ch_versions = ch_versions.mix(SAMTOOLS_SORT_FAIL.out.versions.first())
     SAMTOOLS_INDEX_FAIL(SAMTOOLS_SORT_FAIL.out.bam)
+    ch_taxid_bai_fail = ch_taxid_bai_fail.mix(SAMTOOLS_INDEX_FAIL.out.bai)
     ch_versions = ch_versions.mix(SAMTOOLS_INDEX_FAIL.out.versions.first())
 
+    ch_taxid_fasta = Channel.empty()
     SAMTOOLS_FASTA(SAMTOOLS_SORT_FAIL.out.bam, false)
+    ch_taxid_fasta = ch_taxid_fasta.mix(SAMTOOLS_FASTA.out.fasta)
     ch_versions = ch_versions.mix(SAMTOOLS_FASTA.out.versions.first())
 
     emit:
     versions        = ch_versions
-    taxid_bam       = SAMTOOLS_SORT_PASS.out.bam
-    taxid_bai       = SAMTOOLS_INDEX_PASS.out.bai
-    taxid_fasta     = SAMTOOLS_FASTA.out.fasta
-    taxid_bam_fail  = SUBSET_BAM_FAIL.out.bam
-    taxid_bai_fail  = SAMTOOLS_INDEX_FAIL.out.bai
+    taxid_bam       = ch_taxid_bam
+    taxid_bai       = ch_taxid_bai
+    taxid_fasta     = ch_taxid_fasta
+    taxid_bam_fail  = ch_taxid_bam_fail
+    taxid_bai_fail  = ch_taxid_bai_fail
 }

@@ -35,6 +35,7 @@ workflow MAPPING_SHORTREAD {
     index    = BOWTIE2_BUILD.out.index               // channel: [ val(meta), [ bam ] ]
     bam      = FASTQ_ALIGN_BOWTIE2.out.bam           // channel: [ val(meta), [ bam ] ]
     bai      = FASTQ_ALIGN_BOWTIE2.out.bai           // channel: [ val(meta), [ bai ] ]
+    flagstat = FASTQ_ALIGN_BOWTIE2.out.flagstat      // channel: [ val(meta), [ flagstat ] ]
     versions = ch_versions                           // channel: [ versions.yml ]
     mqc      = ch_multiqc_files
 }

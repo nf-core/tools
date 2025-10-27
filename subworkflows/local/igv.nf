@@ -17,19 +17,7 @@ workflow IGV {
     ch_versions = Channel.empty()
 
     // Extract and index mapped reads
-    SAMTOOLS_VIEW (
-        ch_bam_bai_reference.map {it -> [ it[0], it[1], it[2]]},
-        [ [],[] ],
-        [],
-        'bai'
-    )
-    ch_versions = ch_versions.mix( SAMTOOLS_VIEW.out.versions )
-    SAMTOOLS_INDEX ( SAMTOOLS_VIEW.out.bam )
-    ch_versions = ch_versions.mix( SAMTOOLS_INDEX.out.versions )
-
-    // Create a bed file
-    ch_bedtools_input = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
-    BEDTOOLS_GENOMECOV ( ch_bedtools_input.map { [it[0], it[1], "1"]}, [], 'bed', true )
+    BEDTOOLS_GENOMECOV ( ch_bam_bai_reference.map { [it[0], it[1], "1"]}, [], 'bed', true )
     ch_versions = ch_versions.mix( BEDTOOLS_GENOMECOV.out.versions )
 
     // Uncompress and index the reference genome
@@ -39,7 +27,8 @@ workflow IGV {
     ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
     // IGV report
-    ch_bam_bai = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
+    //ch_bam_bai = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
+    ch_bam_bai = ch_bam_bai_reference.map { meta, bam, bai, ref -> [meta, bam, bai]}
     ch_bed_bam_bai = BEDTOOLS_GENOMECOV.out.genomecov.join( ch_bam_bai )
     ch_fasta_fai = PIGZ_UNCOMPRESS.out.file.join( SAMTOOLS_FAIDX.out.fai )
 

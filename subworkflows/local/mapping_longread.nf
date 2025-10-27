@@ -31,6 +31,7 @@ workflow MAPPING_LONGREAD {
     index    = MINIMAP2_INDEX.out.index              // channel: [ val(meta), [ index ] ]
     bam      = BAM_SORT_STATS_SAMTOOLS.out.bam       // channel: [ val(meta), [ bam ] ]
     bai      = BAM_SORT_STATS_SAMTOOLS.out.bai       // channel: [ val(meta), [ bai ] ]
+    flagstat = BAM_SORT_STATS_SAMTOOLS.out.flagstat  // channel: [ val(meta), [ flagstat ] ]
     versions = ch_versions                           // channel: [ versions.yml ]
     mqc      = ch_multiqc_files
 }

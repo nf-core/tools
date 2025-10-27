@@ -37,6 +37,7 @@ include { paramsSummaryMap                                      } from 'plugin/n
 include { paramsSummaryMultiqc                                  } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML                                } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText                                } from '../subworkflows/local/utils_nfcore_metaval_pipeline'
+include { getFlagstatMappedReads                                } from '../subworkflows/local/utils_nfcore_metaval_pipeline'
 
 // Check input path parameters to see if they exist
 def checkPathParamList = [ params.input, params.pathogens_genomes,
@@ -206,14 +207,38 @@ workflow METAVAL {
             // SUBWORKFLOW: IGV
             //
 
+            // Filter channels to get bam files which contains mapped reads
+            // short reads
+            ch_mapped_shortreads = Channel.empty()
+            ch_mapped_shortreads = ch_mapped_shortreads.mix(MAPPING_SHORTREAD.out.flagstat)
+                .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
+
+            ch_bam_bai_shortread = Channel.empty()
+            ch_bam_bai_shortread = ch_bam_bai_shortread.mix(MAPPING_SHORTREAD.out.bam)
+                .join(MAPPING_SHORTREAD.out.bai)
+                .join (ch_mapped_shortreads, by: [0])
+                .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
+
+            ch_igv_input_shortread = Channel.empty()
+            ch_igv_input_shortread = ch_bam_bai_shortread
+                .join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0 )
+            // long reads
+            ch_mapped_longreads = Channel.empty()
+            ch_mapped_longreads = ch_mapped_longreads.mix(MAPPING_LONGREAD.out.flagstat)
+                .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
+
+            ch_bam_bai_longread = Channel.empty()
+            ch_bam_bai_longread = ch_bam_bai_longread.mix(MAPPING_LONGREAD.out.bam)
+                .join(MAPPING_LONGREAD.out.bai)
+                .join (ch_mapped_longreads, by: [0])
+                .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
+            ch_igv_input_longread = Channel.empty()
+            ch_igv_input_longread = ch_igv_input_longread.mix(ch_bam_bai_longread)
+                .join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
+
             // Prepare IGV input channels
-            ch_igv_input_shortread = MAPPING_SHORTREAD.out.bam
-                .join ( MAPPING_SHORTREAD.out.bai, by:0)
-                .join ( FETCH_BLAST_GENOMES.out.shortreads_genome, by:0 )
-            ch_igv_input_longread = MAPPING_LONGREAD.out.bam
-                .join ( MAPPING_LONGREAD.out.bai)
-                .join ( FETCH_BLAST_GENOMES.out.longreads_genome, by:0 )
-            ch_igv_input = ch_igv_input_shortread.mix ( ch_igv_input_longread )
+            ch_igv_input = Channel.empty()
+            ch_igv_input = ch_igv_input.mix ( ch_igv_input_shortread, ch_igv_input_longread )
 
             IGV( ch_igv_input )
             ch_versions = ch_versions.mix ( IGV.out.versions )
