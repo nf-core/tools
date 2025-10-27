@@ -22,6 +22,5 @@ repo2rocrate
 tabulate
 textual==6.2.1
 trogon
-pdiff
+ipdiff
 ruamel.yaml
-reftrace
