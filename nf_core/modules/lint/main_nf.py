@@ -10,6 +10,7 @@ from urllib.parse import urlparse, urlunparse
 
 import requests
 import yaml
+from reftrace import Module, ParseError
 from rich.progress import Progress
 
 import nf_core
@@ -308,9 +309,6 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     else:
         self.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", self.main_nf))
 
-    # Check that process labels are correct using Reftrace
-    from reftrace import Module, ParseError
-
     reftrace_mod = Module.from_file(str(self.main_nf))
     if not isinstance(reftrace_mod, ParseError):
         check_process_labels(self, reftrace_mod)
@@ -532,7 +530,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         return docker_tag == singularity_tag
 
 
-def check_process_labels(self, mod):
+def check_process_labels(self, mod:Module):
     """
     Check process labels using Reftrace parsing.
 

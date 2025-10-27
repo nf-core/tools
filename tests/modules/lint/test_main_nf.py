@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from reftrace import Module, ParseError
 
@@ -55,7 +57,6 @@ from .test_lint_utils import MockModuleLint
 def test_process_labels(label_content, passed, warned, failed):
     """Test process label validation"""
     # Create a temporary file with the specific label content
-    import os
     import tempfile
 
     # Create proper Nextflow content with the label
@@ -104,8 +105,8 @@ def test_process_labels(label_content, passed, warned, failed):
 
     finally:
         # Clean up the temporary file
-        if os.path.exists(temp_file.name):
-            os.unlink(temp_file.name)
+        if Path(temp_file.name).exists():
+            Path(temp_file.name).unlink()
 
 
 @pytest.mark.parametrize(
