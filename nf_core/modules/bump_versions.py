@@ -7,7 +7,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 import yaml
@@ -31,9 +30,9 @@ log = logging.getLogger(__name__)
 class ModuleVersionBumper(ComponentCommand):
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        pipeline_dir: str | Path,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
     ):
         super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
@@ -42,12 +41,12 @@ class ModuleVersionBumper(ComponentCommand):
         self.updated: list[tuple[str, str]] = []
         self.failed: list[tuple[str, str]] = []
         self.ignored: list[tuple[str, str]] = []
-        self.show_up_to_date: Optional[bool] = None
-        self.tools_config: Optional[NFCoreYamlConfig]
+        self.show_up_to_date: bool | None = None
+        self.tools_config: NFCoreYamlConfig | None
 
     def bump_versions(
         self,
-        module: Optional[str] = None,
+        module: str | None = None,
         all_modules: bool = False,
         show_up_to_date: bool = False,
         dry_run: bool = False,
@@ -116,13 +115,7 @@ class ModuleVersionBumper(ComponentCommand):
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
-            # First try to find an exact match
-            exact_matches = [m for m in nfcore_modules if m.component_name == module]
-            if exact_matches:
-                nfcore_modules = exact_matches
-            else:
-                # If no exact match, look for modules that start with the given name (subtools)
-                nfcore_modules = [m for m in nfcore_modules if m.component_name.startswith(module + "/")]
+            nfcore_modules = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, module)
 
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleExceptionError(

@@ -165,7 +165,7 @@ def test_environment_yml_sorting(tmp_path, input_content, expected):
     environment_yml(lint, module)
 
     assert_yaml_result(test_file, expected)
-    assert any("environment_yml_sorted" in x for x in [p.lint_test for p in lint.passed])
+    assert any("environment_yml_sorted" in x for x in [p[1] for p in module.passed])
 
 
 @pytest.mark.parametrize(

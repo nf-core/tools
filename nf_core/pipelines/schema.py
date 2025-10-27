@@ -6,7 +6,6 @@ import logging
 import tempfile
 import webbrowser
 from pathlib import Path
-from typing import Union
 
 import jinja2
 import jsonschema
@@ -117,9 +116,7 @@ class PipelineSchema:
             self.ignored_params = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
             self.ignored_params.append("validationSchemaIgnoreParams")
 
-    def get_schema_path(
-        self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
-    ) -> None:
+    def get_schema_path(self, path: str | Path, local_only: bool = False, revision: str | None = None) -> None:
         """Given a pipeline name, directory, or path, set self.schema_filename"""
         path = Path(path)
         # Supplied path exists - assume a local pipeline directory or schema

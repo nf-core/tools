@@ -1,6 +1,7 @@
 import contextlib
 import importlib.resources
 import logging
+import os
 import shutil
 import tempfile
 from collections.abc import Generator
@@ -76,8 +77,26 @@ def intermediate_file_no_creation(output_path: Path) -> Generator[Path, None, No
     tmp_fn = Path(tmp.name) / "tempfile"
     try:
         yield tmp_fn
-        Path(tmp.name).rename(output_path)
+        tmp_fn.rename(output_path)
         tmp.cleanup()
     except:
         tmp.cleanup()
         raise
+
+
+@contextlib.contextmanager
+def intermediate_dir_with_cd(original_dir: Path, base_dir: Path = Path(".")):
+    """
+    Context manager to provide and change into a tempdir and ensure its removal and return to the
+    original_dir upon exceptions.
+    """
+
+    if not original_dir.is_dir():
+        raise DownloadError(f"Unable to setup temporary dir, original_dir does not exist: {original_dir}")
+
+    tmp = tempfile.TemporaryDirectory(dir=base_dir)
+    try:
+        os.chdir(tmp.name)
+        yield tmp
+    finally:
+        os.chdir(original_dir)
