@@ -24,3 +24,4 @@ textual==6.2.1
 trogon
 ipdiff
 ruamel.yaml
+reftrace
