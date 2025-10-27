@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from reftrace import Module
 
@@ -21,9 +21,9 @@ class NFCoreComponent:
     def __init__(
         self,
         component_name: str,
-        repo_url: Optional[str],
+        repo_url: str | None,
         component_dir: Path,
-        repo_type: Optional[str],
+        repo_type: str | None,
         base_dir: Path,
         component_type: str,
         remote_component: bool = True,
@@ -49,22 +49,22 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed: list[tuple[str, str, Path]] = []
-        self.warned: list[tuple[str, str, Path]] = []
-        self.failed: list[tuple[str, str, Path]] = []
+        self.passed: list[tuple[str, str, str, Path]] = []
+        self.warned: list[tuple[str, str, str, Path]] = []
+        self.failed: list[tuple[str, str, str, Path]] = []
         self.inputs: list[list[dict[str, dict[str, str]]]] = []
         self.outputs: list[str] = []
         self.has_meta: bool = False
-        self.git_sha: Optional[str] = None
+        self.git_sha: str | None = None
         self.is_patched: bool = False
-        self.branch: Optional[str] = None
-        self.workflow_name: Optional[str] = None
+        self.branch: str | None = None
+        self.workflow_name: str | None = None
 
         if remote_component:
             # Initialize the important files
             self.main_nf: Path = Path(self.component_dir, "main.nf")
-            self.meta_yml: Optional[Path] = Path(self.component_dir, "meta.yml")
-            self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
+            self.meta_yml: Path | None = Path(self.component_dir, "meta.yml")
+            self.environment_yml: Path | None = Path(self.component_dir, "environment.yml")
 
             component_list = self.component_name.split("/")
 
@@ -76,8 +76,8 @@ class NFCoreComponent:
             repo_dir = self.component_dir.parts[:name_index][-1]
 
             self.org = repo_dir
-            self.nftest_testdir: Optional[Path] = Path(self.component_dir, "tests")
-            self.nftest_main_nf: Optional[Path] = Path(self.nftest_testdir, "main.nf.test")
+            self.nftest_testdir: Path | None = Path(self.component_dir, "tests")
+            self.nftest_main_nf: Path | None = Path(self.nftest_testdir, "main.nf.test")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -110,7 +110,7 @@ class NFCoreComponent:
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
-    def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
+    def _get_main_nf_tags(self, test_main_nf: Path | str):
         """Collect all tags from the main.nf.test file."""
         tags = []
         with open(test_main_nf) as fh:
@@ -119,7 +119,7 @@ class NFCoreComponent:
                     tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Union[Path, str]):
+    def _get_included_components(self, main_nf: Path | str):
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf) as fh:
@@ -136,7 +136,7 @@ class NFCoreComponent:
                     included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Union[Path, str]):
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str):
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf_test) as fh:

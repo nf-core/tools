@@ -140,6 +140,15 @@ def test_process_labels(label_content, passed, warned, failed):
             0,
             1,
         ),
+        # Ternary with ? on next line (new Nextflow format) should pass
+        (
+            '''container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
+        : 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264'}"''',
+            6,
+            0,
+            0,
+        ),
     ],
 )
 def test_container_links(content, passed, warned, failed):

@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 from rich import print
@@ -30,15 +29,15 @@ log = logging.getLogger(__name__)
 class ComponentInstall(ComponentCommand):
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
+        pipeline_dir: str | Path,
         component_type: str,
         force: bool = False,
         prompt: bool = False,
-        sha: Optional[str] = None,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        sha: str | None = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
-        installed_by: Optional[list[str]] = None,
+        installed_by: list[str] | None = None,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -52,7 +51,7 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: Union[str, dict[str, str]], silent: bool = False) -> bool:
+    def install(self, component: str | dict[str, str], silent: bool = False) -> bool:
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
@@ -211,7 +210,7 @@ class ComponentInstall(ComponentCommand):
             self.installed_by = original_installed
 
     def collect_and_verify_name(
-        self, component: Optional[str], modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
+        self, component: str | None, modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
     ) -> str:
         """
         Collect component name.
