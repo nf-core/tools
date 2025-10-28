@@ -23,7 +23,6 @@ on:
       blog_post:
         description: "link to release blogpost"
         type: string
-        default: ""
         required: true
 
 # Cancel if a newer run is started
