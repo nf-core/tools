@@ -24,7 +24,7 @@ class MockModuleLint:
     input:
     path input_file
 
-    output:
+        output:
     path "output.txt"
 
     script:
