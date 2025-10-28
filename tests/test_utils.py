@@ -107,7 +107,7 @@ class TestUtils(TestPipelines):
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):
-        result = nf_core.utils.pip_package("multiqc=1.10")
+        result = nf_core.utils.pip_package("multiqc=1.32")
         assert isinstance(result, dict)
 
     @mock.patch("requests.get")
@@ -118,7 +118,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     @mock.patch("requests.get")
     def test_pip_package_connection_error(self, mock_get):
@@ -128,7 +128,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     def test_pip_erroneous_package(self):
         """Tests the PyPi API package information query"""
