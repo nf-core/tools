@@ -29,7 +29,9 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ s
 include { getWorkflowVersion      } from 'plugin/nf-core-utils'
 include { dumpParametersToJSON    } from 'plugin/nf-core-utils'
 include { checkCondaChannels      } from 'plugin/nf-core-utils'
+{%- if email %}
 include { completionEmail         } from 'plugin/nf-core-utils'
+{%- endif %}
 include { completionSummary       } from 'plugin/nf-core-utils'
 {%- if adaptivecard or slackreport %}
 include { imNotification          } from 'plugin/nf-core-utils'
