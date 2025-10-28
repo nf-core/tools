@@ -20,10 +20,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         assert len(subworkflow_lint.warned) >= 0
 
     def test_subworkflows_lint_empty(self):
-        """Test linting a pipeline with no nf-core subworkflows installed.
-
-        The template now has no nf-core subworkflows by default (migrated to nf-core-utils plugin).
-        """
+        """Test linting a pipeline with no nf-core subworkflows installed."""
         nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         assert "No subworkflows from https://github.com/nf-core/modules.git installed in pipeline" in self.caplog.text
 
