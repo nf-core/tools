@@ -212,6 +212,7 @@ def softwareVersionsToYAML(ch_versions) {
         })
 }
 
+{%- if multiqc %}
 //
 // Get workflow summary for MultiQC
 //
@@ -245,6 +246,7 @@ def paramsSummaryMultiqc(summary_params) {
 
     return yaml_file_text
 }
+{%- endif %}
 
 {%- if igenomes %}
 //
