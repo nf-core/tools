@@ -221,7 +221,7 @@ def main_nf(
                 ("main_nf", "main_nf_version_topic", "Module emits software versions as topic", module.main_nf)
             )
         else:
-            module.failed.append(
+            module.warned.append(
                 ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
             )
 
@@ -231,6 +231,15 @@ def main_nf(
         if topic_versions_amount == emit_versions_amount:
             module.passed.append(
                 ("main_nf", "main_nf_version_emit", "Module emits each software version", module.main_nf)
+            )
+        elif "versions" in emits:
+            module.warned.append(
+                (
+                    "main_nf",
+                    "main_nf_version_emit",
+                    "Module emits software versions YAML, please update this to topics output",
+                    module.main_nf,
+                )
             )
         else:
             module.failed.append(
