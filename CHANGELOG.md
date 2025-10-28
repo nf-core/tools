@@ -4,6 +4,8 @@
 
 ### General
 
+- add optional link to blogpost to sync PR ([#3852](https://github.com/nf-core/tools/pull/3852))
+
 ### Template
 
 ### Linting
