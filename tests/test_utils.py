@@ -151,10 +151,10 @@ class TestUtils(TestPipelines):
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
-            if r.get("tag_name") == "v1.10":
+            if r.get("tag_name") == "v1.32":
                 break
         else:
-            raise AssertionError("MultiQC release v1.10 not found")
+            raise AssertionError("MultiQC release v1.32 not found")
         assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
