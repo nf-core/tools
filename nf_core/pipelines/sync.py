@@ -70,7 +70,7 @@ class PipelineSync:
         gh_username: str | None = None,
         template_yaml_path: str | None = None,
         force_pr: bool = False,
-        blog_post: str | None = None,
+        blog_post: str = "",
     ):
         """Initialise syncing object"""
 
@@ -380,7 +380,7 @@ class PipelineSync:
         pr_body_text = (
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
             f"For more details, check out the blog post: {self.blog_post}\n\n"
-            if self.blog_post
+            if self.blog_post != ""
             else ""
             "Please make sure to merge this pull-request as soon as possible, "
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
