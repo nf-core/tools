@@ -253,7 +253,7 @@ class NFCoreComponent:
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -294,3 +294,41 @@ class NFCoreComponent:
                     pass
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
+
+    def get_topics_from_main_nf(self) -> None:
+        with open(self.main_nf) as f:
+            data = f.read()
+        if self.component_type == "modules":
+            topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
+            # get topic name from main.nf after "output:". the names are always after "topic:"
+            if "output:" not in data:
+                log.debug(f"Could not find any outputs in {self.main_nf}")
+                self.topics = topics
+                return
+            output_data = data.split("output:")[1].split("when:")[0]
+            regex_topic = r"topic:\s*([^)\s,]+)"
+            regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            for line in output_data.split("\n"):
+                match_topic = re.search(regex_topic, line)
+                matches_elements = re.finditer(regex_elements, line)
+                if not match_topic:
+                    continue
+                channel_elements: list[dict[str, dict]] = []
+                topic_name = match_topic.group(1)
+                if topic_name in topics:
+                    continue
+                topics[match_topic.group(1)] = []
+                for count, match_element in enumerate(matches_elements, start=1):
+                    output_val = None
+                    if match_element.group(3):
+                        output_val = match_element.group(3)
+                    elif match_element.group(4):
+                        output_val = match_element.group(4)
+                    if output_val:
+                        channel_elements.append({f"value{count}": {}})
+                if len(channel_elements) == 1:
+                    topics[match_topic.group(1)].append(channel_elements[0])
+                elif len(channel_elements) > 1:
+                    topics[match_topic.group(1)].append(channel_elements)
+            log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
+            self.topics = topics
