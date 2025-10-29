@@ -5,7 +5,6 @@
 ### General
 
 - update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
-- Fix changelog for topics ([#3856](https://github.com/nf-core/tools/pull/3856))
 
 ### Template
 
