@@ -295,7 +295,7 @@ class NFCoreComponent:
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
 
-    def get_topics_from_main_nf(self):
+    def get_topics_from_main_nf(self) -> None:
         with open(self.main_nf) as f:
             data = f.read()
         if self.component_type == "modules":
@@ -303,7 +303,8 @@ class NFCoreComponent:
             # get topic name from main.nf after "output:". the names are always after "topic:"
             if "output:" not in data:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
-                return topics
+                self.topics = topics
+                return
             output_data = data.split("output:")[1].split("when:")[0]
             regex_topic = r"topic:\s*([^)\s,]+)"
             regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
