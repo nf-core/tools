@@ -299,7 +299,7 @@ class NFCoreComponent:
         with open(self.main_nf) as f:
             data = f.read()
         if self.component_type == "modules":
-            topics = {}
+            topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"
             if "output:" not in data:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
@@ -313,7 +313,7 @@ class NFCoreComponent:
                 matches_elements = re.finditer(regex_elements, line)
                 if not match_topic:
                     continue
-                channel_elements = []
+                channel_elements: list[dict[str, dict]] = []
                 topic_name = match_topic.group(1)
                 if topic_name in topics:
                     continue

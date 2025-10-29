@@ -115,7 +115,6 @@ class TestMainNfLinting(TestModules):
         if not self.mods_install.install("bamstats/generalstats"):
             self.skipTest("Could not install samtools/sort module")
 
-
     def test_main_nf_lint_with_alternative_registry(self):
         """Test main.nf linting with alternative container registry"""
         # Test with alternative registry - should warn/fail when containers don't match the registry
@@ -142,12 +141,16 @@ class TestMainNfLinting(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.warned) == 2, f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
+        assert len(module_lint.warned) == 2, (
+            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
+        )
         assert len(module_lint.passed) > 0
-        
+
         # Lint a module known to have topics as output in main.nf
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="bamstats/generalstats")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.warned) == 0, f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
+        assert len(module_lint.warned) == 0, (
+            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
+        )
         assert len(module_lint.passed) > 0

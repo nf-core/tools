@@ -720,7 +720,7 @@ def _parse_input(self, line_raw):
     return inputs
 
 
-def _parse_output_emits(self, line:str) -> list[str]:
+def _parse_output_emits(self, line: str) -> list[str]:
     output = []
     if "meta" in line:
         output.append("meta")
@@ -732,7 +732,7 @@ def _parse_output_emits(self, line:str) -> list[str]:
     return output
 
 
-def _parse_output_topics(self, line:str) -> list[str]:
+def _parse_output_topics(self, line: str) -> list[str]:
     output = []
     if "meta" in line:
         output.append("meta")
