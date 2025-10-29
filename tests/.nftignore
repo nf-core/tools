@@ -14,7 +14,7 @@ blast/{blastn,blastx}/{centrifuge,diamond,kraken2}/*.txt
 igv/*.html
 pathogens/blast/{blastn,blastx}/*.txt
 spades/{centrifuge,diamond,kraken2}/*
-pathogens/{bowtie2,minimap2}/align/*
+pathogens/mapping/{bowtie2,minimap2}/align/*
 pathogens/consensus/*
 pathogens/pathogen_reads/{consensus_input,blast_input}/*
 pathogens/igv/*.html
