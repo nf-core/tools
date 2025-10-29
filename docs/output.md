@@ -216,18 +216,19 @@ Map reads to the pathogen genomes databases.
 <summary>Output files</summary>
 
 - `pathogens/`
-  - `bowtie2/`
-    - `align/`
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-supplied pathogens genomes
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
-    - `build/`
-      - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genome
-  - `minimap2/`
-    - `align/`
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
-    - `index/`
-      - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+  - `mapping/`
+    - `bowtie2/`
+      - `align/`
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-supplied pathogens genomes
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
+      - `build/`
+        - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genome
+    - `minimap2/`
+      - `align/`
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
+      - `index/`
+        - `*.mmi`: Minimap2 indicies of reference pathogens genomes
 
 </details>
 
@@ -244,8 +245,8 @@ IGV visualization of reads that classifiers assigned to specific species.
 <details markdown="1">
 <summary>Output files</summary>
 
-- `IGV/`
-  - `<sample_id>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
+- `igv/`
+  - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
 
 #### Pathogen screening
 
@@ -255,7 +256,7 @@ IGV visualization of reads mapped to pathogen genome database.
 <summary>Output files</summary>
 
 - `pathogens/`
-  - `IGV/`
+  - `igv/`
     - `<sample_id>_<taxID>_report.html`: The IGV report shows the variants and coverage of reads mapped to the genomes.
 
 </details>

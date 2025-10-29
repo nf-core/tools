@@ -256,4 +256,3 @@ def getFlagstatMappedReads(flagstat_file) {
     }
     return [ mapped_reads, pass ]
 }
-
