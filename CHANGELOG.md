@@ -15,6 +15,8 @@
 
 ### Linting
 
+- TEMPLATE: ignore nf-core components during prettier linting ([#3858](https://github.com/nf-core/tools/pull/3858))
+
 ### Modules
 
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
