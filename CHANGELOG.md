@@ -6,6 +6,7 @@
 
 - add optional link to blogpost to sync PR ([#3852](https://github.com/nf-core/tools/pull/3852))
 - update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
+- Update python:3.14-slim Docker digest to 4ed3310 ([#3862](https://github.com/nf-core/tools/pull/3862))
 
 ### Template
 
