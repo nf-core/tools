@@ -345,7 +345,7 @@ class PipelineSync:
         try:
             # add and commit all files except self.ignored_files
             # :! syntax to exclude files using git pathspec
-            self.repo.git.add([f":!{f}" for f in self.ignored_files], all=True)
+            self.repo.git.add([f":!{f}" for f in self.ignored_files], all=True, force=True)
             self.repo.index.commit(f"Template update for nf-core/tools version {nf_core.__version__}")
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
