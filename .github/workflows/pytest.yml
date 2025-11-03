@@ -68,7 +68,7 @@ jobs:
     if: ${{ needs.setup.outputs.run-tests }}
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
-      - runner=4cpu-linux-x64
+      - runner=8cpu-linux-x64
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
