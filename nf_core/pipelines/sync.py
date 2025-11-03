@@ -70,6 +70,7 @@ class PipelineSync:
         gh_username: str | None = None,
         template_yaml_path: str | None = None,
         force_pr: bool = False,
+        blog_post: str = "",
     ):
         """Initialise syncing object"""
 
@@ -92,6 +93,7 @@ class PipelineSync:
         self.gh_username = gh_username
         self.gh_repo = gh_repo
         self.pr_url = ""
+        self.blog_post = blog_post
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
         assert self.config_yml_path is not None and self.config_yml is not None  # mypy
@@ -377,7 +379,9 @@ class PipelineSync:
         pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
         pr_body_text = (
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
-            "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
+            f"For more details, check out the blog post: {self.blog_post}\n\n"
+            if self.blog_post != ""
+            else ""
             "Please make sure to merge this pull-request as soon as possible, "
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
