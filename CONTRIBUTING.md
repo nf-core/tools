@@ -21,15 +21,20 @@ If you're not used to this workflow with git, you can start with some [basic doc
 ## Installing dev requirements
 
 If you want to work with developing the nf-core/tools code, you'll need a couple of extra Python packages.
-These are listed in `requirements-dev.txt` and can be installed as follows:
+The recommended way to install is using `uv`, which is much faster than pip:
 
 ```bash
-pip install --upgrade -r requirements-dev.txt
+# Using uv (recommended - much faster)
+uv sync
 ```
 
-Then install your local fork of nf-core/tools:
+This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode.
+
+Alternatively, you can use pip:
 
 ```bash
+# Using pip (legacy method)
+pip install --upgrade -r requirements-dev.txt
 pip install -e .
 ```
 
