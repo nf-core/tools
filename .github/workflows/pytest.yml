@@ -69,10 +69,14 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
       - runner=4cpu-linux-x64
+      - extras=s3-cache
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
     steps:
+      - name: Enable Magic Cache
+        uses: runs-on/action@v2
+
       - name: go to subdirectory and change nextflow workdir
         run: |
           mkdir -p pytest
@@ -89,6 +93,14 @@ jobs:
           cache: "pip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
@@ -102,13 +114,33 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Cache Nextflow assets
+        uses: actions/cache@v4
+        with:
+          path: ~/.nextflow
+          key: ${{ runner.os }}-nextflow-latest-${{ steps.date.outputs.date }}
+          restore-keys: |
+            ${{ runner.os }}-nextflow-latest-
+
+      - name: Cache nf-test
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nf-test
+            ~/.pdiff
+          key: ${{ runner.os }}-nftest-0.9.3
+          restore-keys: |
+            ${{ runner.os }}-nftest-
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
 
       - name: Install nf-test
         uses: nf-core/setup-nf-test@v1
+        with:
+          version: "0.9.3"
 
       - name: move coveragerc file up
         run: |
@@ -152,13 +184,25 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-coverage
       - runner=2cpu-linux-x64
+      - extras=s3-cache
     steps:
+      - name: Enable Magic Cache
+        uses: runs-on/action@v2
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Set up Python 3.14
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
         with:
           python-version: "3.14"
           cache: "pip"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-coverage
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install coverage
         run: |

@@ -26,6 +26,7 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-make-test-worfklow
       - runner=4cpu-linux-x64
+      - extras=s3-cache
     env:
       NXF_ANSI_LOG: false
 
@@ -35,6 +36,9 @@ jobs:
           - "25.04.0"
           - "latest-everything"
     steps:
+      - name: Enable Magic Cache
+        uses: runs-on/action@v2
+
       - name: go to subdirectory and change nextflow workdir
         run: |
           mkdir -p create-lint-wf
@@ -52,10 +56,38 @@ jobs:
           python-version: "3.14"
           cache: pip
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install .
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Cache Nextflow assets
+        uses: actions/cache@v4
+        with:
+          path: ~/.nextflow
+          key: ${{ runner.os }}-nextflow-${{ matrix.NXF_VER }}-${{ matrix.NXF_VER == 'latest-everything' && steps.date.outputs.date || 'stable' }}
+          restore-keys: |
+            ${{ runner.os }}-nextflow-${{ matrix.NXF_VER }}-
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-precommit-
 
       - name: run create-lint-wf
         uses: ./.github/actions/create-lint-wf
