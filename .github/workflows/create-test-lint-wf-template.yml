@@ -132,7 +132,7 @@ jobs:
         if: ${{ matrix.TEMPLATE == 'all' || matrix.TEMPLATE == 'nf-test' }}
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results --aws.client.anonymous false
 
       # Remove results folder before linting
       - name: remove results folder
