@@ -7,6 +7,7 @@
 - add optional link to blogpost to sync PR ([#3852](https://github.com/nf-core/tools/pull/3852))
 - update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
 - Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
 
 ### Template
 
