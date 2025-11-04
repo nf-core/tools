@@ -11,6 +11,8 @@
 
 ### Template
 
+- simplify TEMPLATE with nf-core-utils 0.4.0 ([#3870](https://github.com/nf-core/tools/pull/3870))
+
 ### Linting
 
 ### Modules
