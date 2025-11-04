@@ -179,7 +179,8 @@ class TestModules(TestPipelines):
         psync.get_wf_config()
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
-        assert os.listdir(self.pipeline_dir) == [".git"]
+        top_level_ignored = self._get_top_level_ignored(psync)
+        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
 
     def test_delete_tracked_template_branch_files_unlink_throws_error(self):
         """Test that SyncExceptionError is raised when os.unlink throws an exception"""
@@ -297,7 +298,8 @@ class TestModules(TestPipelines):
         psync.get_wf_config()
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
-        assert os.listdir(self.pipeline_dir) == [".git"]
+        top_level_ignored = self._get_top_level_ignored(psync)
+        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
         # Now create the new template
         psync.make_template_pipeline()
         assert "main.nf" in os.listdir(self.pipeline_dir)
@@ -596,3 +598,8 @@ class TestModules(TestPipelines):
         repo = git.Repo(self.pipeline_dir)
         repo.git.add(".gitignore")
         repo.index.commit("Add .gitignore")
+
+    def _get_top_level_ignored(self, psync: nf_core.pipelines.sync.PipelineSync) -> set[str]:
+        """Helper function to get top-level part of relative directory of ignored files from psync.ignored_files."""
+        top_level_ignored = {Path(f).parts[0] for f in psync.ignored_files}
+        return top_level_ignored
