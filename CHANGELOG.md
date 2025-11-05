@@ -11,6 +11,8 @@
 
 ### Template
 
+- Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869))
+
 ### Linting
 
 ### Modules
