@@ -259,10 +259,10 @@ class PipelineSync:
         Delete all tracked files in the repository
         """
         for the_file in self._get_tracked_files():
-            file_path = os.path.join(self.pipeline_dir, the_file)
+            file_path = Path(self.pipeline_dir) / the_file
             log.debug(f"Deleting {file_path}")
             try:
-                os.unlink(file_path)
+                file_path.unlink()
             except Exception as e:
                 raise SyncExceptionError(e)
 
@@ -275,17 +275,17 @@ class PipelineSync:
         # Track deleted child directories so we know they've been deleted when evaluating if the parent is empty
         deleted = set()
 
-        for curr_dir, sub_dirs, files in os.walk(self.pipeline_dir, topdown=False):
+        for curr_dir, sub_dirs, files in Path(self.pipeline_dir).walk(top_down=False):
             # Don't delete the root directory (should never happen due to .git, but just in case)
             if curr_dir == str(self.pipeline_dir):
                 continue
 
-            subdir_set = set(os.path.join(curr_dir, d) for d in sub_dirs)
+            subdir_set = set(Path(curr_dir) / d for d in sub_dirs)
             currdir_is_empty = (len(subdir_set - deleted) == 0) and (len(files) == 0)
             if currdir_is_empty:
                 log.debug(f"Deleting empty directory {curr_dir}")
                 try:
-                    os.rmdir(curr_dir)
+                    Path(curr_dir).rmdir()
                 except Exception as e:
                     raise SyncExceptionError(e)
                 deleted.add(curr_dir)
