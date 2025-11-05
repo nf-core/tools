@@ -44,10 +44,21 @@ workflow PIPELINE_INITIALISATION {
     main:
 
     ch_versions = Channel.empty()
+
+    //
+    // Print version and exit if required and dump pipeline parameters to JSON file
+    //
+    UTILS_NEXTFLOW_PIPELINE (
+        version,
+        true,
+        outdir,
+        workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1
+    )
+
     {%- if nf_schema %}
 
     //
-    // Print help message
+    // Validate parameters and generate parameter summary to stdout
     //
 
     {%- if is_nfcore %}
@@ -68,44 +79,19 @@ workflow PIPELINE_INITIALISATION {
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
 """{% endif %}
-    command = "nextflow run {${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
+    command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
-    if(help || help_full) {
-        log.info paramsHelp(
-            params.help instanceof String ? params.help : "",
-            {%- if is_nfcore %}
-            beforeText: before_text,
-            afterText: after_text,{% endif %}
-            command: command,
-            showHidden: show_hidden,
-            fullHelp: help_full
-        )
-        exit 0
-    }
-    {%- endif %}
-
-    //
-    // Print version and exit if required and dump pipeline parameters to JSON file
-    //
-    UTILS_NEXTFLOW_PIPELINE (
-        version,
-        true,
-        outdir,
-        workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1
-    )
-
-    {%- if nf_schema %}
-
-    //
-    // Validate parameters and generate parameter summary to stdout
-    //
-    {% if is_nfcore -%}log.info(before_text){%- endif %}
     UTILS_NFSCHEMA_PLUGIN (
         workflow,
         validate_params,
-        null
+        null,
+        help,
+        help_full,
+        show_hidden,
+        {% if is_nfcore -%}before_text{%- else %}""{%- endif %},
+        {% if is_nfcore -%}after_text{%- else %}""{%- endif %},
+        command
     )
-    {% if is_nfcore -%}log.info(after_text){%- endif %}
     {%- endif %}
 
     //

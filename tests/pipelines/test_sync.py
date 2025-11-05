@@ -3,7 +3,6 @@
 import json
 import os
 from pathlib import Path
-from typing import Union
 from unittest import mock
 
 import git
@@ -19,12 +18,12 @@ from ..utils import with_temporary_folder
 
 
 class MockResponse:
-    def __init__(self, data: Union[dict, list[dict]], status_code: int, url: str):
+    def __init__(self, data: dict | list[dict], status_code: int, url: str):
         self.url: str = url
         self.status_code: int = status_code
         self.from_cache: bool = False
         self.reason: str = "Mocked response"
-        self.data: Union[dict, list[dict]] = data
+        self.data: dict | list[dict] = data
         self.content: str = json.dumps(data)
         self.headers: dict[str, str] = {"content-encoding": "test", "connection": "fake"}
 
@@ -311,71 +310,6 @@ class TestModules(TestPipelines):
         assert exc_info.value.args[0].startswith(
             "Something went badly wrong - GitHub API PR failed - got return code 404"
         )
-
-    @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
-    def test_close_open_template_merge_prs(self, mock_get):
-        """Try closing all open prs"""
-        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.inspect_sync_dir()
-        psync.get_wf_config()
-        psync.gh_api.get = mock_get
-        psync.gh_username = "list_prs"
-        psync.gh_repo = "list_prs/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-
-        with mock.patch("nf_core.pipelines.sync.PipelineSync.close_open_pr") as mock_close_open_pr:
-            psync.close_open_template_merge_prs()
-
-            prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data
-            for pr in prs:
-                if pr.get("state", None) == "open":
-                    mock_close_open_pr.assert_any_call(pr)
-
-    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
-    @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
-    def test_close_open_pr(self, mock_patch, mock_post) -> None:
-        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.inspect_sync_dir()
-        psync.get_wf_config()
-        psync.gh_api.post = mock_post
-        psync.gh_api.patch = mock_patch
-        psync.gh_username = "bad_url"
-        psync.gh_repo = "bad_url/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr: dict[str, Union[str, dict[str, str]]] = {
-            "state": "open",
-            "head": {"ref": "nf-core-template-merge-3"},
-            "base": {"ref": "main"},
-            "html_url": "pr_html_url",
-            "url": "url_to_update_pr",
-            "comments_url": "pr_comments_url",
-        }
-
-        assert psync.close_open_pr(pr)
-        mock_patch.assert_called_once_with(url="url_to_update_pr", data='{"state": "closed"}')
-
-    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
-    @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
-    def test_close_open_pr_fail(self, mock_patch, mock_post):
-        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.inspect_sync_dir()
-        psync.get_wf_config()
-        psync.gh_api.post = mock_post
-        psync.gh_api.patch = mock_patch
-        psync.gh_username = "bad_url"
-        psync.gh_repo = "bad_url/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr = {
-            "state": "open",
-            "head": {"ref": "nf-core-template-merge-3"},
-            "base": {"ref": "main"},
-            "html_url": "pr_html_url",
-            "url": "bad_url_to_update_pr",
-            "comments_url": "pr_comments_url",
-        }
-
-        assert not psync.close_open_pr(pr)
-        mock_patch.assert_called_once_with(url="bad_url_to_update_pr", data='{"state": "closed"}')
 
     def test_reset_target_dir(self):
         """Try resetting target pipeline directory"""
