@@ -1,21 +1,26 @@
 name: Update Template snapshots from a comment
 on:
   issue_comment:
-    types: [created]
+    types: [created] # Add "@nf-core-bot update template snapshots" as a PR comment to trigger this workflow.
 
 jobs:
   prepare-matrix:
     name: Retrieve all template features
-    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
-    if: >
-      contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot') &&
-      contains(github.event.comment.body, 'update template snapshots') &&
-      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     outputs:
       all_features: ${{ steps.create_matrix.outputs.matrix }}
+
     steps:
+      - name: branch-deploy
+        id: branch-deploy
+        uses: github/branch-deploy@c9fcc362bdcea69eecac6578dde245cd5e3a55bf # v10.4.3
+        with:
+          trigger: "@nf-core-bot update template snapshots"
+          reaction: "eyes"
+          stable_branch: "dev"
+
       - name: checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Create Matrix
@@ -26,13 +31,9 @@ jobs:
 
   update-snapshots:
     needs: [prepare-matrix]
-    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
-    if: >
-      contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot') &&
-      contains(github.event.comment.body, 'update template snapshots') &&
-      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
@@ -44,13 +45,6 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
-
-      # indication that the command is running
-      - name: React on comment
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ github.event.comment.id }}
-          reactions: eyes
 
       # Action runs on the issue comment, so we don't get the PR by default
       # Use the gh cli to check out the PR

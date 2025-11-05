@@ -1,28 +1,27 @@
 name: Fix linting from a comment
 on:
   issue_comment:
-    types: [created]
+    types: [created] # Add "@nf-core-bot fix linting" as a PR comment to trigger this workflow.
 
 jobs:
   fix-linting:
-    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
-    if: >
-      contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot fix linting') &&
-      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
     steps:
+      - name: branch-deploy
+        id: branch-deploy
+        uses: github/branch-deploy@c9fcc362bdcea69eecac6578dde245cd5e3a55bf # v10.4.3
+        with:
+          trigger: "@nf-core-bot fix linting"
+          reaction: "eyes"
+          stable_branch: "dev"
+
       # Use the @nf-core-bot token to check out so we can push later
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
-
-      # indication that the linting is being fixed
-      - name: React on comment
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ github.event.comment.id }}
-          reactions: eyes
 
       # Action runs on the issue comment, so we don't get the PR by default
       # Use the gh cli to check out the PR
