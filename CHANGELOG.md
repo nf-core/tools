@@ -9,10 +9,11 @@
 - Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
 - remove trailing comas from nextflow_schema.json ([#3874](https://github.com/nf-core/tools/pull/3874))
+- Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
 
 ### Template
 
-- Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869))
+- Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
 
 ### Linting
 
