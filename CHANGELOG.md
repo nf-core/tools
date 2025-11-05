@@ -11,8 +11,7 @@
 
 ### Template
 
-- Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869))
-- Add files_unchanged section to template_features.yml ([#3873](https://github.com/nf-core/tools/pull/3873))
+- Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
 
 ### Linting
 
