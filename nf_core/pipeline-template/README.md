@@ -13,7 +13,7 @@
 
 {% endif -%}
 {% if github_badges -%}
-{% if codespaces %}[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new/{{ name }}){% endif %}
+{% if codespaces %}[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/{{ name }}){% endif %}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/nf-test.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/nf-test.yml)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/actions/workflows/linting.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/linting.yml){% endif -%}
 {% if is_nfcore -%}[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif -%}

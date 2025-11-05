@@ -132,6 +132,7 @@ jobs:
         if: ${{ matrix.TEMPLATE == 'all' || matrix.TEMPLATE == 'nf-test' }}
         run: |
           cd create-test-lint-wf
+          echo "aws.client.anonymous = true" >> nextflow.config
           nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
 
       # Remove results folder before linting
@@ -196,7 +197,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}
           path: create-test-lint-wf/artifact_files.tar

@@ -238,15 +238,15 @@
                 }{% if nf_schema %},
                 "help": {
                     "type": ["boolean", "string"],
-                    "description": "Display the help message.",
+                    "description": "Display the help message."
                 },
                 "help_full": {
                     "type": "boolean",
-                    "description": "Display the full detailed help message.",
+                    "description": "Display the full detailed help message."
                 },
                 "show_hidden": {
                     "type": "boolean",
-                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided).",
+                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
                 }{% endif %}
             }
         }
