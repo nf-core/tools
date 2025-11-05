@@ -5,12 +5,23 @@
 ### General
 
 - Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
+- add optional link to blogpost to sync PR ([#3852](https://github.com/nf-core/tools/pull/3852))
+- update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
+- Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
+- Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
 
 ### Template
 
+- Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
+
 ### Linting
 
+- TEMPLATE: ignore nf-core components during prettier linting ([#3858](https://github.com/nf-core/tools/pull/3858))
+
 ### Modules
+
+- Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 
 ### Subworkflows
 
