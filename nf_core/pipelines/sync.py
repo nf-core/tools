@@ -165,7 +165,6 @@ class PipelineSync:
                 self.create_merge_base_branch()
                 self.push_merge_branch()
                 self.make_pull_request()
-                self.close_open_template_merge_prs()
             except PullRequestExceptionError as e:
                 self.reset_target_dir()
                 raise PullRequestExceptionError(e)
@@ -389,6 +388,9 @@ class PipelineSync:
             "[https://nf-co.re/docs/contributing/sync/](https://nf-co.re/docs/contributing/sync/#merging-automated-prs).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
+            "> [!NOTE]\n"
+            "> Since nf-core/tools 3.5.0, older template update PRs will not be automatically closed, but will remain open in your pipeline repository."
+            "Older template PRs will be automatically closed once a newer template PR has been merged."
         ).format(tag=nf_core.__version__)
 
         # Make new pull-request
@@ -413,74 +415,6 @@ class PipelineSync:
                 self.pr_url = self.gh_pr_returned_data["html_url"]
                 log.debug(f"GitHub API PR worked, return code {r.status_code}")
                 log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
-
-    def close_open_template_merge_prs(self):
-        """Get all template merging branches (starting with 'nf-core-template-merge-')
-        and check for any open PRs from these branches to the self.from_branch
-        If open PRs are found, add a comment and close them
-        """
-        log.info("Checking for open PRs from template merge branches")
-
-        # Look for existing pull-requests
-        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
-        with self.gh_api.cache_disabled():
-            list_prs_request = self.gh_api.get(list_prs_url)
-
-        list_prs_json, list_prs_pp = self._parse_json_response(list_prs_request)
-
-        log.debug(f"GitHub API listing existing PRs:\n{list_prs_url}\n{list_prs_pp}")
-        if list_prs_request.status_code != 200:
-            log.warning(f"Could not list open PRs ('{list_prs_request.status_code}')\n{list_prs_url}\n{list_prs_pp}")
-            return False
-
-        for pr in list_prs_json:
-            if isinstance(pr, int):
-                log.debug(f"Incorrect PR format: {pr}")
-            else:
-                log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
-                # Ignore closed PRs
-                if pr["state"] != "open":
-                    log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
-                    continue
-
-                # Don't close the new PR that we just opened
-                if pr["head"]["ref"] == self.merge_branch:
-                    continue
-
-                # PR is from an automated branch and goes to our target base
-                if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
-                    self.close_open_pr(pr)
-
-    def close_open_pr(self, pr) -> bool:
-        """Given a PR API response, add a comment and close."""
-        log.debug(f"Attempting to close PR: '{pr['html_url']}'")
-
-        # Make a new comment explaining why the PR is being closed
-        comment_text = (
-            f"Version `{nf_core.__version__}` of the [nf-core/tools](https://github.com/nf-core/tools) pipeline template has just been released. "
-            f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
-            f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
-        )
-        with self.gh_api.cache_disabled():
-            self.gh_api.post(url=pr["comments_url"], data=json.dumps({"body": comment_text}))
-
-        # Update the PR status to be closed
-        with self.gh_api.cache_disabled():
-            pr_request = self.gh_api.patch(url=pr["url"], data=json.dumps({"state": "closed"}))
-
-        pr_request_json, pr_request_pp = self._parse_json_response(pr_request)
-
-        # PR update worked
-        if pr_request.status_code == 200:
-            log.debug(f"GitHub API PR-update worked:\n{pr_request_pp}")
-            log.info(
-                f"Closed GitHub PR from '{pr['head']['ref']}' to '{pr['base']['ref']}': {pr_request_json['html_url']}"
-            )
-            return True
-        # Something went wrong
-        else:
-            log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr['url']}\n{pr_request_pp}")
-            return False
 
     @staticmethod
     def _parse_json_response(response) -> tuple[Any, str]:
