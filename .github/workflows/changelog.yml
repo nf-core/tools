@@ -2,6 +2,10 @@ name: Update CHANGELOG.md
 on:
   issue_comment:
     types: [created] # Add "@nf-core-bot changelog" as a PR comment to trigger this workflow.
+  pull_request_target:
+    types: [opened]
+    branches:
+      - dev
 
 jobs:
   update_changelog:
@@ -10,6 +14,7 @@ jobs:
     steps:
       - name: branch-deploy
         id: branch-deploy
+        if: github.event_name == 'issue_comment'
         uses: github/branch-deploy@c9fcc362bdcea69eecac6578dde245cd5e3a55bf # v10.4.3
         with:
           trigger: "@nf-core-bot changelog"
