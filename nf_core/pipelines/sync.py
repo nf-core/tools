@@ -288,7 +288,7 @@ class PipelineSync:
                     Path(curr_dir).rmdir()
                 except Exception as e:
                     raise SyncExceptionError(e)
-                deleted.add(curr_dir)
+                deleted.add(Path(curr_dir))
 
     def make_template_pipeline(self):
         """
