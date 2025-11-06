@@ -19,6 +19,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.14.4 ([#3882](https://github.com/nf-core/tools/pull/3882))
 - add missing setup steps to snapshot update action ([#3883](https://github.com/nf-core/tools/pull/3883))
 - fix sync test ([#3885](https://github.com/nf-core/tools/pull/3885))
+- Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
 
 ### Template
 
