@@ -275,7 +275,7 @@ class PipelineSync:
         # Track deleted child directories so we know they've been deleted when evaluating if the parent is empty
         deleted = set()
 
-        for curr_dir, sub_dirs, files in Path(self.pipeline_dir).walk(top_down=False):
+        for curr_dir, sub_dirs, files in os.walk(self.pipeline_dir, topdown=False):
             # Don't delete the root directory (should never happen due to .git, but just in case)
             if curr_dir == str(self.pipeline_dir):
                 continue
