@@ -20,6 +20,7 @@
 ### Linting
 
 - TEMPLATE: ignore nf-core components during prettier linting ([#3858](https://github.com/nf-core/tools/pull/3858))
+- update json schema store URL ([#3877](https://github.com/nf-core/tools/pull/3877))
 
 ### Modules
 
