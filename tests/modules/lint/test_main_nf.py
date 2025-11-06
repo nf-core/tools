@@ -71,6 +71,15 @@ def test_process_labels(content, passed, warned, failed):
             0,
             1,
         ),
+        # Ternary with ? on next line (new Nextflow format) should pass
+        (
+            '''container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
+        : 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264'}"''',
+            6,
+            0,
+            0,
+        ),
     ],
 )
 def test_container_links(content, passed, warned, failed):
@@ -103,6 +112,8 @@ class TestMainNfLinting(TestModules):
         # Install samtools/sort module for all tests in this class
         if not self.mods_install.install("samtools/sort"):
             self.skipTest("Could not install samtools/sort module")
+        if not self.mods_install.install("bamstats/generalstats"):
+            self.skipTest("Could not install samtools/sort module")
 
     def test_main_nf_lint_with_alternative_registry(self):
         """Test main.nf linting with alternative container registry"""
@@ -121,4 +132,25 @@ class TestMainNfLinting(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+
+    def test_topics_and_emits_version_check(self):
+        """Test that main_nf version emit and topics check works correctly"""
+
+        # Lint a module known to have versions YAML in main.nf (for now)
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="samtools/sort")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.warned) == 2, (
+            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
+        )
+        assert len(module_lint.passed) > 0
+
+        # Lint a module known to have topics as output in main.nf
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="bamstats/generalstats")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.warned) == 0, (
+            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
+        )
         assert len(module_lint.passed) > 0

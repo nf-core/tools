@@ -237,6 +237,7 @@ def update_yaml_file(fn: Path, patterns: list[tuple[str, str]], yaml_key: list[s
     """
     yaml = YAML()
     yaml.preserve_quotes = True
+    yaml.width = 4096  # Prevent line wrapping
     with open(fn) as file:
         yaml_content = yaml.load(file)
 
@@ -259,6 +260,7 @@ def update_yaml_file(fn: Path, patterns: list[tuple[str, str]], yaml_key: list[s
         if new_value != current_value:
             target[last_key] = new_value
             with open(fn, "w") as file:
+                yaml.indent(mapping=2, sequence=4, offset=2)  # from https://stackoverflow.com/a/44389139/1696643
                 yaml.dump(yaml_content, file)
             log.info(f"Updated version in YAML file '{fn}'")
             log_change(str(current_value), str(new_value))

@@ -20,4 +20,7 @@ bin/
 {%- if rocrate %}
 ro-crate-metadata.json
 {%- endif %}
-.nf-test/
+{%- if modules %}
+modules/nf-core/
+subworkflows/nf-core/
+{%- endif %}
