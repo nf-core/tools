@@ -152,7 +152,10 @@ class DownloadWorkflow:
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel = parallel
         self.hide_progress = hide_progress
-        self.authenticated = authenticated
+
+        if not gh_api.has_init:
+            gh_api.lazy_init()
+        self.authenticated = gh_api.auth is not None
 
         self.wf_revisions: list[dict[str, Any]] = []
         self.wf_branches: dict[str, Any] = {}
