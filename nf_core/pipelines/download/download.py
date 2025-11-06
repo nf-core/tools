@@ -574,19 +574,11 @@ class DownloadWorkflow:
 
         log.debug(f"Downloading {download_url}")
 
-        # Fetch content and determine top-level directory based on authentication method
-        if self.authenticated:
-            # GitHub API download: fetch via API and get topdir from zip contents
-            content = gh_api.get(download_url).content
-            with ZipFile(io.BytesIO(content)) as zipfile:
-                topdir = zipfile.namelist()[0]  # API zipballs have a generated directory name
-                zipfile.extractall(self.outdir)
-        else:
-            # Direct URL download: fetch and construct expected topdir name
-            content = requests.get(download_url).content
-            topdir = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-            with ZipFile(io.BytesIO(content)) as zipfile:
-                zipfile.extractall(self.outdir)
+        # GitHub API download: fetch via API and get topdir from zip contents
+        content = gh_api.get(download_url).content
+        with ZipFile(io.BytesIO(content)) as zipfile:
+            topdir = zipfile.namelist()[0]  # API zipballs have a generated directory name
+            zipfile.extractall(self.outdir)
 
         # Create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
