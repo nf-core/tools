@@ -53,24 +53,33 @@ class DownloadTest(unittest.TestCase):
         wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline = "methylseq"
-        download_obj = DownloadWorkflow(pipeline=pipeline, revision="1.6")
-        (
-            download_obj.pipeline,
-            download_obj.wf_revisions,
-            download_obj.wf_branches,
-        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_revision_hash()
-        assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        assert download_obj.outdir == Path("nf-core-methylseq_1.6")
 
-        # explicitly overwrite the authentication state to force
-        # using the archive url
-        download_obj.authenticated = False
+        try:
+            # explicitly overwrite the gh_api authentication state
+            # to force using the archive url
+            from nf_core.utils import gh_api
 
-        assert (
-            download_obj.wf_download_url[download_obj.revision[0]]
-            == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
-        )
+            gh_api.lazy_init()
+            gh_api.auth = None
+
+            download_obj = DownloadWorkflow(pipeline=pipeline, revision="1.6")
+            (
+                download_obj.pipeline,
+                download_obj.wf_revisions,
+                download_obj.wf_branches,
+            ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+            download_obj.get_revision_hash()
+            assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+            assert download_obj.outdir == Path("nf-core-methylseq_1.6")
+
+            assert (
+                download_obj.wf_download_url[download_obj.revision[0]]
+                == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+            )
+
+        finally:
+            gh_api.has_init = False
+            gh_api.auth = None
 
     def test_get_release_hash_release(self):
         wfs = nf_core.pipelines.list.Workflows()
