@@ -96,7 +96,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.outdir == Path("nf-core-methylseq_1.6")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
-            == "https://api.github.com/repos/nf-core/methylseq/zipball/zipball/b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+            == "https://api.github.com/repos/nf-core/methylseq/zipball/b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         )
 
     def test_get_release_hash_branch(self):
