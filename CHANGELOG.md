@@ -16,6 +16,7 @@
 ### Template
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
+- Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
 
 ### Linting
 
