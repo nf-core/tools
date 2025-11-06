@@ -62,7 +62,6 @@ class DownloadWorkflow:
         container_cache_index (Path | None): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
-        authenticated (bool): If True, use the API of the SCM provider to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
     """
 
     def __init__(
@@ -81,7 +80,6 @@ class DownloadWorkflow:
         container_cache_index: Path | None = None,
         parallel: int = 4,
         hide_progress: bool = False,
-        authenticated: bool = False,
     ):
         # Verify that the flags provided make sense together
         if (

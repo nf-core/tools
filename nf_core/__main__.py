@@ -380,13 +380,6 @@ def command_pipelines_lint(
     default=4,
     help="Number of allowed parallel tasks",
 )
-@click.option(
-    "-a",
-    "--authenticated",
-    is_flag=True,
-    default=False,
-    help="Enable authenticated download via the API of the SCM provider (with better rate limits, access to private repos, etc.). Requires e.g., GITHUB_TOKEN to be set in the environment.",
-)
 @click.pass_context
 def command_pipelines_download(
     ctx,
@@ -403,7 +396,6 @@ def command_pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
-    authenticated,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -423,7 +415,6 @@ def command_pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
-        authenticated,
     )
 
 
@@ -2392,7 +2383,6 @@ def command_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
-        authenticated=False,
     )
 
 
