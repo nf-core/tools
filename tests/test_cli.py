@@ -202,7 +202,6 @@ class TestCli(unittest.TestCase):
             container_cache_index=params["container-cache-index"],
             parallel=params["parallel-downloads"],
             hide_progress="hide-progress" in toplevel_params,
-            authenticated=False,
         )
 
         mock_dl.return_value.download_workflow.assert_called_once()
