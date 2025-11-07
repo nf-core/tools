@@ -15,6 +15,7 @@
 - Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
 - Update docker/setup-qemu-action digest to c7c5346 ([#3875](https://github.com/nf-core/tools/pull/3875))
 - chore(deps): update python:3.14-slim docker digest to 9813eec ([#3880](https://github.com/nf-core/tools/pull/3880))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.14.4 ([#3882](https://github.com/nf-core/tools/pull/3882))
 
 ### Template
 
