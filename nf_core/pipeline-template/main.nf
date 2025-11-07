@@ -23,6 +23,22 @@ include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ s
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {%- if igenomes %}
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
+{%- endif %}
+
+// Import nf-core-utils plugin functions
+include { getWorkflowVersion      } from 'plugin/nf-core-utils'
+include { dumpParametersToJSON    } from 'plugin/nf-core-utils'
+include { checkCondaChannels      } from 'plugin/nf-core-utils'
+{%- if email %}
+include { completionEmail         } from 'plugin/nf-core-utils'
+{%- endif %}
+include { completionSummary       } from 'plugin/nf-core-utils'
+{%- if adaptivecard or slackreport %}
+include { imNotification          } from 'plugin/nf-core-utils'
+{%- endif %}
+include { checkConfigProvided     } from 'plugin/nf-core-utils'
+include { checkProfileProvided    } from 'plugin/nf-core-utils'
+{%- if igenomes %}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
