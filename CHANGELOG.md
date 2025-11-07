@@ -13,6 +13,7 @@
 - remove trailing comas from nextflow_schema.json ([#3874](https://github.com/nf-core/tools/pull/3874))
 - Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
 - Update docker/setup-qemu-action digest to c7c5346 ([#3875](https://github.com/nf-core/tools/pull/3875))
+- chore(deps): update python:3.14-slim docker digest to 9813eec ([#3880](https://github.com/nf-core/tools/pull/3880))
 
 ### Template
 
