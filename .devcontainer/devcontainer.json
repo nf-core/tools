@@ -1,6 +1,6 @@
 {
     "name": "nfcore",
-    "image": "nfcore/devcontainer:dev",
+    "image": "nfcore/devcontainer:latest",
 
     "remoteEnv": {
         // Workspace path on the host for mounting with docker-outside-of-docker

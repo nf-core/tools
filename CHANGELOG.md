@@ -1,26 +1,19 @@
 # nf-core/tools: Changelog
 
-## v3.5.0dev
+## v3.5.0d
 
 ### General
 
-- Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
 - add optional link to blogpost to sync PR ([#3852](https://github.com/nf-core/tools/pull/3852))
-- update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
-- Update python:3.14-slim Docker digest to 4ed3310 ([#3862](https://github.com/nf-core/tools/pull/3862))
-- Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
 - Avoid deleting files ignored by git during `pipelines sync` ([#3847](https://github.com/nf-core/tools/pull/3847))
 - remove trailing comas from nextflow_schema.json ([#3874](https://github.com/nf-core/tools/pull/3874))
 - Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
-- Update docker/setup-qemu-action digest to c7c5346 ([#3875](https://github.com/nf-core/tools/pull/3875))
-- chore(deps): update python:3.14-slim docker digest to 9813eec ([#3880](https://github.com/nf-core/tools/pull/3880))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.14.4 ([#3882](https://github.com/nf-core/tools/pull/3882))
 - add missing setup steps to snapshot update action ([#3883](https://github.com/nf-core/tools/pull/3883))
 
 ### Template
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
+- update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
 
 ### Linting
 
@@ -31,7 +24,15 @@
 
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 
-### Subworkflows
+### Version updates
+
+- Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
+- Update docker/setup-qemu-action digest to c7c5346 ([#3875](https://github.com/nf-core/tools/pull/3875))
+- chore(deps): update python:3.14-slim docker digest to 9813eec ([#3880](https://github.com/nf-core/tools/pull/3880))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.14.4 ([#3882](https://github.com/nf-core/tools/pull/3882))
+- Update python:3.14-slim Docker digest to 4ed3310 ([#3862](https://github.com/nf-core/tools/pull/3862))
+- Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
 
 ## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.1) - [2025-10-16]
 
