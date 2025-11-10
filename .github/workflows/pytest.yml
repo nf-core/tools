@@ -32,20 +32,21 @@ env:
 jobs:
   setup:
     runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.14"]
-        runner: ["ubuntu-latest"]
-
     steps:
-      - name: Check conditions
-        id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/main' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.10') }}" >> "$GITHUB_OUTPUT"
-
+      - name: Create config output
+        id: config
+        run: |
+          py_min="3.10"
+          py_max="3.14"
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            python_versions=$(jq -c -n --arg py_min $py_min --arg py_max $py_max '{version: [ $py_min, $py_max ]}')
+          else
+            python_versions=$(jq -c -n --arg py_min $py_min '{version: [ $py_min ]}')
+          fi
+          echo "${python_versions}"
+          echo "python-versions=${python_versions}" >> "$GITHUB_OUTPUT"
     outputs:
-      python-version: ${{ matrix.python-version }}
-      runner: ${{ matrix.runner }}
-      run-tests: ${{ steps.conditions.outputs.run-tests }}
+      python-versions: ${{ steps.config.outputs.python-versions }}
 
   # create a test matrix based on all python files in /tests
   list_tests:
@@ -63,14 +64,15 @@ jobs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
   test:
-    name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
+    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} on ubuntu-latest
     needs: [setup, list_tests]
-    if: ${{ needs.setup.outputs.run-tests }}
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
       - runner=4cpu-linux-x64
     strategy:
-      matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
+      matrix:
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions).version }}
+        test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
       fail-fast: false # run all tests even if one fails
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -82,10 +84,10 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         name: Check out source-code repository
 
-      - name: Set up Python ${{ needs.setup.outputs.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
         with:
-          python-version: ${{ needs.setup.outputs.python-version }}
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
