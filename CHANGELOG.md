@@ -9,11 +9,15 @@
 - remove trailing comas from nextflow_schema.json ([#3874](https://github.com/nf-core/tools/pull/3874))
 - Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
 - add missing setup steps to snapshot update action ([#3883](https://github.com/nf-core/tools/pull/3883))
+- fix sync test ([#3885](https://github.com/nf-core/tools/pull/3885))
+- fix syntax in dockerfile for devcontainer ([#3887](https://github.com/nf-core/tools/pull/3887))
+- Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
 
 ### Template
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
 - update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
+- Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
 
 ### Linting
 

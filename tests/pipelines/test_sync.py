@@ -183,7 +183,7 @@ class TestModules(TestPipelines):
         assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
 
     def test_delete_tracked_template_branch_files_unlink_throws_error(self):
-        """Test that SyncExceptionError is raised when os.unlink throws an exception"""
+        """Test that SyncExceptionError is raised when Path.unlink throws an exception"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
@@ -193,19 +193,19 @@ class TestModules(TestPipelines):
         test_file = Path(self.pipeline_dir) / "test_file.txt"
         test_file.touch()
 
-        # Mock os.unlink to raise an exception
-        with mock.patch("os.unlink", side_effect=OSError("Permission denied")) as mock_unlink:
+        # Mock Path.unlink to raise an exception
+        with mock.patch("pathlib.Path.unlink", side_effect=OSError("Permission denied")) as mock_unlink:
             with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
                 psync.delete_tracked_template_branch_files()
 
             # Verify the exception contains the original error
             assert "Permission denied" in str(exc_info.value)
 
-            # Verify os.unlink was called
+            # Verify Path.unlink was called
             mock_unlink.assert_called()
 
     def test_delete_tracked_template_branch_rmdir_throws_error(self):
-        """Test that SyncExceptionError is raised when os.rmdir throws an exception"""
+        """Test that SyncExceptionError is raised when Path.rmdir throws an exception"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
@@ -215,15 +215,15 @@ class TestModules(TestPipelines):
         empty_dir = Path(self.pipeline_dir) / "empty_test_dir"
         empty_dir.mkdir()
 
-        # Mock os.rmdir to raise an exception
-        with mock.patch("os.rmdir", side_effect=OSError("Permission denied")) as mock_rmdir:
+        # Mock Path.rmdir to raise an exception
+        with mock.patch("pathlib.Path.rmdir", side_effect=OSError("Permission denied")) as mock_rmdir:
             with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
                 psync.delete_tracked_template_branch_files()
 
             # Verify the exception contains the original error
             assert "Permission denied" in str(exc_info.value)
 
-            # Verify os.rmdir was called
+            # Verify Path.rmdir was called
             mock_rmdir.assert_called()
 
     def test_delete_staged_template_branch_files_ignored(self):
