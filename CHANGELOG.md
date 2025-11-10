@@ -21,6 +21,7 @@
 - fix sync test ([#3885](https://github.com/nf-core/tools/pull/3885))
 - fix syntax in dockerfile for devcontainer ([#3887](https://github.com/nf-core/tools/pull/3887))
 - Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
+- fix pytest setup matrix ([#3888](https://github.com/nf-core/tools/pull/3888))
 
 ### Template
 
