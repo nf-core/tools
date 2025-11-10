@@ -20,6 +20,7 @@
 - add missing setup steps to snapshot update action ([#3883](https://github.com/nf-core/tools/pull/3883))
 - fix sync test ([#3885](https://github.com/nf-core/tools/pull/3885))
 - fix syntax in dockerfile for devcontainer ([#3887](https://github.com/nf-core/tools/pull/3887))
+- Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
 
 ### Template
 
