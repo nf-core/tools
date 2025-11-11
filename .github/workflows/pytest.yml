@@ -146,7 +146,7 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           include-hidden-files: true
-          name: coverage_${{ env.test }}
+          name: coverage_py${{ matrix.python-version }}_${{ env.test }}
           path: .coverage
 
   coverage:
