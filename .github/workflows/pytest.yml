@@ -101,6 +101,8 @@ jobs:
 
       - name: Test with pytest
         id: pytest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 -n auto && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
