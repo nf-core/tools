@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.5.0d
+## v3.5.0
 
 ### General
 
