@@ -1,6 +1,6 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d3633338558a2078ce66d3abde55c130f0d5da94f AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:19516babd35bccd1429591a255dd867b2c8c01606cc594a8a6fe5db03309ecf8 AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
@@ -27,7 +27,7 @@ RUN apt-get update --quiet && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM "mcr.microsoft.com/devcontainers/base:debian@sha256:ce2e9e611939e611b737362c045bb6d3449bb3efb84898525d724aace1737b90" AS final
+FROM mcr.microsoft.com/devcontainers/base:debian@sha256:2e826a6ae92e5744cc0a471a03b4411e64f6b7cc6af3adaecddad697f0018f10 AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda
