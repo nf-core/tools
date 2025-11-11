@@ -207,7 +207,7 @@ class NFCoreComponent:
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
-                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                regex = r"\b(val|path)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -226,6 +226,7 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
+            log.debug(f"Inputs: {inputs}")
             self.inputs = inputs
         elif self.component_type == "subworkflows":
             # get input values from main.nf after "take:"
@@ -252,8 +253,9 @@ class NFCoreComponent:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Found output_data: {output_data}")
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout|eval)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -278,6 +280,7 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     outputs[match_emit.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
+            log.debug(f"Outputs: {outputs}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
             outputs = []
@@ -306,8 +309,9 @@ class NFCoreComponent:
                 self.topics = topics
                 return
             output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Output data: {output_data}")
             regex_topic = r"topic:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout|eval)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_topic = re.search(regex_topic, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -331,4 +335,5 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     topics[match_topic.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
+            log.debug(f"Topics: {topics}")
             self.topics = topics
