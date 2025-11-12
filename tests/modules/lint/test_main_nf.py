@@ -190,7 +190,6 @@ process TEST_PROCESS {
     # Should find 3 inputs: meta, reads, and the tuple (evaluate, pathogen)
     # The regex with \b should correctly identify 'val(evaluate)' and 'path(pathogen)' as valid inputs
     assert len(component.inputs) == 3, f"Expected 3 inputs, got {len(component.inputs)}: {component.inputs}"
-    print(component.inputs)
     assert {"meta": {}} in component.inputs
     assert {"reads": {}} in component.inputs
     # The tuple should be captured as a list of two elements
