@@ -54,7 +54,7 @@ jobs:
     strategy:
       matrix:
         # On main branch test with 3.10 and 3.14, otherwise just 3.10
-        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}}}
+        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
         test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
       fail-fast: false # run all tests even if one fails
     steps:
