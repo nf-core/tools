@@ -30,24 +30,6 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  setup:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: Create config output
-        id: config
-        run: |
-          py_min="3.10"
-          py_max="3.14"
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            python_versions=$(jq -c -n --arg py_min $py_min --arg py_max $py_max '{version: [ $py_min, $py_max ]}')
-          else
-            python_versions=$(jq -c -n --arg py_min $py_min '{version: [ $py_min ]}')
-          fi
-          echo "${python_versions}"
-          echo "python-versions=${python_versions}" >> "$GITHUB_OUTPUT"
-    outputs:
-      python-versions: ${{ steps.config.outputs.python-versions }}
-
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
@@ -65,13 +47,14 @@ jobs:
 
   test:
     name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} on ubuntu-latest
-    needs: [setup, list_tests]
+    needs: list_tests
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
       - runner=4cpu-linux-x64
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.setup.outputs.python-versions).version }}
+        # On main branch test with 3.10 and 3.14, otherwise just 3.10
+        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}}}
         test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
       fail-fast: false # run all tests even if one fails
     steps:
