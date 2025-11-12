@@ -24,7 +24,6 @@
 - fix pytest setup matrix ([#3888](https://github.com/nf-core/tools/pull/3888))
 - chore(deps): update mcr.microsoft.com/devcontainers/miniconda docker digest to 19516ba ([#3890](https://github.com/nf-core/tools/pull/3890))
 - Update dependency textual to v6.6.0 ([#3892](https://github.com/nf-core/tools/pull/3892))
-- chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
 
 ### Template
 
