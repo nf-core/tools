@@ -35,6 +35,8 @@ jobs:
       - name: Run prek
         id: prek
         uses: j178/prek-action@v1
+        with:
+          extra-args: --config .pre-commit-config.yaml --all-files
         continue-on-error: true
 
       # indication that the linting has finished

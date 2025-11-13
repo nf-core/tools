@@ -69,8 +69,10 @@ prek install --install-hooks
 You can also run all pre-commit hooks without making a commit:
 
 ```bash
-prek run --all-files
+prek run --config .pre-commit-config.yaml --all-files
 ```
+
+Note: The `--config` flag is important in this repository to ensure prek uses the root configuration file and not the template configs in `nf_core/pipeline-template/`.
 
 ## API Documentation
 
