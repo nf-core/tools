@@ -80,7 +80,7 @@ jobs:
           pip install -e .
 
       - name: Set up Singularity
-        if: ${{ matrix.test == 'test_download.py'}}
+        if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
         uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
         with:
           singularity-version: 3.8.3
