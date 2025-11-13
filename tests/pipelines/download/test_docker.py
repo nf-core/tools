@@ -200,6 +200,7 @@ class DockerTest(unittest.TestCase):
         docker_fetcher.fetch_containers(
             download_obj.containers,
             download_obj.containers_remote,
+            workflow_directory=Path("pipeline-dummy"),
         )
 
     #
