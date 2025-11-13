@@ -119,7 +119,8 @@
                     "seqkit/fq2fa": {
                         "branch": "master",
                         "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/seqkit/fq2fa/seqkit-fq2fa.diff"
                     },
                     "spades": {
                         "branch": "master",

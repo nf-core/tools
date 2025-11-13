@@ -30,7 +30,6 @@ genomic-medicine-sweden/metaval will require the information given bellow.
 | Column              | Description                                                                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | sample              | Unique sample name [required].                                                                                                                   |
-| run_accession       | Run ID or name unique for each (pairs of) file(s). Can also supply sample name again here, if only a single run was generated [required].        |
 | instrument_platform | Sequencing platform reads generated on, selected from the EBI ENA controlled vocabulary [required].                                              |
 | fastq_1             | Unmapped human reads from bowtie2/minimap2, filtered reads from bbduk/nanoq/FiltLong or raw sequencing reads. Gzipped compressed files accepted. |
 | fastq_2             | Unmapped human reads from bowtie2, filtered reads from bbduk/nanoq/FiltLong or raw reads. Gzipped compressed files accepted.                     |
@@ -44,9 +43,9 @@ genomic-medicine-sweden/metaval will require the information given bellow.
 | diamond_taxpasta    | Standardized diamond taxonomic profiles for all samples.                                                                                         |
 
 ```csv title="samplesheet.csv"
-sample,run_accession,instrument_platform,fastq_1,fastq_2,kraken2_report,kraken2_result,kraken2_taxpasta,centrifuge_report,centrifuge_result,centrifuge_taxpasta,diamond,diamond_taxpasta
-sample1,run1,ILLUMINA,sample1.unmapped_1.fastq.gz,sample1.unmapped_2.fastq.gz,sample1.kraken2.kraken2.report.txt,sample1.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample1.centrifuge.txt,sample1.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample1.diamond.tsv,diamond_diamond-db.tsv
-sample2,run1,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sample2.kraken2.kraken2.report.txt,sample2.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample2.centrifuge.txt,sample2.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample2.diamond.tsv,diamond_diamond-db.tsv
+sample,instrument_platform,fastq_1,fastq_2,kraken2_report,kraken2_result,kraken2_taxpasta,centrifuge_report,centrifuge_result,centrifuge_taxpasta,diamond,diamond_taxpasta
+sample1,ILLUMINA,sample1.unmapped_1.fastq.gz,sample1.unmapped_2.fastq.gz,sample1.kraken2.kraken2.report.txt,sample1.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample1.centrifuge.txt,sample1.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample1.diamond.tsv,diamond_diamond-db.tsv
+sample2,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sample2.kraken2.kraken2.report.txt,sample2.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample2.centrifuge.txt,sample2.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample2.diamond.tsv,diamond_diamond-db.tsv
 ```
 
 #### BLASTn database

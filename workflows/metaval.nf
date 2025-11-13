@@ -6,7 +6,8 @@
 
 // Extract reads of taxIDs
 include { TAXID_READS                                           } from '../subworkflows/local/taxid_reads'
-
+include { SEQKIT_FQ2FA as SEQKIT_FQ2FA_READS                    } from '../modules/nf-core/seqkit/fq2fa'
+include { PIGZ_UNCOMPRESS                                       } from '../modules/nf-core/pigz/uncompress'
 // De novo for extracted taxIDs reads
 include { SPADES                                                } from '../modules/nf-core/spades/main'
 include { FLYE                                                  } from '../modules/nf-core/flye/main'
@@ -128,15 +129,35 @@ workflow METAVAL {
                 nonempty: true
             }
 
+        // Transpose to handle both single and paired-end reads
+        ch_taxid_reads_transpose = ch_taxid_reads.nonempty
+            .map { meta, reads ->
+                def read_list = reads instanceof List ? reads: [reads]
+                [meta, read_list]
+            }
+            .transpose ()
+
+        // Convert fastq.gz into fasta files
+        SEQKIT_FQ2FA_READS( ch_taxid_reads_transpose )
+        ch_versions = ch_versions.mix(SEQKIT_FQ2FA_READS.out.versions)
+        PIGZ_UNCOMPRESS ( SEQKIT_FQ2FA_READS.out.fasta )
+        ch_versions = ch_versions.mix(PIGZ_UNCOMPRESS.out.versions)
+
         //
         // MODULE: DE NOVO - SPADES/FLYE
         //
 
         // Run de novo assembly if the number of reads exceeds the params.min_read_counts
         ch_taxid_reads_filter = ch_taxid_reads.nonempty
-            .branch { it ->
-                blast: it[0].single_end ? it[1].countFastq() < params.min_read_counts : it[1][0].countFastq() < params.min_read_counts || it[1][1].countFastq() < params.min_read_counts
+            .branch { meta, reads ->
+                blast: meta.single_end ? reads.countFastq() < params.min_read_counts : reads[0].countFastq() < params.min_read_counts || reads[1].countFastq() < params.min_read_counts
                 denovo: true
+            }
+        // Then select first read for BLAST
+        ch_blast_reads = ch_taxid_reads_filter.blast
+            .map { meta, reads ->
+                def read = meta.single_end ? reads : reads[0]
+                [ meta, read ]
             }
         // Prepare de novo assembly reads channel for shortreads and longreads
         ch_denovo = ch_taxid_reads_filter.denovo
@@ -166,7 +187,7 @@ workflow METAVAL {
 
         // Prepare the query fasta file
         if ( (!params.skip_blastn) || (!params.skip_blastx)) {
-            SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
+            SEQKIT_FQ2FA ( ch_blast_reads )
             // Build ch_blast_query fasta file
             ch_blast_query = SEQKIT_FQ2FA.out.fasta
             if ( params.perform_shortread_denovo ) {
@@ -285,7 +306,6 @@ workflow METAVAL {
                 [ meta, bam, bai, ch_reference ]
             }
         ch_igv_input_pathogen = ch_igv_input_pathogen_shortread.mix( ch_igv_input_pathogen_longread )
-
         IGV_PATHOGEN ( ch_igv_input_pathogen )
         ch_versions = ch_versions.mix( IGV_PATHOGEN.out.versions )
 

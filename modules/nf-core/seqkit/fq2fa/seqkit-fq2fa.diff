@@ -1,0 +1,28 @@
+Changes in component 'nf-core/seqkit/fq2fa'
+Changes in 'seqkit/fq2fa/main.nf':
+--- modules/nf-core/seqkit/fq2fa/main.nf
++++ modules/nf-core/seqkit/fq2fa/main.nf
+@@ -19,7 +19,7 @@
+ 
+     script:
+     def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: fastq.baseName.replaceFirst(/\.(fastq|fq)$/, '')
+ 
+     """
+     seqkit \\
+@@ -36,7 +36,7 @@
+     """
+ 
+     stub:
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: fastq.baseName.replaceFirst(/\.(fastq|fq)$/, '')
+     """
+     echo "" | gzip > ${prefix}.fa.gz
+ 
+
+'modules/nf-core/seqkit/fq2fa/meta.yml' is unchanged
+'modules/nf-core/seqkit/fq2fa/environment.yml' is unchanged
+'modules/nf-core/seqkit/fq2fa/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/seqkit/fq2fa/tests/main.nf.test' is unchanged
+************************************************************

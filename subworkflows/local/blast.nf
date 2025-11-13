@@ -96,7 +96,7 @@ workflow BLAST {
     ch_blast_hits_taxid_uniq = ch_blast_hits_taxid.unique()
 
     emit:
-    unique_taxid = ch_blast_hits_taxid_uniq // eg: ['211044', ['id':'SRR13439799', 'run_accession':'SRR13439799', 'instrument_platform':'OXFORD_NANOPORE', 'single_end':true, 'taxid':'211044', 'tool':'centrifuge']]
+    unique_taxid = ch_blast_hits_taxid_uniq // eg: ['211044', ['id':'SRR13439799', 'instrument_platform':'OXFORD_NANOPORE', 'single_end':true, 'taxid':'211044', 'tool':'centrifuge']]
     blastn_filtered = ch_blastn_filtered    // [ meta, filtered_blast ]
     blastx_filtered = ch_blastx_filtered    // [ meta, filtered_blast ]
     versions = ch_versions
