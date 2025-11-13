@@ -678,6 +678,7 @@ class SingularityError(Exception):
             r"manifest\sunknown": self.InvalidTagError,
             # The container image is no native Singularity Image Format.
             r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularityContainerError,
+            r"received\smediaType:\sapplication/vnd\.docker\.distribution\.manifest": self.NoSingularityContainerError,
         }
         # Loop through the error messages and patterns. Since we want to have the option of
         # no matches at all, we use itertools.product to allow for the use of the for ... else construct.
