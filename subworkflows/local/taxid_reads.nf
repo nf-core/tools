@@ -8,9 +8,6 @@ include { EXTRACT_VIRAL_TAXID as DIAMOND_VIRAL_TAXID      } from '../../modules/
 include { KRAKENTOOLS_EXTRACTKRAKENREADS                  } from '../../modules/nf-core/krakentools/extractkrakenreads/main'
 include { EXTRACTCENTRIFUGEREADS                          } from '../../modules/local/extractcentrifugereads/main'
 include { EXTRACTCDIAMONDREADS                            } from '../../modules/local/extractdiamondreads/main'
-//include { RM_EMPTY_FASTQ as RM_EMPTY_KRAKEN2              } from '../../modules/local/rm_empty_fastq/main'
-//include { RM_EMPTY_FASTQ as RM_EMPTY_CENTRIFUGE           } from '../../modules/local/rm_empty_fastq/main'
-//include { RM_EMPTY_FASTQ as RM_EMPTY_DIAMOND              } from '../../modules/local/rm_empty_fastq/main'
 
 workflow TAXID_READS {
     params.taxid
@@ -60,7 +57,6 @@ workflow TAXID_READS {
                 .collect()
                 .map { it -> file("${params.outdir}/extracted_reads/kraken2") }
                 .set { ch_kraken2_output_dir }
-            //RM_EMPTY_KRAKEN2(ch_kraken2_output_dir)
         } else {
             kraken2_output = kraken2_taxpasta.join(kraken2_report)
             kraken2_taxids = KRAKEN2_VIRAL_TAXID( [], kraken2_output)
@@ -113,7 +109,6 @@ workflow TAXID_READS {
                 .collect()
                 .map { it -> file("${params.outdir}/extracted_reads/centrifuge") }
                 .set { ch_centrifuge_output_dir }
-            //RM_EMPTY_CENTRIFUGE(ch_centrifuge_output_dir)
         } else {
             centrifuge_output = centrifuge_taxpasta.join(centrifuge_report)
             centrifuge_taxids = CENTRIFUGE_VIRAL_TAXID( [], centrifuge_output )
@@ -162,7 +157,6 @@ workflow TAXID_READS {
                 .collect()
                 .map { it -> file("${params.outdir}/extracted_reads/diamond") }
                 .set { ch_diamond_output_dir }
-            //RM_EMPTY_DIAMOND(ch_diamond_output_dir)
         } else {
             diamond_output = diamond_taxpasta.join(diamond_tsv)
             diamond_taxids = DIAMOND_VIRAL_TAXID( params.evalue_threshold, diamond_output )
