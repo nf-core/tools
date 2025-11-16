@@ -31,6 +31,7 @@
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
+- Move CONTRIBUTING.md to docs/, review and update text, and add pipeline-specific conventions section ([#3903](https://github.com/nf-core/tools/pull/3903))
 
 ### Linting
 
@@ -2157,6 +2158,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   - Docs are automatically built by Travis CI and updated on the nf-co.re website.
 - Introduced test for filtering remote workflows by keyword.
 - Build tools python API docs
+
   - Use Travis job for api doc generation and publish
 
 - `nf-core bump-version` now stops before making changes if the linting fails
