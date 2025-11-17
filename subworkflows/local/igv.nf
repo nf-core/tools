@@ -27,7 +27,6 @@ workflow IGV {
     ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
     // IGV report
-    //ch_bam_bai = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
     ch_bam_bai = ch_bam_bai_reference.map { meta, bam, bai, ref -> [meta, bam, bai]}
     ch_bed_bam_bai = BEDTOOLS_GENOMECOV.out.genomecov.join( ch_bam_bai )
     ch_fasta_fai = PIGZ_UNCOMPRESS.out.file.join( SAMTOOLS_FAIDX.out.fai )
