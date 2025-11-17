@@ -534,7 +534,10 @@ class ComponentCreate(ComponentCommand):
                     {"${task.process}": {"type": "string", "description": "The name of the process"}},
                     {f"{self.component}": {"type": "string", "description": "The name of the tool"}},
                     {
-                        f"{self.component} --version": {"type": "eval", "description": "The version of the tool"},
+                        f"{self.component} --version": {
+                            "type": "eval",
+                            "description": "The expression to obtain the version of the tool",
+                        },
                     },
                 ]
             ]
@@ -546,7 +549,10 @@ class ComponentCreate(ComponentCommand):
                     {"${task.process}": {"type": "string", "description": "The name of the process"}},
                     {f"{self.component}": {"type": "string", "description": "The name of the tool"}},
                     {
-                        f"{self.component} --version": {"type": "eval", "description": "The version of the tool"},
+                        f"{self.component} --version": {
+                            "type": "eval",
+                            "description": "The expression to obtain the version of the tool",
+                        },
                     },
                 ]
             ]
