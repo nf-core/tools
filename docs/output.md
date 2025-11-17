@@ -246,7 +246,7 @@ IGV visualization of reads that classifiers assigned to specific species.
 <summary>Output files</summary>
 
 - `igv/`
-  - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
+  - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report with variants and coverage of reads mapped to the genomes.
 
 #### Pathogen screening
 
