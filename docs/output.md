@@ -222,7 +222,7 @@ Map reads to the pathogen genomes databases.
         - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-provided pathogens genomes
         - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
       - `build/`
-        - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genome
+        - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genomes
     - `minimap2/`
       - `align/`
         - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
