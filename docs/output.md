@@ -257,7 +257,7 @@ IGV visualization of reads mapped to pathogen genome database.
 
 - `pathogens/`
   - `igv/`
-    - `<sample_id>_<taxID>_report.html`: The IGV report shows the variants and coverage of reads mapped to the genomes.
+    - `<sample_id>_<taxID>_report.html`: IGV report with the variants and coverage of reads mapped to the genomes.
 
 </details>
 The `IGV` directory will only be present if `perform_mapping` is provided.
