@@ -226,7 +226,7 @@ Map reads to the pathogen genomes databases.
     - `minimap2/`
       - `align/`
         - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-provided pathogens genomes
-        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Bam file index
       - `index/`
         - `*.mmi`: Minimap2 indicies of reference pathogens genomes
 
