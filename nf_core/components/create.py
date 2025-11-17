@@ -534,7 +534,10 @@ class ComponentCreate(ComponentCommand):
                     {"${task.process}": {"type": "string", "description": "The name of the process"}},
                     {f"{self.component}": {"type": "string", "description": "The name of the tool"}},
                     {
-                        f"{self.component} --version": {"type": "string", "description": "The version of the tool"},
+                        f"{self.component} --version": {
+                            "type": "eval",
+                            "description": "The expression to obtain the version of the tool",
+                        },
                     },
                 ]
             ]
@@ -543,12 +546,13 @@ class ComponentCreate(ComponentCommand):
         versions_topic: dict[str, list | dict] = {
             "versions": [
                 [
-                    {"process": {"type": "string", "description": "The process the versions were collected from"}},
+                    {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                    {f"{self.component}": {"type": "string", "description": "The name of the tool"}},
                     {
-                        "tool": {"type": "string", "description": "The tool name the version was collected for"},
-                    },
-                    {
-                        "version": {"type": "string", "description": "The version of the tool"},
+                        f"{self.component} --version": {
+                            "type": "eval",
+                            "description": "The expression to obtain the version of the tool",
+                        },
                     },
                 ]
             ]

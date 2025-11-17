@@ -52,6 +52,7 @@ class NFCoreComponent:
         self.failed: list[tuple[str, str, str, Path]] = []
         self.inputs: list[list[dict[str, dict[str, str]]]] = []
         self.outputs: list[str] = []
+        self.topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]]
         self.has_meta: bool = False
         self.git_sha: str | None = None
         self.is_patched: bool = False
@@ -322,14 +323,18 @@ class NFCoreComponent:
                 if topic_name in topics:
                     continue
                 topics[match_topic.group(1)] = []
-                for count, match_element in enumerate(matches_elements, start=1):
-                    output_val = None
+                for _, match_element in enumerate(matches_elements, start=1):
+                    topic_val = None
                     if match_element.group(3):
-                        output_val = match_element.group(3)
+                        topic_val = match_element.group(3)
                     elif match_element.group(4):
-                        output_val = match_element.group(4)
-                    if output_val:
-                        channel_elements.append({f"value{count}": {}})
+                        topic_val = match_element.group(4)
+                    if topic_val:
+                        topic_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', topic_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        topic_val = topic_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                        channel_elements.append({topic_val: {}})
                 if len(channel_elements) == 1:
                     topics[match_topic.group(1)].append(channel_elements[0])
                 elif len(channel_elements) > 1:

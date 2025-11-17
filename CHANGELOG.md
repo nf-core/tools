@@ -38,6 +38,7 @@
 - TEMPLATE: ignore nf-core components during prettier linting ([#3858](https://github.com/nf-core/tools/pull/3858))
 - update json schema store URL ([#3877](https://github.com/nf-core/tools/pull/3877))
 - add word boundary for input, output and topic linting ([#3894](https://github.com/nf-core/tools/pull/3894))
+- Add linting of topics ([#3902](https://github.com/nf-core/tools/pull/3902))
 
 ### Modules
 
