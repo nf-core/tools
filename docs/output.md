@@ -206,7 +206,7 @@ Map reads to genomes based on BLAST hits or to genomes of identified species if 
       - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Bam index file
     - `index/`
       - `mappingorganism_<organism>`
-        - `*.mmi`: Minimap2 indices of the reference pathogens' genomes
+        - `*.mmi`: Minimap2 indices of the reference pathogens genomes
 
 #### Pathogen screening
 
