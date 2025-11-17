@@ -22,7 +22,6 @@ Initial release of genomic-medicine-sweden/metaval, created with the [nf-core](h
   - Call consensus sequences for reads mapped to the pathogen genomes
   - IGV
 
-
 ### `Fixed`
 
 ### `Dependencies`
