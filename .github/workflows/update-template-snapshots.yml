@@ -18,6 +18,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
       - name: Create Matrix
         id: create_matrix
         run: |
@@ -26,12 +27,6 @@ jobs:
 
   update-snapshots:
     needs: [prepare-matrix]
-    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
-    if: >
-      contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot') &&
-      contains(github.event.comment.body, 'update template snapshots') &&
-      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,6 +65,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: latest-everything
+
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+        with:
+          version: "0.9.3"
+          install-pdiff: true
 
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}

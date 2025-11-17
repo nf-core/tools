@@ -52,6 +52,7 @@ class NFCoreComponent:
         self.failed: list[tuple[str, str, str, Path]] = []
         self.inputs: list[list[dict[str, dict[str, str]]]] = []
         self.outputs: list[str] = []
+        self.topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]]
         self.has_meta: bool = False
         self.git_sha: str | None = None
         self.is_patched: bool = False
@@ -207,7 +208,7 @@ class NFCoreComponent:
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
-                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                regex = r"\b(val|path)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -226,6 +227,7 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
+            log.debug(f"Inputs: {inputs}")
             self.inputs = inputs
         elif self.component_type == "subworkflows":
             # get input values from main.nf after "take:"
@@ -252,8 +254,9 @@ class NFCoreComponent:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Found output_data: {output_data}")
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout|eval)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -278,6 +281,7 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     outputs[match_emit.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
+            log.debug(f"Outputs: {outputs}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
             outputs = []
@@ -294,3 +298,47 @@ class NFCoreComponent:
                     pass
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
+
+    def get_topics_from_main_nf(self) -> None:
+        with open(self.main_nf) as f:
+            data = f.read()
+        if self.component_type == "modules":
+            topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
+            # get topic name from main.nf after "output:". the names are always after "topic:"
+            if "output:" not in data:
+                log.debug(f"Could not find any outputs in {self.main_nf}")
+                self.topics = topics
+                return
+            output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Output data: {output_data}")
+            regex_topic = r"topic:\s*([^)\s,]+)"
+            regex_elements = r"\b(val|path|env|stdout|eval)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            for line in output_data.split("\n"):
+                match_topic = re.search(regex_topic, line)
+                matches_elements = re.finditer(regex_elements, line)
+                if not match_topic:
+                    continue
+                channel_elements: list[dict[str, dict]] = []
+                topic_name = match_topic.group(1)
+                if topic_name in topics:
+                    continue
+                topics[match_topic.group(1)] = []
+                for _, match_element in enumerate(matches_elements, start=1):
+                    topic_val = None
+                    if match_element.group(3):
+                        topic_val = match_element.group(3)
+                    elif match_element.group(4):
+                        topic_val = match_element.group(4)
+                    if topic_val:
+                        topic_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', topic_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        topic_val = topic_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                        channel_elements.append({topic_val: {}})
+                if len(channel_elements) == 1:
+                    topics[match_topic.group(1)].append(channel_elements[0])
+                elif len(channel_elements) > 1:
+                    topics[match_topic.group(1)].append(channel_elements)
+            log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
+            log.debug(f"Topics: {topics}")
+            self.topics = topics
