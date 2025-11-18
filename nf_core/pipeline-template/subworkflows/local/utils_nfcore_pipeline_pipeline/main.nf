@@ -43,7 +43,7 @@ workflow PIPELINE_INITIALISATION {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
@@ -72,7 +72,7 @@ workflow PIPELINE_INITIALISATION {
 \033[0;35m  {{ name }} ${workflow.manifest.version}\033[0m
 -\033[2m----------------------------------------------------\033[0m-
 """
-    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { "    https://doi.org/${it.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
+    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { doi -> "    https://doi.org/${doi.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
 * The nf-core framework
     https://doi.org/10.1038/s41587-020-0439-x
 
@@ -113,7 +113,7 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
 
-    Channel{% if nf_schema %}
+    channel{% if nf_schema %}
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json")){% else %}
         .fromPath(params.input)
         .splitCsv(header: true, strip: true)
