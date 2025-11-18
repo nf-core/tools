@@ -28,6 +28,7 @@
 - Fix GH API rate limits. ([#3895](https://github.com/nf-core/tools/pull/3895))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
 - devcontainer: Set `moby: false` to fix trixie builds ([#3904](https://github.com/nf-core/tools/pull/3904))
+- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
 
 ### Template
 
