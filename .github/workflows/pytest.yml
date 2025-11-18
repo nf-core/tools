@@ -79,11 +79,11 @@ jobs:
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
 
-      - name: Set up Singularity
+      - name: Set up Apptainer
         if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
-        uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
+        uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
         with:
-          singularity-version: 3.8.3
+          apptainer-version: 1.3.4
 
       - name: Get current date
         id: date
