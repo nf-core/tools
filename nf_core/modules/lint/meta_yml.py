@@ -211,6 +211,29 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                         module.meta_yml,
                     )
                 )
+        # Check that all topics are correctly specified
+        if "topics" in meta_yaml:
+            correct_topics = obtain_topics(module_lint_object, module.topics)
+            meta_topics = obtain_topics(module_lint_object, meta_yaml["topics"])
+
+            if correct_topics == meta_topics:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        "correct_meta_topics",
+                        "Correct topics specified in module `meta.yml`",
+                        module.meta_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "meta_yml",
+                        "correct_meta_topics",
+                        f"Module `meta.yml` does not match `main.nf`. Topics should contain: {correct_topics}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        module.meta_yml,
+                    )
+                )
 
 
 def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
@@ -301,3 +324,29 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
         return [{k: v} for k, v in formatted_outputs.items()]
     else:
         return formatted_outputs
+
+
+def obtain_topics(_, topics: dict) -> dict:
+    """
+    Obtain the dictionary of topics and elements of each topic.
+
+    Args:
+        topics (dict): The dictionary of topics from main.nf or meta.yml files.
+
+    Returns:
+        formatted_topics (dict): A dictionary containing the topics and their elements obtained from main.nf or meta.yml files.
+    """
+    formatted_topics: dict = {}
+    for name in topics.keys():
+        content = topics[name]
+        t_elements: list = []
+        for element in content:
+            if isinstance(element, list):
+                t_elements.append([])
+                for e in element:
+                    t_elements[-1].append(list(e.keys())[0])
+            else:
+                t_elements.append(list(element.keys())[0])
+        formatted_topics[name] = t_elements
+
+    return formatted_topics

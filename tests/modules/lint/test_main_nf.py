@@ -1,7 +1,7 @@
 import pytest
 
 import nf_core.modules.lint
-import nf_core.modules.patch
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
 
 from ...test_modules import TestModules
@@ -154,3 +154,120 @@ class TestMainNfLinting(TestModules):
             f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
         )
         assert len(module_lint.passed) > 0
+
+
+def test_get_inputs_no_partial_keyword_match(tmp_path):
+    """Test that input parsing doesn't match keywords within larger words like 'evaluate' or 'pathogen'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+    path(reads)
+    tuple val(evaluate), path(pathogen)
+
+    output:
+    path("*.txt"), emit: results
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+
+    # Should find 3 inputs: meta, reads, and the tuple (evaluate, pathogen)
+    # The regex with \b should correctly identify 'val(evaluate)' and 'path(pathogen)' as valid inputs
+    assert len(component.inputs) == 3, f"Expected 3 inputs, got {len(component.inputs)}: {component.inputs}"
+    assert {"meta": {}} in component.inputs
+    assert {"reads": {}} in component.inputs
+    # The tuple should be captured as a list of two elements
+    tuple_input = [{"evaluate": {}}, {"pathogen": {}}]
+    assert tuple_input in component.inputs
+
+
+def test_get_outputs_no_partial_keyword_match(tmp_path):
+    """Test that output parsing doesn't match keywords within larger words like 'evaluate' or 'pathogen'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), emit: results
+    val(evaluate_result), emit: evaluation
+    path(pathogen_data), emit: pathogens
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    # Should find 3 outputs with variable names containing 'val' and 'path' substrings
+    # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
+    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "results" in component.outputs
+    assert "evaluation" in component.outputs
+    assert "pathogens" in component.outputs
+
+
+def test_get_topics_no_partial_keyword_match(tmp_path):
+    """Test that topic parsing doesn't match keywords within larger words like 'evaluate'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), topic: results
+    val(evaluate_result), topic: evaluation
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    # Should find 2 topics with variable names containing 'val' substring
+    # The regex with \b should correctly identify val(evaluate_result)
+    assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
+    assert "results" in component.topics
+    assert "evaluation" in component.topics

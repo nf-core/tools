@@ -21,21 +21,33 @@
 - fix sync test ([#3885](https://github.com/nf-core/tools/pull/3885))
 - fix syntax in dockerfile for devcontainer ([#3887](https://github.com/nf-core/tools/pull/3887))
 - Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
+- fix pytest setup matrix ([#3888](https://github.com/nf-core/tools/pull/3888))
+- chore(deps): update mcr.microsoft.com/devcontainers/miniconda docker digest to 19516ba ([#3890](https://github.com/nf-core/tools/pull/3890))
+- Update dependency textual to v6.6.0 ([#3892](https://github.com/nf-core/tools/pull/3892))
+- chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
+- Fix GH API rate limits. ([#3895](https://github.com/nf-core/tools/pull/3895))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
+- devcontainer: Set `moby: false` to fix trixie builds ([#3904](https://github.com/nf-core/tools/pull/3904))
+- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
 
 ### Template
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
 - Update pipeline creation information page to be more exclusive as to what should use the full nf-core pipeline template ([#3891](https://github.com/nf-core/tools/pull/3891))
+- Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
 
 ### Linting
 
 - TEMPLATE: ignore nf-core components during prettier linting ([#3858](https://github.com/nf-core/tools/pull/3858))
 - update json schema store URL ([#3877](https://github.com/nf-core/tools/pull/3877))
+- add word boundary for input, output and topic linting ([#3894](https://github.com/nf-core/tools/pull/3894))
+- Add linting of topics ([#3902](https://github.com/nf-core/tools/pull/3902))
 
 ### Modules
 
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
+- Preserve the value of self.modules_repo across nested calls ([#3881](https://github.com/nf-core/tools/pull/3881))
 
 ### Subworkflows
 

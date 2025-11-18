@@ -240,18 +240,28 @@ class TestModulesCreate(TestModules):
                     [
                         {"${task.process}": {"type": "string", "description": "The name of the process"}},
                         {"bpipe": {"type": "string", "description": "The name of the tool"}},
-                        {"bpipe --version": {"type": "string", "description": "The version of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
                 ],
             },
             "topics": {
                 "versions": [
                     [
-                        {"process": {"description": "The process the versions were collected from", "type": "string"}},
-                        {"tool": {"description": "The tool name the version was collected for", "type": "string"}},
-                        {"version": {"description": "The version of the tool", "type": "string"}},
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
-                ]
+                ],
             },
             "authors": ["@author"],
             "maintainers": ["@author"],
@@ -322,18 +332,28 @@ class TestModulesCreate(TestModules):
                     [
                         {"${task.process}": {"type": "string", "description": "The name of the process"}},
                         {"bpipe": {"type": "string", "description": "The name of the tool"}},
-                        {"bpipe --version": {"type": "string", "description": "The version of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
                 ],
             },
             "topics": {
                 "versions": [
                     [
-                        {"process": {"description": "The process the versions were collected from", "type": "string"}},
-                        {"tool": {"description": "The tool name the version was collected for", "type": "string"}},
-                        {"version": {"description": "The version of the tool", "type": "string"}},
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
-                ]
+                ],
             },
             "authors": ["@author"],
             "maintainers": ["@author"],
@@ -427,18 +447,28 @@ class TestModulesCreate(TestModules):
                     [
                         {"${task.process}": {"type": "string", "description": "The name of the process"}},
                         {"test": {"type": "string", "description": "The name of the tool"}},
-                        {"test --version": {"type": "string", "description": "The version of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
                 ],
             },
             "topics": {
                 "versions": [
                     [
-                        {"process": {"description": "The process the versions were collected from", "type": "string"}},
-                        {"tool": {"description": "The tool name the version was collected for", "type": "string"}},
-                        {"version": {"description": "The version of the tool", "type": "string"}},
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
-                ]
+                ],
             },
             "authors": ["@author"],
             "maintainers": ["@author"],
@@ -516,18 +546,28 @@ class TestModulesCreate(TestModules):
                     [
                         {"${task.process}": {"type": "string", "description": "The name of the process"}},
                         {"test": {"type": "string", "description": "The name of the tool"}},
-                        {"test --version": {"type": "string", "description": "The version of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
                 ],
             },
             "topics": {
                 "versions": [
                     [
-                        {"process": {"description": "The process the versions were collected from", "type": "string"}},
-                        {"tool": {"description": "The tool name the version was collected for", "type": "string"}},
-                        {"version": {"description": "The version of the tool", "type": "string"}},
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
-                ]
+                ],
             },
             "authors": ["@author"],
             "maintainers": ["@author"],
@@ -599,18 +639,28 @@ class TestModulesCreate(TestModules):
                     [
                         {"${task.process}": {"type": "string", "description": "The name of the process"}},
                         {"test": {"type": "string", "description": "The name of the tool"}},
-                        {"test --version": {"type": "string", "description": "The version of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
                 ],
             },
             "topics": {
                 "versions": [
                     [
-                        {"process": {"description": "The process the versions were collected from", "type": "string"}},
-                        {"tool": {"description": "The tool name the version was collected for", "type": "string"}},
-                        {"version": {"description": "The version of the tool", "type": "string"}},
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
-                ]
+                ],
             },
             "authors": ["@author"],
             "maintainers": ["@author"],
@@ -662,18 +712,28 @@ class TestModulesCreate(TestModules):
                     [
                         {"${task.process}": {"type": "string", "description": "The name of the process"}},
                         {"test": {"type": "string", "description": "The name of the tool"}},
-                        {"test --version": {"type": "string", "description": "The version of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
                 ],
             },
             "topics": {
                 "versions": [
                     [
-                        {"process": {"description": "The process the versions were collected from", "type": "string"}},
-                        {"tool": {"description": "The tool name the version was collected for", "type": "string"}},
-                        {"version": {"description": "The version of the tool", "type": "string"}},
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
                     ]
-                ]
+                ],
             },
             "authors": ["@author"],
             "maintainers": ["@author"],
