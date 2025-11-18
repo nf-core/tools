@@ -224,3 +224,22 @@ class TestUtils(TestPipelines):
         config = nf_core.utils.fetch_wf_config(".", False)
         assert len(config.keys()) == 1
         assert "params.param2" in list(config.keys())
+
+    @with_temporary_folder
+    def test_get_wf_files(self, tmpdir):
+        tmpdir = Path(tmpdir)
+        (tmpdir / ".gitignore").write_text(".nextflow*\nwork/\nresults/\n")
+        for rpath in [
+            ".git/should-ignore-1",
+            "work/should-ignore-2",
+            "results/should-ignore-3",
+            ".nextflow.should-ignore-4",
+            "dir1/should-match-1",
+            "should-match-2",
+        ]:
+            p = tmpdir / rpath
+            p.parent.mkdir(exist_ok=True)
+            p.touch()
+        files = nf_core.utils.get_wf_files(tmpdir)
+        files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
+        assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]
