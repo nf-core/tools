@@ -49,6 +49,7 @@
 
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 - Preserve the value of self.modules_repo across nested calls ([#3881](https://github.com/nf-core/tools/pull/3881))
+- modules lint: handle meta.ymls without topics field ([#3909](https://github.com/nf-core/tools/pull/3909))
 
 ### Subworkflows
 
