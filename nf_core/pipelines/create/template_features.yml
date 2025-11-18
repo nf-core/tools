@@ -239,6 +239,8 @@ components_modules:
           - "conf/base.config"
           - "conf/modules.config"
           - "modules.json"
+        files_unchanged:
+          - ".prettierignore"
       nfcore_pipelines: False
       custom_pipelines: True
       default: true
