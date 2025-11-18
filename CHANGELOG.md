@@ -27,12 +27,13 @@
 - chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
 - Fix GH API rate limits. ([#3895](https://github.com/nf-core/tools/pull/3895))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
-- Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
+- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
 
 ### Template
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
+- Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
 
 ### Linting
 
