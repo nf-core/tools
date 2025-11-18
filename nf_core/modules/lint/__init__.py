@@ -303,6 +303,7 @@ class ModuleLint(ComponentLint):
         if "output" in meta_yml:
             correct_outputs = self.obtain_outputs(mod.outputs)
             meta_outputs = self.obtain_outputs(meta_yml["output"])
+        if "topics" in meta_yml:
             correct_topics = self.obtain_topics(mod.topics)
             meta_topics = self.obtain_topics(meta_yml["topics"])
 
@@ -370,7 +371,8 @@ class ModuleLint(ComponentLint):
                         corrected_meta_yml["output"][ch_name][i][element_name] = _find_meta_info(
                             meta_yml["output"], element_name, is_output=True
                         )
-        elif "topics" in meta_yml and correct_topics != meta_topics:
+
+        if "topics" in meta_yml and correct_topics != meta_topics:
             log.debug(
                 f"Correct topics: '{correct_topics}' differ from current topics: '{meta_topics}' in '{mod.meta_yml}'"
             )
