@@ -1,18 +1,21 @@
 name: Update Textual snapshots from a comment
 on:
   issue_comment:
-    types: [created]
+    types: [created] # Add "@nf-core-bot update textual snapshots" as a PR comment to trigger this workflow.
 
 jobs:
   update-snapshots:
-    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
-    if: >
-      contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot') &&
-      contains(github.event.comment.body, 'update textual snapshots') &&
-      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
+
     steps:
+      - name: branch-deploy
+        id: branch-deploy
+        uses: github/branch-deploy@c9fcc362bdcea69eecac6578dde245cd5e3a55bf # v10.4.3
+        with:
+          trigger: "@nf-core-bot update textual snapshots"
+          reaction: "eyes"
+          stable_branch: "dev"
+
       # Use the @nf-core-bot token to check out so we can push later
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
