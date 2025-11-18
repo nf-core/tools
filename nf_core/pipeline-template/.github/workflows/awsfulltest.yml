@@ -28,21 +28,21 @@ jobs:
         # Add full size test data (but still relatively small datasets for few samples)
         # on the `test_full.config` test runs with only one set of parameters
         with:
-          workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
+          workspace_id: ${{ vars.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
-          compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
+          compute_env: ${{ vars.TOWER_COMPUTE_ENV }}
           revision: ${{ steps.revision.outputs.revision }}
-          workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ steps.revision.outputs.revision }}{% endraw %}
+          workdir: s3://${{ vars.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ steps.revision.outputs.revision }}{% endraw %}
           parameters: |
             {
               "hook_url": "{% raw %}${{ secrets.MEGATESTS_ALERTS_SLACK_HOOK_URL }}{% endraw %}",
-              "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ steps.revision.outputs.revision }}{% endraw %}"
+              "outdir": "s3://{% raw %}${{ vars.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ steps.revision.outputs.revision }}{% endraw %}"
             }
           profiles: test_full
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: Seqera Platform debug log file
           path: |
-            seqera_platform_action_*.log
-            seqera_platform_action_*.json
+            tower_action_*.log
+            tower_action_*.json

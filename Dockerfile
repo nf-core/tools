@@ -1,4 +1,4 @@
-FROM python:3.13-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419
+FROM python:3.14-slim@sha256:9813eecff3a08a6ac88aea5b43663c82a931fd9557f6aceaa847f0d8ce738978
 LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for nf-core/tools"
 
@@ -32,7 +32,7 @@ RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
     && chmod a+rx /usr/local/bin/nextflow
 # Install nf-test
-RUN curl -fsSL https://code.askimed.com/install/nf-test | bash \
+RUN curl -fsSL https://get.nf-test.com | bash \
     && mv nf-test /usr/local/bin \
     && chmod a+rx /usr/local/bin/nf-test
 

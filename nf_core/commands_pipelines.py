@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Union
 
 import rich
 
@@ -166,7 +165,7 @@ def pipelines_download(
     pipeline,
     revision,
     outdir,
-    compress,
+    compress_type,
     force,
     platform,
     download_configuration,
@@ -189,16 +188,17 @@ def pipelines_download(
         pipeline,
         revision,
         outdir,
-        compress,
-        force,
-        platform,
-        download_configuration,
-        tag,
-        container_system,
-        container_library,
-        container_cache_utilisation,
-        container_cache_index,
-        parallel_downloads,
+        compress_type=compress_type,
+        force=force,
+        platform=platform,
+        download_configuration=download_configuration,
+        additional_tags=tag,
+        container_system=container_system,
+        container_library=container_library,
+        container_cache_utilisation=container_cache_utilisation,
+        container_cache_index=container_cache_index,
+        parallel=parallel_downloads,
+        hide_progress=ctx.obj["hide_progress"],
     )
     dl.download_workflow()
 
@@ -281,9 +281,9 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 # nf-core pipelines rocrate
 def pipelines_rocrate(
     ctx,
-    pipeline_dir: Union[str, Path],
-    json_path: Optional[Union[str, Path]],
-    zip_path: Optional[Union[str, Path]],
+    pipeline_dir: str | Path,
+    json_path: str | Path | None,
+    zip_path: str | Path | None,
     pipeline_version: str,
 ) -> None:
     from nf_core.pipelines.rocrate import ROCrate

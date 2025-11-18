@@ -4,9 +4,8 @@ import json
 import logging
 import os
 import re
-import shutil
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import git
 import questionary
@@ -63,13 +62,14 @@ class PipelineSync:
 
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
-        from_branch: Optional[str] = None,
+        pipeline_dir: str | Path,
+        from_branch: str | None = None,
         make_pr: bool = False,
-        gh_repo: Optional[str] = None,
-        gh_username: Optional[str] = None,
-        template_yaml_path: Optional[str] = None,
+        gh_repo: str | None = None,
+        gh_username: str | None = None,
+        template_yaml_path: str | None = None,
         force_pr: bool = False,
+        blog_post: str = "",
     ):
         """Initialise syncing object"""
 
@@ -92,6 +92,7 @@ class PipelineSync:
         self.gh_username = gh_username
         self.gh_repo = gh_repo
         self.pr_url = ""
+        self.blog_post = blog_post
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
         assert self.config_yml_path is not None and self.config_yml is not None  # mypy
@@ -140,7 +141,7 @@ class PipelineSync:
         self.inspect_sync_dir()
         self.get_wf_config()
         self.checkout_template_branch()
-        self.delete_template_branch_files()
+        self.delete_tracked_template_branch_files()
         self.make_template_pipeline()
         self.commit_template_changes()
 
@@ -163,7 +164,6 @@ class PipelineSync:
                 self.create_merge_base_branch()
                 self.push_merge_branch()
                 self.make_pull_request()
-                self.close_open_template_merge_prs()
             except PullRequestExceptionError as e:
                 self.reset_target_dir()
                 raise PullRequestExceptionError(e)
@@ -194,8 +194,13 @@ class PipelineSync:
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
             raise SyncExceptionError(
-                "Uncommitted changes found in pipeline directory!\nPlease commit these before running nf-core pipelines sync"
+                "Uncommitted changes found in pipeline directory!\n"
+                "Please commit these before running nf-core pipelines sync.\n"
+                "(Hint: .gitignored files are ignored.)"
             )
+
+        # Track ignored files to avoid processing them
+        self.ignored_files = self._get_ignored_files()
 
     def get_wf_config(self):
         """Check out the target branch if requested and fetch the nextflow config.
@@ -240,24 +245,50 @@ class PipelineSync:
             except GitCommandError:
                 raise SyncExceptionError("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
 
-    def delete_template_branch_files(self):
+    def delete_tracked_template_branch_files(self):
         """
-        Delete all files in the TEMPLATE branch
+        Delete all tracked files and subsequent empty directories in the TEMPLATE branch
         """
-        # Delete everything
-        log.info("Deleting all files in 'TEMPLATE' branch")
-        for the_file in os.listdir(self.pipeline_dir):
-            if the_file == ".git":
-                continue
-            file_path = os.path.join(self.pipeline_dir, the_file)
+        # Delete tracked files
+        log.info("Deleting tracked files in 'TEMPLATE' branch")
+        self._delete_tracked_files()
+        self._clean_up_empty_dirs()
+
+    def _delete_tracked_files(self):
+        """
+        Delete all tracked files in the repository
+        """
+        for the_file in self._get_tracked_files():
+            file_path = Path(self.pipeline_dir) / the_file
             log.debug(f"Deleting {file_path}")
             try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
+                file_path.unlink()
             except Exception as e:
                 raise SyncExceptionError(e)
+
+    def _clean_up_empty_dirs(self):
+        """
+        Delete empty directories in the repository
+
+        Walks the directory tree from the bottom up, deleting empty directories as it goes.
+        """
+        # Track deleted child directories so we know they've been deleted when evaluating if the parent is empty
+        deleted = set()
+
+        for curr_dir, sub_dirs, files in os.walk(self.pipeline_dir, topdown=False):
+            # Don't delete the root directory (should never happen due to .git, but just in case)
+            if curr_dir == str(self.pipeline_dir):
+                continue
+
+            subdir_set = set(Path(curr_dir) / d for d in sub_dirs)
+            currdir_is_empty = (len(subdir_set - deleted) == 0) and (len(files) == 0)
+            if currdir_is_empty:
+                log.debug(f"Deleting empty directory {curr_dir}")
+                try:
+                    Path(curr_dir).rmdir()
+                except Exception as e:
+                    raise SyncExceptionError(e)
+                deleted.add(Path(curr_dir))
 
     def make_template_pipeline(self):
         """
@@ -311,7 +342,10 @@ class PipelineSync:
             return False
         # Commit changes
         try:
-            self.repo.git.add(A=True)
+            newly_ignored_files = self._get_ignored_files()
+            # add and commit all files except self.ignored_files
+            # :! syntax to exclude files using git pathspec
+            self.repo.git.add([f":!{f}" for f in self.ignored_files if f not in newly_ignored_files], all=True)
             self.repo.index.commit(f"Template update for nf-core/tools version {nf_core.__version__}")
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
@@ -377,7 +411,9 @@ class PipelineSync:
         pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
         pr_body_text = (
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
-            "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
+            f"For more details, check out the blog post: {self.blog_post}\n\n"
+            if self.blog_post != ""
+            else ""
             "Please make sure to merge this pull-request as soon as possible, "
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
@@ -385,6 +421,9 @@ class PipelineSync:
             "[https://nf-co.re/docs/contributing/sync/](https://nf-co.re/docs/contributing/sync/#merging-automated-prs).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
+            "> [!NOTE]\n"
+            "> Since nf-core/tools 3.5.0, older template update PRs will not be automatically closed, but will remain open in your pipeline repository."
+            "Older template PRs will be automatically closed once a newer template PR has been merged."
         ).format(tag=nf_core.__version__)
 
         # Make new pull-request
@@ -409,74 +448,6 @@ class PipelineSync:
                 self.pr_url = self.gh_pr_returned_data["html_url"]
                 log.debug(f"GitHub API PR worked, return code {r.status_code}")
                 log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
-
-    def close_open_template_merge_prs(self):
-        """Get all template merging branches (starting with 'nf-core-template-merge-')
-        and check for any open PRs from these branches to the self.from_branch
-        If open PRs are found, add a comment and close them
-        """
-        log.info("Checking for open PRs from template merge branches")
-
-        # Look for existing pull-requests
-        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
-        with self.gh_api.cache_disabled():
-            list_prs_request = self.gh_api.get(list_prs_url)
-
-        list_prs_json, list_prs_pp = self._parse_json_response(list_prs_request)
-
-        log.debug(f"GitHub API listing existing PRs:\n{list_prs_url}\n{list_prs_pp}")
-        if list_prs_request.status_code != 200:
-            log.warning(f"Could not list open PRs ('{list_prs_request.status_code}')\n{list_prs_url}\n{list_prs_pp}")
-            return False
-
-        for pr in list_prs_json:
-            if isinstance(pr, int):
-                log.debug(f"Incorrect PR format: {pr}")
-            else:
-                log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
-                # Ignore closed PRs
-                if pr["state"] != "open":
-                    log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
-                    continue
-
-                # Don't close the new PR that we just opened
-                if pr["head"]["ref"] == self.merge_branch:
-                    continue
-
-                # PR is from an automated branch and goes to our target base
-                if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
-                    self.close_open_pr(pr)
-
-    def close_open_pr(self, pr) -> bool:
-        """Given a PR API response, add a comment and close."""
-        log.debug(f"Attempting to close PR: '{pr['html_url']}'")
-
-        # Make a new comment explaining why the PR is being closed
-        comment_text = (
-            f"Version `{nf_core.__version__}` of the [nf-core/tools](https://github.com/nf-core/tools) pipeline template has just been released. "
-            f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
-            f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
-        )
-        with self.gh_api.cache_disabled():
-            self.gh_api.post(url=pr["comments_url"], data=json.dumps({"body": comment_text}))
-
-        # Update the PR status to be closed
-        with self.gh_api.cache_disabled():
-            pr_request = self.gh_api.patch(url=pr["url"], data=json.dumps({"state": "closed"}))
-
-        pr_request_json, pr_request_pp = self._parse_json_response(pr_request)
-
-        # PR update worked
-        if pr_request.status_code == 200:
-            log.debug(f"GitHub API PR-update worked:\n{pr_request_pp}")
-            log.info(
-                f"Closed GitHub PR from '{pr['head']['ref']}' to '{pr['base']['ref']}': {pr_request_json['html_url']}"
-            )
-            return True
-        # Something went wrong
-        else:
-            log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr['url']}\n{pr_request_pp}")
-            return False
 
     @staticmethod
     def _parse_json_response(response) -> tuple[Any, str]:
@@ -503,3 +474,19 @@ class PipelineSync:
             self.repo.git.checkout(self.original_branch)
         except GitCommandError as e:
             raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}")
+
+    def _get_ignored_files(self) -> list[str]:
+        """
+        Get a list of all files in the repo ignored by git.
+        """
+        # -z separates with \0 and makes sure special characters are handled correctly
+        raw_ignored_files = self.repo.git.ls_files(z=True, ignored=True, others=True, exclude_standard=True)
+        return raw_ignored_files.split("\0")[:-1] if raw_ignored_files else []
+
+    def _get_tracked_files(self) -> list[str]:
+        """
+        Get a list of all files in the repo tracked by git.
+        """
+        # -z separates with \0 and makes sure special characters are handled correctly
+        raw_tracked_files = self.repo.git.ls_files(z=True)
+        return raw_tracked_files.split("\0")[:-1] if raw_tracked_files else []

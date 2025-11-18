@@ -239,6 +239,8 @@ components_modules:
           - "conf/base.config"
           - "conf/modules.config"
           - "modules.json"
+        files_unchanged:
+          - ".prettierignore"
       nfcore_pipelines: False
       custom_pipelines: True
       default: true
@@ -362,10 +364,6 @@ configurations:
         nextflow_config:
           - "manifest.name"
           - "manifest.homePage"
-          - "validation.help.beforeText"
-          - "validation.help.afterText"
-          - "validation.summary.beforeText"
-          - "validation.summary.afterText"
         multiqc_config:
           - "report_comment"
       nfcore_pipelines: False
@@ -400,23 +398,10 @@ configurations:
 development_environments:
   name: "Development Environments"
   features:
-    gitpod:
-      skippable_paths:
-        - ".gitpod.yml"
-      short_description: "Include a gitpod environment"
-      description: "Include the configuration required to use Gitpod."
-      help_text: |
-        Gitpod (https://www.gitpod.io/) provides standardized and automated development environments.
-
-        Including this to your pipeline will provide an environment with the latest version of nf-core/tools installed and all its requirements.
-        This is useful to have all the tools ready for pipeline development.
-      nfcore_pipelines: False
-      custom_pipelines: True
-      default: true
-
     codespaces:
       skippable_paths:
         - ".devcontainer/devcontainer.json"
+        - ".devcontainer/setup.sh"
       short_description: "Include GitHub Codespaces"
       description: "The pipeline will include a devcontainer configuration for GitHub Codespaces, providing a development environment with nf-core/tools and Nextflow installed."
       help_text: |

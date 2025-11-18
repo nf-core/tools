@@ -57,6 +57,7 @@ def module_changes(module_lint_object, module):
         if same:
             module.passed.append(
                 (
+                    "module_changes",
                     "check_local_copy",
                     "Local copy of module up to date",
                     f"{Path(module.component_dir, f)}",
@@ -65,6 +66,7 @@ def module_changes(module_lint_object, module):
         else:
             module.failed.append(
                 (
+                    "module_changes",
                     "check_local_copy",
                     "Local copy of module does not match remote",
                     f"{Path(module.component_dir, f)}",

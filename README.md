@@ -1,7 +1,7 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/docs/images/nfcore-tools_logo_dark.png">
-    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/docs/images/nfcore-tools_logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/main/docs/images/nfcore-tools_logo_dark.png">
+    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/main/docs/images/nfcore-tools_logo_light.png">
   </picture>
 </h1><!-- omit in toc -->
 
@@ -35,7 +35,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.13 nf-core nextflow
+conda create --name nf-core python=3.14 nf-core nextflow
 conda activate nf-core
 ```
 
