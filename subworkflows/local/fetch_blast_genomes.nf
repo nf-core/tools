@@ -20,8 +20,7 @@ workflow FETCH_BLAST_GENOMES {
         ch_available_taxids = ch_taxid2genome
             .map { taxid, organism, genome -> taxid }
             .collect()
-            .map { it.toSet() }  // Converts the iterable to a set. Duplicate elements are excluded
-
+            .map { it.toSet() }  // Stores all taxids in a Set, automatically removing any duplicates.
         // Check for missing taxids and emit warnings
         ch_genomes_blast = blast_taxid
             .combine(ch_available_taxids)
@@ -30,7 +29,7 @@ workflow FETCH_BLAST_GENOMES {
                     log.warn "WARNING: Taxid ${blast_taxid} not found in params.taxid2genome - skipping genome fetching!"
                     return null
                 }
-                return [blast_taxid, meta]
+                return [ blast_taxid, meta ]
             }
             .filter { it != null }
             .join(ch_taxid2genome)

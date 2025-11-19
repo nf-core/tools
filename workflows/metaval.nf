@@ -253,6 +253,7 @@ workflow METAVAL {
                 .join(MAPPING_LONGREAD.out.bai)
                 .join (ch_mapped_longreads, by: [0])
                 .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
+
             ch_igv_input_longread = Channel.empty()
             ch_igv_input_longread = ch_igv_input_longread.mix(ch_bam_bai_longread)
                 .join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
