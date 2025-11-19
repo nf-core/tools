@@ -409,11 +409,12 @@ class PipelineSync:
         log.info("Submitting a pull request via the GitHub API")
 
         pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
+        blog_post_sentence = (
+            f"For more details, check out the blog post: {self.blog_post}" if self.blog_post != "" else ""
+        )
         pr_body_text = (
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
-            f"For more details, check out the blog post: {self.blog_post}\n\n"
-            if self.blog_post != ""
-            else ""
+            f"{blog_post_sentence}\n\n"
             "Please make sure to merge this pull-request as soon as possible, "
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
