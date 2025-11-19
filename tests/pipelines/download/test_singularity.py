@@ -434,6 +434,7 @@ class SingularityTest(unittest.TestCase):
             container_cache_utilisation="none",
             container_cache_index=None,
         )
+        singularity_fetcher.registry_set = set()
         singularity_fetcher.check_and_set_implementation()
         singularity_fetcher.progress = mock_progress()
         singularity_fetcher.pull_image("hello-world", tmp_dir / "yet-another-hello-world.sif", "docker.io")
