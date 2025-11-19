@@ -5,6 +5,7 @@
 ### General
 
 - Fix `blog_post` parameter for `nf-core pipelines sync` command ([#3911](https://github.com/nf-core/tools/pull/3911))
+- Fix markdown in sync PR message ([#3913](https://github.com/nf-core/tools/pull/3913))
 
 ## [v3.5.0 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.0) - [2025-11-19]
 
