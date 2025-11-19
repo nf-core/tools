@@ -1,0 +1,53 @@
+Changes in component 'nf-core/flye'
+Changes in 'flye/main.nf':
+--- modules/nf-core/flye/main.nf
++++ modules/nf-core/flye/main.nf
+@@ -12,7 +12,7 @@
+     val mode
+ 
+     output:
+-    tuple val(meta), path("*.fasta.gz"), emit: fasta
++    tuple val(meta), path("*.fasta"), emit: fasta
+     tuple val(meta), path("*.gfa.gz")  , emit: gfa
+     tuple val(meta), path("*.gv.gz")   , emit: gv
+     tuple val(meta), path("*.txt")     , emit: txt
+@@ -37,7 +37,7 @@
+         $task.cpus \\
+         $args
+ 
+-    gzip -c assembly.fasta > ${prefix}.assembly.fasta.gz
++    mv assembly.fasta ${prefix}.assembly.fasta
+     gzip -c assembly_graph.gfa > ${prefix}.assembly_graph.gfa.gz
+     gzip -c assembly_graph.gv > ${prefix}.assembly_graph.gv.gz
+     mv assembly_info.txt ${prefix}.assembly_info.txt
+@@ -53,7 +53,7 @@
+     stub:
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     """
+-    echo stub | gzip -c > ${prefix}.assembly.fasta.gz
++    echo stub > ${prefix}.assembly.fasta
+     echo stub | gzip -c > ${prefix}.assembly_graph.gfa.gz
+     echo stub | gzip -c > ${prefix}.assembly_graph.gv.gz
+     echo contig_1 > ${prefix}.assembly_info.txt
+
+Changes in 'flye/meta.yml':
+--- modules/nf-core/flye/meta.yml
++++ modules/nf-core/flye/meta.yml
+@@ -40,10 +40,10 @@
+           description: |
+             Groovy Map containing sample information
+             e.g. [ id:'test' ]
+-      - "*.fasta.gz":
++      - "*.fasta":
+           type: file
+           description: Assembled FASTA file
+-          pattern: "*.fasta.gz"
++          pattern: "*.fasta"
+           ontologies:
+             - edam: http://edamontology.org/format_3989 # GZIP format
+   gfa:
+
+'modules/nf-core/flye/environment.yml' is unchanged
+'modules/nf-core/flye/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/flye/tests/main.nf.test' is unchanged
+************************************************************
