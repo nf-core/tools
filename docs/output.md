@@ -203,10 +203,10 @@ Map reads to genomes based on BLAST hits or to genomes of identified species if 
   - `minimap2/`
     - `align/`
       - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam`: BAM file containing long reads that were aligned against the user-supplied pathogens genomes
-      - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Index of the bam file.
+      - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Bam index file
     - `index/`
       - `mappingorganism_<organism>`
-        - `*.mmi`: Minimap2 indices of the reference pathogens' genomes
+        - `*.mmi`: Minimap2 indices of the reference pathogens genomes
 
 #### Pathogen screening
 
@@ -219,16 +219,16 @@ Map reads to the pathogen genomes databases.
   - `mapping/`
     - `bowtie2/`
       - `align/`
-        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-supplied pathogens genomes
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-provided pathogens genomes
         - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
       - `build/`
-        - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genome
+        - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genomes
     - `minimap2/`
       - `align/`
-        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
-        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-provided pathogens genomes
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Bam file index
       - `index/`
-        - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+        - `*.mmi`: Minimap2 indices of reference pathogens genomes
 
 </details>
 
@@ -246,7 +246,7 @@ IGV visualization of reads that classifiers assigned to specific species.
 <summary>Output files</summary>
 
 - `igv/`
-  - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
+  - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report with variants and coverage of reads mapped to the genomes.
 
 #### Pathogen screening
 
@@ -257,7 +257,7 @@ IGV visualization of reads mapped to pathogen genome database.
 
 - `pathogens/`
   - `igv/`
-    - `<sample_id>_<taxID>_report.html`: The IGV report shows the variants and coverage of reads mapped to the genomes.
+    - `<sample_id>_<taxID>_report.html`: IGV report with the variants and coverage of reads mapped to the genomes.
 
 </details>
 The `IGV` directory will only be present if `perform_mapping` is provided.
