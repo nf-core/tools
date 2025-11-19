@@ -14,14 +14,8 @@
 - fix syntax in dockerfile for devcontainer ([#3887](https://github.com/nf-core/tools/pull/3887))
 - Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
 - fix pytest setup matrix ([#3888](https://github.com/nf-core/tools/pull/3888))
-- chore(deps): update mcr.microsoft.com/devcontainers/miniconda docker digest to 19516ba ([#3890](https://github.com/nf-core/tools/pull/3890))
-- Update dependency textual to v6.6.0 ([#3892](https://github.com/nf-core/tools/pull/3892))
-- chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
 - Fix GH API rate limits. ([#3895](https://github.com/nf-core/tools/pull/3895))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
-- devcontainer: Set `moby: false` to fix trixie builds ([#3904](https://github.com/nf-core/tools/pull/3904))
-- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
-- devcontainer: downgrade to debian 12 and revert `moby:false` ([#3907](https://github.com/nf-core/tools/pull/3907))
+- devcontainer: downgrade to debian 12 and revert [#3904](https://github.com/nf-core/tools/pull/3904) ([#3907](https://github.com/nf-core/tools/pull/3907))
 
 ### Template
 
@@ -54,7 +48,11 @@
 - Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
 - Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
-
+- chore(deps): update mcr.microsoft.com/devcontainers/miniconda docker digest to 19516ba ([#3890](https://github.com/nf-core/tools/pull/3890))
+- Update dependency textual to v6.6.0 ([#3892](https://github.com/nf-core/tools/pull/3892))
+- chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
+- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
 
 ## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.1) - [2025-10-16]
 
