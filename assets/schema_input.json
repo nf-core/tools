@@ -13,12 +13,6 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
-            "run_accession": {
-                "type": "string",
-                "pattern": "^\\S+$",
-                "errorMessage": "Run accession must be provided and cannot contain spaces",
-                "meta": ["run_accession"]
-            },
             "instrument_platform": {
                 "type": "string",
                 "enum": ["ILLUMINA", "OXFORD_NANOPORE"],
@@ -96,7 +90,7 @@
                 "errorMessage": "Standardized diamond profiling with taxonomic information obtained from `taxpasta`."
             }
         },
-        "required": ["sample", "run_accession", "instrument_platform", "fastq_1"],
+        "required": ["sample", "instrument_platform", "fastq_1"],
         "dependentRequired": {
             "kraken2_result": ["kraken2_report"],
             "kraken2_taxpasta": ["kraken2_report", "kraken2_result"],
