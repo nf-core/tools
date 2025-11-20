@@ -59,26 +59,26 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-          pattern: "*.fa"
-      - "*.scaffolds.fa":
+          pattern: "*.fa.gz"
+      - "*.scaffolds.fa.gz":
           type: map
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-          pattern: "*.fa"
+          pattern: "*.fa.gz"
   contigs:
     - - meta:
           type: map
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-          pattern: "*.fa"
-      - "*.contigs.fa":
+          pattern: "*.fa.gz"
+      - "*.contigs.fa.gz":
           type: map
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-          pattern: "*.fa"
+          pattern: "*.fa.gz"
   transcripts:
     - - meta:
           type: map

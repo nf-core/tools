@@ -13,8 +13,8 @@ process SPADES {
     path hmm
 
     output:
-    tuple val(meta), path('*.scaffolds.fa')    , optional:true, emit: scaffolds
-    tuple val(meta), path('*.contigs.fa')      , optional:true, emit: contigs
+    tuple val(meta), path('*.scaffolds.fa.gz')    , optional:true, emit: scaffolds
+    tuple val(meta), path('*.contigs.fa.gz')      , optional:true, emit: contigs
     tuple val(meta), path('*.transcripts.fa.gz')  , optional:true, emit: transcripts
     tuple val(meta), path('*.gene_clusters.fa.gz'), optional:true, emit: gene_clusters
     tuple val(meta), path('*.assembly.gfa.gz')    , optional:true, emit: gfa
@@ -46,9 +46,11 @@ process SPADES {
 
     if [ -f scaffolds.fasta ]; then
         mv scaffolds.fasta ${prefix}.scaffolds.fa
+        gzip -n ${prefix}.scaffolds.fa
     fi
     if [ -f contigs.fasta ]; then
         mv contigs.fasta ${prefix}.contigs.fa
+        gzip -n ${prefix}.contigs.fa
     fi
     if [ -f transcripts.fasta ]; then
         mv transcripts.fasta ${prefix}.transcripts.fa
@@ -84,8 +86,8 @@ process SPADES {
     def custom_hmms = hmm ? "--custom-hmms $hmm" : ""
     def reads = yml ? "--dataset $yml" : "$illumina_reads $pacbio_reads $nanopore_reads"
     """
-    echo "" > ${prefix}.scaffolds.fa
-    echo "" > ${prefix}.contigs.fa
+    echo "" | gzip > ${prefix}.scaffolds.fa.gz
+    echo "" | gzip > ${prefix}.contigs.fa.gz
     echo "" | gzip > ${prefix}.transcripts.fa.gz
     echo "" | gzip > ${prefix}.gene_clusters.fa.gz
     echo "" | gzip > ${prefix}.assembly.gfa.gz

@@ -34,6 +34,8 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
         (~raw_results["staxid"].astype(str).isin(["NA", "N/A"]))
     ]
 
+    # Explicitly cast staxid to integer
+    raw_results["staxid"] = pd.to_numeric(raw_results["staxid"], errors="coerce").astype("Int64")
     # Apply filtering
     filtered = raw_results[
         (raw_results["qlen"] > min_qlen) &

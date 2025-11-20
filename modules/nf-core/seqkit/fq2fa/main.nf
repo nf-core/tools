@@ -38,7 +38,7 @@ process SEQKIT_FQ2FA {
     stub:
     def prefix = task.ext.prefix ?: fastq.baseName.replaceFirst(/\.(fastq|fq)$/, '')
     """
-    echo "" > ${prefix}.fa
+    echo "" | gzip > ${prefix}.fa.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

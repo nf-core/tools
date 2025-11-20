@@ -11,36 +11,17 @@ Changes in 'seqkit/fq2fa/main.nf':
  
      """
      seqkit \\
-@@ -36,9 +36,9 @@
+@@ -36,7 +36,7 @@
      """
  
      stub:
 -    def prefix = task.ext.prefix ?: "${meta.id}"
 +    def prefix = task.ext.prefix ?: fastq.baseName.replaceFirst(/\.(fastq|fq)$/, '')
      """
--    echo "" | gzip > ${prefix}.fa.gz
-+    echo "" > ${prefix}.fa
+     echo "" | gzip > ${prefix}.fa.gz
  
-     cat <<-END_VERSIONS > versions.yml
-     "${task.process}":
 
-Changes in 'seqkit/fq2fa/meta.yml':
---- modules/nf-core/seqkit/fq2fa/meta.yml
-+++ modules/nf-core/seqkit/fq2fa/meta.yml
-@@ -33,10 +33,10 @@
-           description: |
-             Groovy Map containing sample information
-             e.g. `[ id:'test', single_end:false ]`
--      - "*.fa.gz":
-+      - "*.fa":
-           type: file
-           description: Sequence file in fasta format
--          pattern: "*.{fasta,fa}.gz"
-+          pattern: "*.{fasta,fa}"
-           ontologies: []
-   versions:
-     - versions.yml:
-
+'modules/nf-core/seqkit/fq2fa/meta.yml' is unchanged
 'modules/nf-core/seqkit/fq2fa/environment.yml' is unchanged
 'modules/nf-core/seqkit/fq2fa/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/seqkit/fq2fa/tests/main.nf.test' is unchanged

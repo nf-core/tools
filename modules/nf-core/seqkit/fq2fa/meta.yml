@@ -33,10 +33,10 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. `[ id:'test', single_end:false ]`
-      - "*.fa":
+      - "*.fa.gz":
           type: file
           description: Sequence file in fasta format
-          pattern: "*.{fasta,fa}"
+          pattern: "*.{fasta,fa}.gz"
           ontologies: []
   versions:
     - versions.yml:
