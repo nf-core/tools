@@ -28,6 +28,7 @@ from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
     check_nextflow_version,
+    gh_api,
     pretty_nf_version,
     run_cmd,
 )
@@ -47,7 +48,7 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (str | None): A nf-core pipeline name.
+        pipeline (str | None): The name of an nf-core-compatible pipeline in the form org/repo
         revision (tuple[str] | str | None): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
         outdir (Path | None): Path to the local download directory. Defaults to None.
         compress_type (str | None): Type of compression for the downloaded files. Defaults to None.
@@ -148,6 +149,11 @@ class DownloadWorkflow:
         self.container_cache_index = container_cache_index
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel = parallel
+        self.hide_progress = hide_progress
+
+        if not gh_api.has_init:
+            gh_api.lazy_init()
+        self.authenticated = gh_api.auth is not None
 
         self.wf_revisions: list[dict[str, Any]] = []
         self.wf_branches: dict[str, Any] = {}
@@ -461,11 +467,19 @@ class DownloadWorkflow:
 
         if not self.platform:
             for revision, wf_sha in self.wf_sha.items():
-                # Set the download URL and return - only applicable for classic downloads
-                self.wf_download_url = {
-                    **self.wf_download_url,
-                    revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
-                }
+                # Set the download URL - only applicable for classic downloads
+                if self.authenticated:
+                    # For authenticated downloads, use the GitHub API
+                    self.wf_download_url = {
+                        **self.wf_download_url,
+                        revision: f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}",
+                    }
+                else:
+                    # For unauthenticated downloads, use the archive URL
+                    self.wf_download_url = {
+                        **self.wf_download_url,
+                        revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
+                    }
 
     def prompt_config_inclusion(self) -> None:
         """Prompt for inclusion of institutional configurations"""
@@ -555,22 +569,23 @@ class DownloadWorkflow:
 
     def download_wf_files(self, revision: str, wf_sha: str, download_url: str) -> str:
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
+
         log.debug(f"Downloading {download_url}")
 
-        # Download GitHub zip file into memory and extract
-        url = requests.get(download_url)
-        with ZipFile(io.BytesIO(url.content)) as zipfile:
+        # GitHub API download: fetch via API and get topdir from zip contents
+        content = gh_api.get(download_url).content
+        with ZipFile(io.BytesIO(content)) as zipfile:
+            topdir = zipfile.namelist()[0]  # API zipballs have a generated directory name
             zipfile.extractall(self.outdir)
 
-        # create a filesystem-safe version of the revision name for the directory
+        # Create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
-        # account for name collisions, if there is a branch / release named "configs" or container output dir
+        # Account for name collisions, if there is a branch / release named "configs" or container output dir
         if revision_dirname in ["configs", self.get_container_output_dir()]:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
-        gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-        ((self.outdir / gh_name).rename(self.outdir / revision_dirname),)
+        (self.outdir / topdir).rename(self.outdir / revision_dirname)
 
         # Make downloaded files executable
         for dirpath, _, filelist in os.walk(self.outdir / revision_dirname):

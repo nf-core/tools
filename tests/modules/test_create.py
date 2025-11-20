@@ -236,15 +236,31 @@ class TestModulesCreate(TestModules):
                         },
                     ]
                 ],
+                "versions_bpipe": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
                 "versions": [
-                    {
-                        "versions.yml": {
-                            "type": "file",
-                            "description": "File containing software versions",
-                            "pattern": "versions.yml",
-                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
-                        }
-                    }
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
                 ],
             },
             "authors": ["@author"],
@@ -312,15 +328,31 @@ class TestModulesCreate(TestModules):
                         }
                     }
                 ],
+                "versions_bpipe": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
                 "versions": [
-                    {
-                        "versions.yml": {
-                            "type": "file",
-                            "description": "File containing software versions",
-                            "pattern": "versions.yml",
-                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
-                        }
-                    }
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
                 ],
             },
             "authors": ["@author"],
@@ -411,15 +443,31 @@ class TestModulesCreate(TestModules):
                         },
                     ]
                 ],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
                 "versions": [
-                    {
-                        "versions.yml": {
-                            "type": "file",
-                            "description": "File containing software versions",
-                            "pattern": "versions.yml",
-                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
-                        }
-                    }
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
                 ],
             },
             "authors": ["@author"],
@@ -494,15 +542,31 @@ class TestModulesCreate(TestModules):
                         }
                     }
                 ],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
                 "versions": [
-                    {
-                        "versions.yml": {
-                            "type": "file",
-                            "description": "File containing software versions",
-                            "pattern": "versions.yml",
-                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
-                        }
-                    }
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
                 ],
             },
             "authors": ["@author"],
@@ -571,15 +635,31 @@ class TestModulesCreate(TestModules):
                         {"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}},
                     ]
                 ],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
                 "versions": [
-                    {
-                        "versions.yml": {
-                            "type": "file",
-                            "description": "File containing software versions",
-                            "pattern": "versions.yml",
-                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
-                        }
-                    }
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
                 ],
             },
             "authors": ["@author"],
@@ -628,15 +708,31 @@ class TestModulesCreate(TestModules):
             "input": [{"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}],
             "output": {
                 "output": [{"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
                 "versions": [
-                    {
-                        "versions.yml": {
-                            "type": "file",
-                            "description": "File containing software versions",
-                            "pattern": "versions.yml",
-                            "ontologies": [{"edam": "http://edamontology.org/format_3750"}],
-                        }
-                    }
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
                 ],
             },
             "authors": ["@author"],

@@ -37,14 +37,15 @@ def main_nf(
     * The module has a process label and it is among
       the standard ones.
     * If a ``meta`` map is defined as one of the modules
-      inputs it should be defined as one of the outputs,
+      inputs it should be defined as one of the emits,
       and be correctly configured in the ``saveAs`` function.
     * The module script section should contain definitions
       of ``software`` and ``prefix``
     """
 
     inputs: list[str] = []
-    outputs: list[str] = []
+    emits: list[str] = []
+    topics: list[str] = []
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
@@ -133,8 +134,9 @@ def main_nf(
                 line = joint_tuple
             inputs.extend(_parse_input(module, line))
         if state == "output" and not _is_empty(line):
-            outputs += _parse_output(module, line)
-            outputs = list(set(outputs))  # remove duplicate 'meta's
+            emits += _parse_output_emits(module, line)
+            emits = list(set(emits))  # remove duplicate 'meta's
+            topics += _parse_output_topics(module, line)
         if state == "when" and not _is_empty(line):
             when_lines.append(line)
         if state == "script" and not _is_empty(line):
@@ -145,7 +147,7 @@ def main_nf(
             exec_lines.append(line)
 
     # Check that we have required sections
-    if not len(outputs):
+    if not len(emits):
         module.failed.append(("main_nf", "main_nf_script_outputs", "No process 'output' block found", module.main_nf))
     else:
         module.passed.append(("main_nf", "main_nf_script_outputs", "Process 'output' block found", module.main_nf))
@@ -193,8 +195,8 @@ def main_nf(
     if inputs:
         if "meta" in inputs:
             module.has_meta = True
-            if outputs:
-                if "meta" in outputs:
+            if emits:
+                if "meta" in emits:
                     module.passed.append(
                         (
                             "main_nf",
@@ -214,22 +216,43 @@ def main_nf(
                     )
 
     # Check that a software version is emitted
-    if outputs:
-        if "versions" in outputs:
+    if topics:
+        if "versions" in topics:
             module.passed.append(
-                ("main_nf", "main_nf_version_emitted", "Module emits software version", module.main_nf)
+                ("main_nf", "main_nf_version_topic", "Module emits software versions as topic", module.main_nf)
             )
         else:
             module.warned.append(
+                ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
+            )
+
+    if emits:
+        topic_versions_amount = sum(1 for t in topics if t == "versions")
+        emit_versions_amount = sum(1 for e in emits if e.startswith("versions"))
+        if topic_versions_amount == emit_versions_amount:
+            module.passed.append(
+                ("main_nf", "main_nf_version_emit", "Module emits each software version", module.main_nf)
+            )
+        elif "versions" in emits:
+            module.warned.append(
                 (
                     "main_nf",
-                    "main_nf_version_emitted",
-                    "Module does not emit software version",
+                    "main_nf_version_emit",
+                    "Module emits software versions YAML, please update this to topics output",
+                    module.main_nf,
+                )
+            )
+        else:
+            module.failed.append(
+                (
+                    "main_nf",
+                    "main_nf_version_emit",
+                    "Module does not have an `emit:` and `topic:` for each software version",
                     module.main_nf,
                 )
             )
 
-    return inputs, outputs
+    return inputs, emits
 
 
 def check_script_section(self, lines):
@@ -238,14 +261,6 @@ def check_script_section(self, lines):
     Checks whether `def prefix` is defined and whether getProcessName is used for `versions.yml`.
     """
     script = "".join(lines)
-
-    # check that process name is used for `versions.yml`
-    if re.search(r"\$\{\s*task\.process\s*\}", script):
-        self.passed.append(("main_nf", "main_nf_version_script", "Process name used for versions.yml", self.main_nf))
-    else:
-        self.warned.append(
-            ("main_nf", "main_nf_version_script", "Process name not used for versions.yml", self.main_nf)
-        )
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
@@ -739,16 +754,43 @@ def _parse_input(self, line_raw):
     return inputs
 
 
-def _parse_output(self, line):
+def _parse_output_emits(self, line: str) -> list[str]:
     output = []
     if "meta" in line:
         output.append("meta")
-    if "emit:" not in line:
-        self.failed.append(("main_nf", "missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
+    emit_regex = re.search(r"^.*emit:\s*([^,\s]*)", line)
+    if not emit_regex:
+        self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
     else:
-        output.append(line.split("emit:")[1].strip())
-        self.passed.append(("main_nf", "missing_emit", f"Emit statement found: {line.strip()}", self.main_nf))
+        output.append(emit_regex.group(1).strip())
+    return output
 
+
+def _parse_output_topics(self, line: str) -> list[str]:
+    output = []
+    if "meta" in line:
+        output.append("meta")
+    topic_regex = re.search(r"^.*topic:\s*([^,\s]*)", line)
+    if topic_regex:
+        topic_name = topic_regex.group(1).strip()
+        output.append(topic_name)
+        if topic_name == "versions":
+            if not re.search(r'tuple\s+val\("\${\s*task\.process\s*}"\),\s*val\(.*\),\s*eval\(.*\)', line):
+                self.failed.append(
+                    (
+                        "wrong_version_output",
+                        'Versions topic output is not correctly formatted, expected `tuple val("${task.process}"), val(\'<tool>\'), eval("<version_command>")`',
+                        self.main_nf,
+                    )
+                )
+            if not re.search(r"emit:\s*versions_[\d\w]+", line):
+                self.failed.append(
+                    (
+                        "wrong_version_emit",
+                        "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                        self.main_nf,
+                    )
+                )
     return output
 
 
