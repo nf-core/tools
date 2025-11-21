@@ -21,12 +21,12 @@ workflow TAXID_BAM_FASTA {
     min_read_counts   // Value: minimum number of reads to keep a BAM file
 
     main:
-    ch_versions        = Channel.empty()
-    ch_multiqc_files   = Channel.empty()
-    ch_taxid_bam       = Channel.empty()
-    ch_taxid_bai       = Channel.empty()
-    ch_consensus_input = Channel.empty()
-    ch_blast_input     = Channel.empty()
+    ch_versions        = channel.empty()
+    ch_multiqc_files   = channel.empty()
+    ch_taxid_bam       = channel.empty()
+    ch_taxid_bai       = channel.empty()
+    ch_consensus_input = channel.empty()
+    ch_blast_input     = channel.empty()
 
     // Combine BAM and BAI files
     input_bam = bam.join( bai, by: 0 )
@@ -116,8 +116,8 @@ workflow TAXID_BAM_FASTA {
         }
 
     // FASTA files will be used as BLAST input, bam file will be used in IGV
-    ch_taxid_bam_fail = Channel.empty()
-    ch_taxid_bai_fail = Channel.empty()
+    ch_taxid_bam_fail = channel.empty()
+    ch_taxid_bai_fail = channel.empty()
     SUBSET_BAM_FAIL(ch_blast_input.bam, ch_blast_input.accession)
     ch_taxid_bam_fail = ch_taxid_bam_fail.mix(SUBSET_BAM_FAIL.out.bam)
     ch_versions = ch_versions.mix(SUBSET_BAM_FAIL.out.versions.first())
@@ -127,7 +127,7 @@ workflow TAXID_BAM_FASTA {
     ch_taxid_bai_fail = ch_taxid_bai_fail.mix(SAMTOOLS_INDEX_FAIL.out.bai)
     ch_versions = ch_versions.mix(SAMTOOLS_INDEX_FAIL.out.versions.first())
 
-    ch_taxid_fasta = Channel.empty()
+    ch_taxid_fasta = channel.empty()
     SAMTOOLS_FASTA(SAMTOOLS_SORT_FAIL.out.bam, false)
     ch_taxid_fasta = ch_taxid_fasta.mix(SAMTOOLS_FASTA.out.fasta)
     ch_versions = ch_versions.mix(SAMTOOLS_FASTA.out.versions.first())

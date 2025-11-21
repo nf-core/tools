@@ -25,8 +25,8 @@ workflow TAXID_READS {
 
 
     main:
-    ch_versions      = Channel.empty()
-    ch_taxid_reads   = Channel.empty()
+    ch_versions      = channel.empty()
+    ch_taxid_reads   = channel.empty()
 
     // extract kraken2 reads
     if ( params.extract_kraken2_reads ) {

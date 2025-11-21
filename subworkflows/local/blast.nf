@@ -17,11 +17,11 @@ workflow BLAST {
     blast_header    // channel: [ path(header) ]
 
     main:
-    ch_versions = Channel.empty()
-    ch_blast_hits_taxid = Channel.empty()
+    ch_versions = channel.empty()
+    ch_blast_hits_taxid = channel.empty()
 
-    ch_blastn_filtered = Channel.empty()
-    ch_blastx_filtered = Channel.empty()
+    ch_blastn_filtered = channel.empty()
+    ch_blastx_filtered = channel.empty()
 
     // BLASTN
     if ( !params.skip_blastn ) {

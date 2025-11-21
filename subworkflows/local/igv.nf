@@ -14,7 +14,7 @@ workflow IGV {
     ch_bam_bai_reference   // [ [ meta ], [ bam ], [bai], [ref] ]
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // Extract and index mapped reads
     BEDTOOLS_GENOMECOV (

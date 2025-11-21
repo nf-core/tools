@@ -10,8 +10,8 @@ workflow MAPPING_SHORTREAD {
     ch_reads_reference // [ [ meta ], [ reads ], [ reference ] ]
 
     main:
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    ch_versions = channel.empty()
+    ch_multiqc_files = channel.empty()
 
     // Build the index
     BOWTIE2_BUILD (

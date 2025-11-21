@@ -11,8 +11,8 @@ workflow MAPPING_LONGREAD {
     ch_reads_reference // [ [ meta ], [ reads ], [ reference ] ]
 
     main:
-    ch_versions       = Channel.empty()
-    ch_multiqc_files  = Channel.empty()
+    ch_versions       = channel.empty()
+    ch_multiqc_files  = channel.empty()
 
     // Build the index
     MINIMAP2_INDEX (

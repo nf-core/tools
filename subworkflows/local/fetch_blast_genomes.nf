@@ -35,7 +35,7 @@ workflow FETCH_BLAST_GENOMES {
             .join(ch_taxid2genome)
     } else {
         // Create empty channel if BLAST steps are skipped
-        ch_genomes_blast = Channel.empty()
+        ch_genomes_blast = channel.empty()
     }
 
     ch_genomes_reads = ch_genomes_blast

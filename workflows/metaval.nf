@@ -68,9 +68,9 @@ workflow METAVAL {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
-    ch_fastqc_files = Channel.empty()
+    ch_versions = channel.empty()
+    ch_multiqc_files = channel.empty()
+    ch_fastqc_files = channel.empty()
 
     // Create input channels
     ch_input = ch_samplesheet.branch { meta, fastq_1, fastq_2, kraken2_report, kraken2_result, kraken2_taxpasta, centrifuge_report, centrifuge_result, centrifuge_taxpasta, diamond, diamond_taxpasta ->
@@ -168,7 +168,7 @@ workflow METAVAL {
                     return [ meta, reads ]
             }
         // Short reads de novo assembly
-        ch_contigs_denovo = Channel.empty()
+        ch_contigs_denovo = channel.empty()
         if ( params.perform_shortread_denovo ) {
             SPADES( ch_denovo.shortreads, [], [] )
             ch_versions = ch_versions.mix( SPADES.out.versions.first() )
@@ -236,36 +236,36 @@ workflow METAVAL {
 
             // Filter channels to get bam files which contains mapped reads
             // short reads
-            ch_mapped_shortreads = Channel.empty()
+            ch_mapped_shortreads = channel.empty()
             ch_mapped_shortreads = ch_mapped_shortreads.mix(MAPPING_SHORTREAD.out.flagstat)
                 .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
 
-            ch_bam_bai_shortread = Channel.empty()
+            ch_bam_bai_shortread = channel.empty()
             ch_bam_bai_shortread = ch_bam_bai_shortread.mix(MAPPING_SHORTREAD.out.bam)
                 .join(MAPPING_SHORTREAD.out.bai)
                 .join (ch_mapped_shortreads, by: [0])
                 .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
 
-            ch_igv_input_shortread = Channel.empty()
+            ch_igv_input_shortread = channel.empty()
             ch_igv_input_shortread = ch_bam_bai_shortread
                 .join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0 )
             // long reads
-            ch_mapped_longreads = Channel.empty()
+            ch_mapped_longreads = channel.empty()
             ch_mapped_longreads = ch_mapped_longreads.mix(MAPPING_LONGREAD.out.flagstat)
                 .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
 
-            ch_bam_bai_longread = Channel.empty()
+            ch_bam_bai_longread = channel.empty()
             ch_bam_bai_longread = ch_bam_bai_longread.mix(MAPPING_LONGREAD.out.bam)
                 .join(MAPPING_LONGREAD.out.bai)
                 .join (ch_mapped_longreads, by: [0])
                 .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
 
-            ch_igv_input_longread = Channel.empty()
+            ch_igv_input_longread = channel.empty()
             ch_igv_input_longread = ch_igv_input_longread.mix(ch_bam_bai_longread)
                 .join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
 
             // Prepare IGV input channels
-            ch_igv_input = Channel.empty()
+            ch_igv_input = channel.empty()
             ch_igv_input = ch_igv_input.mix ( ch_igv_input_shortread, ch_igv_input_longread )
 
             IGV( ch_igv_input )
@@ -273,6 +273,8 @@ workflow METAVAL {
         }
     }
 
+    ch_versions = channel.empty()
+    ch_multiqc_files = channel.empty()
     //
     // WORKFLOW: Screen pathogens
     //
@@ -350,14 +352,32 @@ workflow METAVAL {
     //
     // MODULE: FASTQC
     //
-        FASTQC( ch_fastqc_files )
-        ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{it[1]} )
-        ch_versions = ch_versions.mix( FASTQC.out.versions.first() )
+    FASTQC( ch_fastqc_files )
+    ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{it[1]} )
+    ch_versions = ch_versions.mix( FASTQC.out.versions.first() )
 
     //
     // Collate and save software versions
     //
-    softwareVersionsToYAML(ch_versions)
+    def topic_versions = Channel.topic("versions")
+        .distinct()
+        .branch { entry ->
+            versions_file: entry instanceof Path
+            versions_tuple: true
+        }
+
+    def topic_versions_string = topic_versions.versions_tuple
+        .map { process, tool, version ->
+            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+        }
+        .groupTuple(by:0)
+        .map { process, tool_versions ->
+            tool_versions.unique().sort()
+            "${process}:\n${tool_versions.join('\n')}"
+        }
+
+    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
+        .mix(topic_versions_string)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
             name:  'genomic-medicine-sweden_' + 'metaval_software_'  + 'mqc_'  + 'versions.yml',
@@ -369,24 +389,24 @@ workflow METAVAL {
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config        = Channel.fromPath(
+    ch_multiqc_config        = channel.fromPath(
         "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     ch_multiqc_custom_config = params.multiqc_config ?
-        Channel.fromPath(params.multiqc_config, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_config, checkIfExists: true) :
+        channel.empty()
     ch_multiqc_logo          = params.multiqc_logo ?
-        Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_logo, checkIfExists: true) :
+        channel.empty()
 
     summary_params      = paramsSummaryMap(
         workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
+    ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
         file(params.multiqc_methods_description, checkIfExists: true) :
         file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(
+    ch_methods_description                = channel.value(
         methodsDescriptionText(ch_multiqc_custom_methods_description))
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)

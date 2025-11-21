@@ -15,8 +15,8 @@ workflow CONSENSUS {
     consensus_min_bases // channel: [ val(consensus_min_bases) ]  default: 50bp
 
     main:
-    ch_versions = Channel.empty()
-    ch_consensus = Channel.empty()
+    ch_versions = channel.empty()
+    ch_consensus = channel.empty()
 
     // Separate short read and long read bam files
     ch_bam = bam
