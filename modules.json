@@ -39,7 +39,8 @@
                     "flye": {
                         "branch": "master",
                         "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/flye/flye.diff"
                     },
                     "igvreports": {
                         "branch": "master",
@@ -125,7 +126,8 @@
                     "spades": {
                         "branch": "master",
                         "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/spades/spades.diff"
                     },
                     "untar": {
                         "branch": "master",
