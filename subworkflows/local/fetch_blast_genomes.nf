@@ -26,7 +26,7 @@ workflow FETCH_BLAST_GENOMES {
             .combine(ch_available_taxids)
             .map { blast_taxid, meta, available_taxids ->
                 if (!available_taxids.contains(blast_taxid)) {
-                    log.warn "WARNING: Taxid ${blast_taxid} not found in params.taxid2genome - skipping genome fetching!"
+                    log.warn "WARNING: Blast taxid ${blast_taxid} for sample ${meta.id}_${meta.taxid}_${meta.tool} not found in params.taxid2genome - skipping genome fetching!"
                     return null
                 }
                 return [ blast_taxid, meta ]
@@ -40,8 +40,9 @@ workflow FETCH_BLAST_GENOMES {
 
     ch_genomes_reads = ch_genomes_blast
         .map { blast_taxid, meta, organism, genome ->
-            [ "${meta.id}_${meta.taxid}_${meta.tool}", blast_taxid, meta, organism, genome ] }
-        .join(
+            [ "${meta.id}_${meta.taxid}_${meta.tool}", blast_taxid, meta, organism, genome ]
+        }
+        .combine(
             ch_reads.map { meta, reads -> [ "${meta.id}_${meta.taxid}_${meta.tool}", meta, reads ]},
             by: 0
         )

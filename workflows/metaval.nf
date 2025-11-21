@@ -218,9 +218,15 @@ workflow METAVAL {
         //
 
         if (params.perform_mapping) {
+            // Fetch genomes of blast hits
             FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
-            MAPPING_SHORTREAD ( FETCH_BLAST_GENOMES.out.shortreads, FETCH_BLAST_GENOMES.out.shortreads_genome )
-            MAPPING_LONGREAD ( FETCH_BLAST_GENOMES.out.longreads, FETCH_BLAST_GENOMES.out.longreads_genome )
+            // Mapping - short reads
+            ch_mapping_input_sr = FETCH_BLAST_GENOMES.out.shortreads.join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0)
+            MAPPING_SHORTREAD ( ch_mapping_input_sr )
+
+            // Mapping - long reads
+            ch_mapping_input_lr = FETCH_BLAST_GENOMES.out.longreads.join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
+            MAPPING_LONGREAD ( ch_mapping_input_lr )
             ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
             ch_versions = ch_versions.mix ( MAPPING_LONGREAD.out.versions )
 
@@ -278,11 +284,16 @@ workflow METAVAL {
 
     if ( params.perform_screen_pathogens ) {
         // Map short reads to the pathogens genome
-        MAPPING_SHORTREAD_PATHOGEN ( ch_input.short_reads, [ [], ch_reference ] )
+        ch_mapping_pathogen_sr = ch_input.short_reads
+            .map { meta, reads -> [ meta, reads, ch_reference]}
+        MAPPING_SHORTREAD_PATHOGEN ( ch_mapping_pathogen_sr )
         ch_versions = ch_versions.mix( MAPPING_SHORTREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_SHORTREAD_PATHOGEN.out.mqc)
+
         // Map long reads to the pathogens genome
-        MAPPING_LONGREAD_PATHOGEN ( ch_input.long_reads, [ [], ch_reference ] )
+        ch_mapping_pathogen_lr = ch_input.long_reads
+            .map { meta, reads -> [ meta, reads, ch_reference]}
+        MAPPING_LONGREAD_PATHOGEN ( ch_mapping_pathogen_lr )
         ch_versions = ch_versions.mix( MAPPING_LONGREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_LONGREAD_PATHOGEN.out.mqc)
 
