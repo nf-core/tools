@@ -1,30 +1,30 @@
 lint:
   files_exist:
-  - assets/nf-core-metaval_logo_light.png
-  - docs/images/nf-core-metaval_logo_light.png
-  - docs/images/nf-core-metaval_logo_dark.png
-  - assets/samplesheet.csv
-  - .github/ISSUE_TEMPLATE/config.yml
-  - conf/test_full.config
+    - assets/nf-core-metaval_logo_light.png
+    - docs/images/nf-core-metaval_logo_light.png
+    - docs/images/nf-core-metaval_logo_dark.png
+    - assets/samplesheet.csv
+    - .github/ISSUE_TEMPLATE/config.yml
+    - conf/test_full.config
   files_unchanged:
-  - assets/sendmail_template.txt
-  - .github/CONTRIBUTING.md
-  - .github/ISSUE_TEMPLATE/bug_report.yml
-  - .github/PULL_REQUEST_TEMPLATE.md
-  - .github/workflows/linting.yml
-  - .github/workflows/branch.yml
-  - .github/ISSUE_TEMPLATE/feature_request.yml
-  - assets/email_template.html
-  - assets/email_template.txt
-  - docs/README.md
-  - docs/usage.md
-  - viralPathogenList.csv
-  - README.md
+    - assets/sendmail_template.txt
+    - .github/CONTRIBUTING.md
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/linting.yml
+    - .github/workflows/branch.yml
+    - .github/ISSUE_TEMPLATE/feature_request.yml
+    - assets/email_template.html
+    - assets/email_template.txt
+    - docs/README.md
+    - docs/usage.md
+    - viralPathogenList.csv
+    - README.md
   multiqc_config:
-  - report_comment
+    - report_comment
   nextflow_config:
-  - manifest.name
-  - manifest.homePage
+    - manifest.name
+    - manifest.homePage
 nf_core_version: 3.5.1
 repository_type: pipeline
 template:

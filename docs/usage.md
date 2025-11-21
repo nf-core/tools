@@ -28,8 +28,8 @@ You will need to create a samplesheet in csv format with information about the s
 genomic-medicine-sweden/metaval will require the information given bellow.
 
 | Column              | Description                                                                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| sample              | Unique sample name [required].                                                                                                                   |       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --- |
+| sample              | Unique sample name [required].                                                                                                                   |     |
 | instrument_platform | Sequencing platform reads generated on, selected from the EBI ENA controlled vocabulary [required].                                              |
 | fastq_1             | Unmapped human reads from bowtie2/minimap2, filtered reads from bbduk/nanoq/FiltLong or raw sequencing reads. Gzipped compressed files accepted. |
 | fastq_2             | Unmapped human reads from bowtie2, filtered reads from bbduk/nanoq/FiltLong or raw reads. Gzipped compressed files accepted.                     |
