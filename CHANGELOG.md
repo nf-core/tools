@@ -4,6 +4,8 @@
 
 ### General
 
+- dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
+
 ### Template
 
 ### Linting
