@@ -25,7 +25,7 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
         column_names = header_line.split("\t")
 
     # Load BLASTn results
-    raw_results = pd.read_csv(input, sep="\t", header=None, names=column_names,keep_default_na=False)
+    raw_results = pd.read_csv(input, sep="\t", header=None, names=column_names, keep_default_na=False)
 
     # Remove entries with missing or invalid staxid
     raw_results = raw_results[
