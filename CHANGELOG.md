@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+## v3.6.0dev
+
+### General
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
 ## [v3.5.1 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.1) - [2025-11-19]
 
 ### General
