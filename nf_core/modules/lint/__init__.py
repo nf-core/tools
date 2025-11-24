@@ -526,13 +526,22 @@ class ModuleLint(ComponentLint):
 
         # Create YAML anchors for versions_* keys in output that match "versions" in topics
         if "output" in corrected_meta_yml and "topics" in corrected_meta_yml:
-            for output_key in corrected_meta_yml["output"].keys():
-                # Only process versions_* keys in output
-                if output_key.startswith("versions_") and "versions" in corrected_meta_yml["topics"]:
-                    # Replace topics["versions"] entry with a reference to the output entry
-                    corrected_meta_yml["topics"]["versions"] = corrected_meta_yml["output"][output_key]
-                    # Create an anchor named "versions"
-                    corrected_meta_yml["output"][output_key].yaml_set_anchor("versions")
+            # Find all versions_* keys in output
+            versions_keys = [key for key in corrected_meta_yml["output"].keys() if key.startswith("versions_")]
+
+            if versions_keys and "versions" in corrected_meta_yml["topics"]:
+                if len(versions_keys) == 1:
+                    # Single versions channel: use simple anchor name "versions"
+                    corrected_meta_yml["topics"]["versions"] = corrected_meta_yml["output"][versions_keys[0]]
+                    if hasattr(corrected_meta_yml["output"][versions_keys[0]], "yaml_set_anchor"):
+                        corrected_meta_yml["output"][versions_keys[0]].yaml_set_anchor("versions")
+                else:
+                    # Multiple versions channels: add all to topics["versions"] array with full names as anchors
+                    corrected_meta_yml["topics"]["versions"] = []
+                    for versions_key in versions_keys:
+                        corrected_meta_yml["topics"]["versions"].append(corrected_meta_yml["output"][versions_key][0])
+                        if hasattr(corrected_meta_yml["output"][versions_key], "yaml_set_anchor"):
+                            corrected_meta_yml["output"][versions_key].yaml_set_anchor(versions_key)
 
         corrected_meta_yml = _sort_meta_yml(corrected_meta_yml)
 
