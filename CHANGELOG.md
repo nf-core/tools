@@ -4,7 +4,6 @@
 
 ### General
 
-
 ### Template
 
 ### Linting
