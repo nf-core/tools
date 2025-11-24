@@ -29,9 +29,13 @@ workflow MAPPING_LONGREAD {
         }
 
     // Align
+    ch_reads = ch_reads_with_index
+        .map { meta, reads, index, ref -> [ meta, reads ] }
+    ch_index = ch_reads_with_index
+        .map { meta, reads, index, ref -> [ meta, index ] }
     MINIMAP2_ALIGN (
-        ch_reads_with_index.map { meta, reads, index, ref -> [ meta, reads ] },
-        ch_reads_with_index.map { meta, reads, index, ref -> [ meta, index ] },
+        ch_reads,
+        ch_index,
         true,   // bam_format
         'bai',  // bam_index_extension
         false,  // cigar_paf
@@ -45,10 +49,13 @@ workflow MAPPING_LONGREAD {
             ch_reads_with_index.map { meta, reads, index, ref -> [ meta, ref ] },
             by: 0
         )
-
+    ch_bam = ch_bam_with_ref
+        .map { meta, bam, ref -> [ meta, bam ] }
+    ch_ref = ch_bam_with_ref
+        .map { meta, bam, ref -> [ meta, ref ] }
     BAM_SORT_STATS_SAMTOOLS (
-        ch_bam_with_ref.map { meta, bam, ref -> [ meta, bam ] },
-        ch_bam_with_ref.map { meta, bam, ref -> [ meta, ref ] }
+        ch_bam,
+        ch_ref
     )
     ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{it[1]}.ifEmpty([]))
