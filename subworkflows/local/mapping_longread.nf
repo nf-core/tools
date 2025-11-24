@@ -15,9 +15,9 @@ workflow MAPPING_LONGREAD {
     ch_multiqc_files  = channel.empty()
 
     // Build the index
-    MINIMAP2_INDEX (
-        ch_reads_reference.map { meta, reads, ref -> [ meta, ref ] }
-    )
+    ch_reference = ch_reads_reference
+        .map { meta, reads, ref -> [ meta, ref ] }
+    MINIMAP2_INDEX ( ch_reference )
     ch_versions = ch_versions.mix( MINIMAP2_INDEX.out.versions )
 
     // Join the built index back with the original paired data
