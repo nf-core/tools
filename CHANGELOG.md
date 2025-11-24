@@ -4,7 +4,6 @@
 
 ### General
 
-- bump to 3.6.0dev ([#3920](https://github.com/nf-core/tools/pull/3920))
 
 ### Template
 
