@@ -21,6 +21,19 @@ jobs:
     strategy:
       fail-fast: false
     steps:
+      # Free up disk space on GitHub Actions runner
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # This option removes unnecessary tools and packages
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Check out code
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
