@@ -1,9 +1,11 @@
-name: nf-core Docker push (dev)
+name: nf-core Docker push
 # This builds the docker image and pushes it to DockerHub
-# Runs on nf-core repo releases and push event to 'dev' branch (PR merges)
+# Runs on releases and pushes to 'dev' branch (PR merges)
 on:
   push:
     branches: [dev]
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
@@ -12,18 +14,17 @@ concurrency:
 
 jobs:
   push_dockerhub:
-    name: Push new Docker image to Docker Hub (dev)
+    name: Push new Docker image to Docker Hub
     runs-on: ubuntu-latest
-    # Only run for the nf-core repo, for releases and merged PRs
     if: ${{ github.repository == 'nf-core/tools' }}
     env:
       TARGET_PLATFORM: "linux/amd64,linux/arm64"
     steps:
-      # Free up disk space on GitHub Actions runner
+      # Free up disk space on GitHub Actions runner (only for dev builds)
       - name: Free Disk Space (Ubuntu)
+        if: github.event_name == 'push'
         uses: jlumbroso/free-disk-space@main
         with:
-          # This option removes unnecessary tools and packages
           tool-cache: true
           android: true
           dotnet: true
@@ -47,9 +48,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
-      # Retry building tools image once after a delay because of
-      # irregularly occuring 403 http errors when installing nf-test
-      - name: Build nfcore/tools image (dev)
+      # Determine Docker tags based on trigger
+      - name: Set Docker tags
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "TOOLS_TAGS=-t nfcore/tools:${{ github.event.release.tag_name }} -t nfcore/tools:latest" >> $GITHUB_OUTPUT
+            echo "DEVCONTAINER_TAGS=${{ github.event.release.tag_name }},latest" >> $GITHUB_OUTPUT
+          else
+            echo "TOOLS_TAGS=-t nfcore/tools:dev" >> $GITHUB_OUTPUT
+            echo "DEVCONTAINER_TAGS=dev" >> $GITHUB_OUTPUT
+          fi
+
+      # Retry building tools image (for 403 errors with nf-test)
+      - name: Build and push nfcore/tools image
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
         with:
           timeout_minutes: 20
@@ -57,16 +69,16 @@ jobs:
           retry_wait_seconds: 60
           command: |
             docker buildx build \
-            --platform ${{ env.TARGET_PLATFORM }} \
-            -t nfcore/tools:dev \
-            --push --no-cache .
+              --platform ${{ env.TARGET_PLATFORM }} \
+              ${{ steps.tags.outputs.TOOLS_TAGS }} \
+              --push --no-cache .
 
-      - name: Build and push nfcore/devcontainer:dev image (dev)
+      - name: Build and push nfcore/devcontainer image
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: nfcore/devcontainer
-          imageTag: dev
+          imageTag: ${{ steps.tags.outputs.DEVCONTAINER_TAGS }}
           platform: ${{ env.TARGET_PLATFORM }}
           push: always
           noCache: true
