@@ -93,7 +93,7 @@ jobs:
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           cd create-test-lint-wf
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
+          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
       # Copy snapshot file
       - name: copy snapshot file
