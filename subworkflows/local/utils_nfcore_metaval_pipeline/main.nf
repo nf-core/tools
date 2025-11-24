@@ -237,3 +237,22 @@ def methodsDescriptionText(mqc_methods_yaml) {
 
     return description_html.toString()
 }
+
+//
+// Function that parses and returns the number of mapped reads from flagstat files
+//
+def getFlagstatMappedReads(flagstat_file) {
+    def mapped_reads = 0
+    flagstat_file.eachLine { line ->
+        if (line.contains(' mapped (')) {
+            mapped_reads = line.tokenize().first().toInteger()
+        }
+    }
+
+    def pass = false
+    def logname = flagstat_file.getBaseName() - 'flagstat'
+    if (mapped_reads > 0) {
+        pass = true
+    }
+    return [ mapped_reads, pass ]
+}

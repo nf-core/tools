@@ -14,36 +14,47 @@ workflow IGV {
     ch_bam_bai_reference   // [ [ meta ], [ bam ], [bai], [ref] ]
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // Extract and index mapped reads
-    SAMTOOLS_VIEW (
-        ch_bam_bai_reference.map {it -> [ it[0], it[1], it[2]]},
-        [ [],[] ],
+    BEDTOOLS_GENOMECOV (
+        ch_bam_bai_reference.map { meta, bam, bai, ref -> [ meta, bam, "1" ] },
         [],
-        'bai'
+        'bed',
+        true
     )
-    ch_versions = ch_versions.mix( SAMTOOLS_VIEW.out.versions )
-    SAMTOOLS_INDEX ( SAMTOOLS_VIEW.out.bam )
-    ch_versions = ch_versions.mix( SAMTOOLS_INDEX.out.versions )
-
-    // Create a bed file
-    ch_bedtools_input = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
-    BEDTOOLS_GENOMECOV ( ch_bedtools_input.map { [it[0], it[1], "1"]}, [], 'bed', true )
     ch_versions = ch_versions.mix( BEDTOOLS_GENOMECOV.out.versions )
 
     // Uncompress and index the reference genome
-    PIGZ_UNCOMPRESS ( ch_bam_bai_reference.map { it -> [ it[0], it[3] ]} )
-    SAMTOOLS_FAIDX ( PIGZ_UNCOMPRESS.out.file, [ [],[] ], false )
+    PIGZ_UNCOMPRESS (
+        ch_bam_bai_reference.map { meta, bam, bai, ref -> [ meta, ref ] }
+    )
     ch_versions = ch_versions.mix( PIGZ_UNCOMPRESS.out.versions )
+
+    SAMTOOLS_FAIDX ( PIGZ_UNCOMPRESS.out.file, [ [], [] ], false )
     ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
-    // IGV report
-    ch_bam_bai = SAMTOOLS_VIEW.out.bam.join( SAMTOOLS_INDEX.out.bai )
-    ch_bed_bam_bai = BEDTOOLS_GENOMECOV.out.genomecov.join( ch_bam_bai )
-    ch_fasta_fai = PIGZ_UNCOMPRESS.out.file.join( SAMTOOLS_FAIDX.out.fai )
+    // Join all channels together
+    ch_bam_bai = ch_bam_bai_reference.map { meta, bam, bai, ref -> [ meta, bam, bai ] }
 
-    IGVREPORTS ( ch_bed_bam_bai, ch_fasta_fai )
+    ch_bed_bam_bai = BEDTOOLS_GENOMECOV.out.genomecov
+        .join( ch_bam_bai, by: 0 )
+
+    ch_fasta_fai = PIGZ_UNCOMPRESS.out.file
+        .join( SAMTOOLS_FAIDX.out.fai, by: 0 )
+
+    ch_igv_input = ch_bed_bam_bai
+        .join(ch_fasta_fai, by: 0)
+
+    // IGV reports - use explicit parameter names
+    IGVREPORTS (
+        ch_igv_input.map { meta, bed, bam, bai, fasta, fai ->
+            [ meta, bed, bam, bai ]
+        },
+        ch_igv_input.map { meta, bed, bam, bai, fasta, fai ->
+            [ meta, fasta, fai ]
+        }
+    )
     ch_versions = ch_versions.mix(IGVREPORTS.out.versions)
 
     emit:
@@ -51,5 +62,4 @@ workflow IGV {
     fna           = PIGZ_UNCOMPRESS.out.file
     fai           = SAMTOOLS_FAIDX.out.fai
     versions      = ch_versions
-
 }

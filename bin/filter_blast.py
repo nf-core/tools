@@ -25,10 +25,14 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
         column_names = header_line.split("\t")
 
     # Load BLASTn results
-    raw_results = pd.read_csv(input, sep="\t", header=None, names=column_names)
+    raw_results = pd.read_csv(input, sep="\t", header=None, names=column_names, keep_default_na=False)
 
-    # Explicitly cast staxid to integer
-    raw_results["staxid"] = pd.to_numeric(raw_results["staxid"]).astype("Int64")
+    # Remove entries with missing or invalid staxid
+    raw_results = raw_results[
+        raw_results["staxid"].notna() &
+        (raw_results["staxid"].astype(str).str.strip() != "") &
+        (~raw_results["staxid"].astype(str).isin(["NA", "N/A"]))
+    ]
 
     # Apply filtering
     filtered = raw_results[

@@ -19,7 +19,7 @@ process SEQKIT_FQ2FA {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: fastq.baseName.replaceFirst(/\.(fastq|fq)$/, '')
 
     """
     seqkit \\
@@ -36,9 +36,9 @@ process SEQKIT_FQ2FA {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: fastq.baseName.replaceFirst(/\.(fastq|fq)$/, '')
     """
-    echo "" | gzip > ${prefix}.fa.gz
+    echo "" > ${prefix}.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

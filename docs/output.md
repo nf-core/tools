@@ -65,11 +65,11 @@ Retrieve the reads of all viral TaxIDs predicted by classifiers or extracts read
 
 - `extracted_reads/`
   - `centrifuge/`
-    - `<sample_id>_<taxID>.extracted_centrifuge.fastq.gz` : Reads assigned to certain TaxID by `Centrifuge`.
+    - `<sample_id>_<taxID>.extracted_centrifuge.fa` : Reads assigned to certain TaxID by `Centrifuge`.
   - `diamond/`
-    - `<sample_id>_<taxID>.extracted_diamond.fastq.gz` : Reads assigned to certain TaxID by `DIAMOND`.
+    - `<sample_id>_<taxID>.extracted_diamond.fa` : Reads assigned to certain TaxID by `DIAMOND`.
   - `kraken2/`
-    - `<sample_id>_<taxID>.extracted_kraken2.fastq.gz` : Reads assigned to certain TaxID by `Kraken2`.
+    - `<sample_id>_<taxID>.extracted_kraken2.fa` : Reads assigned to certain TaxID by `Kraken2`.
 
 </details>
 
@@ -195,18 +195,18 @@ Map reads to genomes based on BLAST hits or to genomes of identified species if 
 - `mapping/`
   - `bowtie2/`
     - `align/`
-      - `<sample_id>_taxid_<taxID>_mappingorganism_<organism>.bam`: BAM file containing short reads that were aligned against the genomes based on BLAST hits.
-      - `<sample_id>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Index of the bam file.
+      - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam`: BAM file containing short reads that were aligned against the genomes based on BLAST hits.
+      - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Index of the bam file.
     - `build/`
       - `mappingorganism_<organism>/`
         - `bowtie2/*.bt2l`: Bowtie2 indices of genomes with BLAST hits
   - `minimap2/`
     - `align/`
-      - `<sample_id>_taxid_<taxID>_mappingorganism_<organism>.bam`: BAM file containing long reads that were aligned against the user-supplied pathogens genomes
-      - `<sample_id>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Index of the bam file.
+      - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam`: BAM file containing long reads that were aligned against the user-supplied pathogens genomes
+      - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>.bam.bai`: Bam index file
     - `index/`
       - `mappingorganism_<organism>`
-        - `*.mmi`: Minimap2 indices of the reference pathogens' genomes
+        - `*.mmi`: Minimap2 indices of the reference pathogens genomes
 
 #### Pathogen screening
 
@@ -216,18 +216,19 @@ Map reads to the pathogen genomes databases.
 <summary>Output files</summary>
 
 - `pathogens/`
-  - `bowtie2/`
-    - `align/`
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-supplied pathogens genomes
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
-    - `build/`
-      - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genome
-  - `minimap2/`
-    - `align/`
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-supplied pathogens genomes
-      - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
-    - `index/`
-      - `*.mmi`: Minimap2 indicies of reference pathogens genomes
+  - `mapping/`
+    - `bowtie2/`
+      - `align/`
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-provided pathogens genomes
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Index of the bam file.
+      - `build/`
+        - `bowtie2/*.bt2l`: Bowtie2 indices of reference pathogens genomes
+    - `minimap2/`
+      - `align/`
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing long reads that aligned against the user-provided pathogens genomes
+        - `<sample_id>_aligned_pathogens_genome_sorted.bam.bai`: Bam file index
+      - `index/`
+        - `*.mmi`: Minimap2 indices of reference pathogens genomes
 
 </details>
 
@@ -244,8 +245,8 @@ IGV visualization of reads that classifiers assigned to specific species.
 <details markdown="1">
 <summary>Output files</summary>
 
-- `IGV/`
-  - `<sample_id>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report shows variants and coverage of reads mapped to the genomes.
+- `igv/`
+  - `<sample_id>_<classifer>_taxid_<taxID>_mappingorganism_<organism>_report.html`: IGV report with variants and coverage of reads mapped to the genomes.
 
 #### Pathogen screening
 
@@ -255,8 +256,8 @@ IGV visualization of reads mapped to pathogen genome database.
 <summary>Output files</summary>
 
 - `pathogens/`
-  - `IGV/`
-    - `<sample_id>_<taxID>_report.html`: The IGV report shows the variants and coverage of reads mapped to the genomes.
+  - `igv/`
+    - `<sample_id>_<taxID>_report.html`: IGV report with the variants and coverage of reads mapped to the genomes.
 
 </details>
 The `IGV` directory will only be present if `perform_mapping` is provided.

@@ -118,20 +118,6 @@ nextflow run genomic-medicine-sweden/metaval \
 
 For more details and further functionality, please refer to the [usage documentation](https://github.com/genomic-medicine-sweden/metaval/blob/dev/docs/usage.md).
 
-## Test data
-
-There are three test datasets within `assets/test_data/`, produced by the `nf-core/taxprofiler` pipeline
-
-- `taxprofiler_test_data`: produced by executing the `test.config` file within the pipeline `nf-core/taxprofiler`.
-- `taxprofiler_test_full_data`: produced by executing the `test_full.config` file within the pipeline `nf-core/taxprofiler`.
-- `test_data_version2_subset`: produced by running the data downloaded from <https://www.nature.com/articles/s41598-021-83812-x>
-
-The corresponding input samplesheets are stored in `assets/`
-
-- `samplesheet_v1.csv`:results of taxprofiler test data; limited classification results; no viruses; single-end (`perform_runmerging`).
-- `samplesheet_v2.csv`:results of taxprofiler full test data; no viruses; single-end (`perform_runmerging`).
-- `samplesheet_v3.csv`: with viruses; subset data from `test_data_version2_subset` (sample 20% of pair-end reads).
-
 ## Headlines of input files
 
 `kraken2_report` & `centrifuge_report`

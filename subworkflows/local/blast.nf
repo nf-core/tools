@@ -17,11 +17,11 @@ workflow BLAST {
     blast_header    // channel: [ path(header) ]
 
     main:
-    ch_versions = Channel.empty()
-    ch_blast_hits_taxid = Channel.empty()
+    ch_versions = channel.empty()
+    ch_blast_hits_taxid = channel.empty()
 
-    ch_blastn_filtered = Channel.empty()
-    ch_blastx_filtered = Channel.empty()
+    ch_blastn_filtered = channel.empty()
+    ch_blastx_filtered = channel.empty()
 
     // BLASTN
     if ( !params.skip_blastn ) {
@@ -45,7 +45,6 @@ workflow BLAST {
         FILTER_BLASTN ( ch_blastn_hits, file( blast_header, checkIfExists: true ))
         ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
         ch_blastn_filtered = ch_blastn_filtered.mix( FILTER_BLASTN.out.filtered_blast )
-
         // Extract unique taxids from BLASTN hit results
         ch_blastn_hits_taxid = FILTER_BLASTN.out.filtered_blast
             .flatMap { meta, blastn_hits ->
@@ -94,7 +93,6 @@ workflow BLAST {
             .map { taxid, meta, blastx_hits -> [ taxid, meta ] }
             ch_blast_hits_taxid = ch_blast_hits_taxid.mix ( ch_blastx_hits_taxid )
     }
-
     ch_blast_hits_taxid_uniq = ch_blast_hits_taxid.unique()
 
     emit:

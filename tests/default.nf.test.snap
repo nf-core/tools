@@ -74,9 +74,6 @@
                 "SAMTOOLS_STATS": {
                     "samtools": 1.21
                 },
-                "SAMTOOLS_VIEW": {
-                    "samtools": 1.21
-                },
                 "SUBSET_BAM_FAIL": {
                     "samtools": 1.21
                 },
@@ -95,6 +92,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.0"
         },
-        "timestamp": "2025-11-21T10:28:24.921149823"
+        "timestamp": "2025-11-21T17:02:59.870634612"
     }
 }
