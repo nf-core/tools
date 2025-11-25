@@ -1,5 +1,6 @@
 mypy
 myst_parser
+prek
 pytest-cov
 pytest-datafiles
 responses

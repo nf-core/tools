@@ -5,6 +5,8 @@
 ### General
 
 - dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
+- Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
+- Switch from pre-commit to prek for pre-commit hooks in development([#3899](https://github.com/nf-core/tools/pull/3899))
 
 ### Template
 
@@ -13,6 +15,8 @@
 ### Modules
 
 ### Subworkflows
+
+- Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
 
 ## [v3.5.1 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.1) - [2025-11-19]
 

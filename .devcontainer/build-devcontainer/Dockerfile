@@ -9,9 +9,8 @@ COPY . /root/nfcore-tools/
 # install local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel pre-commit && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install -r requirements.txt --no-cache-dir -e . && \
-    pre-commit install --install-hooks && \
     rm -rf /root/.cache/pip
 
 # Install nextflow and nf-test via conda and run conda clean
