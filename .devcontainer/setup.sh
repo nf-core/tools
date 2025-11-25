@@ -12,5 +12,8 @@ nextflow self-update
 # Install specifically the version of tools from the workspace
 pip install --upgrade  -r requirements.txt -r requirements-dev.txt -e .
 
+# Install pre-commit hooks
+prek install --install-hooks
+
 # Update welcome message
 echo "Welcome to the nf-core devcontainer!" > /usr/local/etc/vscode-dev-containers/first-run-notice.txt

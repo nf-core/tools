@@ -56,21 +56,23 @@ Ruff has been adopted for linting and formatting in replacement of Black, isort 
 
 ### pre-commit hooks
 
-This repository comes with [pre-commit](https://pre-commit.com/) hooks for ruff and Prettier. pre-commit automatically runs checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
+This repository comes with pre-commit hooks for ruff and Prettier, managed by [prek](https://github.com/j178/prek). Pre-commit hooks automatically run checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
 
-You can use the pre-commit hooks if you like, but you don't have to. The CI on Github will run the same checks as the tools installed with pre-commit. If the pre-commit checks pass, then the same checks in the CI will pass, too.
+You can use the pre-commit hooks if you like, but you don't have to. The CI on Github will run the same checks as the tools installed with prek. If the pre-commit checks pass, then the same checks in the CI will pass, too.
 
 You can install the pre-commit hooks into the development environment by running the following command in the root directory of the repository.
 
 ```bash
-pre-commit install --install-hooks
+prek install --install-hooks
 ```
 
 You can also run all pre-commit hooks without making a commit:
 
 ```bash
-pre-commit run --all
+prek run --config .pre-commit-config.yaml --all-files
 ```
+
+Note: The `--config` flag is important in this repository to ensure prek uses the root configuration file and not the template configs in `nf_core/pipeline-template/`.
 
 ## API Documentation
 

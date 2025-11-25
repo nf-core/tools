@@ -31,22 +31,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
-      # Install and run pre-commit
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+      # Install and run prek
+      - name: Run prek
+        id: prek
+        uses: j178/prek-action@v1
         with:
-          python-version: "3.14"
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run pre-commit
-        id: pre-commit
-        run: pre-commit run --all-files
+          extra-args: --config .pre-commit-config.yaml --all-files
         continue-on-error: true
 
       # indication that the linting has finished
       - name: react if linting finished succesfully
-        if: steps.pre-commit.outcome == 'success'
+        if: steps.prek.outcome == 'success'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           comment-id: ${{ github.event.comment.id }}
@@ -54,7 +49,7 @@ jobs:
 
       - name: Commit & push changes
         id: commit-and-push
-        if: steps.pre-commit.outcome == 'failure'
+        if: steps.prek.outcome == 'failure'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
