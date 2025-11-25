@@ -2,8 +2,12 @@
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=40.6.0", "wheel"]
 
-[tool.setuptools]
-packages = ["nf_core"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nf_core*"]
+
+[tool.setuptools.package-data]
+nf_core = ["**/*"]
 
 [project]
 name = "nf-core"
