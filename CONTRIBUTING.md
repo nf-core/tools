@@ -30,14 +30,6 @@ uv sync
 
 This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode.
 
-Alternatively, you can use pip:
-
-```bash
-# Using pip (legacy method)
-pip install --upgrade -r requirements-dev.txt
-pip install -e .
-```
-
 ## Code formatting
 
 ### Ruff
@@ -45,7 +37,7 @@ pip install -e .
 All Python code in nf-core/tools must be passed through the [Ruff code linter and formatter](https://github.com/astral-sh/ruff).
 This ensures a harmonised code formatting style throughout the package, from all contributors.
 
-You can run Ruff on the command line (it's included in `requirements-dev.txt`) - eg. to run recursively on the whole repository:
+You can run Ruff on the command line (it's included in the dev dependencies) - eg. to run recursively on the whole repository:
 
 ```bash
 ruff format .

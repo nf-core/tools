@@ -2,12 +2,15 @@
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=40.6.0", "wheel"]
 
+[tool.setuptools]
+packages = ["nf_core"]
+
 [project]
 name = "nf-core"
 version = "3.6.0dev"
 description = "Helper tools for use with nf-core Nextflow pipelines."
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 keywords = [
     "nf-core",
     "nextflow",
@@ -52,7 +55,7 @@ dependencies = [
     "ruamel.yaml",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "mypy",
     "myst_parser",

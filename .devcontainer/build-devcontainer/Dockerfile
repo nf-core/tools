@@ -9,7 +9,7 @@ COPY . /root/nfcore-tools/
 # Install uv and local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip uv pre-commit && \
+    pip install --no-cache-dir --upgrade pip uv && \
     uv pip install --system --no-cache-dir . && \
     rm -rf /root/.cache/pip /root/.cache/uv
 

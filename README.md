@@ -56,11 +56,7 @@ pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 If editing, fork and clone the repo, then install as follows:
 
 ```bash
-# Using uv (recommended - much faster)
 uv sync
-
-# Alternatively, using pip:
-pip install --upgrade -r requirements-dev.txt -e .
 ```
 
 ## Contributions and Support
