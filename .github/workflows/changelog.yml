@@ -74,6 +74,8 @@ jobs:
 
       - name: Run pre-commit rules with prek
         uses: j178/prek-action@v1
+        with:
+          extra-args: --config .pre-commit-config.yaml --all-files
 
       - name: Commit and push changes
         if: steps.file_changed.outputs.changed == 'TRUE'
