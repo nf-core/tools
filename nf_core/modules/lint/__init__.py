@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 from .environment_yml import environment_yml
 from .main_nf import main_nf
-from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, read_meta_yml
+from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
 from .module_changes import module_changes
 from .module_deprecations import module_deprecations
 from .module_patch import module_patch
@@ -48,6 +48,7 @@ class ModuleLint(ComponentLint):
     meta_yml = meta_yml
     obtain_inputs = obtain_inputs
     obtain_outputs = obtain_outputs
+    obtain_topics = obtain_topics
     read_meta_yml = read_meta_yml
     module_changes = module_changes
     module_deprecations = module_deprecations
@@ -302,6 +303,9 @@ class ModuleLint(ComponentLint):
         if "output" in meta_yml:
             correct_outputs = self.obtain_outputs(mod.outputs)
             meta_outputs = self.obtain_outputs(meta_yml["output"])
+        if "topics" in meta_yml:
+            correct_topics = self.obtain_topics(mod.topics)
+            meta_topics = self.obtain_topics(meta_yml["topics"])
 
         def _find_meta_info(meta_yml, element_name, is_output=False) -> dict:
             """Find the information specified in the meta.yml file to update the corrected meta.yml content"""
@@ -366,6 +370,25 @@ class ModuleLint(ComponentLint):
                         element_name = list(ch_content.keys())[0]
                         corrected_meta_yml["output"][ch_name][i][element_name] = _find_meta_info(
                             meta_yml["output"], element_name, is_output=True
+                        )
+
+        if "topics" in meta_yml and correct_topics != meta_topics:
+            log.debug(
+                f"Correct topics: '{correct_topics}' differ from current topics: '{meta_topics}' in '{mod.meta_yml}'"
+            )
+            corrected_meta_yml["topics"] = mod.topics.copy()
+            for t_name in corrected_meta_yml["topics"].keys():
+                for i, t_content in enumerate(corrected_meta_yml["topics"][t_name]):
+                    if isinstance(t_content, list):
+                        for j, element in enumerate(t_content):
+                            element_name = list(element.keys())[0]
+                            corrected_meta_yml["topics"][t_name][i][j][element_name] = _find_meta_info(
+                                meta_yml["topics"], element_name, is_output=True
+                            )
+                    elif isinstance(t_content, dict):
+                        element_name = list(t_content.keys())[0]
+                        corrected_meta_yml["topics"][t_name][i][element_name] = _find_meta_info(
+                            meta_yml["topics"], element_name, is_output=True
                         )
 
         def _add_edam_ontologies(section, edam_formats, desc):

@@ -612,13 +612,16 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
 def command_pipelines_sync(
-    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
+    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
     """
-    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    pipelines_sync(
+        ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+    )
 
 
 # nf-core pipelines bump-version
