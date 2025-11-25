@@ -57,6 +57,12 @@ If editing, fork and clone the repo, then install as follows:
 
 ```bash
 uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Or use uv run to run commands without activating
+uv run nf-core --help
 ```
 
 ## Contributions and Support

@@ -21,14 +21,30 @@ If you're not used to this workflow with git, you can start with some [basic doc
 ## Installing dev requirements
 
 If you want to work with developing the nf-core/tools code, you'll need a couple of extra Python packages.
-The recommended way to install is using `uv`, which is much faster than pip:
+Install using `uv`:
 
 ```bash
-# Using uv (recommended - much faster)
 uv sync
 ```
 
-This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode.
+This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode. The virtual environment is automatically created in `.venv/` in the project directory.
+
+To activate the virtual environment:
+
+```bash
+# On macOS/Linux
+source .venv/bin/activate
+
+# On Windows
+.venv\Scripts\activate
+```
+
+Alternatively, you can run commands without activating the environment using `uv run`:
+
+```bash
+uv run nf-core --help
+uv run pytest
+```
 
 ## Code formatting
 

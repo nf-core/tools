@@ -12,7 +12,11 @@ nextflow self-update
 # Install specifically the version of tools from the workspace
 uv sync
 
-# Install pre-commit hooks
+# Activate the virtual environment automatically on login
+echo "source $(pwd)/.venv/bin/activate" >> $HOME/.bashrc
+
+# Install pre-commit hooks (using the venv)
+source .venv/bin/activate
 prek install --install-hooks
 
 # Update welcome message
