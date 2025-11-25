@@ -6,7 +6,7 @@ on:
     branches: [dev]
   release:
     types: [published]
-
+  workflow_dispatch:
 # Cancel if a newer run is started
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
