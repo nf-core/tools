@@ -4,6 +4,8 @@
 
 ### General
 
+- Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
+
 ### Template
 
 ### Linting
