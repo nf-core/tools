@@ -25,3 +25,13 @@ repos:
               subworkflows/nf-core/.*|
               .*\.snap$
           )$
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+        exclude: |
+          (?x)^(
+              .*ro-crate-metadata.json$|
+              .*\.snap$|
+              lib/nfcore_external_java_deps.jar$|
+              docs/.*\.(svg|pdf)$
+          )$
+      - id: check-merge-conflict
