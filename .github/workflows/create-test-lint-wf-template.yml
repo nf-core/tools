@@ -151,7 +151,7 @@ jobs:
       # Run code style linting
       - name: Run pre-commit
         run: uv run prek run --config .pre-commit-config.yaml  --all-files
-        working-directory: create-test-lint-wf
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Remove TODO statements
       - name: remove TODO
@@ -182,7 +182,7 @@ jobs:
       - name: run pre-commit
         shell: bash
         run: uv run prek run --config .pre-commit-config.yaml  --all-files
-        working-directory: create-test-lint-wf
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Run bump-version
       - name: nf-core pipelines bump-version
