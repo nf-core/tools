@@ -101,11 +101,11 @@ class TestMetaYml(TestModules):
 
             # For multiple versions channels, topics.versions should be a list
             versions_topic = meta_yml["topics"]["versions"]
-            if isinstance(versions_topic, list) and all(isinstance(item, list) for item in versions_topic):
-                # Multiple versions channels: should have 2 entries
-                assert len(versions_topic) == 2, (
-                    f"Expected 2 entries in versions topic, got {len(versions_topic)}: {versions_topic}"
-                )
+            assert isinstance(versions_topic, list) and all(isinstance(item, list) for item in versions_topic)
+            # Two versions channels: should have 2 entries
+            assert len(versions_topic) == 2, (
+                f"Expected 2 entries in versions topic, got {len(versions_topic)}: {versions_topic}"
+            )
 
         finally:
             # Restore original main.nf
