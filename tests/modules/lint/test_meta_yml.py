@@ -166,7 +166,7 @@ class TestMetaYml(TestModules):
             # Check that the versions topic has the correct structure
             versions_topic = meta_yml_updated["topics"]["versions"]
             assert isinstance(versions_topic, list), "versions topic should be a list"
-            assert len(versions_topic) > 0, "versions topic should have at least one entry"
+            assert len(versions_topic[0]) == 3, "versions topic should have 1 entrie with 3 elements"
 
         finally:
             # Restore original files
