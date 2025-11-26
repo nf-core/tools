@@ -24,7 +24,7 @@ If you want to work with developing the nf-core/tools code, you'll need a couple
 Install using `uv`:
 
 ```bash
-uv sync
+uv sync --all-extras
 ```
 
 This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode. The virtual environment is automatically created in `.venv/` in the project directory.

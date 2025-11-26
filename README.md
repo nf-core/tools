@@ -56,7 +56,7 @@ pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 If editing, fork and clone the repo, then install as follows:
 
 ```bash
-uv sync
+uv sync --all-extras
 
 # Activate the virtual environment
 source .venv/bin/activate

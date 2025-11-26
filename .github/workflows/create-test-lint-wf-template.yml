@@ -69,7 +69,7 @@ jobs:
           enable-cache: true
 
       - name: Install python dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2

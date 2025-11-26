@@ -57,7 +57,7 @@ jobs:
           enable-cache: true
 
       - name: Install python dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: run create-lint-wf
         uses: ./.github/actions/create-lint-wf
