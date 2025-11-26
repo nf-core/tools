@@ -43,3 +43,7 @@ repos:
           - types-Markdown
           - types-setuptools
           - pydantic
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.5.20
+    hooks:
+      - id: uv-lock
