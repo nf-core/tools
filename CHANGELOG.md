@@ -9,6 +9,7 @@
 - Switch from pre-commit to prek for pre-commit hooks in development([#3899](https://github.com/nf-core/tools/pull/3899))
 - switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
+- Simplify coverage reporting in pytest.yml ([#3934](https://github.com/nf-core/tools/pull/3934))
 
 ### Template
 
