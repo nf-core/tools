@@ -33,7 +33,13 @@ runs:
       shell: bash
       run: uv run nf-core --log-file log.txt pipelines sync --dir nf-core-testpipeline/
       working-directory: create-lint-wf
-
+    #FIXME debugging
+    - name: check directory
+      shell: bash
+      run: |
+        pwd
+        ls -l
+      working-directory: create-lint-wf/nf-core-testpipeline
     # Run code style linting
     - name: run pre-commit
       shell: bash
