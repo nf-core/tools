@@ -2,6 +2,100 @@
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=40.6.0", "wheel"]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nf_core*"]
+
+[tool.setuptools.package-data]
+nf_core = ["**/*"]
+
+[project]
+name = "nf-core"
+version = "3.6.0dev"
+description = "Helper tools for use with nf-core Nextflow pipelines."
+readme = "README.md"
+license = "MIT"
+keywords = [
+    "nf-core",
+    "nextflow",
+    "bioinformatics",
+    "workflow",
+    "pipeline",
+    "biology",
+    "sequencing",
+    "NGS",
+    "next generation sequencing",
+]
+authors = [
+    {name = "Phil Ewels", email = "phil.ewels@scilifelab.se"}
+]
+requires-python = ">=3.10, <4"
+dependencies = [
+    "click",
+    "filetype",
+    "GitPython",
+    "PyGithub",
+    "jinja2",
+    "jsonschema>=4.0",
+    "markdown>=3.3",
+    "packaging",
+    "pillow",
+    "pre-commit",
+    "prompt_toolkit<=3.0.52",
+    "pydantic>=2.2.1",
+    "pyyaml",
+    "questionary>=2.0.1",
+    "refgenie",
+    "requests",
+    "requests_cache",
+    "rich-click==1.9.*",
+    "rich>=13.3.1",
+    "rocrate",
+    "repo2rocrate",
+    "tabulate",
+    "textual==6.2.1",
+    "trogon",
+    "pdiff",
+    "ruamel.yaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "myst_parser",
+    "pytest-cov",
+    "pytest-datafiles",
+    "responses",
+    "prek",
+    "ruff",
+    "Sphinx",
+    "sphinx-rtd-theme",
+    "textual-dev==1.7.0",
+    "types-PyYAML",
+    "types-requests",
+    "types-jsonschema",
+    "types-Markdown",
+    "types-setuptools",
+    "typing_extensions>=4.0.0",
+    "pytest-asyncio",
+    "pytest-textual-snapshot==1.1.0",
+    "pytest-workflow>=2.0.0",
+    "pytest-xdist>=3.7.0",
+    "pytest>=8.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/nf-core/tools"
+Documentation = "https://nf-co.re/docs/nf-core-tools"
+Repository = "https://github.com/nf-core/tools"
+Changelog = "https://github.com/nf-core/tools/blob/master/CHANGELOG.md"
+
+[project.scripts]
+nf-core = "nf_core.__main__:run_nf_core"
+
+[project.entry-points."refgenie.hooks.post_update"]
+nf-core-refgenie = "nf_core.pipelines.refgenie:update_config"
+
 [tool.pytest.ini_options]
 markers = ["datafiles: load datafiles", "integration"]
 testpaths = ["tests"]

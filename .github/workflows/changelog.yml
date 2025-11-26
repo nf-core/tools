@@ -41,9 +41,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml
+        run: pip install pyyaml
 
       - name: Update CHANGELOG.md from the PR title
         env:
@@ -70,7 +68,6 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: "3.14"
-          cache: "pip"
 
       - name: Run pre-commit rules with prek
         uses: j178/prek-action@91fd7d7cf70ae1dee9f4f44e7dfa5d1073fe6623 # v1

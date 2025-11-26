@@ -21,16 +21,29 @@ If you're not used to this workflow with git, you can start with some [basic doc
 ## Installing dev requirements
 
 If you want to work with developing the nf-core/tools code, you'll need a couple of extra Python packages.
-These are listed in `requirements-dev.txt` and can be installed as follows:
+Install using `uv`:
 
 ```bash
-pip install --upgrade -r requirements-dev.txt
+uv sync --all-extras
 ```
 
-Then install your local fork of nf-core/tools:
+This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode. The virtual environment is automatically created in `.venv/` in the project directory.
+
+To activate the virtual environment:
 
 ```bash
-pip install -e .
+# On macOS/Linux
+source .venv/bin/activate
+
+# On Windows
+.venv\Scripts\activate
+```
+
+Alternatively, you can run commands without activating the environment using `uv run`:
+
+```bash
+uv run nf-core --help
+uv run pytest
 ```
 
 ## Code formatting
@@ -40,7 +53,7 @@ pip install -e .
 All Python code in nf-core/tools must be passed through the [Ruff code linter and formatter](https://github.com/astral-sh/ruff).
 This ensures a harmonised code formatting style throughout the package, from all contributors.
 
-You can run Ruff on the command line (it's included in `requirements-dev.txt`) - eg. to run recursively on the whole repository:
+You can run Ruff on the command line (it's included in the dev dependencies) - eg. to run recursively on the whole repository:
 
 ```bash
 ruff format .

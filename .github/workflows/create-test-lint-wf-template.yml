@@ -63,10 +63,13 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
       - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
+        run: uv sync --all-extras
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
@@ -95,7 +98,7 @@ jobs:
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           cd create-test-lint-wf
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
+          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
       # Copy snapshot file
       - name: copy snapshot file
@@ -143,11 +146,11 @@ jobs:
 
       # Try syncing it before we change anything
       - name: nf-core pipelines sync
-        run: nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
+        run: uv run nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
       - name: Run pre-commit
-        run: pre-commit run --all-files
+        run: uv run pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Remove TODO statements
@@ -172,23 +175,23 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core pipelines lint
-        run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
+        run: uv run nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
         working-directory: create-test-lint-wf
 
       # Run code style linting
       - name: run pre-commit
         shell: bash
-        run: pre-commit run --all-files
+        run: uv run pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Run bump-version
       - name: nf-core pipelines bump-version
-        run: nf-core --log-file log.txt pipelines bump-version --dir my-prefix-testpipeline/ 1.1
+        run: uv run nf-core --log-file log.txt pipelines bump-version --dir my-prefix-testpipeline/ 1.1
         working-directory: create-test-lint-wf
 
       # Run nf-core linting in release mode
       - name: nf-core pipelines lint in release mode
-        run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned --release
+        run: uv run nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned --release
         working-directory: create-test-lint-wf
 
       - name: Tar files

@@ -49,10 +49,13 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
       - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
+        run: uv sync
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
@@ -69,7 +72,7 @@ jobs:
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
       - name: copy snapshot file
         run: |
