@@ -66,7 +66,7 @@ jobs:
 
       # Build a module from the template
       - name: nf-core modules create
-        run: nf-core --verbose --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
+        run: uv run nf-core --verbose --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
         working-directory: create-lint-wf
 
       # Remove TODO statements
@@ -81,11 +81,11 @@ jobs:
 
       # Run the other nf-core commands
       - name: nf-core pipelines list
-        run: nf-core --log-file log.txt pipelines list
+        run: uv run nf-core --log-file log.txt pipelines list
         working-directory: create-lint-wf
 
       - name: nf-core pipelines schema
-        run: nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
+        run: uv run nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
         working-directory: create-lint-wf
 
       - name: Cleanup work directory
