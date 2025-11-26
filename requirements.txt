@@ -24,3 +24,4 @@ textual==6.6.0
 trogon
 pdiff
 ruamel.yaml
+reftrace

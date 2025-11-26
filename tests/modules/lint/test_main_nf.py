@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import pytest
+from reftrace import Module, ParseError
 
 import nf_core.modules.lint
 from nf_core.components.nfcore_component import NFCoreComponent
@@ -7,36 +10,103 @@ from nf_core.modules.lint.main_nf import check_container_link_line, check_proces
 from ...test_modules import TestModules
 from .test_lint_utils import MockModuleLint
 
+# @pytest.mark.parametrize(
+#     "content,passed,warned,failed",
+#     [
+#         # Valid process label
+#         ("label 'process_high'\ncpus 12", 1, 0, 0),
+#         # Non-alphanumeric characters in label
+#         ("label 'a:label:with:colons'\ncpus 12", 0, 2, 0),
+#         # Conflicting labels
+#         ("label 'process_high'\nlabel 'process_low'\ncpus 12", 0, 1, 0),
+#         # Duplicate labels
+#         ("label 'process_high'\nlabel 'process_high'\ncpus 12", 0, 2, 0),
+#         # Valid and non-standard labels
+#         ("label 'process_high'\nlabel 'process_extra_label'\ncpus 12", 1, 1, 0),
+#         # Non-standard label only
+#         ("label 'process_extra_label'\ncpus 12", 0, 2, 0),
+#         # Non-standard duplicates without quotes
+#         ("label process_extra_label\nlabel process_extra_label\ncpus 12", 0, 3, 0),
+#         # No label found
+#         ("cpus 12", 0, 1, 0),
+#     ],
+# )
+
 
 @pytest.mark.parametrize(
-    "content,passed,warned,failed",
+    "label_content,passed,warned,failed",
     [
         # Valid process label
-        ("label 'process_high'\ncpus 12", 1, 0, 0),
+        ("label 'process_high'", 1, 0, 0),
         # Non-alphanumeric characters in label
-        ("label 'a:label:with:colons'\ncpus 12", 0, 2, 0),
-        # Conflicting labels
-        ("label 'process_high'\nlabel 'process_low'\ncpus 12", 0, 1, 0),
+        ("label 'a:label:with:colons'", 0, 2, 0),
+        # Conflicting labels (multiple label lines)
+        ("label 'process_low'\nlabel 'process_high'", 0, 1, 0),
         # Duplicate labels
-        ("label 'process_high'\nlabel 'process_high'\ncpus 12", 0, 2, 0),
+        ("label 'process_high'\nlabel 'process_high'", 0, 2, 0),
         # Valid and non-standard labels
-        ("label 'process_high'\nlabel 'process_extra_label'\ncpus 12", 1, 1, 0),
+        ("label 'process_high'\nlabel 'process_extra_label'", 1, 1, 0),
         # Non-standard label only
-        ("label 'process_extra_label'\ncpus 12", 0, 2, 0),
-        # Non-standard duplicates without quotes
-        ("label process_extra_label\nlabel process_extra_label\ncpus 12", 0, 3, 0),
+        ("label 'process_extra_label'", 0, 2, 0),
+        # Duplicate non-standard labels
+        ("label 'process_extra_label'\nlabel 'process_extra_label'", 0, 3, 0),
         # No label found
-        ("cpus 12", 0, 1, 0),
+        ("cpus 2", 0, 1, 0),
     ],
 )
-def test_process_labels(content, passed, warned, failed):
+def test_process_labels(label_content, passed, warned, failed):
     """Test process label validation"""
-    mock_lint = MockModuleLint()
-    check_process_labels(mock_lint, content.splitlines())
+    # Create a temporary file with the specific label content
+    import tempfile
 
-    assert len(mock_lint.passed) == passed
-    assert len(mock_lint.warned) == warned
-    assert len(mock_lint.failed) == failed
+    # Create proper Nextflow content with the label
+    process_content = f"""process TEST_PROCESS {{
+    {label_content}
+
+    input:
+    path input_file
+
+    output:
+    path "output.txt"
+
+    script:
+    '''
+    echo "test" > output.txt
+    '''
+}}
+"""
+
+    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".nf", delete=False)
+    temp_file.write(process_content)
+    temp_file.close()
+
+    try:
+        # Create MockModuleLint but override with our specific test file
+        mock_lint = MockModuleLint()
+        mock_lint.cleanup()  # Clean up the default temp file
+        mock_lint.main_nf = temp_file.name
+
+        # Parse with Reftrace
+        module = Module.from_file(temp_file.name)
+        assert not isinstance(module, ParseError), f"Failed to parse test file: {module}"
+        # Run the check_process_labels function
+        check_process_labels(mock_lint, module)
+
+        # Verify results
+        assert len(mock_lint.passed) == passed, (
+            f"Expected {passed} passed tests, got {len(mock_lint.passed)}: {mock_lint.passed}"
+        )
+        assert len(mock_lint.warned) == warned, (
+            f"Expected {warned} warned tests, got {len(mock_lint.warned)}: {mock_lint.warned}"
+        )
+        assert len(mock_lint.failed) == failed, (
+            f"Expected {failed} failed tests, got {len(mock_lint.failed)}: {mock_lint.failed}"
+        )
+
+    finally:
+        # Clean up the temporary file
+        if Path(temp_file.name).exists():
+            Path(temp_file.name).unlink()
 
 
 @pytest.mark.parametrize(
