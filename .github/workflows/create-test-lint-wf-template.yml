@@ -150,7 +150,7 @@ jobs:
 
       # Run code style linting
       - name: Run pre-commit
-        run: uv run prek run --all-files
+        run: uv run prek run --config .pre-commit-config.yaml  --all-files
         working-directory: create-test-lint-wf
 
       # Remove TODO statements
@@ -181,7 +181,7 @@ jobs:
       # Run code style linting
       - name: run pre-commit
         shell: bash
-        run: uv run prek run --all-files
+        run: uv run prek run --config .pre-commit-config.yaml  --all-files
         working-directory: create-test-lint-wf
 
       # Run bump-version

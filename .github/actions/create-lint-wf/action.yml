@@ -37,7 +37,7 @@ runs:
     # Run code style linting
     - name: run pre-commit
       shell: bash
-      run: uv run prek run --all-files
+      run: uv run prek run --config .pre-commit-config.yaml --all-files
       working-directory: create-lint-wf
 
     # Update modules to the latest version
