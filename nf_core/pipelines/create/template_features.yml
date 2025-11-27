@@ -438,6 +438,7 @@ code_quality:
         - ".prettierignore"
         - ".prettierrc.yml"
         - ".github/workflows/fix-linting.yml"
+        - ".hooks/block_pipeline_outdir.sh"
       short_description: "Use code linters"
       description: "The pipeline will include code linters and CI tests to lint your code: pre-commit, editor-config and prettier."
       help_text: |
