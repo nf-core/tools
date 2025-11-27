@@ -202,7 +202,7 @@ class PipelineSync:
         # Track ignored files to avoid processing them
         self.ignored_files = self._get_ignored_files()
 
-    def get_wf_config(self):
+    def get_wf_config(self) -> None:
         """Check out the target branch if requested and fetch the nextflow config.
         Check that we have the required config variables.
         """
@@ -290,7 +290,7 @@ class PipelineSync:
                     raise SyncExceptionError(e)
                 deleted.add(Path(curr_dir))
 
-    def make_template_pipeline(self):
+    def make_template_pipeline(self) -> None:
         """
         Delete all files and make a fresh template using the workflow variables
         """
@@ -310,17 +310,12 @@ class PipelineSync:
                 yaml.safe_dump(self.config_yml.model_dump(exclude_none=True), config_path)
 
         try:
-            try:
-                default_branch = self.wf_config.manifest.default_branch or "master"
-            except AttributeError:
-                default_branch = "master"
-
             pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
                 outdir=str(self.pipeline_dir),
                 from_config_file=True,
                 no_git=True,
                 force=True,
-                default_branch=default_branch,
+                default_branch=self.wf_config.get("manifest.defaultBranch") or "master",
             )
             pipeline_create_obj.init_pipeline()
 
