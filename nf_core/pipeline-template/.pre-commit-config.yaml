@@ -41,3 +41,9 @@ repos:
       - id: nextflow-lint
         files: '\.nf$|nextflow\.config$'
         args: ["-output", "json"]
+  - repo: local
+    hooks:
+      - id: block-pipeline-outdir
+        name: Prevent committing output from pipeline test runs to the pipeline code itself
+        entry: ./.hooks/block_pipeline_outdir.sh
+        language: script
