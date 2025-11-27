@@ -6,13 +6,12 @@ FROM mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d36
 COPY . /root/nfcore-tools/
 
 # Explicitly reinstall python 3.13 via conda
-# install local nf-core tools version, and precommit hooks
+# Install uv and local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel pre-commit && \
-    pip install -r requirements.txt --no-cache-dir -e . && \
-    pre-commit install --install-hooks && \
-    rm -rf /root/.cache/pip
+    pip install --no-cache-dir --upgrade pip uv && \
+    uv pip install --system --no-cache-dir . && \
+    rm -rf /root/.cache/pip /root/.cache/uv
 
 # Install nextflow and nf-test via conda and run conda clean
 RUN conda install -c bioconda -y nextflow nf-test && \
