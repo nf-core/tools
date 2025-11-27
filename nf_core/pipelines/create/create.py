@@ -94,8 +94,9 @@ class PipelineCreate:
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
 
-        # Get the default branch name from the Git configuration
-        self.get_default_branch()
+        # Get the default branch name from the Git configuration if it was not parsed from nextflow.config previously
+        if self.default_branch == "master":
+            self.get_default_branch()
 
         self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
             self.config.skip_features or [], str(self.config.outdir)

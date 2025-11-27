@@ -310,11 +310,17 @@ class PipelineSync:
                 yaml.safe_dump(self.config_yml.model_dump(exclude_none=True), config_path)
 
         try:
+            try:
+                default_branch = self.wf_config.manifest.default_branch or "master"
+            except AttributeError:
+                default_branch = "master"
+
             pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
                 outdir=str(self.pipeline_dir),
                 from_config_file=True,
                 no_git=True,
                 force=True,
+                default_branch=default_branch,
             )
             pipeline_create_obj.init_pipeline()
 
