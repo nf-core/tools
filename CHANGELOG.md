@@ -15,6 +15,8 @@
 
 ### Linting
 
+- TEMPLATE: switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
+
 ### Modules
 
 ### Subworkflows
