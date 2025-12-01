@@ -10,6 +10,7 @@
 - switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.7 ([#3943](https://github.com/nf-core/tools/pull/3943))
 
 ### Template
 
