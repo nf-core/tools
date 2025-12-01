@@ -10,6 +10,7 @@
 - switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
+- Update dependency prettier to v3.7.3 ([#3945](https://github.com/nf-core/tools/pull/3945))
 
 ### Template
 
