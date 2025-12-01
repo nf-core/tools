@@ -11,6 +11,7 @@ import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
+import rich_click.rich_click as rc
 from trogon import tui
 
 from nf_core import __version__
@@ -54,14 +55,10 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
-from nf_core.commands_test_datasets import (
-    test_datasets_list_branches,
-    test_datasets_list_remote,
-    test_datasets_search,
-)
+from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download import DownloadError
+from nf_core.pipelines.download.download import DownloadError
 from nf_core.pipelines.list import autocomplete_pipelines
 from nf_core.utils import (
     check_if_outdated,
@@ -78,65 +75,10 @@ log = logging.getLogger()
 setup_nfcore_dir()
 
 # Set up nicer formatting of click cli help messages
-click.rich_click.MAX_WIDTH = 100
-click.rich_click.USE_RICH_MARKUP = True
-click.rich_click.COMMAND_GROUPS = {
-    "nf-core": [
-        {
-            "name": "Commands",
-            "commands": ["pipelines", "modules", "subworkflows", "configs", "test-datasets", "interface"],
-        },
-    ],
-    "nf-core pipelines": [
-        {
-            "name": "For users",
-            "commands": ["list", "launch", "download", "create-params-file"],
-        },
-        {
-            "name": "For developers",
-            "commands": [
-                "create",
-                "lint",
-                "bump-version",
-                "sync",
-                "schema",
-                "rocrate",
-                "create-logo",
-            ],
-        },
-    ],
-    "nf-core modules": [
-        {
-            "name": "For pipelines",
-            "commands": ["list", "info", "install", "update", "remove", "patch"],
-        },
-        {
-            "name": "Developing new modules",
-            "commands": ["create", "lint", "test", "bump-versions"],
-        },
-    ],
-    "nf-core subworkflows": [
-        {
-            "name": "For pipelines",
-            "commands": ["list", "info", "install", "update", "remove"],
-        },
-        {
-            "name": "Developing new subworkflows",
-            "commands": ["create", "lint", "test"],
-        },
-    ],
-    "nf-core configs": [
-        {
-            "name": "Config commands",
-            "commands": ["create"],
-        },
-    ],
-    "nf-core pipelines schema": [{"name": "Schema commands", "commands": ["validate", "build", "lint", "docs"]}],
-    "nf-core test-datasets": [{"name": "For developers", "commands": ["search", "list", "list-branches"]}],
-}
-click.rich_click.OPTION_GROUPS = {
-    "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
-}
+rc.MAX_WIDTH = 100
+rc.USE_RICH_MARKUP = True
+rc.COMMANDS_BEFORE_OPTIONS = True
+
 # Set up rich stderr console
 stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -167,17 +109,6 @@ def normalize_case(ctx, param, component_name):
         return component_name.casefold()
 
 
-# Define a custom click group class to sort options and commands in the help message
-# TODO: Remove this class and use COMMANDS_BEFORE_OPTIONS when rich-click is updated
-# See https://github.com/ewels/rich-click/issues/200 for more information
-class CustomRichGroup(click.RichGroup):
-    def format_options(self, ctx, formatter) -> None:
-        from rich_click.rich_help_rendering import get_rich_options
-
-        self.format_commands(ctx, formatter)
-        get_rich_options(self, ctx, formatter)
-
-
 def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
@@ -203,11 +134,8 @@ def run_nf_core():
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
-@tui(
-    command="interface",
-    help="Launch the nf-core interface",
-)
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]), cls=CustomRichGroup)
+@tui(command="interface", help="Launch the nf-core interface")
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
 @click.option(
     "-v",
@@ -219,6 +147,12 @@ def run_nf_core():
 @click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 @click.pass_context
+@click.rich_config(
+    {
+        "theme": "default-nu",
+        "options_table_column_types": ["opt_long", "opt_short", "help"],
+    }
+)
 def nf_core_cli(ctx, verbose, hide_progress, log_file):
     """
     nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
@@ -257,7 +191,11 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 
 
 # nf-core pipelines subcommands
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["p", "pipeline"])
+@click.command_panel("For users", commands=["download", "create-params-file", "launch", "list"])
+@click.command_panel(
+    "For developers", commands=["bump-version", "create", "create-logo", "lint", "rocrate", "schema", "sync"]
+)
 @click.pass_context
 def pipelines(ctx):
     """
@@ -424,33 +362,33 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(
     "-l",
     "--container-library",
     multiple=True,
-    help="Container registry/library or mirror to pull images from.",
+    help="Container registry/library or mirror to pull images from. Not available for Docker containers.",
 )
 @click.option(
     "-u",
     "--container-cache-utilisation",
     type=click.Choice(["amend", "copy", "remote"]),
-    help="Utilise a `singularity.cacheDir` in the download process, if applicable.",
+    help="Utilise a `singularity.cacheDir` in the download process, if applicable. Not available for Docker containers.",
 )
 @click.option(
     "-i",
     "--container-cache-index",
     type=str,
-    help="List of images already available in a remote `singularity.cacheDir`.",
+    help="List of images already available in a remote `singularity.cacheDir`. Not available for Docker containers.",
 )
 @click.option(
     "-d",
     "--parallel-downloads",
     type=int,
     default=4,
-    help="Number of parallel image downloads",
+    help="Number of allowed parallel tasks",
 )
 @click.pass_context
 def command_pipelines_download(
@@ -684,13 +622,16 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
 def command_pipelines_sync(
-    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
+    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
     """
-    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    pipelines_sync(
+        ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+    )
 
 
 # nf-core pipelines bump-version
@@ -908,7 +849,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
 
 
 # nf-core modules subcommands
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["m", "module"])
 @click.option(
     "-g",
     "--git-remote",
@@ -930,6 +871,8 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
     default=False,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
+@click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
+@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
 @click.pass_context
 def modules(ctx, git_remote, branch, no_pull):
     """
@@ -1445,7 +1388,7 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
 
 
 # nf-core subworkflows click command
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["s", "swf", "subworkflow"])
 @click.option(
     "-g",
     "--git-remote",
@@ -1467,6 +1410,8 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     default=False,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
+@click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
+@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
 @click.pass_context
 def subworkflows(ctx, git_remote, branch, no_pull):
     """
@@ -1902,7 +1847,7 @@ def command_subworkflows_update(
 
 
 # nf-core configs subcommands
-@nf_core_cli.group()
+@nf_core_cli.group(aliases=["c", "config"])
 @click.pass_context
 def configs(ctx):
     """
@@ -1912,19 +1857,7 @@ def configs(ctx):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
-
-# nf-core test-dataset subcommands
-@nf_core_cli.group()
-@click.pass_context
-def test_datasets(ctx):
-    """
-    Commands to manage nf-core test datasets.
-    """
-    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
-    # by means other than the `if` block below)
-    ctx.ensure_object(dict)
-
-
+    
 # nf-core configs create
 @configs.command("create")
 @click.pass_context
@@ -1942,6 +1875,18 @@ def create_configs(ctx):
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
+        
+
+# nf-core test-dataset subcommands
+@nf_core_cli.group(aliases=["tds"])
+@click.pass_context
+def test_datasets(ctx):
+    """
+    Commands to manage nf-core test datasets.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
 
 
 # nf-core test-dataset search
@@ -1960,7 +1905,7 @@ def create_configs(ctx):
     "--generate-dl-url",
     is_flag=True,
     default=False,
-    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 @click.argument("query", required=False)
 def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
@@ -1987,7 +1932,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, 
     "--generate-dl-url",
     is_flag=True,
     default=False,
-    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     """
@@ -2005,7 +1950,7 @@ def command_test_datasets_list_branches(ctx):
     """
     test_datasets_list_branches(ctx)
 
-
+    
 ## DEPRECATED commands since v3.0.0
 
 
@@ -2415,7 +2360,7 @@ def command_create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(

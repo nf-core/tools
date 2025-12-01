@@ -1,16 +1,12 @@
-FROM python:3.13-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419
+FROM python:3.14-slim@sha256:9813eecff3a08a6ac88aea5b43663c82a931fd9557f6aceaa847f0d8ce738978
 LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for nf-core/tools"
 
 # Do not pick up python packages from $HOME
 ENV PYTHONNUSERSITE=1
 
-# Update pip to latest version
-RUN python -m pip install --upgrade pip
-
-# Install dependencies
-COPY requirements.txt requirements.txt
-RUN python -m pip install -r requirements.txt
+# Update pip and install uv
+RUN python -m pip install --upgrade pip uv
 
 # Install Nextflow dependencies
 RUN apt-get update \
@@ -32,7 +28,7 @@ RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
     && chmod a+rx /usr/local/bin/nextflow
 # Install nf-test
-RUN curl -fsSL https://code.askimed.com/install/nf-test | bash \
+RUN curl -fsSL https://get.nf-test.com | bash \
     && mv nf-test /usr/local/bin \
     && chmod a+rx /usr/local/bin/nf-test
 
@@ -41,7 +37,7 @@ COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Install nf-core
-RUN python -m pip install .
+RUN uv pip install --system .
 
 # Set up entrypoint and cmd for easy docker usage
 ENTRYPOINT [ "nf-core" ]

@@ -98,16 +98,16 @@ class TestUtils(TestPipelines):
         files = pipeline_obj.list_files()
         assert tmp_fn in files
 
-    @mock.patch("os.path.exists")
-    @mock.patch("os.makedirs")
-    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.exists")
+    def test_request_cant_create_cache(self, mock_exists, mock_mkdir):
         """Test that we don't get an error when we can't create cachedirs"""
-        mock_mkd.side_effect = PermissionError()
         mock_exists.return_value = False
+        mock_mkdir.side_effect = PermissionError()
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):
-        result = nf_core.utils.pip_package("multiqc=1.10")
+        result = nf_core.utils.pip_package("multiqc=1.32")
         assert isinstance(result, dict)
 
     @mock.patch("requests.get")
@@ -118,7 +118,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     @mock.patch("requests.get")
     def test_pip_package_connection_error(self, mock_get):
@@ -128,7 +128,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     def test_pip_erroneous_package(self):
         """Tests the PyPi API package information query"""
@@ -151,10 +151,10 @@ class TestUtils(TestPipelines):
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
-            if r.get("tag_name") == "v1.10":
+            if r.get("tag_name") == "v1.32":
                 break
         else:
-            raise AssertionError("MultiQC release v1.10 not found")
+            raise AssertionError("MultiQC release v1.32 not found")
         assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
@@ -224,3 +224,22 @@ class TestUtils(TestPipelines):
         config = nf_core.utils.fetch_wf_config(".", False)
         assert len(config.keys()) == 1
         assert "params.param2" in list(config.keys())
+
+    @with_temporary_folder
+    def test_get_wf_files(self, tmpdir):
+        tmpdir = Path(tmpdir)
+        (tmpdir / ".gitignore").write_text(".nextflow*\nwork/\nresults/\n")
+        for rpath in [
+            ".git/should-ignore-1",
+            "work/should-ignore-2",
+            "results/should-ignore-3",
+            ".nextflow.should-ignore-4",
+            "dir1/should-match-1",
+            "should-match-2",
+        ]:
+            p = tmpdir / rpath
+            p.parent.mkdir(exist_ok=True)
+            p.touch()
+        files = nf_core.utils.get_wf_files(tmpdir)
+        files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
+        assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]

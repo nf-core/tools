@@ -7,7 +7,6 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
 
 import requests
 import rocrate.rocrate
@@ -37,13 +36,13 @@ class CustomNextflowCrateBuilder(NextflowCrateBuilder):
 
 def custom_make_crate(
     root: Path,
-    workflow: Optional[Path] = None,
-    repo_url: Optional[str] = None,
-    wf_name: Optional[str] = None,
-    wf_version: Optional[str] = None,
-    lang_version: Optional[str] = None,
-    ci_workflow: Optional[str] = "nf-test.yml",
-    diagram: Optional[Path] = None,
+    workflow: Path | None = None,
+    repo_url: str | None = None,
+    wf_name: str | None = None,
+    wf_version: str | None = None,
+    lang_version: str | None = None,
+    ci_workflow: str | None = "nf-test.yml",
+    diagram: Path | None = None,
 ) -> BaseROCrate:
     builder = CustomNextflowCrateBuilder(root, repo_url=repo_url)
 
@@ -83,7 +82,7 @@ class ROCrate:
 
         setup_requests_cachedir()
 
-    def create_rocrate(self, json_path: Union[None, Path] = None, zip_path: Union[None, Path] = None) -> bool:
+    def create_rocrate(self, json_path: None | Path = None, zip_path: None | Path = None) -> bool:
         """
         Create an RO Crate for a pipeline
 
@@ -143,7 +142,7 @@ class ROCrate:
         if self.pipeline_obj is None:
             raise ValueError("Pipeline object not loaded")
 
-        diagram: Optional[Path] = None
+        diagram: Path | None = None
         # find files (metro|tube)_?(map)?.png in the pipeline directory or docs/ using pathlib
         pattern = re.compile(r".*?(metro|tube|subway)_(map).*?\.png", re.IGNORECASE)
         for file in self.pipeline_dir.rglob("*.png"):
@@ -350,13 +349,13 @@ class ROCrate:
         """
         # check if we need to output a json file and/or a zip file based on the file extensions
         # try to find a json file
-        json_path: Optional[Path] = None
+        json_path: Path | None = None
         potential_json_path = Path(self.pipeline_dir, "ro-crate-metadata.json")
         if potential_json_path.exists():
             json_path = potential_json_path
 
         # try to find a zip file
-        zip_path: Optional[Path] = None
+        zip_path: Path | None = None
         potential_zip_path = Path(self.pipeline_dir, "ro-crate.crate.zip")
         if potential_zip_path.exists():
             zip_path = potential_zip_path
@@ -364,7 +363,7 @@ class ROCrate:
         return self.create_rocrate(json_path=json_path, zip_path=zip_path)
 
 
-def get_orcid(name: str) -> Optional[str]:
+def get_orcid(name: str) -> str | None:
     """
     Get the ORCID for a given name
 

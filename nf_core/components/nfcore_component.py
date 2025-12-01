@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +19,9 @@ class NFCoreComponent:
     def __init__(
         self,
         component_name: str,
-        repo_url: Optional[str],
+        repo_url: str | None,
         component_dir: Path,
-        repo_type: Optional[str],
+        repo_type: str | None,
         base_dir: Path,
         component_type: str,
         remote_component: bool = True,
@@ -47,22 +47,23 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed: list[tuple[str, str, Path]] = []
-        self.warned: list[tuple[str, str, Path]] = []
-        self.failed: list[tuple[str, str, Path]] = []
+        self.passed: list[tuple[str, str, str, Path]] = []
+        self.warned: list[tuple[str, str, str, Path]] = []
+        self.failed: list[tuple[str, str, str, Path]] = []
         self.inputs: list[list[dict[str, dict[str, str]]]] = []
         self.outputs: list[str] = []
+        self.topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]]
         self.has_meta: bool = False
-        self.git_sha: Optional[str] = None
+        self.git_sha: str | None = None
         self.is_patched: bool = False
-        self.branch: Optional[str] = None
-        self.workflow_name: Optional[str] = None
+        self.branch: str | None = None
+        self.workflow_name: str | None = None
 
         if remote_component:
             # Initialize the important files
             self.main_nf: Path = Path(self.component_dir, "main.nf")
-            self.meta_yml: Optional[Path] = Path(self.component_dir, "meta.yml")
-            self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
+            self.meta_yml: Path | None = Path(self.component_dir, "meta.yml")
+            self.environment_yml: Path | None = Path(self.component_dir, "environment.yml")
 
             component_list = self.component_name.split("/")
 
@@ -74,8 +75,8 @@ class NFCoreComponent:
             repo_dir = self.component_dir.parts[:name_index][-1]
 
             self.org = repo_dir
-            self.nftest_testdir: Optional[Path] = Path(self.component_dir, "tests")
-            self.nftest_main_nf: Optional[Path] = Path(self.nftest_testdir, "main.nf.test")
+            self.nftest_testdir: Path | None = Path(self.component_dir, "tests")
+            self.nftest_main_nf: Path | None = Path(self.nftest_testdir, "main.nf.test")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -108,7 +109,7 @@ class NFCoreComponent:
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
-    def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
+    def _get_main_nf_tags(self, test_main_nf: Path | str):
         """Collect all tags from the main.nf.test file."""
         tags = []
         with open(test_main_nf) as fh:
@@ -117,7 +118,7 @@ class NFCoreComponent:
                     tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Union[Path, str]):
+    def _get_included_components(self, main_nf: Path | str):
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf) as fh:
@@ -134,7 +135,7 @@ class NFCoreComponent:
                     included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Union[Path, str]):
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str):
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf_test) as fh:
@@ -207,7 +208,7 @@ class NFCoreComponent:
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
-                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                regex = r"\b(val|path)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -226,6 +227,7 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
+            log.debug(f"Inputs: {inputs}")
             self.inputs = inputs
         elif self.component_type == "subworkflows":
             # get input values from main.nf after "take:"
@@ -252,8 +254,9 @@ class NFCoreComponent:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Found output_data: {output_data}")
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout|eval)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -278,6 +281,7 @@ class NFCoreComponent:
                 elif len(channel_elements) > 1:
                     outputs[match_emit.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
+            log.debug(f"Outputs: {outputs}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
             outputs = []
@@ -294,3 +298,46 @@ class NFCoreComponent:
                     pass
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
+
+    def get_topics_from_main_nf(self) -> None:
+        with open(self.main_nf) as f:
+            data = f.read()
+        if self.component_type == "modules":
+            topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
+            # get topic name from main.nf after "output:". the names are always after "topic:"
+            if "output:" not in data:
+                log.debug(f"Could not find any outputs in {self.main_nf}")
+                self.topics = topics
+                return
+            output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Output data: {output_data}")
+            regex_topic = r"topic:\s*([^)\s,]+)"
+            regex_elements = r"\b(val|path|env|stdout|eval)\b\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            for line in output_data.split("\n"):
+                match_topic = re.search(regex_topic, line)
+                matches_elements = re.finditer(regex_elements, line)
+                if not match_topic:
+                    continue
+                channel_elements: list[dict[str, dict]] = []
+                topic_name = match_topic.group(1)
+                if topic_name not in topics:
+                    topics[topic_name] = []
+                for _, match_element in enumerate(matches_elements, start=1):
+                    topic_val = None
+                    if match_element.group(3):
+                        topic_val = match_element.group(3)
+                    elif match_element.group(4):
+                        topic_val = match_element.group(4)
+                    if topic_val:
+                        topic_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', topic_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        topic_val = topic_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                        channel_elements.append({topic_val: {}})
+                if len(channel_elements) == 1:
+                    topics[topic_name].append(channel_elements[0])
+                elif len(channel_elements) > 1:
+                    topics[topic_name].append(channel_elements)
+            log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
+            log.debug(f"Topics: {topics}")
+            self.topics = topics
