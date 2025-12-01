@@ -35,6 +35,9 @@ from packaging.version import Version
 from pydantic import BaseModel, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
+from textual.message import Message
+from textual.widget import Widget
+from textual.widgets import Markdown, RichLog
 
 import nf_core
 
@@ -1668,3 +1671,46 @@ def get_wf_files(wf_path: Path):
             wf_files.append(str(path))
 
     return wf_files
+
+
+# General textual-related functions and objects
+
+
+class HelpText(Markdown):
+    """A class to show a text box with help text."""
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    def show(self) -> None:
+        """Method to show the help text box."""
+        self.add_class("displayed")
+
+    def hide(self) -> None:
+        """Method to hide the help text box."""
+        self.remove_class("displayed")
+
+
+class LoggingConsole(RichLog):
+    file = False
+    console: Widget
+
+    def print(self, content):
+        self.write(content)
+
+
+class ShowLogs(Message):
+    """Custom message to show the logging messages."""
+
+    pass
+
+
+# Functions
+def add_hide_class(app, widget_id: str) -> None:
+    """Add class 'hide' to a widget. Not display widget."""
+    app.get_widget_by_id(widget_id).add_class("hide")
+
+
+def remove_hide_class(app, widget_id: str) -> None:
+    """Remove class 'hide' to a widget. Display widget."""
+    app.get_widget_by_id(widget_id).remove_class("hide")
