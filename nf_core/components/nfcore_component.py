@@ -332,7 +332,7 @@ class NFCoreComponent:
                         topic_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', topic_val)[
                             0
                         ]  # Takes only first part, avoid commas in quotes
-                        topic_val = topic_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                        topic_val = topic_val.strip()
                         channel_elements.append({topic_val: {}})
                 if len(channel_elements) == 1:
                     topics[topic_name].append(channel_elements[0])
