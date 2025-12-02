@@ -14,13 +14,16 @@ class ContainerConfigs:
 
     Args:
         workflow_directory (str | Path): The directory containing the workflow files.
+        org (str): Organisation path.
     """
 
     def __init__(
         self,
         workflow_directory: str | Path = ".",
+        org: str = "nf-core",
     ):
         self.workflow_directory = Path(workflow_directory)
+        self.org: str = org
 
     def generate_container_configs(self) -> None:
         """Generate the container configuration files for a pipeline."""
@@ -97,7 +100,7 @@ class ContainerConfigs:
                 module_path = Path(module_name.lower())
 
             try:
-                with open(self.workflow_directory / "modules" / module_path / "meta.yml") as fh:
+                with open(self.workflow_directory / "modules" / module_path / self.org / "meta.yml") as fh:
                     meta = yaml.safe_load(fh)
             except FileNotFoundError:
                 log.warning(f"Could not find meta.yml for {module_name}")

@@ -171,7 +171,7 @@ class ComponentInstall(ComponentCommand):
         # Regenerate container configuration files for the pipeline when modules are installed
         if self.component_type == "modules":
             try:
-                ContainerConfigs(self.directory).generate_container_configs()
+                ContainerConfigs(self.directory, self.modules_repo.repo_path).generate_container_configs()
             except UserWarning as e:
                 log.warning(f"Could not regenerate container configuration files: {e}")
 
