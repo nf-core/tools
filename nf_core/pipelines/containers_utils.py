@@ -27,11 +27,11 @@ class ContainerConfigs:
 
     def generate_container_configs(self) -> None:
         """Generate the container configuration files for a pipeline."""
-        self.check_nextflow_version()
+        self.check_nextflow_version_sufficient()
         default_config = self.generate_default_container_config()
         self.generate_all_container_configs(default_config)
 
-    def check_nextflow_version(self) -> None:
+    def check_nextflow_version_sufficient(self) -> None:
         """Check if the Nextflow version is sufficient to run `nextflow inspect`."""
         if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
             raise UserWarning(
@@ -80,7 +80,7 @@ class ContainerConfigs:
         }
         for line in default_config.split("\n"):
             if line.startswith("process"):
-                pattern = r"process { withName: \'(.*)\' { container = \'(.*)\' } }\n"
+                pattern = r"process { withName: \'(.*)\' { container = \'(.*)\' } }"
                 match = re.search(pattern, line)
                 if match:
                     try:
@@ -100,7 +100,7 @@ class ContainerConfigs:
                 module_path = Path(module_name.lower())
 
             try:
-                with open(self.workflow_directory / "modules" / module_path / self.org / "meta.yml") as fh:
+                with open(self.workflow_directory / "modules" / self.org / module_path / "meta.yml") as fh:
                     meta = yaml.safe_load(fh)
             except FileNotFoundError:
                 log.warning(f"Could not find meta.yml for {module_name}")
@@ -159,5 +159,5 @@ class ContainerConfigs:
             with open(self.workflow_directory / "conf" / f"containers_{platform}.config", "w") as fh:
                 for module_name in containers[platform].keys():
                     fh.write(
-                        f"process {{ withName: '{module_name}' {{ container = {containers[platform][module_name]}' }} }}\n"
+                        f"process {{ withName: '{module_name}' {{ container = '{containers[platform][module_name]}' }} }}\n"
                     )
