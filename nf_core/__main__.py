@@ -1410,7 +1410,7 @@ def command_modules_containers_create(ctx, await_, module):
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
-    pass
+    modules_containers_create(ctx, module, await_)
 
 
 @modules_containers.command("conda-lock")
@@ -1427,7 +1427,7 @@ def command_modules_containers_conda_lock(ctx, module):
     """
     Build a Docker linux/arm64 container and fetch the conda lock file for a module.
     """
-    pass
+    modules_containers_conda_lock(ctx, module)
 
 
 @modules_containers.command("lint")
@@ -1444,7 +1444,7 @@ def command_modules_containers_lint(ctx, module):
     """
     Confirm that container images for a module exist.
     """
-    pass
+    modules_containers_lint(ctx, module)
 
 
 @modules_containers.command("list")
@@ -1461,7 +1461,7 @@ def command_modules_containers_list(ctx, module):
     """
     Print containers defined in a module meta.yml.
     """
-    pass
+    modules_containers_list(ctx, module)
 
 
 # nf-core subworkflows click command

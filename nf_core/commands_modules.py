@@ -357,14 +357,86 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
         log.critical(e)
         sys.exit(1)
 
-def modules_containers_create(ctx,):
-    pass
-    
-def modules_containers_conda_lock():
-    pass
 
-def modules_containers_list():
-    pass
-    
-def modules_containers_lint():
-    pass
+def modules_containers_create(ctx, module, await_: bool):
+    """
+    Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
+    """
+    from nf_core.modules.containers import ModuleContainers
+
+    try:
+        manager = ModuleContainers(
+            ".",
+            ctx.obj.get("modules_repo_url"),
+            ctx.obj.get("modules_repo_branch"),
+            ctx.obj.get("modules_repo_no_pull"),
+            ctx.obj.get("hide_progress"),
+        )
+        commands = manager.create(module, await_)
+        for cmd in commands:
+            stdout.print(" ".join(cmd))
+    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+def modules_containers_conda_lock(ctx, module,):
+    """
+    Build a Docker linux/arm64 container and fetch the conda lock file using wave.
+    """
+    from nf_core.modules.containers import ModuleContainers 
+
+    try:
+        manager = ModuleContainers(
+            ".",
+            ctx.obj.get("modules_repo_url"),
+            ctx.obj.get("modules_repo_branch"),
+            ctx.obj.get("modules_repo_no_pull"),
+            ctx.obj.get("hide_progress"),
+        )
+        cmd = manager.conda_lock(module)
+        stdout.print(" ".join(cmd))
+    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+def modules_containers_list(ctx, module,):
+    """
+    Print containers defined in a module meta.yml.
+    """
+    from nf_core.modules.containers import ModuleContainers
+
+    try:
+        manager = ModuleContainers(
+            ".",
+            ctx.obj.get("modules_repo_url"),
+            ctx.obj.get("modules_repo_branch"),
+            ctx.obj.get("modules_repo_no_pull"),
+            ctx.obj.get("hide_progress"),
+        )
+        containers = manager.list_containers(module)
+        stdout.print("\n".join(containers))
+    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+        log.error(e)
+        sys.exit(1)
+
+def modules_containers_lint(ctx, module,):
+    """
+    Confirm containers are defined for the module.
+    """
+    from nf_core.modules.containers import ModuleContainers
+
+    try:
+        manager = ModuleContainers(
+            ".",
+            ctx.obj.get("modules_repo_url"),
+            ctx.obj.get("modules_repo_branch"),
+            ctx.obj.get("modules_repo_no_pull"),
+            ctx.obj.get("hide_progress"),
+        )
+        containers = manager.lint(module)
+        stdout.print(f"Found {len(containers)} container(s) for {module}.")
+    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+        log.error(e)
+        sys.exit(1)
