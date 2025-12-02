@@ -11,6 +11,7 @@
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
+- switch pre-commit to prek for development ([#3954](https://github.com/nf-core/tools/pull/3954))
 
 ### Template
 
