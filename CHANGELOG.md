@@ -12,6 +12,7 @@
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
 - Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
+- Add new command to generate pipeline container config files ([#3955](https://github.com/nf-core/tools/pull/3955))
 
 ### Template
 
