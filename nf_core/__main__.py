@@ -27,6 +27,10 @@ from nf_core.commands_modules import (
     modules_remove,
     modules_test,
     modules_update,
+    modules_containers_create,
+    modules_containers_conda_lock,
+    modules_containers_list,
+    modules_containers_lint,
 )
 from nf_core.commands_pipelines import (
     pipelines_bump_version,
@@ -1380,33 +1384,83 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
 @modules.group("containers")
 @click.pass_context
 def modules_containers(ctx):
-    """ """
+    """Manage module container builds and metadata."""
     pass
 
 
 @modules_containers.command("create")
-def command_modules_containers_create(ctx):
+@click.pass_context
+@click.option(
+    "-await",
+    "--await",
+    "await_",
+    is_flag=True,
+    default=False,
+    help="Wait for the container build to finish.",
+)
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_create(ctx, await_, module):
     """
-    Build the docker and singularity container files for linux/arm64 linux/amd64 with wave and create container config file.
+    Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
     pass
 
 
 @modules_containers.command("conda-lock")
-def command_modules_containers_conda_lock(ctx):
-    """ """
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_conda_lock(ctx, module):
+    """
+    Build a Docker linux/arm64 container and fetch the conda lock file for a module.
+    """
     pass
 
 
 @modules_containers.command("lint")
-def command_modules_containers_lint(ctx):
-    """ """
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_lint(ctx, module):
+    """
+    Confirm that container images for a module exist.
+    """
     pass
 
 
 @modules_containers.command("list")
-def command_modules_containers_list(ctx):
-    """ """
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_list(ctx, module):
+    """
+    Print containers defined in a module meta.yml.
+    """
     pass
 
 

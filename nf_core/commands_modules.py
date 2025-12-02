@@ -356,3 +356,15 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
+
+def modules_containers_create(ctx,):
+    pass
+    
+def modules_containers_conda_lock():
+    pass
+
+def modules_containers_list():
+    pass
+    
+def modules_containers_lint():
+    pass
