@@ -18,6 +18,7 @@ from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.pipelines.containers_utils import ContainerConfigs
 from nf_core.utils import plural_es, plural_s, plural_y
 
 log = logging.getLogger(__name__)
@@ -298,6 +299,13 @@ class ComponentUpdate(ComponentCommand):
                 # Update modules.json with newly installed component
                 self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
+
+                # Regenerate container configuration files for the pipeline when modules are updated
+                if self.component_type == "modules":
+                    try:
+                        ContainerConfigs(self.directory).generate_container_configs()
+                    except UserWarning as e:
+                        log.warning(f"Could not regenerate container configuration files: {e}")
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
                 if not silent and len(modules_to_update + subworkflows_to_update) > 0:
