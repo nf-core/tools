@@ -862,7 +862,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
-@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
+@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions", "containers"])
 @click.pass_context
 def modules(ctx, git_remote, branch, no_pull):
     """
@@ -1375,6 +1375,39 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     the nf-core/modules repo.
     """
     modules_bump_versions(ctx, tool, directory, all, show_all, dry_run)
+
+
+@modules.group("containers")
+@click.pass_context
+def modules_containers(ctx):
+    """ """
+    pass
+
+
+@modules_containers.command("create")
+def command_modules_containers_create(ctx):
+    """
+    Build the docker and singularity container files for linux/arm64 linux/amd64 with wave and create container config file.
+    """
+    pass
+
+
+@modules_containers.command("conda-lock")
+def command_modules_containers_conda_lock(ctx):
+    """ """
+    pass
+
+
+@modules_containers.command("lint")
+def command_modules_containers_lint(ctx):
+    """ """
+    pass
+
+
+@modules_containers.command("list")
+def command_modules_containers_list(ctx):
+    """ """
+    pass
 
 
 # nf-core subworkflows click command
