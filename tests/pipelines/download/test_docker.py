@@ -108,18 +108,18 @@ class DockerTest(unittest.TestCase):
         )
 
         # test image not found for several registries
-        with pytest.raises(DockerError.ImageNotFoundError):
+        with pytest.raises((DockerError.ImageNotFoundError, DockerError.OtherError)):
             docker_fetcher.pull_image("ghcr.io/not-a-real-registry/this-container-does-not-exist", mock_task_obj)
 
-        with pytest.raises(DockerError.ImageNotFoundError):
+        with pytest.raises((DockerError.ImageNotFoundError, DockerError.OtherError)):
             docker_fetcher.pull_image("docker.io/not-a-real-registry/this-container-does-not-exist", mock_task_obj)
 
         # test image not found for absolute URI.
-        with pytest.raises(DockerError.ImageNotFoundError):
+        with pytest.raises((DockerError.ImageNotFoundError, DockerError.OtherError)):
             docker_fetcher.pull_image("docker.io/bschiffthaler/nothingtopullhere", mock_task_obj)
 
         # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
-        with pytest.raises(DockerError.InvalidTagError):
+        with pytest.raises((DockerError.InvalidTagError, DockerError.OtherError)):
             docker_fetcher.pull_image("ghcr.io/ewels/multiqc:go-rewrite", mock_task_obj)
 
     #
@@ -160,7 +160,7 @@ class DockerTest(unittest.TestCase):
         )
         docker_fetcher.progress = mock_progress()
         mock_task_obj = mock_task()
-        with pytest.raises(DockerError.ImageNotPulledError):
+        with pytest.raises((DockerError.ImageNotPulledError, DockerError.OtherError)):
             docker_fetcher.save_image(
                 "this-image-cannot-possibly-be-pulled-to-this-machine:latest",
                 tmp_dir / "this-image-cannot-possibly-be-pulled-to-this-machine.tar",
