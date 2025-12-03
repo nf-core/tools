@@ -1406,11 +1406,18 @@ def modules_containers(ctx):
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-def command_modules_containers_create(ctx, await_, module):
+@click.option(
+    "--dry-run/--run",
+    "dry_run",
+    is_flag=True,
+    default=False,
+    help="Print the wave commands instead of executing them.",
+)
+def command_modules_containers_create(ctx, await_, dry_run, module):
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
-    modules_containers_create(ctx, module, await_)
+    modules_containers_create(ctx, module, await_, dry_run)
 
 
 @modules_containers.command("conda-lock")
