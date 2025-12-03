@@ -92,7 +92,8 @@ NFCORE_CACHE_DIR = Path(
 )
 NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
-# TODO container-conversion: Add constants
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
 
 
 def fetch_remote_version(source_url):
