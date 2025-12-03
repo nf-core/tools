@@ -25,6 +25,8 @@ process {{ component_name_underscore|upper }} {
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     {% endif -%}
     conda "${moduleDir}/environment.yml"
+
+    // TODO container-conversion: Update to only one line. Move the platform logic to meta.yml
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
         '{{ docker_container if docker_container else 'biocontainers/YOUR-TOOL-HERE' }}' }"

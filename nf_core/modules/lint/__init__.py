@@ -236,6 +236,7 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
+            # TODO container-conversion:  get_containers from main_nf
             # Update meta.yml file if requested
             if self.fix and mod.meta_yml is not None:
                 self.update_meta_yml_file(mod)
@@ -263,6 +264,8 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
+            # TODO container-conversion:  get_containers from main_nf
+
             # Update meta.yml file if requested
             if self.fix:
                 self.update_meta_yml_file(mod)
@@ -324,7 +327,13 @@ class ModuleLint(ComponentLint):
             return {}
 
         def _sort_meta_yml(meta_yml: dict) -> dict:
-            """Ensure topics comes after input/output and before authors"""
+            """
+            Ensure topics comes after input/output and before authors.
+            Ensure containers comes at the end of the meta.yml.
+            """
+
+            # TODO container-conversion: Sort container section to end of meta.yml
+
             # Early return if no topics to reorder
             if "topics" not in meta_yml:
                 return meta_yml
@@ -363,6 +372,9 @@ class ModuleLint(ComponentLint):
         if "output" in meta_yml:
             correct_outputs = self.obtain_outputs(mod.outputs)
             meta_outputs = self.obtain_outputs(meta_yml["output"])
+        if "containers" in meta_yml:
+            # TODO container-conversion: Read from main.nf
+            pass
 
         correct_topics = self.obtain_topics(mod.topics)
         meta_topics = self.obtain_topics(meta_yml.get("topics", {}))
@@ -542,6 +554,9 @@ class ModuleLint(ComponentLint):
                         corrected_meta_yml["topics"]["versions"].append(corrected_meta_yml["output"][versions_key][0])
                         if hasattr(corrected_meta_yml["output"][versions_key], "yaml_set_anchor"):
                             corrected_meta_yml["output"][versions_key].yaml_set_anchor(versions_key)
+
+        # TODO container-conversion: If containers in original meta.yml:
+        # - Run _add_containers
 
         corrected_meta_yml = _sort_meta_yml(corrected_meta_yml)
 

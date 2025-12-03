@@ -92,6 +92,8 @@ NFCORE_CACHE_DIR = Path(
 )
 NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
+# TODO container-conversion: Add constants
+
 
 def fetch_remote_version(source_url):
     response = requests.get(source_url, timeout=3)
