@@ -8,8 +8,8 @@ from rich.syntax import Syntax
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.components_utils import try_generate_container_configs
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.pipelines.containers_utils import ContainerConfigs
 
 from .install import ComponentInstall
 
@@ -175,10 +175,7 @@ class ComponentRemove(ComponentCommand):
                         removed_components.append(component_name.replace("/", "_"))
             # Regenerate container configuration files for the pipeline when modules are removed
             if self.component_type == "modules":
-                try:
-                    ContainerConfigs(self.directory, repo_path).generate_container_configs()
-                except UserWarning as e:
-                    log.warning(f"Could not regenerate container configuration files: {e}")
+                try_generate_container_configs(self.directory, repo_path)
 
             # print removed dependencies
             if removed_components:

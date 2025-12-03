@@ -106,53 +106,22 @@ class ContainerConfigs:
                 log.warning(f"Could not find meta.yml for {module_name}")
                 continue
 
-            try:
-                containers["docker_arm64"][module_name] = meta["containers"]["docker"]["linux_arm64"]["name"]
-            except KeyError:
-                log.warning(f"Could not find docker linux_arm64 container for {module_name}")
-                continue
-            try:
-                containers["singularity_oras_amd64"][module_name] = meta["containers"]["singularity"]["linux_amd64"][
-                    "name"
-                ]
-            except KeyError:
-                log.warning(f"Could not find singularity linux_amd64 oras container for {module_name}")
-                continue
-            try:
-                containers["singularity_oras_arm64"][module_name] = meta["containers"]["singularity"]["linux_arm64"][
-                    "name"
-                ]
-            except KeyError:
-                log.warning(f"Could not find singularity linux_arm64 oras container for {module_name}")
-                continue
-            try:
-                containers["singularity_https_amd64"][module_name] = meta["containers"]["singularity"]["linux_amd64"][
-                    "https"
-                ]
-            except KeyError:
-                log.warning(f"Could not find singularity linux_amd64 https URL for {module_name}")
-                continue
-            try:
-                containers["singularity_https_arm64"][module_name] = meta["containers"]["singularity"]["linux_arm64"][
-                    "https"
-                ]
-            except KeyError:
-                log.warning(f"Could not find singularity linux_arm64 https URL for {module_name}")
-                continue
-            try:
-                containers["conda_amd64_lockfile"][module_name] = meta["containers"]["conda"]["linux_amd64"][
-                    "lock_file"
-                ]
-            except KeyError:
-                log.warning(f"Could not find conda linux_amd64 lock file for {module_name}")
-                continue
-            try:
-                containers["conda_arm64_lockfile"][module_name] = meta["containers"]["conda"]["linux_arm64"][
-                    "lock_file"
-                ]
-            except KeyError:
-                log.warning(f"Could not find conda linux_arm64 lock file for {module_name}")
-                continue
+            platforms: dict[str, list[str]] = {
+                "docker_arm64": ["docker", "linux_arm64", "name"],
+                "singularity_oras_amd64": ["singularity", "linux_amd64", "name"],
+                "singularity_oras_arm64": ["singularity", "linux_arm64", "name"],
+                "singularity_https_amd64": ["singularity", "linux_amd64", "https"],
+                "singularity_https_arm64": ["singularity", "linux_arm64", "https"],
+                "conda_amd64_lockfile": ["conda", "linux_amd64", "lock_file"],
+                "conda_arm64_lockfile": ["conda", "linux_arm64", "lock_file"],
+            }
+
+            for p_name, p_keys in platforms.items():
+                try:
+                    containers[p_name][module_name] = meta["containers"][p_keys[0]][p_keys[1]][p_keys[2]]
+                except KeyError:
+                    log.warning(f"Could not find {p_name} container for {module_name}")
+                    continue
 
         # write config files
         for platform in containers.keys():

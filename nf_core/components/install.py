@@ -16,13 +16,13 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import (
     get_components_to_install,
     prompt_component_version_sha,
+    try_generate_container_configs,
 )
 from nf_core.components.constants import (
     NF_CORE_MODULES_NAME,
 )
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
-from nf_core.pipelines.containers_utils import ContainerConfigs
 
 log = logging.getLogger(__name__)
 
@@ -170,10 +170,7 @@ class ComponentInstall(ComponentCommand):
 
         # Regenerate container configuration files for the pipeline when modules are installed
         if self.component_type == "modules":
-            try:
-                ContainerConfigs(self.directory, self.modules_repo.repo_path).generate_container_configs()
-            except UserWarning as e:
-                log.warning(f"Could not regenerate container configuration files: {e}")
+            try_generate_container_configs(self.directory, self.modules_repo.repo_path)
 
         if not silent:
             modules_json.load()

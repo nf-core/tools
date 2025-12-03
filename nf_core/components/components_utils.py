@@ -9,6 +9,7 @@ import ruamel.yaml
 
 import nf_core.utils
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.pipelines.containers_utils import ContainerConfigs
 
 log = logging.getLogger(__name__)
 
@@ -279,3 +280,10 @@ def get_channel_info_from_biotools(
     # If the tool name was not found in the response
     log.warning(f"Could not find an EDAM ontology term for '{tool_name}'")
     return None
+
+
+def try_generate_container_configs(directory: str | Path, path: str):
+    try:
+        ContainerConfigs(directory, path).generate_container_configs()
+    except UserWarning as e:
+        log.warning(f"Could not regenerate container configuration files: {e}")
