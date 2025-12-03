@@ -2,12 +2,9 @@ import logging
 from pathlib import Path
 
 from nf_core.modules.info import ModuleInfo
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
 log = logging.getLogger(__name__)
-
-# TODO: Use these constants
-CONTAINER_SYSTEMS = ["docker", "singularity"]
-CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
 
 
 class ModuleContainers:
@@ -63,17 +60,15 @@ class ModuleContainers:
     #     """
     #     return self._containers_from_meta(self._resolve_module_dir(module))
 
-    def list_containers(self, module: str) -> None:
+    def list_containers(self, module: str) -> list[tuple[str, str, str]]:
         """
-        Print containers defined in the module meta.yml.
+        Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """
         containers_valid = self._containers_from_meta(self, module, self.directory)
-        # TODO container-conversion: Print container list (as rich table?)
-
-        # make ruff happy ...
-        print(containers_valid)
-
-        pass
+        containers_flat = [
+            (cs, p, containers_valid[cs][p]["name"]) for cs in CONTAINER_SYSTEMS for p in CONTAINER_PLATFORMS
+        ]
+        return containers_flat
 
     def _resolve_module_dir(self, module: str | Path) -> Path:
         if module is None:
@@ -104,18 +99,18 @@ class ModuleContainers:
         if module_info.meta is None:
             raise ValueError(f"The meta.yml for module {module_name} could not be parsed or doesn't exist.")
 
-        containers = module_info.meta.get("containers", None)
-        if containers is None:
+        containers = module_info.meta.get("containers")
+        if not containers:
             raise ValueError(f"Required section 'containers' missing from meta.yaml for module '{module_name}'")
 
         for system in CONTAINER_SYSTEMS:
-            cs = containers.get(system, None)
-            if cs is None:
+            cs = containers.get(system)
+            if not cs:
                 raise ValueError(f"Container missing for {cs}")
 
             for pf in CONTAINER_PLATFORMS:
-                spec = containers.get(pf, None)
-                if spec is None:
+                spec = containers.get(pf)
+                if not spec:
                     raise ValueError(f"Platform build {pf} missing for {cs} container for module {module_name}")
 
         return containers
