@@ -1,7 +1,13 @@
 import logging
 from pathlib import Path
 
+from nf_core.modules.info import ModuleInfo
+
 log = logging.getLogger(__name__)
+
+# TODO: Use these constants
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
 
 
 class ModuleContainers:
@@ -57,11 +63,17 @@ class ModuleContainers:
     #     """
     #     return self._containers_from_meta(self._resolve_module_dir(module))
 
-    # def list_containers(self, module: str) -> list[str]:
-    #     """
-    #     Return containers defined in the module meta.yml.
-    #     """
-    #     return self._containers_from_meta(self._resolve_module_dir(module))
+    def list_containers(self, module: str) -> None:
+        """
+        Print containers defined in the module meta.yml.
+        """
+        containers_valid = self._containers_from_meta(self, module, self.directory)
+        # TODO container-conversion: Print container list (as rich table?)
+
+        # make ruff happy ...
+        print(containers_valid)
+
+        pass
 
     def _resolve_module_dir(self, module: str | Path) -> Path:
         if module is None:
@@ -82,25 +94,28 @@ class ModuleContainers:
             raise FileNotFoundError(f"environment.yml not found for module at {module_dir}")
         return env_path
 
-    # @staticmethod
-    # def _containers_from_meta(module_dir: Path) -> list[str]:
-    #     meta_path = module_dir / "meta.yml"
-    #     if not meta_path.exists():
-    #         raise FileNotFoundError(f"meta.yml not found for module at {module_dir}")
+    @staticmethod
+    def _containers_from_meta(cls, module_name: str, dir: Path = Path(".")) -> dict:
+        """
+        Return containers defined in the module meta.yml.
+        """
+        module_info = ModuleInfo(dir, module_name)
+        module_info.get_component_info()
+        if module_info.meta is None:
+            raise ValueError(f"The meta.yml for module {module_name} could not be parsed or doesn't exist.")
 
-    #     with open(meta_path) as fh:
-    #         meta = yaml.safe_load(fh) or {}
+        containers = module_info.meta.get("containers", None)
+        if containers is None:
+            raise ValueError(f"Required section 'containers' missing from meta.yaml for module '{module_name}'")
 
-    #     containers = meta.get("containers")
-    #     if containers is None:
-    #         raise UserWarning("No containers defined in meta.yml")
-    #     if not isinstance(containers, list):
-    #         raise ValueError("Expected 'containers' to be a list in meta.yml")
+        for system in CONTAINER_SYSTEMS:
+            cs = containers.get(system, None)
+            if cs is None:
+                raise ValueError(f"Container missing for {cs}")
 
-    #     cleaned = [c for c in containers if c is not None and str(c).strip()]
-    #     if len(cleaned) != len(containers):
-    #         raise UserWarning("Empty container entries found in meta.yml")
-    #     if len(cleaned) == 0:
-    #         raise UserWarning("No containers defined in meta.yml")
+            for pf in CONTAINER_PLATFORMS:
+                spec = containers.get(pf, None)
+                if spec is None:
+                    raise ValueError(f"Platform build {pf} missing for {cs} container for module {module_name}")
 
-    #     return cleaned
+        return containers
