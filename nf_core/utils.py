@@ -103,7 +103,8 @@ NFCORE_DIR = Path(
     "nfcore",
 )
 
-# TODO container-conversion: Add constants
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
 
 
 def unquote(s: str) -> str:
