@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-import yaml
-
 log = logging.getLogger(__name__)
 
 
@@ -11,7 +9,7 @@ class ModuleContainers:
     Helpers for building, linting and listing module containers.
     """
 
-    def __init__( # not sure how accurate this is...
+    def __init__(  # not sure how accurate this is...
         self,
         directory: str | Path = ".",
         remote_url: str | None = None,
@@ -31,6 +29,7 @@ class ModuleContainers:
         """
         # module_dir = self._resolve_module_dir(module)
         # env_path = self._environment_path(module_dir)
+        env_path = None  # TODO: remove
 
         commands: list[list[str]] = []
         for profile in ["docker", "singularity"]:
@@ -64,17 +63,16 @@ class ModuleContainers:
     #     """
     #     return self._containers_from_meta(self._resolve_module_dir(module))
 
-    def _resolve_module_dir(self, module: str) -> Path:
+    def _resolve_module_dir(self, module: str | Path) -> Path:
         if module is None:
-            raise UserWarning("Please specify a module name.")
+            raise ValueError("Please specify a module name.")
 
-        module_path = Path(module)
-        if module_path.parts and module_path.parts[0] == "nf-core":
-            module_path = Path(*module_path.parts[1:])
-
-        module_dir = self.directory / "modules" / "nf-core" / module_path
+        module_dir = Path(self.directory, "modules", "nf-core", module)
         if not module_dir.exists():
-            raise LookupError(f"Module '{module}' not found at {module_dir}")
+            raise ValueError(f"Module '{module}' not found at {module_dir}")
+
+        # TODO: Check if meta.yml and environment.yml are there
+
         return module_dir
 
     @staticmethod
