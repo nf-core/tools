@@ -30,13 +30,12 @@ class ModuleContainers:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
-        # module_dir = self._resolve_module_dir(module)
-        # env_path = self._environment_path(module_dir)
-        env_path = None  # TODO: remove
+        module_dir = self._resolve_module_dir(module)
+        env_path = self._environment_path(module_dir)
 
         commands: list[list[str]] = []
-        for profile in ["docker", "singularity"]:
-            for platform in ["linux/amd64", "linux/arm64"]:
+        for profile in CONTAINER_SYSTEMS:
+            for platform in CONTAINER_PLATFORMS:
                 cmd = ["wave", "--conda-file", str(env_path), "--freeze", "--platform", platform]
                 # here "--tower-token" ${{ secrets.TOWER_ACCESS_TOKEN }} --tower-workspace-id ${{ secrets.TOWER_WORKSPACE_ID }}]
                 if profile == "singularity":
