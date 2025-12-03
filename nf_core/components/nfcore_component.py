@@ -58,6 +58,7 @@ class NFCoreComponent:
         self.is_patched: bool = False
         self.branch: str | None = None
         self.workflow_name: str | None = None
+        # TODO container-conversion: add containers (or containeR :D)
 
         if remote_component:
             # Initialize the important files

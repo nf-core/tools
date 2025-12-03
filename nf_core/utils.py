@@ -103,6 +103,8 @@ NFCORE_DIR = Path(
     "nfcore",
 )
 
+# TODO container-conversion: Add constants
+
 
 def unquote(s: str) -> str:
     """
