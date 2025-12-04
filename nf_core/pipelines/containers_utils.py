@@ -117,9 +117,9 @@ class ContainerConfigs:
                 "conda_arm64_lockfile": ["conda", "linux_arm64", "lock_file"],
             }
 
-            for p_name, p_keys in platforms.items():
-                try:
-                    containers[p_name][module_name] = meta["containers"][p_keys[0]][p_keys[1]][p_keys[2]]
+            for p_name, (runtime, arch, protocol) in platforms.items():
+			    try:
+			        containers[p_name][module_name] = meta["containers"][runtime][arch][protocol]
                 except KeyError:
                     log.warning(f"Could not find {p_name} container for {module_name}")
                     continue
