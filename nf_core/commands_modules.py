@@ -3,7 +3,7 @@ import sys
 
 import rich
 
-from nf_core.utils import rich_force_colors
+from nf_core.utils import rich_force_colors, run_cmd
 
 log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -358,7 +358,7 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
         sys.exit(1)
 
 
-def modules_containers_create(ctx, module, await_: bool):
+def modules_containers_create(ctx, module, await_: bool, dry_run: bool=False):
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
@@ -373,8 +373,12 @@ def modules_containers_create(ctx, module, await_: bool):
             ctx.obj.get("hide_progress"),
         )
         commands = manager.create(module, await_)
-        for cmd in commands:
-            stdout.print(" ".join(cmd))
+        if dry_run:
+            for cmd in commands:
+                stdout.print(" ".join(cmd))
+        else:
+            for cmd in commands:
+                run_cmd("wave", cmd)
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)
