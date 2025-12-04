@@ -2,10 +2,13 @@
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
 
+import json
 import logging
 import re
 from pathlib import Path
 from typing import Any
+
+from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, run_cmd, set_wd_tempdir
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +61,7 @@ class NFCoreComponent:
         self.is_patched: bool = False
         self.branch: str | None = None
         self.workflow_name: str | None = None
-        # TODO container-conversion: add containers (or containeR :D)
+        self.container: str
 
         if remote_component:
             # Initialize the important files
@@ -342,3 +345,63 @@ class NFCoreComponent:
             log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
             log.debug(f"Topics: {topics}")
             self.topics = topics
+
+    def get_containers_from_main_nf(self) -> None:
+        if self.component_type == "module":
+            if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
+                self.container = self._get_container_with_inspect()
+            else:
+                self.container = self._get_container_with_regex()
+
+            if not self.container:
+                log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
+
+    def _get_container_with_inspect(self):
+        with set_wd_tempdir():
+            self.component_dir.absolute()
+
+            executable = "nextflow"
+            cmd_params = f"inspect -format json {self.main_nf}"
+            cmd_out = run_cmd(executable, cmd_params)
+            if cmd_out is None:
+                log.debug("Failed to run `nextflow inspect`")
+                log.debug("Falling back to regex method")
+                return self._get_container_with_regex()
+
+            out, _ = cmd_out
+            out_json = json.loads(out)
+            container = out_json.get("processes", [{}])[0].get("container", None)
+            if container is None:
+                log.debug(
+                    f"Container for {self.component_name} could not be extracted from the output of nextflow inspect"
+                )
+                log.debug(f"Output of nextflow inspect: {out}")
+                log.debug("Falling back to regex method.")
+                return self._get_container_with_regex()
+
+            return container
+
+    def _get_container_with_regex(self):
+        with open(self.main_nf) as f:
+            data = f.read()
+
+            if "container:" not in data:
+                log.debug(f"Could not find a container directive for {self.component_name} in {self.main_nf}")
+                return ""
+
+            # Regex explained:
+            #  1. negative lookahead for "container" and arbitrary white spaces.
+            #  2. Capturing group 1: Match a quote char " or '
+            #  3. Match any characters
+            #  4. Match whatever was most recently captured in capturing group 1
+            regex_container = r"(?<=container\s+)([\"']).+?(\1)"
+            match = re.search(regex_container, data)
+            if not match:
+                log.warning(
+                    f"Container for {self.component_name} could not be extracted from {self.main_nf} with regex"
+                )
+                return ""
+
+            # quotes " or ' were matched as well and are clipped
+            container = data[match.start()[0] + 1 : match.end()[0] - 1]
+            return container
