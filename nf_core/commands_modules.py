@@ -357,11 +357,11 @@ def modules_containers_create(ctx, module, await_: bool):
         sys.exit(1)
 
 
-def modules_containers_conda_lock(ctx, module,):
+def modules_containers_conda_lock(ctx, module):
     """
     Build a Docker linux/arm64 container and fetch the conda lock file using wave.
     """
-    from nf_core.modules.containers import ModuleContainers 
+    from nf_core.modules.containers import ModuleContainers
 
     try:
         manager = ModuleContainers(
@@ -378,7 +378,7 @@ def modules_containers_conda_lock(ctx, module,):
         sys.exit(1)
 
 
-def modules_containers_list(ctx, module,):
+def modules_containers_list(ctx, module):
     """
     Print containers defined in a module meta.yml.
     """
@@ -393,12 +393,16 @@ def modules_containers_list(ctx, module,):
             ctx.obj.get("hide_progress"),
         )
         containers = manager.list_containers(module)
-        stdout.print("\n".join(containers))
+        t = rich.table.Table("Container System", "Platform", "Image")
+        for cs, p, img in containers:
+            t.add_row(cs, p, img)
+        stdout.print(t)
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)
 
-def modules_containers_lint(ctx, module,):
+
+def modules_containers_lint(ctx, module):
     """
     Confirm containers are defined for the module.
     """
