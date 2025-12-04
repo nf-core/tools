@@ -118,8 +118,8 @@ class ContainerConfigs:
             }
 
             for p_name, (runtime, arch, protocol) in platforms.items():
-			    try:
-			        containers[p_name][module_name] = meta["containers"][runtime][arch][protocol]
+                try:
+                    containers[p_name][module_name] = meta["containers"][runtime][arch][protocol]
                 except KeyError:
                     log.warning(f"Could not find {p_name} container for {module_name}")
                     continue
