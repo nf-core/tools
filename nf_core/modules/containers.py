@@ -14,7 +14,7 @@ class ModuleContainers:
     Helpers for building, linting and listing module containers.
     """
 
-    def __init__(  # not sure how accurate this is...
+    def __init__(
         self,
         directory: str | Path = ".",
         remote_url: str | None = None,
