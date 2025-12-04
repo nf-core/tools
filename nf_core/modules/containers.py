@@ -1,8 +1,10 @@
 import logging
 from pathlib import Path
 
+import regex as re
+
 from nf_core.modules.info import ModuleInfo
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -26,24 +28,46 @@ class ModuleContainers:
         self.no_pull = no_pull
         self.hide_progress = hide_progress
 
-    def create(self, module: str, await_: bool = False) -> list[list[str]]:
+    def create(self, module: str, await_: bool = False, dry_run: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
         module_dir = self._resolve_module_dir(module)
         env_path = self._environment_path(module_dir)
 
-        commands: list[list[str]] = []
-        for profile in CONTAINER_SYSTEMS:
+        containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
+        for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
-                cmd = ["wave", "--conda-file", str(env_path), "--freeze", "--platform", platform]
+                exectuable = "wave"
+                args = ["--conda-file", str(env_path), "--freeze", "--platform", platform]
                 # here "--tower-token" ${{ secrets.TOWER_ACCESS_TOKEN }} --tower-workspace-id ${{ secrets.TOWER_WORKSPACE_ID }}]
-                if profile == "singularity":
-                    cmd.append("--singularity")
+                if cs == "singularity":
+                    args.append("--singularity")
                 if await_:
-                    cmd.append("--await")
-                commands.append(cmd)
-        return commands
+                    args.append("--await")
+
+                args_str = " ".join(args)
+                log.debug(f"Wave command to request container build for {module} ({cs} {platform}): `wave {args_str}`")
+                if not dry_run:
+                    out = run_cmd(exectuable, args_str)
+
+                    if out is None:
+                        raise RuntimeError("Wave command did not return any output")
+
+                    wave_out, wave_err = out
+                    # Match singularity and docker container image names from seqera containers
+                    # to validate wave return value
+                    regex_container = r"(oras://)?.*wave\.seqera\.io.+$"
+                    match = re.match(regex_container, wave_out)
+                    if not match:
+                        raise RuntimeError(
+                            f"Returned output from wave build for {module} ({cs} {platform}) could not be parsed: {str(wave_out)}"
+                        )
+
+                    container = match.string
+                    containers[cs][platform]["name"] = container
+
+        return containers
 
     # def conda_lock(self, module: str) -> list[str]:
     #     """
