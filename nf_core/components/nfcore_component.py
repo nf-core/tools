@@ -346,7 +346,7 @@ class NFCoreComponent:
             log.debug(f"Topics: {topics}")
             self.topics = topics
 
-    def get_containers_from_main_nf(self) -> None:
+    def get_container_from_main_nf(self) -> None:
         if self.component_type == "module":
             if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
                 self.container = self._get_container_with_inspect()
