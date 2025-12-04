@@ -107,6 +107,7 @@ class ContainerConfigs:
                 continue
 
             platforms: dict[str, list[str]] = {
+                "docker_amd64": ["docker", "linux_amd64", "name"],
                 "docker_arm64": ["docker", "linux_arm64", "name"],
                 "singularity_oras_amd64": ["singularity", "linux_amd64", "name"],
                 "singularity_oras_arm64": ["singularity", "linux_arm64", "name"],
