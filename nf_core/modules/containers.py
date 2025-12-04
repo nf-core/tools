@@ -54,14 +54,20 @@ class ModuleContainers:
                     if out is None:
                         raise RuntimeError("Wave command did not return any output")
 
-                    wave_out, wave_err = out
+                    try:
+                        wave_out = out[0].decode()
+                    except AttributeError:
+                        wave_out = str(out[0])
+                    finally:
+                        wave_out = wave_out.strip()
+
                     # Match singularity and docker container image names from seqera containers
                     # to validate wave return value
                     regex_container = r"(oras://)?.*wave\.seqera\.io.+$"
                     match = re.match(regex_container, wave_out)
                     if not match:
                         raise RuntimeError(
-                            f"Returned output from wave build for {module} ({cs} {platform}) could not be parsed: {str(wave_out)}"
+                            f"Returned output from wave build for {module} ({cs} {platform}) could not be parsed: {wave_out}"
                         )
 
                     container = match.string
