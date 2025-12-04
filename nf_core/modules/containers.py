@@ -27,6 +27,7 @@ class ModuleContainers:
         self.branch = branch
         self.no_pull = no_pull
         self.hide_progress = hide_progress
+        # TODO: save the created containers in this instance
 
     def create(self, module: str, await_: bool = False, dry_run: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
@@ -39,7 +40,9 @@ class ModuleContainers:
         for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
                 exectuable = "wave"
+                # TODO: add -o yaml or -o json flag!
                 args = ["--conda-file", str(env_path), "--freeze", "--platform", platform]
+                # TODO: use access tokens
                 # here "--tower-token" ${{ secrets.TOWER_ACCESS_TOKEN }} --tower-workspace-id ${{ secrets.TOWER_WORKSPACE_ID }}]
                 if cs == "singularity":
                     args.append("--singularity")
@@ -60,6 +63,8 @@ class ModuleContainers:
                         wave_out = str(out[0])
                     finally:
                         wave_out = wave_out.strip()
+
+                    # TODO: change to reading container, build_id, url (?) from json or yaml output!
 
                     # Match singularity and docker container image names from seqera containers
                     # to validate wave return value
