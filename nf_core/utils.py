@@ -17,6 +17,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
@@ -1644,6 +1645,17 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+@contextmanager
+def set_wd_tempdir() -> Generator[None, None, None]:
+    """
+    Context manager to provide and change into a tempdir and ensure its removal and return to the
+    original_dir upon exceptions.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        with set_wd(Path(tmp)):
+            yield
 
 
 def get_wf_files(wf_path: Path):
