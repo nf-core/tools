@@ -14,6 +14,10 @@ class ModuleContainers:
     Helpers for building, linting and listing module containers.
     """
 
+    IMAGE_KEY = "name"
+    BUILD_ID_KEY = "buildId"
+    SCAN_ID_KEY = "scanId"
+
     def __init__(
         self,
         directory: str | Path = ".",
@@ -41,12 +45,19 @@ class ModuleContainers:
             for platform in CONTAINER_PLATFORMS:
                 containers[cs][platform] = self.request_container(cs, platform, env_path, await_, dry_run)
 
+        for platform in CONTAINER_PLATFORMS:
+            build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY, "")
+            if build_id:
+                # TODO: Add conda-lock url for platform based on the build_id for docker and the same platform
+                pass
+                # containers["conda"].update(dict((platform, dict(()))))
+
         self.containers = containers
         return containers
 
-    @staticmethod
+    @classmethod
     def request_container(
-        container_system: str, platform: str, conda_file: Path, await_build=False, dry_run=False
+        cls, container_system: str, platform: str, conda_file: Path, await_build=False, dry_run=False
     ) -> dict:
         assert conda_file.exists()
         assert container_system in CONTAINER_SYSTEMS
@@ -78,15 +89,15 @@ class ModuleContainers:
             if not image:
                 raise RuntimeError(f"Wave build ({container_system} {platform}) did not return a image name")
 
-            container["name"] = image
+            container[cls.IMAGE_KEY] = image
 
-            build_id = meta_data.get("buildId", "")
+            build_id = meta_data.get(cls.BUILD_ID_KEY, "")
             if build_id:
-                container["buildId"] = build_id
+                container[cls.BUILD_ID_KEY] = build_id
 
-            scan_id = meta_data.get("scanId", "")
+            scan_id = meta_data.get(cls.SCAN_ID_KEY, "")
             if scan_id:
-                container["scanId"] = scan_id
+                container[cls.SCAN_ID_KEY] = scan_id
 
         return container
 
