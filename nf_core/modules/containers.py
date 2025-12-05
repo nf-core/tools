@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from urllib.parse import quote
 
 import yaml
 
@@ -47,10 +48,13 @@ class ModuleContainers:
 
         for platform in CONTAINER_PLATFORMS:
             build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY, "")
-            if build_id:
-                # TODO: Add conda-lock url for platform based on the build_id for docker and the same platform
-                pass
-                # containers["conda"].update(dict((platform, dict(()))))
+            if not build_id:
+                log.debug("Docker image for {platform} missing - Conda-lock skipped")
+                continue
+
+            conda_data = containers.get("conda", dict())
+            conda_data.update({platform: {"lock_file": self.get_conda_lock_url(build_id)}})
+            containers["conda"] = conda_data
 
         self.containers = containers
         return containers
@@ -100,6 +104,12 @@ class ModuleContainers:
                 container[cls.SCAN_ID_KEY] = scan_id
 
         return container
+
+    @staticmethod
+    def get_conda_lock_url(build_id) -> str:
+        build_id_safe = quote(build_id, safe="")
+        url = f" https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
+        return url
 
     # def conda_lock(self, module: str) -> list[str]:
     #     """
