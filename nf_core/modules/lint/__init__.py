@@ -9,7 +9,9 @@ nf-core modules lint
 import logging
 import os
 import re
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 import questionary
 import rich
@@ -79,6 +81,7 @@ class ModuleLint(ComponentLint):
             registry=registry,
             hide_progress=hide_progress,
         )
+        self.meta_schema: Mapping[str, Any] | None = None
 
     def lint(
         self,
@@ -287,6 +290,30 @@ class ModuleLint(ComponentLint):
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
 
+    def load_meta_schema(self) -> Mapping[str, Any]:
+        """
+        Load the meta.yml JSON schema from the local modules repository cache.
+        The schema is cached in self.meta_schema to avoid reloading.
+
+        Returns:
+            dict: The meta.yml JSON schema
+
+        Raises:
+            LookupError: If the local module cache is not found
+        """
+        # Return cached schema if already loaded
+        if self.meta_schema is not None:
+            return self.meta_schema
+
+        if self.modules_repo.local_repo_dir is None:
+            raise LookupError("Local module cache not found")
+
+        import json
+
+        with open(Path(self.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
+            self.meta_schema = json.load(fh)
+        return self.meta_schema
+
     def update_meta_yml_file(self, mod):
         """
         Update the meta.yml file with the correct inputs and outputs
@@ -324,33 +351,25 @@ class ModuleLint(ComponentLint):
             return {}
 
         def _sort_meta_yml(meta_yml: dict) -> dict:
-            """Ensure topics comes after input/output and before authors"""
-            # Early return if no topics to reorder
-            if "topics" not in meta_yml:
-                return meta_yml
+            """Sort meta.yml keys according to the schema's property order"""
+            # Get the schema to determine the correct key order
+            try:
+                schema = self.load_meta_schema()
+                schema_keys = list(schema["properties"].keys())
+            except (LintExceptionError, KeyError) as e:
+                raise UserWarning("Failed to load meta schema", e)
 
-            result = {}
-            topics_value = meta_yml["topics"]
-            topics_added = False
+            result: dict = {}
 
-            for key, value in meta_yml.items():
-                if key == "topics":
-                    continue  # Skip topics, we'll add it in the right place
+            # First, add keys in the order they appear in the schema
+            for key in schema_keys:
+                if key in meta_yml:
+                    result[key] = meta_yml[key]
 
-                # Add topics before authors key (if not already added)
-                if key == "authors" and not topics_added:
-                    result["topics"] = topics_value
-                    topics_added = True
-
-                result[key] = value
-
-                # Add topics after output (preferred) or after input (if no output)
-                if key == "output":
-                    result["topics"] = topics_value
-                    topics_added = True
-                elif key == "input" and "output" not in meta_yml:
-                    result["topics"] = topics_value
-                    topics_added = True
+            # Then add any keys that aren't in the schema (to preserve custom keys)
+            for key in meta_yml.keys():
+                if key not in result:
+                    result[key] = meta_yml[key]
 
             return result
 
