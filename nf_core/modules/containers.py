@@ -196,9 +196,15 @@ class ModuleContainers:
             log.debug("Containers not initialized - running `create()` ...")
             self.create()
 
-        with open(self.metafile, "rw") as f:
-            meta = yaml.safe_load(f.read())
-            meta.get("containers").update(self.containers)
-            # TODO container-conversion: sort the yaml (again) -> call linting?
-            out = yaml.dump(meta)
+        with open(self.metafile) as f:
+            meta = yaml.safe_load(f)
+
+        meta_containers = meta.get("containers", dict())
+        meta_containers.update(self.containers)
+        meta["containers"] = meta_containers
+
+        # TODO container-conversion: sort the yaml (again) -> call linting?
+
+        out = yaml.dump(meta)
+        with open(self.metafile, "w") as f:
             f.write(out)
