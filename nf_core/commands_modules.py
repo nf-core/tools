@@ -367,6 +367,7 @@ def modules_containers_create(ctx, module, await_: bool, dry_run: bool = False):
     try:
         manager = ModuleContainers(module=module, directory=".")
         _ = manager.create(await_, dry_run)
+        manager.update_containers_in_meta()
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)
