@@ -27,7 +27,7 @@ class ModuleContainers:
         self.branch = branch
         self.no_pull = no_pull
         self.hide_progress = hide_progress
-        # TODO: save the created containers in this instance
+        self.containers: dict | None = None
 
     def create(self, module: str, await_: bool = False, dry_run: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
@@ -41,7 +41,6 @@ class ModuleContainers:
             for platform in CONTAINER_PLATFORMS:
                 exectuable = "wave"
                 args = ["--conda-file", str(env_path), "--freeze", "--platform", platform, "-o yaml"]
-                # here "--tower-token" ${{ secrets.TOWER_ACCESS_TOKEN }} --tower-workspace-id ${{ secrets.TOWER_WORKSPACE_ID }}]
                 if cs == "singularity":
                     args.append("--singularity")
                 if await_:
@@ -63,10 +62,21 @@ class ModuleContainers:
                     except (AttributeError, yaml.YAMLError) as e:
                         raise RuntimeError(f"Could not parse wave YAML metadata for {module} ({cs} {platform})") from e
 
-                    # container = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
-                    containers[cs][platform]["name"] = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
-                    containers[cs][platform]["buildId"] = meta_data.get("buildId", "")
-                    containers[cs][platform]["scanId"] = meta_data.get("scanId", "")
+                    image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
+                    if not image:
+                        raise RuntimeError(f"Wave build for {module} ({cs} {platform}) did not return a image name")
+
+                    containers[cs][platform]["name"] = image
+
+                    build_id = meta_data.get("buildId", "")
+                    if build_id:
+                        containers[cs][platform]["buildId"] = build_id
+
+                    scan_id = meta_data.get("scanId", "")
+                    if scan_id:
+                        containers[cs][platform]["scanId"] = scan_id
+
+        self.containers = containers
         return containers
 
     # def conda_lock(self, module: str) -> list[str]:
