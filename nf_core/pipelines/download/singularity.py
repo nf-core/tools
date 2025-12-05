@@ -595,6 +595,7 @@ class SingularityFetcher(ContainerFetcher):
             progress_type="singularity_pull",
             current_log="",
         ) as task:
+            self._ensure_output_dir_exists()
             with intermediate_file_no_creation(output_path) as output_path_tmp:
                 singularity_command = self.construct_pull_command(output_path_tmp, address)
                 log.debug(f"Building singularity image: {address}")
@@ -628,6 +629,12 @@ class SingularityFetcher(ContainerFetcher):
 
             self.symlink_registries(output_path)
         return True
+
+    def _ensure_output_dir_exists(self) -> None:
+        """Ensure that the container output directory exists."""
+        if not self.get_container_output_dir().is_dir():
+            log.debug(f"Container output directory not found, creating: {self.get_container_output_dir()}")
+            self.get_container_output_dir().mkdir(parents=True, exist_ok=True)
 
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions
@@ -671,6 +678,7 @@ class SingularityError(Exception):
             r"manifest\sunknown": self.InvalidTagError,
             # The container image is no native Singularity Image Format.
             r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularityContainerError,
+            r"received\smediaType:\sapplication/vnd\.docker\.distribution\.manifest": self.NoSingularityContainerError,
         }
         # Loop through the error messages and patterns. Since we want to have the option of
         # no matches at all, we use itertools.product to allow for the use of the for ... else construct.

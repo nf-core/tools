@@ -271,3 +271,50 @@ process TEST_PROCESS {
     assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
     assert "results" in component.topics
     assert "evaluation" in component.topics
+
+
+def test_get_topics_multiple_versions_channels(tmp_path):
+    """Test that multiple versions_* channels with the same topic name are correctly captured"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | head -1 | sed -e "s/samtools //"'), emit: versions_samtools, topic: versions
+    tuple val("${task.process}"), val('bcftools'), eval('bcftools --version | head -1 | sed -e "s/bcftools //"'), emit: versions_bcftools, topic: versions
+    path("*.txt"), emit: results, topic: results
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    # Should find 2 topics: versions and results
+    assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
+    assert "versions" in component.topics
+    assert "results" in component.topics
+
+    # The versions topic should have 2 entries (one for each versions_* channel)
+    assert len(component.topics["versions"]) == 2, (
+        f"Expected 2 entries in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    )
+
+    # Each entry should be a list of 3 tuples elements
+    for entry in component.topics["versions"]:
+        assert isinstance(entry, list), f"Expected list, got {type(entry)}"
+        assert len(entry) == 3, f"Expected 3 elements in entry, got {len(entry)}: {entry}"

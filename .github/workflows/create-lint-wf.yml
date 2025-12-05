@@ -42,20 +42,22 @@ jobs:
           export NXF_WORK=$(pwd)
 
       # Get the repo code
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out source-code repository
 
       # Set up nf-core/tools
       - name: Set up Python 3.14
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: "3.14"
-          cache: pip
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7
+        with:
+          enable-cache: true
 
       - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
+        run: uv sync --all-extras
 
       - name: run create-lint-wf
         uses: ./.github/actions/create-lint-wf
@@ -64,7 +66,7 @@ jobs:
 
       # Build a module from the template
       - name: nf-core modules create
-        run: nf-core --verbose --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
+        run: uv run nf-core --verbose --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
         working-directory: create-lint-wf
 
       # Remove TODO statements
@@ -79,11 +81,11 @@ jobs:
 
       # Run the other nf-core commands
       - name: nf-core pipelines list
-        run: nf-core --log-file log.txt pipelines list
+        run: uv run nf-core --log-file log.txt pipelines list
         working-directory: create-lint-wf
 
       - name: nf-core pipelines schema
-        run: nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
+        run: uv run nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
         working-directory: create-lint-wf
 
       - name: Cleanup work directory
