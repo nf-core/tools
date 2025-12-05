@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from urllib.parse import quote
 
+import requests
 import yaml
 
 from nf_core.modules.info import ModuleInfo
@@ -18,6 +19,7 @@ class ModuleContainers:
     IMAGE_KEY = "name"
     BUILD_ID_KEY = "buildId"
     SCAN_ID_KEY = "scanId"
+    LOCK_FILE_KEY = "lock_file"
 
     def __init__(
         self,
@@ -53,7 +55,7 @@ class ModuleContainers:
                 continue
 
             conda_data = containers.get("conda", dict())
-            conda_data.update({platform: {"lock_file": self.get_conda_lock_url(build_id)}})
+            conda_data.update({platform: {self.LOCK_FILE_KEY: self.get_conda_lock_url(build_id)}})
             containers["conda"] = conda_data
 
         self.containers = containers
@@ -111,13 +113,30 @@ class ModuleContainers:
         url = f"https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
         return url
 
-    # def conda_lock(self, module: str) -> list[str]:
-    #     """
-    #     Build a Docker linux/arm64 container and fetch the conda lock file using wave.
-    #     """
-    #     module_dir = self._resolve_module_dir(module)
-    #     env_path = self._environment_path(module_dir)
-    #     return ["wave", "--conda-file", str(env_path), "--freeze", "--platform", "linux/arm64", "--await"]
+    def conda_lock(self, module: str, platform: str) -> str:
+        """
+        Get the conda lock file for an existing environment.
+        Try (in that order):
+            1. reading from meta.yml
+            2. reading from cached containers
+            3. recreating with wave commands
+        """
+        assert platform in CONTAINER_PLATFORMS
+
+        containers = (
+            self.containers or self._containers_from_meta(module, self.directory) or self.create(module) or dict()
+        )
+
+        conda_lock_url = containers.get("conda", dict()).get(platform, dict()).get(self.LOCK_FILE_KEY)
+        if not conda_lock_url:
+            raise ValueError("")
+
+        return self.request_conda_lock(conda_lock_url)
+
+    @staticmethod
+    def request_conda_lock(conda_lock_url: str) -> str:
+        resp = requests.get(conda_lock_url)
+        return resp.text
 
     # def lint(self, module: str) -> list[str]:
     #     """
@@ -129,7 +148,7 @@ class ModuleContainers:
         """
         Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """
-        containers_valid = self._containers_from_meta(self, module, self.directory)
+        containers_valid = self._containers_from_meta(module, self.directory)
         containers_flat = [
             (cs, p, containers_valid[cs][p]["name"]) for cs in CONTAINER_SYSTEMS for p in CONTAINER_PLATFORMS
         ]
@@ -155,7 +174,7 @@ class ModuleContainers:
         return env_path
 
     @staticmethod
-    def _containers_from_meta(cls, module_name: str, dir: Path = Path(".")) -> dict:
+    def _containers_from_meta(module_name: str, dir: Path = Path(".")) -> dict:
         """
         Return containers defined in the module meta.yml.
         """
@@ -164,9 +183,9 @@ class ModuleContainers:
         if module_info.meta is None:
             raise ValueError(f"The meta.yml for module {module_name} could not be parsed or doesn't exist.")
 
-        containers = module_info.meta.get("containers")
+        containers = module_info.meta.get("containers", dict())
         if not containers:
-            raise ValueError(f"Required section 'containers' missing from meta.yaml for module '{module_name}'")
+            log.warning(f"Section 'containers' missing from meta.yaml for module '{module_name}'")
 
         for system in CONTAINER_SYSTEMS:
             cs = containers.get(system)
