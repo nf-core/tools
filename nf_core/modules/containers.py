@@ -39,45 +39,56 @@ class ModuleContainers:
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
-                exectuable = "wave"
-                args = ["--conda-file", str(env_path), "--freeze", "--platform", platform, "-o yaml"]
-                if cs == "singularity":
-                    args.append("--singularity")
-                if await_:
-                    args.append("--await")
-
-                args_str = " ".join(args)
-                log.debug(f"Wave command to request container build for {module} ({cs} {platform}): `wave {args_str}`")
-                if not dry_run:
-                    out = run_cmd(exectuable, args_str)
-
-                    if out is None:
-                        raise RuntimeError("Wave command did not return any output")
-
-                    if not out[0]:
-                        raise RuntimeError("Wave command did not return any metadata output")
-
-                    try:
-                        meta_data = yaml.safe_load(out[0].decode()) or {}
-                    except (AttributeError, yaml.YAMLError) as e:
-                        raise RuntimeError(f"Could not parse wave YAML metadata for {module} ({cs} {platform})") from e
-
-                    image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
-                    if not image:
-                        raise RuntimeError(f"Wave build for {module} ({cs} {platform}) did not return a image name")
-
-                    containers[cs][platform]["name"] = image
-
-                    build_id = meta_data.get("buildId", "")
-                    if build_id:
-                        containers[cs][platform]["buildId"] = build_id
-
-                    scan_id = meta_data.get("scanId", "")
-                    if scan_id:
-                        containers[cs][platform]["scanId"] = scan_id
+                containers[cs][platform] = self.request_container(cs, platform, env_path, await_, dry_run)
 
         self.containers = containers
         return containers
+
+    @staticmethod
+    def request_container(
+        container_system: str, platform: str, conda_file: Path, await_build=False, dry_run=False
+    ) -> dict:
+        assert conda_file.exists()
+        assert container_system in CONTAINER_SYSTEMS
+        assert platform in CONTAINER_PLATFORMS
+
+        container: dict[str, str] = dict()
+        exectuable = "wave"
+        args = ["--conda-file", str(conda_file.absolute()), "--freeze", "--platform", str(platform), "-o yaml"]
+        if container_system == "singularity":
+            args.append("--singularity")
+        if await_build:
+            args.append("--await")
+
+        args_str = " ".join(args)
+        log.debug(f"Wave command to request container ({container_system} {platform}): `wave {args_str}`")
+        if not dry_run:
+            out = run_cmd(exectuable, args_str)
+
+            if out is None:
+                raise RuntimeError("Wave command did not return any output")
+
+            try:
+                meta_data = yaml.safe_load(out[0].decode()) or dict()
+            except (KeyError, AttributeError, yaml.YAMLError) as e:
+                log.debug(f"Output yaml from wave build command: {out}")
+                raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
+
+            image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
+            if not image:
+                raise RuntimeError(f"Wave build ({container_system} {platform}) did not return a image name")
+
+            container["name"] = image
+
+            build_id = meta_data.get("buildId", "")
+            if build_id:
+                container["buildId"] = build_id
+
+            scan_id = meta_data.get("scanId", "")
+            if scan_id:
+                container["scanId"] = scan_id
+
+        return container
 
     # def conda_lock(self, module: str) -> list[str]:
     #     """
