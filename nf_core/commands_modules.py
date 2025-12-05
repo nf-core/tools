@@ -357,13 +357,7 @@ def modules_containers_conda_lock(ctx, module):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(
-            ".",
-            ctx.obj.get("modules_repo_url"),
-            ctx.obj.get("modules_repo_branch"),
-            ctx.obj.get("modules_repo_no_pull"),
-            ctx.obj.get("hide_progress"),
-        )
+        manager = ModuleContainers(module, ".")
         cmd = manager.conda_lock(module)
         stdout.print(" ".join(cmd))
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
@@ -378,13 +372,7 @@ def modules_containers_list(ctx, module):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(
-            ".",
-            ctx.obj.get("modules_repo_url"),
-            ctx.obj.get("modules_repo_branch"),
-            ctx.obj.get("modules_repo_no_pull"),
-            ctx.obj.get("hide_progress"),
-        )
+        manager = ModuleContainers(module, ".")
         containers = manager.list_containers(module)
         t = rich.table.Table("Container System", "Platform", "Image")
         for cs, p, img in containers:
@@ -402,13 +390,7 @@ def modules_containers_lint(ctx, module):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(
-            ".",
-            ctx.obj.get("modules_repo_url"),
-            ctx.obj.get("modules_repo_branch"),
-            ctx.obj.get("modules_repo_no_pull"),
-            ctx.obj.get("hide_progress"),
-        )
+        manager = ModuleContainers(module, ".")
         containers = manager.lint(module)
         stdout.print(f"Found {len(containers)} container(s) for {module}.")
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
