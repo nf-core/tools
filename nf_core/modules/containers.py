@@ -21,32 +21,22 @@ class ModuleContainers:
     SCAN_ID_KEY = "scanId"
     LOCK_FILE_KEY = "lock_file"
 
-    def __init__(
-        self,
-        directory: str | Path = ".",
-        remote_url: str | None = None,
-        branch: str | None = None,
-        no_pull: bool = False,
-        hide_progress: bool | None = None,
-    ):
+    def __init__(self, module: str, directory: str | Path = "."):
         self.directory = Path(directory)
-        self.remote_url = remote_url
-        self.branch = branch
-        self.no_pull = no_pull
-        self.hide_progress = hide_progress
+        self.module = module
+        self.module_directory = self.get_module_dir(module)
+        self.condafile = self.get_environment_path(self.module_directory)
+        self.metafile = self.get_metayaml_path(self.module_directory)
         self.containers: dict | None = None
 
-    def create(self, module: str, await_: bool = False, dry_run: bool = False) -> dict[str, dict[str, dict[str, str]]]:
+    def create(self, await_: bool = False, dry_run: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
-        module_dir = self._resolve_module_dir(module)
-        env_path = self._environment_path(module_dir)
-
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
-                containers[cs][platform] = self.request_container(cs, platform, env_path, await_, dry_run)
+                containers[cs][platform] = self.request_container(cs, platform, self.condafile, await_, dry_run)
 
         for platform in CONTAINER_PLATFORMS:
             build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY, "")
@@ -113,7 +103,7 @@ class ModuleContainers:
         url = f"https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
         return url
 
-    def conda_lock(self, module: str, platform: str) -> str:
+    def conda_lock(self, platform: str) -> str:
         """
         Get the conda lock file for an existing environment.
         Try (in that order):
@@ -123,9 +113,7 @@ class ModuleContainers:
         """
         assert platform in CONTAINER_PLATFORMS
 
-        containers = (
-            self.containers or self._containers_from_meta(module, self.directory) or self.create(module) or dict()
-        )
+        containers = self.containers or self.get_containers_from_meta() or self.create() or dict()
 
         conda_lock_url = containers.get("conda", dict()).get(platform, dict()).get(self.LOCK_FILE_KEY)
         if not conda_lock_url:
@@ -144,17 +132,17 @@ class ModuleContainers:
     #     """
     #     return self._containers_from_meta(self._resolve_module_dir(module))
 
-    def list_containers(self, module: str) -> list[tuple[str, str, str]]:
+    def list_containers(self) -> list[tuple[str, str, str]]:
         """
         Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """
-        containers_valid = self._containers_from_meta(module, self.directory)
+        containers_valid = self.get_containers_from_meta()
         containers_flat = [
             (cs, p, containers_valid[cs][p]["name"]) for cs in CONTAINER_SYSTEMS for p in CONTAINER_PLATFORMS
         ]
         return containers_flat
 
-    def _resolve_module_dir(self, module: str | Path) -> Path:
+    def get_module_dir(self, module: str | Path) -> Path:
         if module is None:
             raise ValueError("Please specify a module name.")
 
@@ -162,30 +150,34 @@ class ModuleContainers:
         if not module_dir.exists():
             raise ValueError(f"Module '{module}' not found at {module_dir}")
 
-        # TODO: Check if meta.yml and environment.yml are there
-
         return module_dir
 
     @staticmethod
-    def _environment_path(module_dir: Path) -> Path:
+    def get_environment_path(module_dir: Path) -> Path:
         env_path = module_dir / "environment.yml"
         if not env_path.exists():
             raise FileNotFoundError(f"environment.yml not found for module at {module_dir}")
         return env_path
 
     @staticmethod
-    def _containers_from_meta(module_name: str, dir: Path = Path(".")) -> dict:
+    def get_metayaml_path(module_dir: Path) -> Path:
+        metayaml_path = module_dir / "meta.yaml"
+        if not metayaml_path.exists():
+            raise FileNotFoundError(f"meta.yml not found for module at {module_dir}")
+        return metayaml_path
+
+    def get_containers_from_meta(self) -> dict:
         """
         Return containers defined in the module meta.yml.
         """
-        module_info = ModuleInfo(dir, module_name)
+        module_info = ModuleInfo(dir, self.module)
         module_info.get_component_info()
         if module_info.meta is None:
-            raise ValueError(f"The meta.yml for module {module_name} could not be parsed or doesn't exist.")
+            raise ValueError(f"The meta.yml for module {self.module} could not be parsed or doesn't exist.")
 
         containers = module_info.meta.get("containers", dict())
         if not containers:
-            log.warning(f"Section 'containers' missing from meta.yaml for module '{module_name}'")
+            log.warning(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
 
         for system in CONTAINER_SYSTEMS:
             cs = containers.get(system)
@@ -195,6 +187,6 @@ class ModuleContainers:
             for pf in CONTAINER_PLATFORMS:
                 spec = containers.get(pf)
                 if not spec:
-                    raise ValueError(f"Platform build {pf} missing for {cs} container for module {module_name}")
+                    raise ValueError(f"Platform build {pf} missing for {cs} container for module {self.module}")
 
         return containers
