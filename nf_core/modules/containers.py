@@ -1,8 +1,7 @@
-import json
 import logging
 from pathlib import Path
 
-import regex as re
+import yaml
 
 from nf_core.modules.info import ModuleInfo
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
@@ -41,9 +40,7 @@ class ModuleContainers:
         for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
                 exectuable = "wave"
-                # TODO: add -o yaml or -o json flag!
-                args = ["--conda-file", str(env_path), "--freeze", "--platform", platform]
-                # TODO: use access tokens
+                args = ["--conda-file", str(env_path), "--freeze", "--platform", platform, "-o yaml"]
                 # here "--tower-token" ${{ secrets.TOWER_ACCESS_TOKEN }} --tower-workspace-id ${{ secrets.TOWER_WORKSPACE_ID }}]
                 if cs == "singularity":
                     args.append("--singularity")
@@ -58,34 +55,16 @@ class ModuleContainers:
                     if out is None:
                         raise RuntimeError("Wave command did not return any output")
 
+                    if not out[0]:
+                        raise RuntimeError("Wave command did not return any metadata output")
+
                     try:
-                        wave_out = out[0].decode()
-                    except AttributeError:
-                        wave_out = str(out[0])
-                    finally:
-                        wave_out = wave_out.strip()
+                        meta_data = yaml.safe_load(out[0].decode()) or {}
+                    except (AttributeError, yaml.YAMLError) as e:
+                        raise RuntimeError(f"Could not parse wave YAML metadata for {module} ({cs} {platform})") from e
 
-                    # TODO: change to reading container, build_id, url (?) from json or yaml output!
-
-                    # Match singularity and docker container image names from seqera containers
-                    # to validate wave return value
-                    regex_container = r"(oras://)?.*wave\.seqera\.io.+$"
-                    match = re.match(regex_container, wave_out)
-                    if not match:
-                        raise RuntimeError(
-                            f"Returned output from wave build for {module} ({cs} {platform}) could not be parsed: {wave_out}"
-                        )
-                        
-                    meta_out = run_cmd("wave", f'--conda-package "{module}" --platform {platform} -o json')
-                    if meta_out is None or not meta_out[0]:
-                        raise RuntimeError("Wave command did not return any metadata JSON")
-                    try:
-                        meta_data = json.loads(meta_out[0].decode())
-                    except (AttributeError, json.JSONDecodeError) as e:
-                        raise RuntimeError(f"Could not parse wave JSON metadata for {module} ({cs} {platform})") from e
-
-                    container = match.string
-                    containers[cs][platform]["name"] = container
+                    # container = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
+                    containers[cs][platform]["name"] = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
                     containers[cs][platform]["buildId"] = meta_data.get("buildId", "")
                     containers[cs][platform]["scanId"] = meta_data.get("scanId", "")
         return containers
