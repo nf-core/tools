@@ -161,7 +161,7 @@ class ModuleContainers:
 
     @staticmethod
     def get_metayaml_path(module_dir: Path) -> Path:
-        metayaml_path = module_dir / "meta.yaml"
+        metayaml_path = module_dir / "meta.yml"
         if not metayaml_path.exists():
             raise FileNotFoundError(f"meta.yml not found for module at {module_dir}")
         return metayaml_path
