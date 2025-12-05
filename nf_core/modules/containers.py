@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 
@@ -69,10 +70,19 @@ class ModuleContainers:
                         raise RuntimeError(
                             f"Returned output from wave build for {module} ({cs} {platform}) could not be parsed: {wave_out}"
                         )
+                        
+                    meta_out = run_cmd("wave", f'--conda-package "{module}" --platform {platform} -o json')
+                    if meta_out is None or not meta_out[0]:
+                        raise RuntimeError("Wave command did not return any metadata JSON")
+                    try:
+                        meta_data = json.loads(meta_out[0].decode())
+                    except (AttributeError, json.JSONDecodeError) as e:
+                        raise RuntimeError(f"Could not parse wave JSON metadata for {module} ({cs} {platform})") from e
 
                     container = match.string
                     containers[cs][platform]["name"] = container
-
+                    containers[cs][platform]["buildId"] = meta_data.get("buildId", "")
+                    containers[cs][platform]["scanId"] = meta_data.get("scanId", "")
         return containers
 
     # def conda_lock(self, module: str) -> list[str]:
