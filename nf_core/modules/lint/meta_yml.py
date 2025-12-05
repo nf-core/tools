@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
@@ -7,7 +10,9 @@ from jsonschema import exceptions, validators
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint import ModuleLint
+
+if TYPE_CHECKING:
+    from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
 
