@@ -5,7 +5,6 @@ from urllib.parse import quote
 import requests
 import yaml
 
-from nf_core.modules.info import ModuleInfo
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
 log = logging.getLogger(__name__)
@@ -166,16 +165,19 @@ class ModuleContainers:
             raise FileNotFoundError(f"meta.yml not found for module at {module_dir}")
         return metayaml_path
 
+    def get_meta(self) -> dict:
+        with open(self.metafile) as f:
+            meta = yaml.safe_load(f)
+        return meta
+
     def get_containers_from_meta(self) -> dict:
         """
         Return containers defined in the module meta.yml.
         """
-        module_info = ModuleInfo(dir, self.module)
-        module_info.get_component_info()
-        if module_info.meta is None:
-            raise ValueError(f"The meta.yml for module {self.module} could not be parsed or doesn't exist.")
+        assert self.metafile.exists()
 
-        containers = module_info.meta.get("containers", dict())
+        meta = self.get_meta()
+        containers = meta.get("containers", dict())
         if not containers:
             log.warning(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
 
@@ -196,9 +198,7 @@ class ModuleContainers:
             log.debug("Containers not initialized - running `create()` ...")
             self.create()
 
-        with open(self.metafile) as f:
-            meta = yaml.safe_load(f)
-
+        meta = self.get_meta()
         meta_containers = meta.get("containers", dict())
         meta_containers.update(self.containers)
         meta["containers"] = meta_containers
