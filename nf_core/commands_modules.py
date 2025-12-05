@@ -365,16 +365,8 @@ def modules_containers_create(ctx, module, await_: bool, dry_run: bool = False):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(
-            ".",
-            ctx.obj.get("modules_repo_url"),
-            ctx.obj.get("modules_repo_branch"),
-            ctx.obj.get("modules_repo_no_pull"),
-            ctx.obj.get("hide_progress"),
-        )
-        containers = manager.create(module, await_, dry_run)
-        # make ruff happy
-        print(containers)
+        manager = ModuleContainers(module=module, directory=".")
+        _ = manager.create(await_, dry_run)
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)
