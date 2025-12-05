@@ -19,7 +19,6 @@
 
 - Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
 
-
 ### Linting
 
 ### Modules
