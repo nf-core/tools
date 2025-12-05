@@ -21,6 +21,8 @@
 
 ### Modules
 
+- sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
+
 ### Subworkflows
 
 - Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
