@@ -108,7 +108,7 @@ class ModuleContainers:
     @staticmethod
     def get_conda_lock_url(build_id) -> str:
         build_id_safe = quote(build_id, safe="")
-        url = f" https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
+        url = f"https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
         return url
 
     # def conda_lock(self, module: str) -> list[str]:
