@@ -190,3 +190,15 @@ class ModuleContainers:
                     raise ValueError(f"Platform build {pf} missing for {cs} container for module {self.module}")
 
         return containers
+
+    def update_containers_in_meta(self) -> None:
+        if self.containers is None:
+            log.debug("Containers not initialized - running `create()` ...")
+            self.create()
+
+        with open(self.metafile, "rw") as f:
+            meta = yaml.safe_load(f.read())
+            meta.get("containers").update(self.containers)
+            # TODO container-conversion: sort the yaml (again) -> call linting?
+            out = yaml.dump(meta)
+            f.write(out)
