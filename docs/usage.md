@@ -30,7 +30,7 @@ genomic-medicine-sweden/metaval will require the information given bellow.
 | Column              | Description                                                                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | sample              | Unique sample name [required].                                                                                                                   |
-| instrument_platform | Sequencing platform reads generated on, selected from the EBI ENA controlled vocabulary [required].                                              |
+| instrument_platform | Sequencing platform reads generated on, either ILLUMINA or OXFORD_NANOPORE [required].                                              |
 | fastq_1             | Unmapped human reads from bowtie2/minimap2, filtered reads from bbduk/nanoq/FiltLong or raw sequencing reads. Gzipped compressed files accepted. |
 | fastq_2             | Unmapped human reads from bowtie2, filtered reads from bbduk/nanoq/FiltLong or raw reads. Gzipped compressed files accepted.                     |
 | kraken2_report      | Kraken2 report containing stats about classified and not classified reads.                                                                       |
