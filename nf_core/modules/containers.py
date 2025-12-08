@@ -48,7 +48,7 @@ class ModuleContainers:
             containers[cs][platform] = fut.result()
 
             # Add conda lock information based on info for docker container
-            if platform != "docker":
+            if cs != "docker":
                 continue
 
             build_id = containers[cs][platform].get(self.BUILD_ID_KEY, "")
