@@ -50,15 +50,69 @@ sample2,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sample2
 
 #### BLASTn database
 
-Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `nt_viruses` instead of the `nt` database for BLASTn.
+Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `nt_viruses` instead of the `nt` database for BLASTn. The following example code downloads the BLASTn `nt_viruses` database:
+```sh
+conda install bioconda::blast
+update_blastdb.pl --decompress nt_viruses [*]
+```
 
 #### BLASTx (DIAMOND) database
 
-Use a pre-built `DIAMOND` database as described in the [DIAMOND tutorial](https://github.com/bbuchfink/diamond_docs/blob/master/Documentation.MD). DIAMOND is quite demanding in terms of memory and computation time. To speed up the BLAST process, choose the database carefully. For example, when working with viruses, you can construct the database using only viral genomes downloaded from RefSeq.
+Use a pre-built `DIAMOND` database as described in the [DIAMOND tutorial](https://github.com/bbuchfink/diamond_docs/blob/master/Documentation.MD). DIAMOND is quite demanding in terms of memory and computation time. To speed up the BLAST process, choose the database carefully. For example, when working with viruses, you can construct the database using only viral genomes downloaded from RefSeq. The following example code constructs the DIAMOND database:
+
+```sh
+conda install bioconda::diamond
+# Step 1: Download sequences from NCBI and concatenate all sequences into a single file refseq_viruse_protein.faa.gz
+
+# Step 2: Download prot.accession2taxid.FULL.gz file
+wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.FULL.gz
+
+# Step 3: Download the taxonomy folder from NCBI
+wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+mkdir -p taxdump
+tar -zxvf taxdump.tar.gz -C taxdump
+
+# Step 4: Construct the diamond database (diamond.dmnd)
+diamond makedb --in refseq_viruse_protein.faa.gz \
+    --threads 36 -v --log -d diamond \
+    --taxonmap prot.accession2taxid.FULL.gz \
+    --taxonnodes taxdump/nodes.dmp --taxonnames taxdump/names.dmp
+```
 
 ### taxid2genome
 
-A map file containing taxonomic IDs and their corresponding genome paths, including all GenBank and/or RefSeq genome assemblies.
+A map file containing taxonomic IDs along with their corresponding scientific names and genome paths, including all GenBank and/or RefSeq genome assemblies. This map files stores all genome paths that will be used to retrieve the genomes of species with BLAST hits for the downstream mapping step. For instance:
+
+| taxid   | organism                                      | genome |
+|---------|-----------------------------------------------|--------|
+| 1826872 | Candidatus_Nitrosocosmicus_hydrocola_archaea  | genomes/GCA_001870125.1/GCA_001870125.1_ASM187012v1_genomic.fna.gz |
+| 2810370 | Escherichia_phage_vB_EcoP-ZQ2                 | genomes/GCA_019095225.1/GCA_019095225.1_ASM1909522v1_genomic.fna.gz |
+| 1458848 | Escherichia_phage_Bp4                         | genomes/GCA_000922735.2/GCA_000922735.2_ViralProj248626_genomic.fna.gz |
+| 2234086 | Escherichia_phage_phi_G17                     | genomes/GCA_003307555.1/GCA_003307555.1_ASM330755v1_genomic.fna.gz |
+
+The following example code can be used to prepare this `taxid2genome` map file.
+
+```sh
+conda install bioconda::ncbi-genome-download
+
+# Step1: download all GenBank or RefSeq genome assemblies from NCBI:
+
+groups=$1 # 'all', 'archaea', 'bacteria', 'fungi', 'invertebrate', 'metagenomes’,
+                       #'plant', 'protozoa', 'vertebrate_mammalian', 'vertebrate_other', 'viral’
+
+ncbi-genome-download $groups \
+    --section genbank \
+    --formats genbank,fasta \
+    --progress-bar \
+    --parallel 36 \
+    --retries 3 \
+    --verbose \
+    --debug \
+    --assembly-levels "complete,chromosome" \
+    --metadata-table metadata_${groups}.tsv
+
+# Step 2: Use the metadata_${group}.tsv to generate the taxid2genome file.
+```
 
 ### Extra input for Pathogen screening
 
