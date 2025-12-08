@@ -358,7 +358,7 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
         sys.exit(1)
 
 
-def modules_containers_create(ctx, module, await_: bool, dry_run: bool = False):
+def modules_containers_create(ctx, module, await_: bool):
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
@@ -366,7 +366,7 @@ def modules_containers_create(ctx, module, await_: bool, dry_run: bool = False):
 
     try:
         manager = ModuleContainers(module=module, directory=".")
-        _ = manager.create(await_, dry_run)
+        _ = manager.create(await_)
         manager.update_containers_in_meta()
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)

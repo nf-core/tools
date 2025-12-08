@@ -28,14 +28,14 @@ class ModuleContainers:
         self.metafile = self.get_metayaml_path(self.module_directory)
         self.containers: dict | None = None
 
-    def create(self, await_: bool = False, dry_run: bool = False) -> dict[str, dict[str, dict[str, str]]]:
+    def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
-                containers[cs][platform] = self.request_container(cs, platform, self.condafile, await_, dry_run)
+                containers[cs][platform] = self.request_container(cs, platform, self.condafile, await_)
 
         for platform in CONTAINER_PLATFORMS:
             build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY, "")
@@ -51,9 +51,7 @@ class ModuleContainers:
         return containers
 
     @classmethod
-    def request_container(
-        cls, container_system: str, platform: str, conda_file: Path, await_build=False, dry_run=False
-    ) -> dict:
+    def request_container(cls, container_system: str, platform: str, conda_file: Path, await_build=False) -> dict:
         assert conda_file.exists()
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
@@ -68,31 +66,30 @@ class ModuleContainers:
 
         args_str = " ".join(args)
         log.debug(f"Wave command to request container ({container_system} {platform}): `wave {args_str}`")
-        if not dry_run:
-            out = run_cmd(exectuable, args_str)
+        out = run_cmd(exectuable, args_str)
 
-            if out is None:
-                raise RuntimeError("Wave command did not return any output")
+        if out is None:
+            raise RuntimeError("Wave command did not return any output")
 
-            try:
-                meta_data = yaml.safe_load(out[0].decode()) or dict()
-            except (KeyError, AttributeError, yaml.YAMLError) as e:
-                log.debug(f"Output yaml from wave build command: {out}")
-                raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
+        try:
+            meta_data = yaml.safe_load(out[0].decode()) or dict()
+        except (KeyError, AttributeError, yaml.YAMLError) as e:
+            log.debug(f"Output yaml from wave build command: {out}")
+            raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
 
-            image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
-            if not image:
-                raise RuntimeError(f"Wave build ({container_system} {platform}) did not return an image name")
+        image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
+        if not image:
+            raise RuntimeError(f"Wave build ({container_system} {platform}) did not return an image name")
 
-            container[cls.IMAGE_KEY] = image
+        container[cls.IMAGE_KEY] = image
 
-            build_id = meta_data.get(cls.BUILD_ID_KEY, "")
-            if build_id:
-                container[cls.BUILD_ID_KEY] = build_id
+        build_id = meta_data.get(cls.BUILD_ID_KEY, "")
+        if build_id:
+            container[cls.BUILD_ID_KEY] = build_id
 
-            scan_id = meta_data.get(cls.SCAN_ID_KEY, "")
-            if scan_id:
-                container[cls.SCAN_ID_KEY] = scan_id
+        scan_id = meta_data.get(cls.SCAN_ID_KEY, "")
+        if scan_id:
+            container[cls.SCAN_ID_KEY] = scan_id
 
         return container
 

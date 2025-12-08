@@ -17,6 +17,10 @@ from trogon import tui
 from nf_core import __version__
 from nf_core.commands_modules import (
     modules_bump_versions,
+    modules_containers_conda_lock,
+    modules_containers_create,
+    modules_containers_lint,
+    modules_containers_list,
     modules_create,
     modules_info,
     modules_install,
@@ -27,10 +31,6 @@ from nf_core.commands_modules import (
     modules_remove,
     modules_test,
     modules_update,
-    modules_containers_create,
-    modules_containers_conda_lock,
-    modules_containers_list,
-    modules_containers_lint,
 )
 from nf_core.commands_pipelines import (
     pipelines_bump_version,
@@ -1406,18 +1406,11 @@ def modules_containers(ctx):
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-@click.option(
-    "--dry-run/--run",
-    "dry_run",
-    is_flag=True,
-    default=False,
-    help="Print the wave commands instead of executing them.",
-)
-def command_modules_containers_create(ctx, await_, dry_run, module):
+def command_modules_containers_create(ctx, await_, module):
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
-    modules_containers_create(ctx, module, await_, dry_run)
+    modules_containers_create(ctx, module, await_)
 
 
 @modules_containers.command("conda-lock")
