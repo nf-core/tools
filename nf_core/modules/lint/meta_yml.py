@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from pathlib import Path
 
 import ruamel.yaml
@@ -300,15 +301,19 @@ def obtain_inputs(_, inputs: list) -> list:
     Returns:
         formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    formatted_inputs = []
+    formatted_inputs: list[list[str] | str] = []
     for input_channel in inputs:
         if isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                # Normalize by removing paired quotes (single or double)
+                channel_elements.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
             formatted_inputs.append(channel_elements)
         else:
-            formatted_inputs.append(list(input_channel.keys())[0])
+            key = list(input_channel.keys())[0]
+            # Normalize by removing paired quotes (single or double)
+            formatted_inputs.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
 
     return formatted_inputs
 
@@ -335,9 +340,13 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
             if isinstance(element, list):
                 channel_elements.append([])
                 for e in element:
-                    channel_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    # Normalize by removing paired quotes (single or double)
+                    channel_elements[-1].append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
             else:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                # Normalize by removing paired quotes (single or double)
+                channel_elements.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
         formatted_outputs[channel_name] = channel_elements
 
     if old_structure:
@@ -364,9 +373,13 @@ def obtain_topics(_, topics: dict) -> dict:
             if isinstance(element, list):
                 t_elements.append([])
                 for e in element:
-                    t_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    # Normalize by removing paired quotes (single or double)
+                    t_elements[-1].append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
             else:
-                t_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                # Normalize by removing paired quotes (single or double)
+                t_elements.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
         formatted_topics[name] = t_elements
 
     return formatted_topics

@@ -300,12 +300,12 @@ class ModuleLint(ComponentLint):
         def _find_meta_info(meta_yml: dict, element_name: str, is_output=False) -> dict:
             """Find the information specified in the meta.yml file to update the corrected meta.yml content
 
-            Note: element_name may contain quotes (e.g., '"*.html"') from parsing main.nf,
+            Note: element_name may contain quotes (e.g., '"*.html"', "'bpipe'") from parsing main.nf,
             but meta.yml keys don't include the quotes. We normalize both for comparison
-            by removing paired double quotes (assumes Prettier enforces double quotes).
+            by removing paired quotes (both single and double).
             """
-            # Remove paired double quotes from element name for comparison
-            normalized_element_name = re.sub(r'^"(.*)"$', r"\1", element_name)
+            # Remove paired quotes (single or double) from element name for comparison
+            normalized_element_name = re.sub(r'^["\'](.*)["\'"]$', r"\1", element_name)
 
             # Convert old meta.yml output structure (list) to dict
             if is_output and isinstance(meta_yml, list):
@@ -314,7 +314,9 @@ class ModuleLint(ComponentLint):
             # Helper to check if a key matches and return its metadata
             def check_match(element: dict) -> dict | None:
                 key = list(element.keys())[0]
-                return element[key] if normalized_element_name == re.sub(r'^"(.*)"$', r"\1", key) else None
+                # Normalize key by removing paired quotes (single or double)
+                normalized_key = re.sub(r'^["\'](.*)["\'"]$', r"\1", key)
+                return element[key] if normalized_element_name == normalized_key else None
 
             # Handle list structure (inputs)
             if isinstance(meta_yml, list):
