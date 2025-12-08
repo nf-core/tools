@@ -102,7 +102,7 @@ class ModuleContainers:
         url = f"https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
         return url
 
-    def conda_lock(self, platform: str) -> str:
+    def get_conda_lock_file(self, platform: str) -> str:
         """
         Get the conda lock file for an existing environment.
         Try (in that order):
@@ -118,10 +118,10 @@ class ModuleContainers:
         if not conda_lock_url:
             raise ValueError("")
 
-        return self.request_conda_lock(conda_lock_url)
+        return self.request_conda_lock_file(conda_lock_url)
 
     @staticmethod
-    def request_conda_lock(conda_lock_url: str) -> str:
+    def request_conda_lock_file(conda_lock_url: str) -> str:
         resp = requests.get(conda_lock_url)
         return resp.text
 
