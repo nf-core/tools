@@ -58,7 +58,7 @@ class ModuleContainers:
 
         container: dict[str, str] = dict()
         exectuable = "wave"
-        args = ["--conda-file", str(conda_file.absolute()), "--freeze", "--platform", str(platform), "-o yaml"]
+        args = ["--conda-file", str(conda_file.absolute()), "--freeze", "--platform", platform, "-o yaml"]
         if container_system == "singularity":
             args.append("--singularity")
         if await_build:
