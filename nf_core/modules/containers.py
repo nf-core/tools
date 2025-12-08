@@ -35,17 +35,19 @@ class ModuleContainers:
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         for cs in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
+                # Add container info for all container systems
                 containers[cs][platform] = self.request_container(cs, platform, self.condafile, await_)
 
-        for platform in CONTAINER_PLATFORMS:
-            build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY, "")
-            if not build_id:
-                log.debug("Docker image for {platform} missing - Conda-lock skipped")
-                continue
+                # Add conda lock information based on info for docker container
+                if platform == "docker":
+                    build_id = containers[cs][platform].get(self.BUILD_ID_KEY, "")
+                    if not build_id:
+                        log.debug("Docker image for {platform} missing - Conda-lock skipped")
+                        continue
 
-            conda_data = containers.get("conda", dict())
-            conda_data.update({platform: {self.LOCK_FILE_KEY: self.get_conda_lock_url(build_id)}})
-            containers["conda"] = conda_data
+                    conda_data = containers.get("conda", dict())
+                    conda_data.update({platform: {self.LOCK_FILE_KEY: self.get_conda_lock_url(build_id)}})
+                    containers["conda"] = conda_data
 
         self.containers = containers
         return containers
