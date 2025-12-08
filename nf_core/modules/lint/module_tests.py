@@ -13,6 +13,38 @@ from nf_core.components.nfcore_component import NFCoreComponent
 log = logging.getLogger(__name__)
 
 
+def _contains_version_hash(test_content):
+    """Check if test content contains version information in hash format rather than actual YAML content."""
+    version_hash_patterns = [
+        r"\bversions\.yml:md5,[a-f0-9]{32}\b",
+        r"\bversions\.yml:sha[0-9]*,[a-f0-9]+\b",
+    ]
+
+    content_str = str(test_content)
+
+    for pattern in version_hash_patterns:
+        if re.search(pattern, content_str):
+            return True
+
+    return False
+
+
+def _check_snapshot_for_version_hash(snap_content, test_name):
+    """Check both snapshot content and keys for version hash patterns."""
+    # Check test content for version hashes
+    if _contains_version_hash(snap_content[test_name]):
+        return True
+
+    # Check specific test's keys for version hashes
+    test_data = snap_content.get(test_name, {})
+    if isinstance(test_data, dict):
+        for key in test_data.keys():
+            if _contains_version_hash(str(key)):
+                return True
+
+    return False
+
+
 def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
     """
     Lint the tests of a module in ``nf-core/modules``
@@ -177,24 +209,43 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                             snap_file,
                                         )
                                     )
-                            if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
-                                module.passed.append(
-                                    (
-                                        "module_tests",
-                                        "test_snap_versions",
-                                        "versions found in snapshot file",
-                                        snap_file,
+                                if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
+                                    module.passed.append(
+                                        (
+                                            "module_tests",
+                                            "test_snap_versions",
+                                            "versions found in snapshot file",
+                                            snap_file,
+                                        )
                                     )
-                                )
-                            else:
-                                module.failed.append(
-                                    (
-                                        "module_tests",
-                                        "test_snap_versions",
-                                        "versions not found in snapshot file",
-                                        snap_file,
+                                    # Check if version content contains hash instead of actual YAML content
+                                    if _check_snapshot_for_version_hash(snap_content, test_name):
+                                        module.failed.append(
+                                            (
+                                                "module_tests",
+                                                "test_snap_version_content",
+                                                "Version information should contain actual YAML content (e.g., {'tool': {'version': '1.0'}}), not hash format like 'versions.yml:md5,hash'",
+                                                snap_file,
+                                            )
+                                        )
+                                    else:
+                                        module.passed.append(
+                                            (
+                                                "module_tests",
+                                                "test_snap_version_content",
+                                                "version information contains actual content instead of hash",
+                                                snap_file,
+                                            )
+                                        )
+                                else:
+                                    module.failed.append(
+                                        (
+                                            "module_tests",
+                                            "test_snap_versions",
+                                            "versions not found in snapshot file",
+                                            snap_file,
+                                        )
                                     )
-                                )
                         except json.decoder.JSONDecodeError as e:
                             module.failed.append(
                                 (
