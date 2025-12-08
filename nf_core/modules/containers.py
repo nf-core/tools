@@ -45,7 +45,7 @@ class ModuleContainers:
         for fut in as_completed(tasks):
             cs, platform = tasks[fut]
             # Add container info for all container systems
-            containers[cs][platform] = tasks[fut]
+            containers[cs][platform] = fut.result()
 
             # Add conda lock information based on info for docker container
             if platform != "docker":
