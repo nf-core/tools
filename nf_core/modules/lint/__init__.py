@@ -298,29 +298,45 @@ class ModuleLint(ComponentLint):
         corrected_meta_yml = meta_yml.copy()
 
         def _find_meta_info(meta_yml: dict, element_name: str, is_output=False) -> dict:
-            """Find the information specified in the meta.yml file to update the corrected meta.yml content"""
+            """Find the information specified in the meta.yml file to update the corrected meta.yml content
+
+            Note: element_name may contain quotes (e.g., '"*.html"') from parsing main.nf,
+            but meta.yml keys don't include the quotes. We normalize both for comparison
+            by removing paired double quotes (assumes Prettier enforces double quotes).
+            """
+            # Remove paired double quotes from element name for comparison
+            normalized_element_name = re.sub(r'^"(.*)"$', r"\1", element_name)
+
+            # Convert old meta.yml output structure (list) to dict
             if is_output and isinstance(meta_yml, list):
-                # Convert old meta.yml structure for outputs (list) to dict
                 meta_yml = {k: v for d in meta_yml for k, v in d.items()}
+
+            # Helper to check if a key matches and return its metadata
+            def check_match(element: dict) -> dict | None:
+                key = list(element.keys())[0]
+                return element[key] if normalized_element_name == re.sub(r'^"(.*)"$', r"\1", key) else None
+
+            # Handle list structure (inputs)
             if isinstance(meta_yml, list):
-                for k, meta_channel in enumerate(meta_yml):
-                    if isinstance(meta_channel, list):
-                        for x, meta_element in enumerate(meta_channel):
-                            if element_name == list(meta_element.keys())[0]:
-                                return meta_yml[k][x][element_name]
-                    elif isinstance(meta_channel, dict):
-                        if element_name == list(meta_channel.keys())[0]:
-                            return meta_yml[k][element_name]
+                for channel in meta_yml:
+                    if isinstance(channel, list):
+                        for element in channel:
+                            if (result := check_match(element)) is not None:
+                                return result
+                    elif isinstance(channel, dict) and (result := check_match(channel)) is not None:
+                        return result
+
+            # Handle dict structure (outputs/topics)
             elif isinstance(meta_yml, dict):
-                for ch_name, channels in meta_yml.items():
-                    for k, meta_channel in enumerate(channels):
-                        if isinstance(meta_channel, list):
-                            for x, meta_element in enumerate(meta_channel):
-                                if element_name == list(meta_element.keys())[0]:
-                                    return meta_yml[ch_name][k][x][element_name]
-                        elif isinstance(meta_channel, dict):
-                            if element_name == list(meta_channel.keys())[0]:
-                                return meta_yml[ch_name][k][element_name]
+                for channels in meta_yml.values():
+                    for channel in channels:
+                        if isinstance(channel, list):
+                            for element in channel:
+                                if (result := check_match(element)) is not None:
+                                    return result
+                        elif isinstance(channel, dict) and (result := check_match(channel)) is not None:
+                            return result
+
             return {}
 
         def _sort_meta_yml(meta_yml: dict) -> dict:
@@ -367,6 +383,18 @@ class ModuleLint(ComponentLint):
         correct_topics = self.obtain_topics(mod.topics)
         meta_topics = self.obtain_topics(meta_yml.get("topics", {}))
 
+        # Load topic metadata template from module-template/meta.yml
+        template_path = Path(__file__).parent.parent.parent / "module-template" / "meta.yml"
+        topic_metadata = [{}, {}, {}]  # [process, tool, version]
+        try:
+            with open(template_path) as fh:
+                template_meta = yaml.load(fh)
+                versions_entry = template_meta.get("topics", {}).get("versions", [[]])[0]
+                if len(versions_entry) == 3:
+                    topic_metadata = [next(iter(item.values())) for item in versions_entry]
+        except Exception as e:
+            log.debug(f"Could not load topic template metadata: {e}")
+
         def _populate_channel_elements(io_type, correct_value, meta_value, mod_io_data, meta_yml_io, check_exists=True):
             """Populate input, output, or topic channel elements with metadata information.
 
@@ -410,19 +438,49 @@ class ModuleLint(ComponentLint):
                         corrected_data[i][element_name] = _find_meta_info(meta_yml_io, element_name)
             else:
                 # Output and topics structure: { name: [[ {meta:{}}, {*.bam:{}} ]], other: [ {*.fa:{}} ] }
-                for ch_name in corrected_data.keys():
-                    for i, ch_content in enumerate(corrected_data[ch_name]):
+                # Use the original meta_yml_io as the base to preserve all existing metadata
+                # Only update structure when it differs from main.nf
+                corrected_data = meta_yml_io.copy() if meta_yml_io else mod_io_data.copy()
+
+                for ch_name in mod_io_data.keys():
+                    # Ensure channel exists in corrected_data
+                    if ch_name not in corrected_data:
+                        corrected_data[ch_name] = mod_io_data[ch_name]
+
+                    for i, ch_content in enumerate(mod_io_data[ch_name]):
+                        # Ensure index exists
+                        if i >= len(corrected_data[ch_name]):
+                            corrected_data[ch_name].append(mod_io_data[ch_name][i])
+
                         if isinstance(ch_content, list):
                             for j, element in enumerate(ch_content):
                                 element_name = list(element.keys())[0]
-                                corrected_data[ch_name][i][j][element_name] = _find_meta_info(
-                                    meta_yml_io, element_name, is_output=True
+                                element_meta = _find_meta_info(meta_yml_io, element_name, is_output=True)
+
+                                # For topics, add default type and description if empty
+                                if io_type == "topics" and not element_meta:
+                                    element_meta = topic_metadata[j].copy() if j < len(topic_metadata) else {}
+                                    log.info(f"Adding topic metadata for '{element_name}' at index {j}: {element_meta}")
+
+                                # Only update if we found metadata
+                                if element_meta:
+                                    corrected_data[ch_name][i][j][element_name] = element_meta
+                                log.debug(
+                                    f"After assignment: corrected_data[{ch_name}][{i}][{j}][{element_name}] = {corrected_data[ch_name][i][j].get(element_name, {})}"
                                 )
                         elif isinstance(ch_content, dict):
                             element_name = list(ch_content.keys())[0]
-                            corrected_data[ch_name][i][element_name] = _find_meta_info(
-                                meta_yml_io, element_name, is_output=True
-                            )
+                            element_meta = _find_meta_info(meta_yml_io, element_name, is_output=True)
+                            # For topics, add default type and description if empty
+                            if io_type == "topics" and not element_meta:
+                                element_meta = topic_metadata[i].copy() if i < len(topic_metadata) else {}
+                                log.debug(
+                                    f"Element name dict: {element_name} at index {i}, Element meta: {element_meta}"
+                                )
+
+                            # Only update if we found metadata
+                            if element_meta:
+                                corrected_data[ch_name][i][element_name] = element_meta
 
             return corrected_data
 
@@ -446,6 +504,32 @@ class ModuleLint(ComponentLint):
         )
         if populated_topics is not None:
             corrected_meta_yml["topics"] = populated_topics
+
+        # Populate metadata for versions_* output channels and topics (from template)
+        def _populate_versions_metadata(section_name: str, section_data: dict) -> None:
+            """Add template metadata to versions_* channels and topics.versions"""
+            for ch_name, ch_data in section_data.items():
+                # Only process versions_* outputs or "versions" topic
+                if (section_name == "output" and ch_name.startswith("versions_")) or (
+                    section_name == "topics" and ch_name == "versions"
+                ):
+                    for i, ch_content in enumerate(ch_data):
+                        if isinstance(ch_content, list):
+                            for j, element in enumerate(ch_content):
+                                element_name = list(element.keys())[0]
+                                element_meta = section_data[ch_name][i][j][element_name]
+                                # Add metadata if empty
+                                if not element_meta or not any(k in element_meta for k in ["type", "description"]):
+                                    element_meta = topic_metadata[j].copy() if j < len(topic_metadata) else {}
+                                    section_data[ch_name][i][j][element_name] = element_meta
+                                    log.debug(
+                                        f"Adding metadata to {section_name}.{ch_name} for '{element_name}' at index {j}"
+                                    )
+
+        if "output" in corrected_meta_yml:
+            _populate_versions_metadata("output", corrected_meta_yml["output"])
+        if "topics" in corrected_meta_yml:
+            _populate_versions_metadata("topics", corrected_meta_yml["topics"])
 
         def _add_edam_ontologies(section, edam_formats, desc):
             expected_ontologies = []
@@ -525,24 +609,22 @@ class ModuleLint(ComponentLint):
                 corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(biotools_data, tool_name)
 
         # Create YAML anchors for versions_* keys in output that match "versions" in topics
+        # Since we now populate metadata for both output and topics, set up anchors to reference output from topics
         if "output" in corrected_meta_yml and "topics" in corrected_meta_yml:
-            # Find all versions_* keys in output
             versions_keys = [key for key in corrected_meta_yml["output"].keys() if key.startswith("versions_")]
 
             if versions_keys and "versions" in corrected_meta_yml["topics"]:
+                # Set topics["versions"] to reference output versions (now with populated metadata)
                 if len(versions_keys) == 1:
-                    # Single versions channel: use simple anchor name "versions"
                     corrected_meta_yml["topics"]["versions"] = corrected_meta_yml["output"][versions_keys[0]]
                     if hasattr(corrected_meta_yml["output"][versions_keys[0]], "yaml_set_anchor"):
                         corrected_meta_yml["output"][versions_keys[0]].yaml_set_anchor("versions")
                 else:
-                    # Multiple versions channels: add all to topics["versions"] array with full names as anchors
                     corrected_meta_yml["topics"]["versions"] = []
                     for versions_key in versions_keys:
                         corrected_meta_yml["topics"]["versions"].append(corrected_meta_yml["output"][versions_key][0])
                         if hasattr(corrected_meta_yml["output"][versions_key], "yaml_set_anchor"):
                             corrected_meta_yml["output"][versions_key].yaml_set_anchor(versions_key)
-
         corrected_meta_yml = _sort_meta_yml(corrected_meta_yml)
 
         with open(mod.meta_yml, "w") as fh:
