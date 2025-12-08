@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import quote
 
@@ -28,26 +29,36 @@ class ModuleContainers:
         self.metafile = self.get_metayaml_path(self.module_directory)
         self.containers: dict | None = None
 
-    def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
+    def create(self, await_: bool = False, max_threads: int = 4) -> dict[str, dict[str, dict[str, str]]]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
-        for cs in CONTAINER_SYSTEMS:
-            for platform in CONTAINER_PLATFORMS:
-                # Add container info for all container systems
-                containers[cs][platform] = self.request_container(cs, platform, self.condafile, await_)
+        tasks = dict()
+        threads = min(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), max_threads)
+        with ThreadPoolExecutor(max_workers=threads) as pool:
+            for cs in CONTAINER_SYSTEMS:
+                for platform in CONTAINER_PLATFORMS:
+                    fut = pool.submit(self.request_container, cs, platform, self.condafile, await_)
+                    tasks[fut] = (cs, platform)
 
-                # Add conda lock information based on info for docker container
-                if platform == "docker":
-                    build_id = containers[cs][platform].get(self.BUILD_ID_KEY, "")
-                    if not build_id:
-                        log.debug("Docker image for {platform} missing - Conda-lock skipped")
-                        continue
+        for fut in as_completed(tasks):
+            cs, platform = tasks[fut]
+            # Add container info for all container systems
+            containers[cs][platform] = tasks[fut]
 
-                    conda_data = containers.get("conda", dict())
-                    conda_data.update({platform: {self.LOCK_FILE_KEY: self.get_conda_lock_url(build_id)}})
-                    containers["conda"] = conda_data
+            # Add conda lock information based on info for docker container
+            if platform != "docker":
+                continue
+
+            build_id = containers[cs][platform].get(self.BUILD_ID_KEY, "")
+            if not build_id:
+                log.debug("Docker image for {platform} missing - Conda-lock skipped")
+                continue
+
+            conda_data = containers.get("conda", dict())
+            conda_data.update({platform: {self.LOCK_FILE_KEY: self.get_conda_lock_url(build_id)}})
+            containers["conda"] = conda_data
 
         self.containers = containers
         return containers
