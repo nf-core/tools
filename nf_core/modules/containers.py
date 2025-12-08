@@ -29,13 +29,13 @@ class ModuleContainers:
         self.metafile = self.get_metayaml_path(self.module_directory)
         self.containers: dict | None = None
 
-    def create(self, await_: bool = False, max_threads: int = 4) -> dict[str, dict[str, dict[str, str]]]:
+    def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         tasks = dict()
-        threads = min(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), max_threads)
+        threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:
