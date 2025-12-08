@@ -220,7 +220,7 @@ class NFCoreComponent:
                         input_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', input_val)[
                             0
                         ]  # Takes only first part, avoid commas in quotes
-                        input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                        input_val = input_val.strip()  # remove whitespaces
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) == 1:
                     inputs.append(channel_elements[0])
@@ -274,7 +274,7 @@ class NFCoreComponent:
                         output_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', output_val)[
                             0
                         ]  # Takes only first part, avoid commas in quotes
-                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                        output_val = output_val.strip()  # remove quotes and whitespaces
                         channel_elements.append({output_val: {}})
                 if len(channel_elements) == 1:
                     outputs[match_emit.group(1)].append(channel_elements[0])
