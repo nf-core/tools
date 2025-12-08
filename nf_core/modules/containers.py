@@ -82,7 +82,7 @@ class ModuleContainers:
 
             image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
             if not image:
-                raise RuntimeError(f"Wave build ({container_system} {platform}) did not return a image name")
+                raise RuntimeError(f"Wave build ({container_system} {platform}) did not return an image name")
 
             container[cls.IMAGE_KEY] = image
 
