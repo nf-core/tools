@@ -3,7 +3,7 @@ import sys
 
 import rich
 
-from nf_core.utils import rich_force_colors
+from nf_core.utils import CONTAINER_PLATFORMS, rich_force_colors
 
 log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -373,7 +373,7 @@ def modules_containers_create(ctx, module, await_: bool, dry_run: bool = False):
         sys.exit(1)
 
 
-def modules_containers_conda_lock(ctx, module):
+def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
     """
     Build a Docker linux/arm64 container and fetch the conda lock file using wave.
     """
@@ -381,8 +381,8 @@ def modules_containers_conda_lock(ctx, module):
 
     try:
         manager = ModuleContainers(module, ".")
-        cmd = manager.conda_lock(module)
-        stdout.print(" ".join(cmd))
+        lock_file = manager.get_conda_lock_file(platform)
+        stdout.print(lock_file)
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)
