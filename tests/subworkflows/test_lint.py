@@ -228,7 +228,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 2
+        assert len(subworkflow_lint.warned) == 3
         assert any(
             [
                 x.message == "Included component 'SAMTOOLS_STATS_1' versions are added in main.nf"
@@ -240,6 +240,9 @@ class TestSubworkflowsLint(TestSubworkflows):
         )
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned]
+        )
+        assert any(
+            [x.message == "Can be ignored if the module is using topic channels" for x in subworkflow_lint.warned]
         )
 
         # cleanup
@@ -470,8 +473,9 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) == 1, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
-        warnings = [x.message for x in subworkflow_lint.warned]
-        assert "Can be ignored if the module is using topic channels" in warnings
+        assert any(
+            [x.message == "Can be ignored if the module is using topic channels" for x in subworkflow_lint.warned]
+        )
 
     def test_lint_broken_patch(self):
         """Test linting a patched subworkflow when the patch is broken"""
@@ -489,4 +493,7 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         errors = [x.message for x in subworkflow_lint.failed]
         assert "Subworkflow patch cannot be cleanly applied" in errors
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 0, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+        assert len(subworkflow_lint.warned) == 1, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+        assert any(
+            [x.message == "Can be ignored if the module is using topic channels" for x in subworkflow_lint.warned]
+        )
