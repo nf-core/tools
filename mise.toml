@@ -1,0 +1,36 @@
+[tools]
+# Python version - can be overridden with MISE_PYTHON_VERSION env var
+python = "3.14"
+# UV package manager
+uv = "latest"
+# Nextflow workflow manager
+nextflow = "latest"
+# nf-test for Nextflow testing
+"nf-test" = "0.9.3"
+# pdiff for nf-test snapshot comparison
+pdiff = "latest"
+# yq for YAML processing
+yq = "latest"
+# jq for JSON processing
+jq = "latest"
+
+[env]
+# Environment variables
+_.python.venv = { path = ".venv", create = true }
+GITHUB_TOKEN = "{{ env.GITHUB_TOKEN }}"
+
+[tasks.install]
+description = "Install Python dependencies with uv"
+run = "uv sync --all-extras"
+
+[tasks.test]
+description = "Run pytest tests"
+run = "uv run pytest --color=yes"
+
+[tasks.lint]
+description = "Run code linting"
+run = "uv run ruff check ."
+
+[tasks.format]
+description = "Format code"
+run = "uv run ruff format ."
