@@ -6,6 +6,7 @@ Command:
 nf-core modules lint
 """
 
+import json
 import logging
 import os
 import re
@@ -307,8 +308,6 @@ class ModuleLint(ComponentLint):
 
         if self.modules_repo.local_repo_dir is None:
             raise LookupError("Local module cache not found")
-
-        import json
 
         with open(Path(self.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
             self.meta_schema = json.load(fh)
