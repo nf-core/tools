@@ -235,14 +235,14 @@
                 },
                 "blastn_max_evalue": {
                     "type": "number",
-                    "default": 0.05,
+                    "default": 0.001,
                     "description": "The maximum e-value (--max_evalue) used to filter BLASTN results",
                     "help_text": "Specify the maximum expected value for filtering BLASTN results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `max_evalue=`",
                     "fa_icon": "filter"
                 },
                 "blastx_max_evalue": {
                     "type": "number",
-                    "default": 0.05,
+                    "default": 0.001,
                     "description": "The maximum e-value (--max_evalue) used to filter DIAMOND/BLASTX results",
                     "help_text": "Specify the maximum expected value for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `max_evalue=`",
                     "fa_icon": "filter"
