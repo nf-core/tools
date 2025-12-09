@@ -179,7 +179,7 @@ Run `BLAST(n/x)` on reads or consensus sequences mapped to a predefined pathogen
 
 </details>
 
-The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sseqid slen pident qlen length qcovs nident evalue bitscore staxid ssciname'`. If you want to add or remove fields from the output, you need to update both `BLAST` output header file (`assets/blast_outfmt10_header.txt`) and the filtering function of `BLAST` hits (`bin/filter_blast.py`). Filtering thresholds can be adjusted using the parameters `params.blast(n/x)_min_qlen`, `params.blast(n/x)_min_pident`,`params.blast(n/x)_min_length`,`params.blast(n/x)_max_evalue`, which correspond to query length, percent of identical matches, alignment length, and e-value. The default values are 50, 50, 50 and 0.05.
+The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sseqid slen pident qlen length qcovs nident evalue bitscore staxid ssciname'`. If you want to add or remove fields from the output, you need to update both `BLAST` output header file (`assets/blast_outfmt10_header.txt`) and the filtering function of `BLAST` hits (`bin/filter_blast.py`). Filtering thresholds can be adjusted using the parameters `params.blast(n/x)_min_qlen`, `params.blast(n/x)_min_pident`,`params.blast(n/x)_min_length`,`params.blast(n/x)_max_evalue`, which correspond to query length, percent of identical matches, alignment length, and e-value. The default values are 50, 50, 50 and 0.001.
 
 ### Mapping
 

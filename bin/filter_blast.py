@@ -14,7 +14,7 @@ def parse_args(args=None):
     parser.add_argument("--min_qlen", type=int, default=50, help="Minimum query sequence length (default: 50)")
     parser.add_argument("--min_pident", type=int, default=50, help="Minimum percentage of identical matches (default: 50)" )
     parser.add_argument("--min_length", type=int, default=50, help="Minimum alignment length (default: 50)")
-    parser.add_argument("--max_evalue", type=float, default=0.05, help="Maximum expected value (default: 0.05)")
+    parser.add_argument("--max_evalue", type=float, default=0.001, help="Maximum expected value (default: 0.001)")
 
     return parser.parse_args(args)
 
