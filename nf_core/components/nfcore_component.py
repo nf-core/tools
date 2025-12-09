@@ -271,7 +271,7 @@ class NFCoreComponent:
             match = re.match(r"([^,\n]*)", rest)
             return match.group(1).strip() if match else None
 
-        # Find matching closing paren, respecting quotes
+        # Find matching closing parentheses, respecting quotes
         depth = 0
         in_quote = None
         for i, char in enumerate(rest):
@@ -282,7 +282,7 @@ class NFCoreComponent:
             elif char == ")" and in_quote is None:
                 depth -= 1
                 if depth == 0:
-                    return rest[1:i]  # Return content between parens
+                    return rest[1:i]  # Return content between parentheses
         return None
 
     def get_outputs_from_main_nf(self):
