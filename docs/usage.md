@@ -51,6 +51,7 @@ sample2,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sample2
 #### BLASTn database
 
 Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `nt_viruses` instead of the `nt` database for BLASTn. The following example code downloads the BLASTn `nt_viruses` database:
+
 ```sh
 conda install bioconda::blast
 update_blastdb.pl --decompress nt_viruses [*]
@@ -83,12 +84,12 @@ diamond makedb --in refseq_viruse_protein.faa.gz \
 
 A map file containing taxonomic IDs along with their corresponding scientific names and genome paths, including all GenBank and/or RefSeq genome assemblies. This map files stores all genome paths that will be used to retrieve the genomes of species with BLAST hits for the downstream mapping step. For instance:
 
-| taxid   | organism                                      | genome |
-|---------|-----------------------------------------------|--------|
-| 1826872 | Candidatus_Nitrosocosmicus_hydrocola_archaea  | genomes/GCA_001870125.1/GCA_001870125.1_ASM187012v1_genomic.fna.gz |
-| 2810370 | Escherichia_phage_vB_EcoP-ZQ2                 | genomes/GCA_019095225.1/GCA_019095225.1_ASM1909522v1_genomic.fna.gz |
-| 1458848 | Escherichia_phage_Bp4                         | genomes/GCA_000922735.2/GCA_000922735.2_ViralProj248626_genomic.fna.gz |
-| 2234086 | Escherichia_phage_phi_G17                     | genomes/GCA_003307555.1/GCA_003307555.1_ASM330755v1_genomic.fna.gz |
+| taxid   | organism                                     | genome                                                                 |
+| ------- | -------------------------------------------- | ---------------------------------------------------------------------- |
+| 1826872 | Candidatus_Nitrosocosmicus_hydrocola_archaea | genomes/GCA_001870125.1/GCA_001870125.1_ASM187012v1_genomic.fna.gz     |
+| 2810370 | Escherichia_phage_vB_EcoP-ZQ2                | genomes/GCA_019095225.1/GCA_019095225.1_ASM1909522v1_genomic.fna.gz    |
+| 1458848 | Escherichia_phage_Bp4                        | genomes/GCA_000922735.2/GCA_000922735.2_ViralProj248626_genomic.fna.gz |
+| 2234086 | Escherichia_phage_phi_G17                    | genomes/GCA_003307555.1/GCA_003307555.1_ASM330755v1_genomic.fna.gz     |
 
 The following example code can be used to prepare this `taxid2genome` map file.
 
