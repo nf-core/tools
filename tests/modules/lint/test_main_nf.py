@@ -137,9 +137,10 @@ class TestMainNfLinting(TestModules):
     def test_topics_and_emits_version_check(self):
         """Test that main_nf version emit and topics check works correctly"""
 
+        self.mods_install.install("bioawk")
         # Lint a module known to have versions YAML in main.nf (for now)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="samtools/sort")
+        module_lint.lint(print_results=False, module="bioawk")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.warned) == 2, (
             f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"

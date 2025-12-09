@@ -14,10 +14,13 @@
 - Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
 - Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
+- Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 
 ### Template
 
 ### Linting
+
+- fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
 
 ### Modules
 
