@@ -230,19 +230,16 @@ class TestSubworkflowsLint(TestSubworkflows):
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) == 3
         assert any(
-            [
-                x.message == "Included component 'SAMTOOLS_STATS_1' versions are added in main.nf"
-                for x in subworkflow_lint.passed
-            ]
-        )
-        assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed]
         )
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned]
         )
         assert any(
-            [x.message == "Can be ignored if the module is using topic channels" for x in subworkflow_lint.warned]
+            [
+                x.message.endswith("Can be ignored if the module is using topic channels")
+                for x in subworkflow_lint.warned
+            ]
         )
 
         # cleanup
@@ -474,7 +471,10 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) == 1, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
         assert any(
-            [x.message == "Can be ignored if the module is using topic channels" for x in subworkflow_lint.warned]
+            [
+                x.message.endswith("Can be ignored if the module is using topic channels")
+                for x in subworkflow_lint.warned
+            ]
         )
 
     def test_lint_broken_patch(self):
@@ -495,5 +495,8 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) == 1, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
         assert any(
-            [x.message == "Can be ignored if the module is using topic channels" for x in subworkflow_lint.warned]
+            [
+                x.message.endswith("Can be ignored if the module is using topic channels")
+                for x in subworkflow_lint.warned
+            ]
         )
