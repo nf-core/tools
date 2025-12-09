@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 from pathlib import Path
 
 import ruamel.yaml
@@ -9,6 +8,7 @@ from jsonschema import exceptions, validators
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import unquote
 
 log = logging.getLogger(__name__)
 
@@ -307,13 +307,11 @@ def obtain_inputs(_, inputs: list) -> list:
             channel_elements = []
             for element in input_channel:
                 key = list(element.keys())[0]
-                # Normalize by removing paired quotes (single or double)
-                channel_elements.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
+                channel_elements.append(unquote(key))
             formatted_inputs.append(channel_elements)
         else:
             key = list(input_channel.keys())[0]
-            # Normalize by removing paired quotes (single or double)
-            formatted_inputs.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
+            formatted_inputs.append(unquote(key))
 
     return formatted_inputs
 
@@ -341,12 +339,10 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
                 channel_elements.append([])
                 for e in element:
                     key = list(e.keys())[0]
-                    # Normalize by removing paired quotes (single or double)
-                    channel_elements[-1].append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
+                    channel_elements[-1].append(unquote(key))
             else:
                 key = list(element.keys())[0]
-                # Normalize by removing paired quotes (single or double)
-                channel_elements.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
+                channel_elements.append(unquote(key))
         formatted_outputs[channel_name] = channel_elements
 
     if old_structure:
@@ -374,12 +370,10 @@ def obtain_topics(_, topics: dict) -> dict:
                 t_elements.append([])
                 for e in element:
                     key = list(e.keys())[0]
-                    # Normalize by removing paired quotes (single or double)
-                    t_elements[-1].append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
+                    t_elements[-1].append(unquote(key))
             else:
                 key = list(element.keys())[0]
-                # Normalize by removing paired quotes (single or double)
-                t_elements.append(re.sub(r'^["\'](.*)["\'"]$', r"\1", key))
+                t_elements.append(unquote(key))
         formatted_topics[name] = t_elements
 
     return formatted_topics

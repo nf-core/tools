@@ -22,6 +22,7 @@ from nf_core.components.components_utils import get_biotools_id, get_biotools_re
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
+from nf_core.utils import unquote
 
 log = logging.getLogger(__name__)
 
@@ -305,7 +306,7 @@ class ModuleLint(ComponentLint):
             by removing paired quotes (both single and double).
             """
             # Remove paired quotes (single or double) from element name for comparison
-            normalized_element_name = re.sub(r'^["\'](.*)["\'"]$', r"\1", element_name)
+            normalized_element_name = unquote(element_name)
 
             # Convert old meta.yml output structure (list) to dict
             if is_output and isinstance(meta_yml, list):
@@ -314,9 +315,7 @@ class ModuleLint(ComponentLint):
             # Helper to check if a key matches and return its metadata
             def check_match(element: dict) -> dict | None:
                 key = list(element.keys())[0]
-                # Normalize key by removing paired quotes (single or double)
-                normalized_key = re.sub(r'^["\'](.*)["\'"]$', r"\1", key)
-                return element[key] if normalized_element_name == normalized_key else None
+                return element[key] if normalized_element_name == unquote(key) else None
 
             # Handle list structure (inputs)
             if isinstance(meta_yml, list):
@@ -434,10 +433,12 @@ class ModuleLint(ComponentLint):
                     if isinstance(channel, list):
                         for j, element in enumerate(channel):
                             element_name = list(element.keys())[0]
-                            corrected_data[i][j][element_name] = _find_meta_info(meta_yml_io, element_name)
+                            normalized_name = unquote(element_name)
+                            corrected_data[i][j] = {normalized_name: _find_meta_info(meta_yml_io, element_name)}
                     elif isinstance(channel, dict):
                         element_name = list(channel.keys())[0]
-                        corrected_data[i][element_name] = _find_meta_info(meta_yml_io, element_name)
+                        normalized_name = unquote(element_name)
+                        corrected_data[i] = {normalized_name: _find_meta_info(meta_yml_io, element_name)}
             else:
                 # Output and topics structure: { name: [[ {meta:{}}, {*.bam:{}} ]], other: [ {*.fa:{}} ] }
                 # Use the original meta_yml_io as the base to preserve all existing metadata
@@ -452,37 +453,38 @@ class ModuleLint(ComponentLint):
                     for i, ch_content in enumerate(mod_io_data[ch_name]):
                         # Ensure index exists
                         if i >= len(corrected_data[ch_name]):
-                            corrected_data[ch_name].append(mod_io_data[ch_name][i])
+                            corrected_data[ch_name].append([])  # Initialize empty, we'll populate below
 
                         if isinstance(ch_content, list):
+                            # Rebuild list with normalized keys
+                            normalized_list = []
                             for j, element in enumerate(ch_content):
                                 element_name = list(element.keys())[0]
+                                normalized_name = unquote(element_name)
                                 element_meta = _find_meta_info(meta_yml_io, element_name, is_output=True)
 
                                 # For topics, add default type and description if empty
                                 if io_type == "topics" and not element_meta:
                                     element_meta = topic_metadata[j].copy() if j < len(topic_metadata) else {}
-                                    log.info(f"Adding topic metadata for '{element_name}' at index {j}: {element_meta}")
+                                    log.info(
+                                        f"Adding topic metadata for '{normalized_name}' at index {j}: {element_meta}"
+                                    )
 
-                                # Only update if we found metadata
-                                if element_meta:
-                                    corrected_data[ch_name][i][j][element_name] = element_meta
-                                log.debug(
-                                    f"After assignment: corrected_data[{ch_name}][{i}][{j}][{element_name}] = {corrected_data[ch_name][i][j].get(element_name, {})}"
-                                )
+                                normalized_list.append({normalized_name: element_meta})
+                                log.debug(f"After assignment: normalized_list[{j}][{normalized_name}] = {element_meta}")
+                            corrected_data[ch_name][i] = normalized_list
                         elif isinstance(ch_content, dict):
                             element_name = list(ch_content.keys())[0]
+                            normalized_name = unquote(element_name)
                             element_meta = _find_meta_info(meta_yml_io, element_name, is_output=True)
                             # For topics, add default type and description if empty
                             if io_type == "topics" and not element_meta:
                                 element_meta = topic_metadata[i].copy() if i < len(topic_metadata) else {}
                                 log.debug(
-                                    f"Element name dict: {element_name} at index {i}, Element meta: {element_meta}"
+                                    f"Element name dict: {normalized_name} at index {i}, Element meta: {element_meta}"
                                 )
 
-                            # Only update if we found metadata
-                            if element_meta:
-                                corrected_data[ch_name][i][element_name] = element_meta
+                            corrected_data[ch_name][i] = {normalized_name: element_meta}
 
             return corrected_data
 
@@ -519,13 +521,14 @@ class ModuleLint(ComponentLint):
                         if isinstance(ch_content, list):
                             for j, element in enumerate(ch_content):
                                 element_name = list(element.keys())[0]
-                                element_meta = section_data[ch_name][i][j][element_name]
+                                normalized_name = unquote(element_name)
+                                element_meta = section_data[ch_name][i][j].get(normalized_name, {})
                                 # Add metadata if empty
                                 if not element_meta or not any(k in element_meta for k in ["type", "description"]):
                                     element_meta = topic_metadata[j].copy() if j < len(topic_metadata) else {}
-                                    section_data[ch_name][i][j][element_name] = element_meta
+                                    section_data[ch_name][i][j][normalized_name] = element_meta
                                     log.debug(
-                                        f"Adding metadata to {section_name}.{ch_name} for '{element_name}' at index {j}"
+                                        f"Adding metadata to {section_name}.{ch_name} for '{normalized_name}' at index {j}"
                                     )
 
         if "output" in corrected_meta_yml:
