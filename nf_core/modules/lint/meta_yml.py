@@ -10,6 +10,7 @@ from jsonschema import exceptions, validators
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import unquote
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
@@ -304,15 +305,17 @@ def obtain_inputs(_, inputs: list) -> list:
     Returns:
         formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    formatted_inputs = []
+    formatted_inputs: list[list[str] | str] = []
     for input_channel in inputs:
         if isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
             formatted_inputs.append(channel_elements)
         else:
-            formatted_inputs.append(list(input_channel.keys())[0])
+            key = list(input_channel.keys())[0]
+            formatted_inputs.append(unquote(key))
 
     return formatted_inputs
 
@@ -339,9 +342,11 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
             if isinstance(element, list):
                 channel_elements.append([])
                 for e in element:
-                    channel_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    channel_elements[-1].append(unquote(key))
             else:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
         formatted_outputs[channel_name] = channel_elements
 
     if old_structure:
@@ -368,9 +373,11 @@ def obtain_topics(_, topics: dict) -> dict:
             if isinstance(element, list):
                 t_elements.append([])
                 for e in element:
-                    t_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    t_elements[-1].append(unquote(key))
             else:
-                t_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                t_elements.append(unquote(key))
         formatted_topics[name] = t_elements
 
     return formatted_topics
