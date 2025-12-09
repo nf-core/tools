@@ -37,7 +37,6 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@v2
         with:
-          version: latest
           install: true
           cache: true
 
@@ -69,7 +68,6 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@v2
         with:
-          version: latest
           install: true
           cache: true
           experimental: true
