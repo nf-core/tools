@@ -1,6 +1,8 @@
-import json
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
@@ -9,10 +11,13 @@ from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
+if TYPE_CHECKING:
+    from nf_core.modules.lint import ModuleLint
+
 log = logging.getLogger(__name__)
 
 
-def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
     """
     Lint a ``meta.yml`` file
 
@@ -76,8 +81,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
-            schema = json.load(fh)
+        schema = module_lint_object.load_meta_schema()
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
