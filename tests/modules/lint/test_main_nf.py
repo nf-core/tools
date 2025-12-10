@@ -209,6 +209,7 @@ process TEST_PROCESS {
     path("*.txt"), emit: results
     val(evaluate_result), emit: evaluation
     path(pathogen_data), emit: pathogens
+    tuple val(meta), path("*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"), emit: reads
 
     script:
     "echo test"
@@ -231,10 +232,12 @@ process TEST_PROCESS {
 
     # Should find 3 outputs with variable names containing 'val' and 'path' substrings
     # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
-    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert len(component.outputs) == 4, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
     assert "results" in component.outputs
     assert "evaluation" in component.outputs
     assert "pathogens" in component.outputs
+    assert "reads" in component.outputs
+    assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
 
 
 def test_get_topics_no_partial_keyword_match(tmp_path):
