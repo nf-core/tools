@@ -34,6 +34,7 @@
 ### Subworkflows
 
 - Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
+- Subworkflow lint bugfixes ([#3968](https://github.com/nf-core/tools/pull/3968))
 
 ## [v3.5.1 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.1) - [2025-11-19]
 
