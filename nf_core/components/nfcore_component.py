@@ -205,7 +205,8 @@ class NFCoreComponent:
                 log.debug(f"Could not find any inputs in {self.main_nf}")
                 return
             input_data = data.split("input:")[1].split("output:")[0]
-            regex_keyword = r"\b(val|path)\b"
+            # Match keywords only when followed by opening parentheses or whitespace
+            regex_keyword = r"\b(val|path)(?=\(|\s)"
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
@@ -297,7 +298,8 @@ class NFCoreComponent:
             output_data = data.split("output:")[1].split("when:")[0]
             log.debug(f"Found output_data: {output_data}")
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_keyword = r"\b(val|path|env|stdout|eval)\b"
+            # Match keywords only when followed by opening parentheses or whitespace
+            regex_keyword = r"\b(val|path|env|stdout|eval)(?=\(|\s)"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 if not match_emit:
@@ -344,7 +346,8 @@ class NFCoreComponent:
             output_data = data.split("output:")[1].split("when:")[0]
             log.debug(f"Output data: {output_data}")
             regex_topic = r"topic:\s*([^)\s,]+)"
-            regex_keyword = r"\b(val|path|env|stdout|eval)\b"
+            # Match keywords only when followed by opening parentheses or whitespace
+            regex_keyword = r"\b(val|path|env|stdout|eval)(?=\(|\s)"
             for line in output_data.split("\n"):
                 match_topic = re.search(regex_topic, line)
                 if not match_topic:
