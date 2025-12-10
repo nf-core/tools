@@ -13,7 +13,7 @@ include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endi
 include { paramsSummaryMap       } from 'plugin/nf-schema'{% endif %}
 {%- if multiqc %}
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML } from 'plugin/nf-core-utils'
 {%- if citations or multiqc %}
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
 {%- endif %}
@@ -50,31 +50,15 @@ workflow {{ short_name|upper }} {
     //
     // Collate and save software versions
     //
-    def topic_versions = Channel.topic("versions")
-        .distinct()
-        .branch { entry ->
-            versions_file: entry instanceof Path
-            versions_tuple: true
-        }
-
-    def topic_versions_string = topic_versions.versions_tuple
-        .map { process, tool, version ->
-            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
-        }
-        .groupTuple(by:0)
-        .map { process, tool_versions ->
-            tool_versions.unique().sort()
-            "${process}:\n${tool_versions.join('\n')}"
-        }
-
-    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
-        .mix(topic_versions_string)
-        .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
-            name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
-            sort: true,
-            newLine: true
-        ).set { ch_collated_versions }
+    softwareVersionsToYAML(
+        softwareVersions: ch_versions.mix(channel.topic("versions")),
+        nextflowVersion: workflow.nextflow.version
+    ).collectFile(
+        storeDir: "${params.outdir}/pipeline_info",
+        name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
+        sort: true,
+        newLine: true,
+    ).set { ch_collated_versions }
 
 {% if multiqc %}
     //
