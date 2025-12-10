@@ -139,6 +139,7 @@
 ### Subworkflows
 
 - Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
+- split subworkflow/test_lint into separate files ([#3965](https://github.com/nf-core/tools/pull/3965))
 
 #### Version updates
 
