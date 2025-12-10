@@ -4,15 +4,15 @@
 
 ### General
 
+- Switch from pre-commit to prek for pre-commit hooks in development([#3899](https://github.com/nf-core/tools/pull/3899))
+- Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
+- switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
 - dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
 - Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
-- Switch from pre-commit to prek for pre-commit hooks in development([#3899](https://github.com/nf-core/tools/pull/3899))
-- switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
 - Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
-- Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
 - Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
@@ -23,6 +23,7 @@
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
+- Fix bugs in subworkflows lint causing false positive warnings ([#3968](https://github.com/nf-core/tools/pull/3968))
 
 ### Modules
 
