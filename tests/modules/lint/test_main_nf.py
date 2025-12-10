@@ -232,7 +232,7 @@ process TEST_PROCESS {
 
     # Should find 3 outputs with variable names containing 'val' and 'path' substrings
     # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
-    assert len(component.outputs) == 4, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
     assert "results" in component.outputs
     assert "evaluation" in component.outputs
     assert "pathogens" in component.outputs
