@@ -51,7 +51,7 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     workflow_lines = []
     main_lines = []
     for line in lines:
-        if not _is_empty(line) and re.search(r"^\s*workflow\s*\w*\s*{", line) and state == "subworkflow":
+        if not _is_empty(line) and re.search(r"^\s*workflow\s*\w*\s*{", line) and state in ["subworkflow", "emit"]:
             state = "workflow"
         if not _is_empty(line) and re.search(r"take\s*:", line) and state in ["workflow"]:
             state = "take"
