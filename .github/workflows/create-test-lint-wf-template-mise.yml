@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
         with:
           install: true
           cache: true
@@ -66,13 +66,16 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
         with:
           install: true
           cache: true
           experimental: true
         env:
           MISE_PYTHON_VERSION: "3.14"
+
+      - name: Install pdiff (Python tool for nf-test)
+        run: uv tool install pdiff
 
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}
