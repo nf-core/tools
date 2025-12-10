@@ -52,6 +52,16 @@ class ConfigsCreateConfig(BaseModel):
     """ Config description """
     config_profile_url: Optional[str] = None
     """ Config institution URL """
+    default_process_ncpus: Optional[str] = None
+    """ Default number of CPUs """
+    default_process_memgb: Optional[str] = None
+    """ Default amount of memory """
+    default_process_hours: Optional[str] = None
+    """ Default walltime - hours """
+    default_process_minutes: Optional[str] = None
+    """ Default walltime - minutes """
+    default_process_seconds: Optional[str] = None
+    """ Default walltime - seconds """
     is_nfcore: Optional[bool] = None
     """ Whether the config is part of the nf-core organisation """
 
@@ -142,6 +152,17 @@ class ConfigsCreateConfig(BaseModel):
                 )
         return v
 
+    @field_validator("default_process_ncpus", "default_process_memgb", "default_process_hours", "default_process_minutes", "default_process_seconds")
+    @classmethod
+    def integer_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that integer values are non-empty and positive."""
+        if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        try:
+            int(v.strip())
+        except ValueError:
+            raise ValueError("Must be an integer.")
+        return v
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):
