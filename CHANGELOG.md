@@ -27,6 +27,7 @@
 ### Modules
 
 - sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
+- linting: polish regex for output parsing in modules main.nf ([#3967](https://github.com/nf-core/tools/pull/3967))
 
 ### Subworkflows
 
