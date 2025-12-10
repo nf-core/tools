@@ -8,19 +8,22 @@ from ...test_subworkflows import TestSubworkflows
 class TestMainNf(TestSubworkflows):
     """Test main.nf functionality in subworkflows"""
 
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.subworkflow_install.install("bam_stats_samtools")
+        self.main_nf = Path(
+            self.pipeline_dir,
+            "subworkflows",
+            "nf-core",
+            "bam_stats_samtools",
+            "main.nf",
+        )
+
     def test_subworkflows_lint_less_than_two_modules_warning(self):
         """Test linting a subworkflow with less than two modules"""
-        self.subworkflow_install.install("bam_stats_samtools")
         # Remove two modules
-        with open(
-            Path(
-                self.pipeline_dir,
-                "subworkflows",
-                "nf-core",
-                "bam_stats_samtools",
-                "main.nf",
-            )
-        ) as fh:
+        with open(self.main_nf) as fh:
             content = fh.read()
             new_content = content.replace(
                 "include { SAMTOOLS_IDXSTATS } from '../../../modules/nf-core/samtools/idxstats/main'",
@@ -31,13 +34,7 @@ class TestMainNf(TestSubworkflows):
                 "",
             )
         with open(
-            Path(
-                self.pipeline_dir,
-                "subworkflows",
-                "nf-core",
-                "bam_stats_samtools",
-                "main.nf",
-            ),
+            self.main_nf,
             "w",
         ) as fh:
             fh.write(new_content)
@@ -50,16 +47,7 @@ class TestMainNf(TestSubworkflows):
 
     def test_subworkflows_lint_include_multiple_alias(self):
         """Test linting a subworkflow with multiple include methods"""
-        self.subworkflow_install.install("bam_stats_samtools")
-        with open(
-            Path(
-                self.pipeline_dir,
-                "subworkflows",
-                "nf-core",
-                "bam_stats_samtools",
-                "main.nf",
-            )
-        ) as fh:
+        with open(self.main_nf) as fh:
             content = fh.read()
             new_content = content.replace("SAMTOOLS_STATS", "SAMTOOLS_STATS_1")
             new_content = new_content.replace(
@@ -67,13 +55,7 @@ class TestMainNf(TestSubworkflows):
                 "include { SAMTOOLS_STATS as SAMTOOLS_STATS_1; SAMTOOLS_STATS as SAMTOOLS_STATS_2 ",
             )
         with open(
-            Path(
-                self.pipeline_dir,
-                "subworkflows",
-                "nf-core",
-                "bam_stats_samtools",
-                "main.nf",
-            ),
+            self.main_nf,
             "w",
         ) as fh:
             fh.write(new_content)
@@ -101,27 +83,12 @@ class TestMainNf(TestSubworkflows):
 
     def test_subworkflows_lint_capitalization_fail(self):
         """Test linting a subworkflow with a capitalization fail"""
-        self.subworkflow_install.install("bam_stats_samtools")
         # change workflow name to lowercase
-        with open(
-            Path(
-                self.pipeline_dir,
-                "subworkflows",
-                "nf-core",
-                "bam_stats_samtools",
-                "main.nf",
-            )
-        ) as fh:
+        with open(self.main_nf) as fh:
             content = fh.read()
             new_content = content.replace("workflow BAM_STATS_SAMTOOLS {", "workflow bam_stats_samtools {")
         with open(
-            Path(
-                self.pipeline_dir,
-                "subworkflows",
-                "nf-core",
-                "bam_stats_samtools",
-                "main.nf",
-            ),
+            self.main_nf,
             "w",
         ) as fh:
             fh.write(new_content)
