@@ -20,6 +20,8 @@
 
 ### Template
 
+- TEMPLATE - add trainling slash for pipelines_testdata_base_path ([#3701](https://github.com/nf-core/tools/pull/3701))
+
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
