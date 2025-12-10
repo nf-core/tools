@@ -3,12 +3,10 @@
 python = "3.14"
 # UV package manager
 uv = "latest"
-# Nextflow workflow manager
-nextflow = "latest"
-# nf-test for Nextflow testing
-"nf-test" = "0.9.3"
-# pdiff for nf-test snapshot comparison
-pdiff = "latest"
+# Nextflow workflow manager (from GitHub releases)
+"ubi:nextflow-io/nextflow" = "latest"
+# nf-test for Nextflow testing (from GitHub releases)
+"ubi:askimed/nf-test" = "0.9.3"
 # yq for YAML processing
 yq = "latest"
 # jq for JSON processing
