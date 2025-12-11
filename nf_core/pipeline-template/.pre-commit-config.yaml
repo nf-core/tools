@@ -32,7 +32,8 @@ repos:
               .*ro-crate-metadata.json$|
               .*\.snap$|
               lib/nfcore_external_java_deps.jar$|
-              docs/.*\.(svg|pdf)$
+              docs/.*\.(svg|pdf)$|
+              assets/.*$
           )$
       - id: check-merge-conflict
   - repo: local
