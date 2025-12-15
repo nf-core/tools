@@ -70,7 +70,7 @@ class ModuleContainers:
         assert platform in CONTAINER_PLATFORMS
 
         container: dict[str, str] = dict()
-        exectuable = "wave"
+        executable = "wave"
         args = ["--conda-file", str(conda_file.absolute()), "--freeze", "--platform", platform, "-o yaml"]
         if container_system == "singularity":
             args.append("--singularity")
@@ -79,7 +79,7 @@ class ModuleContainers:
 
         args_str = " ".join(args)
         log.debug(f"Wave command to request container ({container_system} {platform}): `wave {args_str}`")
-        out = run_cmd(exectuable, args_str)
+        out = run_cmd(executable, args_str)
 
         if out is None:
             raise RuntimeError("Wave command did not return any output")
