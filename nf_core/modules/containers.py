@@ -113,6 +113,9 @@ class ModuleContainers:
             if scan_id:
                 container[cls.SCAN_ID_KEY] = scan_id
 
+        if container_system == "singularity" and not await_build:
+            log.warning("Cannot retrieve https-url by inspecting the image, when the image build is not awaited.")
+
         elif container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
             container_info = inspect_out.get(cls.INSP_CONTAINER_KEY, dict())
