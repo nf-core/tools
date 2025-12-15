@@ -284,6 +284,6 @@ def get_channel_info_from_biotools(
 
 def try_generate_container_configs(directory: Path, path: Path):
     try:
-        ContainerConfigs(directory, path).generate_container_configs()
+        ContainerConfigs(directory, str(path)).generate_container_configs()
     except UserWarning as e:
         log.warning(f"Could not regenerate container configuration files: {e}")
