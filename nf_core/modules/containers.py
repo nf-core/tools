@@ -21,6 +21,14 @@ class ModuleContainers:
     SCAN_ID_KEY = "scanId"
     LOCK_FILE_KEY = "lock_file"
 
+    # wave inspect output
+    INSP_CONTAINER_KEY = "container"
+    INSP_HOST_NAME_KEY = "hostName"
+    INSP_IMAGE_NAME_KEY = "imageName"
+    INSP_IMAGE_DIGEST_KEY = "digest"
+
+    HTTPS_URL_KEY = "https"
+
     def __init__(self, module: str, directory: str | Path = "."):
         self.directory = Path(directory)
         self.module = module
@@ -100,11 +108,51 @@ class ModuleContainers:
         if build_id:
             container[cls.BUILD_ID_KEY] = build_id
 
-        scan_id = meta_data.get(cls.SCAN_ID_KEY, "")
-        if scan_id:
-            container[cls.SCAN_ID_KEY] = scan_id
+        if container_system == "docker":
+            scan_id = meta_data.get(cls.SCAN_ID_KEY, "")
+            if scan_id:
+                container[cls.SCAN_ID_KEY] = scan_id
+
+        elif container_system == "singularity":
+            inspect_out = cls.request_image_inspect(image)
+            container_info = inspect_out.get(cls.INSP_CONTAINER_KEY, dict())
+
+            host_name = container_info.get(cls.INSP_HOST_NAME_KEY)
+            image_name = container_info.get(cls.INSP_IMAGE_NAME_KEY)
+            digest = container_info.get(cls.INSP_IMAGE_DIGEST_KEY)
+            if not (host_name and image_name and digest):
+                log.debug(
+                    f"Unable to create https-url from inspect output for {image} based on (host, image, digest) = ({host_name}, {image_name}, {digest})"
+                )
+                log.warning(f"Could not create https-url for image {image}")
+            else:
+                url = f"{host_name}/{image_name}/blob/{digest}"
+                container[cls.HTTPS_URL_KEY] = url
 
         return container
+
+    @classmethod
+    def request_image_inspect(cls, image: str) -> dict:
+        """
+        Request wave container inspect.
+        """
+        executable = "wave"
+        args = ["--inspect", "-o yaml", "-i", image]
+
+        args_str = " ".join(args)
+        log.debug(f"Wave command to request image inspect for image {image}: `wave {args_str}`")
+        out = run_cmd(executable, args_str)
+
+        if out is None:
+            raise RuntimeError("Wave command did not return any output")
+
+        try:
+            inspect_out = yaml.safe_load(out[0].decode()) or dict()
+        except (KeyError, AttributeError, yaml.YAMLError) as e:
+            log.debug(f"Output yaml from wave build command: {out}")
+            raise RuntimeError(f"Could not parse wave inspect yaml output for image {image}") from e
+
+        return inspect_out
 
     @staticmethod
     def get_conda_lock_url(build_id) -> str:
