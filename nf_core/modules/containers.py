@@ -113,19 +113,16 @@ class ModuleContainers:
             inspect_out = cls.request_image_inspect(image)
             container_layers = inspect_out.get("container", dict()).get("manifest", dict()).get("layers", dict())
 
-            # find the layer with nested Key: Value pair - "annotations"."org.opencontainers.image.title": "image.sif"
-            image_layer = next(
-                filter(
-                    lambda d: d.get("annotations", dict()).get("org.opencontainers.image.title", "") == "image.sif",
-                    container_layers,
-                )
-            )
-
-            try:
-                log.debug(f"Extracting https-uri for {image} from image inspect: {image_layer}")
-                container[cls.HTTPS_URL_KEY] = image_layer["uri"]
-            except KeyError:
+            if not (
+                len(container_layers) == 1
+                and container_layers[0].get("mediaType", "").endswith(".sif")
+                and container_layers[0].get("uri")
+            ):
                 log.warning(f"Https-url for image {image} could not be extracted from image inspect output")
+
+            else:
+                log.debug(f"Extracting https-uri for {image} from image inspect: {container_layers[0]}")
+                container[cls.HTTPS_URL_KEY] = container_layers[0]["uri"]
 
         return container
 
