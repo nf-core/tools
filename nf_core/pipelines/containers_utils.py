@@ -19,10 +19,10 @@ class ContainerConfigs:
 
     def __init__(
         self,
-        workflow_directory: str | Path = ".",
+        workflow_directory: Path = Path("."),
         org: str = "nf-core",
     ):
-        self.workflow_directory = Path(workflow_directory)
+        self.workflow_directory = workflow_directory
         self.org: str = org
 
     def generate_container_configs(self) -> None:

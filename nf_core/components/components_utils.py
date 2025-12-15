@@ -282,7 +282,7 @@ def get_channel_info_from_biotools(
     return None
 
 
-def try_generate_container_configs(directory: str | Path, path: str):
+def try_generate_container_configs(directory: Path, path: Path):
     try:
         ContainerConfigs(directory, path).generate_container_configs()
     except UserWarning as e:
