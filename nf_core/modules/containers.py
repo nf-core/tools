@@ -20,12 +20,6 @@ class ModuleContainers:
     BUILD_ID_KEY = "buildId"
     SCAN_ID_KEY = "scanId"
     LOCK_FILE_KEY = "lock_file"
-
-    # wave inspect output
-    INSP_HOST_NAME_KEY = "hostName"
-    INSP_IMAGE_NAME_KEY = "imageName"
-    INSP_IMAGE_DIGEST_KEY = "digest"
-
     HTTPS_URL_KEY = "https"
 
     def __init__(self, module: str, directory: str | Path = "."):
