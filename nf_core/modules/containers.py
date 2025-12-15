@@ -22,7 +22,6 @@ class ModuleContainers:
     LOCK_FILE_KEY = "lock_file"
 
     # wave inspect output
-    INSP_CONTAINER_KEY = "container"
     INSP_HOST_NAME_KEY = "hostName"
     INSP_IMAGE_NAME_KEY = "imageName"
     INSP_IMAGE_DIGEST_KEY = "digest"
@@ -118,19 +117,21 @@ class ModuleContainers:
 
         elif container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
-            container_info = inspect_out.get(cls.INSP_CONTAINER_KEY, dict())
+            container_layers = inspect_out.get("container", dict()).get("manifest", dict()).get("layers", dict())
 
-            host_name = container_info.get(cls.INSP_HOST_NAME_KEY)
-            image_name = container_info.get(cls.INSP_IMAGE_NAME_KEY)
-            digest = container_info.get(cls.INSP_IMAGE_DIGEST_KEY)
-            if not (host_name and image_name and digest):
-                log.debug(
-                    f"Unable to create https-url from inspect output for {image} based on (host, image, digest) = ({host_name}, {image_name}, {digest})"
+            # find the layer with nested Key: Value pair - "annotations"."org.opencontainers.image.title": "image.sif"
+            image_layer = next(
+                filter(
+                    lambda d: d.get("annotations", dict()).get("org.opencontainers.image.title", "") == "image.sif",
+                    container_layers,
                 )
-                log.warning(f"Could not create https-url for image {image}")
-            else:
-                url = f"{host_name}/{image_name}/blob/{digest}"
-                container[cls.HTTPS_URL_KEY] = url
+            )
+
+            try:
+                log.debug(f"Extracting https-uri for {image} from image inspect: {image_layer}")
+                container[cls.HTTPS_URL_KEY] = image_layer["uri"]
+            except KeyError:
+                log.warning(f"Https-url for image {image} could not be extracted from image inspect output")
 
         return container
 
