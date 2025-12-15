@@ -126,7 +126,6 @@ class ModuleContainers:
                 container[cls.HTTPS_URL_KEY] = (
                     f"https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/{digest[:2]}/{digest}/data"
                 )
-                # TODO: Or access via this field: container_layers[0]["uri"]
 
         return container
 
