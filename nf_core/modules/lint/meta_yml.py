@@ -1,6 +1,8 @@
-import json
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
@@ -8,11 +10,15 @@ from jsonschema import exceptions, validators
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import unquote
+
+if TYPE_CHECKING:
+    from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
 
 
-def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
     """
     Lint a ``meta.yml`` file
 
@@ -76,8 +82,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
-            schema = json.load(fh)
+        schema = module_lint_object.load_meta_schema()
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
@@ -300,15 +305,17 @@ def obtain_inputs(_, inputs: list) -> list:
     Returns:
         formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    formatted_inputs = []
+    formatted_inputs: list[list[str] | str] = []
     for input_channel in inputs:
         if isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
             formatted_inputs.append(channel_elements)
         else:
-            formatted_inputs.append(list(input_channel.keys())[0])
+            key = list(input_channel.keys())[0]
+            formatted_inputs.append(unquote(key))
 
     return formatted_inputs
 
@@ -335,9 +342,11 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
             if isinstance(element, list):
                 channel_elements.append([])
                 for e in element:
-                    channel_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    channel_elements[-1].append(unquote(key))
             else:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
         formatted_outputs[channel_name] = channel_elements
 
     if old_structure:
@@ -364,9 +373,11 @@ def obtain_topics(_, topics: dict) -> dict:
             if isinstance(element, list):
                 t_elements.append([])
                 for e in element:
-                    t_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    t_elements[-1].append(unquote(key))
             else:
-                t_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                t_elements.append(unquote(key))
         formatted_topics[name] = t_elements
 
     return formatted_topics

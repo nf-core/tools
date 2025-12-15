@@ -137,9 +137,10 @@ class TestMainNfLinting(TestModules):
     def test_topics_and_emits_version_check(self):
         """Test that main_nf version emit and topics check works correctly"""
 
+        self.mods_install.install("bioawk")
         # Lint a module known to have versions YAML in main.nf (for now)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="samtools/sort")
+        module_lint.lint(print_results=False, module="bioawk")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.warned) == 2, (
             f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
@@ -208,6 +209,7 @@ process TEST_PROCESS {
     path("*.txt"), emit: results
     val(evaluate_result), emit: evaluation
     path(pathogen_data), emit: pathogens
+    tuple val(meta), path("*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"), emit: reads
 
     script:
     "echo test"
@@ -230,10 +232,12 @@ process TEST_PROCESS {
 
     # Should find 3 outputs with variable names containing 'val' and 'path' substrings
     # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
-    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
     assert "results" in component.outputs
     assert "evaluation" in component.outputs
     assert "pathogens" in component.outputs
+    assert "reads" in component.outputs
+    assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
 
 
 def test_get_topics_no_partial_keyword_match(tmp_path):
