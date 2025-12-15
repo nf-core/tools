@@ -116,13 +116,17 @@ class ModuleContainers:
             if not (
                 len(container_layers) == 1
                 and container_layers[0].get("mediaType", "").endswith(".sif")
-                and container_layers[0].get("uri")
+                and container_layers[0].get("digest")
             ):
                 log.warning(f"Https-url for image {image} could not be extracted from image inspect output")
 
             else:
                 log.debug(f"Extracting https-uri for {image} from image inspect: {container_layers[0]}")
-                container[cls.HTTPS_URL_KEY] = container_layers[0]["uri"]
+                digest = container_layers[0]["digest"].replace("sha256:", "")
+                container[cls.HTTPS_URL_KEY] = (
+                    f"https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/{digest[:2]}/{digest}/data"
+                )
+                # TODO: Or access via this field: container_layers[0]["uri"]
 
         return container
 
