@@ -1,6 +1,5 @@
 """Tests for the ContainerConfigs helper used by pipelines."""
 
-import json
 from unittest.mock import patch
 
 import pytest
@@ -44,49 +43,8 @@ class TestContainerConfigs(TestPipelines):
         # Error message should mention the minimal required version
         assert pretty_nf_version(NF_INSPECT_MIN_NF_VERSION) in str(excinfo.value)
 
-    def test_generate_default_container_config(self) -> None:
-        """Run generate_default_container_config with mocking."""
-        mock_config = {
-            "processes": [
-                {
-                    "name": "FOO_BAR",
-                    "container": "docker://foo/bar:amd64",
-                }
-            ]
-        }
-        mock_config_bytes = json.dumps(mock_config).encode()
-
-        with patch(
-            "nf_core.pipelines.containers_utils.run_cmd",
-            return_value=(mock_config_bytes, b""),
-        ) as mocked_run_cmd:
-            out = self.container_configs.generate_default_container_config()
-
-        expected_cmd_params = f"inspect -format json {self.pipeline_dir}"
-        mocked_run_cmd.assert_called_once_with("nextflow", expected_cmd_params)
-
-        assert out == mock_config
-
-    def test_generate_default_container_config_in_pipeline(self) -> None:
-        """Run generate_default_container_config in a pipeline."""
-        out = self.container_configs.generate_default_container_config()
-        assert isinstance(out, dict)
-        assert "processes" in out
-
-        process_names = {proc["name"] for proc in out["processes"]}
-        assert "FASTQC" in process_names
-        assert "MULTIQC" in process_names
-
     def test_generate_all_container_configs(self) -> None:
         """Run generate_all_container_configs in a pipeline."""
-        # Mock generate_default_container_config() output
-        default_config = {
-            "processes": [
-                {"name": "FASTQC", "container": "community.wave.seqera.io/library/fastqc:0.12.1--af7a5314d5015c29"},
-                {"name": "MULTIQC", "container": "community.wave.seqera.io/library/multiqc:1.32--d58f60e4deb769bf"},
-            ]
-        }
-
         # Install fastqc and multiqc from gitlub seqera-containers test branch
         mods_install = ModuleInstall(
             self.pipeline_dir,
@@ -96,7 +54,7 @@ class TestContainerConfigs(TestPipelines):
         mods_install.install("fastqc")
         mods_install.install("multiqc")
 
-        self.container_configs.generate_all_container_configs(default_config)
+        self.container_configs.generate_container_configs()
 
         conf_dir = self.pipeline_dir / "conf"
         # Expected platforms and one expected container
