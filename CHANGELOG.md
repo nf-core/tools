@@ -11,18 +11,26 @@
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
+- Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
 - Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
+- Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
 
 ### Template
+
+- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
 
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
 
 ### Modules
+
+- sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
+- fix(modules_json): Use name string instead of dict as key in recreate_dependencies ([#3963](https://github.com/nf-core/tools/pull/3963))
+- linting: polish regex for output parsing in modules main.nf ([#3967](https://github.com/nf-core/tools/pull/3967))
 
 ### Subworkflows
 
