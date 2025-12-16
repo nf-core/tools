@@ -1,5 +1,5 @@
+import json
 import logging
-import re
 from pathlib import Path
 
 import yaml
@@ -39,7 +39,7 @@ class ContainerConfigs:
                 f"Please update your Nextflow version with [magenta]'nextflow self-update'[/]\n"
             )
 
-    def generate_default_container_config(self) -> str:
+    def generate_default_container_config(self) -> dict:
         """
         Generate the default container configuration file for a pipeline.
         Requires Nextflow >= 25.04.4
@@ -48,25 +48,20 @@ class ContainerConfigs:
         try:
             # Run nextflow inspect
             executable = "nextflow"
-            cmd_params = f"inspect -format config {self.workflow_directory}"
+            cmd_params = f"inspect -format json {self.workflow_directory}"
             cmd_out = run_cmd(executable, cmd_params)
             if cmd_out is None:
                 raise UserWarning("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
             out, _ = cmd_out
-            out_str = str(out, encoding="utf-8")
-            with open(self.workflow_directory / "conf" / "containers_docker_amd64.config", "w") as fh:
-                fh.write(out_str)
-            log.info(
-                f"Generated container config file for Docker AMD64: {self.workflow_directory / 'conf' / 'containers_docker_amd64.config'}"
-            )
-            return out_str
+            out_json = json.loads(out)
+            return out_json
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error:")
             raise UserWarning(e)
 
-    def generate_all_container_configs(self, default_config: str) -> None:
+    def generate_all_container_configs(self, default_config: dict) -> None:
         """Generate the container configuration files for all platforms."""
         containers: dict[str, dict[str, str]] = {
             "docker_amd64": {},
@@ -78,20 +73,10 @@ class ContainerConfigs:
             "conda_amd64_lockfile": {},
             "conda_arm64_lockfile": {},
         }
-        for line in default_config.split("\n"):
-            if line.startswith("process"):
-                pattern = r"process { withName: \'(.*)\' { container = \'(.*)\' } }"
-                match = re.search(pattern, line)
-                if match:
-                    try:
-                        module_name = match.group(1)
-                        container = match.group(2)
-                    except AttributeError:
-                        log.warning(f"Could not parse container for process {line}")
-                        continue
-                else:
-                    continue
-                containers["docker_amd64"][module_name] = container
+        for module in default_config["processes"]:
+            module_name = module["name"]
+            m_container = module["container"]
+            containers["docker_amd64"][module_name] = m_container
         for module_name in containers["docker_amd64"].keys():
             # Find module containers in meta.yml
             if "_" in module_name:
