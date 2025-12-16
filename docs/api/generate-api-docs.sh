@@ -46,7 +46,7 @@ for release in "${releases[@]}"; do
     echo "Generating docs for release: $release"
     echo "_________________________"
     git checkout docs/api
-    pip install -r docs/api/requirements.txt --quiet
+    uv pip install -r docs/api/requirements.txt --quiet
     # add the napoleon extension to the sphinx conf.py
     sed -i 's/^extensions = \[/extensions = \[\n    "sphinx_markdown_builder",/' docs/api/_src/conf.py
 

@@ -409,11 +409,12 @@ class PipelineSync:
         log.info("Submitting a pull request via the GitHub API")
 
         pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
+        blog_post_sentence = (
+            f"For more details, check out the blog post: {self.blog_post}" if self.blog_post != "" else ""
+        )
         pr_body_text = (
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
-            f"For more details, check out the blog post: {self.blog_post}\n\n"
-            if self.blog_post != ""
-            else ""
+            f"{blog_post_sentence}\n\n"
             "Please make sure to merge this pull-request as soon as possible, "
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
@@ -421,8 +422,8 @@ class PipelineSync:
             "[https://nf-co.re/docs/contributing/sync/](https://nf-co.re/docs/contributing/sync/#merging-automated-prs).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
-            "> [!NOTE]\n"
-            "> Since nf-core/tools 3.5.0, older template update PRs will not be automatically closed, but will remain open in your pipeline repository."
+            "\n\n> [!NOTE]\n"
+            "> Since nf-core/tools 3.5.0, older template update PRs will not be automatically closed, but will remain open in your pipeline repository. "
             "Older template PRs will be automatically closed once a newer template PR has been merged."
         ).format(tag=nf_core.__version__)
 

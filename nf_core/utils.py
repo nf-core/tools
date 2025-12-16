@@ -2,6 +2,7 @@
 Common utility functions for the nf-core python package.
 """
 
+import ast
 import concurrent.futures
 import datetime
 import errno
@@ -91,6 +92,25 @@ NFCORE_CACHE_DIR = Path(
     "nfcore",
 )
 NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+
+
+def unquote(s: str) -> str:
+    """
+    Remove paired quotes (single or double) from start and end of string.
+
+    Uses ast.literal_eval to safely parse Python string literals, preserving
+    the original string if it's not a valid literal.
+
+    Args:
+        s: String potentially containing quotes
+
+    Returns:
+        String with outer quotes removed if present, otherwise original string
+    """
+    try:
+        return ast.literal_eval(s)
+    except (ValueError, SyntaxError):
+        return s
 
 
 def fetch_remote_version(source_url):
@@ -1648,15 +1668,21 @@ def get_wf_files(wf_path: Path):
 
     wf_files = []
 
+    ignore = [".git/*"]
     try:
         with open(Path(wf_path, ".gitignore")) as f:
-            lines = f.read().splitlines()
-        ignore = [line for line in lines if line and not line.startswith("#")]
+            for line in f.read().splitlines():
+                if not line or line.startswith("#"):
+                    continue
+                # Make trailing-slash patterns match their entire subtree
+                line = re.sub("/$", "/*", line)
+                ignore.append(line)
     except FileNotFoundError:
-        ignore = []
+        pass
 
     for path in Path(wf_path).rglob("*"):
-        if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
+        rpath = str(path.relative_to(wf_path))
+        if any(fnmatch.fnmatch(rpath, pattern) for pattern in ignore):
             continue
         if path.is_file():
             wf_files.append(str(path))

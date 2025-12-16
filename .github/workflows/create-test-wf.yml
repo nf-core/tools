@@ -41,18 +41,21 @@ jobs:
           cd create-test-wf
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out source-code repository
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: "3.14"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a # v7
+        with:
+          enable-cache: true
+
       - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
+        run: uv sync
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
@@ -69,7 +72,7 @@ jobs:
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
       - name: copy snapshot file
         run: |
