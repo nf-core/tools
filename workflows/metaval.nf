@@ -282,9 +282,8 @@ workflow METAVAL {
     //
     // SUBWORKFLOW: MAPPING
     //
-    ch_reference = file( params.pathogens_genomes, checkIfExists: true)
-
     if ( params.perform_screen_pathogens ) {
+        ch_reference = file( params.pathogens_genomes, checkIfExists: true)
         // Map short reads to the pathogens genome
         ch_mapping_pathogen_sr = ch_input.short_reads
             .map { meta, reads -> [ meta, reads, ch_reference]}
