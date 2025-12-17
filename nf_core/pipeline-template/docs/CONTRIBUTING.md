@@ -152,6 +152,7 @@ Use the following naming schemes for channels to make the channel flow easier to
 #### Default parameter values
 
 Parameters should be initialised and defined with default values within the `params` scope in `nextflow.config`.
+They should also be documented in the pipeline JSON schema.
 
 To update `nextflow_schema.json`, run:
 
@@ -159,7 +160,7 @@ To update `nextflow_schema.json`, run:
 nf-core pipelines schema build
 ```
 
-To update `nextflow_schema.json`.
+The schema builder interface that loads in your browser should automatically update the defaults in the parameter documentation.
 
 #### Default processes resource requirements
 
