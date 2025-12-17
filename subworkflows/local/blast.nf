@@ -51,7 +51,6 @@ workflow BLAST {
                 blastn_hits.splitCsv( sep: '\t', header: true )
                     .collect { row -> [ row.staxid, meta, blastn_hits ] }
             }
-            //.unique { it[0] }
             .unique { staxid, meta, blastn_hits -> [staxid, meta.id, meta.taxid, meta.tool]}
             .map { staxid, meta, blastn_hits -> [ staxid, meta ] }
         ch_blast_hits_taxid = ch_blast_hits_taxid.mix( ch_blastn_hits_taxid )
@@ -90,7 +89,6 @@ workflow BLAST {
                 blastx_hits.splitCsv( sep: '\t', header: true )
                     .collect { row -> [ row.staxid, meta, blastx_hits ] }
             }
-            //.unique { it[0] }  // Remove duplicate taxids
             .unique { staxid, meta, blastx_hits -> [staxid, meta.id, meta.taxid, meta.tool]}
             .map { staxid, meta, blastx_hits -> [ staxid, meta ] }
             ch_blast_hits_taxid = ch_blast_hits_taxid.mix ( ch_blastx_hits_taxid )
