@@ -8,7 +8,7 @@ markdownPlugin: checklist
 Hi there!
 Thanks for taking an interest in improving {{ name }}.
 
-This page describes the recommended nf-core way to contribute to both {{ name }} and nf-core pipelines in general.
+This page describes the recommended nf-core way to contribute to both {{ name }} and nf-core pipelines in general, including:
 
 - [General contribution guidelines](#general-contribution-guidelines): for common procedures or guides across all nf-core pipelines.
 - [Pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines): for any procedures or guides specific to the development conventions of {{ name }}.
@@ -16,7 +16,7 @@ This page describes the recommended nf-core way to contribute to both {{ name }}
 {% if is_nfcore -%}
 
 > [!NOTE]
-> If you need help using or modifying {{ name }}, the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying {{ name }}, ask on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 {% endif -%}
 
@@ -24,25 +24,25 @@ This page describes the recommended nf-core way to contribute to both {{ name }}
 
 ### Contribution quick start
 
-If you would like to write code for {{ name }}, the standard workflow is as follows:
+To contribute code to any nf-core pipeline:
 
 - [ ] Ensure you have Nextflow, nf-core tools, and nf-test installed. See the [nf-core/tools repository](https://github.com/nf-core/tools) for instructions.
-- [ ] Check whether a GitHub [issue](https://github.com/{{ name }}/issues) about your idea already exists. If an issue does not exist, create one so that others know you are working on this.
+- [ ] Check whether a GitHub [issue](https://github.com/{{ name }}/issues) about your idea already exists. If an issue does not exist, create one so that others are aware you are working on it.
 - [ ] [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ name }} repository](https://github.com/{{ name }}) to your GitHub account.
-- [ ] Make the changes and additions on a branch of your forked repository following the [pipeline conventions](#pipeline-contribution-conventions).
-- [ ] To fix a major bug, use a branch named `patch` and see the [patch release](#patch-release) section below.
+- [ ] Create a branch on your forked repository and make your changes following [pipeline conventions](#pipeline-contribution-conventions) (if applicable).
+- [ ] To fix major bugs, name your branch `patch` and follow the [patch release](#patch-release) process.
 - [ ] Update relevant documentation within the `docs/` folder and use nf-core/tools to update `nextflow_schema.json`.
-- [ ] Run and/or update tests as appropriate (see the [Testing](#testing) section below).
+- [ ] Run and/or update tests. See [Testing](#testing) for more information.
 - [ ] [Lint](#lint-tests) your code with nf-core/tools.
 - [ ] Submit a pull request (PR) against the `dev` branch and request a review.
 
-If you are not used to this workflow with Git, start with the [GitHub documentation](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests) or their [Git resources](https://try.github.io/).
+If you are not used to this workflow with Git, see the [GitHub documentation](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests) or [Git resources](https://try.github.io/) for more information.
 
 {% if is_nfcore -%}
 
 ### Getting help
 
-For further information and help, see the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) or get in touch on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information and help, see the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) or ask on the nf-core [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) Slack channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 {% endif -%}
 
@@ -50,11 +50,11 @@ For further information and help, see the [{{ name }} documentation](https://nf-
 
 ### GitHub Codespaces
 
-If you want to contribute to {{ name }}, but do not want to install a local development environment on your own machine, you can use [GitHub Codespaces](https://github.com/codespaces).
+You can contribute to {{ name }} without installing a local development environment on your machine by using [GitHub Codespaces](https://github.com/codespaces).
 
-This is an online developer environment that runs in your browser, complete with VS Code and a terminal.
-This repository includes a devcontainer configuration which will create a GitHub Codespaces specifically for Nextflow development.
-It includes pre-installed nf-core tools, Nextflow, and a few other helpful utilities via a Docker container.
+[GitHub Codespaces](https://github.com/codespaces) is an online developer environment that runs in your browser, complete with VS Code and a terminal.
+Most nf-core repositories include a devcontainer configuration, which creates a GitHub Codespaces environment specifically for Nextflow development.
+The environment includes pre-installed nf-core tools, Nextflow, and a few other helpful utilities via a Docker container.
 
 To get started, open the repository in [Codespaces](https://github.com/{{ name }}/codespaces).
 {%- endif %}
@@ -62,15 +62,15 @@ To get started, open the repository in [Codespaces](https://github.com/{{ name }
 ### Testing
 
 {% if test_config -%}
-Once you have made your changes, test them locally by running the pipeline with nf-test.
-We recommend using the `--verbose` flag to see the Nextflow console log output in addition to the output from nf-test.
+Once you have made your changes, run the pipeline with nf-test to test them locally.
+We recommend the `--verbose` flag to view the Nextflow console log output in addition to the output from nf-test.
 
 ```bash
 nf-test test --tag test --profile +docker --verbose
 ```
 
 If you have added new functionality, ensure you update the test assertions in the `.nf.test` files in the `tests/` directory.
-Update the snapshots with the following command.
+Update the snapshots with the following command:
 
 ```bash
 nf-test test --tag test --profile +docker --verbose --update-snapshots
@@ -86,32 +86,32 @@ Pull requests are typically reviewed when these tests are passing.
 #### Lint tests
 
 nf-core has a [set of guidelines](https://nf-co.re/docs/contributing/guidelines) which all pipelines must follow.
-To enforce these and keep pipelines in sync, use the nf-core/tools package to run linting locally:
+To enforce these, run linting with nf-core/tools:
 
 ```bash
 nf-core pipelines lint <pipeline_directory>
 ```
 
 If you encounter failures or warnings, follow the linked documentation printed to screen.
-See the full list of tests in the nf-core/tools [documentation](https://nf-co.re/docs/nf-core-tools/api_reference/latest/pipeline_lint_tests/actions_awsfulltest).
+For more information about linting tests, see [nf-core/tools API documentation](https://nf-co.re/docs/nf-core-tools/api_reference/latest/pipeline_lint_tests/actions_awsfulltest).
 
 {%- if test_config %}
 
 #### Pipeline tests
 
 Each nf-core pipeline should be set up with a minimal set of test data.
-GitHub Actions then runs the pipeline on this data to ensure the pipeline runs and exits successfully.
+GitHub Actions runs the pipeline on this data to ensure it runs through and exits successfully.
 If there are any failures then the automated tests fail.
-These tests are run both with the latest available version of Nextflow and also the minimum required version that is stated in the pipeline code.
+These tests are run with the latest available version of Nextflow and the minimum required version specified in the pipeline code.
 {%- endif %}
 
 ### Patch release
 
 > [!WARNING]
-> Only in the unlikely event of a release that has a bug.
+> Only in the unlikely event of a release that contains a critical bug.
 
-- [ ] Make a new branch `patch` on your fork based on `upstream/main` or `upstream/master`.
-- [ ] Fix the bug and use nf-core tools to bump the version to the next semantic version, for example, `1.2.3` → `1.2.4`.
+- [ ] Create a new branch `patch` on your fork based on `upstream/main` or `upstream/master`.
+- [ ] Fix the bug and use nf-core/tools to bump the version to the next semantic version, for example, `1.2.3` → `1.2.4`.
 - [ ] Open a Pull Request from `patch` directly to `main`/`master` with the changes.
 
 ### Pipeline contribution conventions
@@ -120,11 +120,11 @@ To make the `{{ name }}` code and processing logic more understandable for new c
 
 #### Add a new pipeline step
 
-If you wish to contribute a new step to the pipeline, follow the general nf-core coding procedure.
+To contribute a new step to the pipeline, follow the general nf-core coding procedure:
 Please also refer to the [pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines):
 
 - [ ] Define the corresponding [input channel](#channel-naming-schemes) into your new process from the expected previous process channel.
-- [ ] Install a module with nf-core tools, or write a local module (see [default processes resource requirements](#default-processes-resource-requirements)), and add it to the target `<workflow>.nf`.
+- [ ] Install a module with nf-core/tools, or write a local module (see [default processes resource requirements](#default-processes-resource-requirements)), and add it to the target `<workflow>.nf`.
 - [ ] Define the output channel if needed. Mix the version output channel into `ch_versions` and relevant files into `ch_multiqc`.
 - [ ] Add new or updated parameters to `nextflow.config` with a [default value](#default-parameter-values).
 - [ ] Add new or updated parameters and relevant help text to `nextflow_schema.json` with [nf-core/tools](#default-parameter-values).
@@ -140,11 +140,11 @@ Please also refer to the [pipeline-specific contribution guidelines](#pipeline-s
 - [ ] Add a description of the output files and, if relevant, images from the MultiQC report to `docs/output.md`.
       {%- endif %}
 
-If you need to update the minimum required Nextflow version, please see the [Nextflow version bumping](#nextflow-version-bumping) section below.
+To update the minimum required Nextflow version, see the [Nextflow version bumping](#nextflow-version-bumping) section below. For more information about pipeline contributions, see [pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines).
 
 #### Channel naming schemes
 
-Use the following naming schemes for channels to make the channel flow easier to understand.
+Use the following naming schemes for channels to make the channel flow easier to understand:
 
 - Initial process channel: `ch_output_from_<process>`
 - Intermediate and terminal channels: `ch_<previousprocess>_for_<nextprocess>`
@@ -153,7 +153,7 @@ Use the following naming schemes for channels to make the channel flow easier to
 
 Parameters should be initialised and defined with default values within the `params` scope in `nextflow.config`.
 
-Once there, use:
+To update `nextflow_schema.json`, run:
 
 ```bash
 nf-core pipelines schema build
@@ -183,7 +183,7 @@ nf-core pipelines bump-version --nextflow . <min_nf_version>
 
 #### Images and figures guidelines
 
-For overview images and other documents we follow the nf-core [style guidelines and examples](https://nf-co.re/docs/guidelines/graphic_design/overview).
+If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/guidelines/graphic_design/overview).
 
 ## Pipeline specific contribution guidelines
 
