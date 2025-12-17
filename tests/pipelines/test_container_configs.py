@@ -45,7 +45,7 @@ class TestContainerConfigs(TestPipelines):
 
     def test_generate_all_container_configs(self) -> None:
         """Run generate_all_container_configs in a pipeline."""
-        # Install fastqc and multiqc from gitlub seqera-containers test branch
+        # Install fastqc and multiqc
         mods_install = ModuleInstall(
             self.pipeline_dir,
             prompt=False,
