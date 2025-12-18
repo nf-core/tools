@@ -88,19 +88,37 @@ class ConfigsCreateConfig(BaseModel):
     def path_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that a path is valid."""
         context = info.context
-        if context and not context["is_infrastructure"]:
+        if context and (not context["is_infrastructure"] and not context["is_nfcore"]):
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             if not Path(v).is_dir():
                 raise ValueError("Must be a valid path.")
         return v
 
-    @field_validator("config_profile_contact", "config_profile_description", "config_pipeline_name")
+    @field_validator("config_pipeline_name")
     @classmethod
-    def notempty_nfcore(cls, v: str, info: ValidationInfo) -> str:
-        """Check that string values are not empty when the config is nf-core."""
+    def nfcore_name_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that an nf-core pipeline name is valid."""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and (not context["is_infrastructure"] and context["is_nfcore"]):
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("config_profile_description")
+    @classmethod
+    def notempty_description(cls, v: str) -> str:
+        """Check that description is not empty when."""
+        if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("config_profile_contact")
+    @classmethod
+    def notempty_contact(cls, v: str, info: ValidationInfo) -> str:
+        """Check that contact values are not empty when the config is infrastructure."""
+        context = info.context
+        if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
@@ -113,7 +131,7 @@ class ConfigsCreateConfig(BaseModel):
         """Check that GitHub handles start with '@'.
         Make providing a handle mandatory for nf-core configs"""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(
@@ -132,7 +150,7 @@ class ConfigsCreateConfig(BaseModel):
     def url_prefix(cls, v: str, info: ValidationInfo) -> str:
         """Check that institutional web links start with valid URL prefix."""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(
@@ -152,16 +170,36 @@ class ConfigsCreateConfig(BaseModel):
                 )
         return v
 
-    @field_validator("default_process_ncpus", "default_process_memgb", "default_process_hours", "default_process_minutes", "default_process_seconds")
+    @field_validator("default_process_ncpus", "default_process_memgb")
     @classmethod
-    def integer_valid(cls, v: str, info: ValidationInfo) -> str:
+    def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that integer values are non-empty and positive."""
-        if v.strip() == "":
-            raise ValueError("Cannot be left empty.")
-        try:
-            int(v.strip())
-        except ValueError:
-            raise ValueError("Must be an integer.")
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+            try:
+                v_int = int(v.strip())
+            except ValueError:
+                raise ValueError("Must be an integer.")
+            if not v_int > 0:
+                raise ValueError("Must be a positive integer.")
+        return v
+
+    @field_validator("default_process_hours", "default_process_minutes", "default_process_seconds")
+    @classmethod
+    def non_neg_integer_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that integer values are non-empty and non-negative."""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+            try:
+                v_int = int(v.strip())
+            except ValueError:
+                raise ValueError("Must be an integer.")
+            if not v_int >= 0:
+                raise ValueError("Must be a non-negative integer.")
         return v
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)

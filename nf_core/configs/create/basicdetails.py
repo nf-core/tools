@@ -12,6 +12,7 @@ from textual.widgets import Button, Footer, Header, Input, Markdown
 from nf_core.configs.create.utils import (
     ConfigsCreateConfig,
     TextInput,
+    init_context
 )  ## TODO Move somewhere common?
 from nf_core.utils import add_hide_class, remove_hide_class
 
@@ -101,7 +102,8 @@ class BasicDetails(Screen):
             else:
                 text_input.query_one(".validation_msg").update("")
         try:
-            self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
+            with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+                self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
             if event.button.id == "next":
                 if self.parent.CONFIG_TYPE == "infrastructure":
                     self.parent.push_screen("hpc_question")

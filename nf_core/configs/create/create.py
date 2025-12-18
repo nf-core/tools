@@ -3,6 +3,7 @@ nf-core organization specification.
 """
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, generate_config_entry
+from re import sub
 
 
 class ConfigCreate:
@@ -31,7 +32,8 @@ class ConfigCreate:
 
     def write_to_file(self):
         ## File name option
-        filename = "_".join(self.template_config.general_config_name) + ".conf"
+        config_name = str(self.template_config.general_config_name).strip()
+        filename = sub(r'\s+', '_', config_name) + ".conf"
 
         ## Collect all config entries per scope, for later checking scope needs to be written
         validparams = self.construct_params(

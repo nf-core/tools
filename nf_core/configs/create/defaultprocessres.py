@@ -11,6 +11,7 @@ from textual.widgets import Button, Footer, Header, Input, Markdown
 from nf_core.configs.create.utils import (
     ConfigsCreateConfig,
     TextInput,
+    init_context
 )  ## TODO Move somewhere common?
 from nf_core.utils import add_hide_class, remove_hide_class
 
@@ -75,7 +76,20 @@ class DefaultProcess(Screen):
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
+        new_config = {}
+        for text_input in self.query("TextInput"):
+            this_input = text_input.query_one(Input)
+            validation_result = this_input.validate(this_input.value)
+            new_config[text_input.field_id] = this_input.value
+            if not validation_result.is_valid:
+                text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
+            else:
+                text_input.query_one(".validation_msg").update("")
         try:
+            config = self.parent.TEMPLATE_CONFIG.__dict__
+            config.update(new_config)
+            with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+                self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
             if event.button.id == "next":
                 self.parent.push_screen("final")
         except ValueError:
