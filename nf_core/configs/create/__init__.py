@@ -21,6 +21,7 @@ from nf_core.configs.create.hpcquestion import ChooseHpc
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 from nf_core.configs.create.defaultprocessres import DefaultProcess
+from nf_core.configs.create.customprocessres import CustomProcess
 
 ## General utilities
 from nf_core.utils import LoggingConsole
@@ -61,6 +62,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "hpc_question": ChooseHpc,
         "hpc_customisation": HpcCustomisation,
         "default_process_resources": DefaultProcess,
+        "custom_process_resources": CustomProcess,
         "final_infra_details": FinalInfraDetails,
     }
 

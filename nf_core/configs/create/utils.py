@@ -62,6 +62,20 @@ class ConfigsCreateConfig(BaseModel):
     """ Default walltime - minutes """
     default_process_seconds: Optional[str] = None
     """ Default walltime - seconds """
+    custom_process_ncpus: Optional[str] = None
+    """ Number of CPUs for process """
+    custom_process_memgb: Optional[str] = None
+    """ Amount of memory for process """
+    custom_process_hours: Optional[str] = None
+    """ Walltime for process - hours """
+    custom_process_minutes: Optional[str] = None
+    """ Walltime for process - minutes """
+    custom_process_seconds: Optional[str] = None
+    """ Walltime for process - seconds """
+    named_process_resources: Optional[dict] = None
+    """ Dictionary containing custom resource requirements for named processes """
+    labelled_process_resources: Optional[dict] = None
+    """ Dictionary containing custom resource requirements for labelled processes """
     is_nfcore: Optional[bool] = None
     """ Whether the config is part of the nf-core organisation """
 
@@ -170,7 +184,7 @@ class ConfigsCreateConfig(BaseModel):
                 )
         return v
 
-    @field_validator("default_process_ncpus", "default_process_memgb")
+    @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")
     @classmethod
     def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that integer values are non-empty and positive."""
@@ -186,7 +200,7 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a positive integer.")
         return v
 
-    @field_validator("default_process_hours", "default_process_minutes", "default_process_seconds")
+    @field_validator("default_process_hours", "default_process_minutes", "default_process_seconds", "custom_process_hours", "custom_process_minutes", "custom_process_seconds")
     @classmethod
     def non_neg_integer_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that integer values are non-empty and non-negative."""
