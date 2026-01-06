@@ -31,7 +31,7 @@ To contribute code to any nf-core pipeline:
 - [ ] [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ name }} repository](https://github.com/{{ name }}) to your GitHub account.
 - [ ] Create a branch on your forked repository and make your changes following [pipeline conventions](#pipeline-contribution-conventions) (if applicable).
 - [ ] To fix major bugs, name your branch `patch` and follow the [patch release](#patch-release) process.
-- [ ] Update relevant documentation within the `docs/` folder and use nf-core/tools to update `nextflow_schema.json`.
+- [ ] Update relevant documentation within the `docs/` folder, use nf-core/tools to update `nextflow_schema.json`, and update `CITATIONS.md`.
 - [ ] Run and/or update tests. See [Testing](#testing) for more information.
 - [ ] [Lint](#lint-tests) your code with nf-core/tools.
 - [ ] Submit a pull request (PR) against the `dev` branch and request a review.
@@ -120,7 +120,7 @@ To make the `{{ name }}` code and processing logic more understandable for new c
 
 #### Add a new pipeline step
 
-To contribute a new step to the pipeline, follow the general nf-core coding procedure:
+To contribute a new step to the pipeline, follow the general nf-core coding procedure.
 Please also refer to the [pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines):
 
 - [ ] Define the corresponding [input channel](#channel-naming-schemes) into your new process from the expected previous process channel.
@@ -136,7 +136,7 @@ Please also refer to the [pipeline-specific contribution guidelines](#pipeline-s
 - [ ] Update any diagrams or pipeline images as necessary.
       {%- if multiqc %}
 - [ ] Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name cleanup, and module plots are in the appropriate order.
-- [ ] If applicable, add a [MultiQC](https://seqera.io/multiqc/) module.
+- [ ] If applicable, create a [MultiQC](https://seqera.io/multiqc/) module.
 - [ ] Add a description of the output files and, if relevant, images from the MultiQC report to `docs/output.md`.
       {%- endif %}
 
@@ -172,7 +172,7 @@ Specify these with generic `withLabel:` selectors, so they can be shared across 
 nf-core provides a set of standard labels that you should follow where possible, as seen in the [nf-core pipeline template](https://github.com/nf-core/tools/blob/main/nf_core/pipeline-template/conf/base.config).
 These labels define resource defaults for single-core processes, modules that require a GPU, and different levels of multi-core configurations with increasing memory requirements.
 
-Pass process resources to the tool dynamically using the `${task.cpus}` and `${task.memory}` Nextflow variables in the `script:` block (see an example in the [modules repository](https://github.com/nf-core/modules/blob/bd1b6a40f55933d94b8c9ca94ec8c1ea0eaf4b82/modules/nf-core/samtools/bam2fq/main.nf#L30)).
+Values assigned within these labels can be dynamically passed to a tool using the the `${task.cpus}` and `${task.memory}` Nextflow variables in the `script:` block of a module (see an example in the [modules repository](https://github.com/nf-core/modules/blob/bd1b6a40f55933d94b8c9ca94ec8c1ea0eaf4b82/modules/nf-core/samtools/bam2fq/main.nf#L30)).
 
 #### Nextflow version bumping
 
