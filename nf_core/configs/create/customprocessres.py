@@ -24,6 +24,8 @@ class CustomProcess(Screen):
     def __init__(self) -> None:
         super().__init__()
         self.select_label = False
+        self.config_stack = []
+        self.current_config = {}
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -41,14 +43,7 @@ class CustomProcess(Screen):
                 "",
                 "The name of the process you wish to configure.",
                 "",
-                classes="column hide" if self.select_label else "column",
-            )
-            yield TextInput(
-                "custom_process_label",
-                "",
-                "The process label you wish to configure.",
-                "",
-                classes="column hide" if not self.select_label else "column",
+                classes="column",
             )
         with Horizontal():
             yield Label(
@@ -102,6 +97,7 @@ class CustomProcess(Screen):
             )
         yield Center(
             Button("Back", id="back", variant="default"),
+            Button("Configure another process", id="another"),
             Button("Next", id="next", variant="success"),
             classes="cta",
         )
@@ -110,17 +106,7 @@ class CustomProcess(Screen):
     def on_toggle_process_name_label(self, event: Switch.Changed) -> None:
         """ Handle toggling the process name/label switch """
         self.select_label = event.value
-        # Update the input text box and labels
-        for text_input in self.query("TextInput"):
-            if text_input.field_id in ["custom_process_name", "custom_process_label"]:
-                text_input.refresh(repaint=True, layout=True, recompose=True)
-        if self.select_label:
-            add_hide_class(self.parent, "custom_process_name")
-            remove_hide_class(self.parent, "custom_process_label")
-        else:
-            add_hide_class(self.parent, "custom_process_label")
-            remove_hide_class(self.parent, "custom_process_name")
-        # Update the switch label as well
+        # Update the switch label
         for label in self.query(Label):
             if label.id == "name_or_label_text":
                 label.update("label" if self.select_label else "name")
@@ -130,22 +116,65 @@ class CustomProcess(Screen):
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
-        new_config = {}
+        if event.button.id in ["next", "another"]:
+            tmp_config = {}
+            for text_input in self.query("TextInput"):
+                this_input = text_input.query_one(Input)
+                validation_result = this_input.validate(this_input.value)
+                tmp_config[text_input.field_id] = this_input.value
+                if not validation_result.is_valid:
+                    text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
+                else:
+                    text_input.query_one(".validation_msg").update("")
+            # Validate the config
+            try:
+                with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+                    ConfigsCreateConfig(**tmp_config)
+                # Add to the config stack
+                tmp_config['select_label'] = self.select_label
+                self.config_stack.append(tmp_config)
+                self.current_config = {}
+            except ValueError:
+                pass
+        elif event.button.id == "back":
+            try:
+                self.current_config = self.config_stack.pop()
+            except IndexError:
+                self.current_config = {}
+
+        # Reset all input field values
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)
-            validation_result = this_input.validate(this_input.value)
-            new_config[text_input.field_id] = this_input.value
-            if not validation_result.is_valid:
-                text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
-            else:
-                text_input.query_one(".validation_msg").update("")
-        try:
-            with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
-                # First, validate the new config data
-                ConfigsCreateConfig(**new_config)
-                # If that passes validation, update the existing config
-                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
-            if event.button.id == "next":
-                self.parent.push_screen("final")
-        except ValueError:
-            pass
+            this_input.clear()
+            field_id = text_input.field_id
+            if field_id in self.current_config:
+                this_input.insert(self.current_config[field_id], 0)
+        # Also reset switch
+        switch_input = self.query_one(Switch)
+        if 'select_label' in self.current_config:
+            self.select_label = self.current_config['select_label']
+        else:
+            self.select_label = False
+        if switch_input.value != self.select_label:
+            switch_input.toggle()
+
+        if event.button.id == "next":
+            new_config = {}
+            for key in ["labelled_process_resources", "named_process_resources"]:
+                custom_process_resources_dict = self.parent.TEMPLATE_CONFIG.__dict__.get(key)
+                if custom_process_resources_dict is None:
+                    new_config[key] = {}
+                else:
+                    new_config[key] = custom_process_resources_dict
+            for tmp_config in self.config_stack:
+                select_label = tmp_config.pop('select_label')
+                process_name_or_label = tmp_config.get('custom_process_name')
+                if select_label:
+                    key = 'labelled_process_resources'
+                else:
+                    key = 'named_process_resources'
+                new_config[key][process_name_or_label] = tmp_config
+            self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+            self.parent.push_screen("final")
+        elif event.button.id == "another":
+            self.parent.push_screen("custom_process_resources")
