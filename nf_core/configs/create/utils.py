@@ -62,6 +62,8 @@ class ConfigsCreateConfig(BaseModel):
     """ Default walltime - minutes """
     default_process_seconds: Optional[str] = None
     """ Default walltime - seconds """
+    custom_process_name: Optional[str] = None
+    """" Name or label of a process to configure """
     custom_process_ncpus: Optional[str] = None
     """ Number of CPUs for process """
     custom_process_memgb: Optional[str] = None
@@ -182,6 +184,16 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError(
                     "Handle must be a valid URL starting with 'https://' or 'http://' and include the domain (e.g. .com)."
                 )
+        return v
+
+    @field_validator("custom_process_name")
+    @classmethod
+    def notempty_process_name(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the custom process name or label isn't empty."""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
         return v
 
     @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")

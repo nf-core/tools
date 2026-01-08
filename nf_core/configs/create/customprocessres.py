@@ -116,6 +116,7 @@ class CustomProcess(Screen):
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
+        proceed = False
         if event.button.id in ["next", "another"]:
             tmp_config = {}
             for text_input in self.query("TextInput"):
@@ -130,6 +131,7 @@ class CustomProcess(Screen):
             try:
                 with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
                     ConfigsCreateConfig(**tmp_config)
+                proceed = True
                 # Add to the config stack
                 tmp_config['select_label'] = self.select_label
                 self.config_stack.append(tmp_config)
@@ -137,10 +139,16 @@ class CustomProcess(Screen):
             except ValueError:
                 pass
         elif event.button.id == "back":
+            proceed = True
             try:
                 self.current_config = self.config_stack.pop()
             except IndexError:
                 self.current_config = {}
+
+        # Only continue if the user clicked 'next' or 'another' and we have a valid config
+        # or if the user clicked 'back'
+        if not proceed:
+            return
 
         # Reset all input field values
         for text_input in self.query("TextInput"):
@@ -149,6 +157,8 @@ class CustomProcess(Screen):
             field_id = text_input.field_id
             if field_id in self.current_config:
                 this_input.insert(self.current_config[field_id], 0)
+            else:
+                text_input.refresh(repaint=True, layout=True, recompose=True)
         # Also reset switch
         switch_input = self.query_one(Switch)
         if 'select_label' in self.current_config:
@@ -159,6 +169,7 @@ class CustomProcess(Screen):
             switch_input.toggle()
 
         if event.button.id == "next":
+            # If finalising the custom resources, add them all to the config now
             new_config = {}
             for key in ["labelled_process_resources", "named_process_resources"]:
                 custom_process_resources_dict = self.parent.TEMPLATE_CONFIG.__dict__.get(key)
@@ -177,4 +188,5 @@ class CustomProcess(Screen):
             self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
             self.parent.push_screen("final")
         elif event.button.id == "another":
+            # If configuring another process, push a new copy of this screen to the stack
             self.parent.push_screen("custom_process_resources")
