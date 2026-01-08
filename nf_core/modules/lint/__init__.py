@@ -10,15 +10,12 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 import rich
 import rich.progress
 import ruamel.yaml
 
-import nf_core.components
-import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml
@@ -30,7 +27,7 @@ log = logging.getLogger(__name__)
 
 from .environment_yml import environment_yml
 from .main_nf import main_nf
-from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, read_meta_yml
+from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
 from .module_changes import module_changes
 from .module_deprecations import module_deprecations
 from .module_patch import module_patch
@@ -51,6 +48,7 @@ class ModuleLint(ComponentLint):
     meta_yml = meta_yml
     obtain_inputs = obtain_inputs
     obtain_outputs = obtain_outputs
+    obtain_topics = obtain_topics
     read_meta_yml = read_meta_yml
     module_changes = module_changes
     module_deprecations = module_deprecations
@@ -61,13 +59,13 @@ class ModuleLint(ComponentLint):
 
     def __init__(
         self,
-        directory: Union[str, Path],
+        directory: str | Path,
         fail_warned: bool = False,
         fix: bool = False,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
-        registry: Optional[str] = None,
+        registry: str | None = None,
         hide_progress: bool = False,
     ):
         super().__init__(
@@ -143,7 +141,7 @@ class ModuleLint(ComponentLint):
             if all_modules:
                 raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            remote_modules = [m for m in self.all_remote_components if m.component_name == module]
+            remote_modules = nf_core.modules.modules_utils.filter_modules_by_name(self.all_remote_components, module)
             if len(remote_modules) == 0:
                 raise LintExceptionError(f"Could not find the specified module: '{module}'")
         else:
@@ -237,6 +235,7 @@ class ModuleLint(ComponentLint):
         if local:
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
+            mod.get_topics_from_main_nf()
             # Update meta.yml file if requested
             if self.fix and mod.meta_yml is not None:
                 self.update_meta_yml_file(mod)
@@ -263,6 +262,7 @@ class ModuleLint(ComponentLint):
         else:
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
+            mod.get_topics_from_main_nf()
             # Update meta.yml file if requested
             if self.fix:
                 self.update_meta_yml_file(mod)
@@ -303,6 +303,9 @@ class ModuleLint(ComponentLint):
         if "output" in meta_yml:
             correct_outputs = self.obtain_outputs(mod.outputs)
             meta_outputs = self.obtain_outputs(meta_yml["output"])
+        if "topics" in meta_yml:
+            correct_topics = self.obtain_topics(mod.topics)
+            meta_topics = self.obtain_topics(meta_yml["topics"])
 
         def _find_meta_info(meta_yml, element_name, is_output=False) -> dict:
             """Find the information specified in the meta.yml file to update the corrected meta.yml content"""
@@ -367,6 +370,25 @@ class ModuleLint(ComponentLint):
                         element_name = list(ch_content.keys())[0]
                         corrected_meta_yml["output"][ch_name][i][element_name] = _find_meta_info(
                             meta_yml["output"], element_name, is_output=True
+                        )
+
+        if "topics" in meta_yml and correct_topics != meta_topics:
+            log.debug(
+                f"Correct topics: '{correct_topics}' differ from current topics: '{meta_topics}' in '{mod.meta_yml}'"
+            )
+            corrected_meta_yml["topics"] = mod.topics.copy()
+            for t_name in corrected_meta_yml["topics"].keys():
+                for i, t_content in enumerate(corrected_meta_yml["topics"][t_name]):
+                    if isinstance(t_content, list):
+                        for j, element in enumerate(t_content):
+                            element_name = list(element.keys())[0]
+                            corrected_meta_yml["topics"][t_name][i][j][element_name] = _find_meta_info(
+                                meta_yml["topics"], element_name, is_output=True
+                            )
+                    elif isinstance(t_content, dict):
+                        element_name = list(t_content.keys())[0]
+                        corrected_meta_yml["topics"][t_name][i][element_name] = _find_meta_info(
+                            meta_yml["topics"], element_name, is_output=True
                         )
 
         def _add_edam_ontologies(section, edam_formats, desc):

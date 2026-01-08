@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
 
 import git
 import rich
@@ -35,8 +34,8 @@ class ModulesRepo(SyncedRepo):
 
     def __init__(
         self,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
         hide_progress: bool = False,
     ) -> None:
