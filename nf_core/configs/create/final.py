@@ -36,7 +36,7 @@ class FinalScreen(Screen):
 
     def _create_config(self) -> None:
         """Create the config."""
-        create_obj = ConfigCreate(template_config=self.parent.TEMPLATE_CONFIG)
+        create_obj = ConfigCreate(template_config=self.parent.TEMPLATE_CONFIG, config_type=self.parent.CONFIG_TYPE)
         create_obj.write_to_file()
 
     @on(Button.Pressed, "#close_app")
