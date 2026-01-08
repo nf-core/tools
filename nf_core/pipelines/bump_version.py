@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Optional, Union
 
+import cairosvg
 import rich.console
 from ruamel.yaml import YAML
 
@@ -129,6 +130,29 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["template", "version"],
     )
 
+    # SVG files in docs/images/ - version badges
+    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("docs/images/*.svg")]
+    for svg_file in svg_files:
+        update_file_version(
+            svg_file,
+            pipeline_obj,
+            [
+                (
+                    rf"(>v?){re.escape(current_version)}(<)",
+                    rf"\g<1>{new_version}\g<2>",
+                )
+            ],
+            required=False,
+        )
+        # Export updated SVG to PNG and PDF (if PDF exists)
+        svg_path = pipeline_obj._fp(svg_file)
+        if svg_path.exists():
+            png_path = svg_path.with_suffix(".png")
+            export_svg_to_png(svg_path, png_path)
+            pdf_path = svg_path.with_suffix(".pdf")
+            if pdf_path.exists():
+                export_svg_to_pdf(svg_path, pdf_path)
+
     # update rocrate if ro-crate is present
     if Path(pipeline_obj.wf_path, "ro-crate-metadata.json").exists():
         ROCrate(pipeline_obj.wf_path).update_rocrate()
@@ -192,6 +216,36 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         ],
         False,
     )
+
+
+def export_svg_to_png(svg_path: Path, png_path: Path) -> None:
+    """
+    Export an SVG file to PNG format.
+
+    Args:
+        svg_path (Path): Path to the source SVG file.
+        png_path (Path): Path to the output PNG file.
+    """
+    try:
+        cairosvg.svg2png(url=str(svg_path), write_to=str(png_path))
+        log.info(f"Exported PNG: '{png_path}'")
+    except Exception as e:
+        handle_error(f"Failed to export SVG to PNG: {e}", required=False)
+
+
+def export_svg_to_pdf(svg_path: Path, pdf_path: Path) -> None:
+    """
+    Export an SVG file to PDF format.
+
+    Args:
+        svg_path (Path): Path to the source SVG file.
+        pdf_path (Path): Path to the output PDF file.
+    """
+    try:
+        cairosvg.svg2pdf(url=str(svg_path), write_to=str(pdf_path))
+        log.info(f"Exported PDF: '{pdf_path}'")
+    except Exception as e:
+        handle_error(f"Failed to export SVG to PDF: {e}", required=False)
 
 
 def update_file_version(
