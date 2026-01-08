@@ -3,7 +3,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
@@ -125,7 +125,7 @@ class TextInput(Static):
 
     @on(Input.Changed)
     @on(Input.Submitted)
-    def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
+    def show_invalid_reasons(self, event: Input.Changed | Input.Submitted) -> None:
         """Validate the text input and show errors if invalid."""
         val_msg = self.query_one(".validation_msg")
         if not isinstance(val_msg, Static):

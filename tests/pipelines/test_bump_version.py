@@ -7,6 +7,7 @@ import yaml
 
 import nf_core.pipelines.bump_version
 import nf_core.utils
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 from ..test_pipelines import TestPipelines
 
@@ -81,16 +82,18 @@ class TestBumpVersion(TestPipelines):
         snapshot_dir.mkdir(parents=True, exist_ok=True)
         snapshot_fn = snapshot_dir / "main.nf.test.snap"
         snapshot_fn.touch()
+
+        pipeline_slug = f"{self.pipeline_obj.pipeline_prefix}/{self.pipeline_obj.pipeline_name}"
         # write version number in snapshot
         with open(snapshot_fn, "w") as fh:
-            fh.write("nf-core/testpipeline=1.0.0dev")
+            fh.write(f"{pipeline_slug}=1.0.0dev")
 
         # Bump the version number
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
 
         # Check the snapshot
         with open(snapshot_fn) as fh:
-            assert fh.read().strip() == "nf-core/testpipeline=1.1.0"
+            assert fh.read().strip() == f"{pipeline_slug}=1.1.0"
 
     def test_bump_pipeline_version_in_snapshot_no_version(self):
         """Test that bump version does not update versions in the snapshot if no version is given."""
@@ -156,3 +159,43 @@ class TestBumpVersion(TestPipelines):
         # Check PDF was re-exported (file should be larger than empty)
         assert pdf_path.exists()
         assert pdf_path.stat().st_size > 0
+
+    def test_bump_pipeline_version_nf_core_yml_prettier(self):
+        """Test that lists in .nf-core.yml have correct formatting after version bump."""
+
+        nf_core_yml_path = Path(self.pipeline_dir / ".nf-core.yml")
+
+        # Add a list to the .nf-core.yml file to test list indentation
+        with open(nf_core_yml_path) as fh:
+            nf_core_yml = yaml.safe_load(fh)
+
+        # Add a lint section with a list
+        if "lint" not in nf_core_yml:
+            nf_core_yml["lint"] = {}
+        nf_core_yml["lint"]["files_exist"] = ["assets/multiqc_config.yml", "conf/base.config"]
+
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.dump(nf_core_yml, fh, default_flow_style=False)
+
+        # Run prettier to ensure the file is properly formatted before the test
+        run_prettier_on_file(nf_core_yml_path)
+
+        # Bump the version
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Read the file before prettier to store it
+        with open(nf_core_yml_path) as fh:
+            content_before = fh.read()
+
+        # Run prettier on the file
+        run_prettier_on_file(nf_core_yml_path)
+
+        # Read the file after prettier
+        with open(nf_core_yml_path) as fh:
+            content_after = fh.read()
+
+        # If prettier changed the file, the formatting was wrong
+        assert content_before == content_after, (
+            "The .nf-core.yml file formatting changed after running prettier. "
+            "This means the YAML dumping did not use correct indentation settings."
+        )

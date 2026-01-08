@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.7
+    rev: v0.14.5
     hooks:
       - id: ruff-check # linter
         args: [--fix, --exit-non-zero-on-fix] # sort imports and fix
@@ -9,10 +9,11 @@ repos:
     rev: "v3.1.0"
     hooks:
       - id: prettier
+        entry: prettier --experimental-cli --write --ignore-unknown --no-cache
         additional_dependencies:
           - prettier@3.6.2
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -32,7 +33,7 @@ repos:
               tests/pipelines/__snapshots__/.*
           )$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.17.1"
+    rev: "v1.18.2"
     hooks:
       - id: mypy
         additional_dependencies:
@@ -42,3 +43,7 @@ repos:
           - types-Markdown
           - types-setuptools
           - pydantic
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.5.20
+    hooks:
+      - id: uv-lock

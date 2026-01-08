@@ -1,7 +1,7 @@
 import pytest
 
 import nf_core.modules.lint
-import nf_core.modules.patch
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
 
 from ...test_modules import TestModules
@@ -71,6 +71,15 @@ def test_process_labels(content, passed, warned, failed):
             0,
             1,
         ),
+        # Ternary with ? on next line (new Nextflow format) should pass
+        (
+            '''container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
+        : 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264'}"''',
+            6,
+            0,
+            0,
+        ),
     ],
 )
 def test_container_links(content, passed, warned, failed):
@@ -103,6 +112,8 @@ class TestMainNfLinting(TestModules):
         # Install samtools/sort module for all tests in this class
         if not self.mods_install.install("samtools/sort"):
             self.skipTest("Could not install samtools/sort module")
+        if not self.mods_install.install("bamstats/generalstats"):
+            self.skipTest("Could not install samtools/sort module")
 
     def test_main_nf_lint_with_alternative_registry(self):
         """Test main.nf linting with alternative container registry"""
@@ -122,3 +133,192 @@ class TestMainNfLinting(TestModules):
         module_lint.lint(print_results=False, module="samtools/sort")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
+
+    def test_topics_and_emits_version_check(self):
+        """Test that main_nf version emit and topics check works correctly"""
+
+        self.mods_install.install("bioawk")
+        # Lint a module known to have versions YAML in main.nf (for now)
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="bioawk")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.warned) == 2, (
+            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
+        )
+        assert len(module_lint.passed) > 0
+
+        # Lint a module known to have topics as output in main.nf
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="bamstats/generalstats")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.warned) == 0, (
+            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
+        )
+        assert len(module_lint.passed) > 0
+
+
+def test_get_inputs_no_partial_keyword_match(tmp_path):
+    """Test that input parsing doesn't match keywords within larger words like 'evaluate' or 'pathogen'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+    path(reads)
+    tuple val(evaluate), path(pathogen)
+
+    output:
+    path("*.txt"), emit: results
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+
+    # Should find 3 inputs: meta, reads, and the tuple (evaluate, pathogen)
+    # The regex with \b should correctly identify 'val(evaluate)' and 'path(pathogen)' as valid inputs
+    assert len(component.inputs) == 3, f"Expected 3 inputs, got {len(component.inputs)}: {component.inputs}"
+    assert {"meta": {}} in component.inputs
+    assert {"reads": {}} in component.inputs
+    # The tuple should be captured as a list of two elements
+    tuple_input = [{"evaluate": {}}, {"pathogen": {}}]
+    assert tuple_input in component.inputs
+
+
+def test_get_outputs_no_partial_keyword_match(tmp_path):
+    """Test that output parsing doesn't match keywords within larger words like 'evaluate' or 'pathogen'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), emit: results
+    val(evaluate_result), emit: evaluation
+    path(pathogen_data), emit: pathogens
+    tuple val(meta), path("*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"), emit: reads
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    # Should find 3 outputs with variable names containing 'val' and 'path' substrings
+    # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
+    assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "results" in component.outputs
+    assert "evaluation" in component.outputs
+    assert "pathogens" in component.outputs
+    assert "reads" in component.outputs
+    assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
+
+
+def test_get_topics_no_partial_keyword_match(tmp_path):
+    """Test that topic parsing doesn't match keywords within larger words like 'evaluate'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), topic: results
+    val(evaluate_result), topic: evaluation
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    # Should find 2 topics with variable names containing 'val' substring
+    # The regex with \b should correctly identify val(evaluate_result)
+    assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
+    assert "results" in component.topics
+    assert "evaluation" in component.topics
+
+
+def test_get_topics_multiple_versions_channels(tmp_path):
+    """Test that multiple versions_* channels with the same topic name are correctly captured"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | head -1 | sed -e "s/samtools //"'), emit: versions_samtools, topic: versions
+    tuple val("${task.process}"), val('bcftools'), eval('bcftools --version | head -1 | sed -e "s/bcftools //"'), emit: versions_bcftools, topic: versions
+    path("*.txt"), emit: results, topic: results
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    # Should find 2 topics: versions and results
+    assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
+    assert "versions" in component.topics
+    assert "results" in component.topics
+
+    # The versions topic should have 2 entries (one for each versions_* channel)
+    assert len(component.topics["versions"]) == 2, (
+        f"Expected 2 entries in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    )
+
+    # Each entry should be a list of 3 tuples elements
+    for entry in component.topics["versions"]:
+        assert isinstance(entry, list), f"Expected list, got {type(entry)}"
+        assert len(entry) == 3, f"Expected 3 elements in entry, got {len(entry)}: {entry}"

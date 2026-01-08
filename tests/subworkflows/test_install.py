@@ -95,6 +95,25 @@ class TestSubworkflowsInstall(TestSubworkflows):
             "fastq_trim_fastp_fastqc"
         ]
 
+    def test_subworkflows_install_across_organizations_only_nfcore(self):
+        """Test installing a subworkflow from a different organization but only with modules from nf-core"""
+        # The wget_subwf subworkflow contains nf-core/modules/wget (and only that). It used to not be possible to install it twice
+        # because of some org/nf-core confusion (https://github.com/nf-core/tools/issues/3876)
+        # Note that we use two SubworkflowInstall to avoid cross-contamination
+        for swfi in (self.subworkflow_install_cross_org, self.subworkflow_install_cross_org_again):
+            swfi.install("wget_subwf")
+            # Verify that the installed_by entry was added correctly
+            modules_json = ModulesJson(self.pipeline_dir)
+            mod_json = modules_json.get_modules_json()
+            assert mod_json["repos"][CROSS_ORGANIZATION_URL]["subworkflows"]["nf-core-test"]["wget_subwf"][
+                "installed_by"
+            ] == ["subworkflows"]
+            # This assertion used to fail on the second attempt
+            assert (
+                "wget_subwf"
+                not in mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"]
+            )
+
     def test_subworkflow_install_with_same_module(self):
         """Test installing a subworkflow with a module from a different organization that is already installed from another org"""
         # The fastq_trim_fastp_fastqc subworkflow contains the cross-org fastqc module, not the nf-core one

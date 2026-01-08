@@ -37,9 +37,11 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
             # Check whether file exists and load it
             with open(subworkflow.main_nf) as fh:
                 lines = fh.readlines()
-            subworkflow.passed.append(("main_nf_exists", "Subworkflow file exists", subworkflow.main_nf))
+            subworkflow.passed.append(("main_nf", "main_nf_exists", "Subworkflow file exists", subworkflow.main_nf))
         except FileNotFoundError:
-            subworkflow.failed.append(("main_nf_exists", "Subworkflow file does not exist", subworkflow.main_nf))
+            subworkflow.failed.append(
+                ("main_nf", "main_nf_exists", "Subworkflow file does not exist", subworkflow.main_nf)
+            )
             return inputs, outputs
 
     # Go through subworkflow main.nf file and switch state according to current section
@@ -75,9 +77,13 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
 
     # Check that we have required sections
     if not len(outputs):
-        subworkflow.failed.append(("main_nf_script_outputs", "No workflow 'emit' block found", subworkflow.main_nf))
+        subworkflow.failed.append(
+            ("main_nf", "main_nf_script_outputs", "No workflow 'emit' block found", subworkflow.main_nf)
+        )
     else:
-        subworkflow.passed.append(("main_nf_script_outputs", "Workflow 'emit' block found", subworkflow.main_nf))
+        subworkflow.passed.append(
+            ("main_nf", "main_nf_script_outputs", "Workflow 'emit' block found", subworkflow.main_nf)
+        )
 
     # Check the subworkflow include statements
     included_components = check_subworkflow_section(subworkflow, subworkflow_lines)
@@ -92,11 +98,16 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     if outputs:
         if "versions" in outputs:
             subworkflow.passed.append(
-                ("main_nf_version_emitted", "Subworkflow emits software version", subworkflow.main_nf)
+                ("main_nf", "main_nf_version_emitted", "Subworkflow emits software version", subworkflow.main_nf)
             )
         else:
             subworkflow.warned.append(
-                ("main_nf_version_emitted", "Subworkflow does not emit software version", subworkflow.main_nf)
+                (
+                    "main_nf",
+                    "main_nf_version_emitted",
+                    "Subworkflow does not emit software version",
+                    subworkflow.main_nf,
+                )
             )
 
     return inputs, outputs
@@ -111,13 +122,14 @@ def check_main_section(self, lines, included_components):
     if len(lines) == 0:
         self.failed.append(
             (
+                "main_nf",
                 "main_section",
                 "Subworkflow does not contain a main section",
                 self.main_nf,
             )
         )
         return
-    self.passed.append(("main_section", "Subworkflow does contain a main section", self.main_nf))
+    self.passed.append(("main_nf", "main_section", "Subworkflow does contain a main section", self.main_nf))
 
     script = "".join(lines)
 
@@ -127,11 +139,17 @@ def check_main_section(self, lines, included_components):
         for component in included_components:
             if component in script:
                 self.passed.append(
-                    ("main_nf_include_used", f"Included component '{component}' used in main.nf", self.main_nf)
+                    (
+                        "main_nf",
+                        "main_nf_include_used",
+                        f"Included component '{component}' used in main.nf",
+                        self.main_nf,
+                    )
                 )
             else:
                 self.warned.append(
                     (
+                        "main_nf",
                         "main_nf_include_used",
                         f"Included component '{component}' not used in main.nf",
                         self.main_nf,
@@ -140,6 +158,7 @@ def check_main_section(self, lines, included_components):
             if component + ".out.versions" in script:
                 self.passed.append(
                     (
+                        "main_nf",
                         "main_nf_include_versions",
                         f"Included component '{component}' versions are added in main.nf",
                         self.main_nf,
@@ -148,8 +167,9 @@ def check_main_section(self, lines, included_components):
             else:
                 self.warned.append(
                     (
+                        "main_nf",
                         "main_nf_include_versions",
-                        f"Included component '{component}' versions are not added in main.nf",
+                        f"Included component '{component}' versions are not added in main.nf. Can be ignored if the module is using topic channels",
                         self.main_nf,
                     )
                 )
@@ -169,6 +189,7 @@ def check_subworkflow_section(self, lines: list[str]) -> list[str]:
     if len(lines) == 0:
         self.failed.append(
             (
+                "main_nf",
                 "subworkflow_include",
                 "Subworkflow does not include any modules before the workflow definition",
                 self.main_nf,
@@ -176,7 +197,12 @@ def check_subworkflow_section(self, lines: list[str]) -> list[str]:
         )
         return []
     self.passed.append(
-        ("subworkflow_include", "Subworkflow does include modules before the workflow definition", self.main_nf)
+        (
+            "main_nf",
+            "subworkflow_include",
+            "Subworkflow does include modules before the workflow definition",
+            self.main_nf,
+        )
     )
 
     includes = []
@@ -194,9 +220,9 @@ def check_subworkflow_section(self, lines: list[str]) -> list[str]:
     # remove duplicated components
     includes = list(set(includes))
     if len(includes) >= 2:
-        self.passed.append(("main_nf_include", "Subworkflow includes two or more modules", self.main_nf))
+        self.passed.append(("main_nf", "main_nf_include", "Subworkflow includes two or more modules", self.main_nf))
     else:
-        self.warned.append(("main_nf_include", "Subworkflow includes less than two modules", self.main_nf))
+        self.warned.append(("main_nf", "main_nf_include", "Subworkflow includes less than two modules", self.main_nf))
 
     return includes
 
@@ -214,9 +240,9 @@ def check_workflow_section(self, lines: list[str]) -> None:
     # Workflow name should be all capital letters
     self.workflow_name = lines[0].split()[1]
     if self.workflow_name == self.workflow_name.upper():
-        self.passed.append(("workflow_capitals", "Workflow name is in capital letters", self.main_nf))
+        self.passed.append(("main_nf", "workflow_capitals", "Workflow name is in capital letters", self.main_nf))
     else:
-        self.failed.append(("workflow_capitals", "Workflow name is not in capital letters", self.main_nf))
+        self.failed.append(("main_nf", "workflow_capitals", "Workflow name is not in capital letters", self.main_nf))
 
 
 def _parse_input(self, line):

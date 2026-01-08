@@ -43,46 +43,7 @@ workflow PIPELINE_INITIALISATION {
 
     main:
 
-    ch_versions = Channel.empty()
-    {%- if nf_schema %}
-
-    //
-    // Print help message
-    //
-
-    {%- if is_nfcore %}
-    before_text = """
--\033[2m----------------------------------------------------\033[0m-
-                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
-\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
-\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
-\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
-                                        \033[0;32m`._,._,\'\033[0m
-\033[0;35m  {{ name }} ${workflow.manifest.version}\033[0m
--\033[2m----------------------------------------------------\033[0m-
-"""
-    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { "    https://doi.org/${it.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
-* The nf-core framework
-    https://doi.org/10.1038/s41587-020-0439-x
-
-* Software dependencies
-    https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
-"""{% endif %}
-    command = "nextflow run {${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
-
-    if(help || help_full) {
-        log.info paramsHelp(
-            params.help instanceof String ? params.help : "",
-            {%- if is_nfcore %}
-            beforeText: before_text,
-            afterText: after_text,{% endif %}
-            command: command,
-            showHidden: show_hidden,
-            fullHelp: help_full
-        )
-        exit 0
-    }
-    {%- endif %}
+    ch_versions = channel.empty()
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
@@ -99,13 +60,38 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    {% if is_nfcore -%}log.info(before_text){%- endif %}
+
+    {%- if is_nfcore %}
+    before_text = """
+-\033[2m----------------------------------------------------\033[0m-
+                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
+\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
+\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
+\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
+                                        \033[0;32m`._,._,\'\033[0m
+\033[0;35m  {{ name }} ${workflow.manifest.version}\033[0m
+-\033[2m----------------------------------------------------\033[0m-
+"""
+    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { doi -> "    https://doi.org/${doi.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
+* The nf-core framework
+    https://doi.org/10.1038/s41587-020-0439-x
+
+* Software dependencies
+    https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
+"""{% endif %}
+    command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
+
     UTILS_NFSCHEMA_PLUGIN (
         workflow,
         validate_params,
-        null
+        null,
+        help,
+        help_full,
+        show_hidden,
+        {% if is_nfcore -%}before_text{%- else %}""{%- endif %},
+        {% if is_nfcore -%}after_text{%- else %}""{%- endif %},
+        command
     )
-    {% if is_nfcore -%}log.info(after_text){%- endif %}
     {%- endif %}
 
     //
@@ -127,7 +113,7 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
 
-    Channel{% if nf_schema %}
+    channel{% if nf_schema %}
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json")){% else %}
         .fromPath(params.input)
         .splitCsv(header: true, strip: true)

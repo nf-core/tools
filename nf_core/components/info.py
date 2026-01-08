@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 import yaml
@@ -59,18 +58,18 @@ class ComponentInfo(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        pipeline_dir: Union[str, Path],
+        pipeline_dir: str | Path,
         component_name: str,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.meta: Optional[dict] = None
-        self.local_path: Optional[Path] = None
-        self.remote_location: Optional[str] = None
+        self.meta: dict | None = None
+        self.local_path: Path | None = None
+        self.remote_location: str | None = None
         self.local: bool = False
-        self.modules_json: Optional[ModulesJson] = None
+        self.modules_json: ModulesJson | None = None
 
         if self.repo_type == "pipeline":
             # Check modules directory structure
@@ -90,7 +89,7 @@ class ComponentInfo(ComponentCommand):
         """
         return super()._configure_repo_and_paths(nf_dir_req)
 
-    def init_mod_name(self, component: Optional[str]) -> str:
+    def init_mod_name(self, component: str | None) -> str:
         """
         Makes sure that we have a module/subworkflow name before proceeding.
 
@@ -165,16 +164,16 @@ class ComponentInfo(ComponentCommand):
             self.meta = self.get_remote_yaml()
 
         # Could not find the meta
-        if self.meta is False:
+        if self.meta is None:
             raise UserWarning(f"Could not find {self.component_type[:-1]} '{self.component}'")
 
         return self.generate_component_info_help()
 
-    def get_local_yaml(self) -> Optional[dict]:
+    def get_local_yaml(self) -> dict | None:
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
-            Optional[dict]: Parsed meta.yml if found, None otherwise
+            dict | None: Parsed meta.yml if found, None otherwise
         """
 
         if self.repo_type == "pipeline":
@@ -213,7 +212,7 @@ class ComponentInfo(ComponentCommand):
 
         return {}
 
-    def get_remote_yaml(self) -> Optional[dict]:
+    def get_remote_yaml(self) -> dict | None:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
