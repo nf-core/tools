@@ -14,26 +14,26 @@ jobs:
 
     steps:
       - name: Check out Nextflow
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
           repository: nextflow-io/nextflow
           path: nextflow
 
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out nf-core/tools
         with:
           ref: dev
           path: nf-core-tools
 
       - name: Set up Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: "3.14"
           cache: pip
           cache-dependency-path: nf-core-tools/pyproject.toml
 
       - name: Set up Java
-        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
+        uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5
         with:
           distribution: "temurin"
           architecture: x64
@@ -53,11 +53,10 @@ jobs:
       - name: Install nf-core/tools
         run: |
           cd nf-core-tools
-          python -m pip install --upgrade pip
-          pip install .
+          uv sync
 
       - name: Create new pipeline
-        run: nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+        run: uv run nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
       - name: Run new pipeline
         run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results

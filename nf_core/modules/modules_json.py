@@ -1269,9 +1269,9 @@ class ModulesJson:
             current_org = dep_mod.get("org_path", org)
             installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
             if installed_by == ["modules"]:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
+                self.modules_json["repos"][repo]["modules"][org][name]["installed_by"] = []
             if sw_name not in installed_by:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"].append(sw_name)
+                self.modules_json["repos"][repo]["modules"][org][name]["installed_by"].append(sw_name)
 
         for dep_subwf in dep_subwfs:
             name = dep_subwf["name"]
@@ -1279,7 +1279,7 @@ class ModulesJson:
             current_org = dep_subwf.get("org_path", org)
             installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
+                self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"] = []
             if sw_name not in installed_by:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"].append(sw_name)
+                self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"].append(sw_name)
             self.recreate_dependencies(repo, org, dep_subwf)

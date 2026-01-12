@@ -1,18 +1,17 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:19516babd35bccd1429591a255dd867b2c8c01606cc594a8a6fe5db03309ecf8 AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:2be0f5a9afd20bd3012a5c963c838cae7b339d4cbe05f4f325710d26058a7854 AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
 
 # Explicitly reinstall python 3.13 via conda
-# install local nf-core tools version, and precommit hooks
+# Install uv and local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel pre-commit && \
-    pip install -r requirements.txt --no-cache-dir -e . && \
-    pre-commit install --install-hooks && \
-    rm -rf /root/.cache/pip
+    pip install --no-cache-dir --upgrade pip uv && \
+    uv pip install --system --no-cache-dir . && \
+    rm -rf /root/.cache/pip /root/.cache/uv
 
 # Install nextflow and nf-test via conda and run conda clean
 RUN conda install -c bioconda -y nextflow nf-test && \
@@ -27,7 +26,7 @@ RUN apt-get update --quiet && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM mcr.microsoft.com/devcontainers/base:debian@sha256:2e826a6ae92e5744cc0a471a03b4411e64f6b7cc6af3adaecddad697f0018f10 AS final
+FROM mcr.microsoft.com/devcontainers/base:2.0.2-debian12@sha256:23fa69fed758b7927c60061317d73baf7d66b9fca5c344e80bce3a940b229af0 AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda

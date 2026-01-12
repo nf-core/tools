@@ -1,40 +1,77 @@
 # nf-core/tools: Changelog
 
-## v3.5.0dev
+## v3.6.0dev
 
 ### General
 
-- Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
+- dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
+- Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
+- Switch from pre-commit to prek for pre-commit hooks in development([#3899](https://github.com/nf-core/tools/pull/3899))
+- switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
+- Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
+- add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
+- Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
+- Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
+- Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
+- Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
+- Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
+- Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
+
+### Template
+
+- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
+- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
+
+
+### Linting
+
+- fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
+
+### Modules
+
+- sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
+- fix(modules_json): Use name string instead of dict as key in recreate_dependencies ([#3963](https://github.com/nf-core/tools/pull/3963))
+- linting: polish regex for output parsing in modules main.nf ([#3967](https://github.com/nf-core/tools/pull/3967))
+
+### Subworkflows
+
+- Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
+
+## [v3.5.1 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.1) - [2025-11-19]
+
+### General
+
+- Fix `blog_post` parameter for `nf-core pipelines sync` command ([#3911](https://github.com/nf-core/tools/pull/3911))
+- Fix markdown in sync PR message ([#3913](https://github.com/nf-core/tools/pull/3913))
+- Fix wrong structure on version module failure tuple ([#3923](https://github.com/nf-core/tools/pull/3923))
+
+## [v3.5.0 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.0) - [2025-11-19]
+
+### General
+
+- Improve file ignores in workflow file enumeration ([#3820](https://github.com/nf-core/tools/pull/3820))
 - add optional link to blogpost to sync PR ([#3852](https://github.com/nf-core/tools/pull/3852))
-- update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
-- Update dependency textual to v6.5.0 ([#3859](https://github.com/nf-core/tools/pull/3859))
-- Update python:3.14-slim Docker digest to 4ed3310 ([#3862](https://github.com/nf-core/tools/pull/3862))
-- Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
 - Avoid deleting files ignored by git during `pipelines sync` ([#3847](https://github.com/nf-core/tools/pull/3847))
 - remove trailing comas from nextflow_schema.json ([#3874](https://github.com/nf-core/tools/pull/3874))
 - Make bump-version snapshot test more stable ([#3865](https://github.com/nf-core/tools/pull/3865))
-- Update docker/setup-qemu-action digest to c7c5346 ([#3875](https://github.com/nf-core/tools/pull/3875))
-- chore(deps): update python:3.14-slim docker digest to 9813eec ([#3880](https://github.com/nf-core/tools/pull/3880))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.14.4 ([#3882](https://github.com/nf-core/tools/pull/3882))
 - add missing setup steps to snapshot update action ([#3883](https://github.com/nf-core/tools/pull/3883))
 - fix sync test ([#3885](https://github.com/nf-core/tools/pull/3885))
 - fix syntax in dockerfile for devcontainer ([#3887](https://github.com/nf-core/tools/pull/3887))
 - Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
 - fix pytest setup matrix ([#3888](https://github.com/nf-core/tools/pull/3888))
-- chore(deps): update mcr.microsoft.com/devcontainers/miniconda docker digest to 19516ba ([#3890](https://github.com/nf-core/tools/pull/3890))
-- Update dependency textual to v6.6.0 ([#3892](https://github.com/nf-core/tools/pull/3892))
-- chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
 - Fix GH API rate limits. ([#3895](https://github.com/nf-core/tools/pull/3895))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
 - devcontainer: Set `moby: false` to fix trixie builds ([#3904](https://github.com/nf-core/tools/pull/3904))
 - Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
-- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
+- devcontainer: downgrade to debian 12 and revert [#3904](https://github.com/nf-core/tools/pull/3904) ([#3907](https://github.com/nf-core/tools/pull/3907))
 
 ### Template
 
 - Change GitHub Codespaces badge style ([#3869](https://github.com/nf-core/tools/pull/3869) and [#3873](https://github.com/nf-core/tools/pull/3873))
+- update multiqc version to fix utils test ([#3853](https://github.com/nf-core/tools/pull/3853))
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
+- Update pipeline creation information page to be more exclusive as to what should use the full nf-core pipeline template ([#3891](https://github.com/nf-core/tools/pull/3891))
 - Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
 
 ### Linting
@@ -48,8 +85,23 @@
 
 - Add `topics` to the template + update linting ([#3779](https://github.com/nf-core/tools/pull/3779))
 - Preserve the value of self.modules_repo across nested calls ([#3881](https://github.com/nf-core/tools/pull/3881))
+- modules lint: handle meta.ymls without topics field ([#3909](https://github.com/nf-core/tools/pull/3909))
 
-### Subworkflows
+### Version updates
+
+- Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
+- Update docker/setup-qemu-action digest to c7c5346 ([#3875](https://github.com/nf-core/tools/pull/3875))
+- chore(deps): update python:3.14-slim docker digest to 9813eec ([#3880](https://github.com/nf-core/tools/pull/3880))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.14.4 ([#3882](https://github.com/nf-core/tools/pull/3882))
+- Update python:3.14-slim Docker digest to 4ed3310 ([#3862](https://github.com/nf-core/tools/pull/3862))
+- Update dependency textual-dev to v1.8.0 ([#3860](https://github.com/nf-core/tools/pull/3860))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.3 ([#3861](https://github.com/nf-core/tools/pull/3861))
+- Update GitHub Actions (major) ([#3849](https://github.com/nf-core/tools/pull/3849))
+- chore(deps): update mcr.microsoft.com/devcontainers/miniconda docker digest to 19516ba ([#3890](https://github.com/nf-core/tools/pull/3890))
+- Update dependency textual to v6.6.0 ([#3892](https://github.com/nf-core/tools/pull/3892))
+- chore(deps): update mcr.microsoft.com/devcontainers/base:debian docker digest to 2e826a6 ([#3893](https://github.com/nf-core/tools/pull/3893))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
+- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
 
 ## [v3.4.1 - Ducol Dingo Patch 1](https://github.com/nf-core/tools/releases/tag/3.4.1) - [2025-10-16]
 
