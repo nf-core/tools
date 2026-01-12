@@ -281,7 +281,9 @@ process TEST_PROCESS {
     assert "\"stranger --version | sed 's/stranger, version //g'\"" in list(
         component.outputs["versions_stranger"][0][2].keys()
     )
-    assert "'fastqc --version | sed '/FastQC v/!d; s/.*v//''" in list(component.outputs["versions_fastqc"][0][2].keys())
+    assert "'fastqc --version | sed \"/FastQC v/!d; s/.*v//\"'" in list(
+        component.outputs["versions_fastqc"][0][2].keys()
+    )
 
 
 def test_get_topics_no_partial_keyword_match(tmp_path):
