@@ -186,6 +186,57 @@ class NFCoreComponent:
                     return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
         return ""
 
+    def _extract_value(self, text: str, start_pos: int = 0, split_on_comma: bool = False) -> str | None:
+        """
+        Extract values from input/output/topics lines, handling parentheses and quotes properly.
+
+        Can operate in two modes:
+        1. Extract content within parentheses (for parsing "val(foo), path(bar), eval(...)")
+        2. Split on first comma outside quotes (for parsing "param, option: value")
+
+        Args:
+            text: String to parse
+            start_pos: Position to start parsing from
+            split_on_comma: If True, split on first comma outside quotes and return first part.
+                          If False, extract content within matching parentheses.
+
+        Returns:
+            Extracted value or None if not found
+        """
+        rest = text[start_pos:].lstrip()
+        if not rest:
+            return None
+
+        # Mode 1: Split on comma (for extracting parameter name from "param, option: value")
+        if split_on_comma:
+            in_quote = None
+            for i, char in enumerate(rest):
+                if char in ('"', "'") and (i == 0 or rest[i - 1] != "\\"):
+                    in_quote = char if in_quote is None else (None if in_quote == char else in_quote)
+                elif char == "," and in_quote is None:
+                    return rest[:i].strip()
+            return rest.strip()
+
+        # Mode 2: Extract value within parentheses (for val(foo), path(bar), eval(...))
+        if not rest.startswith("("):
+            # No parentheses, extract until comma or newline
+            match = re.match(r"([^,\n]*)", rest)
+            return match.group(1).strip() if match else None
+
+        # Find matching closing parentheses, respecting quotes
+        depth = 0
+        in_quote = None
+        for i, char in enumerate(rest):
+            if char in ('"', "'") and (i == 0 or rest[i - 1] != "\\"):
+                in_quote = char if in_quote is None else (None if in_quote == char else in_quote)
+            elif char == "(" and in_quote is None:
+                depth += 1
+            elif char == ")" and in_quote is None:
+                depth -= 1
+                if depth == 0:
+                    return rest[1:i]  # Return content between parentheses
+        return None
+
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
@@ -211,8 +262,8 @@ class NFCoreComponent:
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
                 for match in re.finditer(regex_keyword, line):
-                    if input_val := self._extract_value_from_line(line, match.end()):
-                        input_val = self._split_first_param(input_val)
+                    if input_val := self._extract_value(line, match.end()):
+                        input_val = self._extract_value(input_val, split_on_comma=True)
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) == 1:
                     inputs.append(channel_elements[0])
@@ -236,56 +287,6 @@ class NFCoreComponent:
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
 
-    def _split_first_param(self, value: str) -> str:
-        """
-        Extract first parameter from comma-separated list, respecting quotes.
-
-        Args:
-            value: String that may contain comma-separated parameters
-
-        Returns:
-            First parameter with whitespace stripped
-        """
-        result = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', value)[0]
-        return result.strip()
-
-    def _extract_value_from_line(self, line: str, pos: int) -> str | None:
-        """
-        Extract value after keyword, handling parentheses and quotes.
-
-        Uses a simple state machine to find matching closing parenthesis
-        while respecting quoted strings.
-
-        Args:
-            line: The line to parse
-            pos: Position in line where keyword ends
-
-        Returns:
-            Extracted value or None if not found
-        """
-        rest = line[pos:].lstrip()
-        if not rest:
-            return None
-
-        if not rest.startswith("("):
-            # No parentheses, extract until comma or newline
-            match = re.match(r"([^,\n]*)", rest)
-            return match.group(1).strip() if match else None
-
-        # Find matching closing parentheses, respecting quotes
-        depth = 0
-        in_quote = None
-        for i, char in enumerate(rest):
-            if char in ('"', "'") and (i == 0 or rest[i - 1] != "\\"):
-                in_quote = char if in_quote is None else (None if in_quote == char else in_quote)
-            elif char == "(" and in_quote is None:
-                depth += 1
-            elif char == ")" and in_quote is None:
-                depth -= 1
-                if depth == 0:
-                    return rest[1:i]  # Return content between parentheses
-        return None
-
     def get_outputs_from_main_nf(self):
         with open(self.main_nf) as f:
             data = f.read()
@@ -307,8 +308,7 @@ class NFCoreComponent:
                 channel_elements = []
                 outputs[match_emit.group(1)] = []
                 for match in re.finditer(regex_keyword, line):
-                    if output_val := self._extract_value_from_line(line, match.end()):
-                        output_val = self._split_first_param(output_val)
+                    if output_val := self._extract_value(line, match.end()):
                         channel_elements.append({output_val: {}})
                 if len(channel_elements) == 1:
                     outputs[match_emit.group(1)].append(channel_elements[0])
@@ -357,8 +357,7 @@ class NFCoreComponent:
                 if topic_name not in topics:
                     topics[topic_name] = []
                 for match in re.finditer(regex_keyword, line):
-                    if topic_val := self._extract_value_from_line(line, match.end()):
-                        topic_val = self._split_first_param(topic_val)
+                    if topic_val := self._extract_value(line, match.end()):
                         channel_elements.append({topic_val: {}})
                 if len(channel_elements) == 1:
                     topics[topic_name].append(channel_elements[0])
