@@ -435,7 +435,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) >= 0
-    
+
     def test_skip_keyword_in_comment(self):
         """Test linting a subworkflow where a comment contains a keyword (workflow, subworkflow, take, main, emit)"""
         assert self.subworkflow_install.install("bam_stats_samtools")
@@ -466,9 +466,11 @@ class TestSubworkflowsLint(TestSubworkflows):
             fh.write(new_content)
 
         subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
-        subworkflow_lint.lint(print_results=False, subworkflow='bam_stats_samtools')
-        assert "Included component 'SAMTOOLS_IDXSTATS' not used in main.nf" not in [warning.message for warning in subworkflow_lint.warned]
-    
+        subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
+        assert "Included component 'SAMTOOLS_IDXSTATS' not used in main.nf" not in [
+            warning.message for warning in subworkflow_lint.warned
+        ]
+
     def test_file_with_multiple_workflows(self):
         """Test linting a subworkflow where a a single file contains more than one workflow definition"""
         assert self.subworkflow_install.install("bam_stats_samtools")
@@ -527,12 +529,13 @@ workflow SECOND_WORKFLOW {
     stats    = SAMTOOLS_STATS.out.stats       // channel: [ val(meta), path(stats) ]
     versions = ch_versions                    // channel: [ path(versions.yml) ]
 }
-"""
-            )
+""")
 
         subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
-        subworkflow_lint.lint(print_results=False, subworkflow='bam_stats_samtools')
-        assert "Included component 'SAMTOOLS_STATS' not used in main.nf" not in [warning.message for warning in subworkflow_lint.warned]
+        subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
+        assert "Included component 'SAMTOOLS_STATS' not used in main.nf" not in [
+            warning.message for warning in subworkflow_lint.warned
+        ]
 
 
 class TestSubworkflowsLintPatch(TestSubworkflows):
