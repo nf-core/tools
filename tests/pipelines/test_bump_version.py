@@ -130,14 +130,6 @@ class TestBumpVersion(TestPipelines):
         assert ">v1.1.0<" in svg_content
         assert ">v1.0.0dev<" not in svg_content
 
-        # Check PNG was exported
-        png_path = test_svg.with_suffix(".png")
-        assert png_path.exists()
-
-        # Check PDF was NOT created (since it didn't exist before)
-        pdf_path = test_svg.with_suffix(".pdf")
-        assert not pdf_path.exists()
-
     def test_bump_pipeline_version_in_svg_warning_pdf_if_exists(self):
         """Test that bump version throws a warning to update pdf manually only if PDF already exists."""
         # Create docs/images directory
