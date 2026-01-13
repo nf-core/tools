@@ -17,6 +17,7 @@
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
+- Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
 
 ### Template
 

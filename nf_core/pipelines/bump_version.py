@@ -142,19 +142,18 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
             ],
             required=False,
         )
-        # Export updated SVG to PNG and PDF (if PDF exists)
+        # Throw a warning if PDF or PNG versions of the SVG exist
         svg_path = pipeline_obj._fp(svg_file)
         if svg_path.exists():
             png_path = svg_path.with_suffix(".png")
             if png_path.exists():
-                # Future idea, add svg to png conversion here
-                log.warning(f"PNG file exists: {png_path}. Please export the bumped svg manually to png.")
+                # Future idea, add SVG to PNG conversion here
+                log.warning(f"PNG file exists: {png_path}. Please export the bumped SVG manually to PNG.")
 
             pdf_path = svg_path.with_suffix(".pdf")
             if pdf_path.exists():
-                # Future idea, add svg to pdf conversion here
-                log.warning(f"PDF file exists: {pdf_path}. Please export the bumped svg manually to pdf.")
-
+                # Future idea, add SVG to PDF conversion here
+                log.warning(f"PDF file exists: {pdf_path}. Please export the bumped SVG manually to PDF.")
 
     # update rocrate if ro-crate is present
     if Path(pipeline_obj.wf_path, "ro-crate-metadata.json").exists():
@@ -219,6 +218,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         ],
         False,
     )
+
 
 def update_file_version(
     filename: str | Path,

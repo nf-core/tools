@@ -157,7 +157,7 @@ class TestBumpVersion(TestPipelines):
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
 
         # Check PDF warning was logged
-        assert "Please export the bumped svg manually to pdf." in self.caplog.text
+        assert "Please export the bumped SVG manually to PDF." in self.caplog.text
 
     def test_bump_pipeline_version_in_svg_warning_png_if_exists(self):
         """Test that bump version throws a warning to update png manually only if PNG already exists."""
@@ -178,8 +178,7 @@ class TestBumpVersion(TestPipelines):
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
 
         # Check PNG warning was logged
-        assert "Please export the bumped svg manually to png." in self.caplog.text
-
+        assert "Please export the bumped SVG manually to PNG." in self.caplog.text
 
     def test_bump_pipeline_version_nf_core_yml_prettier(self):
         """Test that lists in .nf-core.yml have correct formatting after version bump."""
