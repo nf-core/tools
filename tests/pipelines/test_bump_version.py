@@ -138,8 +138,8 @@ class TestBumpVersion(TestPipelines):
         pdf_path = test_svg.with_suffix(".pdf")
         assert not pdf_path.exists()
 
-    def test_bump_pipeline_version_in_svg_exports_pdf_if_exists(self):
-        """Test that bump version exports PDF only if PDF already exists."""
+    def test_bump_pipeline_version_in_svg_warning_pdf_if_exists(self):
+        """Test that bump version throws a warning to update pdf manually only if PDF already exists."""
         # Create docs/images directory
         svg_dir = self.pipeline_dir / "docs" / "images"
         svg_dir.mkdir(parents=True, exist_ok=True)
@@ -156,9 +156,30 @@ class TestBumpVersion(TestPipelines):
         # Bump the version number
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
 
-        # Check PDF was re-exported (file should be larger than empty)
-        assert pdf_path.exists()
-        assert pdf_path.stat().st_size > 0
+        # Check PDF warning was logged
+        assert "Please export the bumped svg manually to pdf." in self.caplog.text
+
+    def test_bump_pipeline_version_in_svg_warning_png_if_exists(self):
+        """Test that bump version throws a warning to update png manually only if PNG already exists."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge_pdf.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Create existing PNG file (empty placeholder)
+        png_path = test_svg.with_suffix(".png")
+        png_path.touch()
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check PNG warning was logged
+        assert "Please export the bumped svg manually to png." in self.caplog.text
+
 
     def test_bump_pipeline_version_nf_core_yml_prettier(self):
         """Test that lists in .nf-core.yml have correct formatting after version bump."""

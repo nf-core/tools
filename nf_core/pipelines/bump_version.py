@@ -6,7 +6,6 @@ import logging
 import re
 from pathlib import Path
 
-import cairosvg
 import rich.console
 from ruamel.yaml import YAML
 
@@ -147,10 +146,15 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         svg_path = pipeline_obj._fp(svg_file)
         if svg_path.exists():
             png_path = svg_path.with_suffix(".png")
-            export_svg_to_png(svg_path, png_path)
+            if png_path.exists():
+                # Future idea, add svg to png conversion here
+                log.warning(f"PNG file exists: {png_path}. Please export the bumped svg manually to png.")
+
             pdf_path = svg_path.with_suffix(".pdf")
             if pdf_path.exists():
-                export_svg_to_pdf(svg_path, pdf_path)
+                # Future idea, add svg to pdf conversion here
+                log.warning(f"PDF file exists: {pdf_path}. Please export the bumped svg manually to pdf.")
+
 
     # update rocrate if ro-crate is present
     if Path(pipeline_obj.wf_path, "ro-crate-metadata.json").exists():
@@ -215,37 +219,6 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         ],
         False,
     )
-
-
-def export_svg_to_png(svg_path: Path, png_path: Path) -> None:
-    """
-    Export an SVG file to PNG format.
-
-    Args:
-        svg_path (Path): Path to the source SVG file.
-        png_path (Path): Path to the output PNG file.
-    """
-    try:
-        cairosvg.svg2png(url=str(svg_path), write_to=str(png_path))
-        log.info(f"Exported PNG: '{png_path}'")
-    except Exception as e:
-        handle_error(f"Failed to export SVG to PNG: {e}", required=False)
-
-
-def export_svg_to_pdf(svg_path: Path, pdf_path: Path) -> None:
-    """
-    Export an SVG file to PDF format.
-
-    Args:
-        svg_path (Path): Path to the source SVG file.
-        pdf_path (Path): Path to the output PDF file.
-    """
-    try:
-        cairosvg.svg2pdf(url=str(svg_path), write_to=str(pdf_path))
-        log.info(f"Exported PDF: '{pdf_path}'")
-    except Exception as e:
-        handle_error(f"Failed to export SVG to PDF: {e}", required=False)
-
 
 def update_file_version(
     filename: str | Path,
