@@ -88,12 +88,20 @@ class ContainerConfigs:
                 continue
 
             # Extract containers for all platforms
+            has_warnings = False
             for platform_name, (runtime, arch, protocol) in platforms.items():
                 try:
                     containers[platform_name][m_name] = meta["containers"][runtime][arch][protocol]
                 except (KeyError, TypeError):
-                    log.warning(f"Could not find {platform_name} container for {m_name}")
+                    log.debug(f"Could not find {platform_name} container for {m_name}")
+                    has_warnings = True
                     continue
+        if has_warnings:
+            log.info(
+                "Generated container configs for the pipeline. Not all containers were found. Run with `-v` to see detailed warning messages."
+            )
+        else:
+            log.info("Generated container configs for the pipeline successfully.")
 
         # write config files
         for platform, module_containers in containers.items():
