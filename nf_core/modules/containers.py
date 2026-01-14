@@ -6,6 +6,9 @@ from urllib.parse import quote
 import requests
 import yaml
 
+from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.lint import ModuleLint
+from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
 log = logging.getLogger(__name__)
@@ -25,10 +28,28 @@ class ModuleContainers:
     def __init__(self, module: str, directory: str | Path = "."):
         self.directory = Path(directory)
         self.module = module
-        self.module_directory = self.get_module_dir(module)
-        self.condafile = self.get_environment_path(self.module_directory)
-        self.metafile = self.get_meta_yml_path(self.module_directory)
+        # Use NFCoreComponent to handle module directory and file paths
+        self.nfcore_component = self._init_nfcore_component(module)
+        self.module_directory = self.nfcore_component.component_dir
+        self.environment_yml = self.nfcore_component.environment_yml
+        self.meta_yml = self.nfcore_component.meta_yml
         self.containers: dict | None = None
+
+    def _init_nfcore_component(self, module: str) -> NFCoreComponent:
+        """Initialize NFCoreComponent for the module."""
+        module_dir = Path(self.directory, "modules", "nf-core", module)
+        if not module_dir.exists():
+            raise ValueError(f"Module '{module}' not found at {module_dir}")
+
+        return NFCoreComponent(
+            component_name=module,
+            repo_url="https://github.com/nf-core/modules.git",
+            component_dir=module_dir,
+            repo_type="modules",
+            base_dir=self.directory,
+            component_type="modules",
+            remote_component=True,
+        )
 
     def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
         """
@@ -40,7 +61,7 @@ class ModuleContainers:
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:
-                    fut = pool.submit(self.request_container, cs, platform, self.condafile, await_)
+                    fut = pool.submit(self.request_container, cs, platform, self.environment_yml, await_)
                     tasks[fut] = (cs, platform)
 
         for fut in as_completed(tasks):
@@ -197,32 +218,11 @@ class ModuleContainers:
         ]
         return containers_flat
 
-    def get_module_dir(self, module: str | Path) -> Path:
-        if module is None:
-            raise ValueError("Please specify a module name.")
-
-        module_dir = Path(self.directory, "modules", "nf-core", module)
-        if not module_dir.exists():
-            raise ValueError(f"Module '{module}' not found at {module_dir}")
-
-        return module_dir
-
-    @staticmethod
-    def get_environment_path(module_dir: Path) -> Path:
-        env_path = module_dir / "environment.yml"
-        if not env_path.exists():
-            raise FileNotFoundError(f"environment.yml not found for module at {module_dir}")
-        return env_path
-
-    @staticmethod
-    def get_meta_yml_path(module_dir: Path) -> Path:
-        meta_yml_path = module_dir / "meta.yml"
-        if not meta_yml_path.exists():
-            raise FileNotFoundError(f"meta.yml not found for module at {module_dir}")
-        return meta_yml_path
-
     def get_meta(self) -> dict:
-        with open(self.metafile) as f:
+        """Load and return the meta.yml content."""
+        if not self.meta_yml or not self.meta_yml.exists():
+            raise FileNotFoundError(f"meta.yml not found for module '{self.module}'")
+        with open(self.meta_yml) as f:
             meta = yaml.safe_load(f)
         return meta
 
@@ -230,7 +230,7 @@ class ModuleContainers:
         """
         Return containers defined in the module meta.yml.
         """
-        assert self.metafile.exists()
+        assert self.meta_yml.exists()
 
         meta = self.get_meta()
         containers = meta.get("containers", dict())
@@ -262,5 +262,5 @@ class ModuleContainers:
         # TODO container-conversion: sort the yaml (again) -> call linting?
 
         out = yaml.dump(meta)
-        with open(self.metafile, "w") as f:
+        with open(self.meta_yml, "w") as f:
             f.write(out)
