@@ -1393,9 +1393,9 @@ def modules_containers(ctx):
 @click.option(
     "-await",
     "--await",
-    "await_",
+    "await_build",
     is_flag=True,
-    default=False,
+    default=True,
     help="Wait for the container build to finish.",
 )
 @click.argument(
@@ -1406,11 +1406,19 @@ def modules_containers(ctx):
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-def command_modules_containers_create(ctx, await_, module):
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
+def command_modules_containers_create(ctx, await_build, module, directory):
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
-    modules_containers_create(ctx, module, await_)
+    modules_containers_create(ctx, module, directory, await_build)
 
 
 @modules_containers.command("conda-lock")

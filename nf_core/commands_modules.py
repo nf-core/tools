@@ -358,15 +358,15 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
         sys.exit(1)
 
 
-def modules_containers_create(ctx, module, await_: bool):
+def modules_containers_create(ctx, module, directory, await_build: bool):
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module=module, directory=".")
-        _ = manager.create(await_)
+        manager = ModuleContainers(module=module, directory=directory)
+        _ = manager.create(await_build)
         manager.update_containers_in_meta()
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
@@ -414,7 +414,7 @@ def modules_containers_lint(ctx, module):
 
     try:
         manager = ModuleContainers(module, ".")
-        containers = manager.lint()
+        containers = manager.lint(module)
         stdout.print(f"Found {len(containers)} container(s) for {module}.")
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
