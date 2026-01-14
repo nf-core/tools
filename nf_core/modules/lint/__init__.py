@@ -315,9 +315,32 @@ class ModuleLint(ComponentLint):
             self.meta_schema = json.load(fh)
         return self.meta_schema
 
+    def sort_meta_yml(self, meta_yml: dict) -> dict:
+        """Sort meta.yml keys according to the schema's property order"""
+        # Get the schema to determine the correct key order
+        try:
+            schema = self.load_meta_schema()
+            schema_keys = list(schema["properties"].keys())
+        except (LintExceptionError, KeyError) as e:
+            raise UserWarning("Failed to load meta schema", e)
+
+        result: dict = {}
+
+        # First, add keys in the order they appear in the schema
+        for key in schema_keys:
+            if key in meta_yml:
+                result[key] = meta_yml[key]
+
+        # Then add any keys that aren't in the schema (to preserve custom keys)
+        for key in meta_yml.keys():
+            if key not in result:
+                result[key] = meta_yml[key]
+
+        return result
+
     def update_meta_yml_file(self, mod):
         """
-        Update the meta.yml file with the correct inputs and outputs
+        Update the meta.yml file with the correct inputs, outputs, topics and containers
         """
         meta_yml = self.read_meta_yml(mod)
         if meta_yml is None:
@@ -702,7 +725,7 @@ class ModuleLint(ComponentLint):
             else:
                 return obj
 
-        corrected_meta_yml = _sort_meta_yml(corrected_meta_yml)
+        corrected_meta_yml = self.sort_meta_yml(corrected_meta_yml)
         corrected_meta_yml = _ensure_string_keys(corrected_meta_yml)
 
         with open(mod.meta_yml, "w") as fh:
