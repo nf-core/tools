@@ -27,7 +27,7 @@ class ModuleContainers:
         self.module = module
         self.module_directory = self.get_module_dir(module)
         self.condafile = self.get_environment_path(self.module_directory)
-        self.metafile = self.get_metayaml_path(self.module_directory)
+        self.metafile = self.get_meta_yml_path(self.module_directory)
         self.containers: dict | None = None
 
     def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
@@ -215,11 +215,11 @@ class ModuleContainers:
         return env_path
 
     @staticmethod
-    def get_metayaml_path(module_dir: Path) -> Path:
-        metayaml_path = module_dir / "meta.yml"
-        if not metayaml_path.exists():
+    def get_meta_yml_path(module_dir: Path) -> Path:
+        meta_yml_path = module_dir / "meta.yml"
+        if not meta_yml_path.exists():
             raise FileNotFoundError(f"meta.yml not found for module at {module_dir}")
-        return metayaml_path
+        return meta_yml_path
 
     def get_meta(self) -> dict:
         with open(self.metafile) as f:
