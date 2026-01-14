@@ -230,7 +230,7 @@ process TEST_PROCESS {
 
     component.get_outputs_from_main_nf()
 
-    # Should find 3 outputs with variable names containing 'val' and 'path' substrings
+    # Should find 4 outputs with variable names containing 'val' and 'path' substrings
     # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
     assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
     assert "results" in component.outputs
@@ -238,6 +238,52 @@ process TEST_PROCESS {
     assert "pathogens" in component.outputs
     assert "reads" in component.outputs
     assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
+
+
+def test_get_outputs_complete_version_command(tmp_path):
+    """Test that the version command is complete"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), emit: results
+    val(evaluate_result), emit: evaluation
+    tuple val("${task.process}"), val('stranger'), eval("stranger --version | sed 's/stranger, version //g'"), topic: versions, emit: versions_stranger
+    tuple val("${task.process}"), val('fastqc'), eval('fastqc --version | sed "/FastQC v/!d; s/.*v//"'), emit: versions_fastqc, topic: versions
+
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "results" in component.outputs
+    assert "evaluation" in component.outputs
+    assert "versions_stranger" in component.outputs
+    assert "versions_fastqc" in component.outputs
+    assert "\"stranger --version | sed 's/stranger, version //g'\"" in list(
+        component.outputs["versions_stranger"][0][2].keys()
+    )
+    assert "'fastqc --version | sed \"/FastQC v/!d; s/.*v//\"'" in list(
+        component.outputs["versions_fastqc"][0][2].keys()
+    )
 
 
 def test_get_topics_no_partial_keyword_match(tmp_path):

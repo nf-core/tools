@@ -17,14 +17,17 @@
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
+- Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
 
 ### Template
 
 - switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
+- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
 
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
+- more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
 
 ### Modules
 
@@ -59,6 +62,9 @@
 - Enable authenticated pipeline download from nf-core compatible repos with github api ([#3607](https://github.com/nf-core/tools/pull/3607))
 - fix pytest setup matrix ([#3888](https://github.com/nf-core/tools/pull/3888))
 - Fix GH API rate limits. ([#3895](https://github.com/nf-core/tools/pull/3895))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.5 ([#3900](https://github.com/nf-core/tools/pull/3900))
+- devcontainer: Set `moby: false` to fix trixie builds ([#3904](https://github.com/nf-core/tools/pull/3904))
+- Update actions/checkout digest to 93cb6ef ([#3906](https://github.com/nf-core/tools/pull/3906))
 - devcontainer: downgrade to debian 12 and revert [#3904](https://github.com/nf-core/tools/pull/3904) ([#3907](https://github.com/nf-core/tools/pull/3907))
 
 ### Template
