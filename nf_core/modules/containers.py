@@ -128,7 +128,9 @@ class ModuleContainers:
                 container[cls.SCAN_ID_KEY] = scan_id
 
         if container_system == "singularity" and not await_build:
-            log.warning("Cannot retrieve https-url by inspecting the image, when the image build is not awaited.")
+            log.warning(
+                "Cannot retrieve https-url by inspecting the image, when the image build is not awaited. Rerun the command with `--await`"
+            )
 
         elif container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
@@ -249,7 +251,14 @@ class ModuleContainers:
 
         return containers
 
-    def update_containers_in_meta(self) -> None:
+    def update_containers_in_meta(self, module_lint: ModuleLint | None = None) -> None:
+        """
+        Update the containers section in meta.yml.
+
+        Args:
+            module_lint: Optional ModuleLint instance to use for sorting.
+                        If not provided, a new instance will be created.
+        """
         if self.containers is None:
             log.debug("Containers not initialized - running `create()` ...")
             self.create()
@@ -259,7 +268,19 @@ class ModuleContainers:
         meta_containers.update(self.containers)
         meta["containers"] = meta_containers
 
-        # TODO container-conversion: sort the yaml (again) -> call linting?
+        # Sort the YAML according to the schema's property order using ModuleLint
+        if module_lint is None:
+            try:
+                modules_repo = ModulesRepo(remote_url="https://github.com/nf-core/modules.git")
+                module_lint = ModuleLint(self.directory, modules_repo=modules_repo)
+            except Exception as e:
+                log.warning(f"Failed to initialize ModuleLint for sorting: {e}")
+
+        if module_lint is not None:
+            try:
+                meta = module_lint.sort_meta_yml(meta)
+            except Exception as e:
+                log.warning(f"Failed to sort meta.yml: {e}")
 
         out = yaml.dump(meta)
         with open(self.meta_yml, "w") as f:
