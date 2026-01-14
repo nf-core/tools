@@ -87,7 +87,7 @@ class DefaultProcess(Screen):
             else:
                 text_input.query_one(".validation_msg").update("")
         try:
-            with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+            with init_context(self.parent.get_context()):
                 # First, validate the new config data
                 ConfigsCreateConfig(**new_config)
                 # If that passes validation, update the existing config

@@ -102,7 +102,7 @@ class BasicDetails(Screen):
             else:
                 text_input.query_one(".validation_msg").update("")
         try:
-            with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+            with init_context(self.parent.get_context()):
                 self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
             if event.button.id == "next":
                 if self.parent.CONFIG_TYPE == "infrastructure":

@@ -31,6 +31,7 @@ def init_context(value: dict[str, Any]) -> Iterator[None]:
 # Define a global variable to store the config type
 CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 NFCORE_CONFIG_GLOBAL: bool = True
+INFRA_ISHPC_GLOBAL: bool = False
 
 
 class ConfigsCreateConfig(BaseModel):
@@ -82,6 +83,30 @@ class ConfigsCreateConfig(BaseModel):
     """ Whether the config is part of the nf-core organisation """
     savelocation: Optional[str] = None
     """ Final location of the configuration file """
+    scheduler: Optional[str] = None
+    """ The scheduler that the HPC uses """
+    queue: Optional[str] = None
+    """ The default queue that the HPC uses """
+    module_system: Optional[str] = None
+    """ Modules to load when running processes """
+    container_system: Optional[str] = None
+    """ The container system the HPC uses """
+    memory: Optional[str] = None
+    """ The maximum memory available to processes """
+    cpus: Optional[str] = None
+    """ The maximum number of CPUs available to processes """
+    time: Optional[str] = None
+    """ The maximum walltime available to processes """
+    envvar: Optional[str] = None
+    """ An environment variable to hold a custom Nextflow container cachedir """
+    cachedir: Optional[str] = None
+    """ An environment variable to hold a custom Nextflow container cachedir """
+    igenomes_cachedir: Optional[str] = None
+    """ A cachedir for iGenomes """
+    scratch_dir: Optional[str] = None
+    """ A scratch directory to use """
+    retries: Optional[str] = None
+    """ Number of retries for failed jobs """
 
     model_config = ConfigDict(extra="allow")
 
@@ -307,7 +332,7 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL, "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL}):
+            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL, "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL, "is_hpc": INFRA_ISHPC_GLOBAL}):
                 ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:

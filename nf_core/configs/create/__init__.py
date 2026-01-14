@@ -72,6 +72,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     # Tracking variables
     CONFIG_TYPE = None
     NFCORE_CONFIG = True
+    INFRA_ISHPC = False
 
     # Log handler
     LOG_HANDLER = rich_log_handler
@@ -103,7 +104,13 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             utils.NFCORE_CONFIG_GLOBAL = False
             self.push_screen("basic_details")
         elif event.button.id == "type_hpc":
+            self.INFRA_ISHPC = True
+            utils.INFRA_ISHPC_GLOBAL = True
             self.push_screen("hpc_customisation")
+        elif event.button.id == "type_local":
+            self.INFRA_ISHPC = False
+            utils.INFRA_ISHPC_GLOBAL = False
+            self.push_screen("final_infra_details")
         elif event.button.id == "toconfiguration":
             self.push_screen("final_infra_details")
         elif event.button.id == "finish":
@@ -119,3 +126,10 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.theme: str = "textual-dark" if self.theme == "textual-light" else "textual-light"
+
+    def get_context(self):
+        return {
+            "is_nfcore": self.NFCORE_CONFIG,
+            "is_infrastructure": self.CONFIG_TYPE == "infrastructure",
+            "is_hpc": self.INFRA_ISHPC
+        }

@@ -128,7 +128,7 @@ class CustomProcess(Screen):
                     text_input.query_one(".validation_msg").update("")
             # Validate the config
             try:
-                with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+                with init_context(self.parent.get_context()):
                     ConfigsCreateConfig(**tmp_config)
                 # Add to the config stack
                 tmp_config['select_label'] = self.select_label

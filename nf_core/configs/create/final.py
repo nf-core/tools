@@ -46,7 +46,7 @@ class FinalScreen(Screen):
         save_location = self.query_one("TextInput")
         save_location_text = save_location.query_one(Input)
         try:
-            with init_context({"is_nfcore": self.parent.NFCORE_CONFIG, "is_infrastructure": self.parent.CONFIG_TYPE == "infrastructure"}):
+            with init_context(self.parent.get_context()):
                 ConfigsCreateConfig(savelocation=save_location_text.value)
             # If validation passes, create the config
             self._create_config(config_dir=save_location_text.value)
