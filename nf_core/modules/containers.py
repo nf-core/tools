@@ -6,9 +6,10 @@ from urllib.parse import quote
 import requests
 import yaml
 
+from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
 log = logging.getLogger(__name__)
@@ -58,6 +59,8 @@ class ModuleContainers:
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         tasks = dict()
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
+
+        assert self.environment_yml is not None
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:
@@ -225,14 +228,14 @@ class ModuleContainers:
         if not self.meta_yml or not self.meta_yml.exists():
             raise FileNotFoundError(f"meta.yml not found for module '{self.module}'")
         with open(self.meta_yml) as f:
-            meta = yaml.safe_load(f)
+            meta = ruamel_yaml.load(f)
         return meta
 
     def get_containers_from_meta(self) -> dict:
         """
         Return containers defined in the module meta.yml.
         """
-        assert self.meta_yml.exists()
+        assert self.meta_yml and self.meta_yml.exists()
 
         meta = self.get_meta()
         containers = meta.get("containers", dict())
@@ -271,8 +274,7 @@ class ModuleContainers:
         # Sort the YAML according to the schema's property order using ModuleLint
         if module_lint is None:
             try:
-                modules_repo = ModulesRepo(remote_url="https://github.com/nf-core/modules.git")
-                module_lint = ModuleLint(self.directory, modules_repo=modules_repo)
+                module_lint = ModuleLint(self.directory)
             except Exception as e:
                 log.warning(f"Failed to initialize ModuleLint for sorting: {e}")
 
@@ -282,6 +284,13 @@ class ModuleContainers:
             except Exception as e:
                 log.warning(f"Failed to sort meta.yml: {e}")
 
-        out = yaml.dump(meta)
+        assert self.meta_yml and self.meta_yml.exists()
+
         with open(self.meta_yml, "w") as f:
-            f.write(out)
+            ruamel_yaml.dump(meta, f)
+
+        # Format with prettier for consistent styling
+        try:
+            run_prettier_on_file(self.meta_yml)
+        except Exception as e:
+            log.debug(f"Could not run prettier on meta.yml: {e}")
