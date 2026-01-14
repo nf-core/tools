@@ -396,7 +396,7 @@ def modules_containers_list(ctx, module):
 
     try:
         manager = ModuleContainers(module, ".")
-        containers = manager.list_containers(module)
+        containers = manager.list_containers()
         t = rich.table.Table("Container System", "Platform", "Image")
         for cs, p, img in containers:
             t.add_row(cs, p, img)
@@ -414,7 +414,7 @@ def modules_containers_lint(ctx, module):
 
     try:
         manager = ModuleContainers(module, ".")
-        containers = manager.lint(module)
+        containers = manager.lint()
         stdout.print(f"Found {len(containers)} container(s) for {module}.")
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
