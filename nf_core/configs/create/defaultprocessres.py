@@ -68,7 +68,8 @@ class DefaultProcess(Screen):
             )
         yield Center(
             Button("Back", id="back", variant="default"),
-            Button("Next", id="next", variant="success"),
+            Button("Configure specific processes", id="config_specific_process", variant="success"),
+            Button("Finish", id="finish_config", variant="success"),
             classes="cta",
         )
 
@@ -91,7 +92,9 @@ class DefaultProcess(Screen):
                 ConfigsCreateConfig(**new_config)
                 # If that passes validation, update the existing config
                 self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
-            if event.button.id == "next":
+            if event.button.id == "config_specific_process":
                 self.parent.push_screen("custom_process_resources")
+            elif event.button.id == "finish_config":
+                self.parent.push_screen("final")
         except ValueError:
             pass

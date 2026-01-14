@@ -7,9 +7,10 @@ from re import sub
 
 
 class ConfigCreate:
-    def __init__(self, template_config: ConfigsCreateConfig, config_type: str):
+    def __init__(self, template_config: ConfigsCreateConfig, config_type: str, config_dir:str = '.'):
         self.template_config = template_config
         self.config_type = config_type
+        self.config_dir = sub(r'/$', '', config_dir)
 
     def construct_info_params(self):
         final_params = {}
@@ -131,6 +132,7 @@ class ConfigCreate:
         ## File name option
         config_name = str(self.template_config.general_config_name).strip()
         filename = sub(r'\s+', '_', config_name) + ".conf"
+        filename = f'{self.config_dir}/{filename}'
 
         ## Collect all config entries per scope, for later checking scope needs to be written
         params_section_str = self.construct_params_str()

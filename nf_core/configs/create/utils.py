@@ -80,6 +80,8 @@ class ConfigsCreateConfig(BaseModel):
     """ Dictionary containing custom resource requirements for labelled processes """
     is_nfcore: Optional[bool] = None
     """ Whether the config is part of the nf-core organisation """
+    savelocation: Optional[str] = None
+    """ Final location of the configuration file """
 
     model_config = ConfigDict(extra="allow")
 
@@ -109,6 +111,16 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Cannot be left empty.")
             if not Path(v).is_dir():
                 raise ValueError("Must be a valid path.")
+        return v
+
+    @field_validator("savelocation")
+    @classmethod
+    def final_path_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the final save directory is valid."""
+        if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        if not Path(v).is_dir():
+            raise ValueError("Must be a valid path to a directory.")
         return v
 
     @field_validator("config_pipeline_name")

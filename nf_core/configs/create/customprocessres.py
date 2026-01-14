@@ -98,7 +98,7 @@ class CustomProcess(Screen):
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Configure another process", id="another"),
-            Button("Next", id="next", variant="success"),
+            Button("Finish", id="finish_config", variant="success"),
             classes="cta",
         )
 
@@ -116,7 +116,7 @@ class CustomProcess(Screen):
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
-        if event.button.id in ["next", "another"]:
+        if event.button.id in ["finish_config", "another"]:
             tmp_config = {}
             for text_input in self.query("TextInput"):
                 this_input = text_input.query_one(Input)

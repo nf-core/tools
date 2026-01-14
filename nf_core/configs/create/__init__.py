@@ -109,10 +109,11 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         elif event.button.id == "finish":
             self.push_screen("final")
         ## General options
-        if event.button.id == "close_app":
-            self.exit(return_code=0)
         if event.button.id == "back":
             self.pop_screen()
+
+    def close_app(self):
+        self.exit(return_code=0)
 
     ## User theme options
     def action_toggle_dark(self) -> None:
