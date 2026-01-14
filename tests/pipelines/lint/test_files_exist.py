@@ -70,7 +70,7 @@ class TestLintFilesExist(TestLint):
         """Check if linting passes with a valid nf-core.yml config"""
         valid_yaml = """
         files_exist:
-            - .github/CONTRIBUTING.md
+            - .github/docs/CONTRIBUTING.md
             - CITATIONS.md
         """
         yaml = YAML()
@@ -85,7 +85,7 @@ class TestLintFilesExist(TestLint):
 
         results = self.lint_obj.files_exist()
         assert results["failed"] == []
-        assert "File is ignored: `.github/CONTRIBUTING.md`" in results["ignored"]
+        assert "File is ignored: `.github/docs/CONTRIBUTING.md`" in results["ignored"]
         assert "File is ignored: `CITATIONS.md`" in results["ignored"]
 
     def test_files_exists_fail_nf_core_yml_config(self):
