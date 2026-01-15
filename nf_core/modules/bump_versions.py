@@ -9,7 +9,6 @@ import os
 import re
 from pathlib import Path
 
-import questionary
 import yaml
 from rich.box import ROUNDED
 from rich.console import Console
@@ -94,24 +93,11 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Prompt for module or all
         if module is None and not all_modules:
-            self.require_prompts(
-                "No module name provided.\nPlease provide the module name as a command-line argument or use '--all'"
+            module = nf_core.modules.modules_utils.prompt_module_selection(
+                nfcore_modules, component_type="modules", action="Bump versions for"
             )
-            question = {
-                "type": "list",
-                "name": "all_modules",
-                "message": "Bump versions for all modules or a single named module?",
-                "choices": ["All modules", "Named module"],
-            }
-            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
-            if answer["all_modules"] == "All modules":
+            if module is None:
                 all_modules = True
-            else:
-                module = questionary.autocomplete(
-                    "Tool name:",
-                    choices=[m.component_name for m in nfcore_modules],
-                    style=nf_core.utils.nfcore_question_style,
-                ).unsafe_ask()
 
         if module:
             self.show_up_to_date = True
