@@ -25,7 +25,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         .gitattributes
         .prettierrc.yml
         .github/.dockstore.yml
-        .github/CONTRIBUTING.md
+        .github/docs/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml
