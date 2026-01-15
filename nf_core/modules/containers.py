@@ -9,6 +9,7 @@ import yaml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
+from nf_core.modules.modules_utils import prompt_module_selection
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
@@ -26,9 +27,20 @@ class ModuleContainers:
     LOCK_FILE_KEY = "lock_file"
     HTTPS_URL_KEY = "https"
 
-    def __init__(self, module: str, directory: str | Path = "."):
+    def __init__(self, module: str | None, directory: str | Path = "."):
         self.directory = Path(directory)
+
+        # Initialize list of available modules for the prompt
+        self.all_remote_components = self._get_available_modules()
+
+        # Prompt for module selection if not provided
+        if module is None and len(self.all_remote_components) > 0:
+            module = prompt_module_selection(
+                self.all_remote_components, component_type="modules", action="Build containers for"
+            )
+
         self.module = module
+
         # Use NFCoreComponent to handle module directory and file paths
         self.nfcore_component = self._init_nfcore_component(module)
         self.module_directory = self.nfcore_component.component_dir
@@ -36,16 +48,69 @@ class ModuleContainers:
         self.meta_yml = self.nfcore_component.meta_yml
         self.containers: dict | None = None
 
+    def _get_available_modules(self) -> list[NFCoreComponent]:
+        """Get list of available modules based on repository type."""
+        from nf_core.components.components_utils import get_repo_info
+        from nf_core.modules.modules_json import ModulesJson
+
+        try:
+            # Detect repository type
+            _, repo_type, org = get_repo_info(self.directory, use_prompt=False)
+        except (UserWarning, FileNotFoundError):
+            log.debug("Could not determine repository type")
+            return []
+
+        modules = []
+
+        if repo_type == "pipeline":
+            # Get modules from modules.json
+            modules_json_path = self.directory / "modules.json"
+            if modules_json_path.exists():
+                try:
+                    modules_json = ModulesJson(self.directory)
+                    for repo_url, components in modules_json.get_all_components("modules").items():
+                        if isinstance(components, str):
+                            log.warning(f"Error parsing modules.json: {components}")
+                            continue
+                        for org_name, module_name in components:
+                            modules.append(
+                                NFCoreComponent(
+                                    module_name,
+                                    repo_url,
+                                    self.directory / "modules" / org_name / module_name,
+                                    repo_type,
+                                    self.directory,
+                                    "modules",
+                                )
+                            )
+                except Exception as e:
+                    log.debug(f"Error loading modules from modules.json: {e}")
+
+        elif repo_type == "modules":
+            # Get modules from modules directory
+            modules_dir = self.directory / "modules" / "nf-core"
+            if modules_dir.exists():
+                for main_nf in modules_dir.rglob("main.nf"):
+                    module_name = str(main_nf.parent.relative_to(modules_dir))
+                    modules.append(
+                        NFCoreComponent(
+                            module_name,
+                            None,
+                            modules_dir / module_name,
+                            repo_type,
+                            self.directory,
+                            "modules",
+                        )
+                    )
+
+        return modules
+
     def _init_nfcore_component(self, module: str) -> NFCoreComponent:
         """Initialize NFCoreComponent for the module."""
-        module_dir = Path(self.directory, "modules", "nf-core", module)
-        if not module_dir.exists():
-            raise ValueError(f"Module '{module}' not found at {module_dir}")
-
         return NFCoreComponent(
             component_name=module,
             repo_url="https://github.com/nf-core/modules.git",
-            component_dir=module_dir,
+            component_dir=self.directory,
             repo_type="modules",
             base_dir=self.directory,
             component_type="modules",

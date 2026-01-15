@@ -9,7 +9,6 @@ nf-core subworkflows lint
 import logging
 import os
 
-import questionary
 import rich
 import ruamel.yaml
 
@@ -101,24 +100,11 @@ class SubworkflowLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for subworkflow or all
         if subworkflow is None and not (local or all_subworkflows):
-            questions = [
-                {
-                    "type": "list",
-                    "name": "all_subworkflows",
-                    "message": "Lint all subworkflows or a single named subworkflow?",
-                    "choices": ["All subworkflows", "Named subworkflow"],
-                },
-                {
-                    "type": "autocomplete",
-                    "name": "subworkflow_name",
-                    "message": "Subworkflow name:",
-                    "when": lambda x: x["all_subworkflows"] == "Named subworkflow",
-                    "choices": [m.component_name for m in self.all_remote_components],
-                },
-            ]
-            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
-            all_subworkflows = answers["all_subworkflows"] == "All subworkflows"
-            subworkflow = answers.get("subworkflow_name")
+            from nf_core.modules.modules_utils import prompt_module_selection
+
+            subworkflow = prompt_module_selection(
+                self.all_remote_components, component_type="subworkflows", action="Lint"
+            )
 
         # Only lint the given module
         if subworkflow:

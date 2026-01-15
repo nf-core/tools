@@ -14,7 +14,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-import questionary
 import rich
 import rich.progress
 import ruamel.yaml
@@ -122,24 +121,9 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
         if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
-            questions = [
-                {
-                    "type": "list",
-                    "name": "all_modules",
-                    "message": "Lint all modules or a single named module?",
-                    "choices": ["All modules", "Named module"],
-                },
-                {
-                    "type": "autocomplete",
-                    "name": "tool_name",
-                    "message": "Tool name:",
-                    "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.component_name for m in self.all_remote_components],
-                },
-            ]
-            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
-            all_modules = answers["all_modules"] == "All modules"
-            module = answers.get("tool_name")
+            module = nf_core.modules.modules_utils.prompt_module_selection(
+                self.all_remote_components, component_type="modules", action="Lint"
+            )
 
         # Only lint the given module
         if module:

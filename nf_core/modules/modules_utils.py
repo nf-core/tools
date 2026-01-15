@@ -133,3 +133,45 @@ def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> 
         return exact_matches
     # If no exact match, look for modules that start with the given name (subtools)
     return [m for m in modules if m.component_name.startswith(module_name)]
+
+
+def prompt_module_selection(
+    modules: list[NFCoreComponent], component_type: str = "modules", action: str = "Select"
+) -> str | None:
+    """
+    Prompt user to select a specific module or all modules.
+
+    Args:
+        modules (list[NFCoreComponent]): List of available modules to choose from
+        component_type (str): The component type (default: "modules", can also be "subworkflows")
+        action (str): The action verb to use in the prompt message (e.g., "Lint", "Install", "Update", "Bump versions for")
+
+    Returns:
+        str | None: The selected module name, or None if "All modules" was selected
+    """
+    import questionary
+
+    from nf_core.utils import nfcore_question_style
+
+    if not modules:
+        return None
+
+    component_singular = component_type.rstrip("s")  # "modules" -> "module"
+
+    questions = [
+        {
+            "type": "list",
+            "name": f"all_{component_type}",
+            "message": f"{action} all {component_type} or a single named {component_singular}?",
+            "choices": [f"All {component_type}", f"Named {component_singular}"],
+        },
+        {
+            "type": "autocomplete",
+            "name": "tool_name",
+            "message": "Tool name:",
+            "when": lambda x: x[f"all_{component_type}"] == f"Named {component_singular}",
+            "choices": [m.component_name for m in modules],
+        },
+    ]
+    answers = questionary.unsafe_prompt(questions, style=nfcore_question_style)
+    return answers.get("tool_name")
