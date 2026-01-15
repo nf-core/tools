@@ -15,7 +15,7 @@ class TestLintFilesUnchanged(TestLint):
         assert not results.get("could_fix", True)
 
     def test_files_unchanged_fail(self):
-        failing_file = Path(".github", "CONTRIBUTING.md")
+        failing_file = Path(".github", "docs/CONTRIBUTING.md")
         new_pipeline = self._make_pipeline_copy()
         with open(Path(new_pipeline, failing_file), "a") as fh:
             fh.write("THIS SHOULD NOT BE HERE")
