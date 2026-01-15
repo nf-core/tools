@@ -1381,14 +1381,14 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     modules_bump_versions(ctx, tool, directory, all, show_all, dry_run)
 
 
-@modules.group("containers")
+@modules.group("containers", aliases=["container", "con"])
 @click.pass_context
 def modules_containers(ctx):
     """Manage module container builds and metadata."""
     pass
 
 
-@modules_containers.command("create")
+@modules_containers.command("create", aliases=["c"])
 @click.pass_context
 @click.option(
     "-await",
