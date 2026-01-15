@@ -93,7 +93,6 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path("CODE_OF_CONDUCT.md")],
         [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path(".github", ".dockstore.yml")],
-        [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
@@ -105,6 +104,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path("assets", "email_template.txt")],
         [Path("assets", "sendmail_template.txt")],
         [Path("assets", f"nf-core-{short_name}_logo_light.png")],
+        [Path("docs", "CONTRIBUTING.md")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [Path("docs", "README.md")],
