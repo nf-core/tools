@@ -25,7 +25,7 @@ def files_exist(self) -> dict[str, list[str]]:
         .prettierignore
         .prettierrc.yml
         .github/.dockstore.yml
-        .github/docs/CONTRIBUTING.md
+        docs/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml

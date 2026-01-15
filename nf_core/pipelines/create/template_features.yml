@@ -18,13 +18,13 @@ repository_setup:
         This means that even if you unselect this option, your pipeline will still contain a `.git` directory and `.gitignore` file.
       linting:
         files_exist:
-          - ".github/docs/CONTRIBUTING.md"
+          - "docs/CONTRIBUTING.md"
           - ".github/ISSUE_TEMPLATE/bug_report.yml"
           - ".github/ISSUE_TEMPLATE/feature_request.yml"
           - ".github/PULL_REQUEST_TEMPLATE.md"
           - ".github/.dockstore.yml"
         files_unchanged:
-          - ".github/docs/CONTRIBUTING.md"
+          - "docs/CONTRIBUTING.md"
           - ".github/ISSUE_TEMPLATE/bug_report.yml"
           - ".github/ISSUE_TEMPLATE/config.yml"
           - ".github/ISSUE_TEMPLATE/feature_request.yml"
@@ -152,7 +152,7 @@ continuous_integration_testing:
           - ".github/actions/nf-test/action.yml"
         nextflow_config: False
         files_unchanged:
-          - ".github/docs/CONTRIBUTING.md"
+          - "docs/CONTRIBUTING.md"
           - ".github/PULL_REQUEST_TEMPLATE.md"
       nfcore_pipelines: False
       custom_pipelines: True
@@ -258,7 +258,7 @@ components_modules:
         The pipeline will include the MultiQC module and will have special steps which also allow the software versions to be reported in the MultiQC output for future traceability. For more information about how to use MultiQC reports, see http://multiqc.info.
       linting:
         files_unchanged:
-          - ".github/docs/CONTRIBUTING.md"
+          - "docs/CONTRIBUTING.md"
           - "assets/sendmail_template.txt"
         files_exist:
           - "assets/multiqc_config.yml"
@@ -357,7 +357,7 @@ configurations:
           - "docs/images/nf-core-{{short_name}}_logo_light.png"
           - "docs/images/nf-core-{{short_name}}_logo_dark.png"
           - ".github/ISSUE_TEMPLATE/bug_report.yml"
-          - ".github/docs/CONTRIBUTING.md"
+          - "docs/CONTRIBUTING.md"
           - ".github/PULL_REQUEST_TEMPLATE.md"
           - "assets/email_template.txt"
           - "docs/README.md"
@@ -411,7 +411,7 @@ development_environments:
         Github Codespaces (https://github.com/features/codespaces) is an online developer environment that runs in your browser, complete with VSCode and a terminal.
       linting:
         files_unchanged:
-          - ".github/docs/CONTRIBUTING.md"
+          - "docs/CONTRIBUTING.md"
       nfcore_pipelines: False
       custom_pipelines: True
       default: true
