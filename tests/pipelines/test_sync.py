@@ -396,6 +396,27 @@ class TestModules(TestPipelines):
         for branch_no in [2, 3]:
             assert f"{psync.original_merge_branch}-{branch_no}" in psync.repo.branches
 
+    def test_create_merge_base_branch_with_special_characters(self):
+        """Test that branch names with regex special characters (like +) are handled correctly.
+
+        This tests that the fix using re.escape() works properly when the version
+        contains characters that have special meaning in regex patterns (e.g., '+' in '3.6.0.dev0+local0').
+        Without re.escape(), the '+' would be interpreted as a regex quantifier instead of a literal character.
+        """
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+
+        psync.original_merge_branch = "nf-core-template-merge-3.6.0.dev0+local0"
+        psync.merge_branch = psync.original_merge_branch
+
+        for _ in range(3):
+            psync.create_merge_base_branch()
+
+        assert psync.merge_branch in psync.repo.branches
+        for branch_no in [2, 3]:
+            assert f"{psync.original_merge_branch}-{branch_no}" in psync.repo.branches
+
     def test_push_merge_branch(self):
         """Try pushing merge branch"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)

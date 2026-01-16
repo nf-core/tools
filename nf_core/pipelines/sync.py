@@ -371,7 +371,7 @@ class PipelineSync:
         # Check if branch exists already
         branch_list = [b.name for b in self.repo.branches]
         if self.merge_branch in branch_list:
-            merge_branch_format = re.compile(rf"{self.original_merge_branch}-(\d+)")
+            merge_branch_format = re.compile(rf"{re.escape(self.original_merge_branch)}-(\d+)")
             max_branch = max(
                 [1]
                 + [
