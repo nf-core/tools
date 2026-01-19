@@ -63,7 +63,7 @@ To get started, open the repository in [Codespaces](https://github.com/{{ name }
 
 {% if test_config -%}
 Once you have made your changes, run the pipeline with nf-test to test them locally.
-We recommend the `--verbose` flag to view the Nextflow console log output in addition to the output from nf-test.
+For additional information, use the `--verbose` flag to view the Nextflow console log output.
 
 ```bash
 nf-test test --tag test --profile +docker --verbose
