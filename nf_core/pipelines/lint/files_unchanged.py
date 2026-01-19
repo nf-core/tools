@@ -25,7 +25,6 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         .gitattributes
         .prettierrc.yml
         .github/.dockstore.yml
-        docs/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml
@@ -110,7 +109,6 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     ]
     files_partial = [
         [Path(".gitignore"), Path(".prettierignore")],
-        [Path("docs", "CONTRIBUTING.md")],
     ]
 
     # Only show error messages from pipeline creation
