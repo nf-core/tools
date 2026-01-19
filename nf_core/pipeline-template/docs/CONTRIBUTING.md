@@ -116,7 +116,7 @@ These tests are run with the latest available version of Nextflow and the minimu
 
 ### Pipeline contribution conventions
 
-To make the `{{ name }}` code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
+nf-core semi-standardises how you write code and other contributions to make the {{ name }} code and processing logic more understandable for new contributors and to ensure quality.
 
 #### Add a new pipeline step
 
