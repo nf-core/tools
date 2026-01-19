@@ -10,8 +10,8 @@ Thanks for taking an interest in improving {{ name }}.
 
 This page describes the recommended nf-core way to contribute to both {{ name }} and nf-core pipelines in general, including:
 
-- [General contribution guidelines](#general-contribution-guidelines): for common procedures or guides across all nf-core pipelines.
-- [Pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines): for any procedures or guides specific to the development conventions of {{ name }}.
+- [General contribution guidelines](#general-contribution-guidelines): common procedures or guides across all nf-core pipelines.
+- [Pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines): procedures or guides specific to the development conventions of {{ name }}.
 
 {% if is_nfcore -%}
 
