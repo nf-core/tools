@@ -104,13 +104,13 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path("assets", "email_template.txt")],
         [Path("assets", "sendmail_template.txt")],
         [Path("assets", f"nf-core-{short_name}_logo_light.png")],
-        [Path("docs", "CONTRIBUTING.md")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [Path("docs", "README.md")],
     ]
     files_partial = [
         [Path(".gitignore"), Path(".prettierignore")],
+        [Path("docs", "CONTRIBUTING.md")],
     ]
 
     # Only show error messages from pipeline creation
