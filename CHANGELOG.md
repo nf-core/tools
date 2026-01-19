@@ -28,6 +28,7 @@
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
 - more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
+- handle val in version topics correctly ([#3988](https://github.com/nf-core/tools/pull/3988))
 
 ### Modules
 
