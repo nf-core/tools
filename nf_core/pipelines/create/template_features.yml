@@ -18,13 +18,12 @@ repository_setup:
         This means that even if you unselect this option, your pipeline will still contain a `.git` directory and `.gitignore` file.
       linting:
         files_exist:
-          - "docs/CONTRIBUTING.md"
           - ".github/ISSUE_TEMPLATE/bug_report.yml"
           - ".github/ISSUE_TEMPLATE/feature_request.yml"
           - ".github/PULL_REQUEST_TEMPLATE.md"
           - ".github/.dockstore.yml"
-        files_unchanged:
           - "docs/CONTRIBUTING.md"
+        files_unchanged:
           - ".github/ISSUE_TEMPLATE/bug_report.yml"
           - ".github/ISSUE_TEMPLATE/config.yml"
           - ".github/ISSUE_TEMPLATE/feature_request.yml"
@@ -33,6 +32,7 @@ repository_setup:
           - ".github/workflows/linting_comment.yml"
           - ".github/workflows/linting.yml"
           - ".github/.dockstore.yml"
+          - "docs/CONTRIBUTING.md"
         readme:
           - "nextflow_badge"
       nfcore_pipelines: False
