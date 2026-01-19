@@ -74,6 +74,7 @@
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
 - Update pipeline creation information page to be more exclusive as to what should use the full nf-core pipeline template ([#3891](https://github.com/nf-core/tools/pull/3891))
 - Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
+- Move CONTRIBUTING.md to docs/, review and update text, and add pipeline-specific conventions section ([#3903](https://github.com/nf-core/tools/pull/3903))
 
 ### Linting
 
