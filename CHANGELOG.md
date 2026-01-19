@@ -18,12 +18,12 @@
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
-- Add bioconda channel to conda setup ([#3987](https://github.com/nf-core/tools/pull/3987))
 
 ### Template
 
 - switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
 - add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
+- Add bioconda channel to conda setup ([#3987](https://github.com/nf-core/tools/pull/3987))
 
 ### Linting
 
