@@ -43,10 +43,9 @@ If you are not used to this workflow with Git, see the [GitHub documentation](ht
 ### Getting help
 
 For further information and help, see the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) or ask on the nf-core [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) Slack channel ([join our Slack here](https://nf-co.re/join/slack)).
+{%- endif %}
 
-{% endif -%}
-
-{%- if codespaces %}
+{%if codespaces -%}
 
 ### GitHub Codespaces
 
