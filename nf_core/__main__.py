@@ -203,7 +203,7 @@ def pipelines(ctx):
 
 
 # nf-core pipelines create
-@pipelines.command("create")
+@pipelines.command("create", aliases=["c"])
 @click.pass_context
 @click.option(
     "-n",
@@ -231,7 +231,7 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
 
 
 # nf-core pipelines lint
-@pipelines.command("lint")
+@pipelines.command("lint", aliases=["l"])
 @click.option(
     "-d",
     "--dir",
@@ -307,7 +307,7 @@ def command_pipelines_lint(
 
 
 # nf-core pipelines download
-@pipelines.command("download")
+@pipelines.command("download", aliases=["d"])
 @click.argument(
     "pipeline",
     required=False,
@@ -522,7 +522,7 @@ def command_pipelines_launch(
 
 
 # nf-core pipelines list
-@pipelines.command("list")
+@pipelines.command("list", aliases=["ls"])
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
     "-s",
@@ -625,7 +625,7 @@ def command_pipelines_sync(
 
 
 # nf-core pipelines bump-version
-@pipelines.command("bump-version")
+@pipelines.command("bump-version", aliases=["bump", "bv", "b"])
 @click.pass_context
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option(
@@ -769,7 +769,7 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
 
 
 # nf-core pipelines schema lint
-@pipeline_schema.command("lint")
+@pipeline_schema.command("lint", aliases=["l"])
 @click.option(
     "-d",
     "--dir",
@@ -879,7 +879,7 @@ def modules(ctx, git_remote, branch, no_pull):
 
 
 # nf-core modules list subcommands
-@modules.group("list")
+@modules.group("list", aliases=["ls"])
 @click.pass_context
 def modules_list(ctx):
     """
@@ -921,7 +921,7 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
 
 
 # nf-core modules install
-@modules.command("install")
+@modules.command("install", aliases=["add", "i"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -962,7 +962,7 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
 
 
 # nf-core modules update
-@modules.command("update")
+@modules.command("update", aliases=["up", "u"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1073,7 +1073,7 @@ def command_modules_patch(ctx, tool, directory, remove):
 
 
 # nf-core modules remove
-@modules.command("remove")
+@modules.command("remove", aliases=["uninstall", "rm", "r"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1099,7 +1099,7 @@ def command_modules_remove(ctx, directory, tool):
 
 
 # nf-core modules create
-@modules.command("create")
+@modules.command("create", aliases=["c"])
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
@@ -1199,7 +1199,7 @@ def command_modules_create(
 
 
 # nf-core modules test
-@modules.command("test")
+@modules.command("test", aliases=["t"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1261,7 +1261,7 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
 
 
 # nf-core modules lint
-@modules.command("lint")
+@modules.command("lint", aliases=["l"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1348,7 +1348,7 @@ def command_modules_info(ctx, tool, directory):
 
 
 # nf-core modules bump-versions
-@modules.command("bump-versions")
+@modules.command("bump-versions", aliases=["bump-version", "bump", "bv", "b"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1418,7 +1418,7 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 
 
 # nf-core subworkflows create
-@subworkflows.command("create")
+@subworkflows.command("create", aliases=["c"])
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
@@ -1450,7 +1450,7 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
 
 
 # nf-core subworkflows test
-@subworkflows.command("test")
+@subworkflows.command("test", aliases=["t"])
 @click.pass_context
 @click.argument(
     "subworkflow",
@@ -1503,7 +1503,7 @@ def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, o
 
 
 # nf-core subworkflows list subcommands
-@subworkflows.group("list")
+@subworkflows.group("list", aliases=["ls"])
 @click.pass_context
 def subworkflows_list(ctx):
     """
@@ -1545,7 +1545,7 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
 
 
 # nf-core subworkflows lint
-@subworkflows.command("lint")
+@subworkflows.command("lint", aliases=["l"])
 @click.pass_context
 @click.argument(
     "subworkflow",
@@ -1627,7 +1627,7 @@ def command_subworkflows_info(ctx, subworkflow, directory):
 
 
 # nf-core subworkflows install
-@subworkflows.command("install")
+@subworkflows.command("install", aliases=["add", "i"])
 @click.pass_context
 @click.argument(
     "subworkflow",
@@ -1718,7 +1718,7 @@ def subworkflows_patch(ctx, subworkflow, dir, remove):
 
 
 # nf-core subworkflows remove
-@subworkflows.command("remove")
+@subworkflows.command("remove", aliases=["uninstall", "rm", "r"])
 @click.pass_context
 @click.argument(
     "subworkflow",
@@ -1744,7 +1744,7 @@ def command_subworkflows_remove(ctx, directory, subworkflow):
 
 
 # nf-core subworkflows update
-@subworkflows.command("update")
+@subworkflows.command("update", aliases=["up", "u"])
 @click.pass_context
 @click.argument(
     "subworkflow",
@@ -1876,7 +1876,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, 
 
 
 # nf-core test-dataset search
-@test_datasets.command("list")
+@test_datasets.command("list", aliases=["ls"])
 @click.pass_context
 @click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 @click.option(

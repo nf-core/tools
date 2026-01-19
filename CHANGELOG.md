@@ -28,6 +28,7 @@
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
 - more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
+- Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
 
 ### Modules
 
