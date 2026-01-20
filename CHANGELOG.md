@@ -17,6 +17,7 @@
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
+- Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
 
 ### Template
 
@@ -28,6 +29,7 @@
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
 - Fix bugs in subworkflows lint causing false positive warnings ([#3968](https://github.com/nf-core/tools/pull/3968))
 - more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
+- handle val in version topics correctly ([#3988](https://github.com/nf-core/tools/pull/3988))
 
 ### Modules
 
@@ -74,6 +76,7 @@
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
 - Update pipeline creation information page to be more exclusive as to what should use the full nf-core pipeline template ([#3891](https://github.com/nf-core/tools/pull/3891))
 - Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
+- Move CONTRIBUTING.md to docs/, review and update text, and add pipeline-specific conventions section ([#3903](https://github.com/nf-core/tools/pull/3903))
 
 ### Linting
 
