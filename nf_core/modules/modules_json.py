@@ -1252,7 +1252,7 @@ class ModulesJson:
                             }
                         )
 
-    def recreate_dependencies(self, repo, org, subworkflow):
+    def recreate_dependencies(self, repo: str, org: str, subworkflow: Dict[str, str]) -> None:
         """
         Try to recreate the installed_by entries for subworkflows.
         Remove self installation entry from dependencies, assuming that the modules.json has been freshly created,
@@ -1267,6 +1267,7 @@ class ModulesJson:
             name = dep_mod["name"]
             current_repo = dep_mod.get("git_remote", repo)
             current_org = dep_mod.get("org_path", org)
+            assert current_repo is not None and current_org is not None
             installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][name]["installed_by"] = []
@@ -1277,6 +1278,7 @@ class ModulesJson:
             name = dep_subwf["name"]
             current_repo = dep_subwf.get("git_remote", repo)
             current_org = dep_subwf.get("org_path", org)
+            assert current_repo is not None and current_org is not None
             installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
                 self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"] = []
