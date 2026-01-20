@@ -47,40 +47,59 @@ class ConfigCreate:
 
         params_section = [
             'params {',
+            '\n',
             *info_params_str_list,
+            '\n',
             '}',
         ]
 
-        return '\n'.join(params_section) + '\n'
+        params_section_str = '\n'.join(params_section) + '\n\n'
+        return sub(r'\n\n\n+', '\n\n', params_section_str)
     
-    def get_resource_strings(self, cpus, memory, hours, minutes, seconds, prefix=''):
-        cpus_int = int(cpus)
-        cpus_str = f'cpus = {cpus_int}'
+    def get_resource_strings(self, cpus, memory, hours, prefix=''):
+        cpus_str = ''
+        if cpus:
+            cpus_int = int(cpus)
+            cpus_str = f'cpus = {cpus_int}'
 
-        memory_int = int(memory)
-        memory_str = f'memory = {memory_int}.Gb'
+        memory_str = ''
+        if memory:
+            memory_int = int(memory)
+            memory_str = f'memory = {memory_int}.GB'
 
-        time_h = int(hours)
-        time_m = int(minutes)
-        time_s = int(seconds)
-        time_str = f"time = '{time_h}h {time_m}m {time_s}s'"
+        time_str = ''
+        if hours:
+            time_h = None
+            time_m = None
+            try:
+                time_h = int(hours)
+            except:
+                try:
+                    time_m = int(float(hours) * 60)
+                except:
+                    raise ValueError("Non-numeric value supplied for walltime value.")
+            if time_m is not None and time_m % 60 == 0:
+                time_h = int(time_m / 60)
+            if time_h is not None:
+                time_str = f"time = {time_h}.h"
+            elif time_m is not None:
+                time_str = f"time = {time_m}.m"
+            else:
+                raise ValueError("Non-numeric value supplied for walltime value.")
 
         resources = [cpus_str, memory_str, time_str]
         return [
             f'{prefix}{res}'
             for res in resources
+            if res
         ]
     
     def construct_process_config_str(self):
-        process_config_str_list = []
-
         # Construct default resources
         default_resources = self.get_resource_strings(
             cpus=self.template_config.default_process_ncpus,
             memory=self.template_config.default_process_memgb,
             hours=self.template_config.default_process_hours,
-            minutes=self.template_config.default_process_minutes,
-            seconds=self.template_config.default_process_seconds,
             prefix='  '
         )
 
@@ -88,45 +107,55 @@ class ConfigCreate:
         named_resources = []
         if self.template_config.named_process_resources:
             for process_name, process_resources in self.template_config.named_process_resources.items():
-                named_resources.append(
-                    f"  withName: '{process_name}'" + " {"
-                )
-                named_resources.extend(self.get_resource_strings(
+                named_resource_string = self.get_resource_strings(
                     cpus=process_resources['custom_process_ncpus'],
                     memory=process_resources['custom_process_memgb'],
                     hours=process_resources['custom_process_hours'],
-                    minutes=process_resources['custom_process_minutes'],
-                    seconds=process_resources['custom_process_seconds'],
                     prefix='    '
-                ))
+                )
+                if not named_resource_string:
+                    continue
+                named_resources.append(
+                    f"  withName: '{process_name}'" + " {"
+                )
+                named_resources.extend(named_resource_string)
                 named_resources.append('  }')
+                named_resources.append('\n')
 
         # Construct labelled process resources
         labelled_resources = []
         if self.template_config.labelled_process_resources:
             for process_label, process_resources in self.template_config.labelled_process_resources.items():
-                labelled_resources.append(
-                    f"  withLabel: '{process_label}'" + " {"
-                )
-                labelled_resources.extend(self.get_resource_strings(
+                labelled_resource_string = self.get_resource_strings(
                     cpus=process_resources['custom_process_ncpus'],
                     memory=process_resources['custom_process_memgb'],
                     hours=process_resources['custom_process_hours'],
-                    minutes=process_resources['custom_process_minutes'],
-                    seconds=process_resources['custom_process_seconds'],
                     prefix='    '
-                ))
+                )
+                if not labelled_resource_string:
+                    continue
+                labelled_resources.append(
+                    f"  withLabel: '{process_label}'" + " {"
+                )
+                labelled_resources.extend(labelled_resource_string)
                 labelled_resources.append('  }')
+                labelled_resources.append('\n')
 
         process_section = [
             'process {',
+            '\n',
             *default_resources,
+            '\n',
             *named_resources,
+            '\n',
             *labelled_resources,
+            '\n',
             '}',
         ]
 
-        return '\n'.join(process_section) + '\n'
+        process_section_str = '\n'.join(process_section) + '\n'
+
+        return sub(r'\n\n\n+', '\n\n', process_section_str)
 
     def write_to_file(self):
         ## File name option

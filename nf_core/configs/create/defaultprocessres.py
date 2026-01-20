@@ -43,38 +43,21 @@ class DefaultProcess(Screen):
             "8",
             classes="column",
         )
-        yield Markdown("The walltime required by default for all processes.")
-        with Horizontal():
-            yield TextInput(
-                "default_process_hours",
-                "1",
-                "Hours:",
-                "1",
-                classes="column",
-            )
-            yield TextInput(
-                "default_process_minutes",
-                "0",
-                "Minutes:",
-                "0",
-                classes="column",
-            )
-            yield TextInput(
-                "default_process_seconds",
-                "0",
-                "Seconds:",
-                "0",
-                classes="column",
-            )
+        yield TextInput(
+            "default_process_hours",
+            "1",
+            "The default number of hours of walltime required for processes:",
+            "1",
+            classes="column",
+        )
         yield Center(
             Button("Back", id="back", variant="default"),
-            Button("Configure specific processes", id="config_specific_process", variant="success"),
-            Button("Finish", id="finish_config", variant="success"),
+            Button("Next", id="next", variant="success"),
             classes="cta",
         )
 
     # Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
-    @on(Button.Pressed)
+    @on(Button.Pressed, "#next")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         new_config = {}
@@ -92,9 +75,12 @@ class DefaultProcess(Screen):
                 ConfigsCreateConfig(**new_config)
                 # If that passes validation, update the existing config
                 self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
-            if event.button.id == "config_specific_process":
-                self.parent.push_screen("custom_process_resources")
-            elif event.button.id == "finish_config":
+            # Push the next screen
+            if self.parent.PIPE_CONF_NAMED:
+                self.parent.push_screen("named_process_resources")
+            elif self.parent.PIPE_CONF_LABELLED:
+                self.parent.push_screen("labelled_process_resources")
+            else:
                 self.parent.push_screen("final")
         except ValueError:
             pass

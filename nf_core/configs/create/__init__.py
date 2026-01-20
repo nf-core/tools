@@ -20,8 +20,10 @@ from nf_core.configs.create.hpccustomisation import HpcCustomisation
 from nf_core.configs.create.hpcquestion import ChooseHpc
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.welcome import WelcomeScreen
+from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
 from nf_core.configs.create.defaultprocessres import DefaultProcess
-from nf_core.configs.create.customprocessres import CustomProcess
+from nf_core.configs.create.namedprocessres import NamedProcess
+from nf_core.configs.create.labelledprocessres import LabelledProcess
 
 ## General utilities
 from nf_core.utils import LoggingConsole
@@ -61,8 +63,10 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "final": FinalScreen,
         "hpc_question": ChooseHpc,
         "hpc_customisation": HpcCustomisation,
+        "pipelineconfigquestion": PipelineConfigQuestion,
         "default_process_resources": DefaultProcess,
-        "custom_process_resources": CustomProcess,
+        "named_process_resources": NamedProcess,
+        "labelled_process_resources": LabelledProcess,
         "final_infra_details": FinalInfraDetails,
     }
 
@@ -73,6 +77,8 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     CONFIG_TYPE = None
     NFCORE_CONFIG = True
     INFRA_ISHPC = False
+    PIPE_CONF_NAMED = False
+    PIPE_CONF_LABELLED = False
 
     # Log handler
     LOG_HANDLER = rich_log_handler

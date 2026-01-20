@@ -71,10 +71,6 @@ class ConfigsCreateConfig(BaseModel):
     """ Amount of memory for process """
     custom_process_hours: Optional[str] = None
     """ Walltime for process - hours """
-    custom_process_minutes: Optional[str] = None
-    """ Walltime for process - minutes """
-    custom_process_seconds: Optional[str] = None
-    """ Walltime for process - seconds """
     named_process_resources: Optional[dict] = None
     """ Dictionary containing custom resource requirements for named processes """
     labelled_process_resources: Optional[dict] = None
@@ -236,11 +232,11 @@ class ConfigsCreateConfig(BaseModel):
     @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")
     @classmethod
     def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
-        """Check that integer values are non-empty and positive."""
+        """Check that integer values are either empty or positive."""
         context = info.context
         if context and not context["is_infrastructure"]:
             if v.strip() == "":
-                raise ValueError("Cannot be left empty.")
+                return v
             try:
                 v_int = int(v.strip())
             except ValueError:
@@ -249,20 +245,20 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a positive integer.")
         return v
 
-    @field_validator("default_process_hours", "default_process_minutes", "default_process_seconds", "custom_process_hours", "custom_process_minutes", "custom_process_seconds")
+    @field_validator("default_process_hours", "custom_process_hours")
     @classmethod
-    def non_neg_integer_valid(cls, v: str, info: ValidationInfo) -> str:
-        """Check that integer values are non-empty and non-negative."""
+    def non_neg_float_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that numeric values are either empty or non-negative."""
         context = info.context
         if context and not context["is_infrastructure"]:
             if v.strip() == "":
-                raise ValueError("Cannot be left empty.")
+                return v
             try:
-                v_int = int(v.strip())
+                vf = float(v.strip())
             except ValueError:
-                raise ValueError("Must be an integer.")
-            if not v_int >= 0:
-                raise ValueError("Must be a non-negative integer.")
+                raise ValueError("Must be a number.")
+            if not vf >= 0:
+                raise ValueError("Must be a non-negative number.")
         return v
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)

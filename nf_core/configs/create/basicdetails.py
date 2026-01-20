@@ -108,7 +108,7 @@ class BasicDetails(Screen):
                 if self.parent.CONFIG_TYPE == "infrastructure":
                     self.parent.push_screen("hpc_question")
                 elif self.parent.CONFIG_TYPE == "pipeline":
-                    self.parent.push_screen("default_process_resources")
+                    self.parent.push_screen("pipelineconfigquestion")
         except ValueError:
             pass
 
