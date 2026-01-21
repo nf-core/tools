@@ -484,6 +484,10 @@ class ModuleLint(ComponentLint):
                                 # For topics, add default type and description if empty
                                 if io_type == "topics" and not element_meta:
                                     element_meta = topic_metadata[j].copy() if j < len(topic_metadata) else {}
+                                    # Check if this is a val or eval keyword to set correct type
+                                    keyword = element.get(element_name, {}).get("_keyword", "")
+                                    if keyword == "val" and "type" in element_meta:
+                                        element_meta["type"] = "string"
                                     log.info(
                                         f"Adding topic metadata for '{normalized_name}' at index {j}: {element_meta}"
                                     )
