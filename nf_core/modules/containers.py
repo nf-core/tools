@@ -27,77 +27,76 @@ class ModuleContainers:
     LOCK_FILE_KEY = "lock_file"
     HTTPS_URL_KEY = "https"
 
-    def __init__(self, module: str | None, directory: str | Path = "."):
+    def __init__(self, module: str | None, directory: str | Path = ".", all_modules: bool = False):
+        from nf_core.components.components_utils import get_repo_info
+
         self.directory = Path(directory)
 
-        # Initialize list of available modules for the prompt
-        self.all_remote_components = self._get_available_modules()
+        # Detect repository type
+        try:
+            _, self.repo_type, _ = get_repo_info(self.directory, use_prompt=False)
+        except (UserWarning, FileNotFoundError):
+            self.repo_type = None
+
+        # Get available modules (local modules for pipelines, repo modules for modules repos)
+        self.available_modules = self._get_available_modules()
 
         # Create a lookup dictionary for quick access by module name
-        self.components_by_name = {comp.component_name: comp for comp in self.all_remote_components}
+        self.components_by_name = {comp.component_name: comp for comp in self.available_modules}
 
         # Prompt for module selection if not provided
-        if module is None and len(self.all_remote_components) > 0:
+        # Only allow "all modules" for pipeline repos
+        if module is None and not all_modules and len(self.available_modules) > 0:
+            allow_all = self.repo_type == "pipeline"
             module = prompt_module_selection(
-                self.all_remote_components, component_type="modules", action="Build containers for"
+                self.available_modules, component_type="modules", action="Build containers for", allow_all=allow_all
             )
+            # If None returned from prompt, user selected "All modules" (only possible in pipeline repos)
+            if module is None:
+                all_modules = True
 
         self.module = module
+        self.all_modules = all_modules
 
         # Use NFCoreComponent to handle module directory and file paths
-        # First try to find it in the components we already created
-        if module is not None and module in self.components_by_name:
-            self.nfcore_component = self.components_by_name[module]
-        elif module is not None:
-            # Fallback to creating a new one (for when module name is provided directly)
-            self.nfcore_component = self._init_nfcore_component(module)
-        else:
-            raise ValueError("No module specified and no modules available")
+        # For single module mode
+        if not self.all_modules:
+            # First try to find it in the components we already created
+            if module is not None and module in self.components_by_name:
+                self.nfcore_component: NFCoreComponent | None = self.components_by_name[module]
+            elif module is not None:
+                # Fallback to creating a new one (for when module name is provided directly)
+                self.nfcore_component = self._init_nfcore_component(module)
+            else:
+                raise ValueError("No module specified and no modules available")
 
-        self.module_directory = self.nfcore_component.component_dir
-        self.environment_yml = self.nfcore_component.environment_yml
-        self.meta_yml = self.nfcore_component.meta_yml
+            self.module_directory: Path | None = self.nfcore_component.component_dir
+            self.environment_yml: Path | None = self.nfcore_component.environment_yml
+            self.meta_yml: Path | None = self.nfcore_component.meta_yml
+        else:
+            # For all modules mode, these will be set per module during iteration
+            self.nfcore_component = None
+            self.module_directory = None
+            self.environment_yml = None
+            self.meta_yml = None
+
         self.containers: dict | None = None
 
     def _get_available_modules(self) -> list[NFCoreComponent]:
-        """Get list of available modules based on repository type."""
-        from nf_core.components.components_utils import get_repo_info
-        from nf_core.modules.modules_json import ModulesJson
+        """
+        Get list of available modules based on repository type.
 
-        try:
-            # Detect repository type
-            _, repo_type, org = get_repo_info(self.directory, use_prompt=False)
-        except (UserWarning, FileNotFoundError):
+        For pipeline repos: Returns only local modules (modules/local/)
+        For modules repos: Returns modules from the repository
+        """
+        if not self.repo_type:
             log.debug("Could not determine repository type")
             return []
 
         modules = []
 
-        if repo_type == "pipeline":
-            # Get modules from modules.json
-            modules_json_path = self.directory / "modules.json"
-            if modules_json_path.exists():
-                try:
-                    modules_json = ModulesJson(self.directory)
-                    for repo_url, components in modules_json.get_all_components("modules").items():
-                        if isinstance(components, str):
-                            log.warning(f"Error parsing modules.json: {components}")
-                            continue
-                        for org_name, module_name in components:
-                            modules.append(
-                                NFCoreComponent(
-                                    module_name,
-                                    repo_url,
-                                    self.directory / "modules" / org_name / module_name,
-                                    repo_type,
-                                    self.directory,
-                                    "modules",
-                                )
-                            )
-                except Exception as e:
-                    log.debug(f"Error loading modules from modules.json: {e}")
-
-            # Get local modules from modules/local directory
+        if self.repo_type == "pipeline":
+            # For pipelines, only return local modules
             local_modules_dir = self.directory / "modules" / "local"
             if local_modules_dir.exists():
                 # Handle directories with main.nf files
@@ -112,15 +111,15 @@ class ModuleContainers:
                             module_name,
                             None,
                             main_nf.parent,
-                            repo_type,
+                            self.repo_type,
                             self.directory,
                             "modules",
                             remote_component=False,
                         )
                     )
 
-        elif repo_type == "modules":
-            # Get modules from modules directory
+        elif self.repo_type == "modules":
+            # For modules repos, get modules from modules directory
             modules_dir = self.directory / "modules" / "nf-core"
             if modules_dir.exists():
                 for main_nf in modules_dir.rglob("main.nf"):
@@ -130,7 +129,7 @@ class ModuleContainers:
                             module_name,
                             None,
                             modules_dir / module_name,
-                            repo_type,
+                            self.repo_type,
                             self.directory,
                             "modules",
                         )
@@ -159,6 +158,7 @@ class ModuleContainers:
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
 
         assert self.environment_yml is not None
+        assert self.module_directory is not None
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:

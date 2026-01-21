@@ -136,7 +136,7 @@ def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> 
 
 
 def prompt_module_selection(
-    modules: list[NFCoreComponent], component_type: str = "modules", action: str = "Select"
+    modules: list[NFCoreComponent], component_type: str = "modules", action: str = "Select", allow_all: bool = True
 ) -> str | None:
     """
     Prompt user to select a specific module or all modules.
@@ -145,6 +145,7 @@ def prompt_module_selection(
         modules (list[NFCoreComponent]): List of available modules to choose from
         component_type (str): The component type (default: "modules", can also be "subworkflows")
         action (str): The action verb to use in the prompt message (e.g., "Lint", "Install", "Update", "Bump versions for")
+        allow_all (bool): Whether to show "All modules" option (default: True)
 
     Returns:
         str | None: The selected module name, or None if "All modules" was selected
@@ -158,6 +159,18 @@ def prompt_module_selection(
 
     component_singular = component_type.rstrip("s")  # "modules" -> "module"
 
+    # If allow_all is False, skip the "all or named" question and go straight to module selection
+    if not allow_all:
+        question = {
+            "type": "autocomplete",
+            "name": "tool_name",
+            "message": "Tool name:",
+            "choices": [m.component_name for m in modules],
+        }
+        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+        return answer.get("tool_name")
+
+    # Otherwise, show the "all or named" question
     questions = [
         {
             "type": "list",

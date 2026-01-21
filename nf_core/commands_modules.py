@@ -366,8 +366,41 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
 
     try:
         manager = ModuleContainers(module=module, directory=directory)
-        _ = manager.create(await_build)
-        manager.update_containers_in_meta()
+
+        # Handle batch processing for all modules
+        if manager.all_modules:
+            if not manager.available_modules:
+                log.error("No modules found to build containers for")
+                sys.exit(1)
+
+            log.info(f"Building containers for {len(manager.available_modules)} module(s)")
+            failed_modules = []
+
+            for component in manager.available_modules:
+                module_name = component.component_name
+                log.info(f"Processing module: {module_name}")
+
+                try:
+                    # Create a new manager for each module
+                    module_manager = ModuleContainers(module=module_name, directory=directory)
+                    _ = module_manager.create(await_build)
+                    module_manager.update_containers_in_meta()
+                    log.info(f"✓ Successfully built containers for {module_name}")
+                except Exception as e:
+                    log.error(f"✗ Failed to build containers for {module_name}: {e}")
+                    failed_modules.append(module_name)
+
+            if failed_modules:
+                log.warning(
+                    f"Failed to build containers for {len(failed_modules)} module(s): {', '.join(failed_modules)}"
+                )
+            else:
+                log.info("Successfully built containers for all modules")
+        else:
+            # Single module mode
+            _ = manager.create(await_build)
+            manager.update_containers_in_meta()
+
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)
