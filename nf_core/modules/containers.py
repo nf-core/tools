@@ -33,6 +33,9 @@ class ModuleContainers:
         # Initialize list of available modules for the prompt
         self.all_remote_components = self._get_available_modules()
 
+        # Create a lookup dictionary for quick access by module name
+        self.components_by_name = {comp.component_name: comp for comp in self.all_remote_components}
+
         # Prompt for module selection if not provided
         if module is None and len(self.all_remote_components) > 0:
             module = prompt_module_selection(
@@ -42,7 +45,15 @@ class ModuleContainers:
         self.module = module
 
         # Use NFCoreComponent to handle module directory and file paths
-        self.nfcore_component = self._init_nfcore_component(module)
+        # First try to find it in the components we already created
+        if module is not None and module in self.components_by_name:
+            self.nfcore_component = self.components_by_name[module]
+        elif module is not None:
+            # Fallback to creating a new one (for when module name is provided directly)
+            self.nfcore_component = self._init_nfcore_component(module)
+        else:
+            raise ValueError("No module specified and no modules available")
+
         self.module_directory = self.nfcore_component.component_dir
         self.environment_yml = self.nfcore_component.environment_yml
         self.meta_yml = self.nfcore_component.meta_yml
@@ -85,6 +96,28 @@ class ModuleContainers:
                             )
                 except Exception as e:
                     log.debug(f"Error loading modules from modules.json: {e}")
+
+            # Get local modules from modules/local directory
+            local_modules_dir = self.directory / "modules" / "local"
+            if local_modules_dir.exists():
+                # Handle directories with main.nf files
+                for main_nf in local_modules_dir.rglob("main.nf"):
+                    # Skip if this main.nf is directly in local_modules_dir
+                    # (would be an unusual structure)
+                    if main_nf.parent == local_modules_dir:
+                        continue
+                    module_name = str(main_nf.parent.relative_to(local_modules_dir))
+                    modules.append(
+                        NFCoreComponent(
+                            module_name,
+                            None,
+                            main_nf.parent,
+                            repo_type,
+                            self.directory,
+                            "modules",
+                            remote_component=False,
+                        )
+                    )
 
         elif repo_type == "modules":
             # Get modules from modules directory
