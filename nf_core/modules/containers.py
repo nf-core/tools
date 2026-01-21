@@ -179,9 +179,17 @@ class ModuleContainers:
                 log.debug("Docker image for {platform} missing - Conda-lock skipped")
                 continue
 
+            platform_safe = platform.replace("/", "-")
             conda_data = containers.get("conda", dict())
-            conda_data.update({platform: {self.LOCK_FILE_KEY: self.get_conda_lock_url(build_id)}})
+            conda_lock_path = self.module_directory / ".conda-lock" / f"{platform_safe}-{build_id}.txt"
+            conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
+            conda_data.update({platform: {self.LOCK_FILE_KEY: str(conda_lock_path)}})
             containers["conda"] = conda_data
+
+            conda_lock_url = self.get_conda_lock_url(build_id)
+            # Download conda lock file
+            log.debug(f"Downloading conda lock file for {platform} from {conda_lock_url} to {conda_lock_path}")
+            conda_lock_path.write_text(self.request_conda_lock_file(conda_lock_url))
 
         self.containers = containers
         return containers
@@ -209,6 +217,7 @@ class ModuleContainers:
 
         try:
             meta_data = yaml.safe_load(out[0].decode()) or dict()
+            log.debug(f"Wave YAML metadata: {meta_data}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
             log.debug(f"Output yaml from wave build command: {out}")
             raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
@@ -270,6 +279,7 @@ class ModuleContainers:
 
         try:
             inspect_out = yaml.safe_load(out[0].decode()) or dict()
+            log.debug(f"Output yaml from wave inspect command: {inspect_out}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
             log.debug(f"Output yaml from wave build command: {out}")
             raise RuntimeError(f"Could not parse wave inspect yaml output for image {image}") from e
@@ -296,13 +306,17 @@ class ModuleContainers:
 
         conda_lock_url = containers.get("conda", dict()).get(platform, dict()).get(self.LOCK_FILE_KEY)
         if not conda_lock_url:
-            raise ValueError("")
+            raise ValueError("No conda lock file found")
 
         return self.request_conda_lock_file(conda_lock_url)
 
     @staticmethod
     def request_conda_lock_file(conda_lock_url: str) -> str:
         resp = requests.get(conda_lock_url)
+        log.debug(f"Downloading conda lock file from {conda_lock_url}")
+        if resp.status_code != 200:
+            raise ValueError(f"Failed to download conda lock file from {conda_lock_url}")
+        log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
         return resp.text
 
     # def lint(self, module: str) -> list[str]:
@@ -332,23 +346,27 @@ class ModuleContainers:
     def get_containers_from_meta(self) -> dict:
         """
         Return containers defined in the module meta.yml.
+        Returns empty dict if containers section is missing or incomplete.
         """
         assert self.meta_yml and self.meta_yml.exists()
 
         meta = self.get_meta()
         containers = meta.get("containers", dict())
         if not containers:
-            log.warning(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
+            log.debug(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
+            return dict()
 
         for system in CONTAINER_SYSTEMS:
             cs = containers.get(system)
             if not cs:
-                raise ValueError(f"Container missing for {cs}")
+                log.debug(f"Container missing for {system}")
+                return dict()
 
             for pf in CONTAINER_PLATFORMS:
                 spec = containers.get(pf)
                 if not spec:
-                    raise ValueError(f"Platform build {pf} missing for {cs} container for module {self.module}")
+                    log.debug(f"Platform build {pf} missing for {system} container for module {self.module}")
+                    return dict()
 
         return containers
 
