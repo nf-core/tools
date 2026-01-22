@@ -171,7 +171,7 @@ class ContainerConfigs:
                 continue
             lines = [
                 f"process {{ withName: '{module_name}' {{ container = '{container}' }} }}\n"
-                for module_name, container in module_containers.items()
+                for module_name, container in sorted(module_containers.items())
             ]
             config_path = self.workflow_directory / "conf" / f"containers_{platform}.config"
             config_path.write_text("".join(lines))
