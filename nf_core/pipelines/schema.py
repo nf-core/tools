@@ -515,7 +515,7 @@ class PipelineSchema:
                     f"Schema `$id` should be `{id_attr}` or {id_attr.replace('/main/', '/master/')}. \n Found `{self.schema['$id']}`"
                 )
 
-            title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
+            title_attr = self.pipeline_manifest["name"].strip("\"'")
             if self.schema["title"] != title_attr:
                 raise AssertionError(f"Schema `title` should be `{title_attr}`\n Found: `{self.schema['title']}`")
 
