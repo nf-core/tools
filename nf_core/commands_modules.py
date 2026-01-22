@@ -401,7 +401,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
             _ = manager.create(await_build)
             manager.update_containers_in_meta()
 
-    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+    except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -416,7 +416,7 @@ def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
         manager = ModuleContainers(module, ".")
         lock_file = manager.get_conda_lock_file(platform)
         stdout.print(lock_file)
-    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+    except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
         log.error(e)
         sys.exit(1)
 
