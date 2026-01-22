@@ -33,11 +33,12 @@ class ModuleContainers:
 
         self.directory = Path(directory)
 
-        # Detect repository type
+        # Detect repository type and organization
         try:
-            _, self.repo_type, _ = get_repo_info(self.directory, use_prompt=False)
+            _, self.repo_type, self.org = get_repo_info(self.directory, use_prompt=False)
         except (UserWarning, FileNotFoundError):
             self.repo_type = None
+            self.org = "nf-core"  # Default to nf-core if repo info not available
 
         # Get available modules (local modules for pipelines, repo modules for modules repos)
         self.available_modules = self._get_available_modules()
@@ -137,33 +138,25 @@ class ModuleContainers:
 
         elif self.repo_type == "modules":
             # For modules repos, get modules from modules directory
-            modules_dir = self.directory / "modules" / "nf-core"
+            modules_dir = self.directory / "modules" / self.org
             if modules_dir.exists():
                 for main_nf in modules_dir.rglob("main.nf"):
                     module_name = str(main_nf.parent.relative_to(modules_dir))
-                    modules.append(
-                        NFCoreComponent(
-                            module_name,
-                            None,
-                            modules_dir / module_name,
-                            self.repo_type,
-                            self.directory,
-                            "modules",
-                        )
-                    )
+                    modules.append(self._init_nfcore_component(module_name))
 
         return modules
 
     def _init_nfcore_component(self, module: str) -> NFCoreComponent:
         """Initialize NFCoreComponent for the module."""
+        # Construct the correct module directory path
+        module_dir = self.directory / "modules" / self.org / module
         return NFCoreComponent(
             component_name=module,
             repo_url="https://github.com/nf-core/modules.git",
-            component_dir=self.directory,
+            component_dir=module_dir,
             repo_type="modules",
             base_dir=self.directory,
             component_type="modules",
-            remote_component=True,
         )
 
     def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
