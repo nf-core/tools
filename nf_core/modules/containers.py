@@ -118,6 +118,7 @@ class ModuleContainers:
             # For pipelines, only return local modules
             local_modules_dir = self.directory / "modules" / "local"
             if local_modules_dir.exists():
+                seen_modules = set()
                 # Handle directories with main.nf files
                 for main_nf in local_modules_dir.rglob("main.nf"):
                     # Skip if this main.nf is directly in local_modules_dir
@@ -125,25 +126,32 @@ class ModuleContainers:
                     if main_nf.parent == local_modules_dir:
                         continue
                     module_name = str(main_nf.parent.relative_to(local_modules_dir))
-                    modules.append(
-                        NFCoreComponent(
-                            module_name,
-                            None,
-                            main_nf.parent,
-                            self.repo_type,
-                            self.directory,
-                            "modules",
-                            remote_component=False,
+                    # Only include if we haven't seen this module before (avoid duplicates from nested main.nf)
+                    if module_name not in seen_modules:
+                        seen_modules.add(module_name)
+                        modules.append(
+                            NFCoreComponent(
+                                module_name,
+                                None,
+                                main_nf.parent,
+                                self.repo_type,
+                                self.directory,
+                                "modules",
+                                remote_component=False,
+                            )
                         )
-                    )
 
         elif self.repo_type == "modules":
             # For modules repos, get modules from modules directory
             modules_dir = self.directory / "modules" / self.org
             if modules_dir.exists():
+                seen_modules = set()
                 for main_nf in modules_dir.rglob("main.nf"):
                     module_name = str(main_nf.parent.relative_to(modules_dir))
-                    modules.append(self._init_nfcore_component(module_name))
+                    # Only include if we haven't seen this module before (avoid duplicates from nested main.nf)
+                    if module_name not in seen_modules:
+                        seen_modules.add(module_name)
+                        modules.append(self._init_nfcore_component(module_name))
 
         return modules
 
@@ -159,6 +167,37 @@ class ModuleContainers:
             base_dir=self.directory,
             component_type="modules",
         )
+
+    def cleanup_stale_conda_lock_files(self, new_lock_files: set[Path]) -> None:
+        """
+        Remove stale conda-lock files that are no longer in the new set.
+
+        Args:
+            new_lock_files: Set of new conda lock file paths that should be kept
+        """
+        if not self.module_directory:
+            return
+
+        conda_lock_dir = self.module_directory / ".conda-lock"
+        if not conda_lock_dir.exists():
+            return
+
+        # Remove all files that aren't in the new set
+        for lock_file in conda_lock_dir.glob("*.txt"):
+            if lock_file not in new_lock_files:
+                try:
+                    lock_file.unlink()
+                    log.debug(f"Removed stale conda-lock file: {lock_file}")
+                except Exception as e:
+                    log.warning(f"Failed to remove stale conda-lock file {lock_file}: {e}")
+
+        # Clean up empty directory
+        try:
+            if not any(conda_lock_dir.iterdir()):
+                conda_lock_dir.rmdir()
+                log.debug(f"Removed empty .conda-lock directory: {conda_lock_dir}")
+        except Exception as e:
+            log.debug(f"Could not remove .conda-lock directory: {e}")
 
     def create(
         self, await_build: bool = False, progress_bar: rich.progress.Progress | None = None, task_id: int | None = None
@@ -209,6 +248,7 @@ class ModuleContainers:
                     continue
 
         # Download conda lock files as separate tasks
+        new_lock_files = set()
         for platform in CONTAINER_PLATFORMS:
             # Get docker build ID for this platform
             build_id = containers.get("docker", {}).get(platform, {}).get(self.BUILD_ID_KEY, "")
@@ -230,13 +270,18 @@ class ModuleContainers:
                 # Download conda lock file
                 log.debug(f"Downloading conda lock file for {platform} from {conda_lock_url} to {conda_lock_path}")
                 conda_lock_path.write_text(self.request_conda_lock_file(conda_lock_url))
+                new_lock_files.add(conda_lock_path)
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, advance=1)
+
             except Exception as e:
                 log.error(f"Failed to download conda lock file for {platform}: {e}")
                 has_failures = True
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, advance=1)
+
+        # Clean up stale conda-lock files
+        self.cleanup_stale_conda_lock_files(new_lock_files)
 
         self.containers = containers
         return containers, not has_failures
