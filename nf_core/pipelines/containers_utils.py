@@ -56,16 +56,17 @@ class ContainerConfigs:
             raise UserWarning(e)
 
         module_names = [p.get("name") for p in out_json["processes"] if p.get("name")]
+        log.debug(f"Found {len(module_names)} modules: {', '.join(module_names)}")
 
         platforms: dict[str, list[str]] = {
-            "docker_amd64": ["docker", "linux_amd64", "name"],
-            "docker_arm64": ["docker", "linux_arm64", "name"],
-            "singularity_oras_amd64": ["singularity", "linux_amd64", "name"],
-            "singularity_oras_arm64": ["singularity", "linux_arm64", "name"],
-            "singularity_https_amd64": ["singularity", "linux_amd64", "https"],
-            "singularity_https_arm64": ["singularity", "linux_arm64", "https"],
-            "conda_amd64_lockfile": ["conda", "linux_amd64", "lock_file"],
-            "conda_arm64_lockfile": ["conda", "linux_arm64", "lock_file"],
+            "docker_amd64": ["docker", "linux/amd64", "name"],
+            "docker_arm64": ["docker", "linux/arm64", "name"],
+            "singularity_oras_amd64": ["singularity", "linux/amd64", "name"],
+            "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
+            "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
+            "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
+            "conda_amd64_lockfile": ["conda", "linux/amd64", "lock_file"],
+            "conda_arm64_lockfile": ["conda", "linux/arm64", "lock_file"],
         }
 
         # Build containers dict from module meta.yml files
