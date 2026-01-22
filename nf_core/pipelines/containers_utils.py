@@ -117,8 +117,8 @@ class ContainerConfigs:
             "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
             "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
             "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
-            "conda_amd64_lockfile": ["conda", "linux/amd64", "lock_file"],
-            "conda_arm64_lockfile": ["conda", "linux/arm64", "lock_file"],
+            "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
+            "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],
         }
 
         # Build containers dict from module meta.yml files
