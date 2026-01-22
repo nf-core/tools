@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import requests
+import rich.progress
 import yaml
 
 from nf_core.components.components_utils import yaml as ruamel_yaml
@@ -159,37 +160,62 @@ class ModuleContainers:
             component_type="modules",
         )
 
-    def create(self, await_: bool = False) -> dict[str, dict[str, dict[str, str]]]:
+    def create(
+        self, await_build: bool = False, progress_bar: rich.progress.Progress | None = None, task_id: int | None = None
+    ) -> tuple[dict[str, dict[str, dict[str, str]]], bool]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
+
+        Args:
+            await_build: Whether to wait for container builds to complete
+            progress_bar: Optional progress bar to use for tracking progress
+            task_id: Optional task ID for this module in the progress bar
+
+        Returns:
+            Tuple of (containers dict, success boolean). Success is False if any build failed.
         """
         # Check for TOWER_ACCESS_TOKEN and warn about API limits
         self.check_tower_token()
 
-        containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
-        tasks = dict()
+        containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS + ["conda"]}
+        build_tasks = dict()
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
+        has_failures = False
 
         assert self.environment_yml is not None
         assert self.module_directory is not None
+
+        # Submit all container build tasks
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:
-                    fut = pool.submit(self.request_container, cs, platform, self.environment_yml, await_)
-                    tasks[fut] = (cs, platform)
+                    fut = pool.submit(self.request_container, cs, platform, self.environment_yml, await_build)
+                    build_tasks[fut] = (cs, platform)
 
-        for fut in as_completed(tasks):
-            cs, platform = tasks[fut]
-            # Add container info for all container systems
-            containers[cs][platform] = fut.result()
+            # Process completed container builds
+            for fut in as_completed(build_tasks):
+                cs, platform = build_tasks[fut]
 
-            # Add conda lock information based on info for docker container
-            if cs != "docker":
-                continue
+                # Try to get the result, but continue on failure
+                try:
+                    containers[cs][platform] = fut.result()
+                    if progress_bar and task_id is not None:
+                        progress_bar.update(task_id, advance=1)
+                except Exception as e:
+                    log.error(f"Failed to build {cs} container for {platform}: {e}")
+                    has_failures = True
+                    if progress_bar and task_id is not None:
+                        progress_bar.update(task_id, advance=1)
+                    continue
 
-            build_id = containers[cs][platform].get(self.BUILD_ID_KEY, "")
+        # Download conda lock files as separate tasks
+        for platform in CONTAINER_PLATFORMS:
+            # Get docker build ID for this platform
+            build_id = containers.get("docker", {}).get(platform, {}).get(self.BUILD_ID_KEY, "")
             if not build_id:
-                log.debug("Docker image for {platform} missing - Conda-lock skipped")
+                log.debug(f"Docker image for {platform} missing - Conda-lock skipped")
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, advance=1)
                 continue
 
             platform_safe = platform.replace("/", "-")
@@ -199,13 +225,21 @@ class ModuleContainers:
             conda_data.update({platform: {self.LOCK_FILE_KEY: str(conda_lock_path)}})
             containers["conda"] = conda_data
 
-            conda_lock_url = self.get_conda_lock_url(build_id)
-            # Download conda lock file
-            log.debug(f"Downloading conda lock file for {platform} from {conda_lock_url} to {conda_lock_path}")
-            conda_lock_path.write_text(self.request_conda_lock_file(conda_lock_url))
+            try:
+                conda_lock_url = self.get_conda_lock_url(build_id)
+                # Download conda lock file
+                log.debug(f"Downloading conda lock file for {platform} from {conda_lock_url} to {conda_lock_path}")
+                conda_lock_path.write_text(self.request_conda_lock_file(conda_lock_url))
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, advance=1)
+            except Exception as e:
+                log.error(f"Failed to download conda lock file for {platform}: {e}")
+                has_failures = True
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, advance=1)
 
         self.containers = containers
-        return containers
+        return containers, not has_failures
 
     @classmethod
     def request_container(cls, container_system: str, platform: str, conda_file: Path, await_build=False) -> dict:
@@ -318,7 +352,7 @@ class ModuleContainers:
         """
         assert platform in CONTAINER_PLATFORMS
 
-        containers = self.containers or self.get_containers_from_meta() or self.create() or dict()
+        containers = self.containers or self.get_containers_from_meta() or self.create()[0] or dict()
 
         conda_lock_url = containers.get("conda", dict()).get(platform, dict()).get(self.LOCK_FILE_KEY)
         if not conda_lock_url:
@@ -396,7 +430,7 @@ class ModuleContainers:
         """
         if self.containers is None:
             log.debug("Containers not initialized - running `create()` ...")
-            self.create()
+            self.create()[0]  # Ignore success status, just get containers
 
         meta = self.get_meta()
         meta_containers = meta.get("containers", dict())
