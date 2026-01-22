@@ -10,8 +10,9 @@ from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
 
 class TestModuleContainers:
-    @staticmethod
-    def _make_module(tmp_path: Path, module_name: str = "testC", with_env: bool = True):
+    """Tests for the ModuleContainers class"""
+
+    def _make_module(self, tmp_path: Path, module_name: str = "testC", with_env: bool = True):
         """
         Create a minimal module structure for testing.
         """
@@ -28,36 +29,69 @@ class TestModuleContainers:
         (module_dir / "main.nf").write_text("", encoding="utf-8")
         return module_dir
 
-    @staticmethod
-    def _write_meta(module_dir: Path, meta: dict) -> None:
+    def _setup_modules_repo(self, tmp_path: Path, module_name: str = "testC", with_env: bool = True):
+        """
+        Create a full modules repo structure with a module in it.
+        Returns (repo_root, module_dir).
+        """
+        import shutil
+
+        # First create the module in a temporary location
+        temp_module_dir = tmp_path / "temp_modules" / "nf-core" / module_name
+        temp_module_dir.mkdir(parents=True, exist_ok=True)
+
+        if with_env:
+            (temp_module_dir / "environment.yml").write_text(
+                f"name: {module_name}\nchannels:\n  - defaults\ndependencies:\n  - python=3.11\n",
+                encoding="utf-8",
+            )
+
+        (temp_module_dir / "meta.yml").write_text(f"name: {module_name}\n", encoding="utf-8")
+        (temp_module_dir / "main.nf").write_text("", encoding="utf-8")
+
+        # Now create the actual repo structure
+        repo_root = tmp_path / "modules_repo"
+        repo_root.mkdir()
+        (repo_root / "modules" / "nf-core").mkdir(parents=True)
+
+        # Copy module to the repo
+        shutil.copytree(temp_module_dir, repo_root / "modules" / "nf-core" / module_name)
+
+        return repo_root, repo_root / "modules" / "nf-core" / module_name
+
+    def _write_meta(self, module_dir: Path, meta: dict) -> None:
         (module_dir / "meta.yml").write_text(yaml.safe_dump(meta), encoding="utf-8")
 
-    @staticmethod
-    def _containers_by_system(prefix: str = "testC") -> dict:
+    def _containers_by_system(self, prefix: str = "testC") -> dict:
         return {
             "docker": {platform: {"name": f"{prefix}-docker-{platform}"} for platform in CONTAINER_PLATFORMS},
             "singularity": {platform: {"name": f"{prefix}-singularity-{platform}"} for platform in CONTAINER_PLATFORMS},
         }
 
     def test_init_sets_paths(self, tmp_path: Path):
-        module_dir = self._make_module(tmp_path, module_name="testC")
-        manager = ModuleContainers("testC", directory=tmp_path)
-        assert manager.directory == Path(tmp_path)
+        """Test that ModuleContainers initializes paths correctly"""
+        repo_root, module_dir = self._setup_modules_repo(tmp_path, module_name="testC")
+        manager = ModuleContainers("testC", directory=repo_root)
+        assert manager.directory == Path(repo_root)
         assert manager.module_directory == module_dir
         assert manager.environment_yml == module_dir / "environment.yml"
         assert manager.meta_yml == module_dir / "meta.yml"
 
     def test_get_meta_returns_dict(self, tmp_path: Path):
-        module_dir = self._make_module(tmp_path)
+        """Test that get_meta returns the meta.yml content"""
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         meta = {"name": "testC", "foo": {"bar": "baz"}}
         self._write_meta(module_dir, meta)
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         assert manager.get_meta() == meta
 
+    @mock.patch.object(ModuleContainers, "request_conda_lock_file")
     @mock.patch.object(ModuleContainers, "request_image_inspect")
     @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_create_builds_containers(self, mock_run_cmd, mock_request_image_inspect, tmp_path: Path):
-        self._make_module(tmp_path)
+    def test_create_builds_containers(
+        self, mock_run_cmd, mock_request_image_inspect, mock_request_conda_lock, tmp_path: Path
+    ):
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
 
         def fake_run_cmd(executable: str, args_str: str):
             assert executable == "wave"
@@ -73,6 +107,7 @@ class TestModuleContainers:
                 "mirror": False,
                 "requestId": f"req-{system}-{platform}",
                 "scanId": f"sc-{system}-{platform}-scan" if system == "docker" else None,
+                "succeeded": True,
                 "targetImage": image,
             }
             meta = {k: v for k, v in meta.items() if v is not None}
@@ -94,8 +129,9 @@ class TestModuleContainers:
 
         mock_run_cmd.side_effect = fake_run_cmd
         mock_request_image_inspect.side_effect = fake_request_image_inspect
+        mock_request_conda_lock.return_value = "# conda lock file content"
 
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         containers = manager.create(await_=True)
         assert manager.containers == containers
 
@@ -107,24 +143,27 @@ class TestModuleContainers:
                 assert entry["buildId"] == f"bd-{system}-{platform}-build"
                 if system == "docker":
                     assert entry["scanId"] == f"sc-{system}-{platform}-scan"
-                    expected_lock = ModuleContainers.get_conda_lock_url(f"bd-{system}-{platform}-build")
-                    assert containers["conda"][platform]["lock_file"] == expected_lock
+                    # Check that conda lock file path exists and is correct
+                    platform_safe = platform.replace("/", "-")
+                    build_id = f"bd-{system}-{platform}-build"
+                    expected_lock_path = str(module_dir / ".conda-lock" / f"{platform_safe}-{build_id}.txt")
+                    assert containers["conda"][platform]["lock_file"] == expected_lock_path
                 else:
                     assert "scanId" not in entry
 
     @mock.patch.object(ModuleContainers, "request_container")
     def test_create_skips_conda_lock_when_build_id_missing(self, mock_request_container, tmp_path: Path):
-        self._make_module(tmp_path)
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         mock_request_container.return_value = {"name": "testC-img"}
 
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         containers = manager.create()
         assert "conda" not in containers
 
     @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
-    def test_create_raises_on_missing_wave_output(self, tmp_path: Path):
-        self._make_module(tmp_path)
-        manager = ModuleContainers("testC", directory=tmp_path)
+    def test_create_raises_on_missing_wave_output(self, mock_run_cmd, tmp_path: Path):
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         with pytest.raises(RuntimeError, match="Wave command did not return any output"):
             manager.create(await_=True)
 
@@ -133,7 +172,7 @@ class TestModuleContainers:
         module_dir = self._make_module(tmp_path)
         conda_file = module_dir / "environment.yml"
         platform = CONTAINER_PLATFORMS[0]
-        meta = {"targetImage": "testC:latest", "buildId": "build-1", "scanId": "scan-1"}
+        meta = {"targetImage": "testC:latest", "buildId": "build-1", "scanId": "scan-1", "succeeded": True}
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
 
         container = ModuleContainers.request_container("docker", platform, conda_file, await_build=True)
@@ -153,7 +192,7 @@ class TestModuleContainers:
         module_dir = self._make_module(tmp_path)
         conda_file = module_dir / "environment.yml"
         platform = CONTAINER_PLATFORMS[0]
-        meta = {"containerImage": "testC:sif", "buildId": "build-2"}
+        meta = {"containerImage": "testC:sif", "buildId": "build-2", "succeeded": True}
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
         mock_request_image_inspect.return_value = {
             "container": {
@@ -182,7 +221,7 @@ class TestModuleContainers:
         module_dir = self._make_module(tmp_path)
         conda_file = module_dir / "environment.yml"
         platform = CONTAINER_PLATFORMS[0]
-        meta = {"containerImage": "testC:sif", "buildId": "build-3"}
+        meta = {"containerImage": "testC:sif", "buildId": "build-3", "succeeded": True}
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
 
         container = ModuleContainers.request_container("singularity", platform, conda_file, await_build=False)
@@ -190,7 +229,7 @@ class TestModuleContainers:
         mock_request_image_inspect.assert_not_called()
 
     @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
-    def test_request_container_missing_output_raises(self, tmp_path: Path):
+    def test_request_container_missing_output_raises(self, mock_run_cmd, tmp_path: Path):
         module_dir = self._make_module(tmp_path)
         conda_file = module_dir / "environment.yml"
         with pytest.raises(RuntimeError, match="Wave command did not return any output"):
@@ -208,7 +247,7 @@ class TestModuleContainers:
     def test_request_container_missing_image_raises(self, mock_run_cmd, tmp_path: Path):
         module_dir = self._make_module(tmp_path)
         conda_file = module_dir / "environment.yml"
-        meta = {"buildId": "build-4"}
+        meta = {"buildId": "build-4", "succeeded": True}
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
         with pytest.raises(RuntimeError, match="did not return an image name"):
             ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], conda_file)
@@ -220,7 +259,7 @@ class TestModuleContainers:
         assert ModuleContainers.request_image_inspect("testC:latest") == inspect_payload
 
     @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
-    def test_request_image_inspect_missing_output(self):
+    def test_request_image_inspect_missing_output(self, mock_run_cmd):
         with pytest.raises(RuntimeError, match="Wave command did not return any output"):
             ModuleContainers.request_image_inspect("testC:latest")
 
@@ -241,8 +280,8 @@ class TestModuleContainers:
         pass
 
     def test_list_containers(self, tmp_path: Path):
-        self._make_module(tmp_path)
-        manager = ModuleContainers("testC", directory=tmp_path)
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         containers = self._containers_by_system("testC")
         with mock.patch.object(manager, "get_containers_from_meta", return_value=containers):
             listed = manager.list_containers()
@@ -250,44 +289,48 @@ class TestModuleContainers:
         assert listed == expected
 
     def test_get_containers_from_meta_missing_section(self, tmp_path: Path, caplog):
-        module_dir = self._make_module(tmp_path)
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         self._write_meta(module_dir, {"name": "testC"})
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
 
-        caplog.set_level(logging.WARNING, logger="nf_core.modules.containers")
-        with pytest.raises(ValueError, match="Container missing"):
-            manager.get_containers_from_meta()
+        caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
+        result = manager.get_containers_from_meta()
+        assert result == {}
         assert "Section 'containers' missing from meta.yaml" in caplog.text
 
-    def test_get_containers_from_meta_missing_system(self, tmp_path: Path):
-        module_dir = self._make_module(tmp_path)
+    def test_get_containers_from_meta_missing_system(self, tmp_path: Path, caplog):
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         self._write_meta(module_dir, {"name": "testC", "containers": {"singularity": {"ok": True}}})
-        manager = ModuleContainers("testC", directory=tmp_path)
-        with pytest.raises(ValueError, match="Container missing"):
-            manager.get_containers_from_meta()
+        manager = ModuleContainers("testC", directory=repo_root)
+        caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
+        result = manager.get_containers_from_meta()
+        assert result == {}
+        assert "Container missing for docker" in caplog.text
 
-    def test_get_containers_from_meta_missing_platform_key(self, tmp_path: Path):
-        module_dir = self._make_module(tmp_path)
+    def test_get_containers_from_meta_missing_platform_key(self, tmp_path: Path, caplog):
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         containers = {"docker": {"ok": True}, "singularity": {"ok": True}, CONTAINER_PLATFORMS[0]: {"ok": True}}
         self._write_meta(module_dir, {"name": "testC", "containers": containers})
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         missing_platform = CONTAINER_PLATFORMS[1]
-        with pytest.raises(ValueError, match=f"Platform build {missing_platform} missing"):
-            manager.get_containers_from_meta()
+        caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
+        result = manager.get_containers_from_meta()
+        assert result == {}
+        assert f"Platform build {missing_platform} missing" in caplog.text
 
     def test_get_containers_from_meta_success(self, tmp_path: Path):
-        module_dir = self._make_module(tmp_path)
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         containers = {"docker": {"ok": True}, "singularity": {"ok": True}}
         for platform in CONTAINER_PLATFORMS:
             containers[platform] = {"ok": True}
         self._write_meta(module_dir, {"name": "testC", "containers": containers})
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         assert manager.get_containers_from_meta() == containers
 
     def test_update_containers_in_meta_merges(self, tmp_path: Path):
-        module_dir = self._make_module(tmp_path)
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
         self._write_meta(module_dir, {"name": "testC", "containers": {"docker": {"linux/amd64": {"name": "old"}}}})
-        manager = ModuleContainers("testC", directory=tmp_path)
+        manager = ModuleContainers("testC", directory=repo_root)
         containers = self._containers_by_system("new")
         manager.containers = containers
 
