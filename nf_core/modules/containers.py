@@ -221,7 +221,10 @@ class ModuleContainers:
         except (KeyError, AttributeError, yaml.YAMLError) as e:
             log.debug(f"Output yaml from wave build command: {out}")
             raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
-
+        if not meta_data.get("succeeded"):
+            raise RuntimeError(
+                f"Wave build ({container_system} {platform}) failed. Reason: {meta_data.get('reason', 'Unknown')}"
+            )
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
         if not image:
             raise RuntimeError(f"Wave build ({container_system} {platform}) did not return an image name")
