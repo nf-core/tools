@@ -1,4 +1,5 @@
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import quote
@@ -82,6 +83,22 @@ class ModuleContainers:
 
         self.containers: dict | None = None
 
+    @staticmethod
+    def check_tower_token() -> None:
+        """
+        Check if TOWER_ACCESS_TOKEN is set and warn about API limits if not.
+
+        Wave API has rate limits that can be increased by setting the TOWER_ACCESS_TOKEN
+        environment variable. This method checks if the token is set and logs a warning
+        if it's missing.
+        """
+        if not os.environ.get("TOWER_ACCESS_TOKEN"):
+            log.warning(
+                "TOWER_ACCESS_TOKEN is not set. Wave API requests will be subject to stricter rate limits. \n"
+                "To increase your quota, set the TOWER_ACCESS_TOKEN environment variable with your Seqera Platform token. \n"
+                "See https://docs.seqera.io/wave/api#api-limits for more information."
+            )
+
     def _get_available_modules(self) -> list[NFCoreComponent]:
         """
         Get list of available modules based on repository type.
@@ -153,6 +170,9 @@ class ModuleContainers:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
         """
+        # Check for TOWER_ACCESS_TOKEN and warn about API limits
+        self.check_tower_token()
+
         containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS}
         tasks = dict()
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
