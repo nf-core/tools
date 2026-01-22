@@ -362,10 +362,17 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
+    import rich.progress
+
     from nf_core.modules.containers import ModuleContainers
+    from nf_core.pipelines.lint_utils import console
+    from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
     try:
         manager = ModuleContainers(module=module, directory=directory)
+
+        # Calculate total tasks per module: (docker, singularity, conda) × (amd64, arm64)
+        tasks_per_module = (len(CONTAINER_SYSTEMS) + 1) * len(CONTAINER_PLATFORMS)
 
         # Handle batch processing for all modules
         if manager.all_modules:
@@ -376,19 +383,40 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
             log.info(f"Building containers for {len(manager.available_modules)} module(s)")
             failed_modules = []
 
-            for component in manager.available_modules:
-                module_name = component.component_name
-                log.info(f"Processing module: {module_name}")
+            progress_bar = rich.progress.Progress(
+                "[bold blue]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[magenta]{task.completed} of {task.total}[reset]",
+                transient=False,
+                console=console,
+                disable=ctx.obj["hide_progress"],
+            )
 
-                try:
-                    # Create a new manager for each module
-                    module_manager = ModuleContainers(module=module_name, directory=directory)
-                    _ = module_manager.create(await_build)
-                    module_manager.update_containers_in_meta()
-                    log.info(f"✓ Successfully built containers for {module_name}")
-                except Exception as e:
-                    log.error(f"✗ Failed to build containers for {module_name}: {e}")
-                    failed_modules.append(module_name)
+            with progress_bar:
+                for component in manager.available_modules:
+                    module_name = component.component_name
+
+                    # Create a task for this module
+                    module_task_id = progress_bar.add_task(
+                        f"[cyan]{module_name}[/cyan]",
+                        total=tasks_per_module,
+                    )
+
+                    try:
+                        # Create a new manager for each module
+                        module_manager = ModuleContainers(module=module_name, directory=directory)
+                        _, success = module_manager.create(
+                            await_build, progress_bar=progress_bar, task_id=module_task_id
+                        )
+                        if success:
+                            module_manager.update_containers_in_meta()
+                        else:
+                            failed_modules.append(module_name)
+                    except Exception as e:
+                        log.error(f"✗ Failed to build containers for {module_name}: {e}")
+                        failed_modules.append(module_name)
+                        # Complete the progress bar for this module even on failure
+                        progress_bar.update(module_task_id, completed=tasks_per_module)
 
             if failed_modules:
                 log.warning(
@@ -397,9 +425,27 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
             else:
                 log.info("Successfully built containers for all modules")
         else:
-            # Single module mode
-            _ = manager.create(await_build)
-            manager.update_containers_in_meta()
+            # Single module mode - create progress bar for single module
+            progress_bar = rich.progress.Progress(
+                "[bold blue]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[magenta]{task.completed} of {task.total}[reset]",
+                transient=False,
+                console=console,
+                disable=ctx.obj["hide_progress"],
+            )
+
+            with progress_bar:
+                module_task_id = progress_bar.add_task(
+                    f"[cyan]{manager.module}[/cyan]",
+                    total=tasks_per_module,
+                )
+                _, success = manager.create(await_build, progress_bar=progress_bar, task_id=module_task_id)
+                if success:
+                    manager.update_containers_in_meta()
+                else:
+                    log.error(f"✗ Some container builds failed for {manager.module}")
+                    sys.exit(1)
 
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
         log.error(e)
