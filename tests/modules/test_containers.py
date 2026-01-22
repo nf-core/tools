@@ -170,9 +170,7 @@ class TestModuleContainers:
 
         container = ModuleContainers.request_container("singularity", platform, conda_file, await_build=True)
         assert container["name"] == "testC:sif"
-        expected_url = (
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ab/abcde12345/data"
-        )
+        expected_url = "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ab/abcde12345/data"
         assert container["https"] == expected_url
         mock_request_image_inspect.assert_called_once_with("testC:sif")
 
@@ -239,7 +237,7 @@ class TestModuleContainers:
         assert url.endswith("/condalock")
 
     def test_request_conda_lock_file(self):
-        #TODO
+        # TODO
         pass
 
     def test_list_containers(self, tmp_path: Path):
