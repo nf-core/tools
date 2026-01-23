@@ -199,6 +199,34 @@ class ModuleContainers:
         except Exception as e:
             log.debug(f"Could not remove .conda-lock directory: {e}")
 
+    def update_main_nf_container(self) -> None:
+        """Update the container name in main.nf using the docker amd64 image without registry."""
+        import re
+
+        if not self.containers or not self.nfcore_component:
+            log.warning("Cannot update main.nf: containers or nfcore_component not available")
+            return
+
+        # Get docker image and strip all path components (registry/path/...)
+        docker_image = self.containers.get("docker", {}).get("linux/amd64", {}).get(self.IMAGE_KEY, "")
+        if not docker_image:
+            log.warning("No docker image found for linux/amd64")
+            return
+
+        # Get just the image:tag (last component after /)
+        # e.g., "community.wave.seqera.io/library/image:tag" -> "image:tag"
+        container_name = docker_image.split("/")[-1]
+
+        # Update main.nf
+        main_nf_path = self.nfcore_component.main_nf
+        content = main_nf_path.read_text()
+
+        # Replace container directive, preserving indentation
+        new_content = re.sub(r"(\s*)container\s+.*", rf'\1container "{container_name}"', content, count=1)
+
+        main_nf_path.write_text(new_content)
+        log.info(f"Updated container in {main_nf_path} to: {container_name}")
+
     def create(
         self, await_build: bool = False, progress_bar: rich.progress.Progress | None = None, task_id: int | None = None
     ) -> tuple[dict[str, dict[str, dict[str, str]]], bool]:
@@ -284,6 +312,14 @@ class ModuleContainers:
         self.cleanup_stale_conda_lock_files(new_lock_files)
 
         self.containers = containers
+
+        # Update main.nf with new container name (docker amd64 without registry)
+        try:
+            self.update_main_nf_container()
+        except Exception as e:
+            log.warning(f"Failed to update main.nf with container name: {e}")
+            has_failures = True
+
         return containers, not has_failures
 
     @classmethod

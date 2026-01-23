@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -14,6 +15,42 @@ class ModuleExceptionError(Exception):
     """Exception raised when there was an error with module commands"""
 
     pass
+
+
+def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
+    """
+    Extract the container directive from a main.nf file using regex.
+
+    Args:
+        main_nf_path: Path to the main.nf file
+        component_name: Optional component name for logging
+
+    Returns:
+        str: The container string, or empty string if not found
+    """
+    with open(main_nf_path) as f:
+        data = f.read()
+
+        if "container" not in data:
+            log.debug(f"Could not find a container directive in {main_nf_path}")
+            return ""
+
+        # Regex explained:
+        #  1. Match "container" followed by whitespace
+        #  2. Capturing group 1: Match a quote char " or '
+        #  3. Capturing group 2: Match any characters (the container string, including newlines)
+        #  4. Match whatever was captured in group 1 (same quote char)
+        # DOTALL flag makes . match newlines for multi-line container directives
+        regex_container = r'container\s+(["\'])(.+?)\1'
+        match = re.search(regex_container, data, re.DOTALL)
+        if not match:
+            component_info = f" for {component_name}" if component_name else ""
+            log.warning(f"Container{component_info} could not be extracted from {main_nf_path} with regex")
+            return ""
+
+        # Return the container string (group 2)
+        container = match.group(2)
+        return container
 
 
 def repo_full_name_from_remote(remote_url: str) -> str:

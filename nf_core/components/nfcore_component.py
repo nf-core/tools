@@ -372,16 +372,20 @@ class NFCoreComponent:
             self.topics = topics
 
     def get_container_from_main_nf(self) -> None:
-        if self.component_type == "module":
+        if self.component_type == "modules":
             if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
                 self.container = self._get_container_with_inspect()
             else:
-                self.container = self._get_container_with_regex()
+                from nf_core.modules.modules_utils import get_container_with_regex
+
+                self.container = get_container_with_regex(self.main_nf, self.component_name)
 
             if not self.container:
                 log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
 
     def _get_container_with_inspect(self):
+        from nf_core.modules.modules_utils import get_container_with_regex
+
         with set_wd_tempdir():
             self.component_dir.absolute()
 
@@ -391,7 +395,7 @@ class NFCoreComponent:
             if cmd_out is None:
                 log.debug("Failed to run `nextflow inspect`")
                 log.debug("Falling back to regex method")
-                return self._get_container_with_regex()
+                return get_container_with_regex(self.main_nf, self.component_name)
 
             out, _ = cmd_out
             out_json = json.loads(out)
@@ -402,31 +406,6 @@ class NFCoreComponent:
                 )
                 log.debug(f"Output of nextflow inspect: {out}")
                 log.debug("Falling back to regex method.")
-                return self._get_container_with_regex()
+                return get_container_with_regex(self.main_nf, self.component_name)
 
-            return container
-
-    def _get_container_with_regex(self):
-        with open(self.main_nf) as f:
-            data = f.read()
-
-            if "container:" not in data:
-                log.debug(f"Could not find a container directive for {self.component_name} in {self.main_nf}")
-                return ""
-
-            # Regex explained:
-            #  1. negative lookahead for "container" and arbitrary white spaces.
-            #  2. Capturing group 1: Match a quote char " or '
-            #  3. Match any characters
-            #  4. Match whatever was most recently captured in capturing group 1
-            regex_container = r"(?<=container\s+)([\"']).+?(\1)"
-            match = re.search(regex_container, data)
-            if not match:
-                log.warning(
-                    f"Container for {self.component_name} could not be extracted from {self.main_nf} with regex"
-                )
-                return ""
-
-            # quotes " or ' were matched as well and are clipped
-            container = data[match.start()[0] + 1 : match.end()[0] - 1]
             return container
