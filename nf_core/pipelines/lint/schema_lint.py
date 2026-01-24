@@ -31,7 +31,7 @@ def schema_lint(self):
 
         * ``$schema``: ``https://json-schema.org/draft-07/schema`` or ``https://json-schema.org/draft/2020-12/schema``
         * ``$id``: URL to the raw schema file, eg. ``https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json``
-        * ``title``: ``YOURPIPELINE pipeline parameters``
+        * ``title``: ``YOURPIPELINE``
         * ``description``: The pipeline config ``manifest.description``
     * That the ``input`` property is defined and has a mimetype. A list of common mimetypes can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types>`_.
 
@@ -42,7 +42,7 @@ def schema_lint(self):
        {
          "$schema": "https://json-schema.org/draft-07/schema",
          "$id": "https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json",
-         "title": "YOURPIPELINE pipeline parameters",
+         "title": "YOURPIPELINE",
          "description": "This pipeline is for testing",
          "properties": {
            "first_param": { "type": "string" }
@@ -64,7 +64,7 @@ def schema_lint(self):
        {
          "$schema": "https://json-schema.org/draft/2020-12/schema",
          "$id": "https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json",
-         "title": "YOURPIPELINE pipeline parameters",
+         "title": "YOURPIPELINE",
          "description": "This pipeline is for testing",
          "properties": {
            "first_param": { "type": "string" }
