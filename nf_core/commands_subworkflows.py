@@ -105,7 +105,7 @@ def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=
 
 
 def subworkflows_lint(
-    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text=False
+    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
 ):
     """
     Lint one or more subworkflows in a directory.

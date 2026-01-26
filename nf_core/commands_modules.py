@@ -262,7 +262,7 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
 
 
 def modules_lint(
-    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text=False
+    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
 ):
     """
     Lint one or more modules in a directory.
