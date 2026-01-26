@@ -35,6 +35,7 @@
 - sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
 - fix(modules_json): Use name string instead of dict as key in recreate_dependencies ([#3963](https://github.com/nf-core/tools/pull/3963))
 - linting: polish regex for output parsing in modules main.nf ([#3967](https://github.com/nf-core/tools/pull/3967))
+- modules linting: catch failing edamontology requests ([#3994](https://github.com/nf-core/tools/pull/3994))
 
 ### Subworkflows
 
