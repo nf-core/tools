@@ -311,50 +311,50 @@ class PipelineLint(nf_core.utils.Pipeline):
             self._print_results_rich(show_passed)
 
     def _print_results_plain_text(self, show_passed):
-        """Print linting results in plain text format (easier to copy/paste)."""
+        """Print linting results in plain text format (easier to copy/paste).
+
+        Messages are printed on their own lines for easy copying.
+        Rich colors are still used for headers.
+        """
         tools_version = __version__
         if "dev" in __version__:
             tools_version = "dev"
 
-        def format_plain_result(test_results, status_label):
-            """Format test results as plain text lines."""
-            lines = []
+        def print_results(test_results, color):
+            """Print test results with messages on their own lines."""
             for eid, msg in test_results:
                 url = f"https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
-                # Ensure message is on one line
-                msg_clean = strip_ansi_codes(str(msg)).replace("\n", " ").strip()
-                lines.append(f"  {eid}: {msg_clean} ({url})")
-            return lines
+                console.print(f"\n[{color}]{eid}[/{color}] {url}")
+                # Print each message line separately for easy copying
+                msg_clean = strip_ansi_codes(str(msg)).strip()
+                for line in msg_clean.split("\n"):
+                    if line.strip():
+                        console.print(f"  {line.strip()}")
 
         # Passed tests
         if len(self.passed) > 0 and show_passed:
-            console.print(f"\n[PASSED] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed")
-            for line in format_plain_result(self.passed, "PASSED"):
-                console.print(line)
+            console.print(f"\n[green][bold][✔] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed[/bold][/green]")
+            print_results(self.passed, "green")
 
         # Fixed tests
         if len(self.fixed) > 0:
-            console.print(f"\n[FIXED] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed")
-            for line in format_plain_result(self.fixed, "FIXED"):
-                console.print(line)
+            console.print(f"\n[bright_blue][bold][?] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed[/bold][/bright_blue]")
+            print_results(self.fixed, "bright_blue")
 
         # Ignored tests
         if len(self.ignored) > 0:
-            console.print(f"\n[IGNORED] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored")
-            for line in format_plain_result(self.ignored, "IGNORED"):
-                console.print(line)
+            console.print(f"\n[grey58][bold][?] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored[/bold][/grey58]")
+            print_results(self.ignored, "grey58")
 
         # Warning tests
         if len(self.warned) > 0:
-            console.print(f"\n[WARNING] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}")
-            for line in format_plain_result(self.warned, "WARNING"):
-                console.print(line)
+            console.print(f"\n[yellow][bold][!] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}[/bold][/yellow]")
+            print_results(self.warned, "yellow")
 
         # Failed tests
         if len(self.failed) > 0:
-            console.print(f"\n[FAILED] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed")
-            for line in format_plain_result(self.failed, "FAILED"):
-                console.print(line)
+            console.print(f"\n[red][bold][✗] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed[/bold][/red]")
+            print_results(self.failed, "red")
 
     def _print_results_rich(self, show_passed):
         """Print linting results using Rich formatting (panels, tables, etc.)."""

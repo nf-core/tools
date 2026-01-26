@@ -253,44 +253,48 @@ class ComponentLint(ComponentCommand):
             self._print_results_rich(show_passed)
 
     def _print_results_plain_text(self, show_passed):
-        """Print linting results in plain text format (easier to copy/paste)."""
+        """Print linting results in plain text format (easier to copy/paste).
+
+        Messages are printed on their own lines for easy copying.
+        Rich colors are still used for headers.
+        """
         tools_version = __version__
         if "dev" in __version__:
             tools_version = "dev"
 
         component_label = self.component_type[:-1].title()  # "Module" or "Subworkflow"
 
-        def format_plain_result(test_results: list[LintResult]):
-            """Format test results as plain text lines."""
-            lines = []
+        def print_results(test_results: list[LintResult], color: str):
+            """Print test results with messages on their own lines."""
             for lint_result in test_results:
                 file_path = os.path.relpath(lint_result.file_path, self.directory)
                 url = f"https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}"
-                # Ensure message is on one line
-                msg_clean = str(lint_result.message).replace("\n", " ").strip()
-                lines.append(f"  {lint_result.component_name} | {file_path} | {lint_result.lint_test}: {msg_clean} ({url})")
-            return lines
+                console.print(f"\n[{color}]{lint_result.component_name}[/{color}] {lint_result.lint_test}")
+                console.print(f"  {file_path}")
+                console.print(f"  {url}")
+                # Print each message line separately for easy copying
+                msg_clean = str(lint_result.message).strip()
+                for line in msg_clean.split("\n"):
+                    if line.strip():
+                        console.print(f"  {line.strip()}")
 
         # Print blank line for spacing
         console.print("")
 
         # Passed tests
         if len(self.passed) > 0 and show_passed:
-            console.print(f"\n[PASSED] {len(self.passed)} {component_label} Test{_s(self.passed)} Passed")
-            for line in format_plain_result(self.passed):
-                console.print(line)
+            console.print(f"\n[green][bold][✔] {len(self.passed)} {component_label} Test{_s(self.passed)} Passed[/bold][/green]")
+            print_results(self.passed, "green")
 
         # Warning tests
         if len(self.warned) > 0:
-            console.print(f"\n[WARNING] {len(self.warned)} {component_label} Test Warning{_s(self.warned)}")
-            for line in format_plain_result(self.warned):
-                console.print(line)
+            console.print(f"\n[yellow][bold][!] {len(self.warned)} {component_label} Test Warning{_s(self.warned)}[/bold][/yellow]")
+            print_results(self.warned, "yellow")
 
         # Failed tests
         if len(self.failed) > 0:
-            console.print(f"\n[FAILED] {len(self.failed)} {component_label} Test{_s(self.failed)} Failed")
-            for line in format_plain_result(self.failed):
-                console.print(line)
+            console.print(f"\n[red][bold][✗] {len(self.failed)} {component_label} Test{_s(self.failed)} Failed[/bold][/red]")
+            print_results(self.failed, "red")
 
     def _print_results_rich(self, show_passed):
         """Print linting results using Rich formatting (panels, tables, etc.)."""
@@ -409,10 +413,10 @@ class ComponentLint(ComponentCommand):
             plain_text: If True, print results in plain text format without Rich formatting.
         """
         if plain_text:
-            console.print("\nLINT RESULTS SUMMARY")
-            console.print(f"  [PASSED]  {len(self.passed):>3} Test{_s(self.passed)} Passed")
-            console.print(f"  [WARNING] {len(self.warned):>3} Test Warning{_s(self.warned)}")
-            console.print(f"  [FAILED]  {len(self.failed):>3} Test{_s(self.failed)} Failed")
+            console.print("\n[bold]LINT RESULTS SUMMARY[/bold]")
+            console.print(f"  [green][✔] {len(self.passed):>3} Test{_s(self.passed)} Passed[/green]")
+            console.print(f"  [yellow][!] {len(self.warned):>3} Test Warning{_s(self.warned)}[/yellow]")
+            console.print(f"  [red][✗] {len(self.failed):>3} Test{_s(self.failed)} Failed[/red]")
         else:
             table = Table(box=rich.box.ROUNDED)
             table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)

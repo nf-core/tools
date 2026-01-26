@@ -47,13 +47,13 @@ def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj, plain_t
     nbr_failed = len(lint_obj.failed) + module_failed + swf_failed
 
     if plain_text:
-        console.print("\nLINT RESULTS SUMMARY")
-        console.print(f"  [PASSED]  {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
+        console.print("\n[bold]LINT RESULTS SUMMARY[/bold]")
+        console.print(f"  [green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed[/green]")
         if nbr_fixed:
-            console.print(f"  [FIXED]   {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
-        console.print(f"  [IGNORED] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
-        console.print(f"  [WARNING] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
-        console.print(f"  [FAILED]  {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
+            console.print(f"  [bright_blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed[/bright_blue]")
+        console.print(f"  [grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored[/grey58]")
+        console.print(f"  [yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}[/yellow]")
+        console.print(f"  [red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed[/red]")
     else:
         summary_colour = "red" if nbr_failed > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)
