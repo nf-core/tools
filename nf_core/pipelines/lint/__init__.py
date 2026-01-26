@@ -329,7 +329,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 msg_clean = strip_ansi_codes(str(msg)).strip()
                 for line in msg_clean.split("\n"):
                     if line.strip():
-                        console.print(f"  {line.strip()}")
+                        console.print(line.strip())
 
         # Passed tests
         if len(self.passed) > 0 and show_passed:

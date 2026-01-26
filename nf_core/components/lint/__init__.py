@@ -270,13 +270,13 @@ class ComponentLint(ComponentCommand):
                 file_path = os.path.relpath(lint_result.file_path, self.directory)
                 url = f"https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}"
                 console.print(f"\n[{color}]{lint_result.component_name}[/{color}] {lint_result.lint_test}")
-                console.print(f"  {file_path}")
-                console.print(f"  {url}")
+                console.print(file_path)
+                console.print(url)
                 # Print each message line separately for easy copying
                 msg_clean = str(lint_result.message).strip()
                 for line in msg_clean.split("\n"):
                     if line.strip():
-                        console.print(f"  {line.strip()}")
+                        console.print(line.strip())
 
         # Print blank line for spacing
         console.print("")
