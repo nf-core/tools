@@ -289,11 +289,15 @@ class PipelineLint(nf_core.utils.Pipeline):
                 if test_results.get("could_fix", False):
                     self.could_fix.append(test_name)
 
-    def _print_results(self, show_passed):
+    def _print_results(self, show_passed, plain_text=False):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
         summarising the linting results.
+
+        Args:
+            show_passed: Whether to show passed tests.
+            plain_text: If True, print results in plain text format without Rich formatting.
         """
 
         # Spacing from log messages above
@@ -301,6 +305,59 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         log.debug("Printing final results")
 
+        if plain_text:
+            self._print_results_plain_text(show_passed)
+        else:
+            self._print_results_rich(show_passed)
+
+    def _print_results_plain_text(self, show_passed):
+        """Print linting results in plain text format (easier to copy/paste)."""
+        tools_version = __version__
+        if "dev" in __version__:
+            tools_version = "dev"
+
+        def format_plain_result(test_results, status_label):
+            """Format test results as plain text lines."""
+            lines = []
+            for eid, msg in test_results:
+                url = f"https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
+                # Ensure message is on one line
+                msg_clean = strip_ansi_codes(str(msg)).replace("\n", " ").strip()
+                lines.append(f"  {eid}: {msg_clean} ({url})")
+            return lines
+
+        # Passed tests
+        if len(self.passed) > 0 and show_passed:
+            console.print(f"\n[PASSED] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed")
+            for line in format_plain_result(self.passed, "PASSED"):
+                console.print(line)
+
+        # Fixed tests
+        if len(self.fixed) > 0:
+            console.print(f"\n[FIXED] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed")
+            for line in format_plain_result(self.fixed, "FIXED"):
+                console.print(line)
+
+        # Ignored tests
+        if len(self.ignored) > 0:
+            console.print(f"\n[IGNORED] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored")
+            for line in format_plain_result(self.ignored, "IGNORED"):
+                console.print(line)
+
+        # Warning tests
+        if len(self.warned) > 0:
+            console.print(f"\n[WARNING] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}")
+            for line in format_plain_result(self.warned, "WARNING"):
+                console.print(line)
+
+        # Failed tests
+        if len(self.failed) > 0:
+            console.print(f"\n[FAILED] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed")
+            for line in format_plain_result(self.failed, "FAILED"):
+                console.print(line)
+
+    def _print_results_rich(self, show_passed):
+        """Print linting results using Rich formatting (panels, tables, etc.)."""
         # Helper function to format test links nicely
         @group()
         def format_result(test_results):
@@ -560,6 +617,7 @@ def run_linting(
     md_fn=None,
     json_fn=None,
     hide_progress: bool = False,
+    plain_text: bool = False,
 ) -> tuple[PipelineLint, ComponentLint | None, ComponentLint | None]:
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
@@ -667,13 +725,13 @@ def run_linting(
             subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
 
     # Print the results
-    lint_obj._print_results(show_passed)
+    lint_obj._print_results(show_passed, plain_text=plain_text)
     if module_lint_obj is not None:
-        module_lint_obj._print_results(show_passed, sort_by=sort_by)
+        module_lint_obj._print_results(show_passed, sort_by=sort_by, plain_text=plain_text)
     if subworkflow_lint_obj is not None:
-        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
-    nf_core.pipelines.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
-    nf_core.pipelines.lint_utils.print_fixes(lint_obj)
+        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by, plain_text=plain_text)
+    nf_core.pipelines.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj, plain_text)
+    nf_core.pipelines.lint_utils.print_fixes(lint_obj, plain_text)
 
     # Save results to Markdown file
     if md_fn is not None:

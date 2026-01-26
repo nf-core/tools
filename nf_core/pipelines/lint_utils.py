@@ -17,8 +17,15 @@ log = logging.getLogger(__name__)
 console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
 
-def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
-    """Print a joint summary of the general pipe lint tests and the module and subworkflow lint tests"""
+def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj, plain_text=False):
+    """Print a joint summary of the general pipe lint tests and the module and subworkflow lint tests
+
+    Args:
+        lint_obj: Pipeline lint object
+        module_lint_obj: Module lint object (can be None)
+        subworkflow_lint_obj: Subworkflow lint object (can be None)
+        plain_text: If True, print results in plain text format without Rich formatting
+    """
     swf_passed = 0
     swf_warned = 0
     swf_failed = 0
@@ -39,29 +46,49 @@ def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
     nbr_warned = len(lint_obj.warned) + module_warned + swf_warned
     nbr_failed = len(lint_obj.failed) + module_failed + swf_failed
 
-    summary_colour = "red" if nbr_failed > 0 else "green"
-    table = Table(box=rich.box.ROUNDED, style=summary_colour)
-    table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
-    table.add_row(rf"[green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
-    if nbr_fixed:
-        table.add_row(rf"[bright blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
-    table.add_row(rf"[grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
-    table.add_row(rf"[yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
-    table.add_row(rf"[red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
-    console.print(table)
+    if plain_text:
+        console.print("\nLINT RESULTS SUMMARY")
+        console.print(f"  [PASSED]  {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
+        if nbr_fixed:
+            console.print(f"  [FIXED]   {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
+        console.print(f"  [IGNORED] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
+        console.print(f"  [WARNING] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
+        console.print(f"  [FAILED]  {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
+    else:
+        summary_colour = "red" if nbr_failed > 0 else "green"
+        table = Table(box=rich.box.ROUNDED, style=summary_colour)
+        table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
+        table.add_row(rf"[green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
+        if nbr_fixed:
+            table.add_row(rf"[bright blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
+        table.add_row(rf"[grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
+        table.add_row(rf"[yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
+        table.add_row(rf"[red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
+        console.print(table)
 
 
-def print_fixes(lint_obj):
-    """Prints available and applied fixes"""
+def print_fixes(lint_obj, plain_text=False):
+    """Prints available and applied fixes
+
+    Args:
+        lint_obj: Pipeline lint object
+        plain_text: If True, print results in plain text format without Rich formatting
+    """
 
     if lint_obj.could_fix:
         fix_flags = "".join([f" --fix {fix}" for fix in lint_obj.could_fix])
         wf_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
         fix_cmd = f"nf-core pipelines lint {wf_dir} {fix_flags}"
-        console.print(
-            "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
-            f"[blue]    {fix_cmd}\n"
-        )
+        if plain_text:
+            console.print(
+                "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
+                f"    {fix_cmd}\n"
+            )
+        else:
+            console.print(
+                "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
+                f"[blue]    {fix_cmd}\n"
+            )
     if len(lint_obj.fix):
         console.print(
             "Automatic fixes applied. "
