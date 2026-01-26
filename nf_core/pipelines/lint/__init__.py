@@ -338,11 +338,14 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         for results, show_condition, icon, label, color in categories:
             if len(results) > 0 and show_condition:
-                console.print(f"\n[{color}][bold][{icon}] {len(results)} Pipeline Test{_s(results)} {label}[/bold][/{color}]")
+                console.print(
+                    f"\n[{color}][bold][{icon}] {len(results)} Pipeline Test{_s(results)} {label}[/bold][/{color}]"
+                )
                 print_results(results, color)
 
     def _print_results_rich(self, show_passed):
         """Print linting results using Rich formatting (panels, tables, etc.)."""
+
         # Helper function to format test links nicely
         @group()
         def format_result(test_results):

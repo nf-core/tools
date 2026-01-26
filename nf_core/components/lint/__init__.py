@@ -284,7 +284,9 @@ class ComponentLint(ComponentCommand):
 
         for results, show_condition, icon, label, color in categories:
             if len(results) > 0 and show_condition:
-                console.print(f"\n[{color}][bold][{icon}] {len(results)} {component_label} Test{_s(results)} {label}[/bold][/{color}]")
+                console.print(
+                    f"\n[{color}][bold][{icon}] {len(results)} {component_label} Test{_s(results)} {label}[/bold][/{color}]"
+                )
                 print_results(results, color)
 
     def _print_results_rich(self, show_passed):
