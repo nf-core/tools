@@ -373,3 +373,57 @@ process TEST_PROCESS {
     for entry in component.topics["versions"]:
         assert isinstance(entry, list), f"Expected list, got {type(entry)}"
         assert len(entry) == 3, f"Expected 3 elements in entry, got {len(entry)}: {entry}"
+
+
+def test_get_outputs_with_hidden_attribute(tmp_path):
+    """Test that output parsing correctly handles path modifiers like 'hidden: true'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val(meta), path("*.{prof,pidx}*", hidden: true), emit: prof, optional: true
+    path("*.txt"), emit: results
+    path("data.csv", hidden: true), emit: data
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    # Should find 3 outputs
+    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "prof" in component.outputs
+    assert "results" in component.outputs
+    assert "data" in component.outputs
+
+    # The prof output should only contain the pattern, not the 'hidden: true' modifier
+    prof_output = component.outputs["prof"]
+    assert len(prof_output) == 1, f"Expected 1 element in prof output, got {len(prof_output)}"
+    assert len(prof_output[0]) == 2, f"Expected 2 elements in tuple, got {len(prof_output[0])}: {prof_output[0]}"
+
+    # Check that the path pattern doesn't include "hidden: true"
+    path_key = list(prof_output[0][1].keys())[0]
+    assert '"*.{prof,pidx}*"' == path_key, f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
+    assert "hidden" not in path_key, f"Pattern should not contain 'hidden': {path_key}"
+
+    # Check the data output also doesn't include "hidden: true"
+    data_output = component.outputs["data"]
+    data_path_key = list(data_output[0].keys())[0]
+    assert '"data.csv"' == data_path_key, f"Expected '\"data.csv\"', got '{data_path_key}'"
+    assert "hidden" not in data_path_key, f"Pattern should not contain 'hidden': {data_path_key}"
