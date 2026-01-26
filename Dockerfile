@@ -5,12 +5,8 @@ LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
 # Do not pick up python packages from $HOME
 ENV PYTHONNUSERSITE=1
 
-# Update pip to latest version
-RUN python -m pip install --upgrade pip
-
-# Install dependencies
-COPY requirements.txt requirements.txt
-RUN python -m pip install -r requirements.txt
+# Update pip and install uv
+RUN python -m pip install --upgrade pip uv
 
 # Install Nextflow dependencies
 RUN apt-get update \
@@ -41,7 +37,7 @@ COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Install nf-core
-RUN python -m pip install .
+RUN uv pip install --system .
 
 # Set up entrypoint and cmd for easy docker usage
 ENTRYPOINT [ "nf-core" ]

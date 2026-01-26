@@ -1,6 +1,8 @@
-import json
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
@@ -8,11 +10,15 @@ from jsonschema import exceptions, validators
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import unquote
+
+if TYPE_CHECKING:
+    from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
 
 
-def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
     """
     Lint a ``meta.yml`` file
 
@@ -68,7 +74,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             yaml = ruamel.yaml.YAML()
             meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
-        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
+        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist.", module.meta_yml))
         return
     else:
         module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
@@ -76,15 +82,14 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
-            schema = json.load(fh)
+        schema = module_lint_object.load_meta_schema()
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
     except exceptions.ValidationError as e:
         hint = ""
         if len(e.path) > 0:
-            hint = f"\nCheck the entry for `{e.path[0]}`."
+            hint = f"\nCheck the entry for `{e.path}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
@@ -212,9 +217,29 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                     )
                 )
         # Check that all topics are correctly specified
-        if "topics" in meta_yaml:
+        if "topics" in meta_yaml or module.topics:
             correct_topics = obtain_topics(module_lint_object, module.topics)
-            meta_topics = obtain_topics(module_lint_object, meta_yaml["topics"])
+            meta_topics = obtain_topics(module_lint_object, meta_yaml.get("topics", {}))
+
+            if not meta_topics:
+                module.failed.append(
+                    (
+                        "meta_yml",
+                        "has_meta_topics",
+                        f"Module `meta.yml` does not contain any topics, even though they appear in `main.nf`. Use `nf-core modules lint {module.component_name} --fix` to automatically resolve this.",
+                        module.meta_yml,
+                    )
+                )
+                return
+            else:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        "has_meta_topics",
+                        "Module `meta.yml` and `main.nf` contain topics.",
+                        module.meta_yml,
+                    )
+                )
 
             if correct_topics == meta_topics:
                 module.passed.append(
@@ -280,15 +305,17 @@ def obtain_inputs(_, inputs: list) -> list:
     Returns:
         formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    formatted_inputs = []
+    formatted_inputs: list[list[str] | str] = []
     for input_channel in inputs:
         if isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
             formatted_inputs.append(channel_elements)
         else:
-            formatted_inputs.append(list(input_channel.keys())[0])
+            key = list(input_channel.keys())[0]
+            formatted_inputs.append(unquote(key))
 
     return formatted_inputs
 
@@ -315,9 +342,11 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
             if isinstance(element, list):
                 channel_elements.append([])
                 for e in element:
-                    channel_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    channel_elements[-1].append(unquote(key))
             else:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
         formatted_outputs[channel_name] = channel_elements
 
     if old_structure:
@@ -344,9 +373,11 @@ def obtain_topics(_, topics: dict) -> dict:
             if isinstance(element, list):
                 t_elements.append([])
                 for e in element:
-                    t_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    t_elements[-1].append(unquote(key))
             else:
-                t_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                t_elements.append(unquote(key))
         formatted_topics[name] = t_elements
 
     return formatted_topics

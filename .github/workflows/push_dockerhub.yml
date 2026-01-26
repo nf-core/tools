@@ -1,0 +1,84 @@
+name: nf-core Docker push
+# This builds the docker image and pushes it to DockerHub
+# Runs on releases and pushes to 'dev' branch (PR merges)
+on:
+  push:
+    branches: [dev]
+  release:
+    types: [published]
+  workflow_dispatch:
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  push_dockerhub:
+    name: Push new Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'nf-core/tools' }}
+    env:
+      TARGET_PLATFORM: "linux/amd64,linux/arm64"
+    steps:
+      # Free up disk space on GitHub Actions runner (only for dev builds)
+      - name: Free Disk Space (Ubuntu)
+        if: github.event_name == 'push'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Set up QEMU for multi-architecture build
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
+
+      # Determine Docker tags based on trigger
+      - name: Set Docker tags
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "TOOLS_TAGS=-t nfcore/tools:${{ github.event.release.tag_name }} -t nfcore/tools:latest" >> $GITHUB_OUTPUT
+            echo "DEVCONTAINER_TAGS=${{ github.event.release.tag_name }},latest" >> $GITHUB_OUTPUT
+          else
+            echo "TOOLS_TAGS=-t nfcore/tools:dev" >> $GITHUB_OUTPUT
+            echo "DEVCONTAINER_TAGS=dev" >> $GITHUB_OUTPUT
+          fi
+
+      # Retry building tools image (for 403 errors with nf-test)
+      - name: Build and push nfcore/tools image
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          retry_wait_seconds: 60
+          command: |
+            docker buildx build \
+              --platform ${{ env.TARGET_PLATFORM }} \
+              ${{ steps.tags.outputs.TOOLS_TAGS }} \
+              --push --no-cache .
+
+      - name: Build and push nfcore/devcontainer image
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
+        with:
+          configFile: .devcontainer/build-devcontainer/devcontainer.json
+          imageName: nfcore/devcontainer
+          imageTag: ${{ steps.tags.outputs.DEVCONTAINER_TAGS }}
+          platform: ${{ env.TARGET_PLATFORM }}
+          push: always
+          noCache: true

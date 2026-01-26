@@ -137,9 +137,10 @@ class TestMainNfLinting(TestModules):
     def test_topics_and_emits_version_check(self):
         """Test that main_nf version emit and topics check works correctly"""
 
+        self.mods_install.install("bioawk")
         # Lint a module known to have versions YAML in main.nf (for now)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="samtools/sort")
+        module_lint.lint(print_results=False, module="bioawk")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.warned) == 2, (
             f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
@@ -208,6 +209,7 @@ process TEST_PROCESS {
     path("*.txt"), emit: results
     val(evaluate_result), emit: evaluation
     path(pathogen_data), emit: pathogens
+    tuple val(meta), path("*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"), emit: reads
 
     script:
     "echo test"
@@ -228,12 +230,64 @@ process TEST_PROCESS {
 
     component.get_outputs_from_main_nf()
 
-    # Should find 3 outputs with variable names containing 'val' and 'path' substrings
+    # Should find 4 outputs with variable names containing 'val' and 'path' substrings
     # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
-    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
     assert "results" in component.outputs
     assert "evaluation" in component.outputs
     assert "pathogens" in component.outputs
+    assert "reads" in component.outputs
+    assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
+
+
+def test_get_outputs_complete_version_command(tmp_path):
+    """Test that the version command is complete with both eval() and val()"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), emit: results
+    val(evaluate_result), emit: evaluation
+    tuple val("${task.process}"), val('stranger'), eval("stranger --version | sed 's/stranger, version //g'"), topic: versions, emit: versions_stranger
+    tuple val("${task.process}"), val('fastqc'), eval('fastqc --version | sed "/FastQC v/!d; s/.*v//"'), emit: versions_fastqc, topic: versions
+    tuple val("${task.process}"), val('fastk'), val('1.0'), emit: versions_fastk, topic: versions
+
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    assert len(component.outputs) == 5, f"Expected 5 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "results" in component.outputs
+    assert "evaluation" in component.outputs
+    assert "versions_stranger" in component.outputs
+    assert "versions_fastqc" in component.outputs
+    assert "versions_fastk" in component.outputs
+    assert "\"stranger --version | sed 's/stranger, version //g'\"" in list(
+        component.outputs["versions_stranger"][0][2].keys()
+    )
+    assert "'fastqc --version | sed \"/FastQC v/!d; s/.*v//\"'" in list(
+        component.outputs["versions_fastqc"][0][2].keys()
+    )
+    # Check that val() for hardcoded version is also captured
+    assert "'1.0'" in list(component.outputs["versions_fastk"][0][2].keys())
 
 
 def test_get_topics_no_partial_keyword_match(tmp_path):
@@ -271,3 +325,51 @@ process TEST_PROCESS {
     assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
     assert "results" in component.topics
     assert "evaluation" in component.topics
+
+
+def test_get_topics_multiple_versions_channels(tmp_path):
+    """Test that multiple versions_* channels with the same topic name are correctly captured, including val() for hardcoded versions"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | head -1 | sed -e "s/samtools //"'), emit: versions_samtools, topic: versions
+    tuple val("${task.process}"), val('bcftools'), eval('bcftools --version | head -1 | sed -e "s/bcftools //"'), emit: versions_bcftools, topic: versions
+    tuple val("${task.process}"), val('fastk'), val('1.0'), emit: versions_fastk, topic: versions
+    path("*.txt"), emit: results, topic: results
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    # Should find 2 topics: versions and results
+    assert len(component.topics) == 2, f"Expected 2 topics, got {len(component.topics)}: {component.topics}"
+    assert "versions" in component.topics
+    assert "results" in component.topics
+
+    # The versions topic should have 3 entries (two with eval(), one with val())
+    assert len(component.topics["versions"]) == 3, (
+        f"Expected 3 entries in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    )
+
+    # Each entry should be a list of 3 tuples elements
+    for entry in component.topics["versions"]:
+        assert isinstance(entry, list), f"Expected list, got {type(entry)}"
+        assert len(entry) == 3, f"Expected 3 elements in entry, got {len(entry)}: {entry}"

@@ -1,18 +1,17 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d3633338558a2078ce66d3abde55c130f0d5da94f AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:2be0f5a9afd20bd3012a5c963c838cae7b339d4cbe05f4f325710d26058a7854 AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
 
 # Explicitly reinstall python 3.13 via conda
-# install local nf-core tools version, and precommit hooks
+# Install uv and local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel pre-commit && \
-    pip install -r requirements.txt --no-cache-dir -e . && \
-    pre-commit install --install-hooks && \
-    rm -rf /root/.cache/pip
+    pip install --no-cache-dir --upgrade pip uv && \
+    uv pip install --system --no-cache-dir . && \
+    rm -rf /root/.cache/pip /root/.cache/uv
 
 # Install nextflow and nf-test via conda and run conda clean
 RUN conda install -c bioconda -y nextflow nf-test && \

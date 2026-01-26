@@ -169,7 +169,7 @@ def check_main_section(self, lines, included_components):
                     (
                         "main_nf",
                         "main_nf_include_versions",
-                        f"Included component '{component}' versions are not added in main.nf",
+                        f"Included component '{component}' versions are not added in main.nf. Can be ignored if the module is using topic channels",
                         self.main_nf,
                     )
                 )
