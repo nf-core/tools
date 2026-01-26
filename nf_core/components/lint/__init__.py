@@ -229,11 +229,6 @@ class ComponentLint(ComponentCommand):
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
         summarising the linting results.
-
-        Args:
-            show_passed: Whether to show passed tests.
-            sort_by: Sort results by "test" or by component name ("module"/"subworkflow").
-            plain_text: If True, print results in plain text format without Rich formatting.
         """
 
         log.debug("Printing final results")
@@ -248,49 +243,16 @@ class ComponentLint(ComponentCommand):
         self.failed.sort(key=operator.attrgetter(*sort_order))
 
         if plain_text:
-            self._print_results_plain_text(show_passed)
-        else:
-            self._print_results_rich(show_passed)
+            from nf_core.pipelines.lint_utils import print_results_plain_text
 
-    def _print_results_plain_text(self, show_passed):
-        """Print linting results in plain text format (easier to copy/paste).
+            results_list = [
+                (self.passed, "✔", "Passed", "green", show_passed),
+                (self.warned, "!", "Warning", "yellow", True),
+                (self.failed, "✗", "Failed", "red", True),
+            ]
+            print_results_plain_text(results_list, self.directory, self.component_type)
+            return
 
-        Messages are printed on their own lines for easy copying.
-        Rich colors are still used for headers.
-        """
-        tools_version = "dev" if "dev" in __version__ else __version__
-        component_label = self.component_type[:-1].title()  # "Module" or "Subworkflow"
-
-        def print_results(test_results: list[LintResult], color: str):
-            """Print test results with messages on their own lines."""
-            for lint_result in test_results:
-                file_path = os.path.relpath(lint_result.file_path, self.directory)
-                url = f"https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}"
-                console.print(f"\n[{color}]{lint_result.component_name}[/{color}] {lint_result.lint_test}")
-                console.print(file_path)
-                console.print(url)
-                for line in str(lint_result.message).strip().split("\n"):
-                    if line.strip():
-                        console.print(line.strip())
-
-        console.print("")
-
-        # Define result categories: (results, show_condition, icon, label, color)
-        categories = [
-            (self.passed, show_passed, "✔", "Passed", "green"),
-            (self.warned, True, "!", "Warning", "yellow"),
-            (self.failed, True, "✗", "Failed", "red"),
-        ]
-
-        for results, show_condition, icon, label, color in categories:
-            if len(results) > 0 and show_condition:
-                console.print(
-                    f"\n[{color}][bold][{icon}] {len(results)} {component_label} Test{_s(results)} {label}[/bold][/{color}]"
-                )
-                print_results(results, color)
-
-    def _print_results_rich(self, show_passed):
-        """Print linting results using Rich formatting (panels, tables, etc.)."""
         # Find maximum module name length
         max_name_len = len(self.component_type[:-1] + " name")
         for tests in [self.passed, self.warned, self.failed]:
@@ -399,26 +361,13 @@ class ComponentLint(ComponentCommand):
                 )
             )
 
-    def print_summary(self, plain_text: bool = False) -> None:
-        """Print a summary table to the console.
+    def print_summary(self, plain_text=False) -> None:
+        """Print a summary table to the console."""
+        from nf_core.pipelines.lint_utils import print_summary as print_summary_table
 
-        Args:
-            plain_text: If True, print results in plain text format without Rich formatting.
-        """
-        # Define summary rows: (count, icon, label, color)
         rows = [
-            (len(self.passed), "✔", f"Test{_s(self.passed)} Passed", "green"),
-            (len(self.warned), "!", f"Test Warning{_s(self.warned)}", "yellow"),
-            (len(self.failed), "✗", f"Test{_s(self.failed)} Failed", "red"),
+            (len(self.passed), "✔", f"Test{_s(self.passed)} Passed", "green", True),
+            (len(self.warned), "!", f"Test Warning{_s(self.warned)}", "yellow", True),
+            (len(self.failed), "✗", f"Test{_s(self.failed)} Failed", "red", True),
         ]
-
-        if plain_text:
-            console.print("\n[bold]LINT RESULTS SUMMARY[/bold]")
-            for count, icon, label, color in rows:
-                console.print(f"[{color}][{icon}] {count:>3} {label}[/{color}]")
-        else:
-            table = Table(box=rich.box.ROUNDED)
-            table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
-            for count, icon, label, color in rows:
-                table.add_row(rf"[{icon}] {count:>3} {label}", style=color)
-            console.print(table)
+        print_summary_table(rows, plain_text)

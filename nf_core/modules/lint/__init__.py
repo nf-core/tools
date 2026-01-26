@@ -116,7 +116,7 @@ class ModuleLint(ComponentLint):
         :param show_passed:     Whether passed tests should be shown as well
         :param fix_version:     Update the module version if a newer version is available
         :param hide_progress:   Don't show progress bars
-        :param plain_text:      Print results in plain text format without Rich formatting
+        :param plain_text:      Print output in plain text without rich formatting
 
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests

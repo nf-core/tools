@@ -107,7 +107,7 @@ def pipelines_lint(
     markdown,
     json,
     sort_by,
-    plain_text=False,
+    plain_text,
 ):
     """
     Check pipeline code against nf-core guidelines.

@@ -289,9 +289,8 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
 @click.option(
     "--plain-text",
     is_flag=True,
-    default=os.environ.get("NF_CORE_LINT_OUTPUT", "").lower() == "plain-text",
-    help="Print results in plain text format without Rich formatting (easier to copy). "
-    "Can also be enabled by setting env var NF_CORE_LINT_OUTPUT=plain-text.",
+    envvar="NF_CORE_LINT_OUTPUT",
+    help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 @click.pass_context
 def command_pipelines_lint(
@@ -1325,9 +1324,8 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
 @click.option(
     "--plain-text",
     is_flag=True,
-    default=os.environ.get("NF_CORE_LINT_OUTPUT", "").lower() == "plain-text",
-    help="Print results in plain text format without Rich formatting (easier to copy). "
-    "Can also be enabled by setting env var NF_CORE_LINT_OUTPUT=plain-text.",
+    envvar="NF_CORE_LINT_OUTPUT",
+    help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 def command_modules_lint(
     ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
@@ -1613,9 +1611,8 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
 @click.option(
     "--plain-text",
     is_flag=True,
-    default=os.environ.get("NF_CORE_LINT_OUTPUT", "").lower() == "plain-text",
-    help="Print results in plain text format without Rich formatting (easier to copy). "
-    "Can also be enabled by setting env var NF_CORE_LINT_OUTPUT=plain-text.",
+    envvar="NF_CORE_LINT_OUTPUT",
+    help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 def command_subworkflows_lint(
     ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
