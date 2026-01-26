@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import yaml
@@ -189,7 +190,6 @@ class TestMetaYml(TestModules):
 
         # Modify main.nf to use val() for version instead of eval()
         # This simulates a module like fastk that has hardcoded version
-        import re
 
         main_nf_modified = re.sub(
             r'eval\("bpipe --version"\)',
