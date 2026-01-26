@@ -289,17 +289,30 @@ class PipelineLint(nf_core.utils.Pipeline):
                 if test_results.get("could_fix", False):
                     self.could_fix.append(test_name)
 
-    def _print_results(self, show_passed):
+    def _print_results(self, show_passed, plain_text=False):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
         summarising the linting results.
         """
 
+        log.debug("Printing final results")
+
+        if plain_text:
+            from nf_core.pipelines.lint_utils import print_results_plain_text
+
+            results_list = [
+                (self.passed, "✔", "Passed", "green", show_passed),
+                (self.fixed, "?", "Fixed", "bright_blue", True),
+                (self.ignored, "?", "Ignored", "grey58", True),
+                (self.warned, "!", "Warning", "yellow", True),
+                (self.failed, "✗", "Failed", "red", True),
+            ]
+            print_results_plain_text(results_list)
+            return
+
         # Spacing from log messages above
         console.print("")
-
-        log.debug("Printing final results")
 
         # Helper function to format test links nicely
         @group()
@@ -374,18 +387,18 @@ class PipelineLint(nf_core.utils.Pipeline):
                 )
             )
 
-    def _print_summary(self):
-        # Summary table
+    def _print_summary(self, plain_text=False):
+        from nf_core.pipelines.lint_utils import print_summary
+
+        rows = [
+            (len(self.passed), "✔", f"Test{_s(self.passed)} Passed", "green", True),
+            (len(self.fixed), "?", f"Test{_s(self.fixed)} Fixed", "bright_blue", False),
+            (len(self.ignored), "?", f"Test{_s(self.ignored)} Ignored", "grey58", True),
+            (len(self.warned), "!", f"Test Warning{_s(self.warned)}", "yellow", True),
+            (len(self.failed), "✗", f"Test{_s(self.failed)} Failed", "red", True),
+        ]
         summary_colour = "red" if len(self.failed) > 0 else "green"
-        table = Table(box=rich.box.ROUNDED, style=summary_colour)
-        table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
-        table.add_row(rf"[green][✔] {len(self.passed):>3} Test{_s(self.passed)} Passed")
-        if len(self.fix):
-            table.add_row(rf"[bright blue][?] {len(self.fixed):>3} Test{_s(self.fixed)} Fixed")
-        table.add_row(rf"[grey58][?] {len(self.ignored):>3} Test{_s(self.ignored)} Ignored")
-        table.add_row(rf"[yellow][!] {len(self.warned):>3} Test Warning{_s(self.warned)}")
-        table.add_row(rf"[red][✗] {len(self.failed):>3} Test{_s(self.failed)} Failed")
-        console.print(table)
+        print_summary(rows, plain_text, summary_colour)
 
     def _get_results_md(self):
         """
@@ -560,6 +573,7 @@ def run_linting(
     md_fn=None,
     json_fn=None,
     hide_progress: bool = False,
+    plain_text: bool = False,
 ) -> tuple[PipelineLint, ComponentLint | None, ComponentLint | None]:
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
@@ -569,6 +583,7 @@ def run_linting(
         pipeline_dir (str): The path to the Nextflow pipeline root directory
         release_mode (bool): Set this to `True`, if the linting should be run in the `release` mode.
                              See :class:`PipelineLint` for more information.
+        plain_text (bool): Print output in plain text without rich formatting
 
     Returns:
         An object of type :class:`PipelineLint` that contains all the linting results.
@@ -667,13 +682,15 @@ def run_linting(
             subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
 
     # Print the results
-    lint_obj._print_results(show_passed)
+    lint_obj._print_results(show_passed, plain_text=plain_text)
     if module_lint_obj is not None:
-        module_lint_obj._print_results(show_passed, sort_by=sort_by)
+        module_lint_obj._print_results(show_passed, sort_by=sort_by, plain_text=plain_text)
     if subworkflow_lint_obj is not None:
-        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
-    nf_core.pipelines.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
-    nf_core.pipelines.lint_utils.print_fixes(lint_obj)
+        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by, plain_text=plain_text)
+    nf_core.pipelines.lint_utils.print_joint_summary(
+        lint_obj, module_lint_obj, subworkflow_lint_obj, plain_text=plain_text
+    )
+    nf_core.pipelines.lint_utils.print_fixes(lint_obj, plain_text=plain_text)
 
     # Save results to Markdown file
     if md_fn is not None:
