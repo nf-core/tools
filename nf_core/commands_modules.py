@@ -369,7 +369,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
     from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
     try:
-        manager = ModuleContainers(module=module, directory=directory)
+        manager = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
 
         # Calculate total tasks per module: (docker, singularity, conda) × (amd64, arm64)
         tasks_per_module = (len(CONTAINER_SYSTEMS) + 1) * len(CONTAINER_PLATFORMS)
@@ -404,7 +404,9 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
 
                     try:
                         # Create a new manager for each module
-                        module_manager = ModuleContainers(module=module_name, directory=directory)
+                        module_manager = ModuleContainers(
+                            module=module_name, directory=directory, verbose=ctx.obj["verbose"]
+                        )
                         _, success = module_manager.create(
                             await_build, progress_bar=progress_bar, task_id=module_task_id
                         )
@@ -459,7 +461,7 @@ def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".")
+        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
         lock_file = manager.get_conda_lock_file(platform)
         stdout.print(lock_file)
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
@@ -474,7 +476,7 @@ def modules_containers_list(ctx, module):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".")
+        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
         containers = manager.list_containers()
         t = rich.table.Table("Container System", "Platform", "Image")
         for cs, p, img in containers:
@@ -492,7 +494,7 @@ def modules_containers_lint(ctx, module):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".")
+        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
         containers = manager.lint(module)
         stdout.print(f"Found {len(containers)} container(s) for {module}.")
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:

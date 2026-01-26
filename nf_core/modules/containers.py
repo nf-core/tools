@@ -29,10 +29,13 @@ class ModuleContainers:
     LOCK_FILE_KEY = "lock_file"
     HTTPS_URL_KEY = "https"
 
-    def __init__(self, module: str | None, directory: str | Path = ".", all_modules: bool = False):
+    def __init__(
+        self, module: str | None, directory: str | Path = ".", all_modules: bool = False, verbose: bool = False
+    ):
         from nf_core.components.components_utils import get_repo_info
 
         self.directory = Path(directory)
+        self.verbose = verbose
 
         # Detect repository type and organization
         try:
@@ -256,7 +259,9 @@ class ModuleContainers:
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:
-                    fut = pool.submit(self.request_container, cs, platform, self.environment_yml, await_build)
+                    fut = pool.submit(
+                        self.request_container, cs, platform, self.environment_yml, await_build, self.verbose
+                    )
                     build_tasks[fut] = (cs, platform)
 
             # Process completed container builds
@@ -323,35 +328,59 @@ class ModuleContainers:
         return containers, not has_failures
 
     @classmethod
-    def request_container(cls, container_system: str, platform: str, conda_file: Path, await_build=False) -> dict:
+    def request_container(
+        cls, container_system: str, platform: str, conda_file: Path, await_build=False, verbose=False
+    ) -> dict:
         assert conda_file.exists()
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
 
         container: dict[str, str] = dict()
         executable = "wave"
-        args = ["--conda-file", str(conda_file.absolute()), "--freeze", "--platform", platform, "-o yaml"]
+        log_level = "DEBUG" if verbose else "INFO"
+        args = [
+            "--conda-file",
+            str(conda_file.absolute()),
+            "--freeze",
+            "--platform",
+            platform,
+            "-o",
+            "yaml",
+            "--build-template",
+            "conda/micromamba:v2",
+            "--log-level",
+            log_level,
+        ]
         if container_system == "singularity":
             args.append("--singularity")
         if await_build:
             args.append("--await")
 
         args_str = " ".join(args)
-        log.debug(f"Wave command to request container ({container_system} {platform}): `wave {args_str}`")
         out = run_cmd(executable, args_str)
 
         if out is None:
             raise RuntimeError("Wave command did not return any output")
 
+        # Decode stdout output
+        stdout_output = out[0].decode()
+
+        # Log Wave CLI output when verbose mode is enabled
+        # Wave outputs debug logs to stdout along with YAML, so we show the full output
+        if verbose:
+            log.info(f"Wave CLI output ({container_system}/{platform}):\n{stdout_output}")
+
         try:
-            meta_data = yaml.safe_load(out[0].decode()) or dict()
+            meta_data = yaml.safe_load(stdout_output) or dict()
             log.debug(f"Wave YAML metadata: {meta_data}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
-            log.debug(f"Output yaml from wave build command: {out}")
             raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
         if not meta_data.get("succeeded"):
             raise RuntimeError(
                 f"Wave build ({container_system} {platform}) failed. Reason: {meta_data.get('reason', 'Unknown')}"
+                f"\nBuild log: https://wave.seqera.io/view/builds/{meta_data.get(cls.BUILD_ID_KEY)}"
+                if meta_data.get(cls.BUILD_ID_KEY)
+                else ""
             )
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
         if not image:
@@ -410,9 +439,7 @@ class ModuleContainers:
 
         try:
             inspect_out = yaml.safe_load(out[0].decode()) or dict()
-            log.debug(f"Output yaml from wave inspect command: {inspect_out}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
-            log.debug(f"Output yaml from wave build command: {out}")
             raise RuntimeError(f"Could not parse wave inspect yaml output for image {image}") from e
 
         return inspect_out
