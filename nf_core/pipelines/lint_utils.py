@@ -26,44 +26,45 @@ def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj, plain_t
         subworkflow_lint_obj: Subworkflow lint object (can be None)
         plain_text: If True, print results in plain text format without Rich formatting
     """
-    swf_passed = 0
-    swf_warned = 0
-    swf_failed = 0
-    module_passed = 0
-    module_warned = 0
-    module_failed = 0
-    if subworkflow_lint_obj is not None:
-        swf_passed = len(subworkflow_lint_obj.passed)
-        swf_warned = len(subworkflow_lint_obj.warned)
-        swf_failed = len(subworkflow_lint_obj.failed)
-    if module_lint_obj is not None:
-        module_passed = len(module_lint_obj.passed)
-        module_warned = len(module_lint_obj.warned)
-        module_failed = len(module_lint_obj.failed)
-    nbr_passed = len(lint_obj.passed) + module_passed + swf_passed
+    # Aggregate counts from all lint objects
+    module_counts = (
+        (len(module_lint_obj.passed), len(module_lint_obj.warned), len(module_lint_obj.failed))
+        if module_lint_obj
+        else (0, 0, 0)
+    )
+    swf_counts = (
+        (len(subworkflow_lint_obj.passed), len(subworkflow_lint_obj.warned), len(subworkflow_lint_obj.failed))
+        if subworkflow_lint_obj
+        else (0, 0, 0)
+    )
+
+    nbr_passed = len(lint_obj.passed) + module_counts[0] + swf_counts[0]
     nbr_ignored = len(lint_obj.ignored)
     nbr_fixed = len(lint_obj.fixed)
-    nbr_warned = len(lint_obj.warned) + module_warned + swf_warned
-    nbr_failed = len(lint_obj.failed) + module_failed + swf_failed
+    nbr_warned = len(lint_obj.warned) + module_counts[1] + swf_counts[1]
+    nbr_failed = len(lint_obj.failed) + module_counts[2] + swf_counts[2]
+
+    # Define summary rows: (count, icon, label, color, always_show)
+    rows = [
+        (nbr_passed, "✔", f"Test{_s(nbr_passed)} Passed", "green", True),
+        (nbr_fixed, "?", f"Test{_s(nbr_fixed)} Fixed", "bright_blue", False),
+        (nbr_ignored, "?", f"Test{_s(nbr_ignored)} Ignored", "grey58", True),
+        (nbr_warned, "!", f"Test Warning{_s(nbr_warned)}", "yellow", True),
+        (nbr_failed, "✗", f"Test{_s(nbr_failed)} Failed", "red", True),
+    ]
 
     if plain_text:
         console.print("\n[bold]LINT RESULTS SUMMARY[/bold]")
-        console.print(f"  [green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed[/green]")
-        if nbr_fixed:
-            console.print(f"  [bright_blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed[/bright_blue]")
-        console.print(f"  [grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored[/grey58]")
-        console.print(f"  [yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}[/yellow]")
-        console.print(f"  [red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed[/red]")
+        for count, icon, label, color, always_show in rows:
+            if always_show or count:
+                console.print(f"[{color}][{icon}] {count:>3} {label}[/{color}]")
     else:
         summary_colour = "red" if nbr_failed > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)
         table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
-        table.add_row(rf"[green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
-        if nbr_fixed:
-            table.add_row(rf"[bright blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
-        table.add_row(rf"[grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
-        table.add_row(rf"[yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
-        table.add_row(rf"[red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
+        for count, icon, label, color, always_show in rows:
+            if always_show or count:
+                table.add_row(rf"[{color}][{icon}] {count:>3} {label}")
         console.print(table)
 
 

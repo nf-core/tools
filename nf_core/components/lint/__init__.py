@@ -258,10 +258,7 @@ class ComponentLint(ComponentCommand):
         Messages are printed on their own lines for easy copying.
         Rich colors are still used for headers.
         """
-        tools_version = __version__
-        if "dev" in __version__:
-            tools_version = "dev"
-
+        tools_version = "dev" if "dev" in __version__ else __version__
         component_label = self.component_type[:-1].title()  # "Module" or "Subworkflow"
 
         def print_results(test_results: list[LintResult], color: str):
@@ -272,29 +269,23 @@ class ComponentLint(ComponentCommand):
                 console.print(f"\n[{color}]{lint_result.component_name}[/{color}] {lint_result.lint_test}")
                 console.print(file_path)
                 console.print(url)
-                # Print each message line separately for easy copying
-                msg_clean = str(lint_result.message).strip()
-                for line in msg_clean.split("\n"):
+                for line in str(lint_result.message).strip().split("\n"):
                     if line.strip():
                         console.print(line.strip())
 
-        # Print blank line for spacing
         console.print("")
 
-        # Passed tests
-        if len(self.passed) > 0 and show_passed:
-            console.print(f"\n[green][bold][✔] {len(self.passed)} {component_label} Test{_s(self.passed)} Passed[/bold][/green]")
-            print_results(self.passed, "green")
+        # Define result categories: (results, show_condition, icon, label, color)
+        categories = [
+            (self.passed, show_passed, "✔", "Passed", "green"),
+            (self.warned, True, "!", "Warning", "yellow"),
+            (self.failed, True, "✗", "Failed", "red"),
+        ]
 
-        # Warning tests
-        if len(self.warned) > 0:
-            console.print(f"\n[yellow][bold][!] {len(self.warned)} {component_label} Test Warning{_s(self.warned)}[/bold][/yellow]")
-            print_results(self.warned, "yellow")
-
-        # Failed tests
-        if len(self.failed) > 0:
-            console.print(f"\n[red][bold][✗] {len(self.failed)} {component_label} Test{_s(self.failed)} Failed[/bold][/red]")
-            print_results(self.failed, "red")
+        for results, show_condition, icon, label, color in categories:
+            if len(results) > 0 and show_condition:
+                console.print(f"\n[{color}][bold][{icon}] {len(results)} {component_label} Test{_s(results)} {label}[/bold][/{color}]")
+                print_results(results, color)
 
     def _print_results_rich(self, show_passed):
         """Print linting results using Rich formatting (panels, tables, etc.)."""
@@ -412,18 +403,20 @@ class ComponentLint(ComponentCommand):
         Args:
             plain_text: If True, print results in plain text format without Rich formatting.
         """
+        # Define summary rows: (count, icon, label, color)
+        rows = [
+            (len(self.passed), "✔", f"Test{_s(self.passed)} Passed", "green"),
+            (len(self.warned), "!", f"Test Warning{_s(self.warned)}", "yellow"),
+            (len(self.failed), "✗", f"Test{_s(self.failed)} Failed", "red"),
+        ]
+
         if plain_text:
             console.print("\n[bold]LINT RESULTS SUMMARY[/bold]")
-            console.print(f"  [green][✔] {len(self.passed):>3} Test{_s(self.passed)} Passed[/green]")
-            console.print(f"  [yellow][!] {len(self.warned):>3} Test Warning{_s(self.warned)}[/yellow]")
-            console.print(f"  [red][✗] {len(self.failed):>3} Test{_s(self.failed)} Failed[/red]")
+            for count, icon, label, color in rows:
+                console.print(f"[{color}][{icon}] {count:>3} {label}[/{color}]")
         else:
             table = Table(box=rich.box.ROUNDED)
             table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
-            table.add_row(
-                rf"[✔] {len(self.passed):>3} Test{_s(self.passed)} Passed",
-                style="green",
-            )
-            table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
-            table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
+            for count, icon, label, color in rows:
+                table.add_row(rf"[{icon}] {count:>3} {label}", style=color)
             console.print(table)

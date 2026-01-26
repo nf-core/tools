@@ -316,45 +316,30 @@ class PipelineLint(nf_core.utils.Pipeline):
         Messages are printed on their own lines for easy copying.
         Rich colors are still used for headers.
         """
-        tools_version = __version__
-        if "dev" in __version__:
-            tools_version = "dev"
+        tools_version = "dev" if "dev" in __version__ else __version__
 
         def print_results(test_results, color):
             """Print test results with messages on their own lines."""
             for eid, msg in test_results:
                 url = f"https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
                 console.print(f"\n[{color}]{eid}[/{color}] {url}")
-                # Print each message line separately for easy copying
-                msg_clean = strip_ansi_codes(str(msg)).strip()
-                for line in msg_clean.split("\n"):
+                for line in strip_ansi_codes(str(msg)).strip().split("\n"):
                     if line.strip():
                         console.print(line.strip())
 
-        # Passed tests
-        if len(self.passed) > 0 and show_passed:
-            console.print(f"\n[green][bold][✔] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed[/bold][/green]")
-            print_results(self.passed, "green")
+        # Define result categories: (results, show_condition, icon, label, color)
+        categories = [
+            (self.passed, show_passed, "✔", "Passed", "green"),
+            (self.fixed, True, "?", "Fixed", "bright_blue"),
+            (self.ignored, True, "?", "Ignored", "grey58"),
+            (self.warned, True, "!", "Warning", "yellow"),
+            (self.failed, True, "✗", "Failed", "red"),
+        ]
 
-        # Fixed tests
-        if len(self.fixed) > 0:
-            console.print(f"\n[bright_blue][bold][?] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed[/bold][/bright_blue]")
-            print_results(self.fixed, "bright_blue")
-
-        # Ignored tests
-        if len(self.ignored) > 0:
-            console.print(f"\n[grey58][bold][?] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored[/bold][/grey58]")
-            print_results(self.ignored, "grey58")
-
-        # Warning tests
-        if len(self.warned) > 0:
-            console.print(f"\n[yellow][bold][!] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}[/bold][/yellow]")
-            print_results(self.warned, "yellow")
-
-        # Failed tests
-        if len(self.failed) > 0:
-            console.print(f"\n[red][bold][✗] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed[/bold][/red]")
-            print_results(self.failed, "red")
+        for results, show_condition, icon, label, color in categories:
+            if len(results) > 0 and show_condition:
+                console.print(f"\n[{color}][bold][{icon}] {len(results)} Pipeline Test{_s(results)} {label}[/bold][/{color}]")
+                print_results(results, color)
 
     def _print_results_rich(self, show_passed):
         """Print linting results using Rich formatting (panels, tables, etc.)."""
