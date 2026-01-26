@@ -448,8 +448,7 @@ class ModuleLint(ComponentLint):
                 element_name = list(element.keys())[0]
                 normalized_name = unquote(element_name)
                 # Ensure normalized_name is always a string (e.g., convert 1.2 -> "1.2")
-                if not isinstance(normalized_name, str):
-                    normalized_name = str(normalized_name)
+                normalized_name = str(normalized_name)
                 element_meta = _find_meta_info(meta_yml_io, element_name, is_output=is_output)
 
                 # For topics, handle type field based on keyword
@@ -459,7 +458,7 @@ class ModuleLint(ComponentLint):
                     # If no existing metadata, use template defaults
                     if not element_meta:
                         element_meta = topic_metadata[index].copy() if index < len(topic_metadata) else {}
-                        log.info(f"Adding topic metadata for '{normalized_name}' at index {index}: {element_meta}")
+                        log.debug(f"Adding topic metadata for '{normalized_name}' at index {index}: {element_meta}")
 
                     # Adjust type field based on keyword (val -> string, eval -> eval)
                     if keyword == "val" and "type" in element_meta:
