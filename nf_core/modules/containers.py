@@ -347,7 +347,7 @@ class ModuleContainers:
             "-o",
             "yaml",
             "--build-template",
-            "conda/micromamba:v2",
+            "conda/pixi:v1",
             "--log-level",
             log_level,
         ]
