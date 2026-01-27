@@ -362,18 +362,18 @@ class ModuleContainers:
         if out is None:
             raise RuntimeError("Wave command did not return any output")
 
-        # Decode stdout output
-        stdout_output = out[0].decode()
-
-        # Log Wave CLI output when verbose mode is enabled
-        # Wave outputs debug logs to stdout along with YAML, so we show the full output
-        if verbose:
-            log.info(f"Wave CLI output ({container_system}/{platform}):\n{stdout_output}")
+        # Log stderr when verbose (Wave outputs debug logs there)
+        if verbose and out[1]:
+            stderr_output = out[1].decode().strip()
+            if stderr_output:
+                for line in stderr_output.splitlines():
+                    log.info(line)
 
         try:
-            meta_data = yaml.safe_load(stdout_output) or dict()
+            meta_data = yaml.safe_load(out[0].decode()) or dict()
             log.debug(f"Wave YAML metadata: {meta_data}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
+            log.error(f"Failed to parse Wave output. Raw output:\n{out[0].decode()}")
             raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
         if not meta_data.get("succeeded"):
             raise RuntimeError(
