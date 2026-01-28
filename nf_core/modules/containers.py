@@ -8,6 +8,7 @@ import requests
 import rich.progress
 import yaml
 
+from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
@@ -231,7 +232,10 @@ class ModuleContainers:
         log.info(f"Updated container in {main_nf_path} to: {container_name}")
 
     def create(
-        self, await_build: bool = False, progress_bar: rich.progress.Progress | None = None, task_id: rich.progress.TaskID | None = None
+        self,
+        await_build: bool = False,
+        progress_bar: rich.progress.Progress | None = None,
+        task_id: rich.progress.TaskID | None = None,
     ) -> tuple[dict[str, dict[str, dict[str, str]]], bool]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
@@ -493,14 +497,6 @@ class ModuleContainers:
         ]
         return containers_flat
 
-    def get_meta(self) -> dict:
-        """Load and return the meta.yml content."""
-        if not self.meta_yml or not self.meta_yml.exists():
-            raise FileNotFoundError(f"meta.yml not found for module '{self.module}'")
-        with open(self.meta_yml) as f:
-            meta = ruamel_yaml.load(f)
-        return meta
-
     def get_containers_from_meta(self) -> dict:
         """
         Return containers defined in the module meta.yml.
@@ -508,7 +504,7 @@ class ModuleContainers:
         """
         assert self.meta_yml and self.meta_yml.exists()
 
-        meta = self.get_meta()
+        meta = read_meta_yml(self.meta_yml)
         containers = meta.get("containers", dict())
         if not containers:
             log.debug(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
@@ -540,7 +536,9 @@ class ModuleContainers:
             log.debug("Containers not initialized - running `create()` ...")
             self.create()[0]  # Ignore success status, just get containers
 
-        meta = self.get_meta()
+        assert self.meta_yml
+
+        meta = read_meta_yml(self.meta_yml)
         meta_containers = meta.get("containers", dict())
         meta_containers.update(self.containers)
         meta["containers"] = meta_containers

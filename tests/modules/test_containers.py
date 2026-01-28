@@ -77,14 +77,6 @@ class TestModuleContainers:
         assert manager.environment_yml == module_dir / "environment.yml"
         assert manager.meta_yml == module_dir / "meta.yml"
 
-    def test_get_meta_returns_dict(self, tmp_path: Path):
-        """Test that get_meta returns the meta.yml content"""
-        repo_root, module_dir = self._setup_modules_repo(tmp_path)
-        meta = {"name": "testC", "foo": {"bar": "baz"}}
-        self._write_meta(module_dir, meta)
-        manager = ModuleContainers("testC", directory=repo_root)
-        assert manager.get_meta() == meta
-
     @mock.patch.object(ModuleContainers, "request_conda_lock_file")
     @mock.patch.object(ModuleContainers, "request_image_inspect")
     @mock.patch("nf_core.modules.containers.run_cmd")
