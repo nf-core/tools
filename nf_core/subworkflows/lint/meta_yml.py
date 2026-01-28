@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 
 import jsonschema.validators
-import ruamel.yaml
 
 import nf_core.components.components_utils
 from nf_core.components.lint import LintExceptionError
@@ -43,9 +42,9 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         raise LintExceptionError("Subworkflow does not have a `meta.yml` file")
 
     try:
-        with open(subworkflow.meta_yml) as fh:
-            yaml = ruamel.yaml.YAML(typ="safe")
-            meta_yaml = yaml.load(fh)
+        from nf_core.components.components_utils import read_meta_yml
+
+        meta_yaml = read_meta_yml(subworkflow.meta_yml)
         subworkflow.passed.append(
             ("meta_yml", "meta_yml_exists", "Subworkflow `meta.yml` exists", subworkflow.meta_yml)
         )

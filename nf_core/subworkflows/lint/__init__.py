@@ -231,13 +231,14 @@ class SubworkflowLint(ComponentLint):
         """
         Update the meta.yml file with the correct inputs and outputs
         """
+        from nf_core.components.components_utils import read_meta_yml
+
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = True
         yaml.indent(mapping=2, sequence=2, offset=0)
 
         # Read meta.yml
-        with open(swf.meta_yml) as fh:
-            meta_yaml = yaml.load(fh)
+        meta_yaml = read_meta_yml(swf.meta_yml)
         meta_yaml_corrected = meta_yaml.copy()
         # Obtain inputs and outputs from main.nf
         swf.get_inputs_from_main_nf()
