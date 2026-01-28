@@ -26,14 +26,14 @@ jobs:
           path: nf-core-tools
 
       - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14"
           cache: pip
           cache-dependency-path: nf-core-tools/pyproject.toml
 
       - name: Set up Java
-        uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           distribution: "temurin"
           architecture: x64
