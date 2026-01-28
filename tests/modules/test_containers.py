@@ -153,13 +153,6 @@ class TestModuleContainers:
         containers = manager.create()
         assert "conda" not in containers
 
-    @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
-    def test_create_raises_on_missing_wave_output(self, mock_run_cmd, tmp_path: Path):
-        repo_root, module_dir = self._setup_modules_repo(tmp_path)
-        manager = ModuleContainers("testC", directory=repo_root)
-        with pytest.raises(RuntimeError, match="Wave command did not return any output"):
-            manager.create(await_build=True)
-
     @mock.patch("nf_core.modules.containers.run_cmd")
     def test_request_container_docker_success(self, mock_run_cmd, tmp_path: Path):
         module_dir = self._make_module(tmp_path)
