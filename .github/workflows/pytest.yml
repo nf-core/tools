@@ -120,7 +120,7 @@ jobs:
           echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
         with:
           include-hidden-files: true
@@ -128,7 +128,7 @@ jobs:
           path: ./snapshot_report.html
 
       - name: Upload coverage
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           include-hidden-files: true
           name: coverage_py${{ matrix.python-version }}_${{ env.test }}
@@ -154,7 +154,7 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: coverage_*
 
