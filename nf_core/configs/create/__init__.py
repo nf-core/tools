@@ -63,7 +63,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "final": FinalScreen,
         "hpc_question": ChooseHpc,
         "hpc_customisation": HpcCustomisation,
-        "pipelineconfigquestion": PipelineConfigQuestion,
+        "pipeline_config_question": PipelineConfigQuestion,
         "default_process_resources": DefaultProcess,
         "named_process_resources": NamedProcess,
         "labelled_process_resources": LabelledProcess,

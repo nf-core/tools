@@ -4,13 +4,18 @@ nf-core organization specification.
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, generate_config_entry
 from re import sub
+from pathlib import Path
 
 
 class ConfigCreate:
-    def __init__(self, template_config: ConfigsCreateConfig, config_type: str, config_dir:str = '.'):
+    def __init__(self, template_config: ConfigsCreateConfig, config_type: str, config_dir: Path | str = Path('.')):
         self.template_config = template_config
         self.config_type = config_type
-        self.config_dir = sub(r'/$', '', config_dir)
+        config_dir_path = config_dir if isinstance(config_dir, Path) else Path(config_dir)
+        assert not config_dir_path.is_file(), f'Error: the path "{str(config_dir_path)}" is a file.'
+        # Create directory if it doesn't already exist
+        config_dir_path.mkdir(parents=True, exist_ok=True)
+        self.config_dir = config_dir_path
 
     def construct_info_params(self):
         final_params = {}
@@ -69,23 +74,13 @@ class ConfigCreate:
 
         time_str = ''
         if hours:
-            time_h = None
-            time_m = None
-            try:
-                time_h = int(hours)
-            except:
-                try:
-                    time_m = int(float(hours) * 60)
-                except:
-                    raise ValueError("Non-numeric value supplied for walltime value.")
-            if time_m is not None and time_m % 60 == 0:
-                time_h = int(time_m / 60)
-            if time_h is not None:
+            time_h = float(hours)
+            if time_h.is_integer():
+                time_h = int(time_h)
                 time_str = f"time = {time_h}.h"
-            elif time_m is not None:
-                time_str = f"time = {time_m}.m"
             else:
-                raise ValueError("Non-numeric value supplied for walltime value.")
+                time_m = int(time_h * 60)
+                time_str = f"time = {time_m}.m"
 
         resources = [cpus_str, memory_str, time_str]
         return [
@@ -160,8 +155,10 @@ class ConfigCreate:
     def write_to_file(self):
         ## File name option
         config_name = str(self.template_config.general_config_name).strip()
-        filename = sub(r'\s+', '_', config_name) + ".conf"
-        filename = f'{self.config_dir}/{filename}'
+        config_name_clean = sub(r'\W+', '_', config_name)
+        config_name_clean = sub(r'_+$', '', config_name_clean)
+        filename = f'{config_name_clean}.conf'
+        filename = self.config_dir / filename
 
         ## Collect all config entries per scope, for later checking scope needs to be written
         params_section_str = self.construct_params_str()
