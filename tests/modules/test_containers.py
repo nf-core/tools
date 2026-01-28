@@ -132,8 +132,9 @@ class TestModuleContainers:
         mock_request_conda_lock.return_value = "# conda lock file content"
 
         manager = ModuleContainers("testC", directory=repo_root)
-        containers = manager.create(await_=True)
+        containers, success = manager.create(await_build=True)
         assert manager.containers == containers
+        assert success is True
 
         for system in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
@@ -165,7 +166,7 @@ class TestModuleContainers:
         repo_root, module_dir = self._setup_modules_repo(tmp_path)
         manager = ModuleContainers("testC", directory=repo_root)
         with pytest.raises(RuntimeError, match="Wave command did not return any output"):
-            manager.create(await_=True)
+            manager.create(await_build=True)
 
     @mock.patch("nf_core.modules.containers.run_cmd")
     def test_request_container_docker_success(self, mock_run_cmd, tmp_path: Path):
