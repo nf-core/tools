@@ -231,7 +231,7 @@ class ModuleContainers:
         log.info(f"Updated container in {main_nf_path} to: {container_name}")
 
     def create(
-        self, await_build: bool = False, progress_bar: rich.progress.Progress | None = None, task_id: int | None = None
+        self, await_build: bool = False, progress_bar: rich.progress.Progress | None = None, task_id: rich.progress.TaskID | None = None
     ) -> tuple[dict[str, dict[str, dict[str, str]]], bool]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
