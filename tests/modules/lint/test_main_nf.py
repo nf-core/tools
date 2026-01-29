@@ -427,3 +427,39 @@ process TEST_PROCESS {
     data_path_key = list(data_output[0].keys())[0]
     assert '"data.csv"' == data_path_key, f"Expected '\"data.csv\"', got '{data_path_key}'"
     assert "hidden" not in data_path_key, f"Pattern should not contain 'hidden': {data_path_key}"
+
+
+def test_get_outputs_with_whitespace_after_parenthesis(tmp_path):
+    """Test that output parsing correctly handles spaces after parentheses like val( meta )"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val( meta ), path("*.thing"), emit: my_channel
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    assert "my_channel" in component.outputs
+    my_channel_output = component.outputs["my_channel"]
+    output_keys = [list(out.keys())[0] for out in my_channel_output[0]]
+    # Check that meta is correctly parsed despite the whitespace
+    assert "meta" in output_keys, f"Expected 'meta' without spaces in output, got {output_keys}"
