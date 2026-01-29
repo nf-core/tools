@@ -224,17 +224,33 @@ class NFCoreComponent:
             return match.group(1).strip() if match else None
 
         # Find matching closing parentheses, respecting quotes
+        # If content starts with a quote, only extract the quoted value (ignoring modifiers like "hidden: true")
+        # First check if content after opening paren starts with a quote
+        content_start = rest[1:].lstrip()  # Skip opening paren and whitespace
+        starts_with_quote = content_start and content_start[0] in ('"', "'")
+
         depth = 0
         in_quote = None
+        quote_closed_at = None
         for i, char in enumerate(rest):
             if char in ('"', "'") and (i == 0 or rest[i - 1] != "\\"):
-                in_quote = char if in_quote is None else (None if in_quote == char else in_quote)
+                if in_quote is None:
+                    in_quote = char
+                elif in_quote == char:
+                    in_quote = None
+                    # Only remember first quote position if content started with a quote
+                    if depth == 1 and quote_closed_at is None and starts_with_quote:
+                        quote_closed_at = i
             elif char == "(" and in_quote is None:
                 depth += 1
             elif char == ")" and in_quote is None:
                 depth -= 1
                 if depth == 0:
-                    return rest[1:i]  # Return content between parentheses
+                    # If content started with a quote and we found it, return only that
+                    if quote_closed_at is not None:
+                        return rest[1 : quote_closed_at + 1]
+                    # Otherwise return everything between parentheses
+                    return rest[1:i]
         return None
 
     def get_inputs_from_main_nf(self) -> None:
