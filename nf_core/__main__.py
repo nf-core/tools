@@ -1388,6 +1388,7 @@ def modules_containers(ctx):
     pass
 
 
+# nf-core modules containers create
 @modules_containers.command("create", aliases=["c"])
 @click.pass_context
 @click.option(
@@ -1455,7 +1456,8 @@ def command_modules_containers_lint(ctx, module):
     modules_containers_lint(ctx, module)
 
 
-@modules_containers.command("list")
+# nf-core modules containers list
+@modules_containers.command("list", aliases=["ls"])
 @click.pass_context
 @click.argument(
     "module",
@@ -1465,11 +1467,18 @@ def command_modules_containers_lint(ctx, module):
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-def command_modules_containers_list(ctx, module):
+@click.option(
+    "-p",
+    "--plain-text",
+    is_flag=True,
+    default=False,
+    help="Output in plain text format",
+)
+def command_modules_containers_list(ctx, module, plain_text):
     """
     Print containers defined in a module meta.yml.
     """
-    modules_containers_list(ctx, module)
+    modules_containers_list(ctx, module, plain_text)
 
 
 # nf-core subworkflows click command

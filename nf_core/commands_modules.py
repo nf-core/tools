@@ -469,7 +469,7 @@ def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
         sys.exit(1)
 
 
-def modules_containers_list(ctx, module):
+def modules_containers_list(ctx, module, plain_text=False):
     """
     Print containers defined in a module meta.yml.
     """
@@ -478,10 +478,16 @@ def modules_containers_list(ctx, module):
     try:
         manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
         containers = manager.list_containers()
-        t = rich.table.Table("Container System", "Platform", "Image")
-        for cs, p, img in containers:
-            t.add_row(cs, p, img)
-        stdout.print(t)
+
+        if plain_text:
+            for cs, p, img in containers:
+                stdout.print(f"{cs} {p} {img}")
+        else:
+            t = rich.table.Table("Container System", "Platform")
+            t.add_column("Image", overflow="fold")
+            for cs, p, img in containers:
+                t.add_row(cs, p, img)
+            stdout.print(t)
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)

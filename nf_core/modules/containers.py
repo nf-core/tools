@@ -306,7 +306,7 @@ class ModuleContainers:
                 conda_lock_url = self.get_conda_lock_url(build_id)
                 # Download conda lock file
                 log.debug(f"Downloading conda lock file for {platform} from {conda_lock_url} to {conda_lock_path}")
-                conda_lock_path.write_text(self.request_conda_lock_file(conda_lock_url))
+                conda_lock_path.write_text(self.get_conda_lock_file(conda_lock_url))
                 new_lock_files.add(conda_lock_path)
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, advance=1)
@@ -470,10 +470,6 @@ class ModuleContainers:
         if not conda_lock_url:
             raise ValueError("No conda lock file found")
 
-        return self.request_conda_lock_file(conda_lock_url)
-
-    @staticmethod
-    def request_conda_lock_file(conda_lock_url: str) -> str:
         resp = requests.get(conda_lock_url)
         log.debug(f"Downloading conda lock file from {conda_lock_url}")
         if resp.status_code != 200:
@@ -492,9 +488,18 @@ class ModuleContainers:
         Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """
         containers_valid = self.get_containers_from_meta()
-        containers_flat = [
-            (cs, p, containers_valid[cs][p]["name"]) for cs in CONTAINER_SYSTEMS for p in CONTAINER_PLATFORMS
-        ]
+        containers_flat = []
+        for cs in CONTAINER_SYSTEMS + ["conda"]:
+            for p in CONTAINER_PLATFORMS:
+                container_entry = containers_valid[cs][p]
+                # Add the name entry
+                if cs == "conda":
+                    containers_flat.append((cs, p, container_entry["lock_file"]))
+                else:
+                    containers_flat.append((cs, p, container_entry["name"]))
+                # For singularity, also add the https entry if available
+                if cs == "singularity" and self.HTTPS_URL_KEY in container_entry:
+                    containers_flat.append((cs, p, container_entry[self.HTTPS_URL_KEY]))
         return containers_flat
 
     def get_containers_from_meta(self) -> dict:
@@ -517,7 +522,7 @@ class ModuleContainers:
                 return dict()
 
             for pf in CONTAINER_PLATFORMS:
-                spec = containers.get(pf)
+                spec = cs.get(pf)
                 if not spec:
                     log.debug(f"Platform build {pf} missing for {system} container for module {self.module}")
                     return dict()
