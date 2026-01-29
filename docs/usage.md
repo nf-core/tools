@@ -188,6 +188,8 @@ This step involves extracting all taxonomic IDs of viral species predicted by cl
 
 This step either retrieves the reads of all viral TaxIDs predicted by classifiers or extracts reads from a user-defined list of TaxIDs separated by spaces when the `--taxid` option is activated. Extracting reads predicted by `Kraken2` can be activated with `--extract_kraken2_reads`, extracting reads predicted by `Centrifuge` can be activated with `--extract_centrifuge_reads` and extracting reads predicted by `DIAMOND` can be activated with `--extract_diamond_reads`.
 
+When extracting `Kraken2` reads, the `--include-children` option is used to include reads classified at lower taxonomic ranks than the specified taxonomy ID level. If you only want to extract reads classified at the specified taxonomy id, you can disable this option by defining it in the custom config file.
+
 If the `--taxid` option is included in the command line, the pipeline will only extract reads for the user specified TaxIDs, in other words, `--taxid` takes priority.
 
 ### de-novo assembly
