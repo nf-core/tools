@@ -19,6 +19,7 @@
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
 - Escape original merge branch to compile regex ([#3984](https://github.com/nf-core/tools/pull/3984))
+- Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 
 ### Template
 
@@ -29,12 +30,15 @@
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
 - more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
+- handle val in version topics correctly ([#3988](https://github.com/nf-core/tools/pull/3988))
+- handle additional attributes in input parsing correctly ([#3990](https://github.com/nf-core/tools/pull/3990))
 
 ### Modules
 
 - sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
 - fix(modules_json): Use name string instead of dict as key in recreate_dependencies ([#3963](https://github.com/nf-core/tools/pull/3963))
 - linting: polish regex for output parsing in modules main.nf ([#3967](https://github.com/nf-core/tools/pull/3967))
+- modules linting: catch failing edamontology requests ([#3994](https://github.com/nf-core/tools/pull/3994))
 
 ### Subworkflows
 
@@ -75,6 +79,7 @@
 - Update multiqc to 1.32 ([#3878](https://github.com/nf-core/tools/pull/3878))
 - Update pipeline creation information page to be more exclusive as to what should use the full nf-core pipeline template ([#3891](https://github.com/nf-core/tools/pull/3891))
 - Fix LSP warnings in pipeline template ([#3905](https://github.com/nf-core/tools/pull/3905))
+- Move CONTRIBUTING.md to docs/, review and update text, and add pipeline-specific conventions section ([#3903](https://github.com/nf-core/tools/pull/3903))
 
 ### Linting
 

@@ -121,7 +121,7 @@ jobs:
   confirm-pass:
     needs: [nf-test]
     if: always()
-    runs-on:  {% endraw %}#{% if is_nfcore %} use self-hosted runners
+    runs-on: {% endraw %}#{% if is_nfcore %} use self-hosted runners
       - runs-on={% raw %}${{ github.run_id }}{% endraw %}-confirm-pass
       - runner=2cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
