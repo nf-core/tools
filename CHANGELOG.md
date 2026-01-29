@@ -10,6 +10,7 @@
 - dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
 - Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
+- Simplify coverage reporting in pytest.yml ([#3934](https://github.com/nf-core/tools/pull/3934))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
 - Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
@@ -18,6 +19,7 @@
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
+- Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 
 ### Template
 
@@ -30,12 +32,14 @@
 - Fix bugs in subworkflows lint causing false positive warnings ([#3968](https://github.com/nf-core/tools/pull/3968))
 - more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
 - handle val in version topics correctly ([#3988](https://github.com/nf-core/tools/pull/3988))
+- handle additional attributes in input parsing correctly ([#3990](https://github.com/nf-core/tools/pull/3990))
 
 ### Modules
 
 - sort meta.yml based on keys in schema ([#3958](https://github.com/nf-core/tools/pull/3958))
 - fix(modules_json): Use name string instead of dict as key in recreate_dependencies ([#3963](https://github.com/nf-core/tools/pull/3963))
 - linting: polish regex for output parsing in modules main.nf ([#3967](https://github.com/nf-core/tools/pull/3967))
+- modules linting: catch failing edamontology requests ([#3994](https://github.com/nf-core/tools/pull/3994))
 
 ### Subworkflows
 
