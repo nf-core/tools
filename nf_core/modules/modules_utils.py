@@ -103,7 +103,11 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    response = requests.get("https://edamontology.org/EDAM.tsv")
+    try:
+        response = requests.get("https://edamontology.org/EDAM.tsv")
+    except requests.exceptions.RequestException as e:
+        log.warning(f"Failed to load EDAM ontology: {e}")
+        return edam_formats
     for line in response.content.splitlines():
         fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format"):

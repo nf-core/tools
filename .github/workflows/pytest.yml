@@ -35,7 +35,7 @@ jobs:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out source-code repository
 
       - name: List tests
@@ -64,17 +64,17 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out source-code repository
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: ${{ matrix.python-version }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
         with:
           enable-cache: true
 
@@ -136,7 +136,7 @@ jobs:
           echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
         with:
           include-hidden-files: true
