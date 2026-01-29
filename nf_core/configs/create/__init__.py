@@ -20,6 +20,9 @@ from nf_core.configs.create.hpccustomisation import HpcCustomisation
 from nf_core.configs.create.hpcquestion import ChooseHpc
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.welcome import WelcomeScreen
+from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
+from nf_core.configs.create.defaultprocessres import DefaultProcess
+from nf_core.configs.create.multiprocessres import MultiNamedProcessConfig, MultiLabelledProcessConfig
 
 ## General utilities
 from nf_core.utils import LoggingConsole
@@ -59,6 +62,10 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "final": FinalScreen,
         "hpc_question": ChooseHpc,
         "hpc_customisation": HpcCustomisation,
+        "pipeline_config_question": PipelineConfigQuestion,
+        "default_process_resources": DefaultProcess,
+        "multi_named_process_config": MultiNamedProcessConfig,
+        "multi_labelled_process_config": MultiLabelledProcessConfig,
         "final_infra_details": FinalInfraDetails,
     }
 
@@ -68,6 +75,9 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     # Tracking variables
     CONFIG_TYPE = None
     NFCORE_CONFIG = True
+    INFRA_ISHPC = False
+    PIPE_CONF_NAMED = False
+    PIPE_CONF_LABELLED = False
 
     # Log handler
     LOG_HANDLER = rich_log_handler
@@ -99,18 +109,32 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             utils.NFCORE_CONFIG_GLOBAL = False
             self.push_screen("basic_details")
         elif event.button.id == "type_hpc":
+            self.INFRA_ISHPC = True
+            utils.INFRA_ISHPC_GLOBAL = True
             self.push_screen("hpc_customisation")
+        elif event.button.id == "type_local":
+            self.INFRA_ISHPC = False
+            utils.INFRA_ISHPC_GLOBAL = False
+            self.push_screen("final_infra_details")
         elif event.button.id == "toconfiguration":
             self.push_screen("final_infra_details")
         elif event.button.id == "finish":
             self.push_screen("final")
         ## General options
-        if event.button.id == "close_app":
-            self.exit(return_code=0)
         if event.button.id == "back":
             self.pop_screen()
+
+    def close_app(self):
+        self.exit(return_code=0)
 
     ## User theme options
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.theme: str = "textual-dark" if self.theme == "textual-light" else "textual-light"
+
+    def get_context(self):
+        return {
+            "is_nfcore": self.NFCORE_CONFIG,
+            "is_infrastructure": self.CONFIG_TYPE == "infrastructure",
+            "is_hpc": self.INFRA_ISHPC
+        }
