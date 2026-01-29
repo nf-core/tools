@@ -52,9 +52,20 @@ class DefaultProcess(Screen):
         )
         yield Center(
             Button("Back", id="back", variant="default"),
+            Button("Skip", id="skip", variant="default"),
             Button("Next", id="next", variant="success"),
             classes="cta",
         )
+
+    @on(Button.Pressed, "#skip")
+    def skip_to_next_screen(self) -> None:
+        # Skip to the next screen without saving
+        if self.parent.PIPE_CONF_NAMED:
+            self.parent.push_screen("multi_named_process_config")
+        elif self.parent.PIPE_CONF_LABELLED:
+            self.parent.push_screen("multi_labelled_process_config")
+        else:
+            self.parent.push_screen("final")
 
     # Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
     @on(Button.Pressed, "#next")
@@ -77,9 +88,9 @@ class DefaultProcess(Screen):
                 self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
             # Push the next screen
             if self.parent.PIPE_CONF_NAMED:
-                self.parent.push_screen("named_process_resources")
+                self.parent.push_screen("multi_named_process_config")
             elif self.parent.PIPE_CONF_LABELLED:
-                self.parent.push_screen("labelled_process_resources")
+                self.parent.push_screen("multi_labelled_process_config")
             else:
                 self.parent.push_screen("final")
         except ValueError:

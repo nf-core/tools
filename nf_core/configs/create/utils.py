@@ -59,11 +59,7 @@ class ConfigsCreateConfig(BaseModel):
     """ Default amount of memory """
     default_process_hours: Optional[str] = None
     """ Default walltime - hours """
-    default_process_minutes: Optional[str] = None
-    """ Default walltime - minutes """
-    default_process_seconds: Optional[str] = None
-    """ Default walltime - seconds """
-    custom_process_name: Optional[str] = None
+    custom_process_id: Optional[str] = None
     """" Name or label of a process to configure """
     custom_process_ncpus: Optional[str] = None
     """ Number of CPUs for process """
@@ -219,7 +215,7 @@ class ConfigsCreateConfig(BaseModel):
                 )
         return v
 
-    @field_validator("custom_process_name")
+    @field_validator("custom_process_id")
     @classmethod
     def notempty_process_name(cls, v: str, info: ValidationInfo) -> str:
         """Check that the custom process name or label isn't empty."""

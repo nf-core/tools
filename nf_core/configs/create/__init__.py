@@ -22,8 +22,7 @@ from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
 from nf_core.configs.create.defaultprocessres import DefaultProcess
-from nf_core.configs.create.namedprocessres import NamedProcess
-from nf_core.configs.create.labelledprocessres import LabelledProcess
+from nf_core.configs.create.multiprocessres import MultiNamedProcessConfig, MultiLabelledProcessConfig
 
 ## General utilities
 from nf_core.utils import LoggingConsole
@@ -65,8 +64,8 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "hpc_customisation": HpcCustomisation,
         "pipeline_config_question": PipelineConfigQuestion,
         "default_process_resources": DefaultProcess,
-        "named_process_resources": NamedProcess,
-        "labelled_process_resources": LabelledProcess,
+        "multi_named_process_config": MultiNamedProcessConfig,
+        "multi_labelled_process_config": MultiLabelledProcessConfig,
         "final_infra_details": FinalInfraDetails,
     }
 

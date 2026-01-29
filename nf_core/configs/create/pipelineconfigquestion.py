@@ -114,8 +114,8 @@ class PipelineConfigQuestion(Screen):
         if self.config_defaults:
             self.parent.push_screen("default_process_resources")
         elif self.config_named_processes:
-            self.parent.push_screen("named_process_resources")
+            self.parent.push_screen("multi_named_process_config")
         elif self.config_labels:
-            self.parent.push_screen("labelled_process_resources")
+            self.parent.push_screen("multi_labelled_process_config")
         else:
             self.parent.push_screen("final")
