@@ -12,6 +12,8 @@
 - Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
 - Simplify coverage reporting in pytest.yml ([#3934](https://github.com/nf-core/tools/pull/3934))
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
+- Update python:3.14-slim Docker digest to 119fd5b ([#3910](https://github.com/nf-core/tools/pull/3910))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.7 ([#3943](https://github.com/nf-core/tools/pull/3943))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
 - Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
@@ -19,7 +21,18 @@
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
 - Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
+- handle type for val in topics correctly ([#3991](https://github.com/nf-core/tools/pull/3991))
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
+- fix failing devcontainer builds ([#4013](https://github.com/nf-core/tools/pull/4013))
+- Update codecov/codecov-action digest to 671740a ([#4000](https://github.com/nf-core/tools/pull/4000))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.19.1 ([#4007](https://github.com/nf-core/tools/pull/4007))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.9.28 ([#4006](https://github.com/nf-core/tools/pull/4006))
+- Update dependency textual-dev to v1.8.0 ([#4005](https://github.com/nf-core/tools/pull/4005))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.5 ([#4002](https://github.com/nf-core/tools/pull/4002))
+- Update dependency textual to v7 ([#4008](https://github.com/nf-core/tools/pull/4008))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 8a29f1c ([#4009](https://github.com/nf-core/tools/pull/4009))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.14 ([#4011](https://github.com/nf-core/tools/pull/4011))
+- Update python:3.14-slim Docker digest to 9b81fe9 ([#4012](https://github.com/nf-core/tools/pull/4012))
 
 ### Template
 

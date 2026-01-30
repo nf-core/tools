@@ -1,6 +1,6 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:2be0f5a9afd20bd3012a5c963c838cae7b339d4cbe05f4f325710d26058a7854 AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:8a29f1c63ce3e138b9731f21a02a5f9aaf19454caebb670769e6fe88a573a4cb AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
@@ -18,7 +18,8 @@ RUN conda install -c bioconda -y nextflow nf-test && \
     conda clean -afy
 
 # Install dependencies for apptainer build and apptainer and run apt clean
-RUN apt-get update --quiet && \
+RUN rm -f /etc/apt/sources.list.d/yarn.list && \
+    apt-get update --quiet && \
     apt-get install -y curl rpm2cpio cpio && \
     curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - /usr/local/apptainer && \
     echo "PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc && \
@@ -26,7 +27,7 @@ RUN apt-get update --quiet && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM mcr.microsoft.com/devcontainers/base:2.0.2-debian12@sha256:23fa69fed758b7927c60061317d73baf7d66b9fca5c344e80bce3a940b229af0 AS final
+FROM mcr.microsoft.com/devcontainers/base:2.1.5-debian12@sha256:210b178bdf27aa3cab843ff98267da72ae27fa1d8e06c415efa756048a4a1a5b AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda

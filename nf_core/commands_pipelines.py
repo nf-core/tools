@@ -107,6 +107,7 @@ def pipelines_lint(
     markdown,
     json,
     sort_by,
+    plain_text,
 ):
     """
     Check pipeline code against nf-core guidelines.
@@ -142,6 +143,7 @@ def pipelines_lint(
             markdown,
             json,
             ctx.obj["hide_progress"],
+            plain_text,
         )
         swf_failed = 0
         module_failed = 0
