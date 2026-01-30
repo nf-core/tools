@@ -249,8 +249,8 @@ class NFCoreComponent:
                     # If content started with a quote and we found it, return only that
                     if quote_closed_at is not None:
                         return rest[1 : quote_closed_at + 1]
-                    # Otherwise return everything between parentheses
-                    return rest[1:i]
+                    # Otherwise return everything between parentheses, stripping whitespace
+                    return rest[1:i].strip()
         return None
 
     def get_inputs_from_main_nf(self) -> None:
