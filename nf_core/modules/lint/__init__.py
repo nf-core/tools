@@ -96,6 +96,7 @@ class ModuleLint(ComponentLint):
         sort_by="test",
         local=False,
         fix_version=False,
+        plain_text=False,
     ):
         """
         Lint all or one specific module
@@ -115,6 +116,7 @@ class ModuleLint(ComponentLint):
         :param show_passed:     Whether passed tests should be shown as well
         :param fix_version:     Update the module version if a newer version is available
         :param hide_progress:   Don't show progress bars
+        :param plain_text:      Print output in plain text without rich formatting
 
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
@@ -178,8 +180,8 @@ class ModuleLint(ComponentLint):
             self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
 
         if print_results:
-            self._print_results(show_passed=show_passed, sort_by=sort_by)
-            self.print_summary()
+            self._print_results(show_passed=show_passed, sort_by=sort_by, plain_text=plain_text)
+            self.print_summary(plain_text=plain_text)
 
     def lint_modules(
         self, modules: list[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
