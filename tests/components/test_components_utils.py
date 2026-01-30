@@ -1,5 +1,7 @@
 import importlib
 import os
+import tempfile
+from pathlib import Path
 from unittest import mock
 
 import responses
@@ -79,3 +81,20 @@ class TestTestComponentsUtils(TestComponents):
                 )
         finally:
             importlib.reload(nf_core.components.constants)
+
+    def test_get_meta_returns_dict(self):
+        """Test that read_meta_yml returns the meta.yml content"""
+        tmp_dir = Path(tempfile.mkdtemp())
+        meta_yml = tmp_dir / "meta.yml"
+        meta_yml.write_text(
+            """
+name: test
+description: test
+version: 1.0.0
+"""
+        )
+        assert nf_core.components.components_utils.read_meta_yml(meta_yml) == {
+            "name": "test",
+            "description": "test",
+            "version": "1.0.0",
+        }

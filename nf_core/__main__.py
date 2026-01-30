@@ -17,6 +17,10 @@ from trogon import tui
 from nf_core import __version__
 from nf_core.commands_modules import (
     modules_bump_versions,
+    modules_containers_conda_lock,
+    modules_containers_create,
+    modules_containers_lint,
+    modules_containers_list,
     modules_create,
     modules_info,
     modules_install,
@@ -862,7 +866,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
-@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
+@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions", "containers"])
 @click.pass_context
 def modules(ctx, git_remote, branch, no_pull):
     """
@@ -1375,6 +1379,106 @@ def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     the nf-core/modules repo.
     """
     modules_bump_versions(ctx, tool, directory, all, show_all, dry_run)
+
+
+@modules.group("containers", aliases=["container", "con"])
+@click.pass_context
+def modules_containers(ctx):
+    """Manage module container builds and metadata."""
+    pass
+
+
+# nf-core modules containers create
+@modules_containers.command("create", aliases=["c"])
+@click.pass_context
+@click.option(
+    "-await",
+    "--await",
+    "await_build",
+    is_flag=True,
+    default=True,
+    help="Wait for the container build to finish.",
+)
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
+def command_modules_containers_create(ctx, await_build, module, directory):
+    """
+    Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
+    """
+    modules_containers_create(ctx, module, directory, await_build)
+
+
+@modules_containers.command("conda-lock")
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_conda_lock(ctx, module):
+    """
+    Build a Docker linux/arm64 container and fetch the conda lock file for a module.
+    """
+    modules_containers_conda_lock(ctx, module)
+
+
+@modules_containers.command("lint")
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_lint(ctx, module):
+    """
+    Confirm that container images for a module exist.
+    """
+    modules_containers_lint(ctx, module)
+
+
+# nf-core modules containers list
+@modules_containers.command("list", aliases=["ls"])
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+@click.option(
+    "-p",
+    "--plain-text",
+    is_flag=True,
+    default=False,
+    help="Output in plain text format",
+)
+def command_modules_containers_list(ctx, module, plain_text):
+    """
+    Print containers defined in a module meta.yml.
+    """
+    modules_containers_list(ctx, module, plain_text)
 
 
 # nf-core subworkflows click command

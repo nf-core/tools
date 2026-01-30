@@ -14,7 +14,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-import questionary
 import rich
 import rich.progress
 import ruamel.yaml
@@ -122,24 +121,9 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
         if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
-            questions = [
-                {
-                    "type": "list",
-                    "name": "all_modules",
-                    "message": "Lint all modules or a single named module?",
-                    "choices": ["All modules", "Named module"],
-                },
-                {
-                    "type": "autocomplete",
-                    "name": "tool_name",
-                    "message": "Tool name:",
-                    "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.component_name for m in self.all_remote_components],
-                },
-            ]
-            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
-            all_modules = answers["all_modules"] == "All modules"
-            module = answers.get("tool_name")
+            module = nf_core.modules.modules_utils.prompt_module_selection(
+                self.all_remote_components, component_type="modules", action="Lint"
+            )
 
         # Only lint the given module
         if module:
@@ -241,6 +225,7 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
+            # TODO container-conversion:  get_containers from main_nf
             # Update meta.yml file if requested
             if self.fix and mod.meta_yml is not None:
                 self.update_meta_yml_file(mod)
@@ -268,6 +253,8 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
+            # TODO container-conversion:  get_containers from main_nf
+
             # Update meta.yml file if requested
             if self.fix:
                 self.update_meta_yml_file(mod)
@@ -314,9 +301,32 @@ class ModuleLint(ComponentLint):
             self.meta_schema = json.load(fh)
         return self.meta_schema
 
+    def sort_meta_yml(self, meta_yml: dict) -> dict:
+        """Sort meta.yml keys according to the schema's property order"""
+        # Get the schema to determine the correct key order
+        try:
+            schema = self.load_meta_schema()
+            schema_keys = list(schema["properties"].keys())
+        except (LintExceptionError, KeyError) as e:
+            raise UserWarning("Failed to load meta schema", e)
+
+        result: dict = {}
+
+        # First, add keys in the order they appear in the schema
+        for key in schema_keys:
+            if key in meta_yml:
+                result[key] = meta_yml[key]
+
+        # Then add any keys that aren't in the schema (to preserve custom keys)
+        for key in meta_yml.keys():
+            if key not in result:
+                result[key] = meta_yml[key]
+
+        return result
+
     def update_meta_yml_file(self, mod):
         """
-        Update the meta.yml file with the correct inputs and outputs
+        Update the meta.yml file with the correct inputs, outputs, topics and containers
         """
         meta_yml = self.read_meta_yml(mod)
         if meta_yml is None:
@@ -366,29 +376,6 @@ class ModuleLint(ComponentLint):
 
             return {}
 
-        def _sort_meta_yml(meta_yml: dict) -> dict:
-            """Sort meta.yml keys according to the schema's property order"""
-            # Get the schema to determine the correct key order
-            try:
-                schema = self.load_meta_schema()
-                schema_keys = list(schema["properties"].keys())
-            except (LintExceptionError, KeyError) as e:
-                raise UserWarning("Failed to load meta schema", e)
-
-            result: dict = {}
-
-            # First, add keys in the order they appear in the schema
-            for key in schema_keys:
-                if key in meta_yml:
-                    result[key] = meta_yml[key]
-
-            # Then add any keys that aren't in the schema (to preserve custom keys)
-            for key in meta_yml.keys():
-                if key not in result:
-                    result[key] = meta_yml[key]
-
-            return result
-
         # Obtain inputs, outputs and topics from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
         # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
@@ -398,6 +385,9 @@ class ModuleLint(ComponentLint):
         if "output" in meta_yml:
             correct_outputs = self.obtain_outputs(mod.outputs)
             meta_outputs = self.obtain_outputs(meta_yml["output"])
+        if "containers" in meta_yml:
+            # TODO container-conversion: Read from main.nf
+            pass
 
         correct_topics = self.obtain_topics(mod.topics)
         meta_topics = self.obtain_topics(meta_yml.get("topics", {}))
@@ -648,7 +638,11 @@ class ModuleLint(ComponentLint):
                         corrected_meta_yml["topics"]["versions"].append(corrected_meta_yml["output"][versions_key][0])
                         if hasattr(corrected_meta_yml["output"][versions_key], "yaml_set_anchor"):
                             corrected_meta_yml["output"][versions_key].yaml_set_anchor(versions_key)
-        corrected_meta_yml = _sort_meta_yml(corrected_meta_yml)
+
+        # TODO container-conversion: If containers in original meta.yml:
+        # - Run _add_containers
+
+        corrected_meta_yml = self.sort_meta_yml(corrected_meta_yml)
 
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")

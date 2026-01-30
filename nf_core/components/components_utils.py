@@ -197,6 +197,27 @@ def get_components_to_install(
     return list(modules.values()), list(subworkflows.values())
 
 
+def read_meta_yml(meta_yml_path: Path) -> dict:
+    """
+    Read and parse a meta.yml file.
+
+    Args:
+        meta_yml_path: Path to the meta.yml file
+
+    Returns:
+        dict: Parsed YAML content
+
+    Raises:
+        FileNotFoundError: If meta.yml doesn't exist
+    """
+    if not meta_yml_path.exists():
+        raise FileNotFoundError(f"meta.yml not found at {meta_yml_path}")
+
+    with open(meta_yml_path) as f:
+        meta = yaml.load(f)
+    return meta
+
+
 def get_biotools_response(tool_name: str) -> dict | None:
     """
     Try to get bio.tools information for 'tool'

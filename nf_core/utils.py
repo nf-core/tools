@@ -18,6 +18,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
@@ -92,6 +93,9 @@ NFCORE_CACHE_DIR = Path(
     "nfcore",
 )
 NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
 
 
 def unquote(s: str) -> str:
@@ -1660,6 +1664,17 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+@contextmanager
+def set_wd_tempdir() -> Generator[None, None, None]:
+    """
+    Context manager to provide and change into a tempdir and ensure its removal and return to the
+    original_dir upon exceptions.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        with set_wd(Path(tmp)):
+            yield
 
 
 def get_wf_files(wf_path: Path):

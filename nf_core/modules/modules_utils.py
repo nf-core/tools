@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -14,6 +15,42 @@ class ModuleExceptionError(Exception):
     """Exception raised when there was an error with module commands"""
 
     pass
+
+
+def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
+    """
+    Extract the container directive from a main.nf file using regex.
+
+    Args:
+        main_nf_path: Path to the main.nf file
+        component_name: Optional component name for logging
+
+    Returns:
+        str: The container string, or empty string if not found
+    """
+    with open(main_nf_path) as f:
+        data = f.read()
+
+        if "container" not in data:
+            log.debug(f"Could not find a container directive in {main_nf_path}")
+            return ""
+
+        # Regex explained:
+        #  1. Match "container" followed by whitespace
+        #  2. Capturing group 1: Match a quote char " or '
+        #  3. Capturing group 2: Match any characters (the container string, including newlines)
+        #  4. Match whatever was captured in group 1 (same quote char)
+        # DOTALL flag makes . match newlines for multi-line container directives
+        regex_container = r'container\s+(["\'])(.+?)\1'
+        match = re.search(regex_container, data, re.DOTALL)
+        if not match:
+            component_info = f" for {component_name}" if component_name else ""
+            log.warning(f"Container{component_info} could not be extracted from {main_nf_path} with regex")
+            return ""
+
+        # Return the container string (group 2)
+        container = match.group(2)
+        return container
 
 
 def repo_full_name_from_remote(remote_url: str) -> str:
@@ -137,3 +174,58 @@ def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> 
         return exact_matches
     # If no exact match, look for modules that start with the given name (subtools)
     return [m for m in modules if m.component_name.startswith(module_name)]
+
+
+def prompt_module_selection(
+    modules: list[NFCoreComponent], component_type: str = "modules", action: str = "Select", allow_all: bool = True
+) -> str | None:
+    """
+    Prompt user to select a specific module or all modules.
+
+    Args:
+        modules (list[NFCoreComponent]): List of available modules to choose from
+        component_type (str): The component type (default: "modules", can also be "subworkflows")
+        action (str): The action verb to use in the prompt message (e.g., "Lint", "Install", "Update", "Bump versions for")
+        allow_all (bool): Whether to show "All modules" option (default: True)
+
+    Returns:
+        str | None: The selected module name, or None if "All modules" was selected
+    """
+    import questionary
+
+    from nf_core.utils import nfcore_question_style
+
+    if not modules:
+        return None
+
+    component_singular = component_type.rstrip("s")  # "modules" -> "module"
+
+    # If allow_all is False, skip the "all or named" question and go straight to module selection
+    if not allow_all:
+        question = {
+            "type": "autocomplete",
+            "name": "tool_name",
+            "message": "Tool name:",
+            "choices": [m.component_name for m in modules],
+        }
+        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+        return answer.get("tool_name")
+
+    # Otherwise, show the "all or named" question
+    questions = [
+        {
+            "type": "list",
+            "name": f"all_{component_type}",
+            "message": f"{action} all {component_type} or a single named {component_singular}?",
+            "choices": [f"All {component_type}", f"Named {component_singular}"],
+        },
+        {
+            "type": "autocomplete",
+            "name": "tool_name",
+            "message": "Tool name:",
+            "when": lambda x: x[f"all_{component_type}"] == f"Named {component_singular}",
+            "choices": [m.component_name for m in modules],
+        },
+    ]
+    answers = questionary.unsafe_prompt(questions, style=nfcore_question_style)
+    return answers.get("tool_name")

@@ -14,6 +14,7 @@
 - Update python:3.14-slim Docker digest to 119fd5b ([#3910](https://github.com/nf-core/tools/pull/3910))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.7 ([#3943](https://github.com/nf-core/tools/pull/3943))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
+- Implement wave container commands ([#3954](https://github.com/nf-core/tools/pull/3954))
 - Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
 - Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))

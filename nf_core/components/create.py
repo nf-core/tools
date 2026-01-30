@@ -525,8 +525,9 @@ class ComponentCreate(ComponentCommand):
         Generate the meta.yml file.
         """
         # TODO: The meta.yml could be handled with a Pydantic model. The reason it is not implemented is because we want to maintain comments in the meta.yml file.
-        with open(self.file_paths["meta.yml"]) as fh:
-            meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
+        from nf_core.components.components_utils import read_meta_yml
+
+        meta_yml: ruamel.yaml.comments.CommentedMap = read_meta_yml(self.file_paths["meta.yml"])
 
         versions: dict[str, list | dict] = {
             f"versions_{self.component}": [
