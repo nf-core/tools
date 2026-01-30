@@ -35,7 +35,7 @@ jobs:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out source-code repository
 
       - name: List tests
@@ -64,17 +64,17 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         name: Check out source-code repository
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: ${{ matrix.python-version }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
         with:
           enable-cache: true
 
@@ -114,59 +114,31 @@ jobs:
             exit 1
           fi
 
+      - name: Generate coverage XML
+        if: always()
+        run: |
+          uv run coverage xml --rcfile=.coveragerc
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
+        with:
+          files: ./coverage.xml
+          flags: python-${{ matrix.python-version }}
+          env_vars: MATRIX_TEST
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          MATRIX_TEST: ${{ matrix.test }}
+
       - name: remove slashes from test name
         run: |
           test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
           echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
         with:
           include-hidden-files: true
           name: Snapshot Report ${{ env.test }}
           path: ./snapshot_report.html
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
-        with:
-          include-hidden-files: true
-          name: coverage_py${{ matrix.python-version }}_${{ env.test }}
-          path: .coverage
-
-  coverage:
-    needs: test
-    runs-on:
-      - runs-on=${{ github.run_id }}-coverage
-      - runner=2cpu-linux-x64
-    steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
-      - name: Set up Python 3.14
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: "3.14"
-
-      - name: Install coverage
-        run: pip install coverage
-
-      - name: move coveragerc file up
-        run: |
-          mv .github/.coveragerc .
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
-        with:
-          pattern: coverage_*
-
-      - name: Run coverage
-        run: |
-          coverage combine --keep coverage_*/.coverage*
-          coverage report
-          coverage xml
-
-      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5
-        with:
-          files: coverage.xml
-          disable_search: true # we already know the file to upload
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
