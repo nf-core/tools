@@ -29,6 +29,7 @@
 - Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.5 ([#4002](https://github.com/nf-core/tools/pull/4002))
 - Update dependency textual to v7 ([#4008](https://github.com/nf-core/tools/pull/4008))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 8a29f1c ([#4009](https://github.com/nf-core/tools/pull/4009))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.14 ([#4011](https://github.com/nf-core/tools/pull/4011))
 
 ### Template
 
