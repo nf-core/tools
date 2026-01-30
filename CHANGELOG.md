@@ -616,6 +616,10 @@ We also enabled to install subworkflows with modules from different remotes.
 | `-p` / `--parallel-downloads`     | `-d` / `--parallel-downloads`     |
 | new parameter                     | `-p` / (`--platform`)             |
 
+### Configs
+
+- New command: `nf-core configs create wizard` for generating configs for nf-core pipelines ([#3001](https://github.com/nf-core/tools/pull/3001))
+
 ### General
 
 - Change default branch to `main` for the nf-core/tools repository
