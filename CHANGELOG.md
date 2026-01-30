@@ -35,6 +35,8 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.14 ([#4011](https://github.com/nf-core/tools/pull/4011))
 - Update python:3.14-slim Docker digest to 9b81fe9 ([#4012](https://github.com/nf-core/tools/pull/4012))
 
+- Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
+
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
