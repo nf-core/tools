@@ -16,6 +16,7 @@
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
 - Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
+- Add new command to generate pipeline container config files ([#3955](https://github.com/nf-core/tools/pull/3955))
 - Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
 - Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
 - Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))

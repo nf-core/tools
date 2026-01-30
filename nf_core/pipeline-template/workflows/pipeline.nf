@@ -43,14 +43,13 @@ workflow {{ short_name|upper }} {
     FASTQC (
         ch_samplesheet
     )
-    {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}){% endif %}
     {%- endif %}
 
     //
     // Collate and save software versions
     //
-    def topic_versions = Channel.topic("versions")
+    def topic_versions = channel.topic("versions")
         .distinct()
         .branch { entry ->
             versions_file: entry instanceof Path

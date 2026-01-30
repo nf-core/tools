@@ -13,6 +13,7 @@ from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import (
     get_components_to_install,
     prompt_component_version_sha,
+    try_generate_container_configs,
 )
 from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
@@ -298,6 +299,10 @@ class ComponentUpdate(ComponentCommand):
                 # Update modules.json with newly installed component
                 self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
+
+                # Regenerate container configuration files for the pipeline when modules are updated
+                if self.component_type == "modules":
+                    try_generate_container_configs(self.directory, modules_repo.repo_path)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
                 if not silent and len(modules_to_update + subworkflows_to_update) > 0:
