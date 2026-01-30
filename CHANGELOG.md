@@ -39,6 +39,7 @@
 
 - switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
 - add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
+- Add bioconda channel to conda setup ([#3987](https://github.com/nf-core/tools/pull/3987))
 
 ### Linting
 
