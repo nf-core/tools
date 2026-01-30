@@ -18,7 +18,8 @@ RUN conda install -c bioconda -y nextflow nf-test && \
     conda clean -afy
 
 # Install dependencies for apptainer build and apptainer and run apt clean
-RUN apt-get update --quiet && \
+RUN rm -f /etc/apt/sources.list.d/yarn.list && \
+    apt-get update --quiet && \
     apt-get install -y curl rpm2cpio cpio && \
     curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - /usr/local/apptainer && \
     echo "PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc && \
