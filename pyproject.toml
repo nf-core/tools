@@ -70,7 +70,7 @@ dev = [
     "ruff",
     "Sphinx",
     "sphinx-rtd-theme",
-    "textual-dev==1.7.0",
+    "textual-dev==1.8.0",
     "types-PyYAML",
     "types-requests",
     "types-jsonschema",
