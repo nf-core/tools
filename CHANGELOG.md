@@ -22,6 +22,7 @@
 
 - Update apptainer setup action version ([#4036](https://github.com/nf-core/tools/pull/4036))
 - Update pre-commit hook astral-sh/uv-pre-commit to v0.10.2 ([#4037](https://github.com/nf-core/tools/pull/4037))
+- Update dependency prettier to v3.8.1 ([#4003](https://github.com/nf-core/tools/pull/4003))
 
 ## v3.5.2
 
@@ -40,6 +41,12 @@
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 - fix wrong parsing when output values contain spaces ([#3999](https://github.com/nf-core/tools/pull/3999))
 - fix failing devcontainer builds ([#4013](https://github.com/nf-core/tools/pull/4013))
+- Update codecov/codecov-action digest to 671740a ([#4000](https://github.com/nf-core/tools/pull/4000))
+
+### Template
+
+- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
+- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
 
 ### Linting
 
