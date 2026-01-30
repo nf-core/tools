@@ -284,6 +284,9 @@ class ModuleContainers:
                         progress_bar.update(task_id, advance=1)
                     continue
 
+        # Set containers early so get_conda_lock_file can access it
+        self.containers = containers
+
         # Download conda lock files as separate tasks
         new_lock_files = set()
         for platform in CONTAINER_PLATFORMS:
@@ -296,17 +299,18 @@ class ModuleContainers:
                 continue
 
             platform_safe = platform.replace("/", "-")
-            conda_data = containers.get("conda", dict())
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform_safe}-{build_id}.txt"
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Store the local file path in containers
+            conda_data = containers.get("conda", dict())
             conda_data.update({platform: {self.LOCK_FILE_KEY: str(conda_lock_path)}})
             containers["conda"] = conda_data
 
             try:
-                conda_lock_url = self.get_conda_lock_url(build_id)
-                # Download conda lock file
-                log.debug(f"Downloading conda lock file for {platform} from {conda_lock_url} to {conda_lock_path}")
-                conda_lock_path.write_text(self.get_conda_lock_file(conda_lock_url))
+                # Download conda lock file (it will look up build_id from docker container)
+                log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
+                conda_lock_path.write_text(self.get_conda_lock_file(platform))
                 new_lock_files.add(conda_lock_path)
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, advance=1)
@@ -319,8 +323,6 @@ class ModuleContainers:
 
         # Clean up stale conda-lock files
         self.cleanup_stale_conda_lock_files(new_lock_files)
-
-        self.containers = containers
 
         # Update main.nf with new container name (docker amd64 without registry)
         try:
@@ -466,9 +468,13 @@ class ModuleContainers:
 
         containers = self.containers or self.get_containers_from_meta() or self.create()[0] or dict()
 
-        conda_lock_url = containers.get("conda", dict()).get(platform, dict()).get(self.LOCK_FILE_KEY)
-        if not conda_lock_url:
-            raise ValueError("No conda lock file found")
+        # Get build_id from docker container for this platform
+        build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY)
+        if not build_id:
+            raise ValueError(f"No build_id found for docker container on platform {platform}")
+
+        # Generate the conda lock URL from the build_id
+        conda_lock_url = self.get_conda_lock_url(build_id)
 
         resp = requests.get(conda_lock_url)
         log.debug(f"Downloading conda lock file from {conda_lock_url}")
@@ -488,6 +494,8 @@ class ModuleContainers:
         Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """
         containers_valid = self.get_containers_from_meta()
+        if not containers_valid:
+            return []
         containers_flat = []
         for cs in CONTAINER_SYSTEMS + ["conda"]:
             for p in CONTAINER_PLATFORMS:

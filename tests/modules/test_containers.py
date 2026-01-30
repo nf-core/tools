@@ -66,6 +66,7 @@ class TestModuleContainers:
         return {
             "docker": {platform: {"name": f"{prefix}-docker-{platform}"} for platform in CONTAINER_PLATFORMS},
             "singularity": {platform: {"name": f"{prefix}-singularity-{platform}"} for platform in CONTAINER_PLATFORMS},
+            "conda": {platform: {"lock_file": f"/path/to/{prefix}-{platform}.txt"} for platform in CONTAINER_PLATFORMS},
         }
 
     def test_init_sets_paths(self, tmp_path: Path):
@@ -77,11 +78,11 @@ class TestModuleContainers:
         assert manager.environment_yml == module_dir / "environment.yml"
         assert manager.meta_yml == module_dir / "meta.yml"
 
-    @mock.patch.object(ModuleContainers, "request_conda_lock_file")
+    @mock.patch("nf_core.modules.containers.requests.get")
     @mock.patch.object(ModuleContainers, "request_image_inspect")
     @mock.patch("nf_core.modules.containers.run_cmd")
     def test_create_builds_containers(
-        self, mock_run_cmd, mock_request_image_inspect, mock_request_conda_lock, tmp_path: Path
+        self, mock_run_cmd, mock_request_image_inspect, mock_requests_get, tmp_path: Path
     ):
         repo_root, module_dir = self._setup_modules_repo(tmp_path)
 
@@ -119,9 +120,14 @@ class TestModuleContainers:
                 }
             }
 
+        # Mock requests.get for conda lock file download
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = "# conda lock file content"
+        mock_requests_get.return_value = mock_response
+
         mock_run_cmd.side_effect = fake_run_cmd
         mock_request_image_inspect.side_effect = fake_request_image_inspect
-        mock_request_conda_lock.return_value = "# conda lock file content"
 
         manager = ModuleContainers("testC", directory=repo_root)
         containers, success = manager.create(await_build=True)
@@ -261,9 +267,30 @@ class TestModuleContainers:
         assert "abc%2Fdef%20123" in url
         assert url.endswith("/condalock")
 
-    def test_request_conda_lock_file(self):
-        # TODO
-        pass
+    @mock.patch("nf_core.modules.containers.requests.get")
+    def test_get_conda_lock_file(self, mock_requests_get, tmp_path: Path):
+        """Test that get_conda_lock_file downloads from the correct URL"""
+        repo_root, module_dir = self._setup_modules_repo(tmp_path)
+
+        # Set up mock response
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = "# conda lock file content"
+        mock_requests_get.return_value = mock_response
+
+        # Create containers with build_id in docker container
+        manager = ModuleContainers("testC", directory=repo_root)
+        platform = CONTAINER_PLATFORMS[0]
+        manager.containers = {
+            "docker": {platform: {"buildId": "test-build-123"}},
+            "conda": {platform: {"lock_file": "/some/path.txt"}},
+        }
+
+        result = manager.get_conda_lock_file(platform)
+        assert result == "# conda lock file content"
+        # Verify it generated the correct URL from the build_id
+        expected_url = "https://wave.seqera.io/v1alpha1/builds/test-build-123/condalock"
+        mock_requests_get.assert_called_once_with(expected_url)
 
     def test_list_containers(self, tmp_path: Path):
         repo_root, module_dir = self._setup_modules_repo(tmp_path)
@@ -271,7 +298,13 @@ class TestModuleContainers:
         containers = self._containers_by_system("testC")
         with mock.patch.object(manager, "get_containers_from_meta", return_value=containers):
             listed = manager.list_containers()
-        expected = [(cs, p, containers[cs][p]["name"]) for cs in CONTAINER_SYSTEMS for p in CONTAINER_PLATFORMS]
+        # Build expected list including docker, singularity, and conda
+        expected = []
+        for cs in CONTAINER_SYSTEMS:
+            for p in CONTAINER_PLATFORMS:
+                expected.append((cs, p, containers[cs][p]["name"]))
+        for p in CONTAINER_PLATFORMS:
+            expected.append(("conda", p, containers["conda"][p]["lock_file"]))
         assert listed == expected
 
     def test_get_containers_from_meta_missing_section(self, tmp_path: Path, caplog):
@@ -295,7 +328,11 @@ class TestModuleContainers:
 
     def test_get_containers_from_meta_missing_platform_key(self, tmp_path: Path, caplog):
         repo_root, module_dir = self._setup_modules_repo(tmp_path)
-        containers = {"docker": {"ok": True}, "singularity": {"ok": True}, CONTAINER_PLATFORMS[0]: {"ok": True}}
+        # Only include one platform under docker/singularity, missing the other
+        containers = {
+            "docker": {CONTAINER_PLATFORMS[0]: {"ok": True}},
+            "singularity": {CONTAINER_PLATFORMS[0]: {"ok": True}},
+        }
         self._write_meta(module_dir, {"name": "testC", "containers": containers})
         manager = ModuleContainers("testC", directory=repo_root)
         missing_platform = CONTAINER_PLATFORMS[1]
@@ -306,9 +343,10 @@ class TestModuleContainers:
 
     def test_get_containers_from_meta_success(self, tmp_path: Path):
         repo_root, module_dir = self._setup_modules_repo(tmp_path)
-        containers = {"docker": {"ok": True}, "singularity": {"ok": True}}
-        for platform in CONTAINER_PLATFORMS:
-            containers[platform] = {"ok": True}
+        containers = {
+            "docker": {platform: {"ok": True} for platform in CONTAINER_PLATFORMS},
+            "singularity": {platform: {"ok": True} for platform in CONTAINER_PLATFORMS},
+        }
         self._write_meta(module_dir, {"name": "testC", "containers": containers})
         manager = ModuleContainers("testC", directory=repo_root)
         assert manager.get_containers_from_meta() == containers
