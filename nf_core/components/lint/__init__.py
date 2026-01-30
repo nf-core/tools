@@ -224,7 +224,7 @@ class ComponentLint(ComponentCommand):
         # If -k supplied, only run these tests
         self.lint_tests = [k for k in self.lint_tests if k in key]
 
-    def _print_results(self, show_passed=False, sort_by="test"):
+    def _print_results(self, show_passed=False, sort_by="test", plain_text=False):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -241,6 +241,17 @@ class ComponentLint(ComponentCommand):
         self.passed.sort(key=operator.attrgetter(*sort_order))
         self.warned.sort(key=operator.attrgetter(*sort_order))
         self.failed.sort(key=operator.attrgetter(*sort_order))
+
+        if plain_text:
+            from nf_core.pipelines.lint_utils import print_results_plain_text
+
+            results_list = [
+                (self.passed, "✔", "Passed", "green", show_passed),
+                (self.warned, "!", "Warning", "yellow", True),
+                (self.failed, "✗", "Failed", "red", True),
+            ]
+            print_results_plain_text(results_list, self.directory, self.component_type)
+            return
 
         # Find maximum module name length
         max_name_len = len(self.component_type[:-1] + " name")
@@ -350,14 +361,13 @@ class ComponentLint(ComponentCommand):
                 )
             )
 
-    def print_summary(self) -> None:
+    def print_summary(self, plain_text=False) -> None:
         """Print a summary table to the console."""
-        table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
-        table.add_row(
-            rf"[✔] {len(self.passed):>3} Test{_s(self.passed)} Passed",
-            style="green",
-        )
-        table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
-        table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
-        console.print(table)
+        from nf_core.pipelines.lint_utils import print_summary as print_summary_table
+
+        rows = [
+            (len(self.passed), "✔", f"Test{_s(self.passed)} Passed", "green", True),
+            (len(self.warned), "!", f"Test Warning{_s(self.warned)}", "yellow", True),
+            (len(self.failed), "✗", f"Test{_s(self.failed)} Failed", "red", True),
+        ]
+        print_summary_table(rows, plain_text)
