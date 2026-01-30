@@ -35,11 +35,6 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.14 ([#4011](https://github.com/nf-core/tools/pull/4011))
 - Update python:3.14-slim Docker digest to 9b81fe9 ([#4012](https://github.com/nf-core/tools/pull/4012))
 
-### Template
-
-- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
-- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
-
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))

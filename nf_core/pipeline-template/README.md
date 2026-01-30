@@ -110,7 +110,7 @@ We thank the following people for their extensive assistance in the development 
 
 ## Contributions and Support
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](docs/CONTRIBUTING.md).
+If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
 {% if is_nfcore -%}
 For further information or help, don't hesitate to get in touch on the [Slack `#{{ short_name }}` channel](https://nfcore.slack.com/channels/{{ short_name }}) (you can join with [this invite](https://nf-co.re/join/slack)).

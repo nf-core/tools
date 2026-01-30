@@ -1289,6 +1289,7 @@ class NFCoreYamlLintConfig(BaseModel):
             - report_section_order
             - report_comment
         files_exist:
+            - .github/CONTRIBUTING.md
             - CITATIONS.md
         template_strings: False
         template_strings:
