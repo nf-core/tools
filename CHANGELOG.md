@@ -21,6 +21,7 @@
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 - Update codecov/codecov-action digest to 671740a ([#4000](https://github.com/nf-core/tools/pull/4000))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.19.1 ([#4007](https://github.com/nf-core/tools/pull/4007))
 
 ### Template
 
