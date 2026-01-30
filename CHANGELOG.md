@@ -22,6 +22,7 @@
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 - Update codecov/codecov-action digest to 671740a ([#4000](https://github.com/nf-core/tools/pull/4000))
 - Update dependency textual-dev to v1.8.0 ([#4005](https://github.com/nf-core/tools/pull/4005))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.5 ([#4002](https://github.com/nf-core/tools/pull/4002))
 - Update dependency textual to v7 ([#4008](https://github.com/nf-core/tools/pull/4008))
 
 ### Template
