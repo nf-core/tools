@@ -25,6 +25,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         .gitattributes
         .prettierrc.yml
         .github/.dockstore.yml
+        .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml
@@ -92,6 +93,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path("CODE_OF_CONDUCT.md")],
         [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path(".github", ".dockstore.yml")],
+        [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],

@@ -24,11 +24,6 @@
 - Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.5 ([#4002](https://github.com/nf-core/tools/pull/4002))
 - Update dependency textual to v7 ([#4008](https://github.com/nf-core/tools/pull/4008))
 
-### Template
-
-- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
-- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
-
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
