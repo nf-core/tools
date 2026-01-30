@@ -1,6 +1,7 @@
 {
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
     "name": "nfcore",
-    "image": "nfcore/devcontainer:latest",
+    "image": "nfcore/devcontainer:dev",
 
     "remoteEnv": {
         // Workspace path on the host for mounting with docker-outside-of-docker

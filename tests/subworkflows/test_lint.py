@@ -228,18 +228,18 @@ class TestSubworkflowsLint(TestSubworkflows):
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 2
-        assert any(
-            [
-                x.message == "Included component 'SAMTOOLS_STATS_1' versions are added in main.nf"
-                for x in subworkflow_lint.passed
-            ]
-        )
+        assert len(subworkflow_lint.warned) == 3
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed]
         )
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned]
+        )
+        assert any(
+            [
+                x.message.endswith("Can be ignored if the module is using topic channels")
+                for x in subworkflow_lint.warned
+            ]
         )
 
         # cleanup
@@ -436,6 +436,41 @@ class TestSubworkflowsLint(TestSubworkflows):
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) >= 0
 
+    def test_skip_keyword_in_comment(self):
+        """Test linting a subworkflow where a comment contains a keyword (workflow, subworkflow, take, main, emit)"""
+        assert self.subworkflow_install.install("bam_stats_samtools")
+        with open(
+            Path(
+                self.pipeline_dir,
+                "subworkflows",
+                "nf-core",
+                "bam_stats_samtools",
+                "main.nf",
+            )
+        ) as fh:
+            content = fh.read()
+            new_content = content.replace(
+                "    SAMTOOLS_IDXSTATS ( ch_bam_bai )",
+                "    // This comment contains the word emit:\n    SAMTOOLS_IDXSTATS ( ch_bam_bai )",
+            )
+        with open(
+            Path(
+                self.pipeline_dir,
+                "subworkflows",
+                "nf-core",
+                "bam_stats_samtools",
+                "main.nf",
+            ),
+            "w",
+        ) as fh:
+            fh.write(new_content)
+
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
+        subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
+        assert "Included component 'SAMTOOLS_IDXSTATS' not used in main.nf" not in [
+            warning.message for warning in subworkflow_lint.warned
+        ]
+
 
 class TestSubworkflowsLintPatch(TestSubworkflows):
     def setUp(self) -> None:
@@ -469,7 +504,13 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
 
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 0, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+        assert len(subworkflow_lint.warned) == 1, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+        assert any(
+            [
+                x.message.endswith("Can be ignored if the module is using topic channels")
+                for x in subworkflow_lint.warned
+            ]
+        )
 
     def test_lint_broken_patch(self):
         """Test linting a patched subworkflow when the patch is broken"""
@@ -487,4 +528,10 @@ class TestSubworkflowsLintPatch(TestSubworkflows):
         errors = [x.message for x in subworkflow_lint.failed]
         assert "Subworkflow patch cannot be cleanly applied" in errors
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 0, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+        assert len(subworkflow_lint.warned) == 1, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+        assert any(
+            [
+                x.message.endswith("Can be ignored if the module is using topic channels")
+                for x in subworkflow_lint.warned
+            ]
+        )

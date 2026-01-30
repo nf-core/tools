@@ -51,7 +51,9 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     workflow_lines = []
     main_lines = []
     for line in lines:
-        if re.search(r"^\s*workflow\s*\w*\s*{", line) and state == "subworkflow":
+        if _is_empty(line):
+            continue
+        if re.search(r"^\s*workflow\s*\w*\s*{", line) and state in ["subworkflow", "emit"]:
             state = "workflow"
         if re.search(r"take\s*:", line) and state in ["workflow"]:
             state = "take"
@@ -169,7 +171,7 @@ def check_main_section(self, lines, included_components):
                     (
                         "main_nf",
                         "main_nf_include_versions",
-                        f"Included component '{component}' versions are not added in main.nf",
+                        f"Included component '{component}' versions are not added in main.nf. Can be ignored if the module is using topic channels",
                         self.main_nf,
                     )
                 )

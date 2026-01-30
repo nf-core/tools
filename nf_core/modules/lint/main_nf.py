@@ -741,17 +741,19 @@ def _parse_output_topics(self, line: str) -> list[str]:
         topic_name = topic_regex.group(1).strip()
         output.append(topic_name)
         if topic_name == "versions":
-            if not re.search(r'tuple\s+val\("\${\s*task\.process\s*}"\),\s*val\(.*\),\s*eval\(.*\)', line):
+            if not re.search(r'tuple\s+val\("\${\s*task\.process\s*}"\),\s*val\(.*\),\s*(?:eval|val)\(.*\)', line):
                 self.failed.append(
                     (
+                        "main_nf",
                         "wrong_version_output",
-                        'Versions topic output is not correctly formatted, expected `tuple val("${task.process}"), val(\'<tool>\'), eval("<version_command>")`',
+                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")` or `tuple val(\"${task.process}\"), val('<tool>'), val('<version>')`",
                         self.main_nf,
                     )
                 )
             if not re.search(r"emit:\s*versions_[\d\w]+", line):
                 self.failed.append(
                     (
+                        "main_nf",
                         "wrong_version_emit",
                         "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
                         self.main_nf,
