@@ -14,7 +14,7 @@ repos:
           (?x)^(
               .*ro-crate-metadata.json$|
               modules/(?!local/).*|
-              subworkflow/(?!local/).*|
+              subworkflows/(?!local/).*|
               .*\.snap$
           )$
       - id: end-of-file-fixer
