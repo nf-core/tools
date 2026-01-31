@@ -13,15 +13,15 @@ repos:
         exclude: |
           (?x)^(
               .*ro-crate-metadata.json$|
-              modules/nf-core/.*|
-              subworkflows/nf-core/.*|
+              modules/(?!local/).*|
+              subworkflow/(?!local/).*|
               .*\.snap$
           )$
       - id: end-of-file-fixer
         exclude: |
           (?x)^(
               .*ro-crate-metadata.json$|
-              modules/nf-core/.*|
-              subworkflows/nf-core/.*|
+              modules/(?!local/).*|
+              subworkflows/(?!local/).*|
               .*\.snap$
           )$
