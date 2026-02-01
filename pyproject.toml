@@ -53,7 +53,7 @@ dependencies = [
     "rocrate",
     "repo2rocrate",
     "tabulate",
-    "textual==7.4.0",
+    "textual==7.5.0",
     "trogon",
     "pdiff",
     "ruamel.yaml",
