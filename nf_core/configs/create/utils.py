@@ -31,6 +31,7 @@ def init_context(value: dict[str, Any]) -> Iterator[None]:
 # Define a global variable to store the config type
 CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 NFCORE_CONFIG_GLOBAL: bool = True
+INFRA_ISHPC_GLOBAL: bool = False
 
 
 class ConfigsCreateConfig(BaseModel):
@@ -52,8 +53,52 @@ class ConfigsCreateConfig(BaseModel):
     """ Config description """
     config_profile_url: Optional[str] = None
     """ Config institution URL """
+    default_process_ncpus: Optional[str] = None
+    """ Default number of CPUs """
+    default_process_memgb: Optional[str] = None
+    """ Default amount of memory """
+    default_process_hours: Optional[str] = None
+    """ Default walltime - hours """
+    custom_process_id: Optional[str] = None
+    """" Name or label of a process to configure """
+    custom_process_ncpus: Optional[str] = None
+    """ Number of CPUs for process """
+    custom_process_memgb: Optional[str] = None
+    """ Amount of memory for process """
+    custom_process_hours: Optional[str] = None
+    """ Walltime for process - hours """
+    named_process_resources: Optional[dict] = None
+    """ Dictionary containing custom resource requirements for named processes """
+    labelled_process_resources: Optional[dict] = None
+    """ Dictionary containing custom resource requirements for labelled processes """
     is_nfcore: Optional[bool] = None
     """ Whether the config is part of the nf-core organisation """
+    savelocation: Optional[str] = None
+    """ Final location of the configuration file """
+    scheduler: Optional[str] = None
+    """ The scheduler that the HPC uses """
+    queue: Optional[str] = None
+    """ The default queue that the HPC uses """
+    module_system: Optional[str] = None
+    """ Modules to load when running processes """
+    container_system: Optional[str] = None
+    """ The container system the HPC uses """
+    memory: Optional[str] = None
+    """ The maximum memory available to processes """
+    cpus: Optional[str] = None
+    """ The maximum number of CPUs available to processes """
+    time: Optional[str] = None
+    """ The maximum walltime available to processes """
+    envvar: Optional[str] = None
+    """ An environment variable to hold a custom Nextflow container cachedir """
+    cachedir: Optional[str] = None
+    """ An environment variable to hold a custom Nextflow container cachedir """
+    igenomes_cachedir: Optional[str] = None
+    """ A cachedir for iGenomes """
+    scratch_dir: Optional[str] = None
+    """ A scratch directory to use """
+    retries: Optional[str] = None
+    """ Number of retries for failed jobs """
 
     model_config = ConfigDict(extra="allow")
 
@@ -78,19 +123,47 @@ class ConfigsCreateConfig(BaseModel):
     def path_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that a path is valid."""
         context = info.context
-        if context and not context["is_infrastructure"]:
+        if context and (not context["is_infrastructure"] and not context["is_nfcore"]):
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             if not Path(v).is_dir():
                 raise ValueError("Must be a valid path.")
         return v
 
-    @field_validator("config_profile_contact", "config_profile_description", "config_pipeline_name")
+    @field_validator("savelocation")
     @classmethod
-    def notempty_nfcore(cls, v: str, info: ValidationInfo) -> str:
-        """Check that string values are not empty when the config is nf-core."""
+    def final_path_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the final save directory is valid."""
+        if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        if not Path(v).is_dir():
+            raise ValueError("Must be a valid path to a directory.")
+        return v
+
+    @field_validator("config_pipeline_name")
+    @classmethod
+    def nfcore_name_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that an nf-core pipeline name is valid."""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and (not context["is_infrastructure"] and context["is_nfcore"]):
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("config_profile_description")
+    @classmethod
+    def notempty_description(cls, v: str) -> str:
+        """Check that description is not empty when."""
+        if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("config_profile_contact")
+    @classmethod
+    def notempty_contact(cls, v: str, info: ValidationInfo) -> str:
+        """Check that contact values are not empty when the config is infrastructure."""
+        context = info.context
+        if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
@@ -103,7 +176,7 @@ class ConfigsCreateConfig(BaseModel):
         """Check that GitHub handles start with '@'.
         Make providing a handle mandatory for nf-core configs"""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(
@@ -122,7 +195,7 @@ class ConfigsCreateConfig(BaseModel):
     def url_prefix(cls, v: str, info: ValidationInfo) -> str:
         """Check that institutional web links start with valid URL prefix."""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(
@@ -142,6 +215,47 @@ class ConfigsCreateConfig(BaseModel):
                 )
         return v
 
+    @field_validator("custom_process_id")
+    @classmethod
+    def notempty_process_name(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the custom process name or label isn't empty."""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")
+    @classmethod
+    def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that integer values are either empty or positive."""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
+            try:
+                v_int = int(v.strip())
+            except ValueError:
+                raise ValueError("Must be an integer.")
+            if not v_int > 0:
+                raise ValueError("Must be a positive integer.")
+        return v
+
+    @field_validator("default_process_hours", "custom_process_hours")
+    @classmethod
+    def non_neg_float_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that numeric values are either empty or non-negative."""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
+            try:
+                vf = float(v.strip())
+            except ValueError:
+                raise ValueError("Must be a number.")
+            if not vf >= 0:
+                raise ValueError("Must be a non-negative number.")
+        return v
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):
@@ -210,7 +324,7 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL, "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL}):
+            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL, "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL, "is_hpc": INFRA_ISHPC_GLOBAL}):
                 ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:
