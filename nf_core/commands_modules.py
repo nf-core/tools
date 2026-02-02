@@ -335,7 +335,7 @@ def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
         sys.exit(1)
 
 
-def modules_containers_create(ctx, module, directory, await_build: bool):
+def modules_containers_create(ctx, module, directory, await_build: bool, force: bool):
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
@@ -385,7 +385,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
                             module=module_name, directory=directory, verbose=ctx.obj["verbose"]
                         )
                         _, success = module_manager.create(
-                            await_build, progress_bar=progress_bar, task_id=module_task_id
+                            await_build, progress_bar=progress_bar, task_id=module_task_id, force=force
                         )
                         if success:
                             module_manager.update_containers_in_meta()
@@ -419,7 +419,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool):
                     f"[cyan]{manager.module}[/cyan]",
                     total=tasks_per_module,
                 )
-                _, success = manager.create(await_build, progress_bar=progress_bar, task_id=module_task_id)
+                _, success = manager.create(await_build, progress_bar=progress_bar, task_id=module_task_id, force=force)
                 if success:
                     manager.update_containers_in_meta()
                 else:

@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import quote
@@ -203,8 +204,10 @@ class ModuleContainers:
         except Exception as e:
             log.debug(f"Could not remove .conda-lock directory: {e}")
 
-    def update_main_nf_container(self) -> None:
-        """Update the container name in main.nf using the docker amd64 image without registry."""
+    def update_main_nf_container(self, force=False) -> None:
+        """Update the container name in main.nf using the docker amd64 image without registry.
+        Don't update if the container name is already correct.
+        """
         import re
 
         if not self.containers or not self.nfcore_component:
@@ -221,21 +224,29 @@ class ModuleContainers:
         # e.g., "community.wave.seqera.io/library/image:tag" -> "image:tag"
         container_name = docker_image.split("/")[-1]
 
-        # Update main.nf
+        # Read main.nf
         main_nf_path = self.nfcore_component.main_nf
         content = main_nf_path.read_text()
+
+        # Check if container name is already correct
+        if container_name in content and not force:
+            log.info(
+                f"Container name in `{self.nfcore_component.component_name}/main.nf` is already correct: `{container_name}`"
+            )
+            return
 
         # Replace container directive, preserving indentation
         new_content = re.sub(r"(\s*)container\s+.*", rf'\1container "{container_name}"', content, count=1)
 
         main_nf_path.write_text(new_content)
-        log.info(f"Updated container in {main_nf_path} to: {container_name}")
+        log.info(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{container_name}`")
 
     def create(
         self,
         await_build: bool = False,
         progress_bar: rich.progress.Progress | None = None,
         task_id: rich.progress.TaskID | None = None,
+        force: bool = False,
     ) -> tuple[dict[str, dict[str, dict[str, str]]], bool]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
@@ -275,6 +286,13 @@ class ModuleContainers:
                 # Try to get the result, but continue on failure
                 try:
                     containers[cs][platform] = fut.result()
+                    # Update self.containers and meta.yml after each successful build
+                    self.containers = containers
+                    try:
+                        self.update_containers_in_meta()
+                        log.debug(f"Updated meta.yml with {cs} container for {platform}")
+                    except Exception as meta_error:
+                        log.warning(f"Failed to update meta.yml after {cs} {platform} build: {meta_error}")
                     if progress_bar and task_id is not None:
                         progress_bar.update(task_id, advance=1)
                 except Exception as e:
@@ -326,12 +344,36 @@ class ModuleContainers:
 
         # Update main.nf with new container name (docker amd64 without registry)
         try:
-            self.update_main_nf_container()
+            self.update_main_nf_container(force)
         except Exception as e:
             log.warning(f"Failed to update main.nf with container name: {e}")
             has_failures = True
 
         return containers, not has_failures
+
+    @staticmethod
+    def _extract_yaml_from_wave_output(output: str) -> str:
+        """
+        Extract YAML content from Wave CLI output in verbose mode.
+
+        Wave CLI with --log-level DEBUG outputs multi-line DEBUG logs before the YAML response.
+        This method finds the first line that looks like YAML (key: value format) and returns
+        everything from that point onwards.
+
+        Args:
+            output: Raw stdout from Wave CLI
+
+        Returns:
+            YAML content with DEBUG lines removed
+        """
+        lines = output.splitlines()
+        for i, line in enumerate(lines):
+            # Look for lines that start with a simple word followed by colon (YAML key)
+            # Expected keys from Wave: buildId, cached, containerImage, duration, freeze, etc.
+            if "DEBUG" not in line and re.match(r"^[a-zA-Z]\w*:\s", line):
+                return "\n".join(lines[i:])
+        # If no YAML start found, return original output
+        return output
 
     @classmethod
     def request_container(
@@ -375,11 +417,18 @@ class ModuleContainers:
                 for line in stderr_output.splitlines():
                     log.info(line)
 
+        # Parse Wave output
+        stdout_output = out[0].decode()
+
+        # In verbose mode, Wave outputs DEBUG lines before YAML - extract only the YAML part
+        if verbose:
+            stdout_output = cls._extract_yaml_from_wave_output(stdout_output)
+
         try:
-            meta_data = yaml.safe_load(out[0].decode()) or dict()
+            meta_data = yaml.safe_load(stdout_output) or dict()
             log.debug(f"Wave YAML metadata: {meta_data}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
-            log.error(f"Failed to parse Wave output. Raw output:\n{out[0].decode()}")
+            log.error(f"Failed to parse Wave output. Raw output:\n{stdout_output}")
             raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
         if not meta_data.get("succeeded"):
             raise RuntimeError(
