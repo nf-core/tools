@@ -26,8 +26,8 @@ from nf_core.pipelines.lint_utils import run_prettier_on_file
 log = logging.getLogger(__name__)
 
 # Set yaml options for meta.yml files
-ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
-    lambda x, y: True
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
+    True
 )  # Fix to not print aliases. https://stackoverflow.com/a/64717341
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
