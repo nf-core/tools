@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from git.repo import Repo
 
 import nf_core.modules.lint
@@ -134,12 +135,20 @@ class TestModuleTests(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="kallisto/quant")
 
-        assert len(module_lint.failed) == 2, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.failed) == 4, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) >= 0
         assert len(module_lint.warned) >= 0
-        assert module_lint.failed[0].lint_test == "meta_yml_valid"
-        assert module_lint.failed[1].lint_test == "test_main_tags"
-        assert "kallisto/index" in module_lint.failed[1].message
+
+        # Check for expected failure types
+        failed_tests = [x.lint_test for x in module_lint.failed]
+        assert "meta_yml_valid" in failed_tests
+        assert "test_main_tags" in failed_tests
+        assert failed_tests.count("test_snap_version_content") == 2  # Should appear twice for the two version entries
+
+        # Check test_main_tags failure contains the expected message
+        main_tags_failures = [x for x in module_lint.failed if x.lint_test == "test_main_tags"]
+        assert len(main_tags_failures) == 1
+        assert "kallisto/index" in main_tags_failures[0].message
 
     def test_modules_absent_version(self):
         """Test linting a nf-test module if the versions is absent in the snapshot file `"""
@@ -162,7 +171,7 @@ class TestModuleTests(TestModules):
         """Test linting a nf-test module with an empty file sha sum in the test snapshot, which should make it fail (if it is not a stub)"""
         snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
         snap = json.load(snap_file.open())
-        content = snap_file.read_text()
+        snap_file.read_text()
         snap["my test"]["content"][0]["0"] = "test:md5,d41d8cd98f00b204e9800998ecf8427e"
 
         with open(snap_file, "w") as fh:
@@ -175,15 +184,11 @@ class TestModuleTests(TestModules):
         assert len(module_lint.warned) >= 0
         assert module_lint.failed[0].lint_test == "test_snap_md5sum"
 
-        # reset the file
-        with open(snap_file, "w") as fh:
-            fh.write(content)
-
     def test_modules_empty_file_in_stub_snapshot(self):
         """Test linting a nf-test module with an empty file sha sum in the stub test snapshot, which should make it not fail"""
         snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
         snap = json.load(snap_file.open())
-        content = snap_file.read_text()
+        snap_file.read_text()
         snap["my_test_stub"] = {"content": [{"0": "test:md5,d41d8cd98f00b204e9800998ecf8427e", "versions": {}}]}
 
         with open(snap_file, "w") as fh:
@@ -210,6 +215,129 @@ class TestModuleTests(TestModules):
 
         assert found_test, "test_snap_md5sum not found in passed tests"
 
-        # reset the file
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_content_md5_hash(self):
+        """Test linting a nf-test module with version information as MD5 hash instead of actual content, which should fail."""
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        snap_file.read_text()
+
+        # Add a version entry with MD5 hash format (the old way that should be flagged)
+        snap["my test"]["content"][0]["versions"] = "versions.yml:md5,949da9c6297b613b50e24c421576f3f1"
+
         with open(snap_file, "w") as fh:
-            fh.write(content)
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should fail because version is using MD5 hash instead of actual content
+        # Filter for only our specific test
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) == 1, (
+            f"Expected 1 test_snap_version_content failure, got {len(version_content_failures)}"
+        )
+
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_content_valid(self):
+        """Test linting a nf-test module with version information as actual content, which should pass."""
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        snap_file.read_text()
+
+        # Add a version entry with actual content (the new way that should pass)
+        snap["my test"]["content"][0]["versions"] = {"ALE": {"ale": "20180904"}}
+
+        with open(snap_file, "w") as fh:
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should pass because version contains actual content
+        # Filter for only our specific test
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) == 0, (
+            f"Expected 0 test_snap_version_content failures, got {len(version_content_failures)}"
+        )
+
+        # Check for test_snap_version_content in passed tests
+        version_content_passed = [
+            x
+            for x in module_lint.passed
+            if (hasattr(x, "lint_test") and x.lint_test == "test_snap_version_content")
+            or (isinstance(x, tuple) and len(x) > 0 and x[0] == "test_snap_version_content")
+        ]
+        assert len(version_content_passed) > 0, "test_snap_version_content not found in passed tests"
+
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_content_sha_hash(self):
+        """Test linting a nf-test module with version information as SHA hash, which should fail."""
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        snap_file.read_text()
+
+        # Add a version entry with SHA hash format (should be flagged)
+        snap["my test"]["content"][0]["versions"] = (
+            "versions.yml:sha256,e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
+
+        with open(snap_file, "w") as fh:
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should fail because version is using SHA hash instead of actual content
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) == 1, (
+            f"Expected 1 test_snap_version_content failure, got {len(version_content_failures)}"
+        )
+
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_no_version_content(self):
+        """Test linting when no version information is present - should not trigger version content check."""
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        snap_file.read_text()
+
+        # Remove version information entirely
+        if "content" in snap["my test"] and snap["my test"]["content"]:
+            snap["my test"]["content"][0].pop("versions", None)
+
+        with open(snap_file, "w") as fh:
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should not have version content check failures when no version data present
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) == 0, "Should not have version content failures when no versions present"
+
+        # Should have test_snap_versions failure since no versions are present
+        version_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_versions"]
+        assert len(version_failures) == 1, "Expected test_snap_versions failure when no versions present"
+
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_hash_in_keys(self):
+        """Test linting when version hash appears in snapshot keys rather than content."""
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        snap_file.read_text()
+
+        # Create a test where version hash appears in the test keys
+        snap["test_with_hash_key"] = {
+            "content": [{"versions.yml:md5,949da9c6297b613b50e24c421576f3f1": "some_value"}],
+            "versions": {"BPIPE": {"bpipe": "0.9.11"}},
+        }
+
+        with open(snap_file, "w") as fh:
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should fail because version hash is in the keys
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) >= 1, "Expected failure for hash in keys"

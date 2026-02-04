@@ -97,7 +97,11 @@ nf-core = "nf_core.__main__:run_nf_core"
 nf-core-refgenie = "nf_core.pipelines.refgenie:update_config"
 
 [tool.pytest.ini_options]
-markers = ["datafiles: load datafiles", "integration"]
+markers = [
+    "datafiles: load datafiles",
+    "integration",
+    "issue: mark test with related issue URL"
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
