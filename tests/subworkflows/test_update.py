@@ -157,7 +157,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Fix the subworkflow version in the .nf-core.yml to an old version
         update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": OLD_SUBWORKFLOWS_SHA}}}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -188,7 +188,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Set the fastq_align_bowtie2 field to no update in the .nf-core.yml
         update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": False}}}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -219,7 +219,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Fix the version of all nf-core subworkflows in the .nf-core.yml to an old version
         update_config = {NF_CORE_MODULES_REMOTE: OLD_SUBWORKFLOWS_SHA}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -250,7 +250,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Set all repository updates to False
         update_config = {NF_CORE_MODULES_REMOTE: False}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
