@@ -335,7 +335,7 @@ class PipelineSchema:
             self.get_wf_params()
 
         # Go over group keys
-        for group_key, group in self.schema.get(self.defs_notation, {}).items():
+        for _group_key, group in self.schema.get(self.defs_notation, {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
                 if param in self.ignored_params:

@@ -179,7 +179,7 @@ class ParamsFileBuilder:
         return out
 
     def format_param(
-        self, name: str, properties: dict, required_properties: list[str] = [], show_hidden: bool = False
+        self, name: str, properties: dict, required_properties: list[str] = None, show_hidden: bool = False
     ) -> str | None:
         """
         Format a single parameter of the schema as commented YAML
@@ -194,6 +194,8 @@ class ParamsFileBuilder:
             str: Section of a params-file.yml for given parameter
             None: If the parameter is skipped because it is hidden and show_hidden is not set
         """
+        if required_properties is None:
+            required_properties = []
         out = ""
         hidden = properties.get("hidden", False)
 

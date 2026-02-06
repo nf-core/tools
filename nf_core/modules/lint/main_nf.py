@@ -400,7 +400,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     check_process_labels(self, lines)
 
     # Deprecated enable_conda
-    for i, raw_line in enumerate(lines):
+    for _i, raw_line in enumerate(lines):
         url = None
         line = raw_line.strip(" \n'\"}:?")
 

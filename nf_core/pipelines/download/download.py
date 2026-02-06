@@ -317,7 +317,9 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        for revision, wf_sha, download_url in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
+        for revision, wf_sha, download_url in zip(
+            self.revision, self.wf_sha.values(), self.wf_download_url.values(), strict=False
+        ):
             revision_dirname = self.download_wf_files(revision=revision, wf_sha=wf_sha, download_url=download_url)
 
             if self.include_configs:
