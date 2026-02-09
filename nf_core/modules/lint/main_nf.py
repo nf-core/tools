@@ -688,7 +688,7 @@ def check_container_link_line(self, raw_line, registry):
             (
                 "main_nf",
                 "container_links",
-                f"Too many double quotes found when specifying container: {line.lstrip('container ')}",
+                f"Too many double quotes found when specifying container: {line.removeprefix('container ')}",
                 self.main_nf,
             )
         )
@@ -697,7 +697,7 @@ def check_container_link_line(self, raw_line, registry):
             (
                 "main_nf",
                 "container_links",
-                f"Correct number of double quotes found when specifying container: {line.lstrip('container ')}",
+                f"Correct number of double quotes found when specifying container: {line.removeprefix('container ')}",
                 self.main_nf,
             )
         )
