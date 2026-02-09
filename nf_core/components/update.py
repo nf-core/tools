@@ -568,7 +568,7 @@ class ComponentUpdate(ComponentCommand):
                         if self.sha is not None:
                             overridden_repos.append(repo_name)
                     elif self.update_config[repo_name][component_dir] is False:
-                        for directory, component in components:
+                        for directory, _component in components:
                             if directory == component_dir:
                                 skipped_components.append(f"{component_dir}/{components}")
                     elif isinstance(self.update_config[repo_name][component_dir], dict):
@@ -685,7 +685,7 @@ class ComponentUpdate(ComponentCommand):
         # Loop through components_info and create on ModulesRepo object per remote and branch
         repos_and_branches = {}
         for repo_name, repo_content in components_info.items():
-            for component_dir, comps in repo_content.items():
+            for _component_dir, comps in repo_content.items():
                 for comp, sha, comp_branch in comps:
                     if branch is not None:
                         comp_branch = branch
