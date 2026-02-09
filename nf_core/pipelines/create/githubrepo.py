@@ -134,8 +134,8 @@ class GithubRepo(Screen):
             org = None
             # Make sure that the authentication was successful
             try:
-                user.login
-                log.debug("GitHub authentication successful")
+                user_name = user.login
+                log.debug(f"GitHub authentication successful for user '{user_name}'")
             except GithubException as e:
                 raise UserWarning(
                     f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
@@ -199,8 +199,8 @@ class GithubRepo(Screen):
             repo = org.get_repo(repo_name)
             # Check if it has a commit history
             try:
-                repo.get_commits().totalCount
-                raise UserWarning(f"GitHub repository '{repo_name}' already exists")
+                n = repo.get_commits().totalCount
+                raise UserWarning(f"GitHub repository '{repo_name}' already exists, with {n} commits")
             except GithubException:
                 # Repo is empty
                 repo_exists = True
