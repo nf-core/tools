@@ -491,6 +491,7 @@ class ContainerFetcher(ABC):
         with intermediate_file(dest_path) as dest_path_tmp:
             shutil.copyfile(src_path, dest_path_tmp.name)
 
+    @abstractmethod
     def cleanup(self) -> None:
         """
         Cleanup any temporary files or resources.
