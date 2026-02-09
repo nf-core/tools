@@ -76,7 +76,7 @@ class DownloadUtilsTest(unittest.TestCase):
                 pass
 
         output_path = outdir / "testfile5"
-        os.symlink("/dummy", output_path)
+        output_path.symlink_to("/dummy")
         with pytest.raises(DownloadError):
             with intermediate_file(output_path) as tmp:
                 pass
