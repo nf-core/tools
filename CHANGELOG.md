@@ -4,31 +4,41 @@
 
 ### General
 
-- dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
-- Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
+### Linting
+
+- fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
+
+### Modules
+
+### Subworkflows
+
+### Pipeline template
+
+#### Version updates
+
+## v3.5.2
+
+### General
+
 - Switch from pre-commit to prek for pre-commit hooks in development([#3899](https://github.com/nf-core/tools/pull/3899))
-- switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
-- Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
-- add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
-- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
-- Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Fix docker errors in test ([#3924](https://github.com/nf-core/tools/pull/3924))
-- Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
-- Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
-- Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
-- Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
+- switch to uv and pyproject.toml ([#3925](https://github.com/nf-core/tools/pull/3925))
+- dockerhub action: add disk clean-up step and combine the two actions ([#3926](https://github.com/nf-core/tools/pull/3926))
+- Pin j178/prek-action action to 91fd7d7 ([#3931](https://github.com/nf-core/tools/pull/3931))
+- Simplify coverage reporting in pytest.yml ([#3934](https://github.com/nf-core/tools/pull/3934))
+- add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
+- Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
 - Escape original merge branch to compile regex ([#3984](https://github.com/nf-core/tools/pull/3984))
+- handle type for val in topics correctly ([#3991](https://github.com/nf-core/tools/pull/3991))
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
-
-### Template
-
-- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
-- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
+- fix wrong parsing when output values contain spaces ([#3999](https://github.com/nf-core/tools/pull/3999))
+- fix failing devcontainer builds ([#4013](https://github.com/nf-core/tools/pull/4013))
 
 ### Linting
 
 - fix test for linting for version.yml ([#3947](https://github.com/nf-core/tools/pull/3947))
+- Fix bugs in subworkflows lint causing false positive warnings ([#3968](https://github.com/nf-core/tools/pull/3968))
 - more fixes for incorrect parsing of version statement ([#3973](https://github.com/nf-core/tools/pull/3973))
 - handle val in version topics correctly ([#3988](https://github.com/nf-core/tools/pull/3988))
 - handle additional attributes in input parsing correctly ([#3990](https://github.com/nf-core/tools/pull/3990))
@@ -43,6 +53,26 @@
 ### Subworkflows
 
 - Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
+
+#### Version updates
+
+- Update actions/setup-python digest to 83679a8 ([#3928](https://github.com/nf-core/tools/pull/3928))
+- Update python:3.14-slim Docker digest to 119fd5b ([#3910](https://github.com/nf-core/tools/pull/3910))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.7 ([#3943](https://github.com/nf-core/tools/pull/3943))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 2be0f5a ([#3946](https://github.com/nf-core/tools/pull/3946))
+- Update actions/checkout digest to 8e8c483 ([#3956](https://github.com/nf-core/tools/pull/3956))
+- Update GitHub Actions ([#3957](https://github.com/nf-core/tools/pull/3957))
+- Update astral-sh/setup-uv digest to ed21f2f ([#3959](https://github.com/nf-core/tools/pull/3959))
+- Update codecov/codecov-action digest to 671740a ([#3962](https://github.com/nf-core/tools/pull/3962))
+- Update codecov/codecov-action digest to 671740a ([#4000](https://github.com/nf-core/tools/pull/4000))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.19.1 ([#4007](https://github.com/nf-core/tools/pull/4007))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.9.28 ([#4006](https://github.com/nf-core/tools/pull/4006))
+- Update dependency textual-dev to v1.8.0 ([#4005](https://github.com/nf-core/tools/pull/4005))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.5 ([#4002](https://github.com/nf-core/tools/pull/4002))
+- Update dependency textual to v7 ([#4008](https://github.com/nf-core/tools/pull/4008))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 8a29f1c ([#4009](https://github.com/nf-core/tools/pull/4009))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.14.14 ([#4011](https://github.com/nf-core/tools/pull/4011))
+- Update python:3.14-slim Docker digest to 9b81fe9 ([#4012](https://github.com/nf-core/tools/pull/4012))
 
 ## [v3.5.1 - Terne Topi](https://github.com/nf-core/tools/releases/tag/3.5.1) - [2025-11-19]
 

@@ -249,8 +249,8 @@ class NFCoreComponent:
                     # If content started with a quote and we found it, return only that
                     if quote_closed_at is not None:
                         return rest[1 : quote_closed_at + 1]
-                    # Otherwise return everything between parentheses
-                    return rest[1:i]
+                    # Otherwise return everything between parentheses, stripping whitespace
+                    return rest[1:i].strip()
         return None
 
     def get_inputs_from_main_nf(self) -> None:
@@ -325,7 +325,8 @@ class NFCoreComponent:
                 outputs[match_emit.group(1)] = []
                 for match in re.finditer(regex_keyword, line):
                     if output_val := self._extract_value(line, match.end()):
-                        channel_elements.append({output_val: {}})
+                        keyword = match.group(0)  # Store the keyword (val, eval, path, etc.)
+                        channel_elements.append({output_val: {"_keyword": keyword}})
                 if len(channel_elements) == 1:
                     outputs[match_emit.group(1)].append(channel_elements[0])
                 elif len(channel_elements) > 1:
@@ -374,7 +375,8 @@ class NFCoreComponent:
                     topics[topic_name] = []
                 for match in re.finditer(regex_keyword, line):
                     if topic_val := self._extract_value(line, match.end()):
-                        channel_elements.append({topic_val: {}})
+                        keyword = match.group(0)  # Store the keyword (val, eval, path, etc.)
+                        channel_elements.append({topic_val: {"_keyword": keyword}})
                 if len(channel_elements) == 1:
                     topics[topic_name].append(channel_elements[0])
                 elif len(channel_elements) > 1:

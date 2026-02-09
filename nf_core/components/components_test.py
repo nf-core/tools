@@ -151,11 +151,23 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 os.environ["PROFILE"] = profile
 
     def display_nftest_output(self, nftest_out: bytes, nftest_err: bytes) -> None:
-        nftest_output = Text.from_ansi(nftest_out.decode())
-        print(Panel(nftest_output, title="nf-test output"))
-        if nftest_err:
-            syntax = Syntax(nftest_err.decode(), "diff", theme="ansi_dark")
-            print(Panel(syntax, title="nf-test error"))
+        if self.no_prompts:
+            # In no_prompts mode (e.g., tests), use simple logging to avoid Rich hanging in non-TTY environments
+            log.debug("nf-test output:\n%s", nftest_out.decode())
+            if nftest_err:
+                log.debug("nf-test error:\n%s", nftest_err.decode())
+        else:
+            # Interactive mode: use Rich formatting
+            print("Displaying nf-test output")
+            nftest_output = Text.from_ansi(nftest_out.decode())
+            print(Panel(nftest_output, title="nf-test output"))
+            print("Displaying nf-test error", nftest_err.decode())
+            if nftest_err:
+                print("Parsing nf-test error")
+                syntax = Syntax(nftest_err.decode(), "diff", theme="ansi_dark")
+                print("Parsed nf-test error")
+                print(Panel(syntax, title="nf-test error"))
+                print("Displaying nf-test error")
             if "Different Snapshot:" in nftest_err.decode():
                 log.error("nf-test failed due to differences in the snapshots")
                 # prompt to update snapshot
