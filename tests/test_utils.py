@@ -243,9 +243,9 @@ class TestUtils(TestPipelines):
 
     def test_set_wd_revert_on_raise(self):
         wd_before_context = Path().resolve()
-        with pytest.raises(Exception):
+        with pytest.raises(RuntimeError):
             with nf_core.utils.set_wd(self.tmp_dir):
-                raise Exception
+                raise RuntimeError
         assert wd_before_context == Path().resolve()
 
     @mock.patch("nf_core.utils.run_cmd")
