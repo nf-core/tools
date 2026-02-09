@@ -254,10 +254,10 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> DictWithStrAndTuple:
+    def _iterate_input_output(funct_data, type) -> DictWithStrAndTuple:
         type_info = {}
-        if type in funct:
-            for element in funct[type]:
+        if type in funct_data:
+            for element in funct_data[type]:
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
                     uris = [element["data"]["uri"]]
@@ -278,9 +278,9 @@ def get_channel_info_from_biotools(
         if tool["name"].lower() == tool_name:
             if "function" in tool:
                 # Parse all tool functions
-                for _funct in tool["function"]:
-                    inputs.update(_iterate_input_output("input"))
-                    outputs.update(_iterate_input_output("output"))
+                for funct in tool["function"]:
+                    inputs.update(_iterate_input_output(funct, "input"))
+                    outputs.update(_iterate_input_output(funct, "output"))
             return inputs, outputs
 
     # If the tool name was not found in the response
