@@ -229,7 +229,7 @@ class ComponentPatch(ComponentCommand):
         try:
             for file in Path(temp_component_dir).glob("*"):
                 file.rename(component_path.joinpath(file.name))
-            os.rmdir(temp_component_dir)
+            Path(temp_component_dir).rmdir()
         except Exception as err:
             raise UserWarning(f"There was a problem reverting the patched file: {err}") from err
 
