@@ -41,7 +41,6 @@ class TestROCrate(TestPipelines):
         """Run the nf-core rocrate command"""
 
         # Run the command
-        self.rocrate_obj
         assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
 
         # Check that the crate was created
