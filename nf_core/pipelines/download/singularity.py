@@ -649,6 +649,12 @@ class SingularityFetcher(ContainerFetcher):
             log.debug(f"Container output directory not found, creating: {self.get_container_output_dir()}")
             self.get_container_output_dir().mkdir(parents=True, exist_ok=True)
 
+    def cleanup(self) -> None:
+        """
+        Cleanup any temporary files or resources.
+        """
+        super().cleanup()
+
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions
 class SingularityError(Exception):

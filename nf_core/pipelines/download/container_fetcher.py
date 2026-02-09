@@ -274,7 +274,7 @@ class ContainerFetcher(ABC):
         """
         pass
 
-    def gather_config_registries(self, workflow_directory: Path, registry_keys: list[str] = None) -> set[str]:
+    def gather_config_registries(self, workflow_directory: Path, registry_keys: list[str] | None = None) -> set[str]:
         """
         Gather the registries from the pipeline config and store them in a set.
 
@@ -491,9 +491,9 @@ class ContainerFetcher(ABC):
         with intermediate_file(dest_path) as dest_path_tmp:
             shutil.copyfile(src_path, dest_path_tmp.name)
 
-    @abstractmethod
     def cleanup(self) -> None:
         """
         Cleanup any temporary files or resources.
+        Default implementation logs completion; subclasses can override to add specific cleanup.
         """
-        pass
+        log.debug(f"Container fetching complete. Images saved to {self.get_container_output_dir()}")
