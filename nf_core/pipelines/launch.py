@@ -334,12 +334,12 @@ class Launch:
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
                 )
-        except AssertionError:
+        except AssertionError as e:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
                 f"Web launch response not recognised: {self.web_schema_launch_url}\n "
                 "See verbose log for full response (nf-core -v launch)"
-            )
+            ) from e
         else:
             self.web_schema_launch_web_url = web_response["web_url"]
             self.web_schema_launch_api_url = web_response["api_url"]
@@ -376,10 +376,12 @@ class Launch:
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except KeyError as e:
-                raise AssertionError(f"Missing return key from web API: {e}")
+                raise AssertionError(f"Missing return key from web API: {e}") from e
             except Exception as e:
                 log.debug(web_response)
-                raise AssertionError(f"Unknown exception ({type(e).__name__}) - see verbose log for details. {e}")
+                raise AssertionError(
+                    f"Unknown exception ({type(e).__name__}) - see verbose log for details. {e}"
+                ) from e
             return True
         else:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")

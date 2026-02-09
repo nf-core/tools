@@ -716,10 +716,10 @@ class ModulesJson:
                 try:
                     self.modules_json = json.load(fh)
                 except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}")
+                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}") from e
 
-        except FileNotFoundError:
-            raise UserWarning("File 'modules.json' is missing")
+        except FileNotFoundError as e:
+            raise UserWarning("File 'modules.json' is missing") from e
 
     def update(
         self,
@@ -908,7 +908,7 @@ class ModulesJson:
         except LookupError as e:
             raise LookupError(
                 f"Failed to apply patch in reverse for {component_type[:-1]} '{component_fullname}' due to: {e}"
-            )
+            ) from e
 
         # Write the patched files to a temporary directory
         log.debug("Writing patched files to tmpdir")

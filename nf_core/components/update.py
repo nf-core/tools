@@ -399,8 +399,8 @@ class ComponentUpdate(ComponentCommand):
         # Get component installation directory
         try:
             install_dir = [dir for dir, m in components if component == m][0]
-        except IndexError:
-            raise UserWarning(f"{self.component_type[:-1].title()} '{component}' not found in 'modules.json'.")
+        except IndexError as e:
+            raise UserWarning(f"{self.component_type[:-1].title()} '{component}' not found in 'modules.json'.") from e
 
         # Check if component is installed before trying to update
         if component not in choices:

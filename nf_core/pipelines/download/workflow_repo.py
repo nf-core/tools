@@ -154,8 +154,8 @@ class WorkflowRepo(SyncedRepo):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                     super().update_local_repo_status(self.fullname, True)
-                except GitCommandError:
-                    raise DownloadError(f"Failed to clone from the remote: `{remote}`")
+                except GitCommandError as e:
+                    raise DownloadError(f"Failed to clone from the remote: `{remote}`") from e
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 

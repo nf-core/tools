@@ -23,7 +23,7 @@ class TestModulesCreate(TestModules):
             try:
                 mod_json_sb = json.load(fh)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}") from e
 
         mod_json_obj = ModulesJson(self.pipeline_dir)
         mod_json = mod_json_obj.get_modules_json()
@@ -214,7 +214,7 @@ class TestModulesCreate(TestModules):
             try:
                 mod_json_new = json.load(f)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}") from e
         assert mod_json == mod_json_new
 
     def test_mod_json_with_empty_modules_value(self):

@@ -173,7 +173,7 @@ class PipelineSync:
                 self.make_pull_request()
             except PullRequestExceptionError as e:
                 self.reset_target_dir()
-                raise PullRequestExceptionError(e)
+                raise PullRequestExceptionError(e) from e
 
         self.reset_target_dir()
 
@@ -191,8 +191,8 @@ class PipelineSync:
         # Check that the pipeline_dir is a git repo
         try:
             self.repo = git.Repo(self.pipeline_dir)
-        except InvalidGitRepositoryError:
-            raise SyncExceptionError(f"'{self.pipeline_dir}' does not appear to be a git repository")
+        except InvalidGitRepositoryError as e:
+            raise SyncExceptionError(f"'{self.pipeline_dir}' does not appear to be a git repository") from e
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
@@ -218,8 +218,8 @@ class PipelineSync:
             if self.from_branch and self.repo.active_branch.name != self.from_branch:
                 log.info(f"Checking out workflow branch '{self.from_branch}'")
                 self.repo.git.checkout(self.from_branch)
-        except GitCommandError:
-            raise SyncExceptionError(f"Branch `{self.from_branch}` not found!")
+        except GitCommandError as e:
+            raise SyncExceptionError(f"Branch `{self.from_branch}` not found!") from e
 
         # If not specified, get the name of the active branch
         if not self.from_branch:
@@ -249,8 +249,8 @@ class PipelineSync:
             # Try to check out an existing local branch called TEMPLATE
             try:
                 self.repo.git.checkout("TEMPLATE")
-            except GitCommandError:
-                raise SyncExceptionError("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
+            except GitCommandError as e:
+                raise SyncExceptionError("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'") from e
 
     def delete_tracked_template_branch_files(self):
         """
@@ -271,7 +271,7 @@ class PipelineSync:
             try:
                 file_path.unlink()
             except Exception as e:
-                raise SyncExceptionError(e)
+                raise SyncExceptionError(e) from e
 
     def _clean_up_empty_dirs(self):
         """
@@ -294,7 +294,7 @@ class PipelineSync:
                 try:
                     Path(curr_dir).rmdir()
                 except Exception as e:
-                    raise SyncExceptionError(e)
+                    raise SyncExceptionError(e) from e
                 deleted.add(Path(curr_dir))
 
     def make_template_pipeline(self) -> None:
@@ -340,7 +340,7 @@ class PipelineSync:
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
-            raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}")
+            raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}") from err
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
@@ -358,7 +358,7 @@ class PipelineSync:
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
         except Exception as e:
-            raise SyncExceptionError(f"Could not commit changes to TEMPLATE:\n{e}")
+            raise SyncExceptionError(f"Could not commit changes to TEMPLATE:\n{e}") from e
         return True
 
     def push_template_branch(self):
@@ -370,7 +370,7 @@ class PipelineSync:
         try:
             self.repo.git.push()
         except GitCommandError as e:
-            raise PullRequestExceptionError(f"Could not push TEMPLATE branch:\n  {e}")
+            raise PullRequestExceptionError(f"Could not push TEMPLATE branch:\n  {e}") from e
 
     def create_merge_base_branch(self):
         """Create a new branch from the updated TEMPLATE branch
@@ -397,7 +397,7 @@ class PipelineSync:
         try:
             self.repo.create_head(self.merge_branch)
         except GitCommandError as e:
-            raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}")
+            raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}") from e
 
     def push_merge_branch(self):
         """Push the newly created merge branch to the remote repository"""
@@ -406,7 +406,7 @@ class PipelineSync:
             origin = self.repo.remote()
             origin.push(self.merge_branch)
         except GitCommandError as e:
-            raise PullRequestExceptionError(f"Could not push branch '{self.merge_branch}':\n  {e}")
+            raise PullRequestExceptionError(f"Could not push branch '{self.merge_branch}':\n  {e}") from e
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
@@ -451,7 +451,7 @@ class PipelineSync:
                 )
             except Exception as e:
                 stderr.print_exception()
-                raise PullRequestExceptionError(f"Something went badly wrong - {e}")
+                raise PullRequestExceptionError(f"Something went badly wrong - {e}") from e
             else:
                 self.gh_pr_returned_data = r.json()
                 self.pr_url = self.gh_pr_returned_data["html_url"]
@@ -482,7 +482,7 @@ class PipelineSync:
         try:
             self.repo.git.checkout(self.original_branch)
         except GitCommandError as e:
-            raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}")
+            raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}") from e
 
     def _get_ignored_files(self) -> list[str]:
         """

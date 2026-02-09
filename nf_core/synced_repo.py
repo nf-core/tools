@@ -92,8 +92,8 @@ class SyncedRepo:
         """
         try:
             unparsed_branches = git.Git().ls_remote(remote_url)
-        except git.GitCommandError:
-            raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
+        except git.GitCommandError as e:
+            raise LookupError(f"Was unable to fetch branches from '{remote_url}'") from e
         else:
             branches = {}
             for branch_info in unparsed_branches.split("\n"):
@@ -133,8 +133,8 @@ class SyncedRepo:
             if config_fn is not None and repo_config is not None:
                 try:
                     self.repo_path = repo_config.org_path
-                except KeyError:
-                    raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+                except KeyError as e:
+                    raise UserWarning(f"'org_path' key not present in {config_fn.name}") from e
 
             # Verify that the repo seems to be correctly configured
             if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
@@ -206,8 +206,8 @@ class SyncedRepo:
         """
         try:
             self.checkout_branch()
-        except GitCommandError:
-            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
+        except GitCommandError as e:
+            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'") from e
 
     def verify_branch(self):
         """
@@ -399,7 +399,7 @@ class SyncedRepo:
                 "To solve this, you can try to remove the cloned rempository and run the command again.\n"
                 f"This repository is typically found at `{self.local_repo_dir}`"
             )
-            raise UserWarning
+            raise UserWarning from None
         commits = iter(commits_new + commits_old)
 
         return commits

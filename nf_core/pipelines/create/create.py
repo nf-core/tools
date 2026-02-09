@@ -154,8 +154,8 @@ class PipelineCreate:
                 with open(template_yaml) as f:
                     template_yaml = yaml.safe_load(f)
                     config = CreateConfig(**template_yaml)
-            except FileNotFoundError:
-                raise UserWarning(f"Template YAML file '{template_yaml}' not found.")
+            except FileNotFoundError as e:
+                raise UserWarning(f"Template YAML file '{template_yaml}' not found.") from e
 
         # Check required fields
         missing_fields = []
@@ -503,7 +503,7 @@ class PipelineCreate:
                 else:
                     raise UserWarning(
                         "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
-                    )
+                    ) from e
         if self.is_interactive:
             try:
                 log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")

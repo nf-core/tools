@@ -136,11 +136,11 @@ class GithubRepo(Screen):
             try:
                 user.login
                 log.debug("GitHub authentication successful")
-            except GithubException:
+            except GithubException as e:
                 raise UserWarning(
                     f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
                     "Please make sure that the provided user name and token are correct."
-                )
+                ) from e
 
             # Check if organisation exists
             # If the organisation is nf-core or it doesn't exist, the repo will be created in the user account

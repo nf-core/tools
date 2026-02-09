@@ -133,7 +133,9 @@ class ComponentPatch(ComponentCommand):
             )
             log.debug(f"Patch file wrote to a temporary directory {patch_temp_path}")
         except UserWarning:
-            raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
+            raise UserWarning(
+                f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute"
+            ) from None
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(
@@ -229,7 +231,7 @@ class ComponentPatch(ComponentCommand):
                 file.rename(component_path.joinpath(file.name))
             os.rmdir(temp_component_dir)
         except Exception as err:
-            raise UserWarning(f"There was a problem reverting the patched file: {err}")
+            raise UserWarning(f"There was a problem reverting the patched file: {err}") from err
 
         log.info(f"Patch for {component} reverted!")
         # Remove patch file if we could revert the patch

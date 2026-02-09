@@ -239,11 +239,11 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Attempting to automatically fix failing tests")
             try:
                 repo = git.Repo(self.wf_path)
-            except InvalidGitRepositoryError:
+            except InvalidGitRepositoryError as e:
                 raise AssertionError(
                     f"'{self.wf_path}' does not appear to be a git repository, "
                     "this is required when running with '--fix'"
-                )
+                ) from e
             # Check that we have no uncommitted changes
             if repo.is_dirty(untracked_files=True):
                 raise AssertionError(

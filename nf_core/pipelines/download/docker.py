@@ -82,10 +82,10 @@ class DockerFetcher(ContainerFetcher):
 
         try:
             nf_core.utils.run_cmd(docker_binary, "info")
-        except RuntimeError:
+        except RuntimeError as e:
             raise OSError(
                 "Docker daemon is required to pull images, but it is not running or unavailable to the docker client"
-            )
+            ) from e
 
         self.implementation = "docker"
 

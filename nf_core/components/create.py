@@ -543,7 +543,7 @@ class ComponentCreate(ComponentCommand):
 
             if hasattr(self, "outputs") and len(self.outputs) > 0:
                 outputs_dict: dict[str, list | dict] = {}
-                for i, (output_name, ontologies) in enumerate(self.outputs.items()):
+                for _i, (output_name, ontologies) in enumerate(self.outputs.items()):
                     channel_contents: list[list[dict] | dict] = []
                     if self.has_meta:
                         channel_contents.append(

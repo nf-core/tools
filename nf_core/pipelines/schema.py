@@ -169,11 +169,11 @@ class PipelineSchema:
         except json.decoder.JSONDecodeError as e:
             error_msg = f"[bold red]Could not parse schema JSON:[/] {e}"
             log.error(error_msg)
-            raise AssertionError(error_msg)
+            raise AssertionError(error_msg) from e
         except AssertionError as e:
             error_msg = f"[red][✗] Pipeline schema does not follow nf-core specs:\n {e}"
             log.error(error_msg)
-            raise AssertionError(error_msg)
+            raise AssertionError(error_msg) from e
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
@@ -279,7 +279,7 @@ class PipelineSchema:
                 try:
                     params = json.load(fh)
                 except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}")
+                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}") from e
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
         except Exception as json_e:
@@ -293,7 +293,7 @@ class PipelineSchema:
             except Exception as yaml_e:
                 error_msg = f"Could not load params file as either JSON or YAML:\n JSON: {json_e}\n YAML: {yaml_e}"
                 log.error(error_msg)
-                raise AssertionError(error_msg)
+                raise AssertionError(error_msg) from yaml_e
 
     def validate_params(self):
         """Check given parameters against a schema and validate"""
@@ -322,7 +322,7 @@ class PipelineSchema:
             jsonschema.validate(self.schema_defaults, strip_required(self.schema))
         except jsonschema.exceptions.ValidationError as e:
             log.debug(f"Complete error message:\n{e}")
-            raise AssertionError(f"Default parameters are invalid: {e.message}")
+            raise AssertionError(f"Default parameters are invalid: {e.message}") from e
         for param, default in self.schema_defaults.items():
             if default in ("null", "", None, "None") or default is False:
                 log.warning(
@@ -429,13 +429,13 @@ class PipelineSchema:
                 jsonschema.Draft7Validator.check_schema(schema)
                 log.debug("JSON Schema Draft7 validated")
             except jsonschema.exceptions.SchemaError as e:
-                raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}")
+                raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}") from e
         elif self.schema_draft == "https://json-schema.org/draft/2020-12/schema":
             try:
                 jsonschema.Draft202012Validator.check_schema(schema)
                 log.debug("JSON Schema Draft2020-12 validated")
             except jsonschema.exceptions.SchemaError as e:
-                raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}")
+                raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}") from e
         else:
             raise AssertionError(
                 f"Schema `$schema` should be `https://json-schema.org/draft/2020-12/schema` or `https://json-schema.org/draft-07/schema` \n Found `{schema_draft}`"
@@ -973,12 +973,12 @@ class PipelineSchema:
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
                 )
-        except AssertionError:
+        except AssertionError as e:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
                 f"Pipeline schema builder response not recognised: {self.web_schema_build_url}\n"
                 " See verbose log for full response (nf-core -v schema)"
-            )
+            ) from e
         else:
             self.web_schema_build_web_url = web_response["web_url"]
             self.web_schema_build_api_url = web_response["api_url"]
@@ -1004,7 +1004,7 @@ class PipelineSchema:
                 self.remove_schema_empty_definitions()
                 self.validate_schema()
             except AssertionError as e:
-                raise AssertionError(f"Response from schema builder did not pass validation:\n {e}")
+                raise AssertionError(f"Response from schema builder did not pass validation:\n {e}") from e
             else:
                 self.save_schema()
                 return True

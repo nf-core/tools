@@ -532,7 +532,7 @@ class DownloadWorkflow:
             else:
                 self.container_fetcher = None
         except OSError as e:
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
     def prompt_use_singularity(self, fail_message: str) -> None:
         if not stderr.is_interactive:
@@ -692,11 +692,11 @@ class DownloadWorkflow:
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error")
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
         except KeyError as e:
             log.error("Failed to parse output of 'nextflow inspect' to extract containers")
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
     def get_container_output_dir(self) -> Path:
         assert self.outdir is not None  # mypy

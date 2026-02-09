@@ -375,7 +375,7 @@ class ModuleLint(ComponentLint):
                 schema = self.load_meta_schema()
                 schema_keys = list(schema["properties"].keys())
             except (LintExceptionError, KeyError) as e:
-                raise UserWarning("Failed to load meta schema", e)
+                raise UserWarning("Failed to load meta schema", e) from e
 
             result: dict = {}
 

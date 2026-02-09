@@ -487,7 +487,7 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
-            )
+            ) from e
         else:
             return None
     except subprocess.CalledProcessError as e:
@@ -497,7 +497,7 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
         else:
             raise RuntimeError(
                 f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-            )
+            ) from e
 
 
 def setup_nfcore_dir() -> bool:
@@ -565,8 +565,8 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
                 if poll_func():
                     break
                 time.sleep(2)
-    except KeyboardInterrupt:
-        raise AssertionError("Cancelled!")
+    except KeyboardInterrupt as e:
+        raise AssertionError("Cancelled!") from e
 
 
 def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
@@ -585,10 +585,10 @@ def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
             else:
                 log.debug(f"requesting {api_url} with {post_data}")
                 response = requests.post(url=api_url, data=post_data)
-        except requests.exceptions.Timeout:
-            raise AssertionError(f"URL timed out: {api_url}")
-        except requests.exceptions.ConnectionError:
-            raise AssertionError(f"Could not connect to URL: {api_url}")
+        except requests.exceptions.Timeout as e:
+            raise AssertionError(f"URL timed out: {api_url}") from e
+        except requests.exceptions.ConnectionError as e:
+            raise AssertionError(f"Could not connect to URL: {api_url}") from e
         else:
             if response.status_code != 200 and response.status_code != 301:
                 response_content = response.content
@@ -605,7 +605,7 @@ def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
                     raise AssertionError()
-            except (json.decoder.JSONDecodeError, AssertionError, TypeError):
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                 response_content = response.content
                 if isinstance(response_content, bytes):
                     response_content = response_content.decode()
@@ -613,7 +613,7 @@ def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"
-                )
+                ) from e
             else:
                 return web_response
 
@@ -818,10 +818,10 @@ def anaconda_package(dep, dep_channels=None):
         anaconda_api_url = f"https://api.anaconda.org/package/{ch}/{depname}"
         try:
             response = requests.get(anaconda_api_url, timeout=10)
-        except requests.exceptions.Timeout:
-            raise LookupError(f"Anaconda API timed out: {anaconda_api_url}")
-        except requests.exceptions.ConnectionError:
-            raise LookupError("Could not connect to Anaconda API")
+        except requests.exceptions.Timeout as e:
+            raise LookupError(f"Anaconda API timed out: {anaconda_api_url}") from e
+        except requests.exceptions.ConnectionError as e:
+            raise LookupError("Could not connect to Anaconda API") from e
         else:
             if response.status_code == 200:
                 return response.json()
@@ -887,10 +887,10 @@ def pip_package(dep):
     pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
-    except requests.exceptions.Timeout:
-        raise LookupError(f"PyPI API timed out: {pip_api_url}")
-    except requests.exceptions.ConnectionError:
-        raise LookupError(f"PyPI API Connection error: {pip_api_url}")
+    except requests.exceptions.Timeout as e:
+        raise LookupError(f"PyPI API timed out: {pip_api_url}") from e
+    except requests.exceptions.ConnectionError as e:
+        raise LookupError(f"PyPI API Connection error: {pip_api_url}") from e
     else:
         if response.status_code == 200:
             return response.json()
@@ -922,8 +922,8 @@ def get_biocontainer_tag(package, version):
 
     try:
         response = requests.get(biocontainers_api_url)
-    except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to biocontainers.pro API")
+    except requests.exceptions.ConnectionError as e:
+        raise LookupError("Could not connect to biocontainers.pro API") from e
     else:
         if response.status_code == 200:
             try:
@@ -965,8 +965,8 @@ def get_biocontainer_tag(package, version):
                 if singularity_image is None:
                     raise LookupError(f"Could not find singularity container for {package}")
                 return docker_image_name, singularity_image["image_name"]
-            except TypeError:
-                raise LookupError(f"Could not find docker or singularity container for {package}")
+            except TypeError as e:
+                raise LookupError(f"Could not find docker or singularity container for {package}") from e
         elif response.status_code != 404:
             raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
@@ -1478,7 +1478,7 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
             error_message += (
                 f"\n{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}\nGot instead: {error['input']}"
             )
-        raise AssertionError(error_message)
+        raise AssertionError(error_message) from e
 
     wf_config = fetch_wf_config(Path(directory))
     if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
