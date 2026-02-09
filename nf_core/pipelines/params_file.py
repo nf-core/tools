@@ -179,7 +179,7 @@ class ParamsFileBuilder:
         return out
 
     def format_param(
-        self, name: str, properties: dict, required_properties: list[str] = None, show_hidden: bool = False
+        self, name: str, properties: dict, required_properties: list[str] | None = None, show_hidden: bool = False
     ) -> str | None:
         """
         Format a single parameter of the schema as commented YAML

@@ -83,7 +83,9 @@ def get_remote_branch_names() -> list[str]:
     return branches
 
 
-def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: list[str] = None) -> list[str]:
+def get_remote_tree_for_branch(
+    branch: str, only_files: bool = True, ignored_prefixes: list[str] | None = None
+) -> list[str]:
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
@@ -130,8 +132,8 @@ def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_pre
 
 def list_files_by_branch(
     branch: str = "",
-    branches: list[str] = None,
-    ignored_file_prefixes: list[str] = None,
+    branches: list[str] | None = None,
+    ignored_file_prefixes: list[str] | None = None,
 ) -> dict[str, list[str]]:
     """
     Lists files for all branches in the test-datasets github repo.
