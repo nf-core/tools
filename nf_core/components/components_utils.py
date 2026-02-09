@@ -278,7 +278,7 @@ def get_channel_info_from_biotools(
         if tool["name"].lower() == tool_name:
             if "function" in tool:
                 # Parse all tool functions
-                for funct in tool["function"]:
+                for _funct in tool["function"]:
                     inputs.update(_iterate_input_output("input"))
                     outputs.update(_iterate_input_output("output"))
             return inputs, outputs

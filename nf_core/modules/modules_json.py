@@ -637,7 +637,7 @@ class ModulesJson:
             for _, repo_entry in self.modules_json.get("repos", {}).items():
                 for component_type in ["modules", "subworkflows"]:
                     if component_type in repo_entry:
-                        for install_dir, install_dir_entry in repo_entry[component_type].items():
+                        for _install_dir, install_dir_entry in repo_entry[component_type].items():
                             for _, component in install_dir_entry.items():
                                 if "installed_by" in component and isinstance(component["installed_by"], str):
                                     log.debug(f"Updating {component} in modules.json")

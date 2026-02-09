@@ -40,5 +40,5 @@ def subworkflow_todos(_, subworkflow):
     swf_results = pipeline_todos(None, root_dir=subworkflow.component_dir)
     for i, warning in enumerate(swf_results["warned"]):
         subworkflow.warned.append(("subworkflow_todos", "subworkflow_todo", warning, swf_results["file_paths"][i]))
-    for i, passed in enumerate(swf_results["passed"]):
+    for _i, passed in enumerate(swf_results["passed"]):
         subworkflow.passed.append(("subworkflow_todos", "subworkflow_todo", passed, subworkflow.component_dir))

@@ -27,7 +27,7 @@ def subworkflow_if_empty_null(_, subworkflow):
         subworkflow.warned.append(
             ("subworkflow_if_empty_null", "subworkflow_if_empty_null", warning, swf_results["file_paths"][i])
         )
-    for i, passed in enumerate(swf_results["passed"]):
+    for _i, passed in enumerate(swf_results["passed"]):
         subworkflow.passed.append(
             ("subworkflow_if_empty_null", "subworkflow_if_empty_null", passed, subworkflow.component_dir)
         )
