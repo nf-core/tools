@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 import questionary
@@ -271,7 +270,7 @@ class ComponentInstall(ComponentCommand):
             True: if the component is not installed
             False: if the component is installed
         """
-        if (current_version is not None and os.path.exists(component_dir)) and not force:
+        if (current_version is not None and component_dir.exists()) and not force:
             # make sure included components are also installed
             if self.component_type == "subworkflows":
                 self.install_included_components(component_dir)

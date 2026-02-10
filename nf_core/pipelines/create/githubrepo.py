@@ -239,8 +239,8 @@ class GithubRepo(Screen):
         gh_user = None
         gh_token = None
         # Use gh CLI config if installed
-        gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
-        if os.path.exists(gh_cli_config_fn):
+        gh_cli_config_fn = Path.home() / ".config" / "gh" / "hosts.yml"
+        if gh_cli_config_fn.exists():
             try:
                 with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)

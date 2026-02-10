@@ -97,7 +97,10 @@ NFCORE_CACHE_DIR = Path(
     os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(
+    os.environ.get("XDG_CONFIG_HOME") or Path(os.getenv("HOME") or "") / ".config",
+    "nfcore",
+)
 
 
 def unquote(s: str) -> str:
@@ -291,8 +294,7 @@ def is_pipeline_directory(wf_path):
         UserWarning: If one of the files are missing
     """
     for fn in ["main.nf", "nextflow.config"]:
-        path = os.path.join(wf_path, fn)
-        if not os.path.isfile(path):
+        if not Path(wf_path, fn).is_file():
             if wf_path == ".":
                 warning = f"Current directory is not a pipeline - '{fn}' is missing."
             else:
@@ -663,8 +665,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 return r
 
         # Default auth if we're running and the gh CLI tool is installed
-        gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
-        if self.auth is None and os.path.exists(gh_cli_config_fn):
+        gh_cli_config_fn = Path.home() / ".config" / "gh" / "hosts.yml"
+        if self.auth is None and gh_cli_config_fn.exists():
             try:
                 with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)

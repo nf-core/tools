@@ -1,4 +1,4 @@
-import os
+import shutil
 from pathlib import Path
 from unittest import mock
 
@@ -28,7 +28,7 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore/main.nf"))
+        assert Path(self.pipeline_dir, "modules", "local", "trimgalore/main.nf").exists()
 
     def test_modules_create_fail_exists(self):
         """Fail at creating the same module twice"""
@@ -55,10 +55,8 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf"))
-        assert os.path.exists(
-            os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "tests", "main.nf.test")
-        )
+        assert Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf").exists()
+        assert Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "tests", "main.nf.test").exists()
 
     def test_modules_create_nfcore_modules_subtool(self):
         """Create a tool/subtool module in a nf-core/modules clone"""
@@ -70,10 +68,8 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "main.nf"))
-        assert os.path.exists(
-            os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "tests", "main.nf.test")
-        )
+        assert Path(self.nfcore_modules, "modules", "nf-core", "star", "index", "main.nf").exists()
+        assert Path(self.nfcore_modules, "modules", "nf-core", "star", "index", "tests", "main.nf.test").exists()
 
     def test_modules_meta_yml_structure_biotools_meta(self):
         """Test the structure of the module meta.yml file when it was generated with INFORMATION from bio.tools and WITH a meta."""

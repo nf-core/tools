@@ -1,4 +1,3 @@
-import os
 import re
 import tempfile
 from pathlib import Path
@@ -18,7 +17,7 @@ class TestModulesBumpVersions(TestModules):
     def test_modules_bump_versions_single_module(self):
         """Test updating a single module"""
         # Change the bpipe/test version to an older version
-        env_yml_path = os.path.join(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")
+        env_yml_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")
         with open(env_yml_path) as fh:
             content = fh.read()
         new_content = re.sub(r"bioconda::star=\d.\d.\d\D?", r"bioconda::star=2.6.1d", content)
@@ -98,7 +97,7 @@ class TestModulesBumpVersions(TestModules):
     def test_modules_bump_versions_fail_unknown_version(self):
         """Fail because of an unknown version"""
         # Change the bpipe/test version to an older version
-        env_yml_path = os.path.join(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")
+        env_yml_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")
         with open(env_yml_path) as fh:
             content = fh.read()
         new_content = re.sub(r"bioconda::bpipe=\d.\d.\d\D?", r"bioconda::bpipe=xxx", content)

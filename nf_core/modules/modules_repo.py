@@ -94,7 +94,7 @@ class ModulesRepo(SyncedRepo):
         """
         self.local_repo_dir = Path(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
-            if not os.path.exists(self.local_repo_dir):
+            if not self.local_repo_dir.exists():
                 try:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",

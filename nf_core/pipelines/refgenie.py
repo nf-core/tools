@@ -82,7 +82,7 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
         """
     )
     nxf_home_config = Path(nxf_home) / "config"
-    if os.path.exists(nxf_home_config):
+    if nxf_home_config.exists():
         # look for include statement in config
         has_include_statement = False
         with open(nxf_home_config) as fh:
@@ -164,9 +164,9 @@ def update_config(rgc):
     if not nxf_home:
         try:
             nxf_home = Path.home() / ".nextflow"
-            if not os.path.exists(nxf_home):
+            if not nxf_home.exists():
                 log.info(f"Creating NXF_HOME directory at {nxf_home}")
-                os.makedirs(nxf_home, exist_ok=True)
+                nxf_home.mkdir(parents=True, exist_ok=True)
         except RuntimeError:
             nxf_home = False
 

@@ -125,9 +125,9 @@ class Launch:
                 ).unsafe_ask()
 
         # Check if the output file exists already
-        if os.path.exists(self.params_out):
+        if self.params_out.exists():
             # if params_in has the same name as params_out, don't ask to overwrite
-            if self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out):
+            if self.params_in and Path(self.params_in).resolve() == self.params_out.resolve():
                 log.warning(
                     f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
                 )
@@ -209,10 +209,10 @@ class Launch:
         self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
 
         # Check if this is a local directory
-        localpath = os.path.abspath(os.path.expanduser(self.pipeline))
-        if os.path.exists(localpath):
+        localpath = Path(self.pipeline).expanduser().resolve()
+        if localpath.exists():
             # Set the nextflow launch command to use full paths
-            self.pipeline = localpath
+            self.pipeline = str(localpath)
             self.nextflow_cmd = f"nextflow run {localpath}"
         else:
             # Assume nf-core if no org given
@@ -239,12 +239,11 @@ class Launch:
         except AssertionError:
             # No schema found
             # Check that this was actually a pipeline
-            if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
+            pipeline_dir_path = Path(self.schema_obj.pipeline_dir) if self.schema_obj.pipeline_dir else None
+            if pipeline_dir_path is None or not pipeline_dir_path.exists():
                 log.error(f"Could not find pipeline: {self.pipeline} ({self.schema_obj.pipeline_dir})")
                 return False
-            if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
-                os.path.join(self.schema_obj.pipeline_dir, "main.nf")
-            ):
+            if not (pipeline_dir_path / "nextflow.config").exists() and not (pipeline_dir_path / "main.nf").exists():
                 log.error("Could not find a 'main.nf' or 'nextflow.config' file, are you sure this is a pipeline?")
                 return False
 

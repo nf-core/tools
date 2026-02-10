@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -474,7 +473,7 @@ def pipelines_schema_docs(schema_path, output, format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    if not os.path.exists(schema_path):
+    if not schema_path.exists():
         log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
         sys.exit(1)
 

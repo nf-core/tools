@@ -71,7 +71,7 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         return []
 
 
-def get_local_wf(workflow: Path, revision=None) -> Path | None:
+def get_local_wf(workflow: str | Path, revision=None) -> Path | None:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """

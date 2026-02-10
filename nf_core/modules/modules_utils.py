@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -82,7 +81,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 
     # Make full (relative) file paths and create NFCoreComponent objects
     if local_modules_dir:
-        local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+        local_modules = [str(local_modules_dir / m) for m in local_modules]
 
     nfcore_modules = [
         NFCoreComponent(
