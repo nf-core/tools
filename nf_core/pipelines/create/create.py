@@ -376,7 +376,7 @@ class PipelineCreate:
 
                 # Mirror file permissions
                 template_stat = os.stat(template_fn_path)
-                os.chmod(output_path, template_stat.st_mode)
+                output_path.chmod(template_stat.st_mode)
 
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline

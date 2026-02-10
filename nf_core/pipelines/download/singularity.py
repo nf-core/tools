@@ -935,4 +935,4 @@ class FileDownloader:
                         raise DownloadError(f"Downloaded file '{remote_path}' is empty")
 
                 # Set image file permissions to user=read,write,execute group/all=read,execute
-                os.chmod(fh.name, 0o755)
+                Path(fh.name).chmod(0o755)
