@@ -2,7 +2,6 @@
 The ComponentCreate class handles generating of module and subworkflow templates
 """
 
-import glob
 import json
 import logging
 import re
@@ -399,7 +398,7 @@ class ComponentCreate(ComponentCommand):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob(f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf")
+            tool_glob = list(Path(self.directory, self.component_type, self.org, self.component).glob("*/main.nf"))
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
