@@ -27,7 +27,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_draft = "https://json-schema.org/draft/2020-12/schema"
         self.schema_obj.defs_notation = "$defs"
         self.schema_obj.validation_plugin = "nf-schema"
-        self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        self.root_repo_dir = Path(__file__).resolve().parent.parent
 
         # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
