@@ -36,7 +36,7 @@ class ComponentCreate(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        directory: Path = Path("."),
+        directory: Path = Path(),
         component: str = "",
         author: str | None = None,
         process_label: str | None = None,

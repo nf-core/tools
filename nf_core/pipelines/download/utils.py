@@ -85,7 +85,7 @@ def intermediate_file_no_creation(output_path: Path) -> Generator[Path, None, No
 
 
 @contextlib.contextmanager
-def intermediate_dir_with_cd(original_dir: Path, base_dir: Path = Path(".")):
+def intermediate_dir_with_cd(original_dir: Path, base_dir: Path = Path()):
     """
     Context manager to provide and change into a tempdir and ensure its removal and return to the
     original_dir upon exceptions.
