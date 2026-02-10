@@ -127,7 +127,8 @@ class Launch:
         # Check if the output file exists already
         if self.params_out.exists():
             # if params_in has the same name as params_out, don't ask to overwrite
-            if self.params_in and Path(self.params_in).resolve() == self.params_out.resolve():
+            params_in_path = Path(self.params_in) if self.params_in else None
+            if params_in_path and params_in_path.exists() and params_in_path.samefile(self.params_out):
                 log.warning(
                     f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
                 )
@@ -140,9 +141,9 @@ class Launch:
             else:
                 log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
                 if Confirm.ask("[yellow]Do you want to overwrite this file?"):
-                    if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
+                    if not (params_in_path and params_in_path.exists() and params_in_path.samefile(self.params_out)):
                         self.params_out.unlink()
-                    log.info(f"Deleted {self.params_out}\n")
+                        log.info(f"Deleted {self.params_out}\n")
                 else:
                     log.info("Exiting. Use --params-out to specify a custom output filename.")
                     return False

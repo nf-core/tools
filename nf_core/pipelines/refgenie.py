@@ -72,12 +72,13 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
     for the 'refgenie_genomes_config_file' if not already defined
     """
     # Check if NXF_HOME/config exists and has a
+    refgenie_config_path = Path(refgenie_genomes_config_file).resolve()
     include_config_string = dedent(
         f"""
         ///// >>> nf-core + RefGenie >>> /////
         // !! Contents within this block are managed by 'nf-core/tools' !!
         // Includes auto-generated config file with RefGenie genome assets
-        includeConfig '{os.path.abspath(refgenie_genomes_config_file)}'
+        includeConfig '{refgenie_config_path}'
         ///// <<< nf-core + RefGenie <<< /////
         """
     )
@@ -88,7 +89,7 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
         with open(nxf_home_config) as fh:
             lines = fh.readlines()
             for line in lines:
-                if re.match(rf"\s*includeConfig\s*'{os.path.abspath(refgenie_genomes_config_file)}'", line):
+                if re.match(rf"\s*includeConfig\s*'{re.escape(str(refgenie_config_path))}'", line):
                     has_include_statement = True
                     break
 
