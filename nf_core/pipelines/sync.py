@@ -366,7 +366,7 @@ class PipelineSync:
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.info(f"Pushing TEMPLATE branch to remote: '{os.path.basename(self.pipeline_dir)}'")
+        log.info(f"Pushing TEMPLATE branch to remote: '{self.pipeline_dir.name}'")
         try:
             self.repo.git.push()
         except GitCommandError as e:
