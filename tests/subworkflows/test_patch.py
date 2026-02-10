@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -274,11 +273,13 @@ class TestSubworkflowsPatch(TestSubworkflows):
         ).install_component_files("bam_sort_stats_samtools", FAIL_SHA, update_obj.modules_repo, temp_dir)
 
         temp_module_dir = temp_dir / "bam_sort_stats_samtools"
-        for file in os.listdir(temp_module_dir):
-            assert file in os.listdir(swf_path)
-            with open(swf_path / file) as fh:
+        temp_files = {f.name for f in temp_module_dir.iterdir()}
+        swf_files = {f.name for f in swf_path.iterdir()}
+        for file_name in temp_files:
+            assert file_name in swf_files
+            with open(swf_path / file_name) as fh:
                 installed = fh.read()
-            with open(temp_module_dir / file) as fh:
+            with open(temp_module_dir / file_name) as fh:
                 shouldbe = fh.read()
             assert installed == shouldbe
 

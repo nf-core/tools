@@ -62,8 +62,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 
         # Filter local modules
         if local_modules_dir.exists():
-            local_modules = os.listdir(local_modules_dir)
-            local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
+            local_modules = sorted([x.name for x in local_modules_dir.iterdir() if x.suffix == ".nf"])
 
     # Get nf-core modules
     if nfcore_modules_dir.exists():

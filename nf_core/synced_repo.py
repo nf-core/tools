@@ -213,10 +213,12 @@ class SyncedRepo:
         """
         Verifies the active branch conforms to the correct directory structure
         """
-        dir_names = os.listdir(self.local_repo_dir)
-        if "modules" not in dir_names:
+        assert self.local_repo_dir is not None, "Repository must be initialized before verifying branch"
+        local_repo_path = Path(self.local_repo_dir)
+
+        if not Path(local_repo_path, "modules").exists():
             err_str = f"Repository '{self.remote_url}' ({self.branch}) does not contain the 'modules/' directory"
-            if "software" in dir_names:
+            if Path(local_repo_path, "software").exists():
                 err_str += (
                     ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
                 )

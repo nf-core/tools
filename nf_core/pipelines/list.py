@@ -153,9 +153,13 @@ class Workflows:
         nextflow_wfdir = _get_nextflow_assets_dir()
         if nextflow_wfdir.is_dir():
             log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
-            for org_name in os.listdir(nextflow_wfdir):
-                for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
-                    self.local_workflows.append(LocalWorkflow(f"{org_name}/{wf_name}"))
+            self.local_workflows.extend(
+                LocalWorkflow(f"{org_dir.name}/{wf_dir.name}")
+                for org_dir in nextflow_wfdir.iterdir()
+                if org_dir.is_dir()
+                for wf_dir in org_dir.iterdir()
+                if wf_dir.is_dir()
+            )
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:

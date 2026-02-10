@@ -180,7 +180,8 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
-        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == set([".git"]).union(top_level_ignored)
 
     def test_delete_tracked_template_branch_files_unlink_throws_error(self):
         """Test that SyncExceptionError is raised when Path.unlink throws an exception"""
@@ -299,11 +300,13 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
-        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == set([".git"]).union(top_level_ignored)
         # Now create the new template
         psync.make_template_pipeline()
-        assert "main.nf" in os.listdir(self.pipeline_dir)
-        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+        pipeline_path = Path(self.pipeline_dir)
+        assert (pipeline_path / "main.nf").exists()
+        assert (pipeline_path / "nextflow.config").exists()
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""
