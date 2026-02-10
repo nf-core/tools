@@ -74,6 +74,7 @@ class ComponentCommand:
         Get the local modules/subworkflows in a pipeline
         """
         local_component_dir = Path(self.directory, self.component_type, "local")
+        # TODO: Return list of Path objects instead of strings to avoid unnecessary conversion
         return [
             str(Path(directory).relative_to(local_component_dir))
             for directory, _, files in os.walk(local_component_dir)
@@ -90,6 +91,7 @@ class ComponentCommand:
             component_base_path = Path(self.directory, self.default_modules_path)
         elif self.component_type == "subworkflows":
             component_base_path = Path(self.directory, self.default_subworkflows_path)
+        # TODO: Return list of Path objects instead of strings to avoid unnecessary conversion
         return [
             str(Path(directory).relative_to(component_base_path))
             for directory, _, files in os.walk(component_base_path)
@@ -160,6 +162,7 @@ class ComponentCommand:
         if not repo_dir.exists():
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
+        # TODO: Return list of Path objects instead of strings to avoid unnecessary conversion
         return [
             str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
         ]
@@ -262,6 +265,7 @@ class ComponentCommand:
                     and self.modules_repo.repo_path is not None
                     and modules_json.modules_json is not None
                 ):
+                    # TODO: Consider if this needs to be a string or if Path object would work
                     modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
                         self.modules_repo.repo_path
                     ][module_name]["patch"] = str(patch_path.relative_to(self.directory.resolve()))

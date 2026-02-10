@@ -468,6 +468,7 @@ class ModulesJson:
         # Add all modules from modules.json to missing_installation
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         # Obtain the path of all installed modules
+        # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
         module_dirs = [
             Path(dir_name).relative_to(self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
@@ -476,6 +477,7 @@ class ModulesJson:
         untracked_dirs_modules, missing_installation = self.parse_dirs(module_dirs, missing_installation, "modules")
 
         # Obtain the path of all installed subworkflows
+        # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
         subworkflow_dirs = [
             Path(dir_name).relative_to(self.subworkflows_dir)
             for dir_name, _, file_names in os.walk(self.subworkflows_dir)

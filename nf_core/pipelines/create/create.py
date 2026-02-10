@@ -332,6 +332,7 @@ class PipelineCreate:
         for template_fn_path in template_files:
             # Skip files that are in the self.skip_paths list
             for skip_path in self.skip_paths:
+                # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
                 if str(template_fn_path.relative_to(template_dir)).startswith(skip_path):
                     break
             else:
@@ -393,6 +394,7 @@ class PipelineCreate:
         if self.config:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
             if config_fn is not None and config_yml is not None:
+                # TODO: Use config_fn.open() instead of open(str(config_fn))
                 with open(str(config_fn), "w") as fh:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())

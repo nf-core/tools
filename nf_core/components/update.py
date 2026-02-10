@@ -794,6 +794,7 @@ class ComponentUpdate(ComponentCommand):
         if pipeline_path.exists():
             pipeline_files = [f.name for f in pipeline_path.iterdir() if f.is_file()]
             # check if any *.config file exists in the pipeline
+            # TODO: Use f.suffix == ".config" instead of str(f).endswith(".config")
             config_files = [f for f in pipeline_files if str(f).endswith(".config")]
             for config_file in config_files:
                 log.debug(f"Moving '{component}/{config_file}' to updated component")
