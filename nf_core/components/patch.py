@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -106,7 +105,7 @@ class ComponentPatch(ComponentCommand):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if remove:
-                os.remove(patch_path)
+                patch_path.unlink()
             else:
                 return
 

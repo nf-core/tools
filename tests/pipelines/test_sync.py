@@ -118,7 +118,7 @@ class TestModules(TestPipelines):
                 psync.inspect_sync_dir()
             assert exc_info.value.args[0].startswith("Uncommitted changes found in pipeline directory!")
         finally:
-            os.remove(test_fn)
+            test_fn.unlink()
 
     def test_inspect_sync_ignored_files(self):
         """

@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -767,7 +766,7 @@ class ComponentUpdate(ComponentCommand):
                 "Please remove the file or provide a different filename"
             )
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
-                os.remove(self.save_diff_fn)
+                self.save_diff_fn.unlink()
                 break
             self.save_diff_fn = questionary.path(
                 "Enter a new filename: ",

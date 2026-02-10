@@ -140,7 +140,8 @@ class Launch:
             else:
                 log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
                 if Confirm.ask("[yellow]Do you want to overwrite this file?"):
-                    os.remove(self.params_out)
+                    if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
+                        self.params_out.unlink()
                     log.info(f"Deleted {self.params_out}\n")
                 else:
                     log.info("Exiting. Use --params-out to specify a custom output filename.")
