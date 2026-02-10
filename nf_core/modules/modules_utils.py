@@ -32,7 +32,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
         path = urlparse(remote_url).path
 
     # Remove the file extension from the path
-    path, _ = os.path.splitext(path)
+    path = str(Path(path).with_suffix(""))
 
     return path
 

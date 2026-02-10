@@ -1011,7 +1011,7 @@ def is_file_binary(path):
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
     # Check common file extensions
-    _, file_extension = os.path.splitext(path)
+    file_extension = Path(path).suffix
     if file_extension in binary_extensions:
         return True
 
