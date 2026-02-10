@@ -44,6 +44,8 @@ def test_process_labels(content, passed, warned, failed):
     [
         # Single-line container definition should pass
         ('container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package', 2, 0, 0),
+        # Single-line container definition should pass
+        ('container "nf-core/modules/gatk:4.4.0.0"', 2, 0, 0),
         # Multi-line container definition should pass
         (
             '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

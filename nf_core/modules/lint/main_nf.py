@@ -395,9 +395,11 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.passed.append(("main_nf", "container_links", "Container prefix is correct", self.main_nf))
 
-            # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
+            # Guess if container name is simple one (e.g. nf-core/ubuntu:20.04)
             # If so, add quay.io as default container prefix
-            if line.count("/") == 1 and line.count(":") == 1:
+            if line.startswith("nf-core"):
+                line = "/".join([registry, line]).replace("//", "/")
+            elif line.count("/") == 1 and line.count(":") == 1:
                 line = "/".join([registry, line]).replace("//", "/")
             url = urlparse(line.split("'")[0])
 
