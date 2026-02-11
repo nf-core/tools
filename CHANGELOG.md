@@ -4,6 +4,8 @@
 
 ### General
 
+- [DO NOT MERGE] test esm setup for setup-nextflow ([#4035](https://github.com/nf-core/tools/pull/4035))
+
 ### Linting
 
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
