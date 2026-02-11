@@ -1,6 +1,5 @@
 import filecmp
 import logging
-import os
 import re
 import shutil
 import tempfile
@@ -170,8 +169,8 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if f.name.endswith(".png") and int(os.stat(_pf(f)).st_size / 500) == int(
-                            os.stat(_tf(f)).st_size / 500
+                        if f.name.endswith(".png") and int(_pf(f).stat().st_size / 500) == int(
+                            _tf(f).stat().st_size / 500
                         ):
                             # almost the same file, good enough for the logo
                             log.debug(f"Files are almost the same. Will pass: {f}")
