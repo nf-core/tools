@@ -1,4 +1,3 @@
-import os
 import subprocess
 import unittest
 from pathlib import Path
@@ -33,7 +32,7 @@ class DownloadUtilsTest(unittest.TestCase):
             tmp.write(b"Hello, World!")
 
         assert output_path.exists()
-        assert os.path.getsize(output_path) == 13
+        assert output_path.stat().st_size == 13
         assert not tmp_path.exists()
 
         # Run an external command as in pull_image
@@ -43,7 +42,7 @@ class DownloadUtilsTest(unittest.TestCase):
             subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
 
         assert (output_path).exists()
-        assert os.path.getsize(output_path) == 14  # Extra \n !
+        assert output_path.stat().st_size == 14  # Extra \n !
         assert not (tmp_path).exists()
 
         # Code that fails. The file shall not exist

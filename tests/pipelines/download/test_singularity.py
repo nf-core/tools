@@ -658,7 +658,7 @@ class FileDownloaderTest(unittest.TestCase):
                 output_path = outdir / Path(src_url).name
                 downloader.download_file(src_url, output_path)
                 assert (output_path).exists()
-                assert os.path.getsize(output_path) == 27
+                assert output_path.stat().st_size == 27
                 assert (
                     "nf_core.pipelines.download.singularity",
                     logging.DEBUG,
