@@ -1866,7 +1866,7 @@ def command_subworkflows_update(
 
 
 # nf-core test-dataset subcommands
-@nf_core_cli.group(aliases=["tds"])
+@nf_core_cli.group(aliases=["t", "td", "tds", "test-datasets"])
 @click.pass_context
 def test_datasets(ctx):
     """
@@ -1930,7 +1930,7 @@ def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_
 
 
 # nf-core test-datasets list-branches
-@test_datasets.command("list-branches")
+@test_datasets.command("list-branches", aliases=["lsb"])
 @click.pass_context
 def command_test_datasets_list_branches(ctx):
     """
