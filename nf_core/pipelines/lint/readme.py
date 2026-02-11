@@ -61,7 +61,7 @@ def readme(self):
             nf_badge_version = match.group(1).strip("'\"")
             try:
                 if nf_badge_version != self.minNextflowVersion:
-                    raise AssertionError()
+                    raise AssertionError
             except (AssertionError, KeyError):
                 failed.append(
                     f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "

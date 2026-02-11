@@ -137,7 +137,7 @@ def multiqc_config(self) -> dict[str, list[str]]:
         # Check that export_plots is activated
         try:
             if not mqc_yml["export_plots"]:
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, KeyError, TypeError):
             failed.append("`assets/multiqc_config.yml` does not contain 'export_plots: true'.")
         else:

@@ -606,7 +606,7 @@ def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
-                    raise AssertionError()
+                    raise AssertionError
             except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                 response_content = response.content
                 if isinstance(response_content, bytes):

@@ -42,11 +42,11 @@ def actions_awsfulltest(self) -> dict[str, list[str]]:
         # Check that the action is only turned on for published releases
         try:
             if wf[True]["pull_request_review"]["types"] != ["submitted"]:
-                raise AssertionError()
+                raise AssertionError
             if "workflow_dispatch" not in wf[True]:
-                raise AssertionError()
+                raise AssertionError
             if wf[True]["release"]["types"] != ["published"]:
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, KeyError, TypeError):
             failed.append("`.github/workflows/awsfulltest.yml` is not triggered correctly")
         else:
@@ -56,7 +56,7 @@ def actions_awsfulltest(self) -> dict[str, list[str]]:
         try:
             steps = wf["jobs"]["run-platform"]["steps"]
             if not any(aws_profile in step["run"] for step in steps if "run" in step.keys()):
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, KeyError, TypeError):
             passed.append("`.github/workflows/awsfulltest.yml` does not use `-profile test`")
         else:

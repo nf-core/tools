@@ -265,7 +265,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
         try:
             manifest_name = self.nf_config.get("manifest.name", "").strip("'\"")
             if not manifest_name.startswith(f"{org_name}/"):
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, IndexError):
             failed.append(f"Config ``manifest.name`` did not begin with ``{org_name}/``:\n    {manifest_name}")
         else:
@@ -276,7 +276,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
         try:
             manifest_homepage = self.nf_config.get("manifest.homePage", "").strip("'\"")
             if not manifest_homepage.startswith(f"https://github.com/{org_name}/"):
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, IndexError):
             failed.append(
                 f"Config variable ``manifest.homePage`` did not begin with https://github.com/{org_name}/:\n    {manifest_homepage}"
