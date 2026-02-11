@@ -131,6 +131,7 @@ select = [
     "B",      # flake8-bugbear - catches common bugs and design problems
     "PTH",    # flake8-use-pathlib - prefer pathlib over os.path
 ]
+ignore = ["PTH123"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["nf_core"]
