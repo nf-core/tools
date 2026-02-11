@@ -110,7 +110,7 @@ class TestList(TestCase):
     def test_parse_local_workflow_and_succeed(self, mock_local_wf):
         test_path = self.tmp_nxf / "nf-core"
         if not os.path.isdir(test_path):
-            os.makedirs(test_path)
+            test_path.mkdir()
         assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
         with open(self.tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
@@ -123,7 +123,7 @@ class TestList(TestCase):
     def test_parse_local_workflow_home(self, mock_local_wf, mock_subprocess):
         test_path = self.tmp_nxf / "nf-core"
         if not os.path.isdir(test_path):
-            os.makedirs(test_path)
+            test_path.mkdir()
         assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
         with open(self.tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
