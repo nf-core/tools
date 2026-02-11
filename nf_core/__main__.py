@@ -593,7 +593,7 @@ def rocrate(
 
 
 # nf-core pipelines sync
-@pipelines.command("sync")
+@pipelines.command("sync", aliases=["s"])
 @click.pass_context
 @click.option(
     "-d",
@@ -1059,7 +1059,7 @@ def command_modules_update(
 
 
 # nf-core modules patch
-@modules.command("patch")
+@modules.command("patch", aliases=["p"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1086,7 +1086,7 @@ def command_modules_patch(ctx, tool, directory, remove):
 
 
 # nf-core modules remove
-@modules.command("remove", aliases=["uninstall", "rm", "r"])
+@modules.command("remove", aliases=["uninstall", "rm"])
 @click.pass_context
 @click.argument(
     "tool",
@@ -1703,7 +1703,7 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
 
 
 # nf-core subworkflows patch
-@subworkflows.command("patch")
+@subworkflows.command("patch", aliases=["p"])
 @click.pass_context
 @click.argument(
     "subworkflow",
@@ -1747,7 +1747,7 @@ def subworkflows_patch(ctx, subworkflow, dir, remove):
 
 
 # nf-core subworkflows remove
-@subworkflows.command("remove", aliases=["uninstall", "rm", "r"])
+@subworkflows.command("remove", aliases=["uninstall", "rm"])
 @click.pass_context
 @click.argument(
     "subworkflow",
