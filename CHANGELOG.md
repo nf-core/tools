@@ -5,6 +5,7 @@
 ### General
 
 - Update pre-commit hook astral-sh/uv-pre-commit to v0.10.2 ([#4037](https://github.com/nf-core/tools/pull/4037))
+- Update python:3.14-slim Docker digest to 486b809 ([#4039](https://github.com/nf-core/tools/pull/4039))
 
 ### Linting
 
