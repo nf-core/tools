@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 import questionary
@@ -379,7 +378,7 @@ class ComponentInfo(ComponentCommand):
             )
             if self.component_type == "subworkflows":
                 subworkflow_config = Path(install_folder, self.component, "nextflow.config").relative_to(self.directory)
-                if os.path.isfile(subworkflow_config):
+                if subworkflow_config.exists():
                     renderables.append(
                         Text.from_markup("\n [blue]Add the following config statement to use this subworkflow:")
                     )

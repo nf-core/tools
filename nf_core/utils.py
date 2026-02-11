@@ -1125,7 +1125,7 @@ class SingularityCacheFilePathValidator(questionary.Validator):
 
     def validate(self, value):
         if len(value.text):
-            if os.path.isfile(value.text):
+            if Path(value.text).is_file():
                 return True
             else:
                 raise questionary.ValidationError(
