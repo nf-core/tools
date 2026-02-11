@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
