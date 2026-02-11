@@ -20,7 +20,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Nextflow
-      uses: nf-core/setup-nextflow@v2
+      uses: mashehu/setup-nextflow@switch-to-esm
       with:
         version: "{% raw %}${{ env.NXF_VERSION }}"
 

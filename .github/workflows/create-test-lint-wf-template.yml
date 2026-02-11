@@ -72,7 +72,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: mashehu/setup-nextflow@switch-to-esm
         with:
           version: latest-everything
 

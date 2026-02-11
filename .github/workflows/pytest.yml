@@ -92,7 +92,7 @@ jobs:
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: mashehu/setup-nextflow@switch-to-esm
 
       - name: Install nf-test
         uses: nf-core/setup-nf-test@v1

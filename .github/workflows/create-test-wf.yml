@@ -58,7 +58,7 @@ jobs:
         run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: mashehu/setup-nextflow@switch-to-esm
         with:
           version: ${{ matrix.NXF_VER }}
 
