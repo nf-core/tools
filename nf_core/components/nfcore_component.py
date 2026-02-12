@@ -295,11 +295,8 @@ class NFCoreComponent:
                 return
             # get all lines between "take" and "main" or "emit"
             input_data = data.split("take:")[1].split("main:")[0].split("emit:")[0]
-            for line in input_data.split("\n"):
-                try:
-                    inputs.append(line.split()[0])
-                except IndexError:
-                    pass  # Empty lines
+            # Extract first word from non-empty lines
+            inputs = [line.split()[0] for line in input_data.split("\n") if line.split()]
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
 
@@ -341,12 +338,8 @@ class NFCoreComponent:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
                 return outputs
             output_data = data.split("emit:")[1].split("}")[0]
-            for line in output_data.split("\n"):
-                try:
-                    outputs.append(line.split("=")[0].split()[0])
-                except IndexError:
-                    # Empty lines
-                    pass
+            # Extract first word before '=' from non-empty lines
+            outputs = [parts[0] for line in output_data.split("\n") if (parts := line.split("=")[0].split())]
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
 

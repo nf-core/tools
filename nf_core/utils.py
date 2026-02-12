@@ -424,10 +424,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
                 # Log warning but don't raise - just regenerate the cache
                 log.warning(f"Unable to load cached JSON file '{cache_path}' due to error: {e}")
                 log.debug("Removing corrupted cache file and regenerating...")
-                try:
-                    cache_path.unlink()
-                except OSError:
-                    pass  # If we can't delete it, just continue
+                cache_path.unlink(missing_ok=True)
     log.debug("No config cache found")
 
     # Call `nextflow config`

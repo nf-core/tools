@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 from pathlib import Path
@@ -219,12 +220,9 @@ class GithubRepo(Screen):
             log.info(f"GitHub repository '{repo_name}' created successfully")
             remove_hide_class(self.parent, "close_app")
 
-        # Add the remote
-        try:
+        # Add the remote (if it doesn't already exist)
+        with contextlib.suppress(git.exc.GitCommandError):
             pipeline_repo.create_remote("origin", repo.clone_url)
-        except git.exc.GitCommandError:
-            # Remote already exists
-            pass
         # Push all branches
         pipeline_repo.remotes.origin.push(all=True).raise_if_error()
 
