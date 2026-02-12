@@ -27,7 +27,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM mcr.microsoft.com/devcontainers/base:2.1.5-debian12@sha256:210b178bdf27aa3cab843ff98267da72ae27fa1d8e06c415efa756048a4a1a5b AS final
+FROM mcr.microsoft.com/devcontainers/base:2.1.6-debian12@sha256:15143a8c806afb8db57ae2c92876c112d7a6a1ced31cd7aa8b414201782757a4 AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda

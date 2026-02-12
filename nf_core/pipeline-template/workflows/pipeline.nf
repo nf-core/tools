@@ -29,8 +29,8 @@ workflow {{ short_name|upper }} {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
 
-    {%- if modules %}
     main:
+    {%- if modules %}
 
     ch_versions = channel.empty()
     {%- if multiqc %}
@@ -128,6 +128,9 @@ workflow {{ short_name|upper }} {
     emit:
     {%- if multiqc %}multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
+{%- else %}
+
+    log.info "Nothing to run."
 {% endif %}
 }
 
