@@ -255,10 +255,11 @@ class ComponentInstall(ComponentCommand):
 
             raise ValueError
 
-        if self.current_remote.remote_url == modules_repo.remote_url:
-            if not modules_repo.component_exists(component, self.component_type, commit=self.current_sha):
-                warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
-                log.warning(warn_msg)
+        if self.current_remote.remote_url == modules_repo.remote_url and not modules_repo.component_exists(
+            component, self.component_type, commit=self.current_sha
+        ):
+            warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
+            log.warning(warn_msg)
 
         return component
 

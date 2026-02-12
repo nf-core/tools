@@ -369,7 +369,7 @@ class PipelineSchema:
         """
 
         # If we have a default in the schema, check it matches the config
-        if "default" in schema_param and (
+        if "default" in schema_param and (  # noqa SIM102
             (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
             and (str(schema_param["default"]) != str(config_default).strip("'\""))
         ):
@@ -723,24 +723,23 @@ class PipelineSchema:
             self.save_schema()
 
         # If running interactively, send to the web for customisation
-        if not self.no_prompts:
-            if Confirm.ask(":rocket:  Launch web builder for customisation and editing?"):
-                try:
-                    self.launch_web_builder()
-                except AssertionError as e:
-                    log.error(e.args[0])
-                    # Extra help for people running offline
-                    if "Could not connect" in e.args[0]:
-                        log.info(
-                            f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
-                        )
-                        log.info("When you're finished, you can paste the edited schema back into the same file")
-                    if self.web_schema_build_web_url:
-                        log.info(
-                            "To save your work, open {}\n"
-                            f"Click the blue 'Finished' button, copy the schema and paste into this file: {self.web_schema_build_web_url, self.schema_filename}"
-                        )
-                    return False
+        if not self.no_prompts and Confirm.ask(":rocket:  Launch web builder for customisation and editing?"):
+            try:
+                self.launch_web_builder()
+            except AssertionError as e:
+                log.error(e.args[0])
+                # Extra help for people running offline
+                if "Could not connect" in e.args[0]:
+                    log.info(
+                        f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
+                    )
+                    log.info("When you're finished, you can paste the edited schema back into the same file")
+                if self.web_schema_build_web_url:
+                    log.info(
+                        "To save your work, open {}\n"
+                        f"Click the blue 'Finished' button, copy the schema and paste into this file: {self.web_schema_build_web_url, self.schema_filename}"
+                    )
+                return False
 
     def get_wf_params(self):
         """

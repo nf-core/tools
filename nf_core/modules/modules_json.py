@@ -513,12 +513,14 @@ class ModulesJson:
             git_url = ""
 
             for repo in missing_installation:
-                if component_type in missing_installation[repo]:
-                    if install_dir in missing_installation[repo][component_type]:
-                        if component in missing_installation[repo][component_type][install_dir]:
-                            component_in_file = True
-                            git_url = repo
-                            break
+                if (
+                    component_type in missing_installation[repo]
+                    and install_dir in missing_installation[repo][component_type]
+                    and component in missing_installation[repo][component_type][install_dir]
+                ):
+                    component_in_file = True
+                    git_url = repo
+                    break
             if not component_in_file:
                 # If it is not, add it to the list of missing components
                 untracked_dirs.append(component)
@@ -1223,10 +1225,11 @@ class ModulesJson:
                         modules_repo.repo_path,
                     )
                     for dir_name, _, _ in os.walk(repo_url_path):
-                        if component_type == "modules":
-                            if len(Path(directory).parts) > 1:  # The module name is TOOL/SUBTOOL
-                                paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
-                                pass
+                        if (
+                            component_type == "modules" and len(Path(directory).parts) > 1
+                        ):  # The module name is TOOL/SUBTOOL
+                            paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
+                            pass
                         paths_in_directory.append(Path(dir_name).parts[-1])
                     if directory in paths_in_directory:
                         yield (modules_repo.repo_path, directory)
