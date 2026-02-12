@@ -532,11 +532,12 @@ class ModuleContainers:
         log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
         return resp.text
 
-    # def lint(self, module: str) -> list[str]:
-    #     """
-    #     Confirm containers are defined for the module.
-    #     """
-    #     return self._containers_from_meta(self._resolve_module_dir(module))
+    def lint(self, module: str):
+        """
+        Confirm containers are defined for the module.
+        """
+        # TODO: Add and call all relevant container linting from modules/lint
+        pass
 
     def list_containers(self) -> list[tuple[str, str, str]]:
         """
