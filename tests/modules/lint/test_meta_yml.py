@@ -211,6 +211,8 @@ class TestMetaYml(TestModules):
             module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules, fix=True)
             module_lint.lint(print_results=False, module="bpipe/test")
 
+            assert len(module_lint.failed) == 0, f"Expected 0 failed tests, got {len(module_lint.failed)}"
+
             # Read the updated meta.yml
             with open(meta_yml_path) as fh:
                 meta_yml = yaml.safe_load(fh)
