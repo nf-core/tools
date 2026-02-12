@@ -173,6 +173,10 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     rich_logger = logging.getLogger("rich")
     rich_logger.setLevel(logging.INFO)
 
+    # don't show markdown-it-py debug logging in verbose mode
+    markdown_logger = logging.getLogger("markdown_it")
+    markdown_logger.setLevel(logging.INFO)
+
     # Set up logs to a file if we asked for one
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
