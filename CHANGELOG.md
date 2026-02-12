@@ -4,6 +4,8 @@
 
 ### General
 
+- Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
+
 ### Linting
 
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
