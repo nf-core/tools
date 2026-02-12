@@ -52,6 +52,7 @@ dependencies = [
     "rich>=13.3.1",
     "rocrate",
     "repo2rocrate",
+    "setuptools<81",
     "tabulate",
     "textual==7.5.0",
     "trogon",
