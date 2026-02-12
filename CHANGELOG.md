@@ -10,6 +10,8 @@
 
 ### Modules
 
+- Template: have a `main:` section in workflow even when modules are skipped ([#4043](https://github.com/nf-core/tools/pull/4043))
+
 ### Subworkflows
 
 - update test to new upstream subworkflow structure ([#4038](https://github.com/nf-core/tools/pull/4038))
