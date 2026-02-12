@@ -908,31 +908,34 @@ class FileDownloader:
         # Set up download progress bar as a new task
         nice_name = self.nice_name(remote_path)
 
-        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
+        with (
+            self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task,
+            intermediate_file(output_path) as fh,
+        ):
             # Open file handle and download
             # This temporary will be automatically renamed to the target if there are no errors
-            with intermediate_file(output_path) as fh:
-                # Disable caching as this breaks streamed downloads
-                with requests_cache.disabled():
-                    r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
-                    filesize = r.headers.get("Content-length")
-                    if filesize:
-                        self.progress.update(task, total=int(filesize))
-                        self.progress.start_task(task)
 
-                    # Stream download
-                    has_content = False
-                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
-                        # Check that the user didn't hit ctrl-c
-                        if self.kill_with_fire:
-                            raise KeyboardInterrupt
-                        self.progress.update(task, advance=len(data))
-                        fh.write(data)
-                        has_content = True
+            # Disable caching as this breaks streamed downloads
+            with requests_cache.disabled():
+                r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
+                filesize = r.headers.get("Content-length")
+                if filesize:
+                    self.progress.update(task, total=int(filesize))
+                    self.progress.start_task(task)
 
-                    # Check that we actually downloaded something
-                    if not has_content:
-                        raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+                # Stream download
+                has_content = False
+                for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
+                    # Check that the user didn't hit ctrl-c
+                    if self.kill_with_fire:
+                        raise KeyboardInterrupt
+                    self.progress.update(task, advance=len(data))
+                    fh.write(data)
+                    has_content = True
 
-                # Set image file permissions to user=read,write,execute group/all=read,execute
-                Path(fh.name).chmod(0o755)
+                # Check that we actually downloaded something
+                if not has_content:
+                    raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+
+            # Set image file permissions to user=read,write,execute group/all=read,execute
+            Path(fh.name).chmod(0o755)

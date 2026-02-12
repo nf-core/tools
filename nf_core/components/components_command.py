@@ -284,18 +284,15 @@ class ComponentCommand:
         if self.repo_type == "pipeline":
             workflow_files = Path(self.directory, "workflows").glob("*.nf")
             for workflow_file in workflow_files:
-                with open(workflow_file) as fh:
+                with open(workflow_file) as fh, mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
                     # Check if component path is in the file using mmap
-                    with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
-                        if s.find(component_path.encode()) != -1:
-                            # If the component path is in the file, check for include statements
-                            for i, line in enumerate(fh):
-                                if line.startswith("include") and component_path in line:
-                                    if str(workflow_file) not in include_stmts:
-                                        include_stmts[str(workflow_file)] = []
-                                    include_stmts[str(workflow_file)].append(
-                                        {"line_number": i + 1, "line": line.rstrip()}
-                                    )
+                    if s.find(component_path.encode()) != -1:
+                        # If the component path is in the file, check for include statements
+                        for i, line in enumerate(fh):
+                            if line.startswith("include") and component_path in line:
+                                if str(workflow_file) not in include_stmts:
+                                    include_stmts[str(workflow_file)] = []
+                                include_stmts[str(workflow_file)].append({"line_number": i + 1, "line": line.rstrip()})
 
             return include_stmts
         else:

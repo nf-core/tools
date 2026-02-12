@@ -21,9 +21,11 @@ def copy_container_load_scripts(container_system: str, dest_dir: Path, make_exec
     container_load_scripts_subpackage = "nf_core.pipelines.download.load_scripts"
     script_name = f"{container_system}-load.sh"
     dest_path = dest_dir / script_name
-    with importlib.resources.open_text(container_load_scripts_subpackage, script_name) as src:
-        with open(dest_path, "w") as dest:
-            shutil.copyfileobj(src, dest)
+    with (
+        importlib.resources.open_text(container_load_scripts_subpackage, script_name) as src,
+        open(dest_path, "w") as dest,
+    ):
+        shutil.copyfileobj(src, dest)
     if make_exec:
         dest_path.chmod(0o775)
     return script_name, dest_path
