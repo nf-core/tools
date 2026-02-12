@@ -12,7 +12,7 @@ import yaml
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint import ModuleLint
+from nf_core.modules.lint import ModuleLint, meta_yml_containers
 from nf_core.modules.modules_utils import prompt_module_selection
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
@@ -536,8 +536,13 @@ class ModuleContainers:
         """
         Confirm containers are defined for the module.
         """
+        if not self.nfcore_component:
+            raise ValueError("No module to lint")
+
         # TODO: Add and call all relevant container linting from modules/lint
-        pass
+        _ = meta_yml_containers(self.nfcore_component)
+
+        # TODO: Linting output
 
     def list_containers(self) -> list[tuple[str, str, str]]:
         """

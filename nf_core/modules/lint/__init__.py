@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 from .environment_yml import environment_yml
 from .main_nf import main_nf
-from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
+from .meta_yml import meta_yml, meta_yml_containers, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
 from .module_changes import module_changes
 from .module_deprecations import module_deprecations
 from .module_patch import module_patch

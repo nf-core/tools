@@ -18,6 +18,24 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+def meta_yml_containers(module: NFCoreComponent) -> bool:
+
+    # TODO: Add logic for linting "containers" section in meta.yml here
+
+    # Subtasks from issue https://github.com/nf-core/tools/issues/4041 :
+    ## TODO: if containers section exists: Check if docker linux/amd64 image exists (Exceptions to this for modules in nf-core/modules@master/.github/skip_nf_test.json)
+    ## -> Assume that we are linting for the modules repo and this file exists locally
+
+    ## TODO: Check if hash part ofbuild_id (bd-this_part_1234089273409_2) matches the docker / singularity container name.
+
+    ## TODO: Check for conda if the hash in build_id for the docker linux/amd64 image matches the hash in the conda lock_file
+
+    ## TODO: Check for conda if lock_files exist
+
+    ## TODO: Check for singularity and docker if the correct protocol is used: oras for singularity, http for docker
+    return False
+
+
 def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
     """Lint a ``meta.yml`` file
 
@@ -282,6 +300,9 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                         module.meta_yml,
                     )
                 )
+
+    # TODO: Run linting containers
+    _ = meta_yml_containers(module)
 
 
 def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
