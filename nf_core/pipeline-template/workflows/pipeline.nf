@@ -128,6 +128,9 @@ workflow {{ short_name|upper }} {
     emit:
     {%- if multiqc %}multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
+{%- else %}
+
+    log.info "Nothing to run."
 {% endif %}
 }
 
