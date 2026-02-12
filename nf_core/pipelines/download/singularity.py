@@ -113,10 +113,7 @@ class SingularityFetcher(ContainerFetcher):
                             f"Proceeding without consideration of the remote ${SINGULARITY_CACHE_DIR_ENV_VAR} index."
                         )
                         self.container_cache_index = None
-                        if os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR):
-                            container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
-                        else:
-                            container_cache_utilisation = None
+                        container_cache_utilisation = "copy" if os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) else None
             else:
                 log.warning("[red]No remote cache index specified, skipping remote container download.[/]")
 

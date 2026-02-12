@@ -606,12 +606,8 @@ def run_linting(
             )
         log.info("Only running tests: '{}'".format("', '".join(key)))
 
-    # Check if we were given any keys, and if they match any pipeline tests
-    if key:
-        pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode))))
-    else:
-        # If no key is supplied, run all tests
-        pipeline_keys = None
+    # Check if we were given any keys, and if they match any pipeline tests. If no key is supplied, run all tests
+    pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode)))) if key else None
 
     # Create the lint object
     lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned, hide_progress)
