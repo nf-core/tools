@@ -175,7 +175,7 @@ class TestUtils(TestPipelines):
                 break
         else:
             raise AssertionError("Release 1.6 not found")
-        assert "dev" in wf_branches.keys()
+        assert "dev" in wf_branches
 
     def test_get_repo_releases_branches_not_nf_core(self):
         wfs = nf_core.pipelines.list.Workflows()
@@ -186,7 +186,7 @@ class TestUtils(TestPipelines):
                 break
         else:
             raise AssertionError("MultiQC release v1.32 not found")
-        assert "main" in wf_branches.keys()
+        assert "main" in wf_branches
 
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.pipelines.list.Workflows()
@@ -243,9 +243,8 @@ class TestUtils(TestPipelines):
 
     def test_set_wd_revert_on_raise(self):
         wd_before_context = Path().resolve()
-        with pytest.raises(RuntimeError):
-            with nf_core.utils.set_wd(self.tmp_dir):
-                raise RuntimeError
+        with pytest.raises(RuntimeError), nf_core.utils.set_wd(self.tmp_dir):
+            raise RuntimeError
         assert wd_before_context == Path().resolve()
 
     @mock.patch("nf_core.utils.run_cmd")

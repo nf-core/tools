@@ -57,7 +57,7 @@ def _print_nf_config(rgc):
                 log.warning(f"{genome}/{asset} is incomplete, ignoring...")
             else:
                 # Translate an alias name to the alias used in the pipeline
-                if asset in alias_translations.keys():
+                if asset in alias_translations:
                     log.info(f"Translating refgenie asset alias {asset} to {alias_translations[asset]}.")
                     asset = alias_translations[asset]
                 genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'

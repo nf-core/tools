@@ -74,9 +74,7 @@ class PipelineCreate:
                 self.config.outdir = outdir if outdir else Path().cwd()
             except (FileNotFoundError, UserWarning):
                 log.debug("The '.nf-core.yml' configuration file was not found.")
-        elif (name and description and author) or (
-            template_config and (isinstance(template_config, str) or isinstance(template_config, Path))
-        ):
+        elif (name and description and author) or (template_config and (isinstance(template_config, (str, Path)))):
             # Obtain a CreateConfig object from the template yaml file
             self.config = self.check_template_yaml_info(template_config, name, description, author)
             self.update_config(organisation, version, force, outdir)
@@ -222,7 +220,7 @@ class PipelineCreate:
         skip_areas = [
             t_area
             for section in self.template_features_yml.values()
-            for t_area in section["features"].keys()
+            for t_area in section["features"]
             if t_area in features_to_skip and section["features"][t_area]["skippable_paths"]
             # for t_area in section["features"][t_area]["skippable_paths"]
         ]
@@ -250,13 +248,12 @@ class PipelineCreate:
         jinja_params["logo_light"] = f"{jinja_params['name_noslash']}_logo_light.png"
         jinja_params["logo_dark"] = f"{jinja_params['name_noslash']}_logo_dark.png"
         jinja_params["default_branch"] = self.default_branch
-        if config_yml is not None:
-            if (
-                hasattr(config_yml, "lint")
-                and hasattr(config_yml["lint"], "nextflow_config")
-                and hasattr(config_yml["lint"]["nextflow_config"], "manifest.name")
-            ):
-                return jinja_params, skip_areas
+        if config_yml is not None and (
+            hasattr(config_yml, "lint")
+            and hasattr(config_yml["lint"], "nextflow_config")
+            and hasattr(config_yml["lint"]["nextflow_config"], "manifest.name")
+        ):
+            return jinja_params, skip_areas
 
         # Check that the pipeline name matches the requirements
         if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
@@ -411,7 +408,7 @@ class PipelineCreate:
         lint_config = {}
         for area in set((self.config.skip_features or []) + self.skip_areas):
             try:
-                for section_name in self.template_features_yml.keys():
+                for section_name in self.template_features_yml:
                     if area in self.template_features_yml[section_name]["features"]:
                         for lint_test in self.template_features_yml[section_name]["features"][area]["linting"]:
                             try:

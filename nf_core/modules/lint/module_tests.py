@@ -142,7 +142,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     with open(snap_file) as snap_fh:
                         try:
                             snap_content = json.load(snap_fh)
-                            for test_name in snap_content.keys():
+                            for test_name in snap_content:
                                 if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
                                     if "stub" not in test_name:
                                         module.failed.append(

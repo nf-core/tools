@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable, Generator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -163,9 +163,8 @@ def check_if_outdated(
                 remote_version = future.result()
         except Exception as e:
             log.debug(f"Could not check for nf-core updates: {e}")
-    if remote_version is not None:
-        if Version(remote_version) > Version(current_version):
-            is_outdated = True
+    if remote_version is not None and Version(remote_version) > Version(current_version):
+        is_outdated = True
     return (is_outdated, current_version, remote_version)
 
 
@@ -848,10 +847,8 @@ def parse_anaconda_licence(anaconda_response, version=None):
     # Licence for each version
     for f in anaconda_response["files"]:
         if not version or version == f.get("version"):
-            try:
+            with suppress(KeyError):
                 licences.add(f["attrs"]["license"])
-            except KeyError:
-                pass
     # Main licence field
     if len(list(licences)) == 0 and isinstance(anaconda_response["license"], str):
         licences.add(anaconda_response["license"])
@@ -1091,7 +1088,7 @@ def prompt_pipeline_release_branch(
             tag_set.append(str(tag))
 
     # Branches
-    for branch in wf_branches.keys():
+    for branch in wf_branches:
         branch_display = [
             ("fg:ansiyellow", f"{branch}  "),
             ("class:choice-default", "[branch]"),

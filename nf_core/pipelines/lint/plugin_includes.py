@@ -22,7 +22,7 @@ def plugin_includes(self) -> dict[str, list[str]]:
 
     plugin_include_pattern = re.compile(r"^include\s*{[^}]+}\s*from\s*[\"']plugin/([^\"']+)[\"']\s*$", re.MULTILINE)
     workflow_files = [
-        file for file in Path(self.wf_path).rglob("*.nf") if not file.relative_to(self.wf_path).parts[0] == "modules"
+        file for file in Path(self.wf_path).rglob("*.nf") if file.relative_to(self.wf_path).parts[0] != "modules"
     ]
     test_passed = True
     for file in workflow_files:

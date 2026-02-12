@@ -385,16 +385,12 @@ class PipelineSchema:
             return
 
         # Check variable types in nextflow.config
-        if schema_param["type"] == "string":
-            if str(config_default) in ["false", "true", "''"]:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"String should not be set to `{config_default}`"
-                )
-        if schema_param["type"] == "boolean":
-            if str(config_default) not in ["false", "true"]:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Booleans should only be true or false, not `{config_default}`"
-                )
+        if schema_param["type"] == "string" and str(config_default) in ["false", "true", "''"]:
+            self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
+        if schema_param["type"] == "boolean" and str(config_default) not in ["false", "true"]:
+            self.invalid_nextflow_config_default_parameters[param] = (
+                f"Booleans should only be true or false, not `{config_default}`"
+            )
         if schema_param["type"] == "integer":
             try:
                 int(config_default)
@@ -833,7 +829,7 @@ class PipelineSchema:
         schema = copy.deepcopy(schema)
         params_removed = []
         # Use iterator so that we can delete the key whilst iterating
-        for p_key in [k for k in schema.get("properties", {}).keys()]:
+        for p_key in [k for k in schema.get("properties", {})]:
             if self.prompt_remove_schema_notfound_config(p_key):
                 del schema["properties"][p_key]
                 # Remove required flag if set
@@ -908,14 +904,16 @@ class PipelineSchema:
                 and (p_key not in self.schema_defaults)
                 and (p_key not in self.ignored_params)
                 and (p_def := self.build_schema_param(p_val).get("default"))
-            ):
-                if self.no_prompts or Confirm.ask(
+            ) and (
+                self.no_prompts
+                or Confirm.ask(
                     f":sparkles: Default for [bold]'params.{p_key}'[/] is not in schema (def='{p_def}'). "
                     "[blue]Update pipeline schema?"
-                ):
-                    s_key_def = s_key + ("default",)
-                    nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
-                    log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
+                )
+            ):
+                s_key_def = s_key + ("default",)
+                nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
+                log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
         return params_added
 
     def build_schema_param(self, p_val):

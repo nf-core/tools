@@ -94,23 +94,22 @@ class ROCrate:
         """
 
         # Check that the checkout pipeline version is the same as the requested version
-        if self.version != "":
-            if self.version != self.pipeline_obj.nf_config.get("manifest.version"):
-                # using git checkout to get the requested version
-                log.info(f"Checking out pipeline version {self.version}")
-                if self.pipeline_obj.repo is None:
-                    log.error(f"Pipeline repository not found in {self.pipeline_dir}")
-                    sys.exit(1)
-                try:
-                    self.pipeline_obj.repo.git.checkout(self.version)
-                    self.pipeline_obj = Pipeline(self.pipeline_dir)
-                    self.pipeline_obj._load()
-                except InvalidGitRepositoryError:
-                    log.error(f"Could not find a git repository in {self.pipeline_dir}")
-                    sys.exit(1)
-                except GitCommandError:
-                    log.error(f"Could not checkout version {self.version}")
-                    sys.exit(1)
+        if self.version != "" and self.version != self.pipeline_obj.nf_config.get("manifest.version"):
+            # using git checkout to get the requested version
+            log.info(f"Checking out pipeline version {self.version}")
+            if self.pipeline_obj.repo is None:
+                log.error(f"Pipeline repository not found in {self.pipeline_dir}")
+                sys.exit(1)
+            try:
+                self.pipeline_obj.repo.git.checkout(self.version)
+                self.pipeline_obj = Pipeline(self.pipeline_dir)
+                self.pipeline_obj._load()
+            except InvalidGitRepositoryError:
+                log.error(f"Could not find a git repository in {self.pipeline_dir}")
+                sys.exit(1)
+            except GitCommandError:
+                log.error(f"Could not checkout version {self.version}")
+                sys.exit(1)
         self.version = self.pipeline_obj.nf_config.get("manifest.version", "")
         self.make_workflow_rocrate()
 
@@ -206,10 +205,7 @@ class ROCrate:
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
         self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
-        if self.version.endswith("dev"):
-            url = "dev"
-        else:
-            url = self.version
+        url = "dev" if self.version.endswith("dev") else self.version
         self.crate.mainEntity.append_to(
             "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
         )

@@ -55,7 +55,7 @@ def actions_awsfulltest(self) -> dict[str, list[str]]:
         # Warn if `-profile test` is still unchanged
         try:
             steps = wf["jobs"]["run-platform"]["steps"]
-            if not any(aws_profile in step["run"] for step in steps if "run" in step.keys()):
+            if not any(aws_profile in step["run"] for step in steps if "run" in step):
                 raise AssertionError
         except (AssertionError, KeyError, TypeError):
             passed.append("`.github/workflows/awsfulltest.yml` does not use `-profile test`")

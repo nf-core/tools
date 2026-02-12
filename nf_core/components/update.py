@@ -197,13 +197,12 @@ class ComponentUpdate(ComponentCommand):
             else:
                 version = modules_repo.get_latest_component_version(component, self.component_type)
 
-            if current_version is not None and not self.force:
-                if current_version == version:
-                    if self.sha or self.prompt:
-                        log.info(f"'{component_fullname}' is already installed at {version}")
-                    else:
-                        log.info(f"'{component_fullname}' is already up to date")
-                    continue
+            if current_version is not None and not self.force and current_version == version:
+                if self.sha or self.prompt:
+                    log.info(f"'{component_fullname}' is already installed at {version}")
+                else:
+                    log.info(f"'{component_fullname}' is already up to date")
+                continue
 
             # Download component files
             if not self.install_component_files(component, version, modules_repo, str(install_tmp_dir)):
@@ -422,7 +421,7 @@ class ComponentUpdate(ComponentCommand):
                     entry.count("/") == 1
                     and (entry.endswith("modules") or entry.endswith("subworkflows"))
                     and not (entry.endswith(".git") or entry.endswith(".git/"))
-                    for entry in self.update_config.keys()
+                    for entry in self.update_config
                 ]
             ):
                 raise UserWarning(

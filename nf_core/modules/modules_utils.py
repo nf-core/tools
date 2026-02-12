@@ -65,7 +65,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 
     # Get nf-core modules
     if nfcore_modules_dir.exists():
-        for m in sorted([m for m in nfcore_modules_dir.iterdir() if not m == "lib"]):
+        for m in sorted([m for m in nfcore_modules_dir.iterdir() if m != "lib"]):
             if not m.is_dir():
                 raise ModuleExceptionError(
                     f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."

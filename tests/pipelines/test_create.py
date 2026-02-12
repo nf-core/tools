@@ -151,7 +151,7 @@ class NfcoreCreateTest(unittest.TestCase):
         ]
         all_skipped_files = []
         for section in template_features_yml.values():
-            for feature in section["features"].keys():
+            for feature in section["features"]:
                 if section["features"][feature]["skippable_paths"]:
                     all_skipped_files.extend(section["features"][feature]["skippable_paths"])
 

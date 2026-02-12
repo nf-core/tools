@@ -107,7 +107,7 @@ class DownloadWorkflow:
         self.platform = platform
         self.fullname: str | None = None
         # downloading configs is not supported for Seqera Platform downloads.
-        self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
+        self.include_configs = bool(download_configuration == "yes" and not bool(platform))
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
@@ -430,7 +430,7 @@ class DownloadWorkflow:
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
-            if revision in self.wf_branches.keys():
+            if revision in self.wf_branches:
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
             else:

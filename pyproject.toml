@@ -131,6 +131,7 @@ select = [
     "B",      # flake8-bugbear - catches common bugs and design problems
     "RSE",    # flake8-raise - unnecessary parentheses on raised exceptions
     "PTH",    # flake8-use-pathlib - prefer pathlib over os.path
+    "SIM",    # flake8-simplify - simplifies code patterns
 ]
 ignore = ["PTH123"]
 

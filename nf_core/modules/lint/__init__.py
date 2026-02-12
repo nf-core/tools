@@ -385,7 +385,7 @@ class ModuleLint(ComponentLint):
                     result[key] = meta_yml[key]
 
             # Then add any keys that aren't in the schema (to preserve custom keys)
-            for key in meta_yml.keys():
+            for key in meta_yml:
                 if key not in result:
                     result[key] = meta_yml[key]
 
@@ -488,7 +488,7 @@ class ModuleLint(ComponentLint):
                 # Only update structure when it differs from main.nf
                 corrected_data = meta_yml_io.copy() if meta_yml_io else mod_io_data.copy()
 
-                for ch_name in mod_io_data.keys():
+                for ch_name in mod_io_data:
                     # Ensure channel exists in corrected_data
                     if ch_name not in corrected_data:
                         corrected_data[ch_name] = []
@@ -639,7 +639,7 @@ class ModuleLint(ComponentLint):
                     )
 
         if "output" in meta_yml:
-            for ch_name in corrected_meta_yml["output"].keys():
+            for ch_name in corrected_meta_yml["output"]:
                 ch_content = corrected_meta_yml["output"][ch_name][0]
                 if isinstance(ch_content, list):
                     for i, element in enumerate(ch_content):
@@ -667,7 +667,7 @@ class ModuleLint(ComponentLint):
         # Create YAML anchors for versions_* keys in output that match "versions" in topics
         # Since we now populate metadata for both output and topics, set up anchors to reference output from topics
         if "output" in corrected_meta_yml and "topics" in corrected_meta_yml:
-            versions_keys = [key for key in corrected_meta_yml["output"].keys() if key.startswith("versions_")]
+            versions_keys = [key for key in corrected_meta_yml["output"] if key.startswith("versions_")]
 
             if versions_keys and "versions" in corrected_meta_yml["topics"]:
                 # Set topics["versions"] to reference output versions (now with populated metadata)

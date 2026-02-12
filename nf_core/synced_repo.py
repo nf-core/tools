@@ -165,10 +165,9 @@ class SyncedRepo:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
             return False
 
-        if sha:
-            if not self.sha_exists_on_branch(sha):
-                log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
-                return False
+        if sha and not self.sha_exists_on_branch(sha):
+            log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
+            return False
 
         return True
 

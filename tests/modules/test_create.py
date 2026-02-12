@@ -40,9 +40,8 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-            with pytest.raises(UserWarning) as excinfo:
-                with requests_cache.disabled():
-                    module_create.create()
+            with pytest.raises(UserWarning) as excinfo, requests_cache.disabled():
+                module_create.create()
         assert "module directory exists:" in str(excinfo.value)
 
     def test_modules_create_nfcore_modules(self):

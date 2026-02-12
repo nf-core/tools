@@ -46,7 +46,7 @@ class Launch:
         self.pipeline = pipeline
         self.pipeline_revision = revision
         self.schema_obj = None
-        self.use_params_file = False if command_only else True
+        self.use_params_file = not command_only
         self.params_in = params_in
         self.params_out = params_out if params_out else Path.cwd() / "nf-params.json"
         self.save_all = save_all
@@ -587,7 +587,7 @@ class Launch:
         # Overwrite default with parsed schema, includes --params-in etc
         if self.schema_obj is not None and param_id in self.schema_obj.input_params:
             if param_obj["type"] == "boolean" and isinstance(self.schema_obj.input_params[param_id], str):
-                question["default"] = "true" == self.schema_obj.input_params[param_id].lower()
+                question["default"] = self.schema_obj.input_params[param_id].lower() == "true"
             else:
                 question["default"] = self.schema_obj.input_params[param_id]
 
@@ -741,7 +741,7 @@ class Launch:
                     if isinstance(val, bool) and val:
                         self.nextflow_cmd += f" --{param}"
                     # No quotes for numbers
-                    elif (isinstance(val, int) or isinstance(val, float)) and val:
+                    elif (isinstance(val, (int, float))) and val:
                         self.nextflow_cmd += " --{} {}".format(param, str(val).replace('"', '\\"'))
                     # everything else
                     else:

@@ -173,7 +173,7 @@ class ModulesJson:
         if repos is None:
             repos = {}
         # Check if there are any nf-core modules installed
-        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos.keys():
+        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos:
             repos[NF_CORE_MODULES_REMOTE] = {}
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
@@ -266,7 +266,7 @@ class ModulesJson:
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
             for directory in fifo:
                 rel_dir = directory.relative_to(components_directory)
-                if rel_dir in repos_at_level.keys():
+                if rel_dir in repos_at_level:
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
                         temp_queue.extend(directory.iterdir())
@@ -661,12 +661,10 @@ class ModulesJson:
         # we try to reinstall them
         if len(missing_installation) > 0:
             if "subworkflows" in [
-                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content
             ]:
                 self.resolve_missing_installation(missing_installation, "subworkflows")
-            if "modules" in [
-                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
-            ]:
+            if "modules" in [c_type for _, repo_content in missing_installation.items() for c_type in repo_content]:
                 self.resolve_missing_installation(missing_installation, "modules")
 
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
@@ -1082,7 +1080,7 @@ class ModulesJson:
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for type in component_types:
-            for repo_url in self.modules_json["repos"].keys():
+            for repo_url in self.modules_json["repos"]:
                 modules_repo = ModulesRepo(repo_url)
                 install_dir = modules_repo.repo_path
                 try:

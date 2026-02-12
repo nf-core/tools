@@ -24,7 +24,7 @@ def modules_json(self) -> dict[str, list[str]]:
     if _modules_json and modules_json_dict is not None:
         all_modules_passed = True
 
-        for repo in modules_json_dict["repos"].keys():
+        for repo in modules_json_dict["repos"]:
             # Check if the modules.json has been updated to keep the
             if "modules" not in modules_json_dict["repos"][repo] or not repo.startswith("http"):
                 failed.append(
@@ -33,7 +33,7 @@ def modules_json(self) -> dict[str, list[str]]:
                 )
                 continue
 
-            for dir in modules_json_dict["repos"][repo]["modules"].keys():
+            for dir in modules_json_dict["repos"][repo]["modules"]:
                 for module, module_entry in modules_json_dict["repos"][repo]["modules"][dir].items():
                     if not Path(modules_dir, dir, module).exists():
                         failed.append(

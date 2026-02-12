@@ -152,11 +152,7 @@ class ComponentRemove(ComponentCommand):
                         removed_components.append(component)
                         return removed
             # Remove the component files of all entries removed from modules.json
-            removed = (
-                True
-                if self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed
-                else False
-            )
+            removed = bool(self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed)
             removed_components.append(component)
 
         # Prettify modules.json file after all changes have been made

@@ -249,7 +249,7 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
     is_flag=True,
     default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
-    and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
+    and os.environ.get("GITHUB_REPOSITORY", "") != "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
 )
 @click.option(

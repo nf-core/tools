@@ -425,13 +425,13 @@ process TEST_PROCESS {
 
     # Check that the path pattern doesn't include "hidden: true"
     path_key = list(prof_output[0][1].keys())[0]
-    assert '"*.{prof,pidx}*"' == path_key, f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
+    assert path_key == '"*.{prof,pidx}*"', f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
     assert "hidden" not in path_key, f"Pattern should not contain 'hidden': {path_key}"
 
     # Check the data output also doesn't include "hidden: true"
     data_output = component.outputs["data"]
     data_path_key = list(data_output[0].keys())[0]
-    assert '"data.csv"' == data_path_key, f"Expected '\"data.csv\"', got '{data_path_key}'"
+    assert data_path_key == '"data.csv"', f"Expected '\"data.csv\"', got '{data_path_key}'"
     assert "hidden" not in data_path_key, f"Pattern should not contain 'hidden': {data_path_key}"
 
 

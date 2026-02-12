@@ -1,5 +1,6 @@
 """A Textual app to create a pipeline."""
 
+import contextlib
 from pathlib import Path
 from textwrap import dedent
 
@@ -71,10 +72,8 @@ class FinalDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
-        try:
+        with contextlib.suppress(ValueError):
             self.parent.TEMPLATE_CONFIG.__dict__.update(new_config)
-        except ValueError:
-            pass
 
         # Create the new pipeline
         self._create_pipeline()

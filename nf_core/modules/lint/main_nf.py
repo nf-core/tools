@@ -89,10 +89,7 @@ def main_nf(
             raise FileNotFoundError(f"Module file does not exist: {module.main_nf}") from e
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
-    if len(lines) > 0:
-        lines_j = "\n".join(lines)
-    else:
-        lines_j = ""
+    lines_j = "\n".join(lines) if len(lines) > 0 else ""
 
     for i in deprecated_i:
         if i in lines_j:
@@ -214,28 +211,27 @@ def main_nf(
             )
 
     # Check whether 'meta' is emitted when given as input
-    if inputs:
-        if "meta" in inputs:
-            module.has_meta = True
-            if emits:
-                if "meta" in emits:
-                    module.passed.append(
-                        (
-                            "main_nf",
-                            "main_nf_meta_output",
-                            "'meta' map emitted in output channel(s)",
-                            module.main_nf,
-                        )
+    if inputs and "meta" in inputs:
+        module.has_meta = True
+        if emits:
+            if "meta" in emits:
+                module.passed.append(
+                    (
+                        "main_nf",
+                        "main_nf_meta_output",
+                        "'meta' map emitted in output channel(s)",
+                        module.main_nf,
                     )
-                else:
-                    module.failed.append(
-                        (
-                            "main_nf",
-                            "main_nf_meta_output",
-                            "'meta' map not emitted in output channel(s)",
-                            module.main_nf,
-                        )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "main_nf",
+                        "main_nf_meta_output",
+                        "'meta' map not emitted in output channel(s)",
+                        module.main_nf,
                     )
+                )
 
     # Check that a software version is emitted
     if topics:
@@ -481,7 +477,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         if url is None:
             continue
         try:
-            container_url = "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url)
+            container_url = "https://" + urlunparse(url) if url.scheme != "https" else urlunparse(url)
             log.debug(f"Trying to connect to URL: {container_url}")
             response = requests.head(
                 container_url,
@@ -489,7 +485,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 allow_redirects=True,
             )
             log.debug(
-                f"Connected to URL: {'https://' + urlunparse(url) if not url.scheme == 'https' else urlunparse(url)}, "
+                f"Connected to URL: {'https://' + urlunparse(url) if url.scheme != 'https' else urlunparse(url)}, "
                 f"status_code: {response.status_code}"
             )
         except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:

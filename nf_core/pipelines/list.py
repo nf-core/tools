@@ -276,10 +276,7 @@ class Workflows:
                     revision = f"{wf.local_wf.branch} - {wf.local_wf.commit_sha[:7]}"
                 else:
                     revision = wf.local_wf.commit_sha
-                if wf.local_is_latest:
-                    is_latest = f"[green]Yes ({revision})"
-                else:
-                    is_latest = f"[red]No ({revision})"
+                is_latest = f"[green]Yes ({revision})" if wf.local_is_latest else f"[red]No ({revision})"
             else:
                 is_latest = "[dim]-"
 
@@ -428,10 +425,7 @@ def pretty_date(time):
     """
 
     now = datetime.now()
-    if isinstance(time, datetime):
-        diff = now - time
-    else:
-        diff = now - datetime.fromtimestamp(time)
+    diff = now - time if isinstance(time, datetime) else now - datetime.fromtimestamp(time)
     second_diff = diff.seconds
     day_diff = diff.days
 

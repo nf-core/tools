@@ -704,7 +704,6 @@ def run_linting(
         lint_obj._save_json_results(json_fn)
 
     # Reminder about --release mode flag if we had failures
-    if len(lint_obj.failed) > 0:
-        if release_mode:
-            log.info("Reminder: Lint tests were run in --release mode.")
+    if len(lint_obj.failed) > 0 and release_mode:
+        log.info("Reminder: Lint tests were run in --release mode.")
     return lint_obj, module_lint_obj, subworkflow_lint_obj

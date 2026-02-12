@@ -40,10 +40,10 @@ class TestModulesCreate(TestModules):
         mod_json = mod_json_obj.get_modules_json()
         assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
         assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]
-        assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["git_sha"]
+        assert mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["git_sha"] == "GIT_SHA"
         assert (
-            NF_CORE_MODULES_DEFAULT_BRANCH
-            == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
+            mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
+            == NF_CORE_MODULES_DEFAULT_BRANCH
         )
         assert (
             "modules" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["installed_by"]

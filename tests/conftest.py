@@ -1,5 +1,6 @@
 """Global pytest configuration for nf-core tests setting up worker-specific cache directories to avoid git lock issues."""
 
+import contextlib
 import os
 import shutil
 import sys
@@ -63,12 +64,8 @@ def pytest_unconfigure(config):
 
     # Clean up temporary directories
     if hasattr(config, "_temp_cache_dir"):
-        try:
+        with contextlib.suppress(OSError, FileNotFoundError):
             shutil.rmtree(config._temp_cache_dir)
-        except (OSError, FileNotFoundError):
-            pass
     if hasattr(config, "_temp_config_dir"):
-        try:
+        with contextlib.suppress(OSError, FileNotFoundError):
             shutil.rmtree(config._temp_config_dir)
-        except (OSError, FileNotFoundError):
-            pass
