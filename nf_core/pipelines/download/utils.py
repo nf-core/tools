@@ -49,16 +49,16 @@ def intermediate_file(output_path: Path) -> Generator[tempfile._TemporaryFileWra
     if output_path.is_symlink():
         raise DownloadError(f"Output path '{output_path}' is a symbolic link")
 
-    tmp = tempfile.NamedTemporaryFile(dir=output_path.parent, delete=False)
-    try:
-        yield tmp
-        tmp.close()
-        Path(tmp.name).rename(output_path)
-    except:
-        tmp_path = Path(tmp.name)
-        if tmp_path.exists():
-            tmp_path.unlink()
-        raise
+    with tempfile.NamedTemporaryFile(dir=output_path.parent, delete=False) as tmp:
+        tmp_name = tmp.name
+        try:
+            yield tmp
+        except BaseException:
+            # File is closed automatically when exiting with block
+            Path(tmp_name).unlink(missing_ok=True)
+            raise
+    # File is now closed, safe to rename
+    Path(tmp_name).rename(output_path)
 
 
 @contextlib.contextmanager
