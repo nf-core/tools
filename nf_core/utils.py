@@ -110,14 +110,10 @@ def unquote(s: str) -> str:
     Returns:
         String with outer quotes removed if present, otherwise original string
     """
-    # Preserve DoubleQuotedScalarString to prevent "123" becoming int 123
-    try:
-        import ruamel.yaml
+    import ruamel.yaml
 
-        if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
-            return s
-    except ImportError:
-        pass
+    if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+        return s
 
     try:
         return ast.literal_eval(s)
