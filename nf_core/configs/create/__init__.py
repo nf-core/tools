@@ -78,6 +78,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     INFRA_ISHPC = False
     PIPE_CONF_NAMED = False
     PIPE_CONF_LABELLED = False
+    PIPE_CONF_HPC = False
 
     # Log handler
     LOG_HANDLER = rich_log_handler

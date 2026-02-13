@@ -26,6 +26,7 @@ class PipelineConfigQuestion(Screen):
         self.config_defaults = False
         self.config_named_processes = False
         self.config_labels = False
+        self.config_hpc = False
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -57,10 +58,10 @@ class PipelineConfigQuestion(Screen):
             )
             yield Switch(
                 id="toggle_configure_names",
-                value=self.config_defaults,
+                value=self.config_named_processes,
             )
             yield Label(
-                "Yes" if self.config_defaults else "No",
+                "Yes" if self.config_named_processes else "No",
                 id="toggle_configure_names_state_label"
             )
         with Horizontal():
@@ -70,11 +71,43 @@ class PipelineConfigQuestion(Screen):
             )
             yield Switch(
                 id="toggle_configure_labels",
-                value=self.config_defaults,
+                value=self.config_labels,
             )
             yield Label(
-                "Yes" if self.config_defaults else "No",
+                "Yes" if self.config_labels else "No",
                 id="toggle_configure_labels_state_label"
+            )
+        yield Markdown(
+            dedent(
+                """
+                # Will you be using this configuration exclusively on an HPC?
+
+                ## Choose _"Yes"_ if:
+
+                You are configuring processes specifically for running on an HPC.
+
+                ## Choose _"No"_ if:
+
+                This config file will be used across different platforms.
+
+                ## What's the difference?
+
+                Choosing _"Yes"_ will allow you to configure additional HPC-specific directives for each process, including `queue` and `executor`.
+                """
+            )
+        )
+        with Horizontal():
+            yield Label(
+                "Configure HPC-specific resources?",
+                id="toggle_configure_hpc_resources_label"
+            )
+            yield Switch(
+                id="toggle_configure_hpc_resources",
+                value=self.config_hpc,
+            )
+            yield Label(
+                "Yes" if self.config_hpc else "No",
+                id="toggle_configure_hpc_resources_state_label"
             )
         yield Center(
             Button("Back", id="back", variant="default"),
@@ -89,6 +122,7 @@ class PipelineConfigQuestion(Screen):
             'toggle_configure_defaults': 'config_defaults',
             'toggle_configure_names': 'config_named_processes',
             'toggle_configure_labels': 'config_labels',
+            'toggle_configure_hpc_resources': 'config_hpc',
         }
 
         if event.switch.id not in valid_toggles:
@@ -109,6 +143,7 @@ class PipelineConfigQuestion(Screen):
         # Update app tracking variables for whether to configure named and/or labelled processes
         self.parent.PIPE_CONF_NAMED = self.config_named_processes
         self.parent.PIPE_CONF_LABELLED = self.config_labels
+        self.parent.PIPE_CONF_HPC = self.config_hpc
 
         # Proceed to next screen depending on what choices the user has made
         if self.config_defaults:
