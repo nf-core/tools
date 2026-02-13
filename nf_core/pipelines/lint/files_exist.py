@@ -224,18 +224,18 @@ def files_exist(self) -> dict[str, list[str]]:
 
     # Files that cause an error if they don't exist
     for files in files_fail:
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             continue
-        if any([pf(f).is_file() for f in files]):
+        if any(pf(f).is_file() for f in files):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
             failed.append(f"File not found: {self._wrap_quotes(files)}")
 
     # Files that cause a warning if they don't exist
     for files in files_warn:
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             continue
-        if any([pf(f).is_file() for f in files]):
+        if any(pf(f).is_file() for f in files):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
             hint = ""

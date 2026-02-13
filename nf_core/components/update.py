@@ -416,12 +416,10 @@ class ComponentUpdate(ComponentCommand):
         config_entry = None
         if self.update_config is not None:
             if any(
-                [
-                    entry.count("/") == 1
-                    and (entry.endswith("modules") or entry.endswith("subworkflows"))
-                    and not (entry.endswith(".git") or entry.endswith(".git/"))
-                    for entry in self.update_config
-                ]
+                entry.count("/") == 1
+                and (entry.endswith("modules") or entry.endswith("subworkflows"))
+                and not (entry.endswith(".git") or entry.endswith(".git/"))
+                for entry in self.update_config
             ):
                 raise UserWarning(
                     "Your '.nf-core.yml' file format is outdated. "
@@ -535,7 +533,7 @@ class ComponentUpdate(ComponentCommand):
                         ]
             elif isinstance(self.update_config, dict) and isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual components or component directories
-                for component_dir in set([dir for dir, _ in components]):
+                for component_dir in {dir for dir, _ in components}:
                     if isinstance(self.update_config[repo_name][component_dir], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = self.update_config[repo_name][component_dir]

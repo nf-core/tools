@@ -235,9 +235,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
     # Check and warn if the process configuration is done with deprecated syntax
 
     process_with_deprecated_syntax = list(
-        set(
-            [match.group(1) for ck in self.nf_config if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None]
-        )
+        {match.group(1) for ck in self.nf_config if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None}
     )
     for pd in process_with_deprecated_syntax:
         warned.append(f"Process configuration is done with deprecated_syntax: {pd}")

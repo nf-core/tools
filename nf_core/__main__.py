@@ -131,7 +131,7 @@ def run_nf_core():
 
 
 @tui(command="interface", help="Launch the nf-core interface")
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.option(
     "-v",

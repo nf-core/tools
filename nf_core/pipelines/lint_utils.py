@@ -165,7 +165,7 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
             if ": SyntaxError: " in e.stdout.decode():
                 log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
             elif "files were modified by this hook" in e.stdout.decode():
-                all_lines = [line for line in e.stdout.decode().split("\n")]
+                all_lines = list(e.stdout.decode().split("\n"))
                 files = "\n".join(all_lines[3:])
                 log.debug(f"The following files were modified by prettier:\n {files}")
             else:

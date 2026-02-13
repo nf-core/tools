@@ -60,14 +60,14 @@ class TestPipelinesLint(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
-        config_dict = {"repository_type": "pipeline", "lint": {test_name: False for test_name in lint_obj.lint_tests}}
+        config_dict = {"repository_type": "pipeline", "lint": dict.fromkeys(lint_obj.lint_tests, False)}
         with open(Path(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
         lint_obj._load_lint_config()
         assert lint_obj.lint_config is not None
-        assert sorted(list(lint_obj.lint_config.model_dump(exclude_none=True))) == sorted(lint_obj.lint_tests)
+        assert sorted(lint_obj.lint_config.model_dump(exclude_none=True)) == sorted(lint_obj.lint_tests)
 
         # Try running linting and make sure that all tests are ignored
         lint_obj._lint_pipeline()

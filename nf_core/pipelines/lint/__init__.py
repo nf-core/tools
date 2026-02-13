@@ -209,7 +209,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Including --release mode tests")
 
         # Check that we recognise all --fix arguments
-        unrecognised_fixes = list(test for test in self.fix if test not in self.lint_tests)
+        unrecognised_fixes = [test for test in self.fix if test not in self.lint_tests]
         if len(unrecognised_fixes):
             raise AssertionError(
                 "Unrecognised lint test{} for '--fix': '{}'".format(
@@ -645,8 +645,8 @@ def run_linting(
             )
         else:
             # If no key is supplied, run the default modules tests
-            module_lint_tests = list(("module_changes", "module_version"))
-            subworkflow_lint_tests = list(("subworkflow_changes", "subworkflow_version"))
+            module_lint_tests = ["module_changes", "module_version"]
+            subworkflow_lint_tests = ["subworkflow_changes", "subworkflow_version"]
         module_lint_obj.filter_tests_by_key(module_lint_tests)
         if subworkflow_lint_obj is not None:
             subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)

@@ -828,7 +828,7 @@ class PipelineSchema:
         schema = copy.deepcopy(schema)
         params_removed = []
         # Use iterator so that we can delete the key whilst iterating
-        for p_key in [k for k in schema.get("properties", {})]:
+        for p_key in list(schema.get("properties", {})):
             if self.prompt_remove_schema_notfound_config(p_key):
                 del schema["properties"][p_key]
                 # Remove required flag if set

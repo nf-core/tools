@@ -154,7 +154,7 @@ def list_files_by_branch(
             log.error(f"No branches matching '{branch}'")
 
     log.debug("Fetching remote trees")
-    tree = dict()
+    tree = {}
     for b in branches:
         tree[b] = get_remote_tree_for_branch(b, only_files=True, ignored_prefixes=ignored_file_prefixes)
 
@@ -242,7 +242,7 @@ def get_or_prompt_file_selection(files: list[str], query: str | None) -> str:
             "File:", choices=files, style=nfcore_question_style, default=query, qmark=AUTOCOMPLETION_HINT
         ).unsafe_ask()
 
-        file_selected = any([selection == file for file in files])
+        file_selected = any(selection == file for file in files)
         if not file_selected:
             stdout.print("Please select a file.")
 

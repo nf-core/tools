@@ -181,7 +181,7 @@ class TestModules(TestPipelines):
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
         pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
-        assert pipeline_contents == set([".git"]).union(top_level_ignored)
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
 
     def test_delete_tracked_template_branch_files_unlink_throws_error(self):
         """Test that SyncExceptionError is raised when Path.unlink throws an exception"""
@@ -301,7 +301,7 @@ class TestModules(TestPipelines):
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
         pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
-        assert pipeline_contents == set([".git"]).union(top_level_ignored)
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
         # Now create the new template
         psync.make_template_pipeline()
         pipeline_path = Path(self.pipeline_dir)

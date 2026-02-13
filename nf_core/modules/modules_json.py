@@ -1210,7 +1210,7 @@ class ModulesJson:
             )
         assert self.modules_json is not None  # mypy
         # Get the remotes we are missing
-        tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
+        tracked_repos = dict(self.modules_json["repos"].items())
         repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
 
         # Get tuples of components that miss installation and their install directory

@@ -155,11 +155,11 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     # Files that must be completely unchanged from template
     for files in files_exact:
         # Ignore if file specified in linting config
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in files]):
+        elif not any(_pf(f).is_file() for f in files):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
@@ -195,11 +195,11 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in files]):
+        elif not any(_pf(f).is_file() for f in files):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents

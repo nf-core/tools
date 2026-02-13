@@ -50,7 +50,7 @@ def template_strings(self):
         # Skip binary files
         binary_ftypes = ["image", "application/java-archive"]
         (ftype, encoding) = mimetypes.guess_type(fn)
-        if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+        if encoding is not None or (ftype is not None and any(ftype.startswith(ft) for ft in binary_ftypes)):
             continue
 
         with open(fn, encoding="latin1") as fh:

@@ -337,7 +337,7 @@ class SyncedRepo:
         else:
             self.checkout(commit)
         component_files = ["main.nf", "meta.yml"]
-        files_identical = {file: True for file in component_files}
+        files_identical = dict.fromkeys(component_files, True)
         component_dir = self.get_component_dir(component_name, component_type)
         for file in component_files:
             try:

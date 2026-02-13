@@ -1076,7 +1076,7 @@ def prompt_pipeline_release_branch(
 
     # Releases
     if len(wf_releases) > 0:
-        for tag in map(lambda release: release.get("tag_name"), wf_releases):
+        for tag in (release.get("tag_name") for release in wf_releases):
             tag_display = [
                 ("fg:ansiblue", f"{tag}  "),
                 ("class:choice-default", "[release]"),
@@ -1154,12 +1154,10 @@ def get_repo_releases_branches(pipeline, wfs):
             pipeline = wf.full_name
 
             # Store releases and stop loop
-            wf_releases = list(
-                sorted(
-                    wf.releases,
-                    key=lambda k: k.get("published_at_timestamp", 0),
-                    reverse=True,
-                )
+            wf_releases = sorted(
+                wf.releases,
+                key=lambda k: k.get("published_at_timestamp", 0),
+                reverse=True,
             )
             break
 
@@ -1180,12 +1178,10 @@ def get_repo_releases_branches(pipeline, wfs):
                     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
-                wf_releases = list(
-                    sorted(
-                        rel_r.json(),
-                        key=lambda k: k.get("published_at_timestamp", 0),
-                        reverse=True,
-                    )
+                wf_releases = sorted(
+                    rel_r.json(),
+                    key=lambda k: k.get("published_at_timestamp", 0),
+                    reverse=True,
                 )
 
                 # Get release tag commit hashes

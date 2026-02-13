@@ -603,7 +603,7 @@ class ModuleLint(ComponentLint):
                         if extension in edam_formats:
                             expected_ontologies.append((edam_formats[extension][0], extension))
                 # remove duplicated entries
-                expected_ontologies = list({k: v for k, v in expected_ontologies}.items())
+                expected_ontologies = list(dict(expected_ontologies).items())
             if "ontologies" in section:
                 for ontology in section["ontologies"]:
                     try:

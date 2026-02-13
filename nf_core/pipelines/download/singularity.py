@@ -382,7 +382,7 @@ class SingularityFetcher(ContainerFetcher):
                     containers_remote.append(match.group(0))
             if n_total_images == 0:
                 raise LookupError("Could not find valid container names in the index file.")
-            containers_remote = sorted(list(set(containers_remote)))
+            containers_remote = sorted(set(containers_remote))
             log.debug(containers_remote)
             return containers_remote
 

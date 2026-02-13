@@ -356,9 +356,9 @@ class ComponentInstall(ComponentCommand):
             False: if problematic components are not found
         """
         modules_json.load()
-        for repo_url, repo_content in modules_json.modules_json.get("repos", dict()).items():
+        for repo_url, repo_content in modules_json.modules_json.get("repos", {}).items():
             for component_type in repo_content:
-                for directory in repo_content.get(component_type, dict()):
+                for directory in repo_content.get(component_type, {}):
                     if directory == self.modules_repo.repo_path and repo_url != self.modules_repo.remote_url:
                         return True
         return False

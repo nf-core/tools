@@ -335,7 +335,7 @@ class PipelineCreate:
             else:
                 if template_fn_path.is_dir():
                     continue
-                if any([s in str(template_fn_path) for s in ignore_strs]):
+                if any(s in str(template_fn_path) for s in ignore_strs):
                     log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
                     continue
 

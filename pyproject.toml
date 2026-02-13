@@ -122,16 +122,16 @@ cache-dir = "~/.cache/ruff"
 
 [tool.ruff.lint]
 select = [
-    # Currently enabled:
-    "I",      # isort
+    "I",                     # isort
     "E1", "E4", "E7", "E9",  # pycodestyle errors (partial)
-    "F",      # pyflakes
-    "UP",     # pyupgrade
-    "N",      # pep8-naming
-    "B",      # flake8-bugbear - catches common bugs and design problems
-    "RSE",    # flake8-raise - unnecessary parentheses on raised exceptions
-    "PTH",    # flake8-use-pathlib - prefer pathlib over os.path
-    "SIM",    # flake8-simplify - simplifies code patterns
+    "F",                     # pyflakes
+    "UP",                    # pyupgrade
+    "N",                     # pep8-naming
+    "B",                     # flake8-bugbear - catches common bugs and design problems
+    "RSE",                   # flake8-raise - unnecessary parentheses on raised exceptions
+    "PTH",                   # flake8-use-pathlib - prefer pathlib over os.path
+    "SIM",                   # flake8-simplify - simplifies code patterns
+    "C4"                     # flake8-comprehensions - better list/dict/set comprehensions
 ]
 ignore = ["PTH123"]
 

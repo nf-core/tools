@@ -287,7 +287,7 @@ class PipelineSync:
             if curr_dir == str(self.pipeline_dir):
                 continue
 
-            subdir_set = set(Path(curr_dir) / d for d in sub_dirs)
+            subdir_set = {Path(curr_dir) / d for d in sub_dirs}
             currdir_is_empty = (len(subdir_set - deleted) == 0) and (len(files) == 0)
             if currdir_is_empty:
                 log.debug(f"Deleting empty directory {curr_dir}")
