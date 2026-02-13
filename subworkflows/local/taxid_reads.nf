@@ -32,10 +32,10 @@ workflow TAXID_READS {
     if ( params.extract_kraken2_reads ) {
         if ( params.taxid ) {
             kraken2_params_taxid = kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ] }
+                .join( kraken2_result, by: 0 )
+                .join( reads, by: 0)
                 .combine ( Channel.of( params.taxid.split(" ") ) )
-                .combine( kraken2_result, by: 0 )
-                .combine( reads, by: 0)
-                .multiMap { meta, kraken2_report, taxid, kraken2_result, reads  ->
+                .multiMap { meta, kraken2_report, kraken2_result, reads, taxid  ->
                     taxid: taxid
                     kraken2_result: [ meta + [taxid: taxid], kraken2_result ]
                     reads: [ meta + [taxid: taxid], reads ]
@@ -51,22 +51,19 @@ workflow TAXID_READS {
             ch_taxid_reads_kraken2  = KRAKENTOOLS_EXTRACTKRAKENREADS.out.extracted_kraken2_reads
                 .map {meta,reads -> [ meta + [tool:"kraken2"], reads ]}
             ch_versions             = ch_versions.mix( KRAKENTOOLS_EXTRACTKRAKENREADS.out.versions.first() )
-
-            // Remove empty fastq files produced by extracting reads for user defined taxIDs
-            KRAKENTOOLS_EXTRACTKRAKENREADS.out.extracted_kraken2_reads
-                .collect()
-                .map { it -> file("${params.outdir}/extracted_reads/kraken2") }
-                .set { ch_kraken2_output_dir }
         } else {
             kraken2_output = kraken2_taxpasta.join(kraken2_report)
-            kraken2_taxids = KRAKEN2_VIRAL_TAXID( [], kraken2_output)
-            kraken2_combined_input = kraken2_taxids.viral_taxid
+            KRAKEN2_VIRAL_TAXID( [], kraken2_output)
+
+            kraken2_taxids = KRAKEN2_VIRAL_TAXID.out.viral_taxid
                 .map { meta, taxid -> [ meta.subMap( meta.keySet() - 'tool' ), taxid ] }
                 .splitText()
-                .combine( kraken2_result, by:0 )
-                .combine( reads, by:0 )
-                .combine( kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ]}, by:0 )
-                .multiMap { meta, taxid, kraken2_result, reads, kraken2_report ->
+
+            kraken2_combined_input = kraken2_result
+                .join( reads, by:0)
+                .join( kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ]}, by:0 )
+                .combine( kraken2_taxids )
+                .multiMap { meta, kraken2_result, reads, kraken2_report, taxid ->
                     taxid: taxid.trim()
                     kraken2_result: [ meta + [ taxid: taxid.trim() ], kraken2_result ]
                     reads: [ meta + [ taxid: taxid.trim() ], reads ]
@@ -89,9 +86,9 @@ workflow TAXID_READS {
     if ( params.extract_centrifuge_reads ) {
         if ( params.taxid ) {
             centrifuge_params_taxid = centrifuge_result
+                .join( reads, by: 0 )
                 .combine( Channel.of( params.taxid.split(" ") ) )
-                .combine( reads, by: 0 )
-                .multiMap { meta, centrifuge_result, taxid, reads ->
+                .multiMap { meta, centrifuge_result, reads, taxid ->
                     taxid: taxid
                     centrifuge_result: [ meta + [taxid: taxid], centrifuge_result, reads ]
                     }
@@ -111,13 +108,15 @@ workflow TAXID_READS {
                 .set { ch_centrifuge_output_dir }
         } else {
             centrifuge_output = centrifuge_taxpasta.join(centrifuge_report)
-            centrifuge_taxids = CENTRIFUGE_VIRAL_TAXID( [], centrifuge_output )
-            centrifuge_combined_input = centrifuge_taxids.viral_taxid
+            CENTRIFUGE_VIRAL_TAXID( [], centrifuge_output )
+            centrifuge_taxids = CENTRIFUGE_VIRAL_TAXID.out.viral_taxid
                 .map { meta, taxid -> [ meta.subMap( meta.keySet() - 'tool' ), taxid ] }
                 .splitText()
-                .combine( centrifuge_result, by:0 )
-                .combine( reads, by:0 )
-                .multiMap { meta, taxid, centrifuge_result, reads ->
+
+            centrifuge_combined_input = centrifuge_result
+                .join( reads, by:0 )
+                .combine( centrifuge_taxids )
+                .multiMap { meta, centrifuge_result, reads, taxid ->
                     taxid: taxid.trim()
                     centrifuge_result: [ meta + [ taxid: taxid.trim() ], centrifuge_result, reads ]
                 }
@@ -136,9 +135,9 @@ workflow TAXID_READS {
     if ( params.extract_diamond_reads ) {
         if ( params.taxid ) {
             diamond_params_taxid = diamond_tsv.map { meta, diamond_tsv -> [meta.subMap( meta.keySet() - 'tool' ), diamond_tsv ] }
+                .join( reads, by:0)
                 .combine( Channel.of( params.taxid.split(" ") ))
-                .combine( reads, by:0)
-                .multiMap { meta, diamond_tsv, taxid, reads ->
+                .multiMap { meta, diamond_tsv, reads, taxid ->
                     taxid: taxid
                     diamond_tsv: [ meta + [ taxid: taxid ], diamond_tsv, reads ]
                     }
@@ -159,13 +158,15 @@ workflow TAXID_READS {
                 .set { ch_diamond_output_dir }
         } else {
             diamond_output = diamond_taxpasta.join(diamond_tsv)
-            diamond_taxids = DIAMOND_VIRAL_TAXID( params.evalue_threshold, diamond_output )
-            diamond_combined_input = diamond_taxids.viral_taxid
+            DIAMOND_VIRAL_TAXID( params.evalue_threshold, diamond_output )
+            diamond_taxids = DIAMOND_VIRAL_TAXID.out.viral_taxid
                 .map { meta, taxid -> [ meta.subMap( meta.keySet() - 'tool' ), taxid ] }
                 .splitText()
-                .combine( diamond_tsv.map{ meta, diamond_tsv -> [meta.subMap( meta.keySet() - 'tool' ), diamond_tsv ] }, by:0 )
-                .combine( reads, by:0 )
-                .multiMap { meta, taxid, diamond, reads ->
+
+            diamond_combined_input = diamond_tsv.map{ meta, diamond_tsv -> [meta.subMap( meta.keySet() - 'tool' ), diamond_tsv ] }
+                .join( reads, by:0 )
+                .combine( diamond_taxids )
+                .multiMap { meta, diamond, reads, taxid ->
                     taxid: taxid.trim()
                     diamond_tsv: [ meta + [ taxid: taxid.trim() ], diamond, reads ]
                 }
