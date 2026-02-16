@@ -9,12 +9,12 @@ Content-Type: text/html; charset=utf-8
 $email_html
 
 --nfcoremimeboundary
-Content-Type: image/png;name="nf-core-metaval_logo.png"
+Content-Type: image/png;name="genomic-medicine-sweden-metaval_logo.png"
 Content-Transfer-Encoding: base64
 Content-ID: <nfcorepipelinelogo>
-Content-Disposition: inline; filename="nf-core-metaval_logo_light.png"
+Content-Disposition: inline; filename="genomic-medicine-sweden-metaval_logo_light.png"
 
-<% out << new File("$projectDir/assets/nf-core-metaval_logo_light.png").
+<% out << new File("$projectDir/assets/genomic-medicine-sweden-metaval_logo_light.png").
     bytes.
     encodeBase64().
     toString().
