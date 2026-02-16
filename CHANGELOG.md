@@ -5,6 +5,7 @@
 ### General
 
 - Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
+- Lock file maintenance ([#4045](https://github.com/nf-core/tools/pull/4045))
 
 ### Linting
 
