@@ -4,6 +4,7 @@
     <img alt="genomic-medicine-sweden/metaval" src="docs/images/metaval_logo_light.png">
   </picture>
 </h1>
+
 [![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/genomic-medicine-sweden/metaval)
 [![GitHub Actions CI Status](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/nf-test.yml/badge.svg)](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/nf-test.yml)
 [![GitHub Actions Linting Status](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/linting.yml/badge.svg)](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/linting.yml)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
