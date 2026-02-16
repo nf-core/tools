@@ -259,7 +259,7 @@ class ComponentLint(ComponentCommand):
             try:
                 for lint_result in tests:
                     max_name_len = max(len(lint_result.component_name), max_name_len)
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
 
         # Helper function to format test links nicely

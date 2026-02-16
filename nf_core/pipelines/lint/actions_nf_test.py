@@ -45,7 +45,7 @@ def actions_nf_test(self):
     try:
         with open(fn) as fh:
             ciwf = yaml.safe_load(fh)
-    except Exception as e:
+    except (OSError, yaml.YAMLError) as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
     # Check that the action is turned on for the correct events

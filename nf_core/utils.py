@@ -161,7 +161,7 @@ def check_if_outdated(
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(fetch_remote_version, source_url)
                 remote_version = future.result()
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             log.debug(f"Could not check for nf-core updates: {e}")
     if remote_version is not None and Version(remote_version) > Version(current_version):
         is_outdated = True
@@ -212,7 +212,7 @@ class Pipeline:
         try:
             self.repo = git.Repo(self.wf_path)
             self.git_sha = self.repo.head.object.hexsha
-        except Exception as e:
+        except git.exc.GitError as e:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
@@ -339,7 +339,7 @@ def get_nf_version() -> tuple[int, int, int, bool] | None:
             is_edge,
         )
         return parsed_version_tuple
-    except Exception as e:
+    except (subprocess.CalledProcessError, IndexError, ValueError) as e:
         log.warning(f"Error getting Nextflow version: {e}")
         return None
 
@@ -671,7 +671,7 @@ class GitHubAPISession(requests_cache.CachedSession):
                         gh_cli_config["github.com"]["oauth_token"],
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
-            except Exception:
+            except (OSError, KeyError, yaml.YAMLError):
                 ex_type, ex_value, _ = sys.exc_info()
                 if ex_type is not None:
                     output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
@@ -700,7 +700,7 @@ class GitHubAPISession(requests_cache.CachedSession):
             log.debug(json.dumps(dict(request.headers), indent=4))
             log.debug(json.dumps(request.json(), indent=4))
             log.debug(json.dumps(post_data, indent=4))
-        except Exception as e:
+        except (json.JSONDecodeError, TypeError) as e:
             log.debug(f"Could not parse JSON response from GitHub API! {e}")
             log.debug(request.headers)
             log.debug(request.content)
@@ -1047,7 +1047,7 @@ def prompt_remote_pipeline_name(wfs):
     if pipeline.count("/") == 1:
         try:
             gh_api.safe_get(f"https://api.github.com/repos/{pipeline}")
-        except Exception:
+        except requests.exceptions.RequestException:
             # No repo found - pass and raise error at the end
             pass
         else:

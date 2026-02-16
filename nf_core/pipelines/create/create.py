@@ -367,8 +367,8 @@ class PipelineCreate:
                     log.debug(f"Copying file without Jinja: '{output_path}' - {e}")
                     shutil.copy(template_fn_path, output_path)
 
-                # Something else went wrong
-                except Exception as e:
+                # Jinja rendering error or other template issues
+                except (jinja2.TemplateError, OSError) as e:
                     log.error(f"Copying raw file as error rendering with Jinja: '{output_path}' - {e}")
                     shutil.copy(template_fn_path, output_path)
 

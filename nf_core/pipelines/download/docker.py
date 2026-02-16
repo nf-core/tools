@@ -154,7 +154,7 @@ class DockerFetcher(ContainerFetcher):
                         future.result()  # This will raise an exception if the pull or save failed
                     except DockerError as e:
                         log.error(f"Error while processing container {e.container}: {e.message}")
-                    except Exception as e:
+                    except OSError as e:
                         log.error(f"Unexpected error: {e}")
 
             except KeyboardInterrupt:

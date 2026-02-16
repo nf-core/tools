@@ -422,7 +422,7 @@ class ComponentCreate(ComponentCommand):
         try:
             gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=subprocess.DEVNULL))
             author_default = f"@{gh_auth_user['login']}"
-        except Exception as e:
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
         # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex

@@ -52,8 +52,8 @@ def _print_nf_config(rgc):
         for asset in asset_list:
             try:
                 pth = rgc.seek(genome, asset)
-            # Catch general exception instead of refgencof exception --> no refgenconf import needed
-            except Exception:
+            # Catch refgenconf exceptions without importing refgenconf
+            except (OSError, RuntimeError):
                 log.warning(f"{genome}/{asset} is incomplete, ignoring...")
             else:
                 # Translate an alias name to the alias used in the pipeline

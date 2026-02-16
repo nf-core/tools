@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 
+import requests
 import rich
 import rich.console
 import rich.logging
@@ -123,7 +124,7 @@ def run_nf_core():
                     f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
                     highlight=False,
                 )
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             log.debug(f"Could not check latest version: {e}")
         stderr.print("\n")
     # Launch the click cli

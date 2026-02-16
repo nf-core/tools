@@ -497,7 +497,8 @@ class SingularityFetcher(ContainerFetcher):
             container, output_path = input_params
             try:
                 self.progress.advance_remote_fetch_task()
-            except Exception as e:
+            except RuntimeError as e:
+                # Rich progress may raise RuntimeError if called from wrong thread
                 log.error(f"Error updating progress bar: {e}")
 
             if status == FileDownloader.Status.DONE:

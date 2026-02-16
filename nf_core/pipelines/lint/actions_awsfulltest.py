@@ -34,7 +34,7 @@ def actions_awsfulltest(self) -> dict[str, list[str]]:
         try:
             with open(fn) as fh:
                 wf = yaml.safe_load(fh)
-        except Exception as e:
+        except (OSError, yaml.YAMLError) as e:
             return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
         aws_profile = "-profile test "

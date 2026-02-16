@@ -66,7 +66,7 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         matches = [CompletionItem(wor) for wor in available_workflows if wor.startswith(incomplete)]
 
         return matches
-    except Exception as e:
+    except (OSError, AttributeError) as e:
         print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
         return []
 
@@ -241,7 +241,8 @@ class Workflows:
             def sort_pulled_date(wf):
                 try:
                     return wf.local_wf.last_pull * -1
-                except Exception:
+                except AttributeError:
+                    # local_wf is None or doesn't have last_pull attribute
                     return 0
 
             filtered_workflows.sort(key=sort_pulled_date)

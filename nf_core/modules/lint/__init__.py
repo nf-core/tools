@@ -413,7 +413,7 @@ class ModuleLint(ComponentLint):
                 versions_entry = template_meta.get("topics", {}).get("versions", [[]])[0]
                 if len(versions_entry) == 3:
                     topic_metadata = [next(iter(item.values())) for item in versions_entry]
-        except Exception as e:
+        except (OSError, yaml.YAMLError, IndexError, StopIteration) as e:
             log.debug(f"Could not load topic template metadata: {e}")
 
         def _populate_channel_elements(io_type, correct_value, meta_value, mod_io_data, meta_yml_io, check_exists=True):

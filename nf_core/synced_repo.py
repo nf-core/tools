@@ -414,7 +414,7 @@ class SyncedRepo:
             if not git_logs:
                 return None
             return git_logs[0]["git_sha"]
-        except Exception as e:
+        except (git.exc.GitError, KeyError) as e:
             log.debug(f"Could not get latest version of {component_name}: {e}")
             return None
 

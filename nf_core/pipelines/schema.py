@@ -282,7 +282,7 @@ class PipelineSchema:
                     raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}") from e
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
-        except Exception as json_e:
+        except (OSError, UserWarning) as json_e:
             log.debug(f"Could not load input params as JSON: {json_e}")
             # This failed, try to load as YAML
             try:

@@ -45,21 +45,21 @@ def actions_schema_validation(self) -> dict[str, list[str]]:
         try:
             with open(wf_path) as fh:
                 wf_json = yaml.safe_load(fh)
-        except Exception as e:
+        except (OSError, yaml.YAMLError) as e:
             failed.append(f"Could not parse yaml file: {wf}, {e}")
             continue
 
         # yaml parses 'on' as True --> try to fix it before schema validation
         try:
             wf_json["on"] = wf_json.pop(True)
-        except Exception:
+        except KeyError:
             failed.append(f"Missing 'on' keyword in {wf}")
 
         # Validate the workflow
         try:
             jsonschema.validate(wf_json, schema)
             passed.append(f"Workflow validation passed: {wf}")
-        except Exception as e:
+        except jsonschema.ValidationError as e:
             failed.append(f"Workflow validation failed for {wf}: {e}")
 
     return {"passed": passed, "failed": failed, "warned": warned}

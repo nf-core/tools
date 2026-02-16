@@ -131,7 +131,8 @@ select = [
     "RSE",                   # flake8-raise - unnecessary parentheses on raised exceptions
     "PTH",                   # flake8-use-pathlib - prefer pathlib over os.path
     "SIM",                   # flake8-simplify - simplifies code patterns
-    "C4"                     # flake8-comprehensions - better list/dict/set comprehensions
+    "C4",                    # flake8-comprehensions - better list/dict/set comprehensions
+    "BLE",                   # flake8-blind-except - catches blind except clauses
 ]
 ignore = ["PTH123"]
 

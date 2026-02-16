@@ -471,7 +471,8 @@ class PipelineSync:
         try:
             json_data = json.loads(response.content)
             return json_data, json.dumps(json_data, indent=4)
-        except Exception:
+        except json.JSONDecodeError:
+            # Response content is not valid JSON
             return response.content, str(response.content)
 
     def reset_target_dir(self):
