@@ -64,7 +64,7 @@
                     },
                     "multiqc": {
                         "branch": "master",
-                        "git_sha": "af27af1be706e6a2bb8fe454175b0cdf77f47b49",
+                        "git_sha": "575e1a4b51a9bad7a8cd1316a88fb85684ef7c7b",
                         "installed_by": ["modules"]
                     },
                     "pigz/uncompress": {

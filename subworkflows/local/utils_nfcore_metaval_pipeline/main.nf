@@ -54,23 +54,6 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    before_text = """
--\033[2m----------------------------------------------------\033[0m-
-                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
-\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
-\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
-\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
-                                        \033[0;32m`._,._,\'\033[0m
-\033[0;35m  nf-core/taxprofiler ${workflow.manifest.version}\033[0m
--\033[2m----------------------------------------------------\033[0m-
-"""
-    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { doi -> "    https://doi.org/${doi.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
-* The nf-core framework
-    https://doi.org/10.1038/s41587-020-0439-x
-
-* Software dependencies
-    https://github.com/nf-core/taxprofiler/blob/master/CITATIONS.md
-"""
     command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     UTILS_NFSCHEMA_PLUGIN (
