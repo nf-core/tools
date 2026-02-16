@@ -197,7 +197,8 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         if "output" in meta_yaml:
             correct_outputs = obtain_outputs(module_lint_object, module.outputs)
             meta_outputs = obtain_outputs(module_lint_object, meta_yaml["output"])
-
+            log.debug(f"Correct outputs: {correct_outputs}")
+            log.debug(f"Outputs in `meta.yml`: {meta_outputs}")
             if correct_outputs == meta_outputs:
                 module.passed.append(
                     (

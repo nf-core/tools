@@ -5,12 +5,17 @@
 ### General
 
 - [DO NOT MERGE] test esm setup for setup-nextflow ([#4035](https://github.com/nf-core/tools/pull/4035))
+- Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
+- Lock file maintenance ([#4045](https://github.com/nf-core/tools/pull/4045))
 
 ### Linting
 
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
+- fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 
 ### Modules
+
+- Template: have a `main:` section in workflow even when modules are skipped ([#4043](https://github.com/nf-core/tools/pull/4043))
 
 ### Subworkflows
 
@@ -22,6 +27,9 @@
 
 - Update apptainer setup action version ([#4036](https://github.com/nf-core/tools/pull/4036))
 - Update pre-commit hook astral-sh/uv-pre-commit to v0.10.2 ([#4037](https://github.com/nf-core/tools/pull/4037))
+- Update dependency prettier to v3.8.1 ([#4003](https://github.com/nf-core/tools/pull/4003))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.10.2 ([#4037](https://github.com/nf-core/tools/pull/4037))
+- Update python:3.14-slim Docker digest to 486b809 ([#4039](https://github.com/nf-core/tools/pull/4039))
 
 ## v3.5.2
 
@@ -40,6 +48,12 @@
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 - fix wrong parsing when output values contain spaces ([#3999](https://github.com/nf-core/tools/pull/3999))
 - fix failing devcontainer builds ([#4013](https://github.com/nf-core/tools/pull/4013))
+- Update codecov/codecov-action digest to 671740a ([#4000](https://github.com/nf-core/tools/pull/4000))
+
+### Template
+
+- switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
+- add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
 
 ### Linting
 

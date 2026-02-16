@@ -101,12 +101,20 @@ def unquote(s: str) -> str:
     Uses ast.literal_eval to safely parse Python string literals, preserving
     the original string if it's not a valid literal.
 
+    Special handling for ruamel.yaml DoubleQuotedScalarString to preserve
+    strings that should not be converted to numbers (e.g., "123" stays as string).
+
     Args:
         s: String potentially containing quotes
 
     Returns:
         String with outer quotes removed if present, otherwise original string
     """
+    import ruamel.yaml
+
+    if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+        return s
+
     try:
         return ast.literal_eval(s)
     except (ValueError, SyntaxError):
