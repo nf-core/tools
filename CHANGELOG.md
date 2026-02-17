@@ -6,6 +6,7 @@
 
 - Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
 - Lock file maintenance ([#4045](https://github.com/nf-core/tools/pull/4045))
+- Update actions/stale digest to b5d41d4 ([#4047](https://github.com/nf-core/tools/pull/4047))
 
 ### Linting
 
