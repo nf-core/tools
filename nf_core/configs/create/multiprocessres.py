@@ -4,7 +4,7 @@ from textwrap import dedent
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, HorizontalGroup, VerticalScroll
+from textual.containers import Center, HorizontalGroup, VerticalScroll, Vertical, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Switch, Label
 from textual.events import Mount, ScreenResume
@@ -21,10 +21,12 @@ from nf_core.utils import add_hide_class, remove_hide_class
 class ProcessConfig(HorizontalGroup):
     """Get resource requirements for a single process."""
 
-    def __init__(self, selector: str) -> None:
+    def __init__(self, selector: str, hpc: bool) -> None:
         super().__init__()
         assert selector in ['name', 'label']
         self.selector = selector
+        self.hpc = hpc
+        self.use_local_exec = False
 
     def compose(self) -> ComposeResult:
         yield TextInput(
@@ -55,6 +57,27 @@ class ProcessConfig(HorizontalGroup):
             "1",
             classes="column",
         )
+        yield TextInput(
+            "custom_process_queue",
+            "queue name",
+            "HPC queue:",
+            "",
+            classes=("column" + (" hide" if not self.hpc else "")),
+        )
+        with Vertical(classes=("column" + (" hide" if not self.hpc else "")), id="toggle_use_local_exec_group"):
+            yield Label(
+                "Use local executor?",
+                id="toggle_use_local_exec_label"
+            )
+            with Horizontal():
+                yield Switch(
+                    id="toggle_use_local_exec",
+                    value=self.use_local_exec
+                )
+                yield Label(
+                    "Yes" if self.use_local_exec else "No",
+                    id="toggle_use_local_exec_state_label"
+                )
         yield Button(
             "-",
             id="remove",
@@ -64,6 +87,14 @@ class ProcessConfig(HorizontalGroup):
     @on(Button.Pressed, "#remove")
     def remove_widget(self) -> None:
         self.remove()
+
+    def update_hpc_status(self, hpc: bool) -> None:
+        self.hpc = hpc
+        for id in ["custom_process_queue", "toggle_use_local_exec_group"]:
+            if self.hpc:
+                self.get_widget_by_id(id).remove_class("hide")
+            else:
+                self.get_widget_by_id(id).add_class("hide")
 
 
 class MultiProcessConfig(Screen):
@@ -87,9 +118,9 @@ class MultiProcessConfig(Screen):
         yield Footer()
         yield Markdown(f'# {self.title}')
         yield VerticalScroll(
-            ProcessConfig(selector=self.selector_type),
-            ProcessConfig(selector=self.selector_type),
-            ProcessConfig(selector=self.selector_type),
+            ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC),
+            ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC),
+            ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC),
             id="configs"
         )
         yield Center(
@@ -104,7 +135,7 @@ class MultiProcessConfig(Screen):
 
     @on(Button.Pressed, "#another")
     def add_config(self) -> None:
-        new_config = ProcessConfig(selector='name')
+        new_config = ProcessConfig(selector='name', hpc=self.parent.PIPE_CONF_HPC)
         self.query_one("#configs").mount(new_config)
 
     @on(Button.Pressed, "#next")
@@ -141,6 +172,12 @@ class MultiProcessConfig(Screen):
     @on(Button.Pressed, "#skip")
     def skip_to_next_screen(self) -> None:
         self.parent.push_screen(self.next_screen)
+
+    @on(Mount)
+    @on(ScreenResume)
+    def update_hide_class(self) -> None:
+        for config_widget in self.query("ProcessConfig"):
+            config_widget.update_hpc_status(self.parent.PIPE_CONF_HPC)
 
 
 class MultiNamedProcessConfig(MultiProcessConfig):
