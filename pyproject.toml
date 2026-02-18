@@ -98,7 +98,7 @@ nf-core = "nf_core.__main__:run_nf_core"
 nf-core-refgenie = "nf_core.pipelines.refgenie:update_config"
 
 [tool.uv]
-required-version = "0.10.2"
+required-version = "0.10.4"
 
 [tool.pytest.ini_options]
 markers = ["datafiles: load datafiles", "integration"]

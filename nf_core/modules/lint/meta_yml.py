@@ -19,20 +19,46 @@ log = logging.getLogger(__name__)
 
 
 def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
-    """
-    Lint a ``meta.yml`` file
+    """Lint a ``meta.yml`` file
 
-    The lint test checks that the module has
-    a ``meta.yml`` file and that it follows the
-    JSON schema defined in the ``modules/meta-schema.json``
-    file in the nf-core/modules repository.
+    Checks that the module has a ``meta.yml`` file, that it is valid according
+    to the nf-core JSON schema, and that its contents are consistent with
+    ``main.nf``.
 
-    In addition it checks that the module name
-    and module input is consistent between the
-    ``meta.yml`` and the ``main.nf``.
+    The following checks are performed:
 
-    If the module has inputs or outputs, they are expected to be
-    formatted as:
+    * ``meta_yml_exists``: The ``meta.yml`` file must exist.
+
+    * ``meta_yml_valid``: The ``meta.yml`` must be valid according to the JSON
+      schema defined in ``modules/meta-schema.json`` in the nf-core/modules
+      repository.
+
+    * ``meta_name``: The ``name`` field in ``meta.yml`` must match (case-insensitive)
+      the process name declared in ``main.nf``.
+
+    * ``meta_input``: If ``main.nf`` declares inputs, they must be listed under
+      the ``input:`` key in ``meta.yml``.
+
+    * ``correct_meta_inputs``: The inputs listed in ``meta.yml`` must exactly
+      match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
+      to auto-correct.
+
+    * ``meta_output``: If ``main.nf`` declares outputs, they must be listed under
+      the ``output:`` key in ``meta.yml``.
+
+    * ``correct_meta_outputs``: The outputs listed in ``meta.yml`` must exactly
+      match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
+      to auto-correct.
+
+    * ``has_meta_topics``: If ``main.nf`` declares topics, ``meta.yml`` must
+      also contain a non-empty ``topics:`` block. Run
+      ``nf-core modules lint --fix`` to auto-correct.
+
+    * ``correct_meta_topics``: The topics listed in ``meta.yml`` must exactly
+      match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
+      to auto-correct.
+
+    If the module has inputs or outputs, they are expected to be formatted as:
 
     .. code-block:: groovy
 
@@ -41,10 +67,6 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         path foo
 
     or permutations of the above.
-
-    Args:
-        module_lint_object (ComponentLint): The lint object for the module
-        module (NFCoreComponent): The module to lint
 
     """
     if module.meta_yml is None:

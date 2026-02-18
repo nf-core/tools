@@ -23,23 +23,42 @@ log = logging.getLogger(__name__)
 def main_nf(
     module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
 ) -> tuple[list[str], list[str]]:
-    """
-    Lint a ``main.nf`` module file
+    """Lint a ``main.nf`` module file
 
     Can also be used to lint local module files,
-    in which case failures will be reported as
-    warnings.
+    in which case failures will be reported as warnings.
 
-    The test checks for the following:
+    The following checks are performed:
 
-    * Software versions and containers are valid
-    * The module has a process label and it is among
-      the standard ones.
-    * If a ``meta`` map is defined as one of the modules
-      inputs it should be defined as one of the emits,
-      and be correctly configured in the ``saveAs`` function.
-    * The module script section should contain definitions
-      of ``software`` and ``prefix``
+    * ``main_nf_exists``: The ``main.nf`` file must exist.
+
+    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
+      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+      ``publishDir``).
+
+    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+
+    * ``main_nf_container``: Container tags across the ``singularity``, ``docker``,
+      and ``conda`` directives must reference the same software version. A warning
+      is issued if they do not match.
+
+    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
+      blocks must be present.
+
+    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
+      a ``template``.
+
+    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
+      must also appear in at least one output channel.
+
+    * ``main_nf_version_topic``: The module should emit software versions using
+      a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
+      equal the number of ``emit:`` outputs whose name starts with ``versions``.
+      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+      of a topic output.
+
     """
 
     inputs: list[str] = []
