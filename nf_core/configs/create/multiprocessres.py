@@ -6,7 +6,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, HorizontalGroup, VerticalScroll, Vertical, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Switch, Label
+from textual.widgets import Button, Footer, Header, Input, Markdown, Switch, Label, Static
 from textual.events import Mount, ScreenResume
 from nf_core.utils import add_hide_class, remove_hide_class
 
@@ -64,25 +64,47 @@ class ProcessConfig(HorizontalGroup):
             "",
             classes=("column" + (" hide" if not self.hpc else "")),
         )
-        with Vertical(classes=("column" + (" hide" if not self.hpc else "")), id="toggle_use_local_exec_group"):
+        with Vertical(classes=("labelled-toggle column" + (" hide" if not self.hpc else "")), id="toggle_use_local_exec_group"):
             yield Label(
                 "Use local executor?",
-                id="toggle_use_local_exec_label"
+                id="toggle_use_local_exec_label",
+                classes="field_help"
             )
-            with Horizontal():
+            with Horizontal(classes="labelled-toggle"):
                 yield Switch(
                     id="toggle_use_local_exec",
                     value=self.use_local_exec
                 )
                 yield Label(
                     "Yes" if self.use_local_exec else "No",
-                    id="toggle_use_local_exec_state_label"
+                    id="toggle_use_local_exec_state_label",
+                    classes="toggle_use_local_exec_state_label"
                 )
-        yield Button(
-            "-",
-            id="remove",
-            variant="error"
-        )
+            yield Static(classes="labelled-toggle-filler")  # Filler
+        with Vertical(classes="labelled-toggle"):
+            yield Label(
+                "Remove",
+                id="remove-process-config",
+                classes="field_help"
+            )
+            yield Button(
+                "-",
+                id="remove",
+                variant="error",
+                classes="remove-process-button"
+            )
+            yield Static(classes="labelled-toggle-filler")  # Filler
+
+    @on(Switch.Changed, "#toggle_use_local_exec")
+    def on_toggle_switch(self, event: Switch.Changed) -> None:
+        """ Handle toggling the local executor switch """
+
+        self.use_local_exec = event.value
+
+        # Update the switch label
+        for label in self.query(Label):
+            if label.id == f'{event.switch.id}_state_label':
+                label.update("Yes" if event.value else "No")
 
     @on(Button.Pressed, "#remove")
     def remove_widget(self) -> None:
@@ -145,6 +167,8 @@ class MultiProcessConfig(Screen):
             for config_widget in self.query("ProcessConfig"):
                 tmp_config = {}
                 for text_input in config_widget.query("TextInput"):
+                    if "hide" in text_input.classes:
+                        continue
                     this_input = text_input.query_one(Input)
                     validation_result = this_input.validate(this_input.value)
                     tmp_config[text_input.field_id] = this_input.value
@@ -152,6 +176,10 @@ class MultiProcessConfig(Screen):
                         text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
                     else:
                         text_input.query_one(".validation_msg").update("")
+                if self.parent.PIPE_CONF_HPC:
+                    local_exec_switch = config_widget.query_one("#toggle_use_local_exec")
+                    if local_exec_switch.value:
+                        tmp_config['executor'] = 'local'
                 # Validate the config
                 with init_context(self.parent.get_context()):
                     ConfigsCreateConfig(**tmp_config)

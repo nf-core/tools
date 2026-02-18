@@ -61,7 +61,7 @@ class ConfigCreate:
         params_section_str = '\n'.join(params_section) + '\n\n'
         return sub(r'\n\n\n+', '\n\n', params_section_str)
     
-    def get_resource_strings(self, cpus, memory, hours, prefix=''):
+    def get_resource_strings(self, cpus, memory, hours, queue='', executor='', prefix=''):
         cpus_str = ''
         if cpus:
             cpus_int = int(cpus)
@@ -82,7 +82,15 @@ class ConfigCreate:
                 time_m = int(time_h * 60)
                 time_str = f"time = {time_m}.m"
 
-        resources = [cpus_str, memory_str, time_str]
+        queue_str = ''
+        if queue:
+            queue_str = f"queue = '{queue}'"
+
+        executor_str = ''
+        if executor:
+            executor_str = f"executor = '{executor}'"
+
+        resources = [cpus_str, memory_str, time_str, queue_str, executor_str]
         return [
             f'{prefix}{res}'
             for res in resources
@@ -106,6 +114,8 @@ class ConfigCreate:
                     cpus=process_resources['custom_process_ncpus'],
                     memory=process_resources['custom_process_memgb'],
                     hours=process_resources['custom_process_hours'],
+                    queue=process_resources.get('custom_process_queue', ''),
+                    executor=process_resources.get('executor', ''),
                     prefix='    '
                 )
                 if not named_resource_string:
@@ -125,6 +135,8 @@ class ConfigCreate:
                     cpus=process_resources['custom_process_ncpus'],
                     memory=process_resources['custom_process_memgb'],
                     hours=process_resources['custom_process_hours'],
+                    queue=process_resources.get('custom_process_queue', ''),
+                    executor=process_resources.get('executor', ''),
                     prefix='    '
                 )
                 if not labelled_resource_string:

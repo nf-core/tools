@@ -29,7 +29,23 @@
 .custom_grid Button {
     width: auto;
 }
-
+.labelled-toggle {
+    padding: 1 1 1 1;
+    content-align-vertical: middle;
+    height: 100%;
+}
+.toggle_use_local_exec_state_label {
+    padding: 1 1 1 1;
+    align-vertical: middle;
+}
+.labelled-toggle-filler {
+    padding: 1 1 1 1;
+    content-align-vertical: middle;
+}
+.remove-process-button {
+    margin: 1 1 1 1;
+    align-vertical: middle;
+}
 .text-input-grid {
     padding: 1 1 1 1;
     grid-size: 1 3;
