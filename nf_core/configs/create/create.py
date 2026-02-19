@@ -163,6 +163,66 @@ class ConfigCreate:
         process_section_str = '\n'.join(process_section) + '\n'
 
         return sub(r'\n\n\n+', '\n\n', process_section_str)
+    
+    def construct_infra_config_str(self):
+        modules_to_load = (
+            self.template_config.container_system
+            if self.template_config.module and self.template_config.container_system 
+            else ''
+        )
+        if self.template_config.module_system:
+            if modules_to_load:
+                modules_to_load += ' '
+            modules_to_load += sub(r'\s+', ':', self.template_config.module_system)
+        memory_str = ''
+        if self.template_config.memory:
+            memory_int = int(self.template_config.memory)
+            memory_str = f'memory = {memory_int}.GB'
+        time_str = ''
+        if self.template_config.time:
+            time_h = float(self.template_config.time)
+            if time_h.is_integer():
+                time_h = int(time_h)
+                time_str = f'{time_h}.h'
+            else:
+                time_m = int(time_h * 60)
+                time_str = f'{time_m}.m'
+        resource_limits = {
+            'cpus': int(self.template_config.cpus) if self.template_config.cpus else None,
+            'memory': memory_str or None,
+            'time': time_str or None,
+        }
+        resource_limits = {k: v for k, v in resource_limits.items() if v}
+        resource_limits_str = [
+            f'{key}: {value}'
+            for key, value in resource_limits.items()
+        ]
+        resource_limits_str = ', '.join(resource_limits_str)
+        resource_limits_str = f'[ {resource_limits_str} ]'
+        process = {
+            'executor': self.template_config.scheduler or None,
+            'queue': self.template_config.queue or None,
+            'module': modules_to_load or None,
+            'resourceLimits': resource_limits_str or None,
+        }
+        process = {k: v for k, v in process.items() if v}
+
+        process_list = [
+            f'{key} = {value}'
+            for key, value in process.items()
+        ]
+        
+        process_section = [
+            'process {',
+            '\n',
+            *process_list,
+            '\n',
+            '}',
+        ]
+
+        process_section_str = '\n'.join(process_section) + '\n'
+
+        return sub(r'\n\n\n+', '\n\n', process_section_str)
 
     def write_to_file(self):
         ## File name option
@@ -177,8 +237,10 @@ class ConfigCreate:
 
         if self.config_type == 'pipeline':
             process_section_str = self.construct_process_config_str()
+        elif self.config_type == 'infrastructure':
+            process_section_str = self.construct_infra_config_str()
         else:
-            process_section_str = ''
+            raise ValueError(f'Invalid config type: {self.config_type}')
 
         with open(filename, "w+") as file:
             ## Write params

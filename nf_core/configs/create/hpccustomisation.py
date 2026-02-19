@@ -4,10 +4,13 @@ from typing import Optional
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Markdown
+from textual.widgets import Button, Footer, Header, Markdown, Input
+from textual import on
 
 from nf_core.configs.create.utils import (
     TextInput,
+    init_context,
+    ConfigsCreateConfig
 )
 
 markdown_intro = """
@@ -30,20 +33,20 @@ class HpcCustomisation(Screen):
                 "scheduler",
                 "Scheduler",
                 "The scheduler in your HPC.",
-                default=scheduler if scheduler is not None else "Scheduler",
+                default=scheduler if scheduler is not None else "local",
                 classes="column",
             )
             yield TextInput(
                 "queue",
                 "Queue",
-                "The queue in your HPC.",
+                "The default queue in your HPC.",
                 classes="column",
                 suggestions=queues,
             )
         yield TextInput(
             "module_system",
             "Other modules to load",
-            "Do you need to load other software using the module system for your compute nodes?",
+            "Do you need to load other software using the module system for your compute nodes? Separate multiple modules by spaces.",
             classes="hide" if not module_system_used else "",
         )
         yield Center(
@@ -108,3 +111,26 @@ class HpcCustomisation(Screen):
         except subprocess.CalledProcessError:
             return False
         return True
+
+    @on(Button.Pressed, "#toconfiguration")
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Save fields to the config."""
+        new_config = {}
+        for text_input in self.query("TextInput"):
+            this_input = text_input.query_one(Input)
+            validation_result = this_input.validate(this_input.value)
+            new_config[text_input.field_id] = this_input.value
+            if not validation_result.is_valid:
+                text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
+            else:
+                text_input.query_one(".validation_msg").update("")
+        try:
+            with init_context(self.parent.get_context()):
+                # First, validate the new config data
+                ConfigsCreateConfig(**new_config)
+                # If that passes validation, update the existing config
+                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+            # Push the next screen
+            self.parent.push_screen("final_infra_details")
+        except ValueError:
+            pass

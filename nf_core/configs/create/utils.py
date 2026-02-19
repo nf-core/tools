@@ -257,6 +257,48 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a non-negative number.")
         return v
 
+    @field_validator("cpus", "memory")
+    @classmethod
+    def pos_integer_valid_infra(cls, v: str, info: ValidationInfo) -> str:
+        """Check that integer values are either empty or positive."""
+        context = info.context
+        if context and context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
+            try:
+                v_int = int(v.strip())
+            except ValueError:
+                raise ValueError("Must be an integer.")
+            if not v_int > 0:
+                raise ValueError("Must be a positive integer.")
+        return v
+
+    @field_validator("time")
+    @classmethod
+    def non_neg_float_valid_infra(cls, v: str, info: ValidationInfo) -> str:
+        """Check that numeric values are either empty or non-negative."""
+        context = info.context
+        if context and context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
+            try:
+                vf = float(v.strip())
+            except ValueError:
+                raise ValueError("Must be a number.")
+            if not vf >= 0:
+                raise ValueError("Must be a non-negative number.")
+        return v
+
+    @field_validator("scheduler", "queue")
+    @classmethod
+    def nonemtpy_hpc_details(cls, v: str, info: ValidationInfo) -> str:
+        """Check that HPC infrastructure details are non-empty"""
+        context = info.context
+        if context and context["is_infrastructure"] and context["is_hpc"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+        return v
+
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):
     """Widget for text inputs.

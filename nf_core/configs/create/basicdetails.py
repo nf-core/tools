@@ -94,6 +94,8 @@ class BasicDetails(Screen):
         """Save fields to the config."""
         config = {}
         for text_input in self.query("TextInput"):
+            if "hide" in text_input.classes:
+                continue
             this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)
             config[text_input.field_id] = this_input.value

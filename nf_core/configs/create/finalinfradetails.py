@@ -10,6 +10,8 @@ from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Swi
 
 from nf_core.configs.create.utils import (
     TextInput,
+    ConfigsCreateConfig,
+    init_context
 )
 from nf_core.utils import add_hide_class, remove_hide_class
 
@@ -42,7 +44,7 @@ class FinalInfraDetails(Screen):
             yield TextInput(
                 "memory",
                 "Memory",
-                "Maximum memory available in your machine.",
+                "Maximum memory (GB) available in your machine.",
                 classes="column",
             )
             yield TextInput(
@@ -54,11 +56,11 @@ class FinalInfraDetails(Screen):
             yield TextInput(
                 "time",
                 "Time",
-                "Maximum time to run your jobs.",
+                "Maximum time (hours) to run your jobs.",
                 classes="column",
             )
-        yield Markdown("## Do you want to define a global cache directory for containers or conda environments?")
-        with Horizontal():
+        with Vertical(id="define-global-cache-dir"):
+            yield Markdown("## Do you want to define a global cache directory for containers or conda environments?")
             yield TextInput(
                 "envvar",
                 "Nextflow cachedir environment variable",
@@ -71,9 +73,7 @@ class FinalInfraDetails(Screen):
                 f"NXF_{self.container_system.upper()}_CACHEDIR" if self.container_system is not None else "",
                 "Define a global cache direcotry.",
                 classes="",
-                default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR")
-                if self.container_system is not None
-                else "",
+                default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR") if self.container_system is not None else "",
             )
         yield TextInput(
             "igenomes_cachedir",
@@ -88,7 +88,7 @@ class FinalInfraDetails(Screen):
             classes="",
         )
         with Horizontal(classes="ghrepo-cols"):
-            yield Switch(value=False, id="private")
+            yield Switch(value=False, id="toggle-delete-work")
             with Vertical():
                 yield Static("Delete work directory", classes="")
                 yield Markdown(
@@ -155,12 +155,54 @@ class FinalInfraDetails(Screen):
         """Get the container system from the input."""
         self.container_system = None
         for text_input in self.query("TextInput"):
+            if text_input.field_id != "container_system":
+                continue
             this_input = text_input.query_one(Input)
-            if text_input.field_id == "container_system":
-                self.container_system = this_input.value
-        if self.container_system is not None:
-            add_hide_class(self.parent, "cachedir")
-            add_hide_class(self.parent, "envvar")
-        else:
-            remove_hide_class(self.parent, "cachedir")
-            remove_hide_class(self.parent, "envvar")
+            self.container_system = this_input.value
+            if self.container_system:
+                remove_hide_class(self.parent, "define-global-cache-dir")
+            else:
+                add_hide_class(self.parent, "define-global-cache-dir")
+            break
+
+    @on(Button.Pressed, "#finish")
+    def on_finish_button(self, event: Button.Pressed) -> None:
+        """Save fields to the config."""
+        new_config = {}
+        for text_input in self.query("TextInput"):
+            if "hide" in text_input.classes:
+                continue
+            this_input = text_input.query_one(Input)
+            validation_result = this_input.validate(this_input.value)
+            new_config[text_input.field_id] = this_input.value
+            if not validation_result.is_valid:
+                text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
+            else:
+                text_input.query_one(".validation_msg").update("")
+        delete_work_switch = self.query_one("#toggle-delete-work")
+        new_config['delete_work_dir'] = delete_work_switch.value
+        new_config['module'] = self._detect_module_system()
+        try:
+            with init_context(self.parent.get_context()):
+                # First, validate the new config data
+                ConfigsCreateConfig(**new_config)
+                # If that passes validation, update the existing config
+                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+            # Push the next screen
+            self.parent.push_screen("final")
+        except ValueError:
+            pass
+
+    @on(Button.Pressed, "#back")
+    def on_back_button(self, event: Button.Pressed) -> None:
+        """Clear the default config info"""
+        blank_config = {}
+        for text_input in self.query("TextInput"):
+            if getattr(self.parent.TEMPLATE_CONFIG, text_input.field_id, None):
+                blank_config[text_input.field_id] = ''
+        try:
+            with init_context(self.parent.get_context()):
+                # Update the existing config with the blank values
+                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=blank_config)
+        except ValueError:
+            pass

@@ -69,7 +69,7 @@ class DefaultProcess(Screen):
 
     # Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
     @on(Button.Pressed, "#next")
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_next_button(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         new_config = {}
         for text_input in self.query("TextInput"):
@@ -93,5 +93,19 @@ class DefaultProcess(Screen):
                 self.parent.push_screen("multi_labelled_process_config")
             else:
                 self.parent.push_screen("final")
+        except ValueError:
+            pass
+
+    @on(Button.Pressed, "#back")
+    def on_back_button(self, event: Button.Pressed) -> None:
+        """Clear the default config info"""
+        blank_config = {}
+        for text_input in self.query("TextInput"):
+            if getattr(self.parent.TEMPLATE_CONFIG, text_input.field_id, None):
+                blank_config[text_input.field_id] = ''
+        try:
+            with init_context(self.parent.get_context()):
+                # Update the existing config with the blank values
+                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=blank_config)
         except ValueError:
             pass

@@ -117,10 +117,6 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             self.INFRA_ISHPC = False
             utils.INFRA_ISHPC_GLOBAL = False
             self.push_screen("final_infra_details")
-        elif event.button.id == "toconfiguration":
-            self.push_screen("final_infra_details")
-        elif event.button.id == "finish":
-            self.push_screen("final")
         ## General options
         if event.button.id == "back":
             self.pop_screen()
