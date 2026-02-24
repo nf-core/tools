@@ -169,7 +169,7 @@ def meta_yml_containers(module: NFCoreComponent):
     # Check docker linux/amd64 image exists (unless skipped)
     skip_file = Path(module.base_dir, ".github", "skip_nf_test.json")
     with open(skip_file) as fh:
-        data = json.load(fh)        
+        data = json.load(fh)
     skip = set()
     for syst in CONTAINER_SYSTEMS + ["conda"]:
         value = data.get(syst)
@@ -194,7 +194,7 @@ def meta_yml_containers(module: NFCoreComponent):
     else:
         docker_amd64 = {}
     docker_amd64_name = docker_amd64.get("name") or docker_amd64.get("image") or docker_amd64.get("container") or ""
-    
+
     if not docker_amd64_name:
         module.failed.append(
             (
@@ -274,7 +274,6 @@ def meta_yml_containers(module: NFCoreComponent):
                     lock_file = entry.get(key)
                     break
             if not lock_file:
-                
                 module.failed.append(
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
                 )
@@ -302,7 +301,6 @@ def meta_yml_containers(module: NFCoreComponent):
                         )
                     )
                 else:
-                    
                     module.failed.append(
                         (
                             "meta_yml",
@@ -340,7 +338,6 @@ def meta_yml_containers(module: NFCoreComponent):
                     )
                 )
             else:
-                
                 module.failed.append(
                     (
                         "meta_yml",
@@ -363,7 +360,7 @@ def meta_yml_containers(module: NFCoreComponent):
             ("meta_yml", "containers_conda_lock_exists", "Conda containers section missing or empty", meta_path)
         )
 
-    return 
+    return
 
 
 def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
@@ -631,7 +628,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                         module.meta_yml,
                     )
                 )
-        
+
         # Check that all containers are correctly specified
         if "containers" in meta_yaml or module.container:
             correct_containers = obtain_containers(module_lint_object, module.container)
@@ -655,7 +652,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                         module.meta_yml,
                     )
                 )
-            
+
             if correct_containers == meta_containers:
                 module.passed.append(
                     (
@@ -674,7 +671,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                         module.meta_yml,
                     )
                 )
-            
+
         _ = meta_yml_containers(module)
 
 
