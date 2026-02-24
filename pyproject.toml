@@ -123,7 +123,7 @@ cache-dir = "~/.cache/ruff"
 [tool.ruff.lint]
 select = [
     "I",                     # isort
-    "E1", "E4", "E7", "E9",  # pycodestyle errors (partial)
+    "E1", "E4", "E7", "E9","E902",  # pycodestyle errors (partial)
     "F",                     # pyflakes
     "UP",                    # pyupgrade
     "N",                     # pep8-naming
@@ -133,6 +133,7 @@ select = [
     "SIM",                   # flake8-simplify - simplifies code patterns
     "C4",                    # flake8-comprehensions - better list/dict/set comprehensions
     "BLE",                   # flake8-blind-except - catches blind except clauses
+    "W",                     # pycodestyle warnings
 ]
 ignore = ["PTH123"]
 
