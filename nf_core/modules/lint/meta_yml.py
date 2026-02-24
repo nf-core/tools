@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def meta_yml_containers(module: NFCoreComponent):
-    meta_path = module.meta_yml
+    meta_path = Path(module.component_dir, "meta.yml")
     containers = module.container
     platform_aliases = {p: (p, p.replace("/", "_")) for p in CONTAINER_PLATFORMS}
     lock_keys = ("lock file", "lock_file", "lockFile", "lockfile")
@@ -268,7 +268,7 @@ def meta_yml_containers(module: NFCoreComponent):
             entry = conda_containers.get(platform, {})
             if not isinstance(entry, dict):
                 entry = {}
-            lock_file = ""
+            lock_file: str | None = None
             for key in lock_keys:
                 if entry.get(key):
                     lock_file = entry.get(key)
@@ -317,7 +317,7 @@ def meta_yml_containers(module: NFCoreComponent):
             conda_amd64 = conda_containers.get("linux_amd64", {})
         if not isinstance(conda_amd64, dict):
             conda_amd64 = {}
-        conda_lock = ""
+        conda_lock: str | None = None
         for key in lock_keys:
             if conda_amd64.get(key):
                 conda_lock = conda_amd64.get(key)
