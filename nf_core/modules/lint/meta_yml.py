@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 def meta_yml_containers(module: NFCoreComponent):
     meta_path = module.meta_yml
-    containers = module.containers
+    containers = module.container
     platform_aliases = {p: (p, p.replace("/", "_")) for p in CONTAINER_PLATFORMS}
     lock_keys = ("lock file", "lock_file", "lockFile", "lockfile")
     # Protocol and hash checks for docker/singularity
@@ -104,14 +104,11 @@ def meta_yml_containers(module: NFCoreComponent):
                         )
                     )
             # check buildId hash matches hash in container tag
-            build_id = entry.get("buildId") or entry.get("buildid") or ""
+            build_id = entry.get("buildId") or entry.get("buildid") or entry.get("build_id") or ""
             if build_id:
                 build_id_clean = build_id[3:] if build_id.startswith("bd-") else build_id
                 parts = build_id_clean.split("_")
-                # Remove trailing parts if they look like timestamps or build numbers (e.g. bd-abc123_20240101_001 -> bd-abc123)
-                if len(parts) >= 3 and parts[-1].isdigit() and parts[-2].isdigit():
-                    parts = parts[:-2]
-                build_hash = "_".join([p for p in parts if p])
+                build_hash = parts[0] if parts else ""
 
                 if "://" in name:
                     name_no_scheme = name.split("://", 1)[1]
@@ -190,7 +187,7 @@ def meta_yml_containers(module: NFCoreComponent):
     docker_containers = containers.get("docker", {})
     if isinstance(docker_containers, dict):
         docker_amd64 = docker_containers.get("linux/amd64", {})
-        if not isinstance(docker_amd64, dict):
+        if not docker_amd64 or not isinstance(docker_amd64, dict):
             docker_amd64 = docker_containers.get("linux_amd64", {})
         if not isinstance(docker_amd64, dict):
             docker_amd64 = {}
@@ -225,7 +222,7 @@ def meta_yml_containers(module: NFCoreComponent):
             )
         else:
             try:
-                response = requests.head(docker_url, stream=True, allow_redirects=True, timeout=5)
+                response = requests.head(docker_url, stream=True, allow_redirects=True)
                 if response.ok:
                     module.passed.append(
                         ("meta_yml", "containers_docker_amd64_exists", "Docker linux/amd64 image exists", meta_path)
@@ -451,6 +448,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         return
     else:
         module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+    module.container = meta_yaml.get("containers", {})
 
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
@@ -635,8 +633,8 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                 )
         
         # Check that all containers are correctly specified
-        if "containers" in meta_yaml or module.containers:
-            correct_containers = obtain_containers(module_lint_object, module.containers)
+        if "containers" in meta_yaml or module.container:
+            correct_containers = obtain_containers(module_lint_object, module.container)
             meta_containers = obtain_containers(module_lint_object, meta_yaml.get("containers", {}))
             if not meta_containers:
                 module.failed.append(

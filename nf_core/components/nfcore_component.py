@@ -61,7 +61,8 @@ class NFCoreComponent:
         self.is_patched: bool = False
         self.branch: str | None = None
         self.workflow_name: str | None = None
-        self.container: str
+        self.container: dict = {}
+        self.container_from_main_nf: str | None = None
 
         if remote_component:
             # Initialize the important files
@@ -385,13 +386,13 @@ class NFCoreComponent:
     def get_container_from_main_nf(self) -> None:
         if self.component_type == "modules":
             if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
-                self.container = self._get_container_with_inspect()
+                self.container_from_main_nf = self._get_container_with_inspect()
             else:
                 from nf_core.modules.modules_utils import get_container_with_regex
 
-                self.container = get_container_with_regex(self.main_nf, self.component_name)
+                self.container_from_main_nf = get_container_with_regex(self.main_nf, self.component_name)
 
-            if not self.container:
+            if not self.container_from_main_nf:
                 log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
 
     def _get_container_with_inspect(self):
