@@ -4,7 +4,6 @@ from pathlib import Path
 from git.repo import Repo
 
 import nf_core.modules.lint
-import nf_core.modules.patch
 
 from ...test_modules import TestModules
 from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL

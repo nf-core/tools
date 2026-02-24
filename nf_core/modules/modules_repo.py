@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 
 import git
-import rich
 import rich.progress
 import rich.prompt
 from git.exc import GitCommandError, InvalidGitRepositoryError

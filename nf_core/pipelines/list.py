@@ -10,7 +10,6 @@ from pathlib import Path
 
 import git
 import requests
-import rich.console
 import rich.table
 from click.shell_completion import CompletionItem
 

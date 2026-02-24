@@ -9,7 +9,6 @@ import git
 import pytest
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.sync
 from nf_core.utils import NFCoreYamlConfig
 

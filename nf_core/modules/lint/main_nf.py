@@ -13,7 +13,6 @@ import yaml
 from rich.progress import Progress
 
 import nf_core
-import nf_core.modules.modules_utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 

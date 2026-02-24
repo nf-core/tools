@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import requests
-import rich
 import rich.console
 import rich.logging
 import rich.traceback

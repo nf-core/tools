@@ -9,7 +9,6 @@ from typing import Any
 
 import git
 import questionary
-import requests
 import requests.auth
 import requests_cache
 import rich
@@ -18,7 +17,6 @@ from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
 import nf_core.pipelines.create.create
-import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
 

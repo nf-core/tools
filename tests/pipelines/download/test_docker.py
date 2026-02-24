@@ -11,7 +11,6 @@ from unittest import mock
 import pytest
 import rich.progress_bar
 import rich.table
-import rich.text
 
 from nf_core.pipelines.download import DownloadWorkflow
 from nf_core.pipelines.download.docker import (

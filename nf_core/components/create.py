@@ -10,7 +10,6 @@ from pathlib import Path
 
 import jinja2
 import questionary
-import rich
 import rich.prompt
 import ruamel.yaml
 from packaging.version import parse as parse_version

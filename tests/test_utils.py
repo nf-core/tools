@@ -8,7 +8,6 @@ from unittest import mock
 import pytest
 import requests
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
 
