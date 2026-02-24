@@ -193,7 +193,7 @@ class ComponentCreate(ComponentCommand):
                 if not self.tool_conda_version:
                     version = anaconda_response.get("latest_version")
                     if not version:
-                        version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+                        version = str(max(parse_version(v) for v in anaconda_response["versions"]))
                 else:
                     version = self.tool_conda_version
 
