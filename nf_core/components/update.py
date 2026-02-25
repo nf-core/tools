@@ -394,7 +394,7 @@ class ComponentUpdate(ComponentCommand):
 
         # Get component installation directory
         try:
-            install_dir = [dir for dir, m in components if component == m][0]
+            install_dir = [comp_dir for comp_dir, m in components if component == m][0]
         except IndexError as e:
             raise UserWarning(f"{self.component_type[:-1].title()} '{component}' not found in 'modules.json'.") from e
 
@@ -532,13 +532,13 @@ class ComponentUpdate(ComponentCommand):
                         ]
             elif isinstance(self.update_config, dict) and isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual components or component directories
-                for component_dir in {dir for dir, _ in components}:
+                for component_dir in {comp_dir for comp_dir, _ in components}:
                     if isinstance(self.update_config[repo_name][component_dir], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = self.update_config[repo_name][component_dir]
                         components_info[repo_name] = {}
-                        for dir, component in components:
-                            if component_dir == dir:
+                        for comp_dir, component in components:
+                            if component_dir == comp_dir:
                                 try:
                                     components_info[repo_name][component_dir].append(
                                         (
@@ -926,16 +926,20 @@ class ComponentUpdate(ComponentCommand):
         elif self.component_type == "subworkflows":
             for repo, repo_content in mods_json["repos"].items():
                 for component_type, dir_content in repo_content.items():
-                    for dir, components in dir_content.items():
+                    for install_dir, components in dir_content.items():
                         for comp, comp_content in components.items():
                             # If the updated subworkflow name appears in the installed_by section of the checked component
                             # The checked component is used by the updated subworkflow
                             # We need to update it too
                             if component in comp_content["installed_by"]:
                                 if component_type == "modules":
-                                    modules_to_update.append({"name": comp, "git_remote": repo, "org_path": dir})
+                                    modules_to_update.append(
+                                        {"name": comp, "git_remote": repo, "org_path": install_dir}
+                                    )
                                 elif component_type == "subworkflows":
-                                    subworkflows_to_update.append({"name": comp, "git_remote": repo, "org_path": dir})
+                                    subworkflows_to_update.append(
+                                        {"name": comp, "git_remote": repo, "org_path": install_dir}
+                                    )
 
         return modules_to_update, subworkflows_to_update
 

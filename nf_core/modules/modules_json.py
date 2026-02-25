@@ -193,7 +193,7 @@ class ModulesJson:
                     "The following director{s} in the {t} directory are untracked: '{l}'".format(
                         s="ies" if len(dirs_not_covered) > 0 else "y",
                         t=component_type,
-                        l="', '".join(str(dir.relative_to(directory)) for dir in dirs_not_covered),
+                        l="', '".join(str(d.relative_to(directory)) for d in dirs_not_covered),
                     )
                 )
                 nrepo_remote = questionary.text(
@@ -1081,17 +1081,19 @@ class ModulesJson:
             assert self.modules_json is not None  # mypy
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
-        for type in component_types:
+        for comp_type in component_types:
             for repo_url in self.modules_json["repos"]:
                 modules_repo = ModulesRepo(repo_url)
                 install_dir = modules_repo.repo_path
                 try:
-                    for comp in self.modules_json["repos"][repo_url][type][install_dir]:
-                        if name in self.modules_json["repos"][repo_url][type][install_dir][comp]["installed_by"]:
-                            dependent_components[comp] = (repo_url, install_dir, type)
+                    for comp in self.modules_json["repos"][repo_url][comp_type][install_dir]:
+                        if name in self.modules_json["repos"][repo_url][comp_type][install_dir][comp]["installed_by"]:
+                            dependent_components[comp] = (repo_url, install_dir, comp_type)
                 except KeyError as e:
                     # This exception will raise when there are only modules installed
-                    log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
+                    log.debug(
+                        f"Trying to retrieve all {comp_type}. There aren't {comp_type} installed. Failed with error {e}"
+                    )
                     continue
 
         return dependent_components
@@ -1199,7 +1201,7 @@ class ModulesJson:
                     self.modules_json["repos"].pop(repo_url)
 
     def resolve_missing_from_modules_json(self, missing_from_modules_json, component_type):
-        format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
+        format_missing = [f"'{d}'" for d in missing_from_modules_json]
         if len(format_missing) == 1:
             log.info(
                 f"Recomputing commit SHA for {component_type[:-1]} {format_missing[0]} which was missing from 'modules.json'"

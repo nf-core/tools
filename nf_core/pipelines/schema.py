@@ -556,7 +556,7 @@ class PipelineSchema:
     def print_documentation(
         self,
         output_fn=None,
-        format="markdown",
+        output_format="markdown",
         force=False,
         columns=None,
     ):
@@ -567,7 +567,7 @@ class PipelineSchema:
             columns = ["parameter", "description", "type,", "default", "required", "hidden"]
 
         output = self.schema_to_markdown(columns)
-        if format == "html":
+        if output_format == "html":
             output = self.markdown_to_html(output)
 
         with tempfile.NamedTemporaryFile(mode="w+") as fh:
@@ -578,7 +578,7 @@ class PipelineSchema:
 
         if not output_fn:
             console = rich.console.Console()
-            console.print("\n", Syntax(prettified_docs, format, word_wrap=True), "\n")
+            console.print("\n", Syntax(prettified_docs, output_format, word_wrap=True), "\n")
         else:
             if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")

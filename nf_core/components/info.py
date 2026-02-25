@@ -231,10 +231,10 @@ class ComponentInfo(ComponentCommand):
         self.remote_location = self.modules_repo.remote_url
         return yaml.safe_load(file_contents)
 
-    def generate_params_table(self, type) -> Table:
+    def generate_params_table(self, io_type) -> Table:
         "Generate a rich table for inputs and outputs"
         table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
-        table.add_column(f":inbox_tray: {type}")
+        table.add_column(f":inbox_tray: {io_type}")
         table.add_column("Description")
         if self.component_type == "modules":
             table.add_column("Pattern", justify="right", style="green")
@@ -299,10 +299,10 @@ class ComponentInfo(ComponentCommand):
         # Inputs
         if self.meta.get("input"):
             inputs_table = self.generate_params_table("Inputs")
-            for i, input in enumerate(self.meta["input"]):
+            for i, input_channel in enumerate(self.meta["input"]):
                 inputs_table.add_row(f"[italic]input[{i}][/]", "", "")
                 if self.component_type == "modules":
-                    for element in input:
+                    for element in input_channel:
                         for key, info in element.items():
                             inputs_table.add_row(
                                 f"[orange1 on black] {key} [/][dim i] ({info['type']})",
@@ -310,7 +310,7 @@ class ComponentInfo(ComponentCommand):
                                 info.get("pattern", ""),
                             )
                 elif self.component_type == "subworkflows":
-                    for key, info in input.items():
+                    for key, info in input_channel.items():
                         inputs_table.add_row(
                             f"[orange1 on black] {key} [/][dim i]",
                             Markdown(info["description"] if info["description"] else ""),

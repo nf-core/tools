@@ -172,8 +172,8 @@ class ROCrate:
         # get license from LICENSE file
         license_file = self.pipeline_dir / "LICENSE"
         try:
-            license = license_file.read_text()
-            if license.startswith("MIT"):
+            license_text = license_file.read_text()
+            if license_text.startswith("MIT"):
                 self.crate.license = "MIT"
             else:
                 # prompt for license

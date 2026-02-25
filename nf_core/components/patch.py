@@ -64,7 +64,7 @@ class ComponentPatch(ComponentCommand):
                 choices=sorted(choices),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, self.modules_repo.repo_path, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -178,7 +178,7 @@ class ComponentPatch(ComponentCommand):
                 choices,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file

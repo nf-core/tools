@@ -134,6 +134,7 @@ select = [
     "C4",                    # flake8-comprehensions - better list/dict/set comprehensions
     "BLE",                   # flake8-blind-except - catches blind except clauses
     "W",                     # pycodestyle warnings
+    "A",                     # flake8-builtins - catches shadowing of Python builtins
 ]
 ignore = ["PTH123"]
 

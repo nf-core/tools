@@ -474,7 +474,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
     shell_complete=autocomplete_pipelines,
 )
 @click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
-@click.option("-i", "--id", help="ID for web-gui launch parameter set")
+@click.option("-i", "--id", "launch_id", help="ID for web-gui launch parameter set")
 @click.option(
     "-c",
     "--command-only",
@@ -521,7 +521,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 def command_pipelines_launch(
     ctx,
     pipeline,
-    id,
+    launch_id,
     revision,
     command_only,
     params_in,
@@ -535,7 +535,7 @@ def command_pipelines_launch(
     Launch a pipeline using a web GUI or command line prompts.
     """
     pipelines_launch(
-        ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url, no_prompts
+        ctx, pipeline, launch_id, revision, command_only, params_in, params_out, save_all, show_hidden, url, no_prompts
     )
 
 
@@ -713,6 +713,7 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
 )
 @click.option(
     "--format",
+    "img_format",
     type=click.Choice(["png", "svg"]),
     default="png",
     help="Image format of the logo, either PNG or SVG.",
@@ -725,11 +726,11 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def command_pipelines_create_logo(logo_text, directory, name, theme, width, format, force):
+def command_pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force):
     """
     Generate a logo with the nf-core logo template.
     """
-    pipelines_create_logo(logo_text, directory, name, theme, width, format, force)
+    pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force)
 
 
 # nf-core pipelines schema subcommands
@@ -855,6 +856,7 @@ def command_pipelines_schema_lint(directory, schema_file):
 @click.option(
     "-x",
     "--format",
+    "output_format",
     type=click.Choice(["markdown", "html"]),
     default="markdown",
     help="Format to output docs in.",
@@ -868,11 +870,11 @@ def command_pipelines_schema_lint(directory, schema_file):
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def command_pipelines_schema_docs(directory, schema_file, output, format, force, columns):
+def command_pipelines_schema_docs(directory, schema_file, output, output_format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    pipelines_schema_docs(Path(directory, schema_file), output, format, force, columns)
+    pipelines_schema_docs(Path(directory, schema_file), output, output_format, force, columns)
 
 
 # nf-core modules subcommands
@@ -1318,7 +1320,7 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     multiple=True,
     help="Run only these lint tests",
 )
-@click.option("-a", "--all", is_flag=True, help="Run on all modules")
+@click.option("-a", "--all", "all_modules", is_flag=True, help="Run on all modules")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
@@ -1342,13 +1344,25 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 def command_modules_lint(
-    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
+    ctx, tool, directory, registry, key, all_modules, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
 ):
     """
     Lint one or more modules in a directory.
     """
     modules_lint(
-        ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
+        ctx,
+        tool,
+        directory,
+        registry,
+        key,
+        all_modules,
+        fail_warned,
+        local,
+        passed,
+        sort_by,
+        fix_version,
+        fix,
+        plain_text,
     )
 
 
@@ -1397,15 +1411,15 @@ def command_modules_info(ctx, tool, directory):
     default=".",
     metavar="<nf-core/modules directory>",
 )
-@click.option("-a", "--all", is_flag=True, help="Run on all modules")
+@click.option("-a", "--all", "all_modules", is_flag=True, help="Run on all modules")
 @click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
 @click.option("-r", "--dry-run", is_flag=True, help="Dry run the command")
-def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
+def command_modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
     """
-    modules_bump_versions(ctx, tool, directory, all, show_all, dry_run)
+    modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run)
 
 
 # nf-core subworkflows click command
@@ -1598,7 +1612,7 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     multiple=True,
     help="Run only these lint tests",
 )
-@click.option("-a", "--all", is_flag=True, help="Run on all subworkflows")
+@click.option("-a", "--all", "all_subworkflows", is_flag=True, help="Run on all subworkflows")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local subworkflows")
 @click.option("--passed", is_flag=True, help="Show passed tests")
@@ -1617,13 +1631,24 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 def command_subworkflows_lint(
-    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
+    ctx, subworkflow, directory, registry, key, all_subworkflows, fail_warned, local, passed, sort_by, fix, plain_text
 ):
     """
     Lint one or more subworkflows in a directory.
     """
     subworkflows_lint(
-        ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
+        ctx,
+        subworkflow,
+        directory,
+        registry,
+        key,
+        all_subworkflows,
+        fail_warned,
+        local,
+        passed,
+        sort_by,
+        fix,
+        plain_text,
     )
 
 
@@ -1714,12 +1739,13 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
-def subworkflows_patch(ctx, subworkflow, dir, remove):
+def subworkflows_patch(ctx, subworkflow, directory, remove):
     """
     Create a patch file for minor changes in a subworkflow
 
@@ -1730,7 +1756,7 @@ def subworkflows_patch(ctx, subworkflow, dir, remove):
 
     try:
         subworkflow_patch = SubworkflowPatch(
-            dir,
+            directory,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],

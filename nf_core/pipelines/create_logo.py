@@ -15,7 +15,7 @@ def create_logo(
     filename: str = "",
     theme: str = "light",
     width: int = 2300,
-    format: str = "png",
+    img_format: str = "png",
     force: bool = False,
 ) -> Path:
     """Create a logo for a pipeline."""
@@ -27,7 +27,7 @@ def create_logo(
         directory.mkdir(parents=True, exist_ok=True)
     assets = Path(nf_core.__file__).parent / "assets/logo"
 
-    if format == "svg":
+    if img_format == "svg":
         template_fn = "placeholder_logo.svg"
 
         if width != 2300:

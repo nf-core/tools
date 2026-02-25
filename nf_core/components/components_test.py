@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 import questionary
-from rich import print
+from rich import print  # noqa: A004
 from rich.panel import Panel
 from rich.prompt import Confirm
 from rich.syntax import Syntax

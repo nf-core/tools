@@ -62,8 +62,8 @@ class TestTestComponentsUtils(TestComponents):
         with responses.RequestsMock() as rsps:
             mock_biotools_api_calls(rsps, "bpipe")
             response = nf_core.components.components_utils.get_biotools_response("bpipe")
-            id = nf_core.components.components_utils.get_biotools_id(response, "bpipe")
-            assert id == "biotools:bpipe"
+            biotools_id = nf_core.components.components_utils.get_biotools_id(response, "bpipe")
+            assert biotools_id == "biotools:bpipe"
 
     def test_get_biotools_id_warn(self):
         """Test getting the bio.tools ID for a tool and failing"""

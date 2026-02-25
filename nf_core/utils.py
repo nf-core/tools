@@ -852,18 +852,18 @@ def parse_anaconda_licence(anaconda_response, version=None):
 
     # Clean up / standardise licence names
     clean_licences = []
-    for license in licences:
-        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
-        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
-        license = license.replace("GPL-", "GPLv")
-        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
-        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superfluous .0 from GPL version
-        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
-        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
-        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
-        license = license.replace("Clause", "clause")  # BSD capitalisation
-        license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
-        clean_licences.append(license)
+    for lic in licences:
+        lic = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", lic)
+        lic = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", lic, flags=re.IGNORECASE)
+        lic = lic.replace("GPL-", "GPLv")
+        lic = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", lic)  # Add v prefix to GPL version if none found
+        lic = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", lic)  # Remove superfluous .0 from GPL version
+        lic = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", lic)
+        lic = re.sub(r"GPL\s*v", "GPL v", lic)  # Normalise whitespace to one space between GPL and v
+        lic = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", lic)  # Normalise whitespace around >= GPL versions
+        lic = lic.replace("Clause", "clause")  # BSD capitalisation
+        lic = re.sub(r"-only$", "", lic)  # Remove superfluous GPL "only" version suffixes
+        clean_licences.append(lic)
     return clean_licences
 
 
