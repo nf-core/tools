@@ -741,7 +741,9 @@ def _parse_output_topics(self, line: str) -> list[str]:
         topic_name = topic_regex.group(1).strip()
         output.append(topic_name)
         if topic_name == "versions":
-            if not re.search(r'tuple\s+val\("\${\s*task\.process\s*}"\),\s*val\(.*\),\s*(?:eval|val)\(.*\)', line):
+            if not re.search(
+                r'tuple\s+val\("\${\s*task\.process\s*}"\)\s*,\s*val\(.*\)\s*,\s*(?:eval|val)\(.*\)', line
+            ):
                 self.failed.append(
                     (
                         "main_nf",
