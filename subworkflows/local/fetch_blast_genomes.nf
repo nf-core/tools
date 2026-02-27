@@ -32,7 +32,9 @@ workflow FETCH_BLAST_GENOMES {
                 return [ blast_taxid, meta ]
             }
             .filter { it != null }
-            .join(ch_taxid2genome)
+            .combine(ch_taxid2genome)
+            .filter { blast_taxid, meta, genome_taxid, organism, genome -> blast_taxid == genome_taxid } // Filter to keep only matching taxids
+            .map { blast_taxid, meta, genome_taxid, organism, genome -> [blast_taxid, meta, organism, genome] }
     } else {
         // Create empty channel if BLAST steps are skipped
         ch_genomes_blast = channel.empty()
@@ -44,7 +46,7 @@ workflow FETCH_BLAST_GENOMES {
         }
         .combine(
             ch_reads.map { meta, reads -> [ "${meta.id}_${meta.taxid}_${meta.tool}", meta, reads ]},
-            by: 0
+            by:0
         )
         .map { meta_joined, blast_taxid, meta1, organism, genome, meta2, reads ->
             def new_meta = meta2.clone()
