@@ -1670,10 +1670,12 @@ def set_wd(path: Path) -> Generator[None, None, None]:
 
 
 def get_wf_files(wf_path: Path):
-    """Return a list of all files in a directory (respects .gitignore)"""
-
-    try:
-        git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=wf_path).splitlines()
-        return [str(Path(wf_path) / fn.decode("utf-8")) for fn in git_ls_files if (Path(wf_path) / fn.decode("utf-8")).is_file()]
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return [str(p) for p in Path(wf_path).rglob("*") if p.is_file() and ".git" not in p.parts]
+    """Return a list of all files in a directory (respects .gitignore via git ls-files)"""
+    git_ls_files = subprocess.check_output(
+        ["git", "ls-files"],
+        cwd=wf_path,
+        stderr=subprocess.DEVNULL,
+    ).splitlines()
+    return [
+        str(Path(wf_path) / fn.decode("utf-8")) for fn in git_ls_files if (Path(wf_path) / fn.decode("utf-8")).is_file()
+    ]

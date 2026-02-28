@@ -1,6 +1,7 @@
 """Tests covering for utility functions."""
 
 import os
+import subprocess
 from pathlib import Path
 from unittest import mock
 
@@ -228,9 +229,9 @@ class TestUtils(TestPipelines):
     @with_temporary_folder
     def test_get_wf_files(self, tmpdir):
         tmpdir = Path(tmpdir)
+        subprocess.check_call(["git", "init"], cwd=tmpdir)
         (tmpdir / ".gitignore").write_text(".nextflow*\nwork/\nresults/\n")
         for rpath in [
-            ".git/should-ignore-1",
             "work/should-ignore-2",
             "results/should-ignore-3",
             ".nextflow.should-ignore-4",
@@ -240,6 +241,10 @@ class TestUtils(TestPipelines):
             p = tmpdir / rpath
             p.parent.mkdir(exist_ok=True)
             p.touch()
+        subprocess.check_call(
+            ["git", "add", ".gitignore", "dir1/should-match-1", "should-match-2"],
+            cwd=tmpdir,
+        )
         files = nf_core.utils.get_wf_files(tmpdir)
         files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
         assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]

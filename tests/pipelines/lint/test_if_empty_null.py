@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -33,6 +34,7 @@ class TestLintIfEmptyNull(TestLint):
                     "| ifEmpty(null)\n",
                 ]
             )
+        subprocess.check_call(["git", "add", "docs/test.txt"], cwd=self.new_pipeline)
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj._load()
         result = lint_obj.pipeline_if_empty_null()
