@@ -6,7 +6,6 @@ import ast
 import concurrent.futures
 import datetime
 import errno
-import fnmatch
 import hashlib
 import io
 import json
@@ -1671,27 +1670,10 @@ def set_wd(path: Path) -> Generator[None, None, None]:
 
 
 def get_wf_files(wf_path: Path):
-    """Return a list of all files in a directory (ignores .gitigore files)"""
+    """Return a list of all files in a directory (respects .gitignore)"""
 
-    wf_files = []
-
-    ignore = [".git/*"]
     try:
-        with open(Path(wf_path, ".gitignore")) as f:
-            for line in f.read().splitlines():
-                if not line or line.startswith("#"):
-                    continue
-                # Make trailing-slash patterns match their entire subtree
-                line = re.sub("/$", "/*", line)
-                ignore.append(line)
-    except FileNotFoundError:
-        pass
-
-    for path in Path(wf_path).rglob("*"):
-        rpath = str(path.relative_to(wf_path))
-        if any(fnmatch.fnmatch(rpath, pattern) for pattern in ignore):
-            continue
-        if path.is_file():
-            wf_files.append(str(path))
-
-    return wf_files
+        git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=wf_path).splitlines()
+        return [str(Path(wf_path) / fn.decode("utf-8")) for fn in git_ls_files if (Path(wf_path) / fn.decode("utf-8")).is_file()]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return [str(p) for p in Path(wf_path).rglob("*") if p.is_file() and ".git" not in p.parts]
