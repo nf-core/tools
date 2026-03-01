@@ -10,6 +10,7 @@
 - hinder renovate from updating packages with a fixed range ([#4058](https://github.com/nf-core/tools/pull/4058))
 - Update actions/upload-artifact action to v7 ([#4061](https://github.com/nf-core/tools/pull/4061))
 - allow harshil alignment™ in version channels ([#4064](https://github.com/nf-core/tools/pull/4064))
+- Update dependency setuptools to v82 ([#4071](https://github.com/nf-core/tools/pull/4071))
 
 ### Linting
 
