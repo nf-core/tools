@@ -135,8 +135,9 @@ select = [
     "BLE",                   # flake8-blind-except - catches blind except clauses
     "W",                     # pycodestyle warnings
     "A",                     # flake8-builtins - catches shadowing of Python builtins
+    "PIE",                   # flake8-pie - misc lints for common issues
 ]
-ignore = ["PTH123"]
+ignore = ["PTH123", "PIE790"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["nf_core"]

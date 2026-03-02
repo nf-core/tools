@@ -416,8 +416,8 @@ class ComponentUpdate(ComponentCommand):
         if self.update_config is not None:
             if any(
                 entry.count("/") == 1
-                and (entry.endswith("modules") or entry.endswith("subworkflows"))
-                and not (entry.endswith(".git") or entry.endswith(".git/"))
+                and entry.endswith(("modules", "subworkflows"))
+                and not entry.endswith((".git", ".git/"))
                 for entry in self.update_config
             ):
                 raise UserWarning(
