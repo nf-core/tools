@@ -11,6 +11,7 @@
 - Update actions/upload-artifact action to v7 ([#4061](https://github.com/nf-core/tools/pull/4061))
 - allow harshil alignment™ in version channels ([#4064](https://github.com/nf-core/tools/pull/4064))
 - Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
 
 ### Linting
 
