@@ -54,6 +54,24 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
+        before_text = """
+----------------------------------------------------
+   ____ __  __ ____                       _                   _
+ / ___|  \\/  / ___|       _ __ ___   ___| |_ __ ___   ____ _| |
+| |  _| |\\/| \\___ \\ _____| '_ ` _ \\ / _ \\ __/ _` \\ \\ / / _` | |
+| |_| | |  | |___) |_____| | | | | |  __/ || (_| |\\ V / (_| | |
+ \\____|_|  |_|____/      |_| |_| |_|\\___| \\__\\__,_| \\_/ \\__,_|_|
+
+  genomic-medicine-sweden/metaval ${workflow.manifest.version}
+----------------------------------------------------
+"""
+    after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { doi -> "    https://doi.org/${doi.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
+* The nf-core framework
+    https://doi.org/10.1038/s41587-020-0439-x
+
+* Software dependencies
+    https://github.com/nf-core/taxprofiler/blob/master/CITATIONS.md
+"""
     command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     UTILS_NFSCHEMA_PLUGIN (
@@ -63,6 +81,8 @@ workflow PIPELINE_INITIALISATION {
         help,
         help_full,
         show_hidden,
+        before_text,
+        after_text,
         command
     )
 
