@@ -28,6 +28,12 @@ workflow {{ short_name|upper }} {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
+    {% if multiqc %}
+    multiqc_config
+    multiqc_logo
+    multiqc_methods_description
+    {%- endif %}
+    outdir
 
     main:
     {%- if modules %}
@@ -67,7 +73,7 @@ workflow {{ short_name|upper }} {
     def ch_collated_versions = softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
         .mix(topic_versions_string)
         .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
+            storeDir: "${outdir}/pipeline_info",
             name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
             sort: true,
             newLine: true
@@ -86,8 +92,8 @@ workflow {{ short_name|upper }} {
 
     {%- endif %}
     {%- if citations %}
-    def ch_multiqc_custom_methods_description = params.multiqc_methods_description
-        ? file(params.multiqc_methods_description, checkIfExists: true)
+    def ch_multiqc_custom_methods_description = multiqc_methods_description
+        ? file(multiqc_methods_description, checkIfExists: true)
         : file("${projectDir}/assets/methods_description_template.yml", checkIfExists: true)
     def ch_methods_description = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: true))
@@ -98,10 +104,10 @@ workflow {{ short_name|upper }} {
             [
                 [id: '{{ short_name }}'],
                 files,
-                params.multiqc_config
-                    ? file(params.multiqc_config, checkIfExists: true)
+                multiqc_config
+                    ? file(multiqc_config, checkIfExists: true)
                     : file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true),
-                params.multiqc_logo ? file(params.multiqc_logo, checkIfExists: true) : [],
+                multiqc_logo ? file(multiqc_logo, checkIfExists: true) : [],
                 [],
                 [],
             ]
