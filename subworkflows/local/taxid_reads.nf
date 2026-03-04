@@ -7,7 +7,7 @@ include { EXTRACT_VIRAL_TAXID as CENTRIFUGE_VIRAL_TAXID   } from '../../modules/
 include { EXTRACT_VIRAL_TAXID as DIAMOND_VIRAL_TAXID      } from '../../modules/local/extract_viral_taxid/main'
 include { KRAKENTOOLS_EXTRACTKRAKENREADS                  } from '../../modules/nf-core/krakentools/extractkrakenreads/main'
 include { EXTRACTCENTRIFUGEREADS                          } from '../../modules/local/extractcentrifugereads/main'
-include { EXTRACTCDIAMONDREADS                            } from '../../modules/local/extractdiamondreads/main'
+include { EXTRACTDIAMONDREADS                            } from '../../modules/local/extractdiamondreads/main'
 
 workflow TAXID_READS {
     params.taxid
@@ -142,17 +142,17 @@ workflow TAXID_READS {
                     diamond_tsv: [ meta + [ taxid: taxid ], diamond_tsv, reads ]
                     }
 
-            EXTRACTCDIAMONDREADS(
+            EXTRACTDIAMONDREADS(
                 diamond_params_taxid.taxid,
                 params.evalue_threshold,
                 diamond_params_taxid.diamond_tsv
             )
-            ch_taxid_reads_diamond = EXTRACTCDIAMONDREADS.out.extracted_diamond_reads
+            ch_taxid_reads_diamond = EXTRACTDIAMONDREADS.out.extracted_diamond_reads
                 .map {meta,reads -> [ meta+[tool:"diamond"], reads ]}
-            ch_versions            = ch_versions.mix( EXTRACTCDIAMONDREADS.out.versions )
+            ch_versions            = ch_versions.mix( EXTRACTDIAMONDREADS.out.versions )
 
             // Remove empty fastq files produced by extracting reads for user defined taxIDs
-            EXTRACTCDIAMONDREADS.out.extracted_diamond_reads
+            EXTRACTDIAMONDREADS.out.extracted_diamond_reads
                 .collect()
                 .map { it -> file("${params.outdir}/extracted_reads/diamond") }
                 .set { ch_diamond_output_dir }
@@ -171,12 +171,12 @@ workflow TAXID_READS {
                     diamond_tsv: [ meta + [ taxid: taxid.trim() ], diamond, reads ]
                 }
 
-            EXTRACTCDIAMONDREADS(
+            EXTRACTDIAMONDREADS(
                 diamond_combined_input.taxid,
                 params.evalue_threshold,
                 diamond_combined_input.diamond_tsv
             )
-            ch_taxid_reads_diamond = EXTRACTCDIAMONDREADS.out.extracted_diamond_reads
+            ch_taxid_reads_diamond = EXTRACTDIAMONDREADS.out.extracted_diamond_reads
                 .map {meta,reads -> [ meta+[tool:"diamond"], reads ]}
         }
         ch_taxid_reads         = ch_taxid_reads.mix(ch_taxid_reads_diamond)

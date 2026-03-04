@@ -1,4 +1,4 @@
-process EXTRACTCDIAMONDREADS {
+process EXTRACTDIAMONDREADS {
 
     tag "${meta.id}"
     label 'process_high'

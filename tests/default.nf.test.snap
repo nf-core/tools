@@ -42,7 +42,7 @@
                 "DIAMOND_BLASTX": {
                     "diamond": "2.1.12"
                 },
-                "EXTRACTCDIAMONDREADS": {
+                "EXTRACTDIAMONDREADS": {
                     "seqkit": "2.9.0",
                     "python": "3.13.1",
                     "pigz": 2.8
