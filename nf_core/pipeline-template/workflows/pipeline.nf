@@ -44,7 +44,6 @@ workflow {{ short_name|upper }} {
         ch_samplesheet
     )
     {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
     {%- endif %}
 
     //
