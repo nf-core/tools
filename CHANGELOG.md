@@ -28,6 +28,7 @@
 
 - update test to new upstream subworkflow structure ([#4038](https://github.com/nf-core/tools/pull/4038))
 - Fix lint: preserve underscores for subworkflow includes via full path ([#4074](https://github.com/nf-core/tools/pull/4074))
+- update modules and subworkflows in template ([#4077](https://github.com/nf-core/tools/pull/4077))
 
 ### Pipeline template
 
