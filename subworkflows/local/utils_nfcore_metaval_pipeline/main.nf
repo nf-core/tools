@@ -54,15 +54,16 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    before_text = """
--\033[2m----------------------------------------------------\033[0m-
-                                        \033[0;32m,--.\033[0;30m/\033[0;32m,-.\033[0m
-\033[0;34m        ___     __   __   __   ___     \033[0;32m/,-._.--~\'\033[0m
-\033[0;34m  |\\ | |__  __ /  ` /  \\ |__) |__         \033[0;33m}  {\033[0m
-\033[0;34m  | \\| |       \\__, \\__/ |  \\ |___     \033[0;32m\\`-._,-`-,\033[0m
-                                        \033[0;32m`._,._,\'\033[0m
-\033[0;35m  nf-core/taxprofiler ${workflow.manifest.version}\033[0m
--\033[2m----------------------------------------------------\033[0m-
+        before_text = """
+----------------------------------------------------
+   ____ __  __ ____                       _                   _
+ / ___|  \\/  / ___|       _ __ ___   ___| |_ __ ___   ____ _| |
+| |  _| |\\/| \\___ \\ _____| '_ ` _ \\ / _ \\ __/ _` \\ \\ / / _` | |
+| |_| | |  | |___) |_____| | | | | |  __/ || (_| |\\ V / (_| | |
+ \\____|_|  |_|____/      |_| |_| |_|\\___| \\__\\__,_| \\_/ \\__,_|_|
+
+  genomic-medicine-sweden/metaval ${workflow.manifest.version}
+----------------------------------------------------
 """
     after_text = """${workflow.manifest.doi ? "\n* The pipeline\n" : ""}${workflow.manifest.doi.tokenize(",").collect { doi -> "    https://doi.org/${doi.trim().replace('https://doi.org/','')}"}.join("\n")}${workflow.manifest.doi ? "\n" : ""}
 * The nf-core framework

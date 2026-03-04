@@ -42,6 +42,15 @@
                 "DIAMOND_BLASTX": {
                     "diamond": "2.1.12"
                 },
+                "EXTRACTCDIAMONDREADS": {
+                    "seqkit": "2.9.0",
+                    "python": "3.13.1",
+                    "pigz": 2.8
+                },
+                "EXTRACTCENTRIFUGEREADS": {
+                    "seqkit": "2.9.0",
+                    "pigz": 2.8
+                },
                 "FASTQC": {
                     "fastqc": "0.12.1"
                 },
@@ -53,6 +62,9 @@
                 },
                 "IGVREPORTS": {
                     "igvreports": "0.1.0"
+                },
+                "KRAKENTOOLS_EXTRACTKRAKENREADS": {
+                    "extract_kraken_reads.py": 1.2
                 },
                 "MINIMAP2_ALIGN": {
                     "minimap2": "2.29-r1283",
@@ -96,6 +108,15 @@
                 },
                 "SAMTOOLS_STATS": {
                     "samtools": 1.21
+                },
+                "SEQKIT_FQ2FA": {
+                    "seqkit": "2.9.0"
+                },
+                "SEQKIT_FQ2FA_READS": {
+                    "seqkit": "2.9.0"
+                },
+                "SPADES": {
+                    "spades": "4.1.0"
                 },
                 "SUBSET_BAM_FAIL": {
                     "samtools": 1.21
@@ -503,5 +524,6 @@
             "nextflow": "25.04.8"
         },
         "timestamp": "2026-03-03T14:16:44.72332035"
+
     }
 }
