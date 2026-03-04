@@ -32,17 +32,15 @@ workflow {{ short_name|upper }} {
     main:
     {%- if modules %}
 
-    ch_versions = channel.empty()
+    def ch_versions = channel.empty()
     {%- if multiqc %}
-    ch_multiqc_files = channel.empty(){% endif %}
+    def ch_multiqc_files = channel.empty(){% endif %}
 
     {%- if fastqc %}
     //
     // MODULE: Run FastQC
     //
-    FASTQC (
-        ch_samplesheet
-    )
+    FASTQC(ch_samplesheet)
     {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
     {%- endif %}
 
@@ -63,7 +61,6 @@ workflow {{ short_name|upper }} {
     //
     // MODULE: MultiQC
     //
-    def ch_multiqc_files = channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
 
     {%- if nf_schema %}
