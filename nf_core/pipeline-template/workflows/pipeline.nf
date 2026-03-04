@@ -28,7 +28,6 @@ workflow {{ short_name|upper }} {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
-    
 
     main:
     {%- if modules %}
