@@ -51,7 +51,7 @@ workflow {{ short_name|upper }} {
     // Collate and save software versions
     //
     def ch_collated_versions = softwareVersionsToYAML(
-        softwareVersions: channel.topic("versions"),
+        softwareVersions: ch_versions.mix(channel.topic("versions")),
         nextflowVersion: workflow.nextflow.version,
     ).collectFile(
         storeDir: "${params.outdir}/pipeline_info",
