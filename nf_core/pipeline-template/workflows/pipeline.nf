@@ -100,7 +100,7 @@ workflow {{ short_name|upper }} {
 
     {%- endif %}
     MULTIQC(
-        multiqc_files.flatten().collect().map { files ->
+        ch_multiqc_files.flatten().collect().map { files ->
             [
                 [id: '{{ short_name }}'],
                 files,
