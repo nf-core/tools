@@ -36,6 +36,10 @@
   | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
   |                            | `list`                         | `ls`                              |
   |                            | `list-branches`                | `lsb`                             |
+- bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
+- nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
+- Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
+- fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
 
 ### Linting
 
@@ -51,6 +55,7 @@
 
 - update test to new upstream subworkflow structure ([#4038](https://github.com/nf-core/tools/pull/4038))
 - Fix lint: preserve underscores for subworkflow includes via full path ([#4074](https://github.com/nf-core/tools/pull/4074))
+- update modules and subworkflows in template ([#4077](https://github.com/nf-core/tools/pull/4077))
 
 ### Pipeline template
 
