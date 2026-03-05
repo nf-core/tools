@@ -14,6 +14,7 @@
 - Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
 - bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
+- nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
 
 ### Linting
 
