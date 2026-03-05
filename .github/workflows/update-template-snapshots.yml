@@ -82,7 +82,7 @@ jobs:
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
-          mkdir create-test-lint-wf
+          mkdir -p create-test-lint-wf
           export NXF_WORK=$(pwd)
           if [ ${{ matrix.TEMPLATE }} == "all" ]
           then
@@ -117,7 +117,7 @@ jobs:
           cd create-test-lint-wf/my-prefix-testpipeline
           nf-test test \
             --profile=+docker \
-            --verbose
+            --verbose \
             --update-snapshot
 
       - name: Copy snapshot to .github/snapshots
