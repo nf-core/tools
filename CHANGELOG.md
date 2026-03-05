@@ -36,6 +36,7 @@
   | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
   |                            | `list`                         | `ls`                              |
   |                            | `list-branches`                | `lsb`                             |
+
 - bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
 - Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
