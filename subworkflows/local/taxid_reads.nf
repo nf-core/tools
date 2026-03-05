@@ -62,7 +62,7 @@ workflow TAXID_READS {
             kraken2_combined_input = kraken2_result
                 .join( reads, by:0)
                 .join( kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ]}, by:0 )
-                .combine( kraken2_taxids )
+                .combine( kraken2_taxids, by:0 )
                 .multiMap { meta, kraken2_result, reads, kraken2_report, taxid ->
                     taxid: taxid.trim()
                     kraken2_result: [ meta + [ taxid: taxid.trim() ], kraken2_result ]
@@ -115,7 +115,7 @@ workflow TAXID_READS {
 
             centrifuge_combined_input = centrifuge_result
                 .join( reads, by:0 )
-                .combine( centrifuge_taxids )
+                .combine( centrifuge_taxids, by:0 )
                 .multiMap { meta, centrifuge_result, reads, taxid ->
                     taxid: taxid.trim()
                     centrifuge_result: [ meta + [ taxid: taxid.trim() ], centrifuge_result, reads ]
@@ -165,7 +165,7 @@ workflow TAXID_READS {
 
             diamond_combined_input = diamond_tsv.map{ meta, diamond_tsv -> [meta.subMap( meta.keySet() - 'tool' ), diamond_tsv ] }
                 .join( reads, by:0 )
-                .combine( diamond_taxids )
+                .combine( diamond_taxids, by:0 )
                 .multiMap { meta, diamond, reads, taxid ->
                     taxid: taxid.trim()
                     diamond_tsv: [ meta + [ taxid: taxid.trim() ], diamond, reads ]

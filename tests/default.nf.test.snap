@@ -42,13 +42,13 @@
                 "DIAMOND_BLASTX": {
                     "diamond": "2.1.12"
                 },
+                "EXTRACTCENTRIFUGEREADS": {
+                    "seqkit": "2.9.0",
+                    "pigz": 2.8
+                },
                 "EXTRACTDIAMONDREADS": {
                     "seqkit": "2.9.0",
                     "python": "3.13.1",
-                    "pigz": 2.8
-                },
-                "EXTRACTCENTRIFUGEREADS": {
-                    "seqkit": "2.9.0",
                     "pigz": 2.8
                 },
                 "FASTQC": {
@@ -134,9 +134,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.04.8"
+            "nextflow": "25.10.0"
         },
-        "timestamp": "2026-03-03T14:16:44.639368597"
+        "timestamp": "2026-03-05T07:47:53.146474209"
     },
     "extracted_reads": {
         "content": [
@@ -524,6 +524,5 @@
             "nextflow": "25.04.8"
         },
         "timestamp": "2026-03-03T14:16:44.72332035"
-
     }
 }
