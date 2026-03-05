@@ -118,11 +118,19 @@ jobs:
           nf-test test \
             --profile=+docker \
             --verbose
+            --update-snapshot
 
-      - name: Update nf-test snapshot
+      - name: Copy snapshot to .github/snapshots
         if: steps.nf-test.outcome == 'success'
         run: |
-          cp ${{ github.workspace }}/create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap
+          cp create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap .github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap
+
+      - name: Upload snapshot artifact
+        if: steps.nf-test.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-${{ matrix.TEMPLATE }}
+          path: .github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap
 
       # indication that the run has finished
       - name: react if finished succesfully
@@ -132,15 +140,34 @@ jobs:
           comment-id: ${{ github.event.comment.id }}
           reactions: "+1"
 
+  commit-snapshots:
+    needs: [prepare-matrix, update-snapshots]
+    runs-on: ubuntu-latest
+    if: always() && needs.update-snapshots.result != 'skipped'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          token: ${{ secrets.nf_core_bot_auth_token }}
+
+      - name: Checkout Pull Request
+        run: gh pr checkout ${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+
+      - name: Download all snapshot artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: snapshot-*
+          path: .github/snapshots/
+          merge-multiple: true
+
       - name: Commit & push changes
         id: commit-and-push
-        if: steps.nf-test.outcome == 'success'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
-          git config push.default upstream
-          git add .
-          git status
+          git add .github/snapshots/
+          git diff --staged --quiet && echo "No snapshot changes to commit" && exit 0
           git commit -m "[automated] Update Template snapshots"
           git push
 
@@ -160,7 +187,7 @@ jobs:
           reactions: confused
 
       - name: react if snapshots were not updated
-        if: steps.commit-and-push.outcome  == 'failure'
+        if: steps.commit-and-push.outcome == 'failure'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           issue-number: ${{ github.event.issue.number }}
