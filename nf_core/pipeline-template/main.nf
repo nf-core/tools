@@ -132,12 +132,12 @@ workflow {
 
     publish:
     multiqc = multiqc_publish
+}
 
 output {
     multiqc {
         path "multiqc"
     }
-}
 {%- endif %}{%- endif %}
 
 }
