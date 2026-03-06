@@ -765,10 +765,12 @@ def _parse_output_topics(self, line: str) -> list[str]:
 
             if re.search(r"emit:\s*versions_[\d\w]+", line):
                 self.passed.append(
-                    "main_nf",
-                    "wrong_version_emit",
-                    "Version emit is correctly formatted",
-                    self.main_nf,
+                    (
+                        "main_nf",
+                        "wrong_version_emit",
+                        "Version emit is correctly formatted",
+                        self.main_nf,
+                    )
                 )
             else:
                 if re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
