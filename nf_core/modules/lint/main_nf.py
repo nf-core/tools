@@ -741,9 +741,19 @@ def _parse_output_topics(self, line: str) -> list[str]:
         topic_name = topic_regex.group(1).strip()
         output.append(topic_name)
         if topic_name == "versions":
-            if not re.search(
+            if re.search(
                 r'tuple\s+val\("\${\s*task\.process\s*}"\)\s*,\s*val\(.*\)\s*,\s*(?:eval|val)\(.*\)', line
-            ):
+            ) or re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
+                self.passed.append(
+                    (
+                        "main_nf",
+                        "wrong_version_output",
+                        "Versions topic output is correctly formatted",
+                        self.main_nf,
+                    )
+                )
+
+            else:
                 self.failed.append(
                     (
                         "main_nf",
@@ -752,7 +762,17 @@ def _parse_output_topics(self, line: str) -> list[str]:
                         self.main_nf,
                     )
                 )
-            if not re.search(r"emit:\s*versions_[\d\w]+", line):
+
+            if re.search(r"emit:\s*versions_[\d\w]+", line):
+                self.passed.append(
+                    (
+                        "main_nf",
+                        "wrong_version_emit",
+                        "Version emit is correctly formatted",
+                        self.main_nf,
+                    )
+                )
+            else:
                 self.failed.append(
                     (
                         "main_nf",
@@ -761,6 +781,7 @@ def _parse_output_topics(self, line: str) -> list[str]:
                         self.main_nf,
                     )
                 )
+
     return output
 
 

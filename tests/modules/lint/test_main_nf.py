@@ -463,3 +463,41 @@ process TEST_PROCESS {
     output_keys = [list(out.keys())[0] for out in my_channel_output[0]]
     # Check that meta is correctly parsed despite the whitespace
     assert "meta" in output_keys, f"Expected 'meta' without spaces in output, got {output_keys}"
+
+
+def test_get_topics_version_yml_path_no_parens(tmp_path):
+    """Test that path "versions.yml" (without parentheses) with topic: versions is correctly parsed"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path "versions.yml", emit: versions_viber, topic: versions
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    assert "versions" in component.topics, f"Expected 'versions' topic, got: {component.topics}"
+    assert len(component.topics["versions"]) == 1, (
+        f"Expected 1 entry in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    )
+    entry = component.topics["versions"][0]
+    assert isinstance(entry, dict), f"Expected dict entry for single path output, got {type(entry)}"
+    assert '"versions.yml"' in entry, f"Expected '\"versions.yml\"' key in entry, got: {entry}"
