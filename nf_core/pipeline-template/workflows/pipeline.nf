@@ -116,6 +116,8 @@ workflow {{ short_name|upper }} {
 {% endif %}
     emit:
     {%- if multiqc %}multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList() // channel: /path/to/multiqc_report.html{% endif %}
+    {%- if multiqc %}multiqc_data   = MULTIQC.out.data // channel: [meta, /path/to/multiqc_data/]{% endif %}
+    {%- if multiqc %}multiqc_plots  = MULTIQC.out.plots // channel: [meta, /path/to/multiqc_plots/]{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 {%- else %}
 

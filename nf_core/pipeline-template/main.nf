@@ -66,6 +66,8 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
 {%- if multiqc %}{%- if modules %}
     emit:
     multiqc_report = {{ short_name|upper }}.out.multiqc_report // channel: /path/to/multiqc_report.html
+    multiqc_data   = {{ short_name|upper }}.out.multiqc_data // channel: [meta, /path/to/multiqc_data/]
+    multiqc_plots  = {{ short_name|upper }}.out.multiqc_plots // channel: [meta, /path/to/multiqc_plots/]
 {%- endif %}{%- endif %}
 }
 /*
@@ -122,6 +124,22 @@ workflow {
         {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
     )
     {%- endif %}
+{%- if multiqc %}{%- if modules %}
+
+    def multiqc_publish = {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report
+        .mix({{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_data)
+        .mix({{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_plots)
+
+    publish:
+    multiqc = multiqc_publish
+
+output {
+    multiqc {
+        path "multiqc"
+    }
+}
+{%- endif %}{%- endif %}
+
 }
 
 /*

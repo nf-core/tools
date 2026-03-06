@@ -5,6 +5,7 @@ nextflow_pipeline {
     tag "pipeline"
 
     test("-profile test") {
+        options "-output-dir $outputDir"
 
         when {
             params {
