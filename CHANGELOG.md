@@ -13,6 +13,30 @@
 - Update python:3.14-slim Docker digest to 6a27522 ([#4072](https://github.com/nf-core/tools/pull/4072))
 - Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
+- Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
+
+  | Command                    | Subcommand                     | Aliases                           |
+  | -------------------------- | ------------------------------ | --------------------------------- |
+  | `modules` & `subworkflows` | `bump-versions` (modules only) | `bump-version`, `bump`, `bv`, `b` |
+  |                            | `create`                       | `c`                               |
+  |                            | `install`                      | `add`, `i`                        |
+  |                            | `lint`                         | `l`                               |
+  |                            | `list`                         | `ls`                              |
+  |                            | `patch`                        | `p`                               |
+  |                            | `remove`                       | `uninstall`, `rm`                 |
+  |                            | `test`                         | `t`                               |
+  |                            | `update`                       | `up`, `u`                         |
+  | `pipelines`                | `bump-version`                 | `bump`, `bv`, `b`                 |
+  |                            | `create`                       | `c`                               |
+  |                            | `download`                     | `d`                               |
+  |                            | `lint`                         | `l`                               |
+  |                            | `list`                         | `ls`                              |
+  |                            | `schema lint`                  | `l`                               |
+  |                            | `sync`                         | `s`                               |
+  | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
+  |                            | `list`                         | `ls`                              |
+  |                            | `list-branches`                | `lsb`                             |
+
 - bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
 - Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
