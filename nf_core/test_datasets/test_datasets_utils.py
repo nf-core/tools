@@ -2,7 +2,6 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import questionary
 import requests
@@ -217,7 +216,7 @@ def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
         return branch, all_branches
 
 
-def get_or_prompt_file_selection(files: list[str], query: Optional[str]) -> str:
+def get_or_prompt_file_selection(files: list[str], query: str | None) -> str:
     """
     Prompt with autocompletion to enter a file from a list of files until a valid file is selected.
     """

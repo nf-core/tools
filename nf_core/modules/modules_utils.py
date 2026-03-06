@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 import requests
@@ -54,7 +53,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
     # initialize lists
     local_modules: list[str] = []
     nfcore_modules_names: list[str] = []
-    local_modules_dir: Optional[Path] = None
+    local_modules_dir: Path | None = None
     nfcore_modules_dir = Path(directory, "modules", "nf-core")
 
     # Get local modules
@@ -104,7 +103,11 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    response = requests.get("https://edamontology.org/EDAM.tsv")
+    try:
+        response = requests.get("https://edamontology.org/EDAM.tsv")
+    except requests.exceptions.RequestException as e:
+        log.warning(f"Failed to load EDAM ontology: {e}")
+        return edam_formats
     for line in response.content.splitlines():
         fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format"):
@@ -115,3 +118,22 @@ def load_edam():
                     if extension not in edam_formats:
                         edam_formats[extension] = (fields[0], fields[1])  # URL, name
     return edam_formats
+
+
+def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> list[NFCoreComponent]:
+    """
+    Filter modules by name, supporting exact matches and tool family matching.
+
+    Args:
+        modules (list[NFCoreComponent]): List of modules to filter
+        module_name (str): The module name or prefix to match
+
+    Returns:
+        list[NFCoreComponent]: List of matching modules
+    """
+    # First try to find an exact match
+    exact_matches = [m for m in modules if m.component_name == module_name]
+    if exact_matches:
+        return exact_matches
+    # If no exact match, look for modules that start with the given name (subtools)
+    return [m for m in modules if m.component_name.startswith(module_name)]

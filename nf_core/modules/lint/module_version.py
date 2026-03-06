@@ -28,11 +28,11 @@ def module_version(module_lint_object: "nf_core.modules.lint.ModuleLint", module
     # Verify that a git_sha exists in the `modules.json` file for this module
     version = module_lint_object.modules_json.get_module_version(module.component_name, module.repo_url, module.org)
     if version is None:
-        module.failed.append(("git_sha", "No git_sha entry in `modules.json`", modules_json_path))
+        module.failed.append(("module_version", "git_sha", "No git_sha entry in `modules.json`", modules_json_path))
         return
 
     module.git_sha = version
-    module.passed.append(("git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
+    module.passed.append(("module_version", "git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
 
     # Check whether a new version is available
     try:
@@ -43,8 +43,10 @@ def module_version(module_lint_object: "nf_core.modules.lint.ModuleLint", module
 
         module_git_log = list(modules_repo.get_component_git_log(module.component_name, "modules"))
         if version == module_git_log[0]["git_sha"]:
-            module.passed.append(("module_version", "Module is the latest version", module.component_dir))
+            module.passed.append(
+                ("module_version", "module_version", "Module is the latest version", module.component_dir)
+            )
         else:
-            module.warned.append(("module_version", "New version available", module.component_dir))
+            module.warned.append(("module_version", "module_version", "New version available", module.component_dir))
     except UserWarning:
-        module.warned.append(("module_version", "Failed to fetch git log", module.component_dir))
+        module.warned.append(("module_version", "module_version", "Failed to fetch git log", module.component_dir))

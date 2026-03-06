@@ -1,7 +1,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import Union
 
 from nf_core.utils import load_tools_config
 
@@ -85,7 +84,7 @@ def nf_test_content(self) -> dict[str, list[str]]:
 
     # Content of *.nf.test files
     test_fns = list(Path(self.wf_path, "tests").glob("*.nf.test"))
-    test_checks: dict[str, dict[str, Union[str, bool]]] = {
+    test_checks: dict[str, dict[str, str | bool]] = {
         "outdir": {
             "pattern": r"outdir *= *[\"']\${?outputDir}?[\"']",
             "description": "`outdir` parameter",

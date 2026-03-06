@@ -151,6 +151,10 @@ class ComponentRemove(ComponentCommand):
             )
             removed_components.append(component)
 
+        # Prettify modules.json file after all changes have been made
+        modules_json.load()
+        modules_json.dump(run_prettier=True)
+
         if removed:
             if self.component_type == "subworkflows":
                 removed_by = component

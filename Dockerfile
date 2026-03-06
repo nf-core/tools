@@ -1,16 +1,12 @@
-FROM python:3.13-slim@sha256:5f55cdf0c5d9dc1a415637a5ccc4a9e18663ad203673173b8cda8f8dcacef689
+FROM python:3.14-slim@sha256:6a27522252aef8432841f224d9baaa6e9fce07b07584154fa0b9a96603af7456
 LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for nf-core/tools"
 
 # Do not pick up python packages from $HOME
 ENV PYTHONNUSERSITE=1
 
-# Update pip to latest version
-RUN python -m pip install --upgrade pip
-
-# Install dependencies
-COPY requirements.txt requirements.txt
-RUN python -m pip install -r requirements.txt
+# Update pip and install uv
+RUN python -m pip install --upgrade pip uv
 
 # Install Nextflow dependencies
 RUN apt-get update \
@@ -41,7 +37,7 @@ COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Install nf-core
-RUN python -m pip install .
+RUN uv pip install --system .
 
 # Set up entrypoint and cmd for easy docker usage
 ENTRYPOINT [ "nf-core" ]

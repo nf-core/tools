@@ -189,14 +189,6 @@
                     "fa_icon": "fas fa-palette",
                     "hidden": true
                 },{% endif %}
-                {%- if slackreport or adaptivecard %}
-                "hook_url": {
-                    "type": "string",
-                    "description": "Incoming hook URL for messaging service",
-                    "fa_icon": "fas fa-people-group",
-                    "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
-                    "hidden": true
-                },{% endif %}
                 {%- if multiqc %}
                 "multiqc_config": {
                     "type": "string",
@@ -238,15 +230,15 @@
                 }{% if nf_schema %},
                 "help": {
                     "type": ["boolean", "string"],
-                    "description": "Display the help message.",
+                    "description": "Display the help message."
                 },
                 "help_full": {
                     "type": "boolean",
-                    "description": "Display the full detailed help message.",
+                    "description": "Display the full detailed help message."
                 },
                 "show_hidden": {
                     "type": "boolean",
-                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided).",
+                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
                 }{% endif %}
             }
         }

@@ -7,7 +7,6 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Union
 
 import git
 import requests
@@ -59,7 +58,7 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         return []
 
 
-def get_local_wf(workflow: Union[str, Path], revision=None) -> Union[str, None]:
+def get_local_wf(workflow: str | Path, revision=None) -> str | None:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """

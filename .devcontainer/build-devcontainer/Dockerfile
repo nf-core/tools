@@ -1,25 +1,25 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM "mcr.microsoft.com/devcontainers/miniconda@sha256:8e262a2664fab1d53054738d3633338558a2078ce66d3abde55c130f0d5da94f" AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:b99720fe7bdce0346dc3c3ff54414ba78ff183d85a5a9d9a2e2e5775ce679347 AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
 
 # Explicitly reinstall python 3.13 via conda
-# install local nf-core tools version, and precommit hooks
+# Install uv and local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
     conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel pre-commit && \
-    pip install -r requirements.txt --no-cache-dir -e . && \
-    pre-commit install --install-hooks && \
-    rm -rf /root/.cache/pip
+    pip install --no-cache-dir --upgrade pip uv && \
+    uv pip install --system --no-cache-dir . && \
+    rm -rf /root/.cache/pip /root/.cache/uv
 
 # Install nextflow and nf-test via conda and run conda clean
 RUN conda install -c bioconda -y nextflow nf-test && \
     conda clean -afy
 
 # Install dependencies for apptainer build and apptainer and run apt clean
-RUN apt-get update --quiet && \
+RUN rm -f /etc/apt/sources.list.d/yarn.list && \
+    apt-get update --quiet && \
     apt-get install -y curl rpm2cpio cpio && \
     curl -s https://raw.githubusercontent.com/apptainer/apptainer/main/tools/install-unprivileged.sh | bash -s - /usr/local/apptainer && \
     echo "PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc && \
@@ -27,7 +27,7 @@ RUN apt-get update --quiet && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM "mcr.microsoft.com/devcontainers/base:debian@sha256:ce2e9e611939e611b737362c045bb6d3449bb3efb84898525d724aace1737b90" AS final
+FROM mcr.microsoft.com/devcontainers/base:2.1.6-debian12@sha256:15143a8c806afb8db57ae2c92876c112d7a6a1ced31cd7aa8b414201782757a4 AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda

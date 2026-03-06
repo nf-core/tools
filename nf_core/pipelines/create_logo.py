@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Optional, Union
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -12,7 +11,7 @@ log = logging.getLogger(__name__)
 
 def create_logo(
     text: str,
-    directory: Union[Path, str],
+    directory: Path | str,
     filename: str = "",
     theme: str = "light",
     width: int = 2300,
@@ -59,7 +58,7 @@ def create_logo(
             return logo_path
         # cache file
         cache_path = Path(NFCORE_CACHE_DIR, "logo", cache_name)
-        img: Optional[Image.Image] = None
+        img: Image.Image | None = None
         if cache_path.is_file():
             log.debug(f"Logo already exists in cache at: {cache_path}. Reusing this file.")
             img = Image.open(cache_path)

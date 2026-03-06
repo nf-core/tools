@@ -7,9 +7,8 @@ import os
 import re
 import shutil
 import subprocess
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Callable, Optional
 
 import questionary
 import requests
@@ -252,7 +251,7 @@ class SingularityFetcher(ContainerFetcher):
         return False
 
     @staticmethod
-    def prompt_singularity_cachedir_path() -> Optional[Path]:
+    def prompt_singularity_cachedir_path() -> Path | None:
         """Prompt for the name of the Singularity cache directory"""
         # Prompt user for a cache directory path
         cachedir_path = None
@@ -286,7 +285,7 @@ class SingularityFetcher(ContainerFetcher):
         }
         shell = Path(os.getenv("SHELL", "")).name
         shellprofile_paths = shells_profile_paths.get(shell, [Path("~/.profile")])
-        shellprofile_path: Optional[Path] = None
+        shellprofile_path: Path | None = None
         for profile_path in shellprofile_paths:
             if profile_path.is_file():
                 shellprofile_path = profile_path
@@ -329,7 +328,7 @@ class SingularityFetcher(ContainerFetcher):
         ).unsafe_ask()
 
     @staticmethod
-    def prompt_singularity_cachedir_remote() -> Optional[Path]:
+    def prompt_singularity_cachedir_remote() -> Path | None:
         """Prompt about the index of a remote singularity cache directory"""
         # Prompt user for a file listing the contents of the remote cache directory
         cachedir_index = None
@@ -596,6 +595,7 @@ class SingularityFetcher(ContainerFetcher):
             progress_type="singularity_pull",
             current_log="",
         ) as task:
+            self._ensure_output_dir_exists()
             with intermediate_file_no_creation(output_path) as output_path_tmp:
                 singularity_command = self.construct_pull_command(output_path_tmp, address)
                 log.debug(f"Building singularity image: {address}")
@@ -629,6 +629,12 @@ class SingularityFetcher(ContainerFetcher):
 
             self.symlink_registries(output_path)
         return True
+
+    def _ensure_output_dir_exists(self) -> None:
+        """Ensure that the container output directory exists."""
+        if not self.get_container_output_dir().is_dir():
+            log.debug(f"Container output directory not found, creating: {self.get_container_output_dir()}")
+            self.get_container_output_dir().mkdir(parents=True, exist_ok=True)
 
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions
@@ -672,6 +678,7 @@ class SingularityError(Exception):
             r"manifest\sunknown": self.InvalidTagError,
             # The container image is no native Singularity Image Format.
             r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularityContainerError,
+            r"received\smediaType:\sapplication/vnd\.docker\.distribution\.manifest": self.NoSingularityContainerError,
         }
         # Loop through the error messages and patterns. Since we want to have the option of
         # no matches at all, we use itertools.product to allow for the use of the for ... else construct.
@@ -803,7 +810,7 @@ class FileDownloader:
         self,
         download_files: Iterable[tuple[str, Path]],
         parallel_downloads: int,
-        callback: Optional[Callable[[tuple[str, Path], Status], None]] = None,
+        callback: Callable[[tuple[str, Path], Status], None] | None = None,
     ) -> list[tuple[str, Path]]:
         """Download multiple files in parallel.
 

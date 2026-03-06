@@ -108,6 +108,10 @@ class TestSubworkflows(unittest.TestCase):
         self.subworkflow_install_cross_org = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
         )
+        # Another instance to avoid cross-contamination
+        self.subworkflow_install_cross_org_again = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
+        )
 
         self.mods_install = nf_core.modules.install.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
 

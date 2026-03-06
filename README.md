@@ -35,7 +35,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.13 nf-core nextflow
+conda create --name nf-core python=3.14 nf-core nextflow
 conda activate nf-core
 ```
 
@@ -56,7 +56,13 @@ pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 If editing, fork and clone the repo, then install as follows:
 
 ```bash
-pip install --upgrade -r requirements-dev.txt -e .
+uv sync --all-extras
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Or use uv run to run commands without activating
+uv run nf-core --help
 ```
 
 ## Contributions and Support

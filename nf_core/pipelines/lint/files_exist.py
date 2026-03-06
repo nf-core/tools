@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Union
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ def files_exist(self) -> dict[str, list[str]]:
         .prettierignore
         .prettierrc.yml
         .github/.dockstore.yml
-        .github/CONTRIBUTING.md
+        docs/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml
@@ -141,7 +140,6 @@ def files_exist(self) -> dict[str, list[str]]:
         [Path("nextflow.config")],
         [Path("README.md")],
         [Path(".github", ".dockstore.yml")],
-        [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
@@ -159,6 +157,7 @@ def files_exist(self) -> dict[str, list[str]]:
         [Path("conf", "modules.config")],
         [Path("conf", "test.config")],
         [Path("conf", "test_full.config")],
+        [Path("docs", "CONTRIBUTING.md")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [Path("docs", "output.md")],
@@ -215,7 +214,7 @@ def files_exist(self) -> dict[str, list[str]]:
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
 
-    def pf(file_path: Union[str, Path]) -> Path:
+    def pf(file_path: str | Path) -> Path:
         return Path(self.wf_path, file_path)
 
     # First - critical files. Check that this is actually a Nextflow pipeline

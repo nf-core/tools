@@ -65,7 +65,12 @@ process {{ component_name_underscore|upper }} {
     {{ 'tuple val(meta), path("*")' if has_meta else 'path "*"' }}, emit: output
     {%- endif %}
     {%- endif %}
-    path "versions.yml"           , emit: versions
+    {% if not_empty_template -%}
+    // TODO nf-core: Update the command here to obtain the version number of the software used in this module
+    // TODO nf-core: If multiple software packages are used in this module, all MUST be added here
+    //               by copying the line below and replacing the current tool with the extra tool(s)
+    {%- endif %}
+    tuple val("${task.process}"), val('{{ component }}'), eval("{{ component }} --version"), topic: versions, emit: versions_{{ component }}
 
     when:
     task.ext.when == null || task.ext.when
@@ -111,11 +116,6 @@ process {{ component_name_underscore|upper }} {
         $bam
         {%- endif %}
     {%- endif %}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        {{ component }}: \$({{ component }} --version)
-    END_VERSIONS
     """
 
     stub:
@@ -146,10 +146,5 @@ process {{ component_name_underscore|upper }} {
     touch ${prefix}.bam
     {%- endif %}
     {%- endif %}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        {{ component }}: \$({{ component }} --version)
-    END_VERSIONS
     """
 }

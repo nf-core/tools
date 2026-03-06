@@ -5,7 +5,6 @@ import shutil
 from collections.abc import Iterable
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Optional, Union
 
 import git
 from git.exc import GitCommandError
@@ -289,9 +288,7 @@ class SyncedRepo:
         else:
             raise ValueError(f"Invalid component type: {component_type}")
 
-    def install_component(
-        self, component_name: str, install_dir: Union[str, Path], commit: str, component_type: str
-    ) -> bool:
+    def install_component(self, component_name: str, install_dir: str | Path, commit: str, component_type: str) -> bool:
         """
         Install the module/subworkflow files into a pipeline at the given commit
 
@@ -368,7 +365,7 @@ class SyncedRepo:
                     git_config.set_value("user", "email", default_email)
 
     def get_component_git_log(
-        self, component_name: Union[str, Path], component_type: str, depth: Optional[int] = None
+        self, component_name: str | Path, component_type: str, depth: int | None = None
     ) -> Iterable[dict[str, str]]:
         """
         Fetches the commit history the of requested module/subworkflow since a given date. The default value is
@@ -451,9 +448,7 @@ class SyncedRepo:
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
-    def get_avail_components(
-        self, component_type: str, checkout: bool = True, commit: Optional[str] = None
-    ) -> list[str]:
+    def get_avail_components(self, component_type: str, checkout: bool = True, commit: str | None = None) -> list[str]:
         """
         Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file

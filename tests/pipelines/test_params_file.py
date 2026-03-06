@@ -25,7 +25,7 @@ class TestParamsFileBuilder(TestPipelines):
         with open(self.outfile) as fh:
             out = fh.read()
 
-        assert "nf-core/testpipeline" in out
+        assert f"{self.pipeline_obj.pipeline_prefix}/{self.pipeline_obj.pipeline_name}" in out
 
     def test_build_template_invalid_schema(self):
         """Build a schema from a template"""
@@ -63,5 +63,5 @@ class TestParamsFileBuilder(TestPipelines):
         with open(self.outfile) as fh:
             out = fh.read()
 
-        assert "nf-core/testpipeline" in out
+        assert f"{self.pipeline_obj.pipeline_prefix}/{self.pipeline_obj.pipeline_name}" in out
         assert "# input: null" in out

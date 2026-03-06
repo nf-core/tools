@@ -55,11 +55,7 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
-from nf_core.commands_test_datasets import (
-    test_datasets_list_branches,
-    test_datasets_list_remote,
-    test_datasets_search,
-)
+from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download.download import DownloadError
@@ -177,6 +173,10 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     rich_logger = logging.getLogger("rich")
     rich_logger.setLevel(logging.INFO)
 
+    # don't show markdown-it-py debug logging in verbose mode
+    markdown_logger = logging.getLogger("markdown_it")
+    markdown_logger.setLevel(logging.INFO)
+
     # Set up logs to a file if we asked for one
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
@@ -290,6 +290,12 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
     help="Sort lint output by module or test name.",
     show_default=True,
 )
+@click.option(
+    "--plain-text",
+    is_flag=True,
+    envvar="NF_CORE_LINT_OUTPUT",
+    help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
+)
 @click.pass_context
 def command_pipelines_lint(
     ctx,
@@ -303,11 +309,14 @@ def command_pipelines_lint(
     markdown,
     json,
     sort_by,
+    plain_text,
 ):
     """
     Check pipeline code against nf-core guidelines.
     """
-    pipelines_lint(ctx, directory, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by)
+    pipelines_lint(
+        ctx, directory, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by, plain_text
+    )
 
 
 # nf-core pipelines download
@@ -616,13 +625,16 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
 def command_pipelines_sync(
-    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
+    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
     """
-    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    pipelines_sync(
+        ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+    )
 
 
 # nf-core pipelines bump-version
@@ -1313,13 +1325,21 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     help="Fix the module version if a newer version is available",
 )
 @click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+@click.option(
+    "--plain-text",
+    is_flag=True,
+    envvar="NF_CORE_LINT_OUTPUT",
+    help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
+)
 def command_modules_lint(
-    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix
+    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
 ):
     """
     Lint one or more modules in a directory.
     """
-    modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix)
+    modules_lint(
+        ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
+    )
 
 
 # nf-core modules info
@@ -1592,13 +1612,21 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     show_default=True,
 )
 @click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+@click.option(
+    "--plain-text",
+    is_flag=True,
+    envvar="NF_CORE_LINT_OUTPUT",
+    help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
+)
 def command_subworkflows_lint(
-    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix
+    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
 ):
     """
     Lint one or more subworkflows in a directory.
     """
-    subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix)
+    subworkflows_lint(
+        ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
+    )
 
 
 # nf-core subworkflows info

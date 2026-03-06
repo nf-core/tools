@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Union
 
 import nf_core.modules.install
 import nf_core.modules.lint
@@ -14,7 +13,7 @@ from ..test_patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, mo
 class TestPatch(TestModules):
     """Test patch.py functionality"""
 
-    def _setup_patch(self, pipeline_dir: Union[str, Path], modify_module: bool):
+    def _setup_patch(self, pipeline_dir: str | Path, modify_module: bool):
         install_obj = nf_core.modules.install.ModuleInstall(
             pipeline_dir,
             prompt=False,

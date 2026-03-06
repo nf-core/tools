@@ -49,6 +49,38 @@ class DownloadTest(unittest.TestCase):
     #
     # Tests for 'get_release_hash'
     #
+    def test_get_release_hash_release_noauth(self):
+        wfs = nf_core.pipelines.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline = "methylseq"
+
+        try:
+            # explicitly overwrite the gh_api authentication state
+            # to force using the archive url
+            from nf_core.utils import gh_api
+
+            gh_api.lazy_init()
+            gh_api.auth = None
+
+            download_obj = DownloadWorkflow(pipeline=pipeline, revision="1.6")
+            (
+                download_obj.pipeline,
+                download_obj.wf_revisions,
+                download_obj.wf_branches,
+            ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+            download_obj.get_revision_hash()
+            assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+            assert download_obj.outdir == Path("nf-core-methylseq_1.6")
+
+            assert (
+                download_obj.wf_download_url[download_obj.revision[0]]
+                == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+            )
+
+        finally:
+            gh_api.has_init = False
+            gh_api.auth = None
+
     def test_get_release_hash_release(self):
         wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
@@ -64,7 +96,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.outdir == Path("nf-core-methylseq_1.6")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
-            == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+            == "https://api.github.com/repos/nf-core/methylseq/zipball/b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         )
 
     def test_get_release_hash_branch(self):
@@ -83,7 +115,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.outdir == Path("nf-core-exoseq_dev")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
-            == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
+            == "https://api.github.com/repos/nf-core/exoseq/zipball/819cbac792b76cf66c840b567ed0ee9a2f620db7"
         )
 
     def test_get_release_hash_long_commit(self):
@@ -104,7 +136,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.outdir == Path(f"nf-core-exoseq_{revision}")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
-            == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
+            == f"https://api.github.com/repos/nf-core/exoseq/zipball/{revision}"
         )
 
     def test_get_release_hash_short_commit(self):
@@ -127,7 +159,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.outdir == Path(f"nf-core-exoseq_{short_rev}")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
-            == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
+            == f"https://api.github.com/repos/nf-core/exoseq/zipball/{revision}"
         )
 
     def test_get_release_hash_non_existent_release(self):
@@ -153,7 +185,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.outdir = outdir
         download_obj.wf_sha = {"1.6": "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"}
         download_obj.wf_download_url = {
-            "1.6": "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+            "1.6": "https://api.github.com/repos/nf-core/methylseq/zipball/b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         }
         rev = download_obj.download_wf_files(
             download_obj.revision[0],

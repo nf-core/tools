@@ -13,7 +13,17 @@ def module_deprecations(_, module):
         module.failed.append(
             (
                 "module_deprecations",
+                "module_deprecations",
                 "Deprecated file `functions.nf` found. No longer required for the latest nf-core/modules syntax!",
+                module.component_dir,
+            )
+        )
+    else:
+        module.passed.append(
+            (
+                "module_deprecations",
+                "module_deprecations",
+                "No deprecated file `functions.nf` found",
                 module.component_dir,
             )
         )

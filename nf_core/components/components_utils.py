@@ -1,7 +1,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 import requests
@@ -14,15 +13,15 @@ from nf_core.modules.modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 # Set yaml options for meta.yml files
-ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
-    lambda x, y: True
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
+    True
 )  # Fix to not print aliases. https://stackoverflow.com/a/64717341
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=2, offset=0)
 
 
-def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> tuple[Path, Optional[str], str]:
+def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -95,7 +94,7 @@ def prompt_component_version_sha(
     component_name: str,
     component_type: str,
     modules_repo: "ModulesRepo",
-    installed_sha: Optional[str] = None,
+    installed_sha: str | None = None,
 ) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
@@ -146,7 +145,7 @@ def prompt_component_version_sha(
 
 
 def get_components_to_install(
-    subworkflow_dir: Union[str, Path],
+    subworkflow_dir: str | Path,
 ) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
@@ -163,12 +162,17 @@ def get_components_to_install(
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
                 if link.startswith("../../../"):
-                    name_split = name.lower().split("_")
-                    component_name = "/".join(name_split)
-                    component_dict: dict[str, str] = {
-                        "name": component_name,
-                    }
-                    modules[component_name] = component_dict
+                    if "../subworkflows/" in link:
+                        component_name = name.lower()
+                        component_dict: dict[str, str] = {"name": component_name}
+                        subworkflows[component_name] = component_dict
+                    else:
+                        name_split = name.lower().split("_")
+                        component_name = "/".join(name_split)
+                        component_dict = {
+                            "name": component_name,
+                        }
+                        modules[component_name] = component_dict
                 elif link.startswith("../"):
                     component_name = name.lower()
                     component_dict = {"name": component_name}
@@ -198,7 +202,7 @@ def get_components_to_install(
     return list(modules.values()), list(subworkflows.values())
 
 
-def get_biotools_response(tool_name: str) -> Optional[dict]:
+def get_biotools_response(tool_name: str) -> dict | None:
     """
     Try to get bio.tools information for 'tool'
     """
@@ -237,7 +241,7 @@ DictWithStrAndTuple = dict[str, tuple[list[str], list[str], list[str]]]
 
 def get_channel_info_from_biotools(
     data: dict, tool_name: str
-) -> Optional[tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
+) -> tuple[DictWithStrAndTuple, DictWithStrAndTuple] | None:
     """
     Try to find input and output channels and the respective EDAM ontology terms
 

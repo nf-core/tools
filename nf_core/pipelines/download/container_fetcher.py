@@ -3,9 +3,8 @@ import logging
 import re
 import shutil
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Container, Generator, Iterable
+from collections.abc import Callable, Collection, Container, Generator, Iterable
 from pathlib import Path
-from typing import Callable, Optional, Union
 
 import rich.progress
 
@@ -22,11 +21,11 @@ class ContainerProgress(rich.progress.Progress):
     Also provide helper functions to control the top-level task.
     """
 
-    main_task: Optional[rich.progress.TaskID] = None
-    remote_fetch_task: Optional[rich.progress.TaskID] = None
-    remote_fetch_task_containers: Optional[list[str]] = []
-    copy_task: Optional[rich.progress.TaskID] = None
-    copy_task_containers: Optional[list[str]] = []
+    main_task: rich.progress.TaskID | None = None
+    remote_fetch_task: rich.progress.TaskID | None = None
+    remote_fetch_task_containers: list[str] | None = []
+    copy_task: rich.progress.TaskID | None = None
+    copy_task_containers: list[str] | None = []
 
     def __init__(self, disable=False):
         super().__init__(disable=disable)
@@ -61,7 +60,7 @@ class ContainerProgress(rich.progress.Progress):
         return task_types_and_columns
 
     def get_renderables(self) -> Generator[rich.table.Table, None, None]:
-        self.columns: Iterable[Union[str, rich.progress.ProgressColumn]]
+        self.columns: Iterable[str | rich.progress.ProgressColumn]
         for task in self.tasks:
             for task_type, columns in self.get_task_types_and_columns().items():
                 if task.fields.get("progress_type") == task_type:
@@ -191,8 +190,8 @@ class ContainerFetcher(ABC):
         container_library (Iterable[str]): A collection of container libraries to use
         registry_set (Iterable[str]): A collection of registries to consider
         progress_factory (Callable[[], ContainerProgress]): A factory to create a progress bar.
-        library_dir (Optional[Path]): The directory to look for container images in.
-        cache_dir (Optional[Path]): A directory where container images might be cached.
+        library_dir (Path | None): The directory to look for container images in.
+        cache_dir (Path | None): A directory where container images might be cached.
         amend_cachedir (bool): Whether to amend the cache directory with the container images.
         parallel (int): The number of containers to fetch in parallel.
     """
@@ -203,8 +202,8 @@ class ContainerFetcher(ABC):
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress_factory: Callable[[bool], ContainerProgress],
-        library_dir: Optional[Path],
-        cache_dir: Optional[Path],
+        library_dir: Path | None,
+        cache_dir: Path | None,
         amend_cachedir: bool,
         parallel: int = 4,
         hide_progress: bool = False,
@@ -212,10 +211,10 @@ class ContainerFetcher(ABC):
         self._container_output_dir = container_output_dir
         self.container_library = list(container_library)
         self.base_registry_set: set[str] = set(registry_set)
-        self._registry_set: Optional[set[str]] = None
+        self._registry_set: set[str] | None = None
 
         self.kill_with_fire = False
-        self.implementation: Optional[str] = None
+        self.implementation: str | None = None
         self.name = None
         self.library_dir = library_dir
         self.cache_dir = cache_dir
@@ -224,7 +223,7 @@ class ContainerFetcher(ABC):
 
         self.hide_progress = hide_progress
         self.progress_factory = progress_factory
-        self.progress: Optional[ContainerProgress] = None
+        self.progress: ContainerProgress | None = None
 
     @property
     def progress(self) -> rich.progress.Progress:
@@ -232,7 +231,7 @@ class ContainerFetcher(ABC):
         return self._progress
 
     @progress.setter
-    def progress(self, progress: Optional[ContainerProgress]) -> None:
+    def progress(self, progress: ContainerProgress | None) -> None:
         self._progress = progress
 
     @property

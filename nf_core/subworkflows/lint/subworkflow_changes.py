@@ -41,9 +41,18 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
             for file, lines in new_lines.items():
                 with open(tempdir / file, "w") as fh:
                     fh.writelines(lines)
+            subworkflow.passed.append(
+                (
+                    "subworkflow_changes",
+                    "subworkflow_patch",
+                    "Subworkflow patch can be cleanly applied",
+                    f"{subworkflow.component_dir}",
+                )
+            )
         except LookupError:
             subworkflow.failed.append(
                 (
+                    "subworkflow_changes",
                     "subworkflow_patch",
                     "Subworkflow patch cannot be cleanly applied",
                     f"{subworkflow.component_dir}",
@@ -63,6 +72,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
         if same:
             subworkflow.passed.append(
                 (
+                    "subworkflow_changes",
                     "check_local_copy",
                     "Local copy of subworkflow up to date",
                     f"{Path(subworkflow.component_dir, f)}",
@@ -71,6 +81,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
         else:
             subworkflow.failed.append(
                 (
+                    "subworkflow_changes",
                     "check_local_copy",
                     "Local copy of subworkflow does not match remote",
                     f"{Path(subworkflow.component_dir, f)}",
