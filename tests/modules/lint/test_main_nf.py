@@ -2,7 +2,7 @@ import pytest
 
 import nf_core.modules.lint
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
+from nf_core.modules.lint.main_nf import _parse_output_topics, check_container_link_line, check_process_labels
 
 from ...test_modules import TestModules
 from .test_lint_utils import MockModuleLint
@@ -473,7 +473,7 @@ process TEST_PROCESS {
     val(meta)
 
     output:
-    path "versions.yml", emit: versions_viber, topic: versions
+    path "versions.yml", emit: versions, topic: versions
 
     script:
     "echo test"
@@ -501,3 +501,20 @@ process TEST_PROCESS {
     entry = component.topics["versions"][0]
     assert isinstance(entry, dict), f"Expected dict entry for single path output, got {type(entry)}"
     assert '"versions.yml"' in entry, f"Expected '\"versions.yml\"' key in entry, got: {entry}"
+
+    # Verify linting: emit: versions on path "versions.yml" should pass wrong_version_yml_emit
+    correct_line = '    path "versions.yml", emit: versions, topic: versions'
+    mock_lint = MockModuleLint()
+    _parse_output_topics(mock_lint, correct_line)
+    assert any("wrong_version_yml_emit" in str(p) for p in mock_lint.passed), (
+        f"Expected wrong_version_yml_emit in passed, got: {mock_lint.passed}"
+    )
+    assert mock_lint.failed == [], f"Expected no failures for correct emit, got: {mock_lint.failed}"
+
+    # Verify linting: wrong emit name on path "versions.yml" should fail wrong_versions_yml_emit
+    wrong_line = '    path "versions.yml", emit: wrong_name, topic: versions'
+    mock_lint_fail = MockModuleLint()
+    _parse_output_topics(mock_lint_fail, wrong_line)
+    assert any("wrong_versions_yml_emit" in str(f) for f in mock_lint_fail.failed), (
+        f"Expected wrong_versions_yml_emit in failed, got: {mock_lint_fail.failed}"
+    )

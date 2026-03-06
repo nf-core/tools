@@ -758,29 +758,47 @@ def _parse_output_topics(self, line: str) -> list[str]:
                     (
                         "main_nf",
                         "wrong_version_output",
-                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")` or `tuple val(\"${task.process}\"), val('<tool>'), val('<version>')`",
+                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")|val('<version>')`` or `path version.yml` if using a template script.",
                         self.main_nf,
                     )
                 )
 
             if re.search(r"emit:\s*versions_[\d\w]+", line):
                 self.passed.append(
-                    (
-                        "main_nf",
-                        "wrong_version_emit",
-                        "Version emit is correctly formatted",
-                        self.main_nf,
-                    )
+                    "main_nf",
+                    "wrong_version_emit",
+                    "Version emit is correctly formatted",
+                    self.main_nf,
                 )
             else:
-                self.failed.append(
-                    (
-                        "main_nf",
-                        "wrong_version_emit",
-                        "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
-                        self.main_nf,
+                if re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
+                    if re.search(r"emit:\s*versions\b", line):
+                        self.passed.append(
+                            (
+                                "main_nf",
+                                "wrong_version_yml_emit",
+                                "Version emit is correctly formatted",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        self.failed.append(
+                            (
+                                "main_nf",
+                                "wrong_versions_yml_emit",
+                                "Version emit should be `versions`",
+                                self.main_nf,
+                            )
+                        )
+                else:
+                    self.failed.append(
+                        (
+                            "main_nf",
+                            "wrong_version_emit",
+                            "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                            self.main_nf,
+                        )
                     )
-                )
 
     return output
 
