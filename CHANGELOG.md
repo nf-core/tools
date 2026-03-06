@@ -17,6 +17,7 @@
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
 - Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
 - fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
+- Add strategy matrix for AWS full tests job ([#4092](https://github.com/nf-core/tools/pull/4092))
 
 ### Linting
 
