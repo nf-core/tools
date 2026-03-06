@@ -12,10 +12,6 @@ on:
 
 jobs:
   run-platform:
-    strategy:
-      matrix:
-        include:
-          - profile: test_full
     name: Run AWS full tests
     # run only if the PR is approved by at least 2 reviewers and against the master/main branch or manually triggered
     if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && (github.event.pull_request.base.ref == 'master' || github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch' || github.event_name == 'release'
@@ -52,10 +48,10 @@ jobs:
                 enabled = false
               }
               onComplete {
-                message = ':white_check_mark: *{{ short_name }}/{% raw %}${{ matrix.profile }}{% endraw %}* completed successfully! :tada:'
+                message = ':white_check_mark: *{{ short_name }}/test_full* completed successfully! :tada:'
               }
               onError {
-                message = ':x: *{{ short_name }}/{% raw %}${{ matrix.profile }}{% endraw %}* failed :crying_cat_face:'
+                message = ':x: *{{ short_name }}/test_full* failed :crying_cat_face:'
               }
             }
           parameters: |
