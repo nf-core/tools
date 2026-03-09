@@ -138,11 +138,12 @@ def check_git_repo() -> bool:
         return False
 
 
-def run_prettier_on_file(file: Path | str | list[str]) -> None:
+def run_prettier_on_file(file: Path | str | list[str], all_files: bool = False) -> None:
     """Run the pre-commit hook prettier on a file.
 
     Args:
         file (Path | str): A file identifier as a string or pathlib.Path.
+        all_files (bool): If True, run on all files instead of specific files.
 
     Warns:
         If Prettier is not installed, a warning is logged.
@@ -152,10 +153,13 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
     args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
-    if isinstance(file, list):
-        args.extend(["--files", *file])
+    if all_files:
+        args.append("--all-files")
     else:
-        args.extend(["--files", str(file)])
+        if isinstance(file, list):
+            args.extend(["--files", *file])
+        else:
+            args.extend(["--files", str(file)])
 
     if is_git:
         try:

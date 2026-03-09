@@ -399,7 +399,7 @@ class PipelineCreate:
 
         # Run prettier on files for pipelines sync
         log.debug("Running prettier on pipeline files")
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")], all_files=True)
 
     def fix_linting(self):
         """
