@@ -21,10 +21,8 @@ class ContainerConfigs:
     def __init__(
         self,
         workflow_directory: Path = Path("."),
-        org: str = "nf-core",
     ):
         self.workflow_directory = workflow_directory
-        self.org: str = org
 
     def check_nextflow_version_sufficient(self) -> None:
         """Check if the Nextflow version is sufficient to run `nextflow inspect`."""
@@ -81,10 +79,13 @@ class ContainerConfigs:
 
         return module_paths
 
-    def generate_container_configs(self) -> None:
+    def generate_container_configs(self) -> set[str]:
         """
         Generate the container configuration files for a pipeline.
         Requires Nextflow >= 25.04.4
+
+        Returns:
+            set[str]: Names of config files written (e.g. ``{'containers_docker_amd64.config'}``).
         """
         self.check_nextflow_version_sufficient()
         log.debug("Generating container config file with [magenta bold]nextflow inspect[/].")
@@ -166,6 +167,7 @@ class ContainerConfigs:
             log.info("Generated container configs for the pipeline successfully.")
 
         # write config files
+        written: set[str] = set()
         for platform, module_containers in containers.items():
             if not module_containers:
                 continue
@@ -175,3 +177,5 @@ class ContainerConfigs:
             ]
             config_path = self.workflow_directory / "conf" / f"containers_{platform}.config"
             config_path.write_text("".join(lines))
+            written.add(config_path.name)
+        return written

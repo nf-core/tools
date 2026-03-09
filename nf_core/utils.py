@@ -1370,6 +1370,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint for included configs """
     local_component_structure: bool | None = None
     """ Lint local components use correct structure mirroring remote"""
+    container_configs: bool | None = None
+    """ Lint that container configuration files in conf/ are up to date """
     rocrate_readme_sync: bool | None = None
     """ Lint for README.md and rocrate.json sync """
 
