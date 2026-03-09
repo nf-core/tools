@@ -47,6 +47,7 @@
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
 - fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 - allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
+- run pre-commit on all files when creating pipeline or syncing ([#4097](https://github.com/nf-core/tools/pull/4097))
 
 ### Modules
 
