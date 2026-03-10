@@ -45,6 +45,7 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 testing*
 create-test-lint-wf/
+log.txt
 htmlcov/
 .tox/
 .coverage
