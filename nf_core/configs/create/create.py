@@ -23,6 +23,7 @@ class ConfigCreate:
         handle = self.template_config.config_profile_handle
         description = self.template_config.config_profile_description
         url = self.template_config.config_profile_url
+        igenomes = self.template_config.igenomes_cachedir
 
         if contact:
             if handle:
@@ -38,6 +39,9 @@ class ConfigCreate:
 
         if url:
             final_params["config_profile_url"] = url
+
+        if igenomes:
+            final_params["igenomes_base"] = igenomes
 
         return final_params
 
@@ -204,11 +208,13 @@ class ConfigCreate:
             'queue': self.template_config.queue or None,
             'module': modules_to_load or None,
             'resourceLimits': resource_limits_str or None,
+            'scratch': f"'{self.template_config.scratch_dir}'" if self.template_config.scratch_dir else None,
+            'maxRetries': self.template_config.retries or None
         }
         process = {k: v for k, v in process.items() if v}
 
         process_list = [
-            f'{key} = {value}'
+            f'  {key} = {value}'
             for key, value in process.items()
         ]
         
