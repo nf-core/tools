@@ -26,18 +26,22 @@ class FinalInfraDetails(Screen):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.container_system = None
+        self.container_system_list = []
+        self.cache_dir = None
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
         yield Markdown(markdown_intro)
-        container_systems = self._get_container_systems()
+        self.container_system_list = self._get_container_systems()
+        self.container_system = self.container_system_list[0] if self.container_system_list else None
+
         yield TextInput(
             "container_system",
             "Container system",
             "What container or software system will you use to run your pipeline?",
             classes="",
-            suggestions=container_systems,
+            suggestions=self.container_system_list,
         )
         yield Markdown("## Maximum resources")
         with Horizontal():
@@ -59,18 +63,11 @@ class FinalInfraDetails(Screen):
                 "Maximum time (hours) to run your jobs.",
                 classes="column",
             )
-        with Vertical(id="define-global-cache-dir"):
+        with Vertical(id="define-global-cache-dir", classes="hide" if not self.container_system else ""):
             yield Markdown("## Do you want to define a global cache directory for containers or conda environments?")
             yield TextInput(
-                "envvar",
-                "Nextflow cachedir environment variable",
-                "Environment variable to define a global cache directory.",
-                classes="",
-                default=f"NXF_{self.container_system.upper()}_CACHEDIR" if self.container_system is not None else "",
-            )
-            yield TextInput(
                 "cachedir",
-                f"NXF_{self.container_system.upper()}_CACHEDIR" if self.container_system is not None else "",
+                "/path/to/cache/dir",
                 "Define a global cache direcotry.",
                 classes="",
                 default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR") if self.container_system is not None else "",
@@ -84,7 +81,7 @@ class FinalInfraDetails(Screen):
         yield TextInput(
             "scratch_dir",
             "Scratch directory",
-            "If you have to use a specific scratch direcotry, specify it.",
+            "If you have to use a specific scratch direcotry, specify it. ",
             classes="",
         )
         with Horizontal(classes="ghrepo-cols"):
@@ -154,16 +151,18 @@ class FinalInfraDetails(Screen):
     def get_container_system(self) -> None:
         """Get the container system from the input."""
         self.container_system = None
-        for text_input in self.query("TextInput"):
-            if text_input.field_id != "container_system":
-                continue
-            this_input = text_input.query_one(Input)
-            self.container_system = this_input.value
-            if self.container_system:
-                remove_hide_class(self.parent, "define-global-cache-dir")
-            else:
-                add_hide_class(self.parent, "define-global-cache-dir")
-            break
+        text_input = self.query_one("#container_system")
+        this_input = text_input.query_one(Input)
+        self.container_system = this_input.value
+        cachedir_text_input = self.query_one("#cachedir")
+        cachedir_input = cachedir_text_input.query_one(Input)
+        if self.container_system:
+            remove_hide_class(self.parent, "define-global-cache-dir")
+            if not cachedir_input.value:
+                cachedir_path = self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR")
+                cachedir_input.value = cachedir_path or ''
+        else:
+            add_hide_class(self.parent, "define-global-cache-dir")
 
     @on(Button.Pressed, "#finish")
     def on_finish_button(self, event: Button.Pressed) -> None:
