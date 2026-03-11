@@ -216,7 +216,12 @@ class ConfigsCreateConfig(BaseModel):
     @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")
     @classmethod
     def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
-        """Check that integer values are either empty or positive."""
+        """Check that integer values are either empty or positive.
+        
+        This contains the same validation as self.pos_integer_valid_infra().
+        However, keep infrastructure and pipeline methods decoupled for
+        easier refactoring in future.
+        """
         context = info.context
         if context and not context["is_infrastructure"]:
             if v.strip() == "":
@@ -245,10 +250,16 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a non-negative number.")
         return v
 
-    @field_validator("cpus", "memory")
+    @field_validator("cpus", "memory", "retries")
     @classmethod
     def pos_integer_valid_infra(cls, v: str, info: ValidationInfo) -> str:
-        """Check that integer values are either empty or positive."""
+        """
+        Check that integer values are either empty or positive.
+        
+        This contains the same validation as self.pos_integer_valid().
+        However, keep infrastructure and pipeline methods decoupled for
+        easier refactoring in future.
+        """
         context = info.context
         if context and context["is_infrastructure"]:
             if v.strip() == "":
