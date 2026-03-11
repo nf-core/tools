@@ -344,6 +344,26 @@ class ConfigsCreateConfig(BaseModel):
                 "or a URI (e.g. s3://ngi-igenomes/igenomes/)"
             )
         return v
+    
+    @field_validator("module_system", "module")
+    @classmethod
+    def module_system_valid(cls, v: str, info: ValidationInfo) -> str:
+        ... #TODO
+
+    @field_validator("container_system")
+    @classmethod
+    def container_system_valid(cls, v: str, info: ValidationInfo) -> str:
+        v = v.strip()
+        if v != "" and v not in SUPPORTED_CONTAINERS:
+            raise ValueError(
+                f"Must be one of: {', '.join(SUPPORTED_CONTAINERS)}"
+            )
+        return v
+
+    @field_validator("delete_work_dir")
+    @classmethod
+    def is_bool(cls, v: str, info: ValidationInfo) -> str:
+        ... #TODO
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):

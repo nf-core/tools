@@ -37,6 +37,7 @@ class FinalInfraDetails(Screen):
         self.container_system_list = self._get_container_systems()
         self.container_system = self.container_system_list[0] if self.container_system_list else None
 
+        # TODO: convert to dropdown with contents self.container_system_list
         yield TextInput(
             "container_system",
             "Container system",
