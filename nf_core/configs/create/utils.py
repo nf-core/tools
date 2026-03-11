@@ -171,13 +171,9 @@ class ConfigsCreateConfig(BaseModel):
         if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
-            elif v and not re.match(
-                r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$", v
-            ):  ## Regex adapted from: https://github.com/shinnn/github-username-regex
-                raise ValueError("Handle must start with '@'.")
-        else:
-            if not v.strip() == "" and not re.match(r"^@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", v):
-                raise ValueError("Handle must start with '@'.")
+        if not v.strip() == "" and not re.match(r"^@[aA-zZ\d](?:[aA-zZ\d]|-(?=[aA-zZ\d])){0,38}$", v):
+            ## Regex adapted from: https://github.com/shinnn/github-username-regex
+            raise ValueError("Handle must start with '@'.")
         return v
 
     @field_validator(
