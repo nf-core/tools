@@ -71,20 +71,20 @@ class FinalInfraDetails(Screen):
             yield TextInput(
                 "cachedir",
                 f"NXF_{self.container_system.upper()}_CACHEDIR" if self.container_system is not None else "",
-                "Define a global cache direcotry.",
+                "Define a global cache directory.",
                 classes="",
                 default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR") if self.container_system is not None else "",
             )
         yield TextInput(
             "igenomes_cachedir",
             "iGenomes cache directory",
-            "If you have an iGenomes cache direcotry, specify it.",
+            "If you have an iGenomes cache directory, specify it.",
             classes="hide" if not self.parent.NFCORE_CONFIG else "",
         )
         yield TextInput(
             "scratch_dir",
             "Scratch directory",
-            "If you have to use a specific scratch direcotry, specify it.",
+            "If you have to use a specific scratch directory, specify it.",
             classes="",
         )
         with Horizontal(classes="ghrepo-cols"):
