@@ -411,7 +411,7 @@ def nextflow_inspect(main_nf: Path, format: str = "json", profile: str = "docker
 
         if cmd_out is None:
             log.debug(f"Failed to run `{executable} {cmd_params}`")
-            return None
+            return dict()
 
         out, _ = cmd_out
         out_str = str(out, encoding="utf-8")
