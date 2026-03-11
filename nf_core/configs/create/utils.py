@@ -99,6 +99,10 @@ class ConfigsCreateConfig(BaseModel):
     """ A scratch directory to use """
     retries: Optional[str] = None
     """ Number of retries for failed jobs """
+    module: Optional[bool] = False
+    """ Whether the infrastructure uses a module system """
+    delete_work_dir: Optional[bool] = False
+    """ Whether to clean up the work directory upon successful completion """
 
     model_config = ConfigDict(extra="allow")
 

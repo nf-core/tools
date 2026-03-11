@@ -167,8 +167,43 @@ class ConfigCreate:
         process_section_str = '\n'.join(process_section) + '\n'
 
         return sub(r'\n\n\n+', '\n\n', process_section_str)
-    
-    def construct_infra_config_str(self):
+
+    def construct_executor_config_str(self):
+        # TODO: Update Pydantic model and HpcCustomisation/FinalInfraDetails
+        # to get info for following executor config fields
+        # queueSize
+        # pollInterval
+        # queueStatInterval (non-local)
+        # submitRateLimit
+        executor_section = [
+            'executor {',
+            '\n',
+            # ...
+            '\n',
+            '}',
+        ]
+        executor_section_str = '\n'.join(executor_section) + '\n'
+        return sub(r'\n\n\n+', '\n\n', executor_section_str)
+
+    def construct_container_config_str(self, container_name, cache_dir):
+        enabled_str = '  enabled = true'
+        cache_dir_str = f"  cacheDir = '{cache_dir}'"
+        automount_str = '  autoMounts = true' if container_name in ['singularity', 'apptainer'] else ''
+        container_section = [
+            f'{container_name}' + ' {',
+            '\n',
+            enabled_str,
+            cache_dir_str,
+            automount_str,
+            '\n',
+            '}',
+        ]
+
+        container_section_str = '\n'.join(container_section) + '\n'
+
+        return sub(r'\n\n\n+', '\n\n', container_section_str)
+
+    def construct_infra_process_config_str(self):
         modules_to_load = (
             self.template_config.container_system
             if self.template_config.module and self.template_config.container_system 
@@ -229,6 +264,36 @@ class ConfigCreate:
         process_section_str = '\n'.join(process_section) + '\n'
 
         return sub(r'\n\n\n+', '\n\n', process_section_str)
+    
+    def construct_infra_config_str(self):
+        process_section_str = self.construct_infra_process_config_str()
+
+        # TODO: Uncomment when executor option fields are implemented
+        # executor_section_str = self.construct_executor_config_str()
+        
+        container_section_str = self.construct_container_config_str(
+            self.template_config.container_system,
+            self.template_config.cachedir
+        )
+
+        cleanup = 'true' if self.template_config.delete_work_dir else 'false'
+
+        unscoped_configs = [
+            f'cleanup = {cleanup}'
+        ]
+        unscoped_configs_str = '\n'.join(unscoped_configs) + '\n'
+
+        final_config = [
+            process_section_str,
+            # executor_section_str,
+            container_section_str,
+            unscoped_configs_str,
+        ]
+
+        final_config_str = '\n\n'.join(final_config) + '\n'
+
+        return sub(r'\n\n\n+', '\n\n', final_config_str)
+
 
     def write_to_file(self):
         ## File name option
