@@ -32,6 +32,7 @@ def init_context(value: dict[str, Any]) -> Iterator[None]:
 CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 NFCORE_CONFIG_GLOBAL: bool = True
 INFRA_ISHPC_GLOBAL: bool = False
+_PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 
 
 class ConfigsCreateConfig(BaseModel):
@@ -296,6 +297,47 @@ class ConfigsCreateConfig(BaseModel):
         if context and context["is_infrastructure"] and context["is_hpc"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
+        return v
+    
+    @field_validator("cachedir", "scratch_dir")
+    @classmethod
+    def is_path_ondisk(cls, v: str, info: ValidationInfo) -> str:
+        """
+        Check that a path looks valid. Does not check if it exists.
+
+        Skip if field is empty.
+
+        Accept:
+            - absolute paths (^/.+)
+            - env var prefixed paths (${INFRA_SPECIFIC_VAR}/..., ${HOME}/..., ${projectDir})
+            - tilde-prefixed paths (~/...)
+        """
+        v = v.strip()
+        if v == "":
+            raise ValueError("Cannot be left empty.")
+
+        if not _PATH_PATTERN.match(v):
+            raise ValueError(
+                "Must be an absolute path (/data/scratch), "
+                "a path relative to home (~/scratch), "
+                "or a path with an environmental variable (e.g. ${DIR}/scratch)"
+            )
+        return v
+
+    @field_validator("igenomes_cachedir")
+    @classmethod
+    def is_path_or_uri(cls, v: str, info: ValidationInfo) -> str:
+        v = v.strip()
+        if v == "":
+            raise ValueError("Cannot be left empty.")
+
+        uri_pattern = re.compile(r"^\w+:\/\/\w+")
+        if not _PATH_PATTERN.match(v) and not uri_pattern.match(v):
+            raise ValueError(
+                "Must be an absolute path with optional environmental variables "
+                "(e.g. /data/cache, ~/cache, ${DIR}/cache), "
+                "or a URI (e.g. s3://ngi-igenomes/igenomes/)"
+            )
         return v
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
