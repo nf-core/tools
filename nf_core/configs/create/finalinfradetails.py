@@ -11,7 +11,8 @@ from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Swi
 from nf_core.configs.create.utils import (
     TextInput,
     ConfigsCreateConfig,
-    init_context
+    init_context,
+    SUPPORTED_CONTAINERS
 )
 from nf_core.utils import add_hide_class, remove_hide_class
 
@@ -107,7 +108,7 @@ class FinalInfraDetails(Screen):
     def _get_container_systems(self) -> list[str]:
         """Get the available container systems to use for software handling."""
         module_system_used = self._detect_module_system()
-        container_systems = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
+        container_systems = SUPPORTED_CONTAINERS
         available_systems = []
         if module_system_used:
             for system in container_systems:

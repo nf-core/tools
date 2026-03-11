@@ -33,7 +33,8 @@ CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 NFCORE_CONFIG_GLOBAL: bool = True
 INFRA_ISHPC_GLOBAL: bool = False
 _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
-
+# Used by finalinfradetails as it already imports create.utils
+SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
 
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
