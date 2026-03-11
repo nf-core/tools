@@ -55,19 +55,19 @@ class ConfigsCreateConfig(BaseModel):
     """ Config description """
     config_profile_url: Optional[str] = None
     """ Config institution URL """
-    default_process_ncpus: Optional[str] = None
+    default_process_ncpus: Optional[int] = None
     """ Default number of CPUs """
-    default_process_memgb: Optional[str] = None
+    default_process_memgb: Optional[int] = None
     """ Default amount of memory """
-    default_process_hours: Optional[str] = None
+    default_process_hours: Optional[float] = None
     """ Default walltime - hours """
     custom_process_id: Optional[str] = None
     """" Name or label of a process to configure """
-    custom_process_ncpus: Optional[str] = None
+    custom_process_ncpus: Optional[int] = None
     """ Number of CPUs for process """
-    custom_process_memgb: Optional[str] = None
+    custom_process_memgb: Optional[int] = None
     """ Amount of memory for process """
-    custom_process_hours: Optional[str] = None
+    custom_process_hours: Optional[float] = None
     """ Walltime for process - hours """
     named_process_resources: Optional[dict] = None
     """ Dictionary containing custom resource requirements for named processes """
@@ -85,11 +85,11 @@ class ConfigsCreateConfig(BaseModel):
     """ Modules to load when running processes """
     container_system: Optional[str] = None
     """ The container system the HPC uses """
-    memory: Optional[str] = None
+    memory: Optional[int] = None
     """ The maximum memory available to processes """
-    cpus: Optional[str] = None
+    cpus: Optional[int] = None
     """ The maximum number of CPUs available to processes """
-    time: Optional[str] = None
+    time: Optional[float] = None
     """ The maximum walltime available to processes """
     envvar: Optional[str] = None
     """ An environment variable to hold a custom Nextflow container cachedir """
@@ -99,8 +99,12 @@ class ConfigsCreateConfig(BaseModel):
     """ A cachedir for iGenomes """
     scratch_dir: Optional[str] = None
     """ A scratch directory to use """
-    retries: Optional[str] = None
+    retries: Optional[int] = None
     """ Number of retries for failed jobs """
+    delete_work_dir: Optional[bool] = None
+    """ Whether to delete the work directory on successful pipeline complete """
+    module: Optional[str] = None
+    """ Detected module system """
 
     model_config = ConfigDict(extra="allow")
 
