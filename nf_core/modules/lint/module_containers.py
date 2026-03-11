@@ -365,19 +365,17 @@ def lint_main_nf_container(
     meta_path = Path(module.component_dir, "meta.yml")
 
     nf_insp_out = nextflow_inspect(main_path, format="json", profile="docker")
-    main_nf_docker_img = nf_insp_out.get("processes", dict()).get("container")
-
-    if main_nf_docker_img is None:
+    try:
+        main_nf_docker_img = nf_insp_out["processes"][0]["container"]
+    except (KeyError, IndexError):
         log.debug("Docker image could not be extracted. Skipping container linting.")
         module.warned.append(("main_nf", "main_nf_container", "Docker container could not be extracted", main_path))
         return
 
     meta_yml = read_meta_yml(meta_path)
-    meta_yml_docker_img = (
-        meta_yml.get("containers", dict()).get("docker", dict()).get("linux_amd64", dict()).get("name", None)
-    )
-
-    if meta_yml_docker_img is None:
+    try:
+        meta_yml_docker_img = meta_yml["containers"]["docker"]["linux_amd64"]["name"]
+    except KeyError:
         log.debug(f"Docker linux_amd64 image could not be read from {meta_path.absolute()}")
         return
 
