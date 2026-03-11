@@ -110,7 +110,7 @@ class ConfigsCreateConfig(BaseModel):
             context=_init_context_var.get(),
         )
 
-    @field_validator("general_config_name")
+    @field_validator("general_config_name", "config_profile_description")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
@@ -148,14 +148,6 @@ class ConfigsCreateConfig(BaseModel):
         if context and (not context["is_infrastructure"] and context["is_nfcore"]):
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
-        return v
-
-    @field_validator("config_profile_description")
-    @classmethod
-    def notempty_description(cls, v: str) -> str:
-        """Check that description is not empty when."""
-        if v.strip() == "":
-            raise ValueError("Cannot be left empty.")
         return v
 
     @field_validator("config_profile_contact")
