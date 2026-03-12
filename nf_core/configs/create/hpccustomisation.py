@@ -1,4 +1,5 @@
 import subprocess
+import json
 import io
 from typing import Optional
 
@@ -87,14 +88,15 @@ class HpcCustomisation(Screen):
         """Get the available queues to use for the jobs"""
         if scheduler == "slurm":
             try:
-                queues = subprocess.check_output(["sinfo", "-o", '"%P,%c,%m,%l"']).decode("utf-8")
-                return queues.split("\n")
+                queues = subprocess.check_output(["sinfo", "-h", "-o", '%P']).decode("utf-8")
+                # Remove default * flag
+                return [i.strip().replace("*", "") for i in queues.split("\n") if i]
             except subprocess.CalledProcessError:
                 pass
         elif scheduler == "pbs":
             try:
-                queues = subprocess.check_output(["qstat", "-q"]).decode("utf-8")
-                return queues.split("\n")
+                queues = json.loads(subprocess.check_output(["qstat", "-Q", "-f", "-F", "json"]).decode("utf-8"))
+                return list(queues["Queue"].keys())
             except subprocess.CalledProcessError:
                 pass
         elif scheduler == "sge":
