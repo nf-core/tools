@@ -27,6 +27,7 @@ class HpcCustomisation(Screen):
         yield Footer()
         scheduler = self._get_scheduler()
         queues = self._get_queues(scheduler)
+        default_queue = self._get_default_queue(scheduler)
         module_system_used = self._detect_module_system()
         yield Markdown(markdown_intro)
         with Horizontal():
@@ -41,6 +42,7 @@ class HpcCustomisation(Screen):
                 "queue",
                 "Queue",
                 "The default queue in your HPC.",
+                default=default_queue if default_queue else "",
                 classes="column",
                 suggestions=queues,
             )
