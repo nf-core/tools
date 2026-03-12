@@ -11,7 +11,8 @@ from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Swi
 from nf_core.configs.create.utils import (
     TextInput,
     ConfigsCreateConfig,
-    init_context
+    init_context,
+    SUPPORTED_CONTAINERS
 )
 from nf_core.utils import add_hide_class, remove_hide_class
 
@@ -36,6 +37,7 @@ class FinalInfraDetails(Screen):
         self.container_system_list = self._get_container_systems()
         self.container_system = self.container_system_list[0] if self.container_system_list else None
 
+        # TODO: convert to dropdown with contents self.container_system_list
         yield TextInput(
             "container_system",
             "Container system",
@@ -63,6 +65,28 @@ class FinalInfraDetails(Screen):
                 "Maximum time (hours) to run your jobs.",
                 classes="column",
             )
+        with Horizontal():
+            yield TextInput(
+                "queue_size",
+                "Queue size",
+                "Number of jobs that can be submitted simultaneously.",
+                default="300",
+                classes="column",
+            )
+            yield TextInput(
+                "poll_interval",
+                "Poll interval",
+                "How often to check for successful process completion (minutes).",
+                default="0.5",
+                classes="column",
+            )
+            yield TextInput(
+                "submit_rate",
+                "Jobs per minutes",
+                "Maximum number of jobs that can be submitted per minute.",
+                default="20",
+                classes="column",
+            )
         with Vertical(id="define-global-cache-dir", classes="hide" if not self.container_system else ""):
             yield Markdown("## Do you want to define a global cache directory for containers or conda environments?")
             yield TextInput(
@@ -75,13 +99,13 @@ class FinalInfraDetails(Screen):
         yield TextInput(
             "igenomes_cachedir",
             "iGenomes cache directory",
-            "If you have an iGenomes cache direcotry, specify it.",
+            "If you have an iGenomes cache directory, specify it.",
             classes="hide" if not self.parent.NFCORE_CONFIG else "",
         )
         yield TextInput(
             "scratch_dir",
             "Scratch directory",
-            "If you have to use a specific scratch direcotry, specify it. ",
+            "If you have to use a specific scratch directory, specify it.",
             classes="",
         )
         with Horizontal(classes="ghrepo-cols"):
@@ -107,7 +131,7 @@ class FinalInfraDetails(Screen):
     def _get_container_systems(self) -> list[str]:
         """Get the available container systems to use for software handling."""
         module_system_used = self._detect_module_system()
-        container_systems = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
+        container_systems = SUPPORTED_CONTAINERS
         available_systems = []
         if module_system_used:
             for system in container_systems:

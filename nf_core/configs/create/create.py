@@ -170,16 +170,50 @@ class ConfigCreate:
         return sub(r'\n\n\n+', '\n\n', process_section_str)
 
     def construct_executor_config_str(self):
-        # TODO: Update Pydantic model and HpcCustomisation/FinalInfraDetails
-        # to get info for following executor config fields
-        # queueSize
-        # pollInterval
-        # queueStatInterval (non-local)
-        # submitRateLimit
+        queue_stat_interval_str = ''
+        queue_size_str = ''
+        poll_interval_str = ''
+        submit_rate_str = ''
+
+        if self.template_config.queue_stat_interval:
+            queue_stat_interval = float(self.template_config.queue_stat_interval)
+            if queue_stat_interval.is_integer():
+                queue_stat_interval = int(queue_stat_interval)
+                queue_stat_interval_str = f'  queueStatInterval = {queue_stat_interval}.m'
+            else:
+                queue_stat_interval = int(queue_stat_interval * 60)
+                queue_stat_interval_str = f'  queueStatInterval = {queue_stat_interval}.s'
+
+        if self.template_config.queue_size:
+            queue_size = int(self.template_config.queue_size)
+            queue_size_str = f'  queueSize = {queue_size}'
+
+        if self.template_config.poll_interval:
+            poll_interval = float(self.template_config.poll_interval)
+            if poll_interval.is_integer():
+                poll_interval = int(poll_interval)
+                poll_interval_str = f'  pollInterval = {poll_interval}.m'
+            else:
+                poll_interval = int(poll_interval * 60)
+                poll_interval_str = f'  pollInterval = {poll_interval}.s'
+
+        if self.template_config.submit_rate:
+            submit_rate = int(self.template_config.submit_rate)
+            submit_rate_str = f"  submitRateLimit = '{submit_rate}min'"
+
+        executor_section = [
+            queue_stat_interval_str,
+            queue_size_str,
+            poll_interval_str,
+            submit_rate_str
+        ]
+
+        executor_section = [s for s in executor_section if s]
+
         executor_section = [
             'executor {',
             '\n',
-            # ...
+            *executor_section,
             '\n',
             '}',
         ]
@@ -187,15 +221,25 @@ class ConfigCreate:
         return sub(r'\n\n\n+', '\n\n', executor_section_str)
 
     def construct_container_config_str(self, container_name, cache_dir):
+        if not container_name:
+            return []
+        
         enabled_str = '  enabled = true'
-        cache_dir_str = f"  cacheDir = '{cache_dir}'"
+        cache_dir_str = f"  cacheDir = '{cache_dir}'" if cache_dir else ''
         automount_str = '  autoMounts = true' if container_name in ['singularity', 'apptainer'] else ''
+
         container_section = [
-            f'{container_name}' + ' {',
-            '\n',
             enabled_str,
             cache_dir_str,
             automount_str,
+        ]
+
+        container_section = [s for s in container_section if s]
+
+        container_section = [
+            f'{container_name}' + ' {',
+            '\n',
+            *container_section,
             '\n',
             '}',
         ]
@@ -217,7 +261,7 @@ class ConfigCreate:
         memory_str = ''
         if self.template_config.memory:
             memory_int = int(self.template_config.memory)
-            memory_str = f'memory = {memory_int}.GB'
+            memory_str = f'{memory_int}.GB'
         time_str = ''
         if self.template_config.time:
             time_h = float(self.template_config.time)
@@ -269,8 +313,7 @@ class ConfigCreate:
     def construct_infra_config_str(self):
         process_section_str = self.construct_infra_process_config_str()
 
-        # TODO: Uncomment when executor option fields are implemented
-        # executor_section_str = self.construct_executor_config_str()
+        executor_section_str = self.construct_executor_config_str()
         
         container_section_str = self.construct_container_config_str(
             self.template_config.container_system,
@@ -286,7 +329,7 @@ class ConfigCreate:
 
         final_config = [
             process_section_str,
-            # executor_section_str,
+            executor_section_str,
             container_section_str,
             unscoped_configs_str,
         ]

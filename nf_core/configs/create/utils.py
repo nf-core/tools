@@ -32,7 +32,9 @@ def init_context(value: dict[str, Any]) -> Iterator[None]:
 CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 NFCORE_CONFIG_GLOBAL: bool = True
 INFRA_ISHPC_GLOBAL: bool = False
-
+_PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
+# Used by finalinfradetails as it already imports create.utils
+SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
 
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
@@ -103,6 +105,14 @@ class ConfigsCreateConfig(BaseModel):
     """ Whether the infrastructure uses a module system """
     delete_work_dir: Optional[bool] = False
     """ Whether to clean up the work directory upon successful completion """
+    queue_stat_interval: Optional[str] = None
+    """ How often to check the HPC queue status. """
+    queue_size: Optional[str] = None
+    """ How many jobs can be submitted to the queue at once. """
+    poll_interval: Optional[str] = None
+    """ How often to check for successful completion of processes. """
+    submit_rate: Optional[str] = None
+    """ How many jobs can be submitted per minute. """
 
     model_config = ConfigDict(extra="allow")
 
@@ -142,7 +152,7 @@ class ConfigsCreateConfig(BaseModel):
             "cleanup": self.delete_work_dir
         }
 
-    @field_validator("general_config_name")
+    @field_validator("general_config_name", "config_profile_description")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
@@ -182,14 +192,6 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Cannot be left empty.")
         return v
 
-    @field_validator("config_profile_description")
-    @classmethod
-    def notempty_description(cls, v: str) -> str:
-        """Check that description is not empty when."""
-        if v.strip() == "":
-            raise ValueError("Cannot be left empty.")
-        return v
-
     @field_validator("config_profile_contact")
     @classmethod
     def notempty_contact(cls, v: str, info: ValidationInfo) -> str:
@@ -211,13 +213,9 @@ class ConfigsCreateConfig(BaseModel):
         if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
-            elif not re.match(
-                r"^@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", v
-            ):  ## Regex from: https://github.com/shinnn/github-username-regex
-                raise ValueError("Handle must start with '@'.")
-        else:
-            if not v.strip() == "" and not re.match(r"^@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", v):
-                raise ValueError("Handle must start with '@'.")
+        if not v.strip() == "" and not re.match(r"^@[aA-zZ\d](?:[aA-zZ\d]|-(?=[aA-zZ\d])){0,38}$", v):
+            ## Regex adapted from: https://github.com/shinnn/github-username-regex
+            raise ValueError("Handle must start with '@'.")
         return v
 
     @field_validator(
@@ -260,7 +258,12 @@ class ConfigsCreateConfig(BaseModel):
     @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")
     @classmethod
     def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
-        """Check that integer values are either empty or positive."""
+        """Check that integer values are either empty or positive.
+        
+        This contains the same validation as self.pos_integer_valid_infra().
+        However, keep infrastructure and pipeline methods decoupled for
+        easier refactoring in future.
+        """
         context = info.context
         if context and not context["is_infrastructure"]:
             if v.strip() == "":
@@ -289,14 +292,20 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a non-negative number.")
         return v
 
-    @field_validator("cpus", "memory")
+    @field_validator("cpus", "memory", "retries")
     @classmethod
     def pos_integer_valid_infra(cls, v: str, info: ValidationInfo) -> str:
-        """Check that integer values are either empty or positive."""
+        """
+        Check that integer values are either empty or positive.
+        
+        This contains the same validation as self.pos_integer_valid().
+        However, keep infrastructure and pipeline methods decoupled for
+        easier refactoring in future.
+        """
         context = info.context
         if context and context["is_infrastructure"]:
             if v.strip() == "":
-                return v
+                raise ValueError("Cannot be empty.")
             try:
                 v_int = int(v.strip())
             except ValueError:
@@ -312,7 +321,7 @@ class ConfigsCreateConfig(BaseModel):
         context = info.context
         if context and context["is_infrastructure"]:
             if v.strip() == "":
-                return v
+                raise ValueError("Cannot be empty.")
             try:
                 vf = float(v.strip())
             except ValueError:
@@ -330,6 +339,65 @@ class ConfigsCreateConfig(BaseModel):
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
+    
+    @field_validator("cachedir", "scratch_dir")
+    @classmethod
+    def is_path_ondisk(cls, v: str, info: ValidationInfo) -> str:
+        """
+        Check that a path looks valid. Does not check if it exists.
+
+        Skip if field is empty.
+
+        Accept:
+            - absolute paths (^/.+)
+            - env var prefixed paths (${INFRA_SPECIFIC_VAR}/..., ${HOME}/..., ${projectDir})
+            - tilde-prefixed paths (~/...)
+        """
+        v = v.strip()
+        if v == "":
+            return v #optional
+
+        if not _PATH_PATTERN.match(v):
+            raise ValueError(
+                "Must be an absolute path (/data/scratch), "
+                "a path relative to home (~/scratch), "
+                "or a path with an environmental variable (e.g. ${DIR}/scratch)"
+            )
+        return v
+
+    @field_validator("igenomes_cachedir")
+    @classmethod
+    def is_path_or_uri(cls, v: str, info: ValidationInfo) -> str:
+        v = v.strip()
+        if v == "":
+            return v #optional
+
+        uri_pattern = re.compile(r"^\w+:\/\/\w+")
+        if not _PATH_PATTERN.match(v) and not uri_pattern.match(v):
+            raise ValueError(
+                "Must be an absolute path with optional environmental variables "
+                "(e.g. /data/cache, ~/cache, ${DIR}/cache), "
+                "or a URI (e.g. s3://ngi-igenomes/igenomes/)"
+            )
+        return v
+    
+    @field_validator("container_system")
+    @classmethod
+    def container_system_valid(cls, v: str, info: ValidationInfo) -> str:
+        v = v.strip()
+        if v != "" and v not in SUPPORTED_CONTAINERS:
+            raise ValueError(
+                f"Must be one of: {', '.join(SUPPORTED_CONTAINERS)}"
+            )
+        return v
+    
+    @field_validator("module_system")
+    @classmethod
+    def module_system(cls, v: str, info: ValidationInfo) -> str:
+        #TODO: placeholder validator until functionality is finished
+        return v
+    
+
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):
