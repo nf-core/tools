@@ -260,7 +260,7 @@ class ConfigCreate:
         memory_str = ''
         if self.template_config.memory:
             memory_int = int(self.template_config.memory)
-            memory_str = f'memory = {memory_int}.GB'
+            memory_str = f'{memory_int}.GB'
         time_str = ''
         if self.template_config.time:
             time_h = float(self.template_config.time)
