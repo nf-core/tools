@@ -1,4 +1,5 @@
 import subprocess
+import json
 from typing import Optional
 
 from textual.app import ComposeResult
@@ -90,8 +91,8 @@ class HpcCustomisation(Screen):
                 pass
         elif scheduler == "pbs":
             try:
-                queues = subprocess.check_output(["qstat", "-q"]).decode("utf-8")
-                return queues.split("\n")
+                queues = json.loads(subprocess.check_output(["qstat", "-Q", "-f", "-F", "json"]).decode("utf-8"))
+                return list(queues["Queue"].keys())
             except subprocess.CalledProcessError:
                 pass
         elif scheduler == "sge":
