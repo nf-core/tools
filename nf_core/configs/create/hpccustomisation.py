@@ -1,5 +1,6 @@
 import subprocess
 import json
+import io
 from typing import Optional
 
 from textual.app import ComposeResult
@@ -27,6 +28,7 @@ class HpcCustomisation(Screen):
         yield Footer()
         scheduler = self._get_scheduler()
         queues = self._get_queues(scheduler)
+        default_queue = self._get_default_queue(scheduler)
         module_system_used = self._detect_module_system()
         yield Markdown(markdown_intro)
         with Horizontal():
@@ -41,6 +43,7 @@ class HpcCustomisation(Screen):
                 "queue",
                 "Queue",
                 "The default queue in your HPC.",
+                default=default_queue if default_queue else "",
                 classes="column",
                 suggestions=queues,
             )
@@ -103,6 +106,59 @@ class HpcCustomisation(Screen):
             except subprocess.CalledProcessError:
                 pass
         return []
+
+    def _get_default_queue(self, scheduler: Optional[str]) -> str:
+        """Get the default queue for the scheduler"""
+        if scheduler == "slurm":
+            try:
+                return self._slurm_get_default_queue()
+            except FileNotFoundError:
+                pass
+        elif scheduler == "pbs":
+            try:
+                return self._pbs_get_default_queue()
+            except subprocess.CalledProcessError:
+                pass
+        # TODO: Implement SGE here
+        return ""
+
+    def _slurm_get_default_queue(self) -> str:
+        """Get the default queue for Slurm"""
+        config = {}
+        # TODO: If slurm is built from source, the config file path can be different
+        with open("/etc/slurm/slurm.conf", "r") as fp:
+            config = self._parse_slurm_config(fp)
+
+        for conf in config:
+            if (conf["Default"] if "Default" in conf.keys() else "NO") == "YES":
+                return conf["PartitionName"]
+        
+        # If no default is set, use the first option
+        return config[0]["PartitionName"]
+
+    def _pbs_get_default_queue(self) -> str:
+        pbs_raw_config = subprocess.check_output(["qmgr", "-c", "list server"]).decode("utf-8")
+        config = self._pbs_parse_config(pbs_raw_config)
+        return config["default_queue"]
+
+    def _parse_slurm_config(self, fp: Optional[io.TextIOWrapper]) -> list[dict]:
+        """Parse the Slurm configuration file"""
+        config = []
+        for line in fp.readlines():
+            if line.startswith("PartitionName"):
+                tokens = [i.rsplit("=", 1) for i in line.split()]
+                config.append({i[0]: i[1] for i in tokens})
+        return config
+
+    def _pbs_parse_config(self, raw: Optional[str]) -> dict:
+        """Parse the PBS configuration file"""
+        config = {}
+        for line in [r.strip() for r in raw.split("\n")]:
+            if "=" not in line:
+                continue
+            k, v = [token.strip() for token in line.split("=", 1)]
+            config[k] = v
+        return config
 
     def _detect_module_system(self) -> bool:
         """Detect if a module system is used"""
