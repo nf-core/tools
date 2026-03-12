@@ -301,7 +301,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                 )
 
         # Check that all containers are correctly specified
-        if "containers" in meta_yaml or module.container:
+        if "containers" in meta_yaml or module.container_from_main_nf:
             correct_containers = obtain_containers(module_lint_object, module.container)
             meta_containers = obtain_containers(module_lint_object, meta_yaml.get("containers", {}))
             if not meta_containers:
@@ -313,7 +313,6 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                         module.meta_yml,
                     )
                 )
-                return
             else:
                 module.passed.append(
                     (
