@@ -350,6 +350,14 @@ class ConfigsCreateConfig(BaseModel):
                 f"Must be one of: {', '.join(SUPPORTED_CONTAINERS)}"
             )
         return v
+    
+    @field_validator("module_system")
+    @classmethod
+    def module_system(cls, v: str, info: ValidationInfo) -> str:
+        #TODO: placeholder validator until functionality is finished
+        return v
+    
+
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):
