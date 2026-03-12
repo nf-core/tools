@@ -85,8 +85,9 @@ class HpcCustomisation(Screen):
         """Get the available queues to use for the jobs"""
         if scheduler == "slurm":
             try:
-                queues = subprocess.check_output(["sinfo", "-o", '"%P,%c,%m,%l"']).decode("utf-8")
-                return queues.split("\n")
+                queues = subprocess.check_output(["sinfo", "-h", "-o", '%P']).decode("utf-8")
+                # Remove default * flag
+                return [i.strip().replace("*", "") for i in queues.split("\n") if i]
             except subprocess.CalledProcessError:
                 pass
         elif scheduler == "pbs":
