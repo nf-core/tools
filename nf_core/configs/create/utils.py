@@ -114,7 +114,7 @@ class ConfigsCreateConfig(BaseModel):
             context=_init_context_var.get(),
         )
 
-    def serial(self):
+    def serial_hpc(self):
         """Returns a dictionary of the config"""
         ret = {
             "params": {
