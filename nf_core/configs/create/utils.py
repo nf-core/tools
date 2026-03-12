@@ -55,19 +55,19 @@ class ConfigsCreateConfig(BaseModel):
     """ Config description """
     config_profile_url: Optional[str] = None
     """ Config institution URL """
-    default_process_ncpus: Optional[int] = None
+    default_process_ncpus: Optional[str] = None
     """ Default number of CPUs """
-    default_process_memgb: Optional[int] = None
+    default_process_memgb: Optional[str] = None
     """ Default amount of memory """
-    default_process_hours: Optional[float] = None
+    default_process_hours: Optional[str] = None
     """ Default walltime - hours """
     custom_process_id: Optional[str] = None
     """" Name or label of a process to configure """
-    custom_process_ncpus: Optional[int] = None
+    custom_process_ncpus: Optional[str] = None
     """ Number of CPUs for process """
-    custom_process_memgb: Optional[int] = None
+    custom_process_memgb: Optional[str] = None
     """ Amount of memory for process """
-    custom_process_hours: Optional[float] = None
+    custom_process_hours: Optional[str] = None
     """ Walltime for process - hours """
     named_process_resources: Optional[dict] = None
     """ Dictionary containing custom resource requirements for named processes """
@@ -85,11 +85,11 @@ class ConfigsCreateConfig(BaseModel):
     """ Modules to load when running processes """
     container_system: Optional[str] = None
     """ The container system the HPC uses """
-    memory: Optional[int] = None
+    memory: Optional[str] = None
     """ The maximum memory available to processes """
-    cpus: Optional[int] = None
+    cpus: Optional[str] = None
     """ The maximum number of CPUs available to processes """
-    time: Optional[float] = None
+    time: Optional[str] = None
     """ The maximum walltime available to processes """
     envvar: Optional[str] = None
     """ An environment variable to hold a custom Nextflow container cachedir """
@@ -99,12 +99,8 @@ class ConfigsCreateConfig(BaseModel):
     """ A cachedir for iGenomes """
     scratch_dir: Optional[str] = None
     """ A scratch directory to use """
-    retries: Optional[int] = None
+    retries: Optional[str] = None
     """ Number of retries for failed jobs """
-    delete_work_dir: Optional[bool] = None
-    """ Whether to delete the work directory on successful pipeline complete """
-    module: Optional[str] = None
-    """ Detected module system """
 
     model_config = ConfigDict(extra="allow")
 
@@ -319,7 +315,7 @@ class ConfigsCreateConfig(BaseModel):
         """
         v = v.strip()
         if v == "":
-            raise ValueError("Cannot be left empty.")
+            return v #optional
 
         if not _PATH_PATTERN.match(v):
             raise ValueError(
@@ -334,7 +330,7 @@ class ConfigsCreateConfig(BaseModel):
     def is_path_or_uri(cls, v: str, info: ValidationInfo) -> str:
         v = v.strip()
         if v == "":
-            raise ValueError("Cannot be left empty.")
+            return v #optional
 
         uri_pattern = re.compile(r"^\w+:\/\/\w+")
         if not _PATH_PATTERN.match(v) and not uri_pattern.match(v):
@@ -345,11 +341,6 @@ class ConfigsCreateConfig(BaseModel):
             )
         return v
     
-    @field_validator("module_system", "module")
-    @classmethod
-    def module_system_valid(cls, v: str, info: ValidationInfo) -> str:
-        ... #TODO
-
     @field_validator("container_system")
     @classmethod
     def container_system_valid(cls, v: str, info: ValidationInfo) -> str:
@@ -359,11 +350,6 @@ class ConfigsCreateConfig(BaseModel):
                 f"Must be one of: {', '.join(SUPPORTED_CONTAINERS)}"
             )
         return v
-
-    @field_validator("delete_work_dir")
-    @classmethod
-    def is_bool(cls, v: str, info: ValidationInfo) -> str:
-        ... #TODO
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
 class TextInput(Static):
