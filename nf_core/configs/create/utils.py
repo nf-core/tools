@@ -105,6 +105,14 @@ class ConfigsCreateConfig(BaseModel):
     """ Whether the infrastructure uses a module system """
     delete_work_dir: Optional[bool] = False
     """ Whether to clean up the work directory upon successful completion """
+    queue_stat_interval: Optional[str] = None
+    """ How often to check the HPC queue status. """
+    queue_size: Optional[str] = None
+    """ How many jobs can be submitted to the queue at once. """
+    poll_interval: Optional[str] = None
+    """ How often to check for successful completion of processes. """
+    submit_rate: Optional[str] = None
+    """ How many jobs can be submitted per minute. """
 
     model_config = ConfigDict(extra="allow")
 

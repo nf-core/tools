@@ -47,6 +47,13 @@ class HpcCustomisation(Screen):
                 classes="column",
                 suggestions=queues,
             )
+            yield TextInput(
+                "queue_stat_interval",
+                "Queue stat interval",
+                "How often to get the queue status from the scheduler (minutes).",
+                default="0.5",
+                classes="column",
+            )
         yield TextInput(
             "module_system",
             "Other modules to load",

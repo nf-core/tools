@@ -65,6 +65,28 @@ class FinalInfraDetails(Screen):
                 "Maximum time (hours) to run your jobs.",
                 classes="column",
             )
+        with Horizontal():
+            yield TextInput(
+                "queue_size",
+                "Queue size",
+                "Number of jobs that can be submitted simultaneously.",
+                default="300",
+                classes="column",
+            )
+            yield TextInput(
+                "poll_interval",
+                "Poll interval",
+                "How often to check for successful process completion (minutes).",
+                default="0.5",
+                classes="column",
+            )
+            yield TextInput(
+                "submit_rate",
+                "Jobs per minutes",
+                "Maximum number of jobs that can be submitted per minute.",
+                default="20",
+                classes="column",
+            )
         with Vertical(id="define-global-cache-dir", classes="hide" if not self.container_system else ""):
             yield Markdown("## Do you want to define a global cache directory for containers or conda environments?")
             yield TextInput(
