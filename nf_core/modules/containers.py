@@ -532,17 +532,27 @@ class ModuleContainers:
         log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
         return resp.text
 
-    def lint(self, module: str):
+    def lint(self, module: str) -> dict[str, list]:
         """
         Confirm containers are defined for the module.
+        Returns dict with 'passed', 'failed', 'warned' lists from the lint.
         """
         if not self.nfcore_component:
             raise ValueError("No module to lint")
 
-        # TODO: Add and call all relevant container linting from modules/lint
-        _ = meta_yml_containers(self.nfcore_component)
+        # Load containers from meta.yml into the component before linting
+        meta_path = Path(self.nfcore_component.component_dir, "meta.yml")
+        if meta_path.exists():
+            meta = read_meta_yml(meta_path)
+            self.nfcore_component.container = meta.get("containers", {})
 
-        # TODO: Linting output
+        meta_yml_containers(self.nfcore_component)
+
+        return {
+            "passed": self.nfcore_component.passed,
+            "failed": self.nfcore_component.failed,
+            "warned": self.nfcore_component.warned,
+        }
 
     def list_containers(self) -> list[tuple[str, str, str]]:
         """

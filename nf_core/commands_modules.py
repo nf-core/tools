@@ -478,8 +478,21 @@ def modules_containers_lint(ctx, module):
 
     try:
         manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
-        containers = manager.lint(module)
-        stdout.print(f"Found {len(containers)} container(s) for {module}.")
+        results = manager.lint(module)
+        for item in results["passed"]:
+            stdout.print(f"  [green]✔[/green] {item[2]}")
+        for item in results["warned"]:
+            stdout.print(f"  [yellow]![/yellow] {item[2]}")
+        for item in results["failed"]:
+            stdout.print(f"  [red]✗[/red] {item[2]}")
+        stdout.print(
+            f"\n[bold]Container lint for {module}:[/bold] "
+            f"[green]{len(results['passed'])} passed[/green], "
+            f"[yellow]{len(results['warned'])} warned[/yellow], "
+            f"[red]{len(results['failed'])} failed[/red]"
+        )
+        if len(results["failed"]) > 0:
+            sys.exit(1)
     except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
         log.error(e)
         sys.exit(1)

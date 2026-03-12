@@ -157,23 +157,25 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
                 )
 
-    # Check docker linux/amd64 image exists (unless skipped)
-    skip_file = Path(module.base_dir, ".github", "skip_nf_test.json")
-    with open(skip_file) as fh:
-        data = json.load(fh)
-    skip = set()
-    for syst in CONTAINER_SYSTEMS + ["conda"]:
-        value = data.get(syst)
-        skip.update({x for x in value if isinstance(x, str)})
-    module.passed.append(
-        (
-            "meta_yml",
-            "containers_section",
-            "Exceptions modules in nf-core/modules@master/.github/skip_nf_test.json ",
-            meta_path,
+    # Check conda/docker/sigularity linux/amd64 image exists (unless skipped)
+    skip_file = Path(module.component_dir.parent.parent.parent, ".github", "skip_nf_test.json")
+    skip_modules: set[str] = set()
+    if skip_file.is_file():
+        with open(skip_file) as fh:
+            data = json.load(fh)
+        skip: set[str] = set()
+        for syst in CONTAINER_SYSTEMS + ["conda"]:
+            value = data.get(syst, [])
+            skip.update({x for x in value if isinstance(x, str)})
+        module.passed.append(
+            (
+                "meta_yml",
+                "containers_section",
+                "Exceptions modules in nf-core/modules@master/.github/skip_nf_test.json ",
+                meta_path,
+            )
         )
-    )
-    skip_modules = {x for x in skip if x.startswith(module.component_name + ":")}
+        skip_modules = {x for x in skip if x.startswith(module.component_name + ":")}
 
     docker_containers = containers.get("docker", {})
     if isinstance(docker_containers, dict):
@@ -185,7 +187,6 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
     else:
         docker_amd64 = {}
     docker_amd64_name = docker_amd64.get("name") or docker_amd64.get("image") or docker_amd64.get("container") or ""
-
     if not docker_amd64_name:
         module.failed.append(
             (
@@ -195,7 +196,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 meta_path,
             )
         )
-    elif module.component_name not in skip_modules:
+    elif not skip_modules:
         if docker_amd64_name.startswith("http://") or docker_amd64_name.startswith("https://"):
             docker_url = docker_amd64_name
         elif "://" in docker_amd64_name:

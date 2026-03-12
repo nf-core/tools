@@ -65,6 +65,7 @@ def create_modules_repo_dummy(tmp_dir):
         meta_yml = yaml.load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
     meta_yml["keywords"] = ["pipelines", "bioinformatics", "run"]
+    # TODOD: add dummy content to containers section of meta.yml ??
     with open(str(meta_yml_path), "w") as fh:
         yaml.dump(meta_yml, fh)
         run_prettier_on_file(fh.name)
