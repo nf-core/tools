@@ -3,6 +3,7 @@ nf-core organization specification.
 """
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, generate_config_entry
+from nf_core.configs.create.serial import NextflowSerial
 from re import sub
 from pathlib import Path
 
@@ -313,7 +314,10 @@ class ConfigCreate:
         else:
             raise ValueError(f'Invalid config type: {self.config_type}')
 
+        serial_data = NextflowSerial.dumps(self.template_config.serial_hpc())
+
         with open(filename, "w+") as file:
             ## Write params
-            file.write(params_section_str)
-            file.write(process_section_str)
+            file.write(serial_data)
+            #file.write(params_section_str)
+            #file.write(process_section_str)
