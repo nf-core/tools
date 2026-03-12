@@ -24,13 +24,13 @@ class NextflowSerial:
         return str(data) # Fallback on the Python str function if no matches
     
     @staticmethod
-    def dumps(data_dict: Optional[Any], tab_indent: Optional[int], current_indent: Optional[int], end: Optional[str] = '\n') -> str:
+    def dumps(data_dict: Optional[Any], tab_indent: Optional[int], current_indent: Optional[int], end: Optional[str] = '\n', indent_start: Optional[bool] = True, one_line: Optional[bool] = False) -> str:
         """Recursive function to create configuration file"""
         output = ""
         if isinstance(data_dict, dict):
             for k, v in data_dict.items():
                 if isinstance(v, dict):
-                    output += " "*current_indent
+                    output += " "*current_indent*int(indent_start)
                     output += f"{k} {{\n"
                     output += NextflowSerial.dumps(v, tab_indent = tab_indent, current_indent = current_indent + tab_indent, end = end)
                     output += " "*current_indent
@@ -40,15 +40,19 @@ class NextflowSerial:
                     output += f"{k} = ["
                     vi = []
                     for i in v:
+                        oneliner = bool(len(i.keys()) != 1)
                         if isinstance(i, dict):
-                            vi.append("{" + NextflowSerial.dumps(i, tab_indent, current_indent=0, end='') + "}")
+                            vi.append("{"*oneliner + NextflowSerial.dumps(i, tab_indent, current_indent=0, end = '', indent_start = False, one_line = not oneliner) + "}"*oneliner)
                             continue
                         vi.append(NextflowSerial.dumps(i, tab_indent, current_indent=0, end = end))
                     output += ", ".join(vi)
                     output += f"]{end}"
                 else:
-                    output += " "*current_indent
-                    output += f"{k} = {NextflowSerial._stringify(v)}{end}"
+                    output += " "*current_indent*indent_start
+                    if one_line:
+                        output += f"{k}: {NextflowSerial._stringify(v)}{end}"
+                    else:
+                        output += f"{k} = {NextflowSerial._stringify(v)}{end}"
             return output
         else:
             return NextflowSerial._stringify(data_dict)
