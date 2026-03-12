@@ -152,7 +152,7 @@ class HpcCustomisation(Screen):
         for line in [r.strip() for r in raw.split("\n")]:
             if "=" not in line:
                 continue
-            k, v = [token.strip() for token in line.rstrip("=", 1)]
+            k, v = [token.strip() for token in line.split("=", 1)]
             config[k] = v
         return config
 
