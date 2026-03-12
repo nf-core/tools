@@ -133,7 +133,7 @@ class HpcCustomisation(Screen):
         return config[0]["PartitionName"]
 
     def _pbs_get_default_queue(self) -> str:
-        pbs_raw_config = subprocess.check_output(["qmgr", "-c", "\"list server\""]).decode("utf-8")
+        pbs_raw_config = subprocess.check_output(["qmgr", "-c", "list server"]).decode("utf-8")
         config = self._pbs_parse_config(pbs_raw_config)
         return config["default_queue"]
 
