@@ -265,7 +265,7 @@ class ConfigsCreateConfig(BaseModel):
         context = info.context
         if context and context["is_infrastructure"]:
             if v.strip() == "":
-                return v
+                raise ValueError("Cannot be empty.")
             try:
                 v_int = int(v.strip())
             except ValueError:
@@ -281,7 +281,7 @@ class ConfigsCreateConfig(BaseModel):
         context = info.context
         if context and context["is_infrastructure"]:
             if v.strip() == "":
-                return v
+                raise ValueError("Cannot be empty.")
             try:
                 vf = float(v.strip())
             except ValueError:
