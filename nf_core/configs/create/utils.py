@@ -114,6 +114,34 @@ class ConfigsCreateConfig(BaseModel):
             context=_init_context_var.get(),
         )
 
+    def serial(self):
+        """Returns a dictionary of the config"""
+        ret = {
+            "params": {
+                "config_profile_contact": self.config_profile_contact,
+                "config_profile_description": self.config_profile_description,
+                "config_profile_url": self.config_profile_url,
+                "igenomes_base": self.igenomes_base
+            },
+            "process": {
+                "executor": self.scheduler,
+                "queue": self.queue,
+                "resourceLimits": [
+                    {"cpus": self.default_process_ncpus},
+                    {"memory": self.default_process_memgb},
+                    {"time": self.default_process_hours}
+                ],
+                "scratch": self.scratch_dir,
+                "maxRetries": self.retries,
+            },
+            self.container_system: {
+                "enabled": True,
+                "cacheDir": self.cachedir,
+                "autoMounts": True
+            },
+            "cleanup": self.delete_work_dir
+        }
+
     @field_validator("general_config_name")
     @classmethod
     def notempty(cls, v: str) -> str:
