@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,7 +16,7 @@ from nf_core.modules.lint.module_containers import (
     lint_main_nf_container,
     lint_meta_yml_containers,
 )
-from nf_core.utils import unquote
+from nf_core.utils import CONTAINER_SYSTEMS, unquote
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
@@ -24,10 +25,30 @@ log = logging.getLogger(__name__)
 
 
 def meta_yml_containers(module: NFCoreComponent):
-    # TODO: Check if linting should be skiped?
-    skip_singularity = False
+    # Determine per-system skips from skip_nf_test.json
+    skip_file = Path(module.component_dir.parent.parent.parent, ".github", "skip_nf_test.json")
     skip_docker = False
+    skip_singularity = False
     skip_conda = False
+    module_prefix = "modules/nf-core/" + module.component_name
+    if skip_file.is_file():
+        with open(skip_file) as fh:
+            data = json.load(fh)
+        for system in CONTAINER_SYSTEMS + ["conda"]:
+            skip_module_paths = data.get(system, [])
+            if any(isinstance(x, str) and x == module_prefix for x in skip_module_paths):
+                if system == "docker":
+                    skip_docker = True
+                elif system == "singularity":
+                    skip_singularity = True
+                elif system == "conda":
+                    skip_conda = True
+        if skip_docker or skip_singularity or skip_conda:
+            log.debug(
+                f"Skip entries found for {module.component_name}: "
+                f"docker={skip_docker}, singularity={skip_singularity}, conda={skip_conda}"
+            )
+
     lint_meta_yml_containers(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
     lint_main_nf_container(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
     if not skip_conda:

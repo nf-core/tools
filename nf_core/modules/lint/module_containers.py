@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 
@@ -6,7 +5,7 @@ import requests
 
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, Platform, nextflow_inspect
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, nextflow_inspect
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +15,10 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
     containers = module.container
     lock_keys = ("lock file", "lock_file", "lockFile", "lockfile")
     # Protocol and hash checks for docker/singularity
+    skip_system = {"docker": skip_docker, "singularity": skip_singularity}
     for system in CONTAINER_SYSTEMS:
+        if skip_system.get(system, False):
+            continue
         # Check that the containers section contains entries for expected platforms
         sys_containers = containers.get(system, {})
         if not isinstance(sys_containers, dict):
@@ -151,93 +153,82 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
                 )
 
-    # Check conda/docker/sigularity linux/amd64 image exists (unless skipped)
-    skip_file = Path(module.component_dir.parent.parent.parent, ".github", "skip_nf_test.json")
-    skip_modules: set[str] = set()
-    if skip_file.is_file():
-        with open(skip_file) as fh:
-            data = json.load(fh)
-        skip: set[str] = set()
-        for syst in CONTAINER_SYSTEMS + ["conda"]:
-            value = data.get(syst, [])
-            skip.update({x for x in value if isinstance(x, str)})
-        module.passed.append(
-            (
-                "meta_yml",
-                "containers_section",
-                "Exceptions modules in nf-core/modules@master/.github/skip_nf_test.json ",
-                meta_path,
-            )
-        )
-        skip_modules = {x for x in skip if x.startswith(module.component_name + ":")}
-
+    # Check docker container images exist for all platforms (unless skipped)
     docker_containers = containers.get("docker", {})
-    if isinstance(docker_containers, dict):
-        docker_amd64: dict = next(
-            (
-                docker_containers[k]
-                for k in docker_containers
-                if Platform("linux_amd64") == k and isinstance(docker_containers[k], dict)
-            ),
-            {},
-        )
-    else:
-        docker_amd64 = {}
-    docker_amd64_name = docker_amd64.get("name") or docker_amd64.get("image") or docker_amd64.get("container") or ""
-    if not docker_amd64_name:
-        module.failed.append(
-            (
-                "meta_yml",
-                "containers_docker_amd64_exists",
-                "Docker linux/amd64 container name missing",
-                meta_path,
-            )
-        )
-    elif not skip_modules:
-        if docker_amd64_name.startswith("http://") or docker_amd64_name.startswith("https://"):
-            docker_url = docker_amd64_name
-        elif "://" in docker_amd64_name:
-            docker_url = ""
-        else:
-            docker_url = f"https://{docker_amd64_name}"
-        if not docker_url:
-            module.warned.append(
+    if not isinstance(docker_containers, dict):
+        docker_containers = {}
+    if not skip_docker:
+        for platform in CONTAINER_PLATFORMS:
+            docker_entry: dict = next(
                 (
-                    "meta_yml",
-                    "containers_docker_amd64_exists",
-                    "Docker linux/amd64 container has non-http protocol; existence check skipped",
-                    meta_path,
-                )
+                    docker_containers[k]
+                    for k in docker_containers
+                    if platform == k and isinstance(docker_containers[k], dict)
+                ),
+                {},
             )
-        else:
-            try:
-                response = requests.head(docker_url, stream=True, allow_redirects=True)
-                if response.ok:
-                    module.passed.append(
-                        ("meta_yml", "containers_docker_amd64_exists", "Docker linux/amd64 image exists", meta_path)
-                    )
-                else:
-                    module.failed.append(
-                        (
-                            "meta_yml",
-                            "containers_docker_amd64_exists",
-                            f"Docker linux/amd64 image not reachable (status {response.status_code})",
-                            meta_path,
-                        )
-                    )
-            except requests.RequestException as e:
-                module.warned.append(
+            docker_name = docker_entry.get("name") or docker_entry.get("image") or docker_entry.get("container") or ""
+            if not docker_name:
+                module.failed.append(
                     (
                         "meta_yml",
-                        "containers_docker_amd64_exists",
-                        f"Unable to connect to docker image URL: {e}",
+                        f"containers_docker_{platform}_exists",
+                        f"Docker {platform} container name missing",
                         meta_path,
                     )
                 )
+                continue
+            if docker_name.startswith("http://") or docker_name.startswith("https://"):
+                docker_url = docker_name
+            elif "://" in docker_name:
+                docker_url = ""
+            else:
+                docker_url = f"https://{docker_name}"
+            if not docker_url:
+                module.warned.append(
+                    (
+                        "meta_yml",
+                        f"containers_docker_{platform}_exists",
+                        f"Docker {platform} container has non-http protocol; existence check skipped",
+                        meta_path,
+                    )
+                )
+            else:
+                try:
+                    response = requests.head(docker_url, stream=True, allow_redirects=True)
+                    if response.ok:
+                        module.passed.append(
+                            (
+                                "meta_yml",
+                                f"containers_docker_{platform}_exists",
+                                f"Docker {platform} image exists",
+                                meta_path,
+                            )
+                        )
+                    else:
+                        module.failed.append(
+                            (
+                                "meta_yml",
+                                f"containers_docker_{platform}_exists",
+                                f"Docker {platform} image not reachable (status {response.status_code})",
+                                meta_path,
+                            )
+                        )
+                except requests.RequestException as e:
+                    module.warned.append(
+                        (
+                            "meta_yml",
+                            f"containers_docker_{platform}_exists",
+                            f"Unable to connect to docker image URL: {e}",
+                            meta_path,
+                        )
+                    )
 
     # Conda lock files and hash checks
     conda_containers = containers.get("conda", {})
-    if isinstance(conda_containers, dict) and conda_containers:
+    if skip_conda:
+        pass
+    elif isinstance(conda_containers, dict) and conda_containers:
         conda_platforms = [
             k for k in conda_containers if isinstance(conda_containers[k], dict) and k in CONTAINER_PLATFORMS
         ]
