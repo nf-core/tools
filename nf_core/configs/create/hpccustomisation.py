@@ -78,7 +78,7 @@ class HpcCustomisation(Screen):
             pass
         except subprocess.CalledProcessError:
             pass
-        return None
+        return 'local'
 
     def _get_queues(self, scheduler: Optional[str]) -> list[str]:
         """Get the available queues to use for the jobs"""
