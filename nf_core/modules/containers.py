@@ -15,7 +15,7 @@ from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint, meta_yml_containers
 from nf_core.modules.modules_utils import prompt_module_selection
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, Platform, run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -215,9 +215,10 @@ class ModuleContainers:
             return
 
         # Get docker image and strip all path components (registry/path/...)
-        docker_image = self.containers.get("docker", {}).get("linux/amd64", {}).get(self.IMAGE_KEY, "")
+        linux_amd64 = CONTAINER_PLATFORMS[0]
+        docker_image = self.containers.get("docker", {}).get(linux_amd64, {}).get(self.IMAGE_KEY, "")
         if not docker_image:
-            log.warning("No docker image found for linux/amd64")
+            log.warning(f"No docker image found for {linux_amd64}")
             return
 
         # Get just the image:tag (last component after /)
@@ -275,7 +276,12 @@ class ModuleContainers:
             for cs in CONTAINER_SYSTEMS:
                 for platform in CONTAINER_PLATFORMS:
                     fut = pool.submit(
-                        self.request_container, cs, platform, self.environment_yml, await_build, self.verbose
+                        self.request_container,
+                        cs,
+                        platform.replace("_", "/"),
+                        self.environment_yml,
+                        await_build,
+                        self.verbose,
                     )
                     build_tasks[fut] = (cs, platform)
 
@@ -316,8 +322,7 @@ class ModuleContainers:
                     progress_bar.update(task_id, advance=1)
                 continue
 
-            platform_safe = platform.replace("/", "-")
-            conda_lock_path = self.module_directory / ".conda-lock" / f"{platform_safe}-{build_id}.txt"
+            conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Store the local file path in containers
@@ -391,7 +396,7 @@ class ModuleContainers:
             str(conda_file.absolute()),
             "--freeze",
             "--platform",
-            platform,
+            platform.replace("_", "/"),
             "-o",
             "yaml",
             "--build-template",
@@ -554,7 +559,7 @@ class ModuleContainers:
             "warned": self.nfcore_component.warned,
         }
 
-    def list_containers(self) -> list[tuple[str, str, str]]:
+    def list_containers(self) -> list[tuple[str, Platform, str]]:
         """
         Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """
