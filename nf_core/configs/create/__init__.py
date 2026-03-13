@@ -12,6 +12,8 @@ from textual.widgets import Button
 from nf_core.configs.create import utils
 
 ## nf-core question page (screen) imports
+from nf_core.configs.create.autoprocesses import AutoProcesses
+from nf_core.configs.create.autoprocessquestion import AutoProcessQuestion
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.final import FinalScreen
@@ -58,6 +60,8 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "welcome": WelcomeScreen,
         "choose_type": ChooseConfigType,
         "nfcore_question": ChooseNfcoreConfig,
+        "auto_process": AutoProcesses,
+        "auto_process_question": AutoProcessQuestion,
         "basic_details": BasicDetails,
         "final": FinalScreen,
         "hpc_question": ChooseHpc,
