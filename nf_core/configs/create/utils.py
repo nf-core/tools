@@ -154,6 +154,17 @@ class ConfigsCreateConfig(BaseModel):
 
         return ret
 
+    def serial_pipeline(self):
+        """Returns a dictionary of the pipeline config"""
+        ret = {
+            "params": {
+                "config_profile_contact": self.config_profile_contact,
+                "config_profile_description": self.config_profile_description,
+                "config_profile_url": self.config_profile_url,
+                "igenomes_base": self.igenomes_cachedir
+            }
+        }
+
     @field_validator("general_config_name", "config_profile_description")
     @classmethod
     def notempty(cls, v: str) -> str:
