@@ -158,12 +158,28 @@ class ConfigsCreateConfig(BaseModel):
         """Returns a dictionary of the pipeline config"""
         ret = {
             "params": {
-                "config_profile_contact": self.config_profile_contact,
                 "config_profile_description": self.config_profile_description,
-                "config_profile_url": self.config_profile_url,
-                "igenomes_base": self.igenomes_cachedir
+            },
+            "process": {
+                "cpus": self.default_process_ncpus,
+                "memory": self.default_process_memgb,
+                "time": self.default_process_hours
             }
         }
+        
+        for named in self.named_process_resources.keys():
+            ret[named] = self.named_process_resources[named]
+
+        for labelled in self.labelled_process_resources.keys():
+            ret[labelled] = self.labelled_process_resources[labelled]
+        
+        return ret
+
+    def serial(self):
+        if self.general_config_type != "pipeline": 
+            return self.serial_hpc()
+        else:
+            return self.serial_pipeline()
 
     @field_validator("general_config_name", "config_profile_description")
     @classmethod
