@@ -12,7 +12,12 @@ workflow FETCH_BLAST_GENOMES {
 
     ch_taxid2genome = Channel.fromPath ( taxid2genome, checkIfExists: true )
         .splitCsv ( sep:'\t', header: true )
-        .map { row -> [ row.taxid, row.organism, file( row.genome, checkIfExists: true ) ] }
+        .map { row ->
+            def organism_reformat = row.organism
+                .replaceAll(/[^A-Za-z0-9]/, '-') // Replace special chars with dashes
+                .replaceAll(/-+/, '-') // Replace multiple dashes with single dash
+                .replaceAll(/^-+|-+$/, '')        // Remove leading and trailing dashes
+            [ row.taxid, organism_reformat, file( row.genome, checkIfExists: true ) ] }
 
     // Fetch genomes and reads with BLAST hits
     if ( !params.skip_blastn || !params.skip_blastx ) {

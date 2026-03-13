@@ -56,8 +56,9 @@
                 },
                 "taxid": {
                     "type": "string",
-                    "description": "The taxonomy ID identified in the classification results, or a list of taxIDs separated by spaces.",
-                    "fa_icon": "fas fa-list-alt"
+                    "format": "file-path",
+                    "description": "A file containing a list taxids and corresponding species name separated by tabs.",
+                    "fa_icon": "fa-file-alt"
                 },
                 "extract_kraken2_reads": {
                     "type": "boolean",
@@ -73,6 +74,13 @@
                     "type": "boolean",
                     "description": "Extract reads classified by DIAMOND according to taxonomic ID.",
                     "fa_icon": "fas fa-toggle-on"
+                },
+                "phages_taxid": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to a file containing a list of taxid taht should be excluded from downstream analysis",
+                    "help_text": "It could be a list of phages taxid, or contamination/reagent species.",
+                    "fa_icon": "fas fa-filter"
                 },
                 "evalue_threshold": {
                     "type": ["number", "integer"],

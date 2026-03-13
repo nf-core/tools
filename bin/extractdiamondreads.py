@@ -31,12 +31,12 @@ def extract_reads_by_taxid(tsv_path, taxid, evalue, fastq_paths, single_end, pre
     output_files = []
 
     if single_end:
-        output_file = f"{prefix}_{taxid}.extracted_diamond_reads.fastq"
+        output_file = f"{prefix}.extracted_diamond_reads.fastq"
         subprocess.run(["seqkit", "grep", "-f", read_id_file, fastq_paths[0], "-o", output_file], check=True)
         output_files.append(output_file)
     else:
-        output_file1 = f"{prefix}_{taxid}.extracted_diamond_read1.fastq"
-        output_file2 = f"{prefix}_{taxid}.extracted_diamond_read2.fastq"
+        output_file1 = f"{prefix}.extracted_diamond_read1.fastq"
+        output_file2 = f"{prefix}.extracted_diamond_read2.fastq"
         subprocess.run(["seqkit", "grep", "-f", read_id_file, fastq_paths[0], "-o", output_file1], check=True)
         subprocess.run(["seqkit", "grep", "-f", read_id_file, fastq_paths[1], "-o", output_file2], check=True)
         output_files.extend([output_file1, output_file2])
