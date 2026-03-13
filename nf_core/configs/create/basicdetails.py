@@ -99,6 +99,7 @@ class BasicDetails(Screen):
             this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)
             config[text_input.field_id] = this_input.value
+            config["is_infrastructure"] = self.parent.CONFIG_TYPE == "infrastructure"
             if not validation_result.is_valid:
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
