@@ -13,10 +13,11 @@ class NextflowSerial:
         self.data_dict[key] = value
 
     @staticmethod
-    def _stringify(data: Optional[Any]) -> str:
+    def _stringify(data: Optional[Any], quote: Optional[bool] = True) -> str:
         """Return nextflow compatible value"""
+        quote = "'"*quote
         if isinstance(data, str):
-            return f"'{data}'"
+            return f"{quote}{data}{quote}"
         if isinstance(data, bool):
             return 'true' if data else 'false'
         if isinstance(data, type(None)):
