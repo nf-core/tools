@@ -163,8 +163,8 @@ class ConfigsCreateConfig(BaseModel):
             },
             "process": {
                 "cpus": self.default_process_ncpus,
-                "memory": self.default_process_memgb,
-                "time": self.default_process_hours
+                "memory": self.default_process_memgb + "GB",
+                "time": self.default_process_hours + "h"
             }
         }
         
@@ -179,7 +179,7 @@ class ConfigsCreateConfig(BaseModel):
             if "executor" in self.named_process_resources[named].keys():
                 ret["process"][f"withName: '{named}'"]["executor"] = self.named_process_resources[named]["custom_process_queue"]
         for labelled in self.labelled_process_resources.keys():
-            ret["process"][f"withLabel: '{named}'"] = {
+            ret["process"][f"withLabel: '{labelled}'"] = {
                 "cpus": self.labelled_process_resources[labelled]["custom_process_ncpus"],
                 "memory": self.labelled_process_resources[labelled]["custom_process_memgb"],
                 "time": self.labelled_process_resources[labelled]["custom_process_hours"] + 'h'
