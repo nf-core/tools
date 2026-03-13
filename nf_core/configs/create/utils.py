@@ -185,9 +185,9 @@ class ConfigsCreateConfig(BaseModel):
                 "time": self.labelled_process_resources[labelled]["custom_process_hours"] + 'h'
             }
             if "custom_process_queue" in self.labelled_process_resources[labelled].keys():
-                ret["process"][f"withLabel: '{named}'"]["queue"] = self.labelled_process_resources[labelled]["custom_process_queue"]
+                ret["process"][f"withLabel: '{labelled}'"]["queue"] = self.labelled_process_resources[labelled]["custom_process_queue"]
             if "executor" in self.labelled_process_resources[labelled].keys():
-                ret["process"][f"withLabel: '{named}'"]["executor"] = self.labelled_process_resources[labelled]["executor"]
+                ret["process"][f"withLabel: '{labelled}'"]["executor"] = self.labelled_process_resources[labelled]["executor"]
         return ret
 
     def serial(self):
