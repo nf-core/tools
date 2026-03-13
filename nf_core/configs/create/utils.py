@@ -40,7 +40,7 @@ SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
 
-    is_infrastructure: Optional[bool] = False 
+    is_infrastructure: Optional[bool] = False
     """ Config variable to define if this is infrastructure or pipeline """
     config_pipeline_name: Optional[str] = None
     """ The name of the pipeline """
