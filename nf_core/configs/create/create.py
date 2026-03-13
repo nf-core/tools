@@ -357,7 +357,7 @@ class ConfigCreate:
         else:
             raise ValueError(f'Invalid config type: {self.config_type}')
 
-        serial_data = NextflowSerial.dumps(self.template_config.serial_hpc())
+        serial_data = NextflowSerial.dumps(self.template_config.serial())
 
         with open(filename, "w+") as file:
             ## Write params
