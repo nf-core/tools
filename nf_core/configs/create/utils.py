@@ -169,15 +169,29 @@ class ConfigsCreateConfig(BaseModel):
         }
         
         for named in self.named_process_resources.keys():
-            ret[named] = self.named_process_resources[named]
-
+            ret["process"][f"withName: '{named}'"] = {
+                "cpus": self.named_process_resources[named]["custom_process_ncpus"],
+                "memory": self.named_process_resources[named]["custom_process_memgb"],
+                "time": self.named_process_resources[named]["custom_process_hours"] + 'h'
+            }
+            if "custom_process_queue" in self.named_process_resources[named].keys():
+                ret["process"][f"withName: '{named}'"]["queue"] = self.named_process_resources[named]["custom_process_queue"]
+            if "executor" in self.named_process_resources[named].keys():
+                ret["process"][f"withName: '{named}'"]["executor"] = self.named_process_resources[named]["custom_process_queue"]
         for labelled in self.labelled_process_resources.keys():
-            ret[labelled] = self.labelled_process_resources[labelled]
-        
+            ret["process"][f"withLabel: '{named}'"] = {
+                "cpus": self.labelled_process_resources[labelled]["custom_process_ncpus"],
+                "memory": self.labelled_process_resources[labelled]["custom_process_memgb"],
+                "time": self.labelled_process_resources[labelled]["custom_process_hours"] + 'h'
+            }
+            if "custom_process_queue" in self.labelled_process_resources[labelled].keys():
+                ret["process"][f"withLabel: '{named}'"]["queue"] = self.labelled_process_resources[labelled]["custom_process_queue"]
+            if "executor" in self.labelled_process_resources[labelled].keys():
+                ret["process"][f"withLabel: '{named}'"]["executor"] = self.labelled_process_resources[labelled]["executor"]
         return ret
 
     def serial(self):
-        if self.general_config_type != "pipeline": 
+        if self.is_infrastructure: 
             return self.serial_hpc()
         else:
             return self.serial_pipeline()
