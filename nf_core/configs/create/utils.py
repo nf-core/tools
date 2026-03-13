@@ -35,12 +35,13 @@ INFRA_ISHPC_GLOBAL: bool = False
 _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 # Used by finalinfradetails as it already imports create.utils
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
+SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
 
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
 
-    general_config_type: Optional[str] = None
-    """ Config file type (infrastructure or pipeline) """
+    is_infrastructure: Optional[bool] = False
+    """ Config variable to define if this is infrastructure or pipeline """
     config_pipeline_name: Optional[str] = None
     """ The name of the pipeline """
     config_pipeline_path: Optional[str] = None
@@ -69,6 +70,8 @@ class ConfigsCreateConfig(BaseModel):
     """ Amount of memory for process """
     custom_process_hours: Optional[str] = None
     """ Walltime for process - hours """
+    custom_process_queue: Optional[str] = None
+    """ Custom queue for process to override default """
     named_process_resources: Optional[dict] = None
     """ Dictionary containing custom resource requirements for named processes """
     labelled_process_resources: Optional[dict] = None
@@ -91,8 +94,6 @@ class ConfigsCreateConfig(BaseModel):
     """ The maximum number of CPUs available to processes """
     time: Optional[str] = None
     """ The maximum walltime available to processes """
-    envvar: Optional[str] = None
-    """ An environment variable to hold a custom Nextflow container cachedir """
     cachedir: Optional[str] = None
     """ An environment variable to hold a custom Nextflow container cachedir """
     igenomes_cachedir: Optional[str] = None
@@ -320,8 +321,21 @@ class ConfigsCreateConfig(BaseModel):
             if not vf >= 0:
                 raise ValueError("Must be a non-negative number.")
         return v
+    
+    @field_validator("custom_process_queue")
+    @classmethod
+    def valid_custom_queue(cls, v: str, info: ValidationInfo) -> str:
+        """Check that a custom queue is either not set or is a valid string"""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
+            if ' ' in v.strip():
+                raise ValueError("Cannot contain spaces")
+        # TODO: Any other invalid characters?
+        return v
 
-    @field_validator("cpus", "memory", "retries")
+    @field_validator("cpus", "memory", "retries", "queue_size", "submit_rate")
     @classmethod
     def pos_integer_valid_infra(cls, v: str, info: ValidationInfo) -> str:
         """
@@ -359,6 +373,22 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a non-negative number.")
         return v
 
+    @field_validator("poll_interval")
+    @classmethod
+    def pos_float_valid_infra(cls, v: str, info: ValidationInfo) -> str:
+        """Check that numeric values are positive."""
+        context = info.context
+        if context and context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be empty.")
+            try:
+                vf = float(v.strip())
+            except ValueError:
+                raise ValueError("Must be a number.")
+            if not vf > 0:
+                raise ValueError("Must be a positive number.")
+        return v
+
     @field_validator("scheduler", "queue")
     @classmethod
     def nonemtpy_hpc_details(cls, v: str, info: ValidationInfo) -> str:
@@ -368,7 +398,19 @@ class ConfigsCreateConfig(BaseModel):
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
-    
+
+    @field_validator("scheduler")
+    @classmethod
+    def valid_scheduler(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the HPC scheduler is supported"""
+        context = info.context
+        if context and context["is_infrastructure"] and context["is_hpc"]:
+            if v.strip() not in SUPPORTED_SCHEDULERS:
+                raise ValueError(
+                    f"Must be one of: {', '.join(SUPPORTED_SCHEDULERS)}"
+                )
+        return v
+
     @field_validator("cachedir", "scratch_dir")
     @classmethod
     def is_path_ondisk(cls, v: str, info: ValidationInfo) -> str:
@@ -425,7 +467,22 @@ class ConfigsCreateConfig(BaseModel):
     def module_system(cls, v: str, info: ValidationInfo) -> str:
         #TODO: placeholder validator until functionality is finished
         return v
-    
+
+    @field_validator("queue_stat_interval")
+    @classmethod
+    def pos_hpc_interval_valid(cls, v: str, info: ValidationInfo) -> str:
+        """Check that HPC interval values are positive."""
+        context = info.context
+        if context and context["is_infrastructure"] and context["is_hpc"]:
+            if v.strip() == "":
+                raise ValueError("Must not be empty.")
+            try:
+                vf = float(v.strip())
+            except ValueError:
+                raise ValueError("Must be a number.")
+            if not vf > 0:
+                raise ValueError("Must be a positive number.")
+        return v
 
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
