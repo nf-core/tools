@@ -25,7 +25,7 @@ class NextflowSerial:
         return str(data) # Fallback on the Python str function if no matches
     
     @staticmethod
-    def dumps(data_dict: Optional[Any], tab_indent: Optional[int], current_indent: Optional[int], end: Optional[str] = '\n', indent_start: Optional[bool] = True, one_line: Optional[bool] = False) -> str:
+    def dumps(data_dict: Optional[Any], tab_indent: Optional[int] = 4, current_indent: Optional[int] = 0, end: Optional[str] = '\n', indent_start: Optional[bool] = True, one_line: Optional[bool] = False) -> str:
         """Recursive function to create configuration file"""
         output = ""
         if isinstance(data_dict, dict):
