@@ -77,7 +77,7 @@ class HpcCustomisation(Screen):
             pass
         try:
             subprocess.run(["qstat", "--version"])
-            return "pbs"
+            return "pbspro"
         except FileNotFoundError:
             pass
         except subprocess.CalledProcessError:
@@ -100,7 +100,7 @@ class HpcCustomisation(Screen):
                 return [i.strip().replace("*", "") for i in queues.split("\n") if i]
             except subprocess.CalledProcessError:
                 pass
-        elif scheduler == "pbs":
+        elif scheduler == "pbspro":
             try:
                 queues = json.loads(subprocess.check_output(["qstat", "-Q", "-f", "-F", "json"]).decode("utf-8"))
                 return list(queues["Queue"].keys())
@@ -121,7 +121,7 @@ class HpcCustomisation(Screen):
                 return self._slurm_get_default_queue()
             except FileNotFoundError:
                 pass
-        elif scheduler == "pbs":
+        elif scheduler == "pbspro":
             try:
                 return self._pbs_get_default_queue()
             except subprocess.CalledProcessError:
