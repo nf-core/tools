@@ -131,18 +131,18 @@ class ConfigsCreateConfig(BaseModel):
                 "config_profile_contact": self.config_profile_contact,
                 "config_profile_description": self.config_profile_description,
                 "config_profile_url": self.config_profile_url,
-                "igenomes_base": self.igenomes_base
+                "igenomes_base": self.igenomes_cachedir
             },
             "process": {
                 "executor": self.scheduler,
                 "queue": self.queue,
                 "resourceLimits": [
-                    {"cpus": self.default_process_ncpus},
-                    {"memory": self.default_process_memgb},
-                    {"time": self.default_process_hours}
+                    {"cpus": int(self.cpus)},
+                    {"memory": self.memory + "GB"},
+                    {"time": str(float(self.time)) + "h"}
                 ],
                 "scratch": self.scratch_dir,
-                "maxRetries": self.retries,
+                "maxRetries": int(self.retries),
             },
             self.container_system: {
                 "enabled": True,
@@ -151,6 +151,8 @@ class ConfigsCreateConfig(BaseModel):
             },
             "cleanup": self.delete_work_dir
         }
+
+        return ret
 
     @field_validator("general_config_name", "config_profile_description")
     @classmethod
