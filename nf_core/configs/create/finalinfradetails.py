@@ -131,7 +131,7 @@ class FinalInfraDetails(Screen):
         )
 
     def _get_container_systems(self) -> list[str]:
-        """Get the available container systems to use for software handling."""
+        """Get the available container systems to use for software handling. """
         module_system_used = self._detect_module_system()
         container_systems = SUPPORTED_CONTAINERS
         available_systems = []
