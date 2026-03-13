@@ -70,6 +70,8 @@ class ConfigsCreateConfig(BaseModel):
     """ Amount of memory for process """
     custom_process_hours: Optional[str] = None
     """ Walltime for process - hours """
+    custom_process_queue: Optional[str] = None
+    """ Custom queue for process to override default """
     named_process_resources: Optional[dict] = None
     """ Dictionary containing custom resource requirements for named processes """
     labelled_process_resources: Optional[dict] = None
@@ -261,6 +263,19 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a number.")
             if not vf >= 0:
                 raise ValueError("Must be a non-negative number.")
+        return v
+    
+    @field_validator("custom_process_queue")
+    @classmethod
+    def valid_custom_queue(cls, v: str, info: ValidationInfo) -> str:
+        """Check that a custom queue is either not set or is a valid string"""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
+            if ' ' in v.strip():
+                raise ValueError("Cannot contain spaces")
+        # TODO: Any other invalid characters?
         return v
 
     @field_validator("cpus", "memory", "retries", "queue_size", "submit_rate")
