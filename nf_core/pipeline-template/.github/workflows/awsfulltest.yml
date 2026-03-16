@@ -33,14 +33,34 @@ jobs:
           compute_env: ${{ vars.TOWER_COMPUTE_ENV }}
           revision: ${{ steps.revision.outputs.revision }}
           workdir: s3://${{ vars.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ steps.revision.outputs.revision }}{% endraw %}
+          nextflow_config: |
+            plugins {
+              id 'nf-slack@0.5.0'
+            }
+            slack {
+              enabled = true
+              bot {
+                token = '{% raw %}${{ secrets.NFSLACK_BOT_TOKEN }}{% endraw %}'
+                # TODO nf-core: Set the Slack channel for CI notifications
+                channel = '{{ short_name }}'
+              }
+              onStart {
+                enabled = false
+              }
+              onComplete {
+                message = ':white_check_mark: *{{ short_name }}/{% raw %}${{ matrix.profile }}{% endraw %}* completed successfully! :tada:'
+              }
+              onError {
+                message = ':x: *{{ short_name }}/{% raw %}${{ matrix.profile }}{% endraw %}* failed :crying_cat_face:'
+              }
+            }
           parameters: |
             {
-              "hook_url": "{% raw %}${{ secrets.MEGATESTS_ALERTS_SLACK_HOOK_URL }}{% endraw %}",
               "outdir": "s3://{% raw %}${{ vars.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ steps.revision.outputs.revision }}{% endraw %}"
             }
           profiles: test_full
 
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: Seqera Platform debug log file
           path: |

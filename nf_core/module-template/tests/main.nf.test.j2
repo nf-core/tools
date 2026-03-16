@@ -42,7 +42,7 @@ nextflow_process {
             assertAll(
                 { assert snapshot(
                     process.out,
-                    path(process.out.versions[0]).yaml
+                    process.out.findAll { key, val -> key.startsWith('versions') }
                 ).match() }
                 //TODO nf-core: Add all required assertions to verify the test output.
                 // See https://nf-co.re/docs/contributing/tutorials/nf-test_assertions for more information and examples.
@@ -75,10 +75,7 @@ nextflow_process {
         then {
             assert process.success
             assertAll(
-                { assert snapshot(
-                    process.out,
-                    path(process.out.versions[0]).yaml
-                ).match() }
+                { assert snapshot(process.out).match() }
             )
         }
 

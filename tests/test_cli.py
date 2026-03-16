@@ -296,6 +296,7 @@ class TestCli(unittest.TestCase):
             params["markdown"],
             params["json"],
             "hide-progress" in params,
+            False,  # plain_text
         )
 
     def test_lint_no_dir(self):

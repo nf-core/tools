@@ -13,8 +13,8 @@ from nf_core.modules.modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 # Set yaml options for meta.yml files
-ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
-    lambda x, y: True
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
+    True
 )  # Fix to not print aliases. https://stackoverflow.com/a/64717341
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
@@ -162,12 +162,17 @@ def get_components_to_install(
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
                 if link.startswith("../../../"):
-                    name_split = name.lower().split("_")
-                    component_name = "/".join(name_split)
-                    component_dict: dict[str, str] = {
-                        "name": component_name,
-                    }
-                    modules[component_name] = component_dict
+                    if "../subworkflows/" in link:
+                        component_name = name.lower()
+                        component_dict: dict[str, str] = {"name": component_name}
+                        subworkflows[component_name] = component_dict
+                    else:
+                        name_split = name.lower().split("_")
+                        component_name = "/".join(name_split)
+                        component_dict = {
+                            "name": component_name,
+                        }
+                        modules[component_name] = component_dict
                 elif link.startswith("../"):
                     component_name = name.lower()
                     component_dict = {"name": component_name}

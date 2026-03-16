@@ -823,7 +823,7 @@ class ModulesJson:
             )
         self.modules_json["repos"][repo_url][component_type][install_dir][component_name]["patch"] = str(patch_filename)
         if write_file:
-            self.dump()
+            self.dump(run_prettier=True)
 
     def remove_patch_entry(self, module_name, repo_url, install_dir, write_file=True):
         if self.modules_json is None:
@@ -835,7 +835,7 @@ class ModulesJson:
         except KeyError:
             log.warning("No patch entry in 'modules.json' to remove")
         if write_file:
-            self.dump()
+            self.dump(run_prettier=True)
 
     def get_patch_fn(self, component_type, component_name, repo_url, install_dir):
         """

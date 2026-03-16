@@ -210,7 +210,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                     (
                                         "subworkflow_tests",
                                         "test_snap_versions",
-                                        "versions not found in snapshot file",
+                                        "versions not found in snapshot file. Can be ignored if the subworkflow is using topic channels",
                                         snap_file,
                                     )
                                 )
