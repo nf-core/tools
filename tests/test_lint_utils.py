@@ -63,3 +63,18 @@ def test_run_prettier_on_syntax_error_file(syntax_error_json, caplog):
     nf_core.pipelines.lint_utils.run_prettier_on_file(syntax_error_json)
     expected_critical_log = "SyntaxError: Unexpected token (1:10)"
     assert expected_critical_log in caplog.text
+
+
+def test_run_prettier_on_file_list(temp_git_repo):
+    """Test that run_prettier_on_file handles a list of files (batched execution)."""
+    tmp_git_dir, repo = temp_git_repo
+    files = []
+    for i in range(3):
+        file = tmp_git_dir / f"file_{i}.json"
+        file.write_text(JSON_FORMATTED)
+        repo.git.add(file)
+        files.append(str(file))
+    # Should not raise (previously would raise OSError with large lists)
+    nf_core.pipelines.lint_utils.run_prettier_on_file(files)
+    for f in files:
+        assert open(f).read() == JSON_FORMATTED
