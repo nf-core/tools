@@ -138,11 +138,30 @@ def check_git_repo() -> bool:
         return False
 
 
+def _run_prettier_once(args: list[str], file_label: str) -> None:
+    """Run a single pre-commit prettier invocation and handle errors."""
+    try:
+        proc = subprocess.run(args, capture_output=True, check=True)
+        log.debug(f"{proc.stdout.decode()}")
+    except subprocess.CalledProcessError as e:
+        if ": SyntaxError: " in e.stdout.decode():
+            log.critical(f"Can't format {file_label} because it has a syntax error.\n{e.stdout.decode()}")
+        elif "files were modified by this hook" in e.stdout.decode():
+            all_lines = [line for line in e.stdout.decode().split("\n")]
+            files = "\n".join(all_lines[3:])
+            log.debug(f"The following files were modified by prettier:\n {files}")
+        else:
+            log.warning(
+                "There was an error running the prettier pre-commit hook.\n"
+                f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+            )
+
+
 def run_prettier_on_file(file: Path | str | list[str]) -> None:
     """Run the pre-commit hook prettier on a file.
 
     Args:
-        file (Path | str): A file identifier as a string or pathlib.Path.
+        file (Path | str | list[str]): A file identifier or list of file paths.
 
     Warns:
         If Prettier is not installed, a warning is logged.
@@ -150,31 +169,23 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
 
     is_git = check_git_repo()
 
-    nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
-    args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
-    if isinstance(file, list):
-        args.extend(["--files", *file])
-    else:
-        args.extend(["--files", str(file)])
-
-    if is_git:
-        try:
-            proc = subprocess.run(args, capture_output=True, check=True)
-            log.debug(f"{proc.stdout.decode()}")
-        except subprocess.CalledProcessError as e:
-            if ": SyntaxError: " in e.stdout.decode():
-                log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
-            elif "files were modified by this hook" in e.stdout.decode():
-                all_lines = [line for line in e.stdout.decode().split("\n")]
-                files = "\n".join(all_lines[3:])
-                log.debug(f"The following files were modified by prettier:\n {files}")
-            else:
-                log.warning(
-                    "There was an error running the prettier pre-commit hook.\n"
-                    f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
-                )
-    else:
+    if not is_git:
         log.debug("Not in a git repository, skipping pre-commit hook.")
+        return
+
+    nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
+    base_args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+
+    if isinstance(file, list):
+        # Run in batches to avoid exceeding OS argument length limits (macOS ARG_MAX)
+        batch_size = 100
+        for i in range(0, len(file), batch_size):
+            batch = file[i : i + batch_size]
+            args = [*base_args, "--files", *batch]
+            _run_prettier_once(args, f"batch {i // batch_size + 1}")
+    else:
+        args = [*base_args, "--files", str(file)]
+        _run_prettier_once(args, str(file))
 
 
 def dump_json_with_prettier(file_name, file_content):

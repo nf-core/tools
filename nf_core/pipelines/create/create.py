@@ -397,9 +397,14 @@ class PipelineCreate:
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
 
-        # Run prettier on files for pipelines sync
+        # Run prettier on files for pipelines sync, excluding .git and work dirs
         log.debug("Running prettier on pipeline files")
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+        excluded_dirs = {".git", "work", ".nf-test"}
+        run_prettier_on_file([
+            str(f)
+            for f in self.outdir.glob("**/*")
+            if f.is_file() and not any(part in excluded_dirs for part in f.relative_to(self.outdir).parts)
+        ])
 
     def fix_linting(self):
         """
