@@ -48,6 +48,10 @@
 - fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 - allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
 
+### Pipelines
+
+- Fix `[Errno 7] Argument list too long: 'pre-commit'` error during `pipelines sync` on macOS by batching prettier file args and excluding `.git/`, `work/`, and `.nf-test/` from the glob ([#4123](https://github.com/nf-core/tools/pull/4123))
+
 ### Modules
 
 - Template: have a `main:` section in workflow even when modules are skipped ([#4043](https://github.com/nf-core/tools/pull/4043))
