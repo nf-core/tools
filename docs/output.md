@@ -65,11 +65,11 @@ Retrieve the reads of all viral TaxIDs predicted by classifiers or extracts read
 
 - `extracted_reads/`
   - `centrifuge/`
-    - `<sample_id>_<species>.extracted_centrifuge.fa` : Reads assigned to certain TaxID by `Centrifuge`.
+    - `<sample_id>_<species>.extracted_centrifuge_read*.fa` : Reads assigned to certain TaxID by `Centrifuge`.
   - `diamond/`
-    - `<sample_id>_<species>.extracted_diamond.fa` : Reads assigned to certain TaxID by `DIAMOND`.
+    - `<sample_id>_<species>.extracted_diamond_read*.fa` : Reads assigned to certain TaxID by `DIAMOND`.
   - `kraken2/`
-    - `<sample_id>_<species>.extracted_kraken2.fa` : Reads assigned to certain TaxID by `Kraken2`.
+    - `<sample_id>_<species>.extracted_kraken2_read*.fa` : Reads assigned to certain TaxID by `Kraken2`.
 
 </details>
 
