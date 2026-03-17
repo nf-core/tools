@@ -400,11 +400,13 @@ class PipelineCreate:
         # Run prettier on files for pipelines sync, excluding .git and work dirs
         log.debug("Running prettier on pipeline files")
         excluded_dirs = {".git", "work", ".nf-test"}
-        run_prettier_on_file([
-            str(f)
-            for f in self.outdir.glob("**/*")
-            if f.is_file() and not any(part in excluded_dirs for part in f.relative_to(self.outdir).parts)
-        ])
+        run_prettier_on_file(
+            [
+                str(f)
+                for f in self.outdir.glob("**/*")
+                if f.is_file() and not any(part in excluded_dirs for part in f.relative_to(self.outdir).parts)
+            ]
+        )
 
     def fix_linting(self):
         """
