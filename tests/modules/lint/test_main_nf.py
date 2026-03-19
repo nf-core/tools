@@ -138,15 +138,15 @@ class TestMainNfLinting(TestModules):
         """Test that main_nf version emit and topics check works correctly"""
 
         self.mods_install_gitlab_nftest.install("fastqc")
-        # Lint a module installed from the gitlab test branch; gitlab test modules
+        # Lint a module installed from the gitlab test branch; gitlab test modules that is known to have versions YAML in main.nf
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="fastqc")
-        assert len(module_lint.failed) == 0
-        assert len(module_lint.passed) > 0
-
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
             f"Expected warning about missing version topic, got {[w.message for w in module_lint.warned]}"
         )
+        assert len(module_lint.passed) > 0
+
 
         # Lint a module known to have topics as output in main.nf
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
