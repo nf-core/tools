@@ -147,7 +147,6 @@ class TestMainNfLinting(TestModules):
         )
         assert len(module_lint.passed) > 0
 
-
         # Lint a module known to have topics as output in main.nf
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="bamstats/generalstats")
