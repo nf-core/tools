@@ -254,6 +254,32 @@ def main_nf(
     return inputs, emits
 
 
+def is_valid_meta_key(key):
+    """
+    Check if meta key is valid
+    """
+    permitted = {"meta.id", "meta.single_end", "meta.strandedness"}
+    return key in permitted
+
+
+def is_valid_ext_key(key):
+    """
+    Check if ext key is valid
+    """
+    permitted = {"ext.args", "ext.prefix", "ext.use_gpu"}
+
+    if key in permitted:
+        return True
+
+    # Check ext.args{N} where N >= 2
+    match = re.match(r"^ext\.args(\d+)$", key)
+    if match:
+        num = int(match.group(1))
+        return num >= 2
+
+    return False
+
+
 def check_script_section(self, lines):
     """
     Lint the script section
@@ -264,11 +290,37 @@ def check_script_section(self, lines):
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
-            self.passed.append(("main_nf", "main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
+            self.passed.append(
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' specified in script section",
+                    self.main_nf,
+                )
+            )
         else:
             self.failed.append(
-                ("main_nf", "main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf)
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' unspecified in script section",
+                    self.main_nf,
+                )
             )
+        # Validate meta keys
+        meta_keys = re.findall(r"meta\.[\w.]+(?!\()", script)
+        invalid_meta_keys = [k for k in meta_keys if not is_valid_meta_key(k)]
+        if not invalid_meta_keys:
+            self.passed.append(("main_nf","main_nf_meta_key","All 'meta' keys are valid", self.main_nf))
+        else:
+            self.failed.append(("main_nf","main_nf_meta_key",f"Invalid 'meta' keys detected: {', '.join(set(invalid_meta_keys))}", self.main_nf))
+    # Validate ext keys
+    ext_keys = re.findall(r"ext\.[\w.]+(?!\()", script)
+    invalid_ext_keys = [k for k in ext_keys if not is_valid_ext_key(k)]
+    if not invalid_ext_keys:
+        self.passed.append(("main_nf","main_nf_meta_key","All 'ext' keys are valid", self.main_nf))
+    else:
+        self.failed.append(("main_nf","main_nf_meta_key",f"Invalid 'ext' keys detected: {', '.join(set(invalid_ext_keys))}", self.main_nf))
 
 
 def check_when_section(self, lines):
