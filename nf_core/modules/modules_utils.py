@@ -31,9 +31,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
         path = urlparse(remote_url).path
 
     # Remove the file extension from the path
-    path = str(Path(path).with_suffix(""))
-
-    return path
+    return str(Path(path).with_suffix(""))
 
 
 def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[str], list[NFCoreComponent]]:
