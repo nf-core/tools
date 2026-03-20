@@ -24,7 +24,11 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def meta_yml_containers(module: NFCoreComponent):
+def meta_yml_containers(module: NFCoreComponent) -> None:
+    """
+    Lints the container information in the meta.yml file and the module's main.nf file.
+    Respects per-system skips from `skip_nf_test.json`.
+    """
     # Determine per-system skips from skip_nf_test.json
     skip_file = Path(module.component_dir.parent.parent.parent, ".github", "skip_nf_test.json")
     skip_docker = False
@@ -363,7 +367,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
 
-        _ = meta_yml_containers(module)
+        meta_yml_containers(module)
 
 
 def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
