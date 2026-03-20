@@ -5,6 +5,7 @@ import shutil
 from collections.abc import Iterable
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
+from typing import cast
 
 import git
 from git.exc import GitCommandError
@@ -212,8 +213,7 @@ class SyncedRepo:
         """
         Verifies the active branch conforms to the correct directory structure
         """
-        assert self.local_repo_dir is not None, "Repository must be initialized before verifying branch"
-        local_repo_path = Path(self.local_repo_dir)
+        local_repo_path = Path(cast(str, self.local_repo_dir))
 
         if not Path(local_repo_path, "modules").exists():
             err_str = f"Repository '{self.remote_url}' ({self.branch}) does not contain the 'modules/' directory"
