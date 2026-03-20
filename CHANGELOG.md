@@ -54,6 +54,7 @@
 - Template: have a `main:` section in workflow even when modules are skipped ([#4043](https://github.com/nf-core/tools/pull/4043))
 - Always prettify modules.json ([#4063](https://github.com/nf-core/tools/pull/4063))
 - Update nf-test module template to topics ([#4113](https://github.com/nf-core/tools/pull/4113))
+- switch to gitlab module to test with old version syntax ([#4126](https://github.com/nf-core/tools/pull/4126))
 
 ### Subworkflows
 
@@ -68,6 +69,7 @@
     - [nf-slack](https://github.com/seqeralabs/nf-slack)
     - [nf-teams](https://github.com/nvnieuwk/nf-teams)
 - Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
+- Fix nf-core tools version to what is specified in `.nf-core.yml` for the GitHub workflow `download_pipeline.yml` ([#4124](https://github.com/nf-core/tools/pull/4124)).
 
 #### Version updates
 
@@ -234,6 +236,7 @@
 - Update nextflow.config to use environment variable for `hook_url` ([#3756](https://github.com/nf-core/tools/pull/3756))
 - Update nf-test to 0.9.3 ([#3781](https://github.com/nf-core/tools/pull/3781))
 - update release checklist to battle test pipeline template more ([#3788](https://github.com/nf-core/tools/pull/3788))
+- add a fallback for new outputdir parameter ([#3798](https://github.com/nf-core/tools/pull/3798))
 - update pipeline template subworkflows ([#3826](https://github.com/nf-core/tools/pull/3826))
 - fix AWS tests launch action ([#3827](https://github.com/nf-core/tools/pull/3827))
 
