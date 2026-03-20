@@ -258,7 +258,7 @@ def is_valid_meta_key(key):
     """
     Check if meta key is valid
     """
-    permitted = {"meta.id", "meta.single_end", "meta.strandedness"}
+    permitted = {"meta.id", "meta.single_end"}
     return key in permitted
 
 
