@@ -311,16 +311,30 @@ def check_script_section(self, lines):
         meta_keys = re.findall(r"meta\.[\w.]+(?!\()", script)
         invalid_meta_keys = [k for k in meta_keys if not is_valid_meta_key(k)]
         if not invalid_meta_keys:
-            self.passed.append(("main_nf","main_nf_meta_key","All 'meta' keys are valid", self.main_nf))
+            self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
         else:
-            self.failed.append(("main_nf","main_nf_meta_key",f"Invalid 'meta' keys detected: {', '.join(set(invalid_meta_keys))}", self.main_nf))
+            self.failed.append(
+                (
+                    "main_nf",
+                    "main_nf_meta_key",
+                    f"Invalid 'meta' keys detected: {', '.join(set(invalid_meta_keys))}",
+                    self.main_nf,
+                )
+            )
     # Validate ext keys
     ext_keys = re.findall(r"ext\.[\w.]+(?!\()", script)
     invalid_ext_keys = [k for k in ext_keys if not is_valid_ext_key(k)]
     if not invalid_ext_keys:
-        self.passed.append(("main_nf","main_nf_meta_key","All 'ext' keys are valid", self.main_nf))
+        self.passed.append(("main_nf", "main_nf_meta_key", "All 'ext' keys are valid", self.main_nf))
     else:
-        self.failed.append(("main_nf","main_nf_meta_key",f"Invalid 'ext' keys detected: {', '.join(set(invalid_ext_keys))}", self.main_nf))
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_meta_key",
+                f"Invalid 'ext' keys detected: {', '.join(set(invalid_ext_keys))}",
+                self.main_nf,
+            )
+        )
 
 
 def check_when_section(self, lines):
