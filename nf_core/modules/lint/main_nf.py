@@ -259,6 +259,8 @@ def is_valid_meta_key(key):
     Check if meta key is valid
     """
     permitted = {"meta.id", "meta.single_end"}
+    if key.endswith(")"):
+        return True
     return key in permitted
 
 
@@ -308,7 +310,7 @@ def check_script_section(self, lines):
                 )
             )
     # Validate meta keys
-    meta_keys = re.findall(r"meta\.[\w.]+(?!\()", script)
+    meta_keys = re.findall(r"meta\d*\.[\w.\(\)]+", script)
     invalid_meta_keys = [k for k in meta_keys if not is_valid_meta_key(k)]
     if not invalid_meta_keys:
         self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
