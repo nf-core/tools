@@ -259,8 +259,11 @@ def is_valid_meta_key(key):
     Check if meta key is valid
     """
     permitted = {"meta.id", "meta.single_end"}
-    if key.endswith(")"):
+
+    # Check for function calls e.g. meta.sorted(), meta.subMap(['id'])
+    if "(" in key:
         return True
+
     return key in permitted
 
 
