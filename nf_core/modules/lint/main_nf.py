@@ -327,7 +327,7 @@ def check_script_section(self, lines):
             )
         )
     # Validate ext keys
-    ext_keys = re.findall(r"ext\.[\w.]+(?!\()", script)
+    ext_keys = re.findall(r"ext\.[\w.]+", script)
     invalid_ext_keys = [k for k in ext_keys if not is_valid_ext_key(k)]
     if not invalid_ext_keys:
         self.passed.append(("main_nf", "main_nf_meta_key", "All 'ext' keys are valid", self.main_nf))
