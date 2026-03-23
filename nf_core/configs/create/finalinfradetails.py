@@ -6,7 +6,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
+from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch, Select
 
 from nf_core.configs.create.utils import (
     TextInput,
@@ -15,6 +15,7 @@ from nf_core.configs.create.utils import (
     SUPPORTED_CONTAINERS
 )
 from nf_core.utils import add_hide_class, remove_hide_class
+
 
 markdown_intro = """
 # Configure the options for your infrastructure config
@@ -36,15 +37,16 @@ class FinalInfraDetails(Screen):
         yield Markdown(markdown_intro)
         self.container_system_list = self._get_container_systems()
         self.container_system = self.container_system_list[0] if self.container_system_list else None
-
-        # TODO: convert to dropdown with contents self.container_system_list
-        yield TextInput(
-            "container_system",
-            "Container system",
-            "What container or software system will you use to run your pipeline?",
-            classes="",
-            suggestions=self.container_system_list,
-        )
+        
+        self.container_system_list = SUPPORTED_CONTAINERS
+        self.container_system = self.container_system_list[0]  # default
+        
+        yield Select(
+           [(c, c) for c in self.container_system_list],
+            prompt="Select container system",
+            id="container_system",
+            value=self.container_system, #sets default
+    )
         yield Markdown("## Maximum resources")
         with Horizontal():
             yield TextInput(
@@ -129,7 +131,7 @@ class FinalInfraDetails(Screen):
         )
 
     def _get_container_systems(self) -> list[str]:
-        """Get the available container systems to use for software handling."""
+        """Get the available container systems to use for software handling. """
         module_system_used = self._detect_module_system()
         container_systems = SUPPORTED_CONTAINERS
         available_systems = []
@@ -171,13 +173,10 @@ class FinalInfraDetails(Screen):
                 return set_dir
         return None
 
-    @on(Input.Changed)
-    def get_container_system(self) -> None:
-        """Get the container system from the input."""
-        self.container_system = None
-        text_input = self.query_one("#container_system")
-        this_input = text_input.query_one(Input)
-        self.container_system = this_input.value
+    @on(Select.Changed, "#container_system")
+    def get_container_system(self,event: Select.Changed) -> None:
+        """Get the container system from dropdown."""
+        self.container_system = event.value
         cachedir_text_input = self.query_one("#cachedir")
         cachedir_input = cachedir_text_input.query_one(Input)
         if self.container_system:
@@ -192,6 +191,11 @@ class FinalInfraDetails(Screen):
     def on_finish_button(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         new_config = {}
+
+        #collect dropdown value
+        select = self.query_one("#container_system", Select)
+        new_config['container_system'] = select.value
+
         for text_input in self.query("TextInput"):
             if "hide" in text_input.classes:
                 continue
@@ -202,9 +206,13 @@ class FinalInfraDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
+
+        # collect switch value
         delete_work_switch = self.query_one("#toggle-delete-work")
         new_config['delete_work_dir'] = delete_work_switch.value
         new_config['module'] = self._detect_module_system()
+        
+        # Validate and update the config
         try:
             with init_context(self.parent.get_context()):
                 # First, validate the new config data
