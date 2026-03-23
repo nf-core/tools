@@ -25,15 +25,17 @@ class NextflowSerial:
         return str(data) # Fallback on the Python str function if no matches
     
     @staticmethod
-    def dumps(data_dict: Optional[Any], tab_indent: Optional[int] = 4, current_indent: Optional[int] = 0, end: Optional[str] = '\n', indent_start: Optional[bool] = True, one_line: Optional[bool] = False) -> str:
+    def dumps(data_dict: Optional[Any], tab_indent: Optional[int] = 4, current_indent: Optional[int] = 0, end: Optional[str] = '\n', indent_start: Optional[bool] = True, one_line: Optional[bool] = False, drop_null: Optional[bool] = False) -> str:
         """Recursive function to create configuration file"""
         output = ""
         if isinstance(data_dict, dict):
             for k, v in data_dict.items():
+                if drop_null and v is None:
+                    continue
                 if isinstance(v, dict):
                     output += " "*current_indent*int(indent_start)
                     output += f"{k} {{\n"
-                    output += NextflowSerial.dumps(v, tab_indent = tab_indent, current_indent = current_indent + tab_indent, end = end)
+                    output += NextflowSerial.dumps(v, tab_indent = tab_indent, current_indent = current_indent + tab_indent, end = end, drop_null = drop_null)
                     output += " "*current_indent
                     output += f"}}{end}"
                 elif isinstance(v, list):
@@ -43,9 +45,9 @@ class NextflowSerial:
                     for i in v:
                         oneliner = bool(len(i.keys()) != 1)
                         if isinstance(i, dict):
-                            vi.append("{"*oneliner + NextflowSerial.dumps(i, tab_indent, current_indent=0, end = '', indent_start = False, one_line = not oneliner) + "}"*oneliner)
+                            vi.append("{"*oneliner + NextflowSerial.dumps(i, tab_indent, current_indent=0, end = '', indent_start = False, one_line = not oneliner, drop_null = drop_null) + "}"*oneliner)
                             continue
-                        vi.append(NextflowSerial.dumps(i, tab_indent, current_indent=0, end = end))
+                        vi.append(NextflowSerial.dumps(i, tab_indent, current_indent=0, end = end, drop_null = drop_null))
                     output += ", ".join(vi)
                     output += f"]{end}"
                 else:
