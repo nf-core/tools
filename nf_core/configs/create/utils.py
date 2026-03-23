@@ -125,6 +125,100 @@ class ConfigsCreateConfig(BaseModel):
             context=_init_context_var.get(),
         )
 
+    def serial_params(self):
+        # Determine contact info
+        contact = ''
+        if self.config_profile_contact:
+            contact = self.config_profile_contact
+            if self.config_profile_handle:
+                contact += f' ({self.config_profile_handle})'
+        elif self.config_profile_handle:
+            contact = self.config_profile_handle
+        else:
+            contact = None
+        ret = {
+            "params": {
+                "config_profile_contact": contact,
+                "config_profile_description": self.config_profile_description or None,
+                "config_profile_url": self.config_profile_url or None,
+                "igenomes_base": self.igenomes_cachedir or None,
+            },
+        }
+        return ret
+
+    def serial_hpc(self):
+        """Returns a dictionary of the config"""
+        # Get params section
+        params = self.serial_params()
+        # Determine modules to load
+        modules_to_load = self.container_system if self.module and self.container_system else ''
+        if self.module_system:
+            if modules_to_load:
+                modules_to_load += ' '
+            modules_to_load += re.sub(r'\s+', ':', self.module_system)
+        ret = {
+            **params,
+            "executor": {
+                "queueStatInterval": str(float(self.queue_stat_interval)) + "m" if self.queue_stat_interval else None,
+                "queueSize": int(self.queue_size) or None,
+                "pollInterval": str(float(self.poll_interval)) + "m" if self.poll_interval else None,
+                "submitRateLimit": str(int(self.submit_rate)) + "min" if self.submit_rate else None,
+            },
+            "process": {
+                "executor": self.scheduler or None,
+                "queue": self.queue or None,
+                "resourceLimits": [
+                    {"cpus": int(self.cpus) if self.cpus else None},
+                    {"memory": str(float(self.memory)) + "GB" if self.memory else None},
+                    {"time": str(float(self.time)) + "h" if self.time else None}
+                ],
+                "scratch": self.scratch_dir or None,
+                "maxRetries": int(self.retries) or None,
+                "module": modules_to_load or None,
+            },
+            self.container_system: {
+                "enabled": True,
+                "cacheDir": self.cachedir or None,
+                "autoMounts": True if self.container_system in ['singularity', 'apptainer'] else None
+            },
+            "cleanup": self.delete_work_dir
+        }
+
+        return ret
+
+    def serial_pipeline(self):
+        """Returns a dictionary of the pipeline config"""
+        # Get params section
+        params = self.serial_params()
+        ret = {
+            **params,
+            "process": {
+                "cpus": int(self.default_process_ncpus) if self.default_process_ncpus else None,
+                "memory": str(float(self.default_process_memgb)) + "GB" if self.default_process_memgb else None,
+                "time": str(float(self.default_process_hours)) + "h" if self.default_process_hours else None
+            }
+        }
+        # Get custom process resources
+        for selector in ['withName', 'withLabel']:
+            custom_resources_dict = self.named_process_resources if selector == 'withName' else self.labelled_process_resources
+            for process_id, process_resources in custom_resources_dict.items():
+                ret["process"][f"{selector}: '{process_id}'"] = {
+                    "cpus": int(process_resources["custom_process_ncpus"]) if process_resources["custom_process_ncpus"] else None,
+                    "memory": str(float(process_resources["custom_process_memgb"])) + "GB" if process_resources["custom_process_memgb"] else None,
+                    "time": str(float(process_resources["custom_process_hours"])) + 'h' if process_resources["custom_process_hours"] else None
+                }
+                if "custom_process_queue" in process_resources:
+                    ret["process"][f"{selector}: '{process_id}'"]["queue"] = process_resources["custom_process_queue"] if process_resources["custom_process_queue"] else None
+                if "executor" in process_resources:
+                    ret["process"][f"{selector}: '{process_id}'"]["executor"] = process_resources["executor"] if process_resources["executor"] else None
+        return ret
+
+    def serial(self):
+        if self.is_infrastructure: 
+            return self.serial_hpc()
+        else:
+            return self.serial_pipeline()
+
     @field_validator("general_config_name", "config_profile_description")
     @classmethod
     def notempty(cls, v: str) -> str:
