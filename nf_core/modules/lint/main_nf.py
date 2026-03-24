@@ -254,37 +254,6 @@ def main_nf(
     return inputs, emits
 
 
-def is_valid_meta_key(key):
-    """
-    Check if meta key is valid
-    """
-    permitted = {"meta.id", "meta.single_end"}
-
-    # Check for function calls e.g. meta.sorted(), meta.subMap(['id'])
-    if "(" in key:
-        return True
-
-    return key in permitted
-
-
-def is_valid_ext_key(key):
-    """
-    Check if ext key is valid
-    """
-    permitted = {"ext.args", "ext.prefix", "ext.use_gpu"}
-
-    if key in permitted:
-        return True
-
-    # Check ext.args{N} where N >= 2
-    match = re.match(r"^ext\.args(\d+)$", key)
-    if match:
-        num = int(match.group(1))
-        return num >= 2
-
-    return False
-
-
 def check_script_section(self, lines):
     """
     Lint the script section
@@ -312,9 +281,9 @@ def check_script_section(self, lines):
                     self.main_nf,
                 )
             )
+
     # Validate meta keys
-    meta_keys = re.findall(r"meta\d*\.[\w.\(]+", script)
-    invalid_meta_keys = [k for k in meta_keys if not is_valid_meta_key(k)]
+    invalid_meta_keys = validate_meta_keys(script)
     if not invalid_meta_keys:
         self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
     else:
@@ -322,21 +291,21 @@ def check_script_section(self, lines):
             (
                 "main_nf",
                 "main_nf_meta_key",
-                f"Invalid 'meta' keys detected: {', '.join(set(invalid_meta_keys))}",
+                f"Invalid 'meta' keys detected: {', '.join(invalid_meta_keys)}",
                 self.main_nf,
             )
         )
+
     # Validate ext keys
-    ext_keys = re.findall(r"ext\.[\w.]+", script)
-    invalid_ext_keys = [k for k in ext_keys if not is_valid_ext_key(k)]
+    invalid_ext_keys = validate_ext_keys(script)
     if not invalid_ext_keys:
-        self.passed.append(("main_nf", "main_nf_meta_key", "All 'ext' keys are valid", self.main_nf))
+        self.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", self.main_nf))
     else:
         self.failed.append(
             (
                 "main_nf",
-                "main_nf_meta_key",
-                f"Invalid 'ext' keys detected: {', '.join(set(invalid_ext_keys))}",
+                "main_nf_ext_key",
+                f"Invalid 'ext' keys detected: {', '.join(invalid_ext_keys)}",
                 self.main_nf,
             )
         )
@@ -742,6 +711,59 @@ def check_container_link_line(self, raw_line, registry):
                     self.main_nf,
                 )
             )
+
+
+def validate_meta_keys(script):
+    """
+    Extract and validate all meta keys from script.
+
+    Returns:
+        list: invalid_keys
+    """
+    permitted_keys = {"id", "single_end"}
+
+    meta_keys = re.findall(r"meta\d*\.[\w\(]+", script)
+
+    invalid_keys = []
+    for key in meta_keys:
+        # Check for function calls e.g. meta.sorted(), meta.subMap(['id'])
+        if "(" in key:
+            continue
+
+        # Extract the key
+        match = re.match(r"^meta\d*\.(\w+)", key)
+        if match and match.group(1) in permitted_keys:
+            continue
+        else:
+            invalid_keys.append(key)
+
+    return invalid_keys
+
+
+def validate_ext_keys(script):
+    """
+    Extract and validate all ext keys from script.
+
+    Returns:
+        list: invalid_keys
+    """
+    permitted_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+
+    ext_keys = re.findall(r"ext\.\w+", script)
+
+    invalid_keys = []
+    for key in ext_keys:
+        if key in permitted_keys:
+            continue
+
+        # Check ext.args{N} where N >= 2
+        args_match = re.match(r"^ext\.args(\d+)$", key)
+        if args_match and int(args_match.group(1)) >= 2:
+            continue
+
+        invalid_keys.append(key)
+
+    return invalid_keys
 
 
 def _parse_input(self, line_raw):
