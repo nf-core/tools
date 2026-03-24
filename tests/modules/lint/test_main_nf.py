@@ -2,7 +2,12 @@ import pytest
 
 import nf_core.modules.lint
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.main_nf import _parse_output_topics, check_container_link_line, check_process_labels
+from nf_core.modules.lint.main_nf import (
+    _parse_output_topics,
+    check_container_link_line,
+    check_process_labels,
+    check_script_section,
+)
 
 from ...test_modules import TestModules
 from .test_lint_utils import MockModuleLint
@@ -521,91 +526,114 @@ process TEST_PROCESS {
 
 def test_validate_meta_keys():
     """Test validation of meta keys in script"""
-    from nf_core.modules.lint.main_nf import validate_meta_keys
+    mock_lint = MockModuleLint()
 
     # Valid meta keys
-    script = """
+    check_script_section(
+        mock_lint,
+        [
+            """
     def prefix = "${meta.id}"
     def se = meta.single_end
     def id = meta.subMap(['id'])
     """
-    invalid = validate_meta_keys(script)
-    assert len(invalid) == 0, f"Expected no invalid keys, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 0
 
     # Invalid meta keys
-    script = """
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
     def sample = meta.sample
     def strand = meta.strandedness
     """
-    invalid = validate_meta_keys(script)
-    assert "meta.sample" in invalid, f"Expected meta.sample in invalid keys, got: {invalid}"
-    assert "meta.strandedness" in invalid, f"Expected meta.strandedness in invalid keys, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 1
+    assert "meta.sample" in mock_lint.failed[0][2]
+    assert "meta.strandedness" in mock_lint.failed[0][2]
 
-    # meta2, meta3 with valid keys
-    script = """
+    # meta2/meta3 with valid keys
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
     def id1 = meta.id
     def id2 = meta2.id
     def se = meta3.single_end
     """
-    invalid = validate_meta_keys(script)
-    assert len(invalid) == 0, f"Expected no invalid keys for meta2/meta3, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 0
 
     # Mix of valid and invalid
-    script = """
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
     def prefix = task.ext.prefix ?: "${meta.id}"
     def sample = meta.sample
     def single_end = meta.single_end
     def custom = meta2.custom_field
     """
-    invalid = validate_meta_keys(script)
-    assert "meta.sample" in invalid
-    assert "meta2.custom_field" in invalid
-    assert len(invalid) == 2, f"Expected 2 invalid keys, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 1
+    assert "meta.sample" in mock_lint.failed[0][2]
+    assert "meta2.custom_field" in mock_lint.failed[0][2]
 
 
 def test_validate_ext_keys():
     """Test validation of ext keys in script"""
-    from nf_core.modules.lint.main_nf import validate_ext_keys
+    mock_lint = MockModuleLint()
 
     # Valid ext keys
-    script = """
+    check_script_section(
+        mock_lint,
+        [
+            """
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def args3 = task.ext.args3 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def use_gpu = task.ext.use_gpu ? '--gpu' : ''
     """
-    invalid = validate_ext_keys(script)
-    assert len(invalid) == 0, f"Expected no invalid keys, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 0
 
     # Invalid ext keys
-    script = """
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
     def args1 = task.ext.args1 ?: ''
     def custom = task.ext.custom ?: ''
     def suffix = task.ext.suffix ?: '.bam'
     """
-    invalid = validate_ext_keys(script)
-    assert "ext.args1" in invalid, f"Expected ext.args1 in invalid keys, got: {invalid}"
-    assert "ext.custom" in invalid, f"Expected ext.custom in invalid keys, got: {invalid}"
-    assert "ext.suffix" in invalid, f"Expected ext.suffix in invalid keys, got: {invalid}"
-
-    # Mix of valid and invalid
-    script = """
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def args = task.ext.args ?: ''
-    def args1 = task.ext.args1 ?: ''
-    def other = task.ext.other ?: ''
-    """
-    invalid = validate_ext_keys(script)
-    assert "ext.args1" in invalid
-    assert "ext.other" in invalid
-    assert len(invalid) == 2, f"Expected 2 invalid keys, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 1
+    assert "ext.args1" in mock_lint.failed[0][2]
+    assert "ext.custom" in mock_lint.failed[0][2]
+    assert "ext.suffix" in mock_lint.failed[0][2]
 
     # ext.argsN where N >= 2 should be valid
-    script = """
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
     def args2 = task.ext.args2 ?: ''
     def args10 = task.ext.args10 ?: ''
     def args99 = task.ext.args99 ?: ''
     """
-    invalid = validate_ext_keys(script)
-    assert len(invalid) == 0, f"Expected ext.args2+ to be valid, got: {invalid}"
+        ],
+    )
+    assert len(mock_lint.failed) == 0
