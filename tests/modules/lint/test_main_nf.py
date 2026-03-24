@@ -517,3 +517,95 @@ process TEST_PROCESS {
     assert any("wrong_versions_yml_emit" in str(f) for f in mock_lint_fail.failed), (
         f"Expected wrong_versions_yml_emit in failed, got: {mock_lint_fail.failed}"
     )
+
+
+def test_validate_meta_keys():
+    """Test validation of meta keys in script"""
+    from nf_core.modules.lint.main_nf import validate_meta_keys
+
+    # Valid meta keys
+    script = """
+    def prefix = "${meta.id}"
+    def se = meta.single_end
+    def id = meta.subMap(['id'])
+    """
+    invalid = validate_meta_keys(script)
+    assert len(invalid) == 0, f"Expected no invalid keys, got: {invalid}"
+
+    # Invalid meta keys
+    script = """
+    def sample = meta.sample
+    def strand = meta.strandedness
+    """
+    invalid = validate_meta_keys(script)
+    assert "meta.sample" in invalid, f"Expected meta.sample in invalid keys, got: {invalid}"
+    assert "meta.strandedness" in invalid, f"Expected meta.strandedness in invalid keys, got: {invalid}"
+
+    # meta2, meta3 with valid keys
+    script = """
+    def id1 = meta.id
+    def id2 = meta2.id
+    def se = meta3.single_end
+    """
+    invalid = validate_meta_keys(script)
+    assert len(invalid) == 0, f"Expected no invalid keys for meta2/meta3, got: {invalid}"
+
+    # Mix of valid and invalid
+    script = """
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def sample = meta.sample
+    def single_end = meta.single_end
+    def custom = meta2.custom_field
+    """
+    invalid = validate_meta_keys(script)
+    assert "meta.sample" in invalid
+    assert "meta2.custom_field" in invalid
+    assert len(invalid) == 2, f"Expected 2 invalid keys, got: {invalid}"
+
+
+def test_validate_ext_keys():
+    """Test validation of ext keys in script"""
+    from nf_core.modules.lint.main_nf import validate_ext_keys
+
+    # Valid ext keys
+    script = """
+    def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
+    def args3 = task.ext.args3 ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def use_gpu = task.ext.use_gpu ? '--gpu' : ''
+    """
+    invalid = validate_ext_keys(script)
+    assert len(invalid) == 0, f"Expected no invalid keys, got: {invalid}"
+
+    # Invalid ext keys
+    script = """
+    def args1 = task.ext.args1 ?: ''
+    def custom = task.ext.custom ?: ''
+    def suffix = task.ext.suffix ?: '.bam'
+    """
+    invalid = validate_ext_keys(script)
+    assert "ext.args1" in invalid, f"Expected ext.args1 in invalid keys, got: {invalid}"
+    assert "ext.custom" in invalid, f"Expected ext.custom in invalid keys, got: {invalid}"
+    assert "ext.suffix" in invalid, f"Expected ext.suffix in invalid keys, got: {invalid}"
+
+    # Mix of valid and invalid
+    script = """
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def args = task.ext.args ?: ''
+    def args1 = task.ext.args1 ?: ''
+    def other = task.ext.other ?: ''
+    """
+    invalid = validate_ext_keys(script)
+    assert "ext.args1" in invalid
+    assert "ext.other" in invalid
+    assert len(invalid) == 2, f"Expected 2 invalid keys, got: {invalid}"
+
+    # ext.argsN where N >= 2 should be valid
+    script = """
+    def args2 = task.ext.args2 ?: ''
+    def args10 = task.ext.args10 ?: ''
+    def args99 = task.ext.args99 ?: ''
+    """
+    invalid = validate_ext_keys(script)
+    assert len(invalid) == 0, f"Expected ext.args2+ to be valid, got: {invalid}"
