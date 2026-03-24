@@ -201,6 +201,8 @@ class ConfigsCreateConfig(BaseModel):
         # Get custom process resources
         for selector in ['withName', 'withLabel']:
             custom_resources_dict = self.named_process_resources if selector == 'withName' else self.labelled_process_resources
+            if not custom_resources_dict:
+                continue
             for process_id, process_resources in custom_resources_dict.items():
                 ret["process"][f"{selector}: '{process_id}'"] = {
                     "cpus": int(process_resources["custom_process_ncpus"]) if process_resources["custom_process_ncpus"] else None,
