@@ -823,7 +823,7 @@ class ModulesJson:
             )
         self.modules_json["repos"][repo_url][component_type][install_dir][component_name]["patch"] = str(patch_filename)
         if write_file:
-            self.dump()
+            self.dump(run_prettier=True)
 
     def remove_patch_entry(self, module_name, repo_url, install_dir, write_file=True):
         if self.modules_json is None:
@@ -835,7 +835,7 @@ class ModulesJson:
         except KeyError:
             log.warning("No patch entry in 'modules.json' to remove")
         if write_file:
-            self.dump()
+            self.dump(run_prettier=True)
 
     def get_patch_fn(self, component_type, component_name, repo_url, install_dir):
         """
@@ -1269,9 +1269,9 @@ class ModulesJson:
             current_org = dep_mod.get("org_path", org)
             installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
             if installed_by == ["modules"]:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
+                self.modules_json["repos"][repo]["modules"][org][name]["installed_by"] = []
             if sw_name not in installed_by:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"].append(sw_name)
+                self.modules_json["repos"][repo]["modules"][org][name]["installed_by"].append(sw_name)
 
         for dep_subwf in dep_subwfs:
             name = dep_subwf["name"]
@@ -1279,7 +1279,7 @@ class ModulesJson:
             current_org = dep_subwf.get("org_path", org)
             installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
+                self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"] = []
             if sw_name not in installed_by:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"].append(sw_name)
+                self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"].append(sw_name)
             self.recreate_dependencies(repo, org, dep_subwf)

@@ -9,7 +9,9 @@ from rich.console import Console
 from rich.table import Table
 
 import nf_core.utils
+from nf_core import __version__
 from nf_core.utils import plural_s as _s
+from nf_core.utils import strip_ansi_codes
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +19,70 @@ log = logging.getLogger(__name__)
 console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
 
-def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
+def print_results_plain_text(results_list, directory=None, component_type=None):
+    """Print lint results in plain text format.
+
+    Args:
+        results_list: List of tuples (results, symbol, label, color, show_condition)
+        directory: Base directory for relative paths (for component linting)
+        component_type: "modules" or "subworkflows" (for component linting)
+    """
+    tools_version = "dev" if "dev" in __version__ else __version__
+
+    def print_lines(text, strip_ansi=False):
+        """Print text line by line, skipping empty lines."""
+        text = strip_ansi_codes(str(text)) if strip_ansi else str(text)
+        for line in text.strip().split("\n"):
+            if line := line.strip():
+                console.print(line)
+
+    for results, symbol, label, color, show in results_list:
+        if show and results:
+            label_suffix = component_type[:-1].title() if component_type else "Pipeline"
+            console.print(
+                f"\n[{color}][bold][{symbol}] {len(results)} {label_suffix} Test{_s(results)} {label}[/bold][/{color}]"
+            )
+            for r in results:
+                if isinstance(r, tuple):
+                    # Pipeline results: (eid, msg)
+                    eid, msg = r
+                    console.print(
+                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
+                    )
+                    print_lines(msg, strip_ansi=True)
+                else:
+                    # Component results: LintResult objects
+                    console.print(f"\n[{color}]{r.component_name}[/{color}] {r.lint_test}")
+                    console.print(Path(r.file_path).relative_to(directory))
+                    console.print(
+                        f"https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{component_type[:-1]}_lint_tests/{r.parent_lint_test}"
+                    )
+                    print_lines(r.message)
+
+
+def print_summary(rows, plain_text=False, summary_colour=None):
+    """Print a summary table in plain text or rich format.
+
+    Args:
+        rows: List of tuples (count, icon, label, color, always_show)
+        plain_text: If True, print in plain text format
+        summary_colour: Color for the rich table border (default: auto based on failures)
+    """
+    if plain_text:
+        console.print("\n[bold]LINT RESULTS SUMMARY[/bold]")
+        for count, icon, label, color, always_show in rows:
+            if always_show or count:
+                console.print(f"[{color}][{icon}] {count:>3} {label}[/{color}]")
+    else:
+        table = Table(box=rich.box.ROUNDED, style=summary_colour)
+        table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
+        for count, icon, label, color, always_show in rows:
+            if always_show or count:
+                table.add_row(rf"[{color}][{icon}] {count:>3} {label}")
+        console.print(table)
+
+
+def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj, plain_text=False):
     """Print a joint summary of the general pipe lint tests and the module and subworkflow lint tests"""
     swf_passed = 0
     swf_warned = 0
@@ -39,33 +104,28 @@ def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
     nbr_warned = len(lint_obj.warned) + module_warned + swf_warned
     nbr_failed = len(lint_obj.failed) + module_failed + swf_failed
 
+    rows = [
+        (nbr_passed, "✔", f"Test{_s(nbr_passed)} Passed", "green", True),
+        (nbr_fixed, "?", f"Test{_s(nbr_fixed)} Fixed", "bright_blue", False),
+        (nbr_ignored, "?", f"Test{_s(nbr_ignored)} Ignored", "grey58", True),
+        (nbr_warned, "!", f"Test Warning{_s(nbr_warned)}", "yellow", True),
+        (nbr_failed, "✗", f"Test{_s(nbr_failed)} Failed", "red", True),
+    ]
     summary_colour = "red" if nbr_failed > 0 else "green"
-    table = Table(box=rich.box.ROUNDED, style=summary_colour)
-    table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
-    table.add_row(rf"[green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
-    if nbr_fixed:
-        table.add_row(rf"[bright blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
-    table.add_row(rf"[grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
-    table.add_row(rf"[yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
-    table.add_row(rf"[red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
-    console.print(table)
+    print_summary(rows, plain_text, summary_colour)
 
 
-def print_fixes(lint_obj):
+def print_fixes(lint_obj, plain_text=False):
     """Prints available and applied fixes"""
-
     if lint_obj.could_fix:
         fix_flags = "".join([f" --fix {fix}" for fix in lint_obj.could_fix])
         wf_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
         fix_cmd = f"nf-core pipelines lint {wf_dir} {fix_flags}"
-        console.print(
-            "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
-            f"[blue]    {fix_cmd}\n"
-        )
+        msg = f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n    {fix_cmd}\n"
+        console.print(msg if plain_text else f"[blue]{msg}")
     if len(lint_obj.fix):
         console.print(
-            "Automatic fixes applied. "
-            "Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
         )
 
 

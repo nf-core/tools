@@ -11,6 +11,8 @@ from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 from ..test_pipelines import TestPipelines
 
+FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+
 
 class TestBumpVersion(TestPipelines):
     def test_bump_pipeline_version(self):
@@ -108,6 +110,67 @@ class TestBumpVersion(TestPipelines):
         self.caplog.set_level(logging.INFO)
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
         assert "Could not find version number in " in self.caplog.text
+
+    def test_bump_pipeline_version_in_svg(self):
+        """Test that bump version updates versions in SVG files and exports PNG."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check the SVG was updated
+        svg_content = test_svg.read_text()
+        assert ">v1.1.0<" in svg_content
+        assert ">v1.0.0dev<" not in svg_content
+
+    def test_bump_pipeline_version_in_svg_warning_pdf_if_exists(self):
+        """Test that bump version throws a warning to update pdf manually only if PDF already exists."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge_pdf.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Create existing PDF file (empty placeholder)
+        pdf_path = test_svg.with_suffix(".pdf")
+        pdf_path.touch()
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check PDF warning was logged
+        assert "Please export the bumped SVG manually to PDF." in self.caplog.text
+
+    def test_bump_pipeline_version_in_svg_warning_png_if_exists(self):
+        """Test that bump version throws a warning to update png manually only if PNG already exists."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge_pdf.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Create existing PNG file (empty placeholder)
+        png_path = test_svg.with_suffix(".png")
+        png_path.touch()
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check PNG warning was logged
+        assert "Please export the bumped SVG manually to PNG." in self.caplog.text
 
     def test_bump_pipeline_version_nf_core_yml_prettier(self):
         """Test that lists in .nf-core.yml have correct formatting after version bump."""

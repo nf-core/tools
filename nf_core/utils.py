@@ -2,6 +2,7 @@
 Common utility functions for the nf-core python package.
 """
 
+import ast
 import concurrent.futures
 import datetime
 import errno
@@ -94,6 +95,33 @@ NFCORE_CACHE_DIR = Path(
     "nfcore",
 )
 NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+
+
+def unquote(s: str) -> str:
+    """
+    Remove paired quotes (single or double) from start and end of string.
+
+    Uses ast.literal_eval to safely parse Python string literals, preserving
+    the original string if it's not a valid literal.
+
+    Special handling for ruamel.yaml DoubleQuotedScalarString to preserve
+    strings that should not be converted to numbers (e.g., "123" stays as string).
+
+    Args:
+        s: String potentially containing quotes
+
+    Returns:
+        String with outer quotes removed if present, otherwise original string
+    """
+    import ruamel.yaml
+
+    if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+        return s
+
+    try:
+        return ast.literal_eval(s)
+    except (ValueError, SyntaxError):
+        return s
 
 
 def fetch_remote_version(source_url):
@@ -1272,7 +1300,6 @@ class NFCoreYamlLintConfig(BaseModel):
             - report_section_order
             - report_comment
         files_exist:
-            - .github/CONTRIBUTING.md
             - CITATIONS.md
         template_strings: False
         template_strings:

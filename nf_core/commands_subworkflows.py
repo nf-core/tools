@@ -104,7 +104,9 @@ def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=
         sys.exit(1)
 
 
-def subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix):
+def subworkflows_lint(
+    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
+):
     """
     Lint one or more subworkflows in a directory.
 
@@ -137,6 +139,7 @@ def subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warn
             local=local,
             show_passed=passed,
             sort_by=sort_by,
+            plain_text=plain_text,
         )
         if len(subworkflow_lint.failed) > 0:
             sys.exit(1)

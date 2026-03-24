@@ -2,7 +2,7 @@ import pytest
 
 import nf_core.modules.lint
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
+from nf_core.modules.lint.main_nf import _parse_output_topics, check_container_link_line, check_process_labels
 
 from ...test_modules import TestModules
 from .test_lint_utils import MockModuleLint
@@ -137,12 +137,13 @@ class TestMainNfLinting(TestModules):
     def test_topics_and_emits_version_check(self):
         """Test that main_nf version emit and topics check works correctly"""
 
-        # Lint a module known to have versions YAML in main.nf (for now)
+        self.mods_install_gitlab_nftest.install("fastqc")
+        # Lint a module installed from the gitlab test branch; gitlab test modules that is known to have versions YAML in main.nf
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="samtools/sort")
+        module_lint.lint(print_results=False, module="fastqc")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.warned) == 2, (
-            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
+        assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
+            f"Expected warning about missing version topic, got {[w.message for w in module_lint.warned]}"
         )
         assert len(module_lint.passed) > 0
 
@@ -150,9 +151,8 @@ class TestMainNfLinting(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="bamstats/generalstats")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.warned) == 0, (
-            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
-        )
+        assert len(module_lint.warned) == 0, f"Expected 0 warnings, got {[x.__dict__ for x in module_lint.warned]}"
+
         assert len(module_lint.passed) > 0
 
 
@@ -208,6 +208,7 @@ process TEST_PROCESS {
     path("*.txt"), emit: results
     val(evaluate_result), emit: evaluation
     path(pathogen_data), emit: pathogens
+    tuple val(meta), path("*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"), emit: reads
 
     script:
     "echo test"
@@ -228,12 +229,64 @@ process TEST_PROCESS {
 
     component.get_outputs_from_main_nf()
 
-    # Should find 3 outputs with variable names containing 'val' and 'path' substrings
+    # Should find 4 outputs with variable names containing 'val' and 'path' substrings
     # The regex with \b should correctly identify val(evaluate_result) and path(pathogen_data)
-    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert len(component.outputs) == 4, f"Expected 4 outputs, got {len(component.outputs)}: {component.outputs}"
     assert "results" in component.outputs
     assert "evaluation" in component.outputs
     assert "pathogens" in component.outputs
+    assert "reads" in component.outputs
+    assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
+
+
+def test_get_outputs_complete_version_command(tmp_path):
+    """Test that the version command is complete with both eval() and val()"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path("*.txt"), emit: results
+    val(evaluate_result), emit: evaluation
+    tuple val("${task.process}"), val('stranger'), eval("stranger --version | sed 's/stranger, version //g'"), topic: versions, emit: versions_stranger
+    tuple val("${task.process}"), val('fastqc'), eval('fastqc --version | sed "/FastQC v/!d; s/.*v//"'), emit: versions_fastqc, topic: versions
+    tuple val("${task.process}"), val('fastk'), val('1.0'), emit: versions_fastk, topic: versions
+
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    assert len(component.outputs) == 5, f"Expected 5 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "results" in component.outputs
+    assert "evaluation" in component.outputs
+    assert "versions_stranger" in component.outputs
+    assert "versions_fastqc" in component.outputs
+    assert "versions_fastk" in component.outputs
+    assert "\"stranger --version | sed 's/stranger, version //g'\"" in list(
+        component.outputs["versions_stranger"][0][2].keys()
+    )
+    assert "'fastqc --version | sed \"/FastQC v/!d; s/.*v//\"'" in list(
+        component.outputs["versions_fastqc"][0][2].keys()
+    )
+    # Check that val() for hardcoded version is also captured
+    assert "'1.0'" in list(component.outputs["versions_fastk"][0][2].keys())
 
 
 def test_get_topics_no_partial_keyword_match(tmp_path):
@@ -274,7 +327,7 @@ process TEST_PROCESS {
 
 
 def test_get_topics_multiple_versions_channels(tmp_path):
-    """Test that multiple versions_* channels with the same topic name are correctly captured"""
+    """Test that multiple versions_* channels with the same topic name are correctly captured, including val() for hardcoded versions"""
     main_nf_content = """
 process TEST_PROCESS {
     input:
@@ -283,6 +336,7 @@ process TEST_PROCESS {
     output:
     tuple val("${task.process}"), val('samtools'), eval('samtools --version | head -1 | sed -e "s/samtools //"'), emit: versions_samtools, topic: versions
     tuple val("${task.process}"), val('bcftools'), eval('bcftools --version | head -1 | sed -e "s/bcftools //"'), emit: versions_bcftools, topic: versions
+    tuple val("${task.process}"), val('fastk'), val('1.0'), emit: versions_fastk, topic: versions
     path("*.txt"), emit: results, topic: results
 
     script:
@@ -309,12 +363,157 @@ process TEST_PROCESS {
     assert "versions" in component.topics
     assert "results" in component.topics
 
-    # The versions topic should have 2 entries (one for each versions_* channel)
-    assert len(component.topics["versions"]) == 2, (
-        f"Expected 2 entries in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    # The versions topic should have 3 entries (two with eval(), one with val())
+    assert len(component.topics["versions"]) == 3, (
+        f"Expected 3 entries in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
     )
 
     # Each entry should be a list of 3 tuples elements
     for entry in component.topics["versions"]:
         assert isinstance(entry, list), f"Expected list, got {type(entry)}"
         assert len(entry) == 3, f"Expected 3 elements in entry, got {len(entry)}: {entry}"
+
+
+def test_get_outputs_with_hidden_attribute(tmp_path):
+    """Test that output parsing correctly handles path modifiers like 'hidden: true'"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val(meta), path("*.{prof,pidx}*", hidden: true), emit: prof, optional: true
+    path("*.txt"), emit: results
+    path("data.csv", hidden: true), emit: data
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    # Should find 3 outputs
+    assert len(component.outputs) == 3, f"Expected 3 outputs, got {len(component.outputs)}: {component.outputs}"
+    assert "prof" in component.outputs
+    assert "results" in component.outputs
+    assert "data" in component.outputs
+
+    # The prof output should only contain the pattern, not the 'hidden: true' modifier
+    prof_output = component.outputs["prof"]
+    assert len(prof_output) == 1, f"Expected 1 element in prof output, got {len(prof_output)}"
+    assert len(prof_output[0]) == 2, f"Expected 2 elements in tuple, got {len(prof_output[0])}: {prof_output[0]}"
+
+    # Check that the path pattern doesn't include "hidden: true"
+    path_key = list(prof_output[0][1].keys())[0]
+    assert '"*.{prof,pidx}*"' == path_key, f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
+    assert "hidden" not in path_key, f"Pattern should not contain 'hidden': {path_key}"
+
+    # Check the data output also doesn't include "hidden: true"
+    data_output = component.outputs["data"]
+    data_path_key = list(data_output[0].keys())[0]
+    assert '"data.csv"' == data_path_key, f"Expected '\"data.csv\"', got '{data_path_key}'"
+    assert "hidden" not in data_path_key, f"Pattern should not contain 'hidden': {data_path_key}"
+
+
+def test_get_outputs_with_whitespace_after_parenthesis(tmp_path):
+    """Test that output parsing correctly handles spaces after parentheses like val( meta )"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    tuple val( meta ), path("*.thing"), emit: my_channel
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    assert "my_channel" in component.outputs
+    my_channel_output = component.outputs["my_channel"]
+    output_keys = [list(out.keys())[0] for out in my_channel_output[0]]
+    # Check that meta is correctly parsed despite the whitespace
+    assert "meta" in output_keys, f"Expected 'meta' without spaces in output, got {output_keys}"
+
+
+def test_get_topics_version_yml_path_no_parens(tmp_path):
+    """Test that path "versions.yml" (without parentheses) with topic: versions is correctly parsed"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path "versions.yml", emit: versions, topic: versions
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    assert "versions" in component.topics, f"Expected 'versions' topic, got: {component.topics}"
+    assert len(component.topics["versions"]) == 1, (
+        f"Expected 1 entry in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    )
+    entry = component.topics["versions"][0]
+    assert isinstance(entry, dict), f"Expected dict entry for single path output, got {type(entry)}"
+    assert '"versions.yml"' in entry, f"Expected '\"versions.yml\"' key in entry, got: {entry}"
+
+    # Verify linting: emit: versions on path "versions.yml" should pass wrong_version_yml_emit
+    correct_line = '    path "versions.yml", emit: versions, topic: versions'
+    mock_lint = MockModuleLint()
+    _parse_output_topics(mock_lint, correct_line)
+    assert any("wrong_version_yml_emit" in str(p) for p in mock_lint.passed), (
+        f"Expected wrong_version_yml_emit in passed, got: {mock_lint.passed}"
+    )
+    assert mock_lint.failed == [], f"Expected no failures for correct emit, got: {mock_lint.failed}"
+
+    # Verify linting: wrong emit name on path "versions.yml" should fail wrong_versions_yml_emit
+    wrong_line = '    path "versions.yml", emit: wrong_name, topic: versions'
+    mock_lint_fail = MockModuleLint()
+    _parse_output_topics(mock_lint_fail, wrong_line)
+    assert any("wrong_versions_yml_emit" in str(f) for f in mock_lint_fail.failed), (
+        f"Expected wrong_versions_yml_emit in failed, got: {mock_lint_fail.failed}"
+    )

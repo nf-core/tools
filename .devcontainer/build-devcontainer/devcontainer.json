@@ -1,4 +1,5 @@
 {
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
     "name": "nfcore-devcontainer-build",
 
     // installs python3.14, nf-core tools from current workspace, nextflow, nf-test,
