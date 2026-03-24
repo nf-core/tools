@@ -1,19 +1,14 @@
-import subprocess
-import json
 import io
-from typing import Optional
+import json
+import subprocess
 
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Markdown, Input
-from textual import on
+from textual.widgets import Button, Footer, Header, Input, Markdown
 
-from nf_core.configs.create.utils import (
-    TextInput,
-    init_context,
-    ConfigsCreateConfig
-)
+from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
 markdown_intro = """
 # Configure the options for your HPC
@@ -66,7 +61,7 @@ class HpcCustomisation(Screen):
             classes="cta",
         )
 
-    def _get_scheduler(self) -> Optional[str]:
+    def _get_scheduler(self) -> str | None:
         """Get the used scheduler"""
         try:
             subprocess.run(["sinfo", "--version"])
@@ -89,13 +84,13 @@ class HpcCustomisation(Screen):
             pass
         except subprocess.CalledProcessError:
             pass
-        return 'local'
+        return "local"
 
-    def _get_queues(self, scheduler: Optional[str]) -> list[str]:
+    def _get_queues(self, scheduler: str | None) -> list[str]:
         """Get the available queues to use for the jobs"""
         if scheduler == "slurm":
             try:
-                queues = subprocess.check_output(["sinfo", "-h", "-o", '%P']).decode("utf-8")
+                queues = subprocess.check_output(["sinfo", "-h", "-o", "%P"]).decode("utf-8")
                 # Remove default * flag
                 return [i.strip().replace("*", "") for i in queues.split("\n") if i]
             except subprocess.CalledProcessError:
@@ -114,7 +109,7 @@ class HpcCustomisation(Screen):
                 pass
         return []
 
-    def _get_default_queue(self, scheduler: Optional[str]) -> str:
+    def _get_default_queue(self, scheduler: str | None) -> str:
         """Get the default queue for the scheduler"""
         if scheduler == "slurm":
             try:
@@ -133,7 +128,7 @@ class HpcCustomisation(Screen):
         """Get the default queue for Slurm"""
         config = {}
         # TODO: If slurm is built from source, the config file path can be different
-        with open("/etc/slurm/slurm.conf", "r") as fp:
+        with open("/etc/slurm/slurm.conf") as fp:
             config = self._parse_slurm_config(fp)
 
         for conf in config:
@@ -148,7 +143,7 @@ class HpcCustomisation(Screen):
         config = self._pbs_parse_config(pbs_raw_config)
         return config["default_queue"]
 
-    def _parse_slurm_config(self, fp: Optional[io.TextIOWrapper]) -> list[dict]:
+    def _parse_slurm_config(self, fp: io.TextIOWrapper | None) -> list[dict]:
         """Parse the Slurm configuration file"""
         config = []
         for line in fp.readlines():
@@ -157,7 +152,7 @@ class HpcCustomisation(Screen):
                 config.append({i[0]: i[1] for i in tokens})
         return config
 
-    def _pbs_parse_config(self, raw: Optional[str]) -> dict:
+    def _pbs_parse_config(self, raw: str | None) -> dict:
         """Parse the PBS configuration file"""
         config = {}
         for line in [r.strip() for r in raw.split("\n")]:

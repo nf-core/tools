@@ -4,16 +4,11 @@ from textwrap import dedent
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
-from nf_core.configs.create.utils import (
-    ConfigsCreateConfig,
-    TextInput,
-    init_context
-)  ## TODO Move somewhere common?
-from nf_core.utils import add_hide_class, remove_hide_class
+from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
 
 class DefaultProcess(Screen):
@@ -102,7 +97,7 @@ class DefaultProcess(Screen):
         blank_config = {}
         for text_input in self.query("TextInput"):
             if getattr(self.parent.TEMPLATE_CONFIG, text_input.field_id, None):
-                blank_config[text_input.field_id] = ''
+                blank_config[text_input.field_id] = ""
         try:
             with init_context(self.parent.get_context()):
                 # Update the existing config with the blank values

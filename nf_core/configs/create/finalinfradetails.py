@@ -1,19 +1,13 @@
 import os
 import subprocess
-from typing import Optional
 
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch, Select
+from textual.widgets import Button, Footer, Header, Input, Markdown, Select, Static, Switch
 
-from nf_core.configs.create.utils import (
-    TextInput,
-    ConfigsCreateConfig,
-    init_context,
-    SUPPORTED_CONTAINERS
-)
+from nf_core.configs.create.utils import SUPPORTED_CONTAINERS, ConfigsCreateConfig, TextInput, init_context
 from nf_core.utils import add_hide_class, remove_hide_class
 
 
@@ -37,16 +31,16 @@ class FinalInfraDetails(Screen):
         yield Markdown(markdown_intro)
         self.container_system_list = self._get_container_systems()
         self.container_system = self.container_system_list[0] if self.container_system_list else None
-        
+
         self.container_system_list = SUPPORTED_CONTAINERS
         self.container_system = self.container_system_list[0]  # default
-        
+
         yield Select(
-           [(c, c) for c in self.container_system_list],
+            [(c, c) for c in self.container_system_list],
             prompt="Select container system",
             id="container_system",
-            value=self.container_system, #sets default
-    )
+            value=self.container_system,  # sets default
+        )
         yield Markdown("## Maximum resources")
         with Horizontal():
             yield TextInput(
@@ -96,7 +90,10 @@ class FinalInfraDetails(Screen):
                 "/path/to/cache/dir",
                 "Define a global cache direcotry.",
                 classes="",
-                default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR") if self.container_system is not None else "",
+                default=self._get_set_directory(
+                    f"NXF_{self.container_system.upper()}_CACHEDIR")
+                    if self.container_system is not None
+                    else "",
             )
         yield TextInput(
             "igenomes_cachedir",
@@ -131,7 +128,7 @@ class FinalInfraDetails(Screen):
         )
 
     def _get_container_systems(self) -> list[str]:
-        """Get the available container systems to use for software handling. """
+        """Get the available container systems to use for software handling."""
         module_system_used = self._detect_module_system()
         container_systems = SUPPORTED_CONTAINERS
         available_systems = []
@@ -165,7 +162,7 @@ class FinalInfraDetails(Screen):
             return False
         return True
 
-    def _get_set_directory(self, dir: str) -> Optional[str]:
+    def _get_set_directory(self, dir: str) -> str | None:
         """Get the available cache directories"""
         if dir:
             set_dir = os.environ.get(dir)
@@ -174,7 +171,7 @@ class FinalInfraDetails(Screen):
         return None
 
     @on(Select.Changed, "#container_system")
-    def get_container_system(self,event: Select.Changed) -> None:
+    def get_container_system(self, event: Select.Changed) -> None:
         """Get the container system from dropdown."""
         self.container_system = event.value
         cachedir_text_input = self.query_one("#cachedir")
@@ -183,7 +180,7 @@ class FinalInfraDetails(Screen):
             remove_hide_class(self.parent, "define-global-cache-dir")
             if not cachedir_input.value:
                 cachedir_path = self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR")
-                cachedir_input.value = cachedir_path or ''
+                cachedir_input.value = cachedir_path or ""
         else:
             add_hide_class(self.parent, "define-global-cache-dir")
 
@@ -192,9 +189,9 @@ class FinalInfraDetails(Screen):
         """Save fields to the config."""
         new_config = {}
 
-        #collect dropdown value
+        # collect dropdown value
         select = self.query_one("#container_system", Select)
-        new_config['container_system'] = select.value
+        new_config["container_system"] = select.value
 
         for text_input in self.query("TextInput"):
             if "hide" in text_input.classes:
@@ -209,8 +206,8 @@ class FinalInfraDetails(Screen):
 
         # collect switch value
         delete_work_switch = self.query_one("#toggle-delete-work")
-        new_config['delete_work_dir'] = delete_work_switch.value
-        new_config['module'] = self._detect_module_system()
+        new_config["delete_work_dir"] = delete_work_switch.value
+        new_config["module"] = self._detect_module_system()
         
         # Validate and update the config
         try:
@@ -230,7 +227,7 @@ class FinalInfraDetails(Screen):
         blank_config = {}
         for text_input in self.query("TextInput"):
             if getattr(self.parent.TEMPLATE_CONFIG, text_input.field_id, None):
-                blank_config[text_input.field_id] = ''
+                blank_config[text_input.field_id] = ""
         try:
             with init_context(self.parent.get_context()):
                 # Update the existing config with the blank values

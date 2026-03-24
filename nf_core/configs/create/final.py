@@ -2,12 +2,10 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Markdown, Input
+from textual.widgets import Button, Footer, Header, Input, Markdown
 
-from nf_core.configs.create.create import (
-    ConfigCreate,
-)
-from nf_core.configs.create.utils import TextInput, ConfigsCreateConfig, init_context
+from nf_core.configs.create.create import ConfigCreate
+from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
 
 class FinalScreen(Screen):
@@ -31,12 +29,16 @@ class FinalScreen(Screen):
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Save and close!", id="close_app", variant="success"),
-            classes="cta"
+            classes="cta",
         )
 
-    def _create_config(self, config_dir='.') -> None:
+    def _create_config(self, config_dir=".") -> None:
         """Create the config."""
-        create_obj = ConfigCreate(template_config=self.parent.TEMPLATE_CONFIG, config_type=self.parent.CONFIG_TYPE, config_dir=config_dir)
+        create_obj = ConfigCreate(
+            template_config=self.parent.TEMPLATE_CONFIG,
+            config_type=self.parent.CONFIG_TYPE,
+            config_dir=config_dir,
+        )
         create_obj.write_to_file()
 
     @on(Button.Pressed, "#close_app")

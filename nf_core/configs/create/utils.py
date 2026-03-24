@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, field_validator
 from textual import on
@@ -40,79 +40,79 @@ SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
 
-    is_infrastructure: Optional[bool] = False
+    is_infrastructure: bool | None = False
     """ Config variable to define if this is infrastructure or pipeline """
-    config_pipeline_name: Optional[str] = None
+    config_pipeline_name: str | None = None
     """ The name of the pipeline """
-    config_pipeline_path: Optional[str] = None
+    config_pipeline_path: str | None = None
     """ The path to the pipeline """
-    general_config_name: Optional[str] = None
+    general_config_name: str | None = None
     """ Config name """
-    config_profile_contact: Optional[str] = None
+    config_profile_contact: str | None = None
     """ Config contact name """
-    config_profile_handle: Optional[str] = None
+    config_profile_handle: str | None = None
     """ Config contact GitHub handle """
-    config_profile_description: Optional[str] = None
+    config_profile_description: str | None = None
     """ Config description """
-    config_profile_url: Optional[str] = None
+    config_profile_url: str | None = None
     """ Config institution URL """
-    default_process_ncpus: Optional[str] = None
+    default_process_ncpus: str | None = None
     """ Default number of CPUs """
-    default_process_memgb: Optional[str] = None
+    default_process_memgb: str | None = None
     """ Default amount of memory """
-    default_process_hours: Optional[str] = None
+    default_process_hours: str | None = None
     """ Default walltime - hours """
-    custom_process_id: Optional[str] = None
+    custom_process_id: str | None = None
     """" Name or label of a process to configure """
-    custom_process_ncpus: Optional[str] = None
+    custom_process_ncpus: str | None = None
     """ Number of CPUs for process """
-    custom_process_memgb: Optional[str] = None
+    custom_process_memgb: str | None = None
     """ Amount of memory for process """
-    custom_process_hours: Optional[str] = None
+    custom_process_hours: str | None = None
     """ Walltime for process - hours """
-    custom_process_queue: Optional[str] = None
+    custom_process_queue: str | None = None
     """ Custom queue for process to override default """
-    named_process_resources: Optional[dict] = None
+    named_process_resources: dict | None = None
     """ Dictionary containing custom resource requirements for named processes """
-    labelled_process_resources: Optional[dict] = None
+    labelled_process_resources: dict | None = None
     """ Dictionary containing custom resource requirements for labelled processes """
-    is_nfcore: Optional[bool] = None
+    is_nfcore: bool | None = None
     """ Whether the config is part of the nf-core organisation """
-    savelocation: Optional[str] = None
+    savelocation: str | None = None
     """ Final location of the configuration file """
-    scheduler: Optional[str] = None
+    scheduler: str | None = None
     """ The scheduler that the HPC uses """
-    queue: Optional[str] = None
+    queue: str | None = None
     """ The default queue that the HPC uses """
-    module_system: Optional[str] = None
+    module_system: str | None = None
     """ Modules to load when running processes """
-    container_system: Optional[str] = None
+    container_system: str | None = None
     """ The container system the HPC uses """
-    memory: Optional[str] = None
+    memory: str | None = None
     """ The maximum memory available to processes """
-    cpus: Optional[str] = None
+    cpus: str | None = None
     """ The maximum number of CPUs available to processes """
-    time: Optional[str] = None
+    time: str | None = None
     """ The maximum walltime available to processes """
-    cachedir: Optional[str] = None
+    cachedir: str | None = None
     """ An environment variable to hold a custom Nextflow container cachedir """
-    igenomes_cachedir: Optional[str] = None
+    igenomes_cachedir: str | None = None
     """ A cachedir for iGenomes """
-    scratch_dir: Optional[str] = None
+    scratch_dir: str | None = None
     """ A scratch directory to use """
-    retries: Optional[str] = None
+    retries: str | None = None
     """ Number of retries for failed jobs """
-    module: Optional[bool] = False
+    module: bool | None = False
     """ Whether the infrastructure uses a module system """
-    delete_work_dir: Optional[bool] = False
+    delete_work_dir: bool | None = False
     """ Whether to clean up the work directory upon successful completion """
-    queue_stat_interval: Optional[str] = None
+    queue_stat_interval: str | None = None
     """ How often to check the HPC queue status. """
-    queue_size: Optional[str] = None
+    queue_size: str | None = None
     """ How many jobs can be submitted to the queue at once. """
-    poll_interval: Optional[str] = None
+    poll_interval: str | None = None
     """ How often to check for successful completion of processes. """
-    submit_rate: Optional[str] = None
+    submit_rate: str | None = None
     """ How many jobs can be submitted per minute. """
 
     model_config = ConfigDict(extra="allow")
@@ -127,11 +127,11 @@ class ConfigsCreateConfig(BaseModel):
 
     def serial_params(self):
         # Determine contact info
-        contact = ''
+        contact = ""
         if self.config_profile_contact:
             contact = self.config_profile_contact
             if self.config_profile_handle:
-                contact += f' ({self.config_profile_handle})'
+                contact += f" ({self.config_profile_handle})"
         elif self.config_profile_handle:
             contact = self.config_profile_handle
         else:
@@ -151,11 +151,11 @@ class ConfigsCreateConfig(BaseModel):
         # Get params section
         params = self.serial_params()
         # Determine modules to load
-        modules_to_load = self.container_system if self.module and self.container_system else ''
+        modules_to_load = self.container_system if self.module and self.container_system else ""
         if self.module_system:
             if modules_to_load:
-                modules_to_load += ' '
-            modules_to_load += re.sub(r'\s+', ':', self.module_system)
+                modules_to_load += " "
+            modules_to_load += re.sub(r"\s+", ":", self.module_system)
         ret = {
             **params,
             "executor": {
@@ -170,7 +170,7 @@ class ConfigsCreateConfig(BaseModel):
                 "resourceLimits": [
                     {"cpus": int(self.cpus) if self.cpus else None},
                     {"memory": str(float(self.memory)) + "GB" if self.memory else None},
-                    {"time": str(float(self.time)) + "h" if self.time else None}
+                    {"time": str(float(self.time)) + "h" if self.time else None},
                 ],
                 "scratch": self.scratch_dir or None,
                 "maxRetries": int(self.retries) or None,
@@ -179,9 +179,9 @@ class ConfigsCreateConfig(BaseModel):
             self.container_system: {
                 "enabled": True,
                 "cacheDir": self.cachedir or None,
-                "autoMounts": True if self.container_system in ['singularity', 'apptainer'] else None
+                "autoMounts": True if self.container_system in ["singularity", "apptainer"] else None,
             },
-            "cleanup": self.delete_work_dir
+            "cleanup": self.delete_work_dir,
         }
 
         return ret
@@ -195,28 +195,46 @@ class ConfigsCreateConfig(BaseModel):
             "process": {
                 "cpus": int(self.default_process_ncpus) if self.default_process_ncpus else None,
                 "memory": str(float(self.default_process_memgb)) + "GB" if self.default_process_memgb else None,
-                "time": str(float(self.default_process_hours)) + "h" if self.default_process_hours else None
+                "time": str(float(self.default_process_hours)) + "h" if self.default_process_hours else None,
             }
         }
         # Get custom process resources
-        for selector in ['withName', 'withLabel']:
-            custom_resources_dict = self.named_process_resources if selector == 'withName' else self.labelled_process_resources
+        for selector in ["withName", "withLabel"]:
+            custom_resources_dict = (
+                self.named_process_resources if selector == "withName" else self.labelled_process_resources
+            )
             if not custom_resources_dict:
                 continue
             for process_id, process_resources in custom_resources_dict.items():
                 ret["process"][f"{selector}: '{process_id}'"] = {
-                    "cpus": int(process_resources["custom_process_ncpus"]) if process_resources["custom_process_ncpus"] else None,
-                    "memory": str(float(process_resources["custom_process_memgb"])) + "GB" if process_resources["custom_process_memgb"] else None,
-                    "time": str(float(process_resources["custom_process_hours"])) + 'h' if process_resources["custom_process_hours"] else None
+                    "cpus": (
+                        int(process_resources["custom_process_ncpus"])
+                        if process_resources["custom_process_ncpus"]
+                        else None
+                    ),
+                    "memory": (
+                        str(float(process_resources["custom_process_memgb"])) + "GB"
+                        if process_resources["custom_process_memgb"]
+                        else None
+                    ),
+                    "time": (
+                        str(float(process_resources["custom_process_hours"])) + "h"
+                        if process_resources["custom_process_hours"]
+                        else None
+                    ),
                 }
                 if "custom_process_queue" in process_resources:
-                    ret["process"][f"{selector}: '{process_id}'"]["queue"] = process_resources["custom_process_queue"] if process_resources["custom_process_queue"] else None
+                    ret["process"][f"{selector}: '{process_id}'"]["queue"] = (
+                        process_resources["custom_process_queue"] if process_resources["custom_process_queue"] else None
+                    )
                 if "executor" in process_resources:
-                    ret["process"][f"{selector}: '{process_id}'"]["executor"] = process_resources["executor"] if process_resources["executor"] else None
+                    ret["process"][f"{selector}: '{process_id}'"]["executor"] = (
+                        process_resources["executor"] if process_resources["executor"] else None
+                    )
         return ret
 
     def serial(self):
-        if self.is_infrastructure: 
+        if self.is_infrastructure:
             return self.serial_hpc()
         else:
             return self.serial_pipeline()
@@ -328,7 +346,7 @@ class ConfigsCreateConfig(BaseModel):
     @classmethod
     def pos_integer_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that integer values are either empty or positive.
-        
+
         This contains the same validation as self.pos_integer_valid_infra().
         However, keep infrastructure and pipeline methods decoupled for
         easier refactoring in future.
@@ -360,7 +378,7 @@ class ConfigsCreateConfig(BaseModel):
             if not vf >= 0:
                 raise ValueError("Must be a non-negative number.")
         return v
-    
+
     @field_validator("custom_process_queue")
     @classmethod
     def valid_custom_queue(cls, v: str, info: ValidationInfo) -> str:
@@ -369,7 +387,7 @@ class ConfigsCreateConfig(BaseModel):
         if context and not context["is_infrastructure"]:
             if v.strip() == "":
                 return v
-            if ' ' in v.strip():
+            if " " in v.strip():
                 raise ValueError("Cannot contain spaces")
         # TODO: Any other invalid characters?
         return v
@@ -379,7 +397,7 @@ class ConfigsCreateConfig(BaseModel):
     def pos_integer_valid_infra(cls, v: str, info: ValidationInfo) -> str:
         """
         Check that integer values are either empty or positive.
-        
+
         This contains the same validation as self.pos_integer_valid().
         However, keep infrastructure and pipeline methods decoupled for
         easier refactoring in future.
@@ -445,9 +463,7 @@ class ConfigsCreateConfig(BaseModel):
         context = info.context
         if context and context["is_infrastructure"] and context["is_hpc"]:
             if v.strip() not in SUPPORTED_SCHEDULERS:
-                raise ValueError(
-                    f"Must be one of: {', '.join(SUPPORTED_SCHEDULERS)}"
-                )
+                raise ValueError(f"Must be one of: {', '.join(SUPPORTED_SCHEDULERS)}")
         return v
 
     @field_validator("cachedir", "scratch_dir")
@@ -465,7 +481,7 @@ class ConfigsCreateConfig(BaseModel):
         """
         v = v.strip()
         if v == "":
-            return v #optional
+            return v  # optional
 
         if not _PATH_PATTERN.match(v):
             raise ValueError(
@@ -490,21 +506,13 @@ class ConfigsCreateConfig(BaseModel):
                 "or a URI (e.g. s3://ngi-igenomes/igenomes/)"
             )
         return v
-    
+
     @field_validator("container_system")
     @classmethod
     def container_system_valid(cls, v: str, info: ValidationInfo) -> str:
         v = v.strip()
         if v != "" and v not in SUPPORTED_CONTAINERS:
-            raise ValueError(
-                f"Must be one of: {', '.join(SUPPORTED_CONTAINERS)}"
-            )
-        return v
-    
-    @field_validator("module_system")
-    @classmethod
-    def module_system(cls, v: str, info: ValidationInfo) -> str:
-        #TODO: placeholder validator until functionality is finished
+            raise ValueError(f"Must be one of: {', '.join(SUPPORTED_CONTAINERS)}")
         return v
 
     @field_validator("queue_stat_interval")
@@ -563,7 +571,7 @@ class TextInput(Static):
 
     @on(Input.Changed)
     @on(Input.Submitted)
-    def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
+    def show_invalid_reasons(self, event: Input.Changed | Input.Submitted) -> None:
         """Validate the text input and show errors if invalid."""
         val_msg = self.query_one(".validation_msg")
         if not isinstance(val_msg, Static):
@@ -591,7 +599,13 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL, "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL, "is_hpc": INFRA_ISHPC_GLOBAL}):
+            with init_context(
+                {
+                    "is_nfcore": NFCORE_CONFIG_GLOBAL,
+                    "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL,
+                    "is_hpc": INFRA_ISHPC_GLOBAL,
+                }
+            ):
                 ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:

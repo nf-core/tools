@@ -14,15 +14,15 @@ from nf_core.configs.create import utils
 ## nf-core question page (screen) imports
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
+from nf_core.configs.create.defaultprocessres import DefaultProcess
 from nf_core.configs.create.final import FinalScreen
 from nf_core.configs.create.finalinfradetails import FinalInfraDetails
 from nf_core.configs.create.hpccustomisation import HpcCustomisation
 from nf_core.configs.create.hpcquestion import ChooseHpc
-from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
-from nf_core.configs.create.welcome import WelcomeScreen
-from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
-from nf_core.configs.create.defaultprocessres import DefaultProcess
 from nf_core.configs.create.multiprocessres import MultiNamedProcessConfig, MultiLabelledProcessConfig
+from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
+from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
+from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
 from nf_core.utils import LoggingConsole
@@ -133,5 +133,5 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         return {
             "is_nfcore": self.NFCORE_CONFIG,
             "is_infrastructure": self.CONFIG_TYPE == "infrastructure",
-            "is_hpc": self.INFRA_ISHPC
+            "is_hpc": self.INFRA_ISHPC,
         }

@@ -1886,7 +1886,7 @@ def configs(ctx):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
-    
+
 # nf-core configs create
 @configs.command("create")
 @click.pass_context
@@ -1904,7 +1904,7 @@ def create_configs(ctx):
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
-        
+
 
 # nf-core test-dataset subcommands
 @nf_core_cli.group(aliases=["t", "td", "tds", "test-datasets"])
@@ -1979,7 +1979,7 @@ def command_test_datasets_list_branches(ctx):
     """
     test_datasets_list_branches(ctx)
 
-    
+
 ## DEPRECATED commands since v3.0.0
 
 

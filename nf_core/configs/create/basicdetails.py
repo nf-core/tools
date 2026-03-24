@@ -9,11 +9,7 @@ from textual.containers import Center, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
-from nf_core.configs.create.utils import (
-    ConfigsCreateConfig,
-    TextInput,
-    init_context
-)  ## TODO Move somewhere common?
+from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 from nf_core.utils import add_hide_class, remove_hide_class
 
 config_exists_warn = """

@@ -6,16 +6,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Switch, Label
-from enum import Enum
-from nf_core.utils import add_hide_class, remove_hide_class
-
-from nf_core.configs.create.utils import (
-    ConfigsCreateConfig,
-    TextInput,
-    init_context
-)  ## TODO Move somewhere common?
-from nf_core.utils import add_hide_class, remove_hide_class
+from textual.widgets import Button, Footer, Header, Label, Markdown, Switch
 
 
 class PipelineConfigQuestion(Screen):
@@ -39,44 +30,26 @@ class PipelineConfigQuestion(Screen):
             )
         )
         with Horizontal():
-            yield Label(
-                "Configure default process resources?",
-                id="toggle_configure_defaults_label"
-            )
+            yield Label("Configure default process resources?", id="toggle_configure_defaults_label")
             yield Switch(
                 id="toggle_configure_defaults",
                 value=self.config_defaults,
             )
-            yield Label(
-                "Yes" if self.config_defaults else "No",
-                id="toggle_configure_defaults_state_label"
-            )
+            yield Label("Yes" if self.config_defaults else "No", id="toggle_configure_defaults_state_label")
         with Horizontal():
-            yield Label(
-                "Configure specific named processes?",
-                id="toggle_configure_names_label"
-            )
+            yield Label("Configure specific named processes?", id="toggle_configure_names_label")
             yield Switch(
                 id="toggle_configure_names",
                 value=self.config_named_processes,
             )
-            yield Label(
-                "Yes" if self.config_named_processes else "No",
-                id="toggle_configure_names_state_label"
-            )
+            yield Label("Yes" if self.config_named_processes else "No", id="toggle_configure_names_state_label")
         with Horizontal():
-            yield Label(
-                "Configure labels?",
-                id="toggle_configure_labels_label"
-            )
+            yield Label("Configure labels?", id="toggle_configure_labels_label")
             yield Switch(
                 id="toggle_configure_labels",
                 value=self.config_labels,
             )
-            yield Label(
-                "Yes" if self.config_labels else "No",
-                id="toggle_configure_labels_state_label"
-            )
+            yield Label("Yes" if self.config_labels else "No", id="toggle_configure_labels_state_label")
         yield Markdown(
             dedent(
                 """
@@ -97,18 +70,12 @@ class PipelineConfigQuestion(Screen):
             )
         )
         with Horizontal():
-            yield Label(
-                "Configure HPC-specific resources?",
-                id="toggle_configure_hpc_resources_label"
-            )
+            yield Label("Configure HPC-specific resources?", id="toggle_configure_hpc_resources_label")
             yield Switch(
                 id="toggle_configure_hpc_resources",
                 value=self.config_hpc,
             )
-            yield Label(
-                "Yes" if self.config_hpc else "No",
-                id="toggle_configure_hpc_resources_state_label"
-            )
+            yield Label("Yes" if self.config_hpc else "No", id="toggle_configure_hpc_resources_state_label")
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Next", id="next", variant="success"),
@@ -117,12 +84,12 @@ class PipelineConfigQuestion(Screen):
 
     @on(Switch.Changed)
     def on_toggle_switch(self, event: Switch.Changed) -> None:
-        """ Handle toggling the switches that determine which pipeline resources to configure """
+        """Handle toggling the switches that determine which pipeline resources to configure"""
         valid_toggles = {
-            'toggle_configure_defaults': 'config_defaults',
-            'toggle_configure_names': 'config_named_processes',
-            'toggle_configure_labels': 'config_labels',
-            'toggle_configure_hpc_resources': 'config_hpc',
+            "toggle_configure_defaults": "config_defaults",
+            "toggle_configure_names": "config_named_processes",
+            "toggle_configure_labels": "config_labels",
+            "toggle_configure_hpc_resources": "config_hpc",
         }
 
         if event.switch.id not in valid_toggles:
@@ -133,7 +100,7 @@ class PipelineConfigQuestion(Screen):
 
         # Update the switch label
         for label in self.query(Label):
-            if label.id == f'{event.switch.id}_state_label':
+            if label.id == f"{event.switch.id}_state_label":
                 label.update("Yes" if event.value else "No")
 
     # Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
