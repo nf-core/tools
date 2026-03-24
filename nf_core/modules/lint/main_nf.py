@@ -283,7 +283,12 @@ def check_script_section(self, lines):
             )
 
     # Validate meta keys
-    invalid_meta_keys = validate_meta_keys(script)
+    permitted_meta_keys = {"id", "single_end"}
+    invalid_meta_keys = [
+        f"{prefix}{key}"
+        for prefix, key in re.findall(r"(meta\d*\.)(\w+)\b(?!\()", script)
+        if key not in permitted_meta_keys
+    ]
     if not invalid_meta_keys:
         self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
     else:
@@ -297,7 +302,12 @@ def check_script_section(self, lines):
         )
 
     # Validate ext keys
-    invalid_ext_keys = validate_ext_keys(script)
+    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+    invalid_ext_keys = [
+        key
+        for key in re.findall(r"ext\.\w+", script)
+        if key not in permitted_ext_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)
+    ]
     if not invalid_ext_keys:
         self.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", self.main_nf))
     else:
@@ -711,35 +721,6 @@ def check_container_link_line(self, raw_line, registry):
                     self.main_nf,
                 )
             )
-
-
-def validate_meta_keys(script):
-    """
-    Extract and validate all meta keys from script.
-
-    Returns:
-        list: invalid_keys
-    """
-    permitted_keys = {"id", "single_end"}
-
-    # Match meta keys, excluding function calls e.g. meta.sorted(), meta.subMap(['id'])
-    meta_refs = re.findall(r"(meta\d*\.)(\w+)(?!\()", script)
-
-    return [f"{prefix}{key}" for prefix, key in meta_refs if key not in permitted_keys]
-
-
-def validate_ext_keys(script):
-    """
-    Extract and validate all ext keys from script.
-
-    Returns:
-        list: invalid_keys
-    """
-    permitted_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
-
-    ext_keys = re.findall(r"ext\.\w+", script)
-
-    return [key for key in ext_keys if key not in permitted_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)]
 
 
 def _parse_input(self, line_raw):
