@@ -722,22 +722,10 @@ def validate_meta_keys(script):
     """
     permitted_keys = {"id", "single_end"}
 
-    meta_keys = re.findall(r"meta\d*\.[\w\(]+", script)
+    # Match meta keys, excluding function calls e.g. meta.sorted(), meta.subMap(['id'])
+    meta_refs = re.findall(r"(meta\d*\.)(\w+)(?!\()", script)
 
-    invalid_keys = []
-    for key in meta_keys:
-        # Check for function calls e.g. meta.sorted(), meta.subMap(['id'])
-        if "(" in key:
-            continue
-
-        # Extract the key
-        match = re.match(r"^meta\d*\.(\w+)", key)
-        if match and match.group(1) in permitted_keys:
-            continue
-        else:
-            invalid_keys.append(key)
-
-    return invalid_keys
+    return [f"{prefix}{key}" for prefix, key in meta_refs if key not in permitted_keys]
 
 
 def validate_ext_keys(script):
@@ -751,19 +739,7 @@ def validate_ext_keys(script):
 
     ext_keys = re.findall(r"ext\.\w+", script)
 
-    invalid_keys = []
-    for key in ext_keys:
-        if key in permitted_keys:
-            continue
-
-        # Check ext.args{N} where N >= 2
-        args_match = re.match(r"^ext\.args(\d+)$", key)
-        if args_match and int(args_match.group(1)) >= 2:
-            continue
-
-        invalid_keys.append(key)
-
-    return invalid_keys
+    return [key for key in ext_keys if key not in permitted_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)]
 
 
 def _parse_input(self, line_raw):
