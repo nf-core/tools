@@ -161,11 +161,14 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 
-    # Set up logs to the console
+    # Set up logs to the console - use the shared console so log output
+    # coordinates with progress spinners (avoids output on the same line)
+    from nf_core.pipelines.lint_utils import console as shared_console
+
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(stderr=True, force_terminal=rich_force_colors()),
+            console=shared_console,
             show_time=False,
             show_path=verbose,  # True if verbose, false otherwise
             markup=True,

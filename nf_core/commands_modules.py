@@ -361,9 +361,9 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
             failed_modules = []
 
             progress_bar = rich.progress.Progress(
+                rich.progress.SpinnerColumn(),
                 "[bold blue]{task.description}",
-                rich.progress.BarColumn(bar_width=None),
-                "[magenta]{task.completed} of {task.total}[reset]",
+                rich.progress.TextColumn("[dim]{task.fields[status]}"),
                 transient=True,
                 console=console,
                 disable=ctx.obj["hide_progress"],
@@ -373,10 +373,11 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                 for component in manager.available_modules:
                     module_name = component.component_name
 
-                    # Create a task for this module
+                    # Create a task for this module (only one active at a time)
                     module_task_id = progress_bar.add_task(
                         f"[cyan]{module_name}[/cyan]",
                         total=tasks_per_module,
+                        status="building containers...",
                     )
 
                     try:
@@ -394,8 +395,9 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                     except Exception as e:
                         log.error(f"✗ Failed to build containers for {module_name}: {e}")
                         failed_modules.append(module_name)
-                        # Complete the progress bar for this module even on failure
-                        progress_bar.update(module_task_id, completed=tasks_per_module)
+                    finally:
+                        # Remove task so only the current module shows in the spinner
+                        progress_bar.remove_task(module_task_id)
 
             if failed_modules:
                 log.warning(
@@ -406,9 +408,9 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
         else:
             # Single module mode - create progress bar for single module
             progress_bar = rich.progress.Progress(
+                rich.progress.SpinnerColumn(),
                 "[bold blue]{task.description}",
-                rich.progress.BarColumn(bar_width=None),
-                "[magenta]{task.completed} of {task.total}[reset]",
+                rich.progress.TextColumn("[dim]{task.fields[status]}"),
                 transient=True,
                 console=console,
                 disable=ctx.obj["hide_progress"],
@@ -418,6 +420,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                 module_task_id = progress_bar.add_task(
                     f"[cyan]{manager.module}[/cyan]",
                     total=tasks_per_module,
+                    status="building containers...",
                 )
                 _, success = manager.create(await_build, progress_bar=progress_bar, task_id=module_task_id, force=force)
                 if success:

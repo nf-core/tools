@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -13,7 +14,7 @@ from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
-from nf_core.modules.modules_utils import prompt_module_selection
+from nf_core.modules.modules_utils import filter_modules_by_name, prompt_module_selection
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
@@ -66,14 +67,30 @@ class ModuleContainers:
         self.module = module
         self.all_modules = all_modules
 
+        # When a module name is given, use filter_modules_by_name so that a parent folder
+        # like "samtools" also selects submodules (samtools/sort, samtools/view, …).
+        if module is not None and not self.all_modules and self.available_modules:
+            matched = filter_modules_by_name(self.available_modules, module)
+            if len(matched) > 1:
+                # Prefix match returned several submodules – treat as a filtered "all" run
+                self.available_modules = matched
+                self.all_modules = True
+
         # Use NFCoreComponent to handle module directory and file paths
         # For single module mode
         if not self.all_modules:
-            # First try to find it in the components we already created
+            # Try exact lookup in the components we already created
             if module is not None and module in self.components_by_name:
                 self.nfcore_component: NFCoreComponent | None = self.components_by_name[module]
+            elif module is not None and self.available_modules:
+                # filter_modules_by_name returned exactly one component (possibly prefix match)
+                matched_single = filter_modules_by_name(self.available_modules, module)
+                if matched_single:
+                    self.nfcore_component = matched_single[0]
+                else:
+                    self.nfcore_component = self._init_nfcore_component(module)
             elif module is not None:
-                # Fallback to creating a new one (for when module name is provided directly)
+                # Fallback: no available_modules list, create component directly
                 self.nfcore_component = self._init_nfcore_component(module)
             else:
                 raise ValueError("No module specified and no modules available")
@@ -236,8 +253,10 @@ class ModuleContainers:
             )
             return
 
-        # Replace container directive, preserving indentation
-        new_content = re.sub(r"(\s*)container\s+.*", rf'\1container "{container_name}"', content, count=1)
+        # Replace container directive (may span multiple lines), preserving indentation
+        new_content = re.sub(
+            r"(\s*)container\s+\".*?\"", rf'\1container "{container_name}"', content, count=1, flags=re.DOTALL
+        )
 
         main_nf_path.write_text(new_content)
         log.info(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{container_name}`")
@@ -290,6 +309,7 @@ class ModuleContainers:
                 cs, platform = build_tasks[fut]
 
                 # Try to get the result, but continue on failure
+                short_platform = platform.split("/")[-1]
                 try:
                     containers[cs][platform] = fut.result()
                     # Update self.containers and meta.yml after each successful build
@@ -300,12 +320,18 @@ class ModuleContainers:
                     except Exception as meta_error:
                         log.warning(f"Failed to update meta.yml after {cs} {platform} build: {meta_error}")
                     if progress_bar and task_id is not None:
-                        progress_bar.update(task_id, advance=1)
+                        progress_bar.update(task_id, advance=1, status=f"{cs}/{short_platform} done")
                 except Exception as e:
-                    log.error(f"Failed to build {cs} container for {platform}: {e}")
-                    has_failures = True
+                    # make it a warning for arm (not required), but fail for other platforms
+                    if platform == "linux/arm64":
+                        log.warning(
+                            f"Failed to build {cs} container for {platform}: {e}. This is only critical if the tool should support arm64."
+                        )
+                    else:
+                        log.error(f"Failed to build {cs} container for {platform}: {e}")
+                        has_failures = True
                     if progress_bar and task_id is not None:
-                        progress_bar.update(task_id, advance=1)
+                        progress_bar.update(task_id, advance=1, status=f"{cs}/{short_platform} failed")
                     continue
 
         # Set containers early so get_conda_lock_file can access it
@@ -316,10 +342,11 @@ class ModuleContainers:
         for platform in CONTAINER_PLATFORMS:
             # Get docker build ID for this platform
             build_id = containers.get("docker", {}).get(platform, {}).get(self.BUILD_ID_KEY, "")
+            short_platform = platform.split("/")[-1]
             if not build_id:
                 log.debug(f"Docker image for {platform} missing - Conda-lock skipped")
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, advance=1)
+                    progress_bar.update(task_id, advance=1, status=f"conda lock {short_platform} skipped")
                 continue
 
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
@@ -333,16 +360,18 @@ class ModuleContainers:
             try:
                 # Download conda lock file (it will look up build_id from docker container)
                 log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, status=f"conda lock {short_platform}...")
                 conda_lock_path.write_text(self.get_conda_lock_file(platform))
                 new_lock_files.add(conda_lock_path)
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, advance=1)
+                    progress_bar.update(task_id, advance=1, status=f"conda lock {short_platform} done")
 
             except Exception as e:
                 log.error(f"Failed to download conda lock file for {platform}: {e}")
                 has_failures = True
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, advance=1)
+                    progress_bar.update(task_id, advance=1, status=f"conda lock {short_platform} failed")
 
         # Clean up stale conda-lock files
         self.cleanup_stale_conda_lock_files(new_lock_files)
@@ -474,7 +503,7 @@ class ModuleContainers:
                 log.warning(f"Https-url for image {image} could not be extracted from image inspect output")
 
             else:
-                log.debug(f"Extracting https-uri for {image} from image inspect: {container_layers[0]}")
+                log.debug(f"Extracting https-uri for {image} from image inspect: {json.dumps(container_layers[0])}")
                 digest = container_layers[0]["digest"].replace("sha256:", "")
                 container[cls.HTTPS_URL_KEY] = (
                     f"https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/{digest[:2]}/{digest}/data"
