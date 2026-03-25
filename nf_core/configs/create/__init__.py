@@ -19,7 +19,7 @@ from nf_core.configs.create.final import FinalScreen
 from nf_core.configs.create.finalinfradetails import FinalInfraDetails
 from nf_core.configs.create.hpccustomisation import HpcCustomisation
 from nf_core.configs.create.hpcquestion import ChooseHpc
-from nf_core.configs.create.multiprocessres import MultiNamedProcessConfig, MultiLabelledProcessConfig
+from nf_core.configs.create.multiprocessres import MultiLabelledProcessConfig, MultiNamedProcessConfig
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
 from nf_core.configs.create.welcome import WelcomeScreen

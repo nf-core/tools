@@ -4,12 +4,12 @@ nf-core organization specification.
 
 from pathlib import Path
 from re import sub
+
 from nf_core.configs.create.serial import NextflowSerial
 from nf_core.configs.create.utils import ConfigsCreateConfig
 
 
 class ConfigCreate:
-
     def __init__(self, template_config: ConfigsCreateConfig, config_type: str, config_dir: Path | str = Path(".")):
         self.template_config = template_config
         self.config_type = config_type
@@ -27,10 +27,7 @@ class ConfigCreate:
         filename = f"{config_name_clean}.conf"
         filename = self.config_dir / filename
 
-        if not (
-            self.config_type == "pipeline" or
-            self.config_type == "infrastructure"
-        ):
+        if not (self.config_type == "pipeline" or self.config_type == "infrastructure"):
             raise ValueError(f"Invalid config type: {self.config_type}")
 
         serial_data = NextflowSerial.dumps(self.template_config.serial(), drop_null=True)

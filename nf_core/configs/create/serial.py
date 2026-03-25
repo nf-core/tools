@@ -1,38 +1,43 @@
 from typing import Any
 
+
 class NextflowSerial:
     def __init__(self, data_dict: dict | None, tab_indent: int | None = 4):
         self.data_dict = data_dict
 
     def __getitem__(self, key: Any | None) -> Any:
         """Returns value from data"""
+        if not isinstance(self.data_dict, dict):
+            raise ValueError("NextflowSerial object is not initialised, cannot index.")
         return self.data_dict[key]
 
     def __setitem__(self, key: Any | None, value: Any | None) -> None:
         """Sets value in data"""
+        if not isinstance(self.data_dict, dict):
+            raise ValueError("NextflowSerial object is not initialised, cannot index.")
         self.data_dict[key] = value
 
     @staticmethod
-    def _stringify(data: Any | None, quote: bool | None = True) -> str:
+    def _stringify(data: Any | None, quote: bool = True) -> str:
         """Return nextflow compatible value"""
-        quote = "'" * quote
+        quote_char = "'" if quote else ""
         if isinstance(data, str):
-            return f"{quote}{data}{quote}"
+            return f"{quote_char}{data}{quote_char}"
         if isinstance(data, bool):
             return "true" if data else "false"
         if isinstance(data, type(None)):
             return "null"
         return str(data)  # Fallback on the Python str function if no matches
-    
+
     @staticmethod
     def dumps(
         data_dict: Any | None,
-        tab_indent: int | None = 4,
-        current_indent: int | None = 0,
-        end: str | None = "\n",
-        indent_start: bool | None = True,
-        one_line: bool | None = False,
-        drop_null: bool | None = False,
+        tab_indent: int = 4,
+        current_indent: int = 0,
+        end: str = "\n",
+        indent_start: bool = True,
+        one_line: bool = False,
+        drop_null: bool = False,
     ) -> str:
         """Recursive function to create configuration file"""
         output = ""

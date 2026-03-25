@@ -10,7 +10,6 @@ from textual.widgets import Button, Footer, Header, Input, Markdown, Select, Sta
 from nf_core.configs.create.utils import SUPPORTED_CONTAINERS, ConfigsCreateConfig, TextInput, init_context
 from nf_core.utils import add_hide_class, remove_hide_class
 
-
 markdown_intro = """
 # Configure the options for your infrastructure config
 """
@@ -90,10 +89,9 @@ class FinalInfraDetails(Screen):
                 "/path/to/cache/dir",
                 "Define a global cache direcotry.",
                 classes="",
-                default=self._get_set_directory(
-                    f"NXF_{self.container_system.upper()}_CACHEDIR")
-                    if self.container_system is not None
-                    else "",
+                default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR")
+                if self.container_system is not None
+                else "",
             )
         yield TextInput(
             "igenomes_cachedir",
@@ -208,7 +206,7 @@ class FinalInfraDetails(Screen):
         delete_work_switch = self.query_one("#toggle-delete-work")
         new_config["delete_work_dir"] = delete_work_switch.value
         new_config["module"] = self._detect_module_system()
-        
+
         # Validate and update the config
         try:
             with init_context(self.parent.get_context()):

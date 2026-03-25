@@ -157,18 +157,18 @@ class MultiProcessConfig(Screen):
                 if self.parent.PIPE_CONF_HPC:
                     local_exec_switch = config_widget.query_one("#toggle_use_local_exec")
                     if local_exec_switch.value:
-                        tmp_config['executor'] = "local"
+                        tmp_config["executor"] = "local"
                 # Validate the config
                 with init_context(self.parent.get_context()):
                     ConfigsCreateConfig(**tmp_config)
                 # Add to the config list
                 config_list.append(tmp_config)
             # Add to the final config
-            new_config = {self.config_key: {}}
+            new_config = {}
             for tmp_config in config_list:
                 process_id = tmp_config.get("custom_process_id")
-                new_config[self.config_key][process_id] = tmp_config
-            self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+                new_config[process_id] = tmp_config
+            self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update={self.config_key: new_config})
             # Push the next screen
             self.parent.push_screen(self.next_screen)
         except ValueError:
@@ -203,7 +203,7 @@ class MultiNamedProcessConfig(MultiProcessConfig):
 class MultiLabelledProcessConfig(MultiProcessConfig):
     def __init__(self) -> None:
         super().__init__(
-            title='Configure processes by label', selector_type='label', config_key='labelled_process_resources'
+            title="Configure processes by label", selector_type="label", config_key="labelled_process_resources"
         )
 
     @on(Mount)

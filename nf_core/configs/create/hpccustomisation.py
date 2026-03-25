@@ -126,7 +126,7 @@ class HpcCustomisation(Screen):
 
     def _slurm_get_default_queue(self) -> str:
         """Get the default queue for Slurm"""
-        config = {}
+        config = None
         # TODO: If slurm is built from source, the config file path can be different
         with open("/etc/slurm/slurm.conf") as fp:
             config = self._parse_slurm_config(fp)
@@ -134,7 +134,7 @@ class HpcCustomisation(Screen):
         for conf in config:
             if (conf["Default"] if "Default" in conf.keys() else "NO") == "YES":
                 return conf["PartitionName"]
-        
+
         # If no default is set, use the first option
         return config[0]["PartitionName"]
 
@@ -143,7 +143,7 @@ class HpcCustomisation(Screen):
         config = self._pbs_parse_config(pbs_raw_config)
         return config["default_queue"]
 
-    def _parse_slurm_config(self, fp: io.TextIOWrapper | None) -> list[dict]:
+    def _parse_slurm_config(self, fp: io.TextIOWrapper) -> list[dict]:
         """Parse the Slurm configuration file"""
         config = []
         for line in fp.readlines():
@@ -152,7 +152,7 @@ class HpcCustomisation(Screen):
                 config.append({i[0]: i[1] for i in tokens})
         return config
 
-    def _pbs_parse_config(self, raw: str | None) -> dict:
+    def _pbs_parse_config(self, raw: str) -> dict:
         """Parse the PBS configuration file"""
         config = {}
         for line in [r.strip() for r in raw.split("\n")]:

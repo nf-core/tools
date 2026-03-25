@@ -37,6 +37,7 @@ _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
 SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
 
+
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
 
@@ -196,7 +197,7 @@ class ConfigsCreateConfig(BaseModel):
                 "cpus": int(self.default_process_ncpus) if self.default_process_ncpus else None,
                 "memory": str(float(self.default_process_memgb)) + "GB" if self.default_process_memgb else None,
                 "time": str(float(self.default_process_hours)) + "h" if self.default_process_hours else None,
-            }
+            },
         }
         # Get custom process resources
         for selector in ["withName", "withLabel"]:
@@ -496,7 +497,7 @@ class ConfigsCreateConfig(BaseModel):
     def is_path_or_uri(cls, v: str, info: ValidationInfo) -> str:
         v = v.strip()
         if v == "":
-            return v #optional
+            return v  # optional
 
         uri_pattern = re.compile(r"^\w+:\/\/\w+")
         if not _PATH_PATTERN.match(v) and not uri_pattern.match(v):
