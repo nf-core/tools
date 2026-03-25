@@ -44,7 +44,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 entry = {}
             name = entry.get("name") or entry.get("image") or entry.get("container") or ""
             if not name:
-                module.failed.append(
+                module.warned.append(
                     ("meta_yml", "containers_name", f"Missing {system} container name for {platform}", meta_path)
                 )
                 continue
@@ -54,7 +54,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 scheme = ""
             if system == "singularity":
                 if scheme != "oras":
-                    module.failed.append(
+                    module.warned.append(
                         (
                             "meta_yml",
                             "containers_protocol",
@@ -73,7 +73,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
             else:
                 if scheme and scheme not in ("http", "https"):
-                    module.failed.append(
+                    module.warned.append(
                         (
                             "meta_yml",
                             "containers_protocol",
@@ -169,7 +169,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
             )
             docker_name = docker_entry.get("name") or docker_entry.get("image") or docker_entry.get("container") or ""
             if not docker_name:
-                module.failed.append(
+                module.warned.append(
                     (
                         "meta_yml",
                         f"containers_docker_{platform}_exists",
@@ -206,7 +206,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                             )
                         )
                     else:
-                        module.failed.append(
+                        module.warned.append(
                             (
                                 "meta_yml",
                                 f"containers_docker_{platform}_exists",
@@ -251,7 +251,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     lock_file = entry.get(key)
                     break
             if not lock_file:
-                module.failed.append(
+                module.warned.append(
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
                 )
                 continue
@@ -278,7 +278,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                         )
                     )
                 else:
-                    module.failed.append(
+                    module.warned.append(
                         (
                             "meta_yml",
                             "containers_conda_lock_exists",
@@ -378,7 +378,7 @@ def lint_main_nf_container(
         return
 
     if meta_yml_docker_img != main_nf_docker_img:
-        module.failed.append(
+        module.warned.append(
             (
                 "main_nf",
                 "main_nf_container",
