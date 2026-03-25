@@ -26,8 +26,8 @@ class ModuleContainers:
     """
 
     IMAGE_KEY = "name"
-    BUILD_ID_KEY = "buildId"
-    SCAN_ID_KEY = "scanId"
+    BUILD_ID_KEY = "build_id"
+    SCAN_ID_KEY = "scan_id"
     LOCK_FILE_KEY = "lock_file"
     HTTPS_URL_KEY = "https"
 
