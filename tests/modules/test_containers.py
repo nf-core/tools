@@ -88,18 +88,17 @@ class TestModuleContainers:
 
         def fake_run_cmd(executable: str, args_str: str):
             assert executable == "wave"
-            platform = next(p for p in CONTAINER_PLATFORMS if p in args_str)
             system = "singularity" if "--singularity" in args_str else "docker"
-            image = f"community.wave.seqera.io/library/testC-{system}:{platform.replace('/', '-')}"
-            build_id = f"bd-{system}-{platform}-build"
+            image = "community.wave.seqera.io/library/testC:0.1.0--abc123"
+            build_id = f"bd-abc123-{system}"
             meta = {
                 "buildId": build_id,
                 "cached": True,
                 "containerImage": image,
                 "freeze": True,
                 "mirror": False,
-                "requestId": f"req-{system}-{platform}",
-                "scanId": f"sc-{system}-{platform}-scan" if system == "docker" else None,
+                "requestId": f"req-abc123-{system}",
+                "scanId": f"sc-abc123-{system}" if system == "docker" else None,
                 "succeeded": True,
                 "targetImage": image,
             }
@@ -137,14 +136,13 @@ class TestModuleContainers:
         for system in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
                 entry = containers[system][platform]
-                expected_image = f"community.wave.seqera.io/library/testC-{system}:{platform.replace('/', '-')}"
-                assert entry["name"] == expected_image
-                assert entry["buildId"] == f"bd-{system}-{platform}-build"
+                assert entry["name"] == "community.wave.seqera.io/library/testC:0.1.0--abc123"
+                assert entry["buildId"] == f"bd-abc123-{system}"
                 if system == "docker":
-                    assert entry["scanId"] == f"sc-{system}-{platform}-scan"
+                    assert entry["scanId"] == f"sc-abc123-{system}"
                     # Check that conda lock file path exists and is correct
-                    platform_safe = platform.replace("/", "-")
-                    build_id = f"bd-{system}-{platform}-build"
+                    platform_safe = platform.replace("/", "_")
+                    build_id = f"bd-abc123-{system}"
                     expected_lock_path = str(module_dir / ".conda-lock" / f"{platform_safe}-{build_id}.txt")
                     assert containers["conda"][platform]["lock_file"] == expected_lock_path
                 else:
