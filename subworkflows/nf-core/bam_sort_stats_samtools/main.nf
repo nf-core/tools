@@ -12,7 +12,13 @@ workflow BAM_SORT_STATS_SAMTOOLS {
     ch_fasta_fai // channel: [ val(meta), path(fasta), path(fai) ]
 
     main:
-    SAMTOOLS_SORT(ch_bam, ch_fasta_fai, '')
+    ch_combined = ch_bam.join(ch_fasta_fai, by:0)
+
+    SAMTOOLS_SORT(
+        ch_combined.map { meta, bam, fasta, fai -> [meta, bam]},
+        ch_combined.map { meta, bam, fasta, fai -> [meta, fasta, fai]},
+        ''
+    )
 
     SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
 

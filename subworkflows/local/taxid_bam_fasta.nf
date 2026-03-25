@@ -121,7 +121,6 @@ workflow TAXID_BAM_FASTA {
     SAMTOOLS_INDEX_FAIL(SAMTOOLS_SORT_FAIL.out.bam)
 
     SAMTOOLS_FASTA(SAMTOOLS_SORT_FAIL.out.bam, false)
-    ch_versions = ch_versions.mix(SAMTOOLS_FASTA.out.versions.first())
 
     emit:
     versions        = ch_versions
