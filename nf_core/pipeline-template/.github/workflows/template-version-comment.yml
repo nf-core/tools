@@ -42,5 +42,5 @@ jobs:
             > Your pipeline is using an old version of the nf-core template: ${{ steps.read_yml.outputs['nf_core_version'] }}.
             > Please update your pipeline to the latest version.
             >
-            > For more documentation on how to update your pipeline, please see the [nf-core documentation](https://github.com/nf-core/tools?tab=readme-ov-file#sync-a-pipeline-with-the-template) and [Synchronisation documentation](https://nf-co.re/docs/contributing/sync).
+            > For more documentation on how to update your pipeline, please see the [Synchronisation documentation](https://nf-co.re/docs/developing/template-syncs/overview).
           #{%- endraw %}

@@ -499,11 +499,13 @@ class ComponentCreate(ComponentCommand):
                 pytest_dir.unlink()
             else:
                 shutil.rmtree(pytest_dir)
+                ## TODO docs-v2 deprecate message or port page? No more pytest modules anymore, I believe?
             log.info(
                 "[yellow]Please convert the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
             )
         else:
+            ## TODO docs-v2 deprecate message or port page? No more pytest modules anymore, I believe?
             log.info(
                 "[yellow]Please migrate the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link].\n"

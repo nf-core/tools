@@ -292,8 +292,8 @@ class PipelineCreate:
                 "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
                 "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
                 "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
-                "[default]Please read: [link=https://nf-co.re/docs/tutorials/adding_a_pipeline/overview#join-the-community]"
-                "https://nf-co.re/docs/tutorials/adding_a_pipeline/overview#join-the-community[/link]"
+                "[default]Please read: [link=https://nf-co.re/docs/contributing/contribute-new-pipelines]"
+                "https://nf-co.re/docs/contributing/contribute-new-pipelines[/link]"
             )
 
     def render_template(self) -> None:

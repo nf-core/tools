@@ -84,7 +84,7 @@ Pull requests are typically reviewed when these tests are passing.
 
 #### Lint tests
 
-nf-core has a [set of guidelines](https://nf-co.re/docs/contributing/guidelines) which all pipelines must follow.
+nf-core has a [set of guidelines](https://nf-co.re/docs/specifications/overview) which all pipelines must follow.
 To enforce these, run linting with nf-core/tools:
 
 ```bash
@@ -183,7 +183,7 @@ nf-core pipelines bump-version --nextflow . <min_nf_version>
 
 #### Images and figures guidelines
 
-If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/guidelines/graphic_design/overview).
+If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/community/brand/workflow-schematics).
 
 ## Pipeline specific contribution guidelines
 

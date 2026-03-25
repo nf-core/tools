@@ -420,7 +420,7 @@ class PipelineSync:
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
             "For instructions on how to merge this PR, please see "
-            "[https://nf-co.re/docs/contributing/sync/](https://nf-co.re/docs/contributing/sync/#merging-automated-prs).\n\n"
+            "[the template sync documentation](https://nf-co.re/docs/developing/template-syncs/merge-automated-pull-requests).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
             "\n\n> [!NOTE]\n"
