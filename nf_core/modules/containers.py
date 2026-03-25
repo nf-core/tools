@@ -12,7 +12,7 @@ import yaml
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint import ModuleLint, meta_yml_containers
+from nf_core.modules.lint import ModuleLint
 from nf_core.modules.modules_utils import prompt_module_selection
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
@@ -536,28 +536,6 @@ class ModuleContainers:
             raise ValueError(f"Failed to download conda lock file from {conda_lock_url}")
         log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
         return resp.text
-
-    def lint(self, module: str) -> dict[str, list]:
-        """
-        Confirm containers are defined for the module.
-        Returns dict with 'passed', 'failed', 'warned' lists from the lint.
-        """
-        if not self.nfcore_component:
-            raise ValueError("No module to lint")
-
-        # Load containers from meta.yml into the component before linting
-        meta_path = Path(self.nfcore_component.component_dir, "meta.yml")
-        if meta_path.exists():
-            meta = read_meta_yml(meta_path)
-            self.nfcore_component.container = meta.get("containers", {})
-
-        meta_yml_containers(self.nfcore_component)
-
-        return {
-            "passed": self.nfcore_component.passed,
-            "failed": self.nfcore_component.failed,
-            "warned": self.nfcore_component.warned,
-        }
 
     def list_containers(self) -> list[tuple[str, str, str]]:
         """

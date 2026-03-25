@@ -19,7 +19,6 @@ from nf_core.commands_modules import (
     modules_bump_versions,
     modules_containers_conda_lock,
     modules_containers_create,
-    modules_containers_lint,
     modules_containers_list,
     modules_create,
     modules_info,
@@ -1506,23 +1505,6 @@ def command_modules_containers_conda_lock(ctx, module):
     Build a Docker linux/arm64 container and fetch the conda lock file for a module.
     """
     modules_containers_conda_lock(ctx, module)
-
-
-@modules_containers.command("lint")
-@click.pass_context
-@click.argument(
-    "module",
-    type=str,
-    required=False,
-    callback=normalize_case,
-    metavar="<module> or <module/submodule>",
-    shell_complete=autocomplete_modules,
-)
-def command_modules_containers_lint(ctx, module):
-    """
-    Confirm that container images for a module exist.
-    """
-    modules_containers_lint(ctx, module)
 
 
 # nf-core modules containers list
