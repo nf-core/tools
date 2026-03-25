@@ -15,7 +15,7 @@ from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint, meta_yml_containers
 from nf_core.modules.modules_utils import prompt_module_selection
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, Platform, run_cmd
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -278,7 +278,7 @@ class ModuleContainers:
                     fut = pool.submit(
                         self.request_container,
                         cs,
-                        platform.replace("_", "/"),
+                        platform,
                         self.environment_yml,
                         await_build,
                         self.verbose,
@@ -396,7 +396,7 @@ class ModuleContainers:
             str(conda_file.absolute()),
             "--freeze",
             "--platform",
-            platform.replace("_", "/"),
+            platform,
             "-o",
             "yaml",
             "--build-template",
@@ -559,7 +559,7 @@ class ModuleContainers:
             "warned": self.nfcore_component.warned,
         }
 
-    def list_containers(self) -> list[tuple[str, Platform, str]]:
+    def list_containers(self) -> list[tuple[str, str, str]]:
         """
         Return containers defined in the module meta.yml as a list of (<container-system>, <platform>, <image-name>).
         """

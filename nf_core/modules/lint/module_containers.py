@@ -372,9 +372,9 @@ def lint_main_nf_container(
 
     meta_yml = read_meta_yml(meta_path)
     try:
-        meta_yml_docker_img = meta_yml["containers"]["docker"]["linux_amd64"]["name"]
+        meta_yml_docker_img = meta_yml["containers"]["docker"]["linux/amd64"]["name"]
     except KeyError:
-        log.debug(f"Docker linux_amd64 image could not be read from {meta_path.absolute()}")
+        log.debug(f"Docker linux/amd64 image could not be read from {meta_path.absolute()}")
         return
 
     if meta_yml_docker_img != main_nf_docker_img:

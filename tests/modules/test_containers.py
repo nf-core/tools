@@ -132,7 +132,7 @@ class TestModuleContainers:
         manager = ModuleContainers("testC", directory=repo_root)
         containers, success = manager.create(await_build=True)
         assert manager.containers == containers
-        assert success is True
+        assert success
 
         for system in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
