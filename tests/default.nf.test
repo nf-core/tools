@@ -35,6 +35,9 @@ nextflow_pipeline {
             def stable_content_bowtie2_align = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
             def bam_files_bowtie2_align  = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", include: ['*.bam'])
 
+            //taxpasta
+            def stable_content_taxpasta     = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include: ["taxpasta/**"]     , ignoreFile: 'tests/.nftignore')
+
              //bowtie2 build
             def stable_content_bowtie2_build = getAllFilesFromDir("$outputDir/mapping/bowtie2/build", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
 
@@ -67,13 +70,13 @@ nextflow_pipeline {
                     stable_content_blastx).match("blastx")},
                 { assert snapshot (stable_content_extracted_reads).match("extracted_reads")},
                 { assert snapshot (
-                    bam_files_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_bowtie2_align.collect { file -> [file.getName() + " bowtie2 align header: " + bam(file.toString()).getHeaderMD5()] },
+                    bam_files_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_bowtie2_align.collect { file -> [file.getName() + " bowtie2 align header: " + bam(file.toString()).getHeader()] },
                     stable_content_bowtie2_align).match("bowtie2_align")},
                 { assert snapshot (stable_content_bowtie2_build).match("bowtie2_build")},
                 { assert snapshot (
                     bam_files_minimap2_align.isEmpty() ? 'No BAM files' : bam_files_minimap2_align.collect { file -> [file.getName() + " minimap2 align md5: " + bam(file.toString()).getReadsMD5()] },
                     stable_content_minimap2_align).match("minimap2_align")},
-               // { assert snapshot (stable_content_igv).match("igv")},
+                //{ assert snapshot (stable_content_igv).match("igv")},
                // { assert snapshot (stable_content_pathogens_blast).match("pathogens_blast")},
             )
         }
