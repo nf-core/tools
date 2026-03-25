@@ -4,11 +4,8 @@ Lint the main.nf file of a module
 
 import logging
 import re
-import sqlite3
 from pathlib import Path
-from urllib.parse import urlparse, urlunparse
 
-import requests
 import yaml
 from rich.progress import Progress
 
@@ -178,10 +175,7 @@ def main_nf(
         module.passed.append(("main_nf", "main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines, registry, fix_version, progress_bar):
-        module.passed.append(("main_nf", "main_nf_container", "Container versions match", module.main_nf))
-    else:
-        module.warned.append(("main_nf", "main_nf_container", "Container versions do not match", module.main_nf))
+    check_process_section(module, process_lines, registry, fix_version, progress_bar)
 
     # Check the when statement
     check_when_section(module, when_lines)
@@ -416,7 +410,7 @@ def check_process_section(
         progress_bar (ProgressBar): Progress bar to update.
 
     Returns:
-        bool | None: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
+        None
     """
     # Check that we have a process section
     if len(lines) == 0:
@@ -424,9 +418,6 @@ def check_process_section(
         return
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
-    # Checks that build numbers of bioconda, singularity and docker container are matching
-    singularity_tag = None
-    docker_tag = None
     bioconda_packages = []
     allowed_registries = registry
 
@@ -438,7 +429,6 @@ def check_process_section(
 
     # Deprecated enable_conda
     for _i, raw_line in enumerate(lines):
-        url = None
         line = raw_line.strip(" \n'\"}:?")
 
         # Catch preceding "container "
@@ -468,83 +458,27 @@ def check_process_section(
                     )
                 )
         if _container_type(line) == "singularity":
-            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
-            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
-            # Please god let's find a better way to do this than regex
-            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", line)
-            if match is not None:
-                singularity_tag = match.group(1)
-                self.passed.append(
-                    ("main_nf", "singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf)
-                )
-            else:
-                self.failed.append(("main_nf", "singularity_tag", "Unable to parse singularity tag", self.main_nf))
-                singularity_tag = None
-            url = urlparse(line.split("'")[0])
-
-        if _container_type(line) == "docker":
-            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
-            # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
-            match = re.search(r":([A-Za-z\d\-_.]+)$", line)
-            if match is not None:
-                docker_tag = match.group(1)
-                self.passed.append(("main_nf", "docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
-            else:
-                self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = None
-            if line.startswith(allowed_registries):
-                l_stripped = re.sub(r"\W+$", "", line)
-                self.passed.append(
-                    (
-                        "main_nf",
-                        "container_links",
-                        f"Container prefix is correct: {l_stripped}",
-                        self.main_nf,
-                    )
-                )
-            else:
-                self.failed.append(
-                    (
-                        "main_nf",
-                        "container_links",
-                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(f'{r}' for r in allowed_registries)}",
-                        self.main_nf,
-                    )
-                )
-
-            url = urlparse(line.split("'")[0])
-
-        if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
-            check_container_link_line(self, raw_line, registry)
-
-        # Try to connect to container URLs
-        if url is None:
-            continue
-        try:
-            container_url = "https://" + urlunparse(url) if url.scheme != "https" else urlunparse(url)
-            log.debug(f"Trying to connect to URL: {container_url}")
-            response = requests.head(
-                container_url,
-                stream=True,
-                allow_redirects=True,
-            )
-            log.debug(
-                f"Connected to URL: {'https://' + urlunparse(url) if url.scheme != 'https' else urlunparse(url)}, "
-                f"status_code: {response.status_code}"
-            )
-        except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
-            log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
-            self.failed.append(("main_nf", "container_links", "Unable to connect to container URL", self.main_nf))
-            continue
-        if not response.ok:
             self.warned.append(
                 (
                     "main_nf",
-                    "container_links",
-                    f"Unable to connect to container registry, code:  {response.status_code}, url: {response.url}",
+                    "deprecated_container_syntax",
+                    "Singularity container URL syntax is deprecated. Please migrate to wave.yml-based containers.",
                     self.main_nf,
                 )
             )
+
+        if _container_type(line) == "docker":
+            self.warned.append(
+                (
+                    "main_nf",
+                    "deprecated_container_syntax",
+                    "Docker container URL syntax is deprecated. Please migrate to wave.yml-based containers.",
+                    self.main_nf,
+                )
+            )
+
+        if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
+            check_container_link_line(self, raw_line, registry)
 
     # Get bioconda packages from environment.yml
     try:
@@ -596,7 +530,7 @@ def check_process_section(
                 # If a new version is available and fix is True, update the version
                 if fix_version:
                     try:
-                        fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
+                        fixed = _fix_module_version(self, bioconda_version, last_ver, response)
                     except FileNotFoundError as e:
                         fixed = False
                         log.debug(f"Unable to update package {package} due to error: {e}")
@@ -648,12 +582,6 @@ def check_process_section(
                         self.main_nf,
                     )
                 )
-
-    # Check if a tag exists at all. If not, return None.
-    if singularity_tag is None or docker_tag is None:
-        return None
-    else:
-        return docker_tag == singularity_tag
 
 
 def check_process_name_format(self, process_name, component_name):
@@ -1023,46 +951,17 @@ def _is_empty(line):
     return empty
 
 
-def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
-    """Updates the module version
-
-    Changes the bioconda current version by the latest version.
-    Obtains the latest build from bioconda response
-    Checks that the new URLs for docker and singularity with the tag [version]--[build] are valid
-    Changes the docker and singularity URLs
-    """
-    # Get latest build
-    build = _get_build(response)
+def _fix_module_version(self, current_version, latest_version, response):
+    """Updates the module conda version in main.nf."""
 
     with open(self.main_nf) as source:
         lines = source.readlines()
 
-    # Check if the new version + build exist and replace
     new_lines = []
     for line in lines:
         line_stripped = line.strip(" '\"")
-        build_type = _container_type(line_stripped)
-        if build_type == "conda":
+        if _container_type(line_stripped) == "conda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
-        elif build_type in ("singularity", "docker"):
-            # Check that the new url is valid
-            new_url = re.search(
-                "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
-            ).group(1)
-            try:
-                response_new_container = requests.get(
-                    "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
-                )
-                log.debug(
-                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, "
-                    f"status_code: {response_new_container.status_code}"
-                )
-            except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
-                log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")
-                return False
-            if response_new_container.status_code != 200:
-                return False
-            new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
         else:
             new_lines.append(line)
 
