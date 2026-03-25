@@ -6,10 +6,8 @@ import logging
 import re
 from pathlib import Path
 
-import yaml
 from rich.progress import Progress
 
-import nf_core
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 
@@ -436,8 +434,6 @@ def check_process_section(
             line = line.replace("container", "").strip(" \n'\"}:?")
 
         if _container_type(line) == "conda":
-            if "bioconda::" in line:
-                bioconda_packages = [b for b in line.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", line)
             if match is None:
                 self.passed.append(

@@ -4,7 +4,9 @@ from pathlib import Path
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
+from rich.progress import Progress
 
+import nf_core.utils
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
@@ -15,7 +17,13 @@ yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=2, offset=2)
 
 
-def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+def environment_yml(
+    module_lint_object: ComponentLint,
+    module: NFCoreComponent,
+    allow_missing: bool = False,
+    fix_version: bool = False,
+    progress_bar: Progress | None = None,
+) -> None:
     """
     Lint an ``environment.yml`` file.
 
@@ -229,3 +237,109 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                         module.environment_yml,
                     )
                 )
+
+        # Check bioconda package versions
+        if "dependencies" in env_yml:
+            bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
+            for bp in bioconda_packages:
+                bp = bp.strip("'").strip('"')
+                try:
+                    bioconda_version = bp.split("=")[1]
+                    response = nf_core.utils.anaconda_package(bp)
+                    module.passed.append(
+                        (
+                            "environment_yml",
+                            "bioconda_version",
+                            f"Conda version specified correctly: {bp}",
+                            module.environment_yml,
+                        )
+                    )
+                except LookupError:
+                    module.warned.append(
+                        (
+                            "environment_yml",
+                            "bioconda_version",
+                            f"Conda version not specified correctly: {bp}",
+                            module.environment_yml,
+                        )
+                    )
+                except ValueError:
+                    module.failed.append(
+                        (
+                            "environment_yml",
+                            "bioconda_version",
+                            f"Conda version not specified correctly: {bp}",
+                            module.environment_yml,
+                        )
+                    )
+                else:
+                    # Check that required version is available at all
+                    if bioconda_version not in response.get("versions"):
+                        module.failed.append(
+                            (
+                                "environment_yml",
+                                "bioconda_version",
+                                f"Conda package {bp} had unknown version: `{bioconda_version}`",
+                                module.environment_yml,
+                            )
+                        )
+                        continue  # No need to test for latest version, continue linting
+                    # Check version is latest available
+                    last_ver = response.get("latest_version")
+                    if last_ver is not None and last_ver != bioconda_version:
+                        package, ver = bp.split("=", 1)
+                        if fix_version:
+                            try:
+                                from nf_core.modules.lint.main_nf import _fix_module_version
+
+                                fixed = _fix_module_version(module, bioconda_version, last_ver, response)
+                            except FileNotFoundError as e:
+                                fixed = False
+                                log.debug(f"Unable to update package {package} due to error: {e}")
+                            else:
+                                if fixed:
+                                    if progress_bar is not None:
+                                        progress_bar.print(
+                                            f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}"
+                                        )
+                                    log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                                    module.passed.append(
+                                        (
+                                            "environment_yml",
+                                            "bioconda_latest",
+                                            f"Conda package has been updated to the latest available: `{bp}`",
+                                            module.environment_yml,
+                                        )
+                                    )
+                                else:
+                                    if progress_bar is not None:
+                                        progress_bar.print(
+                                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                                        )
+                                    log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                                    module.warned.append(
+                                        (
+                                            "environment_yml",
+                                            "bioconda_latest",
+                                            f"Conda update: {package} `{ver}` -> `{last_ver}`",
+                                            module.environment_yml,
+                                        )
+                                    )
+                        else:
+                            module.warned.append(
+                                (
+                                    "environment_yml",
+                                    "bioconda_latest",
+                                    f"Conda update: {package} `{ver}` -> `{last_ver}`",
+                                    module.environment_yml,
+                                )
+                            )
+                    else:
+                        module.passed.append(
+                            (
+                                "environment_yml",
+                                "bioconda_latest",
+                                f"Conda package is the latest available: `{bp}`",
+                                module.environment_yml,
+                            )
+                        )

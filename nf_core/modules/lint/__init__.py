@@ -233,7 +233,11 @@ class ModuleLint(ComponentLint):
                     continue
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
-                elif test_name in ["meta_yml", "environment_yml"]:
+                elif test_name == "environment_yml":
+                    getattr(self, test_name)(
+                        mod, allow_missing=False, fix_version=fix_version, progress_bar=progress_bar
+                    )
+                elif test_name == "meta_yml":
                     # Allow files to be missing for local
                     getattr(self, test_name)(mod, allow_missing=True)
                 else:
@@ -265,6 +269,8 @@ class ModuleLint(ComponentLint):
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                elif test_name == "environment_yml":
+                    getattr(self, test_name)(mod, fix_version=fix_version, progress_bar=progress_bar)
                 else:
                     getattr(self, test_name)(mod)
 
