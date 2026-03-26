@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -9,6 +8,7 @@ from urllib.parse import quote
 import requests
 import rich.progress
 import yaml
+from rich.pretty import pretty_repr
 
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
@@ -460,15 +460,15 @@ class ModuleContainers:
 
         try:
             meta_data = yaml.safe_load(stdout_output) or dict()
-            log.debug(f"Wave YAML metadata: {meta_data}")
+            log.debug(f"Wave YAML metadata: \n{pretty_repr(meta_data)}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
             log.error(f"Failed to parse Wave output. Raw output:\n{stdout_output}")
             raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
         if not meta_data.get("succeeded"):
             raise RuntimeError(
                 f"Wave build ({container_system} {platform}) failed. Reason: {meta_data.get('reason', 'Unknown')}"
-                f"\nBuild log: https://wave.seqera.io/view/builds/{meta_data.get(cls.BUILD_ID_KEY)}"
-                if meta_data.get(cls.BUILD_ID_KEY)
+                f"\nBuild log: https://wave.seqera.io/view/builds/{meta_data.get('buildId')}"
+                if meta_data.get("buildId")
                 else ""
             )
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
@@ -477,16 +477,18 @@ class ModuleContainers:
 
         container[cls.IMAGE_KEY] = image
 
-        build_id = meta_data.get(cls.BUILD_ID_KEY, "")
+        build_id = meta_data.get("buildId", "")
         if build_id:
             container[cls.BUILD_ID_KEY] = build_id
 
         if container_system == "docker":
-            scan_id = meta_data.get(cls.SCAN_ID_KEY, "")
+            scan_id = meta_data.get("scanId", "")
             if scan_id:
                 container[cls.SCAN_ID_KEY] = scan_id
 
-        if container_system == "singularity" and not await_build:
+        build_is_done = await_build or meta_data.get("cached", False) or meta_data.get("status") == "DONE"
+
+        if container_system == "singularity" and not build_is_done:
             log.warning(
                 "Cannot retrieve https-url by inspecting the image, when the image build is not awaited. Rerun the command with `--await`"
             )
@@ -503,7 +505,7 @@ class ModuleContainers:
                 log.warning(f"Https-url for image {image} could not be extracted from image inspect output")
 
             else:
-                log.debug(f"Extracting https-uri for {image} from image inspect: {json.dumps(container_layers[0])}")
+                log.debug(f"Extracting https-uri for {image} from image inspect:\n{pretty_repr(container_layers[0])}")
                 digest = container_layers[0]["digest"].replace("sha256:", "")
                 container[cls.HTTPS_URL_KEY] = (
                     f"https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/{digest[:2]}/{digest}/data"
@@ -624,13 +626,16 @@ class ModuleContainers:
         """
         if self.containers is None:
             log.debug("Containers not initialized - running `create()` ...")
-            self.create()[0]  # Ignore success status, just get containers
+            self.containers, _ = self.create()
 
         assert self.meta_yml
 
         meta = read_meta_yml(self.meta_yml)
         meta_containers = meta.get("containers", dict())
-        meta_containers.update(self.containers)
+        for cs, platforms in self.containers.items():
+            for platform, data in platforms.items():
+                if data:
+                    meta_containers.setdefault(cs, {})[platform] = data
         meta["containers"] = meta_containers
 
         # Sort the YAML according to the schema's property order using ModuleLint

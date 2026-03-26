@@ -255,37 +255,27 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
                 )
                 continue
-            if lock_file.startswith("http://") or lock_file.startswith("https://"):
-                module.warned.append(
+            lock_path = Path(lock_file)
+            if not lock_path.is_absolute():
+                lock_path = module.component_dir / lock_path
+            if lock_path.exists():
+                module.passed.append(
                     (
                         "meta_yml",
                         "containers_conda_lock_exists",
-                        f"Conda lock_file for {platform} is remote; skipping local existence check",
+                        f"Conda lock_file exists for {platform}",
                         meta_path,
                     )
                 )
             else:
-                lock_path = Path(lock_file)
-                if not lock_path.is_absolute():
-                    lock_path = module.component_dir / lock_path
-                if lock_path.exists():
-                    module.passed.append(
-                        (
-                            "meta_yml",
-                            "containers_conda_lock_exists",
-                            f"Conda lock_file exists for {platform}",
-                            meta_path,
-                        )
+                module.warned.append(
+                    (
+                        "meta_yml",
+                        "containers_conda_lock_exists",
+                        f"Conda lock_file not found for {platform}: {lock_path}",
+                        meta_path,
                     )
-                else:
-                    module.warned.append(
-                        (
-                            "meta_yml",
-                            "containers_conda_lock_exists",
-                            f"Conda lock_file not found for {platform}: {lock_path}",
-                            meta_path,
-                        )
-                    )
+                )
         for plat in CONTAINER_PLATFORMS:
             docker_plat: dict = (
                 next(
