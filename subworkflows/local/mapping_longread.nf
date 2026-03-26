@@ -23,7 +23,7 @@ workflow MAPPING_LONGREAD {
     ch_reference = ch_reads_reference
         .map { meta, reads, ref -> [ meta, ref ] }
     MINIMAP2_INDEX ( ch_reference )
-    ch_index = MINIMAP2_INDEX.out.index
+    ch_minimap2_index = MINIMAP2_INDEX.out.index
     ch_versions = ch_versions.mix( MINIMAP2_INDEX.out.versions )
 
     // Build index fai for the reference
@@ -42,13 +42,19 @@ workflow MAPPING_LONGREAD {
     // Join the built index back with the original paired data
     ch_reads_with_index = ch_reads_reference
         .map { meta, reads, ref -> [ meta, reads ] }
-        .join(ch_index, by: 0)
+        .join(ch_minimap2_index, by: 0)
         .join(ch_ref_fai, by:0)
 
+    ch_minimap_align_input = ch_reads_with_index
+        .multiMap { meta, reads, index, ref, fai ->
+            ch_reads: [meta, reads]
+            ch_minimap2_index: [meta, index]
+            ch_ref: [meta, ref, fai]
+            }
     // Align
     MINIMAP2_ALIGN (
-        ch_reads_with_index.map { meta, reads, index, ref, fai -> [ meta, reads ] },
-        ch_reads_with_index.map { meta, reads, index, ref, fai -> [ meta, index ] },
+        ch_minimap_align_input.ch_reads,
+        ch_minimap_align_input.ch_minimap2_index,
         true,   // bam_format
         'bai',  // bam_index_extension
         false,  // cigar_paf
@@ -58,19 +64,13 @@ workflow MAPPING_LONGREAD {
 
     // Sort and stats
     ch_bam_ref_fai = MINIMAP2_ALIGN.out.bam
-        .join(
-            ch_reads_with_index.map { meta, reads, index, ref, fai -> [ meta, ref, fai ] },
-            by: 0
-        )
-    ch_bam = ch_bam_ref_fai
-        .map { meta, bam, ref, fai -> [ meta, bam ] }
-    ch_ref_fai = ch_bam_ref_fai
-        .map { meta, bam, ref, fai -> [ meta, ref, fai ] }
+        .join( ch_minimap_align_input.ch_ref, by: 0 )
+        .multiMap { meta, bam, ref, fai ->
+            ch_bam: [meta, bam]
+            ch_ref_fai: [meta, ref, fai]
+        }
 
-    BAM_SORT_STATS_SAMTOOLS (
-        ch_bam,
-        ch_ref_fai
-    )
+    BAM_SORT_STATS_SAMTOOLS ( ch_bam_ref_fai.ch_bam, ch_bam_ref_fai.ch_ref_fai )
 
     // Remove empty bam files
     if (params.perform_verify_species) {

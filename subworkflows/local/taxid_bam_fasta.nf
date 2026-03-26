@@ -32,7 +32,7 @@ workflow TAXID_BAM_FASTA {
     input_bam = bam.join( bai, by: 0 )
     // Get idxstats for input BAM
     SAMTOOLS_IDXSTATS( input_bam )
-
+    SAMTOOLS_IDXSTATS.out.idxstats.dump(tag:"SAMTOOLS_IDXSTATS.out.idxstats")
     // Extract accessions with meta information preserved
     ch_accession_with_meta = SAMTOOLS_IDXSTATS.out.idxstats
         .flatMap { meta, idxstats ->
@@ -48,10 +48,10 @@ workflow TAXID_BAM_FASTA {
     ch_accession_taxid_with_meta = ch_accession_with_meta
         .map { meta, accession, num_reads -> [meta, accession, num_reads] }
         .combine(ch_accession2taxidmap)
-        .filter { meta, accession, num_reads, acc_lookup, taxid, organism ->
-            accession == acc_lookup
+        .filter { meta, accession, num_reads, ref_accession, taxid, organism ->
+            accession == ref_accession
         }
-        .map { meta, accession, num_reads, acc_lookup, taxid, organism ->
+        .map { meta, accession, num_reads, ref_accession, taxid, organism ->
             [meta, accession, taxid, organism, num_reads]
         }
         .groupTuple( by: [0, 2, 3] ) // Group by [meta, taxid, organism]
