@@ -32,7 +32,7 @@ workflow TAXID_BAM_FASTA {
     input_bam = bam.join( bai, by: 0 )
     // Get idxstats for input BAM
     SAMTOOLS_IDXSTATS( input_bam )
-
+    SAMTOOLS_IDXSTATS.out.idxstats.dump(tag:"SAMTOOLS_IDXSTATS.out.idxstats")
     // Extract accessions with meta information preserved
     ch_accession_with_meta = SAMTOOLS_IDXSTATS.out.idxstats
         .flatMap { meta, idxstats ->
@@ -40,7 +40,6 @@ workflow TAXID_BAM_FASTA {
                 .findAll { it[0] != "*" && it[2].toInteger() > 0 }
                 .collect{ [meta, it[0], it[2].toInteger()] }
         }
-    ch_versions = ch_versions.mix( SAMTOOLS_IDXSTATS.out.versions.first() )
 
     // Load accession2taxid map
     ch_accession2taxidmap = accession2taxid.splitCsv( header: false, sep: "\t" )
@@ -49,10 +48,10 @@ workflow TAXID_BAM_FASTA {
     ch_accession_taxid_with_meta = ch_accession_with_meta
         .map { meta, accession, num_reads -> [meta, accession, num_reads] }
         .combine(ch_accession2taxidmap)
-        .filter { meta, accession, num_reads, acc_lookup, taxid, organism ->
-            accession == acc_lookup
+        .filter { meta, accession, num_reads, ref_accession, taxid, organism ->
+            accession == ref_accession
         }
-        .map { meta, accession, num_reads, acc_lookup, taxid, organism ->
+        .map { meta, accession, num_reads, ref_accession, taxid, organism ->
             [meta, accession, taxid, organism, num_reads]
         }
         .groupTuple( by: [0, 2, 3] ) // Group by [meta, taxid, organism]
@@ -71,9 +70,7 @@ workflow TAXID_BAM_FASTA {
         .join( input_bam, by: 0 ) // Join by meta (index 0)
         .map { meta, accession_list, taxid, organism, bam, bam_index ->
             // Create new meta with taxid and organism information
-            def new_meta = meta.clone()
-            new_meta.taxid = taxid
-            new_meta.organism = organism
+            def new_meta = meta + [taxid: taxid, organism: organism]
             return [ new_meta, bam, bam_index, accession_list ]
         }
         .multiMap {
@@ -85,14 +82,11 @@ workflow TAXID_BAM_FASTA {
     // BAM files will be used to call consensus sequences
     SUBSET_BAM_PASS( ch_consensus_input.bam, ch_consensus_input.accession )
     ch_versions = ch_versions.mix( SUBSET_BAM_PASS.out.versions.first() )
-    SAMTOOLS_SORT_PASS( SUBSET_BAM_PASS.out.bam, [[],[]] )
-    ch_versions = ch_versions.mix( SAMTOOLS_SORT_PASS.out.versions.first() )
+    SAMTOOLS_SORT_PASS( SUBSET_BAM_PASS.out.bam, [[],[],[]], 'bai' )
     SAMTOOLS_INDEX_PASS( SAMTOOLS_SORT_PASS.out.bam )
-    ch_versions = ch_versions.mix( SAMTOOLS_INDEX_PASS.out.versions.first() )
 
     // samtools flagstat check if there are any reads mapped to the genome
-    SAMTOOLS_FLAGSTAT (SAMTOOLS_SORT_PASS.out.bam.join(SAMTOOLS_INDEX_PASS.out.bai))
-    ch_versions = ch_versions.mix(SAMTOOLS_FLAGSTAT.out.versions.first())
+    SAMTOOLS_FLAGSTAT (SAMTOOLS_SORT_PASS.out.bam.join(SAMTOOLS_INDEX_PASS.out.index))
 
     ch_mapped_reads = SAMTOOLS_FLAGSTAT.out.flagstat
         .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
@@ -101,7 +95,7 @@ workflow TAXID_BAM_FASTA {
         .join (ch_mapped_reads, by: [0])
         .filter { meta, bam, mapped, pass -> pass }
         .map { meta, bam, mapped, pass -> [meta, bam] }
-    ch_taxid_bai = ch_taxid_bai.mix(SAMTOOLS_INDEX_PASS.out.bai)
+    ch_taxid_bai = ch_taxid_bai.mix(SAMTOOLS_INDEX_PASS.out.index)
         .join(ch_mapped_reads, by:[0])
         .filter { meta, bai, mapped, pass -> pass }
         .map { meta, bai, mapped, pass -> [meta, bai] }
@@ -111,9 +105,7 @@ workflow TAXID_BAM_FASTA {
         .join( input_bam, by: 0 ) // Join by meta (index 0)
         .map { meta, accession_list, taxid, organism, bam, bam_index ->
             // Create new meta with taxid and organism information
-            def new_meta = meta.clone()
-            new_meta.taxid = taxid
-            new_meta.organism = organism
+            def new_meta = meta + [taxid: taxid, organism: organism]
             return [ new_meta, bam, bam_index, accession_list ]
         }
         .multiMap {
@@ -125,13 +117,10 @@ workflow TAXID_BAM_FASTA {
     // FASTA files will be used as BLAST input, bam file will be used in IGV
     SUBSET_BAM_FAIL(ch_blast_input.bam, ch_blast_input.accession)
     ch_versions = ch_versions.mix(SUBSET_BAM_FAIL.out.versions.first())
-    SAMTOOLS_SORT_FAIL(SUBSET_BAM_FAIL.out.bam, [[],[]])
-    ch_versions = ch_versions.mix(SAMTOOLS_SORT_FAIL.out.versions.first())
+    SAMTOOLS_SORT_FAIL(SUBSET_BAM_FAIL.out.bam, [[],[],[]], 'bai')
     SAMTOOLS_INDEX_FAIL(SAMTOOLS_SORT_FAIL.out.bam)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX_FAIL.out.versions.first())
 
     SAMTOOLS_FASTA(SAMTOOLS_SORT_FAIL.out.bam, false)
-    ch_versions = ch_versions.mix(SAMTOOLS_FASTA.out.versions.first())
 
     emit:
     versions        = ch_versions
@@ -139,5 +128,5 @@ workflow TAXID_BAM_FASTA {
     taxid_bai       = ch_taxid_bai
     taxid_fasta     = SAMTOOLS_FASTA.out.fasta
     taxid_bam_fail  = SAMTOOLS_SORT_FAIL.out.bam
-    taxid_bai_fail  = SAMTOOLS_INDEX_FAIL.out.bai
+    taxid_bai_fail  = SAMTOOLS_INDEX_FAIL.out.index
 }

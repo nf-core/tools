@@ -54,9 +54,7 @@ workflow FETCH_BLAST_GENOMES {
             by:0
         )
         .map { meta_joined, blast_taxid, meta1, organism, genome, meta2, reads ->
-            def new_meta = meta2.clone()
-            new_meta.mapping_taxid = blast_taxid
-            new_meta.organism = organism
+            def new_meta = meta2 + [mapping_taxid: blast_taxid, organism: organism]
             [ new_meta, reads, genome ]
         }
 
