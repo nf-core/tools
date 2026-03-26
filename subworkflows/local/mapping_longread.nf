@@ -35,26 +35,25 @@ workflow MAPPING_LONGREAD {
 
     SAMTOOLS_FAIDX ( ch_ref_uncompressed, [ [], [] ], false )
     ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
-    ch_fai = SAMTOOLS_FAIDX.out.fai
-    ch_ref_fai = ch_ref_uncompressed
-        .join(ch_fai, by:0)
 
-    // Join the built index back with the original paired data
+    // Join the uncompressed reference and reference index
+    ch_ref_fai = ch_ref_uncompressed
+        .join(SAMTOOLS_FAIDX.out.fai, by:0)
+
+    // Join the reads, minimap2 index, reference and reference index
     ch_reads_with_index = ch_reads_reference
         .map { meta, reads, ref -> [ meta, reads ] }
         .join(ch_minimap2_index, by: 0)
         .join(ch_ref_fai, by:0)
-
-    ch_minimap_align_input = ch_reads_with_index
         .multiMap { meta, reads, index, ref, fai ->
             ch_reads: [meta, reads]
             ch_minimap2_index: [meta, index]
             ch_ref: [meta, ref, fai]
-            }
+        }
     // Align
     MINIMAP2_ALIGN (
-        ch_minimap_align_input.ch_reads,
-        ch_minimap_align_input.ch_minimap2_index,
+        ch_reads_with_index.ch_reads,
+        ch_reads_with_index.ch_minimap2_index,
         true,   // bam_format
         'bai',  // bam_index_extension
         false,  // cigar_paf
@@ -64,7 +63,7 @@ workflow MAPPING_LONGREAD {
 
     // Sort and stats
     ch_bam_ref_fai = MINIMAP2_ALIGN.out.bam
-        .join( ch_minimap_align_input.ch_ref, by: 0 )
+        .join( ch_reads_with_index.ch_ref, by: 0 )
         .multiMap { meta, bam, ref, fai ->
             ch_bam: [meta, bam]
             ch_ref_fai: [meta, ref, fai]

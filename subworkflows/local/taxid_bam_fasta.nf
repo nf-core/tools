@@ -32,11 +32,12 @@ workflow TAXID_BAM_FASTA {
     input_bam = bam.join( bai, by: 0 )
     // Get idxstats for input BAM
     SAMTOOLS_IDXSTATS( input_bam )
-    SAMTOOLS_IDXSTATS.out.idxstats.dump(tag:"SAMTOOLS_IDXSTATS.out.idxstats")
-    // Extract accessions with meta information preserved
+    // Extract accessions with mapped reads
     ch_accession_with_meta = SAMTOOLS_IDXSTATS.out.idxstats
         .flatMap { meta, idxstats ->
             idxstats.splitCsv( header: false, sep: "\t" )
+                // The SAMTOOLS_IDXSTATS.out.idxstats file contains four columns: <reference_name> <reference_length> <mapped_reads> <unmapped_reads>
+                // The last row is "* 0 0 0" and should be filtered out, along with rows that have zero mapped reads.
                 .findAll { it[0] != "*" && it[2].toInteger() > 0 }
                 .collect{ [meta, it[0], it[2].toInteger()] }
         }
@@ -46,7 +47,6 @@ workflow TAXID_BAM_FASTA {
 
     // Join accessions with taxids: [meta, accession, num_reads] + [accession, taxid, organism]
     ch_accession_taxid_with_meta = ch_accession_with_meta
-        .map { meta, accession, num_reads -> [meta, accession, num_reads] }
         .combine(ch_accession2taxidmap)
         .filter { meta, accession, num_reads, ref_accession, taxid, organism ->
             accession == ref_accession

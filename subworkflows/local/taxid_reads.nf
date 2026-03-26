@@ -29,9 +29,9 @@ workflow TAXID_READS {
     ch_taxid_reads   = channel.empty()
 
     // Create taxid channel once if params.taxid is provided
-    ch_taxid = params.taxid ? Channel.of(params.taxid.split(" ")) : Channel.empty()
+    ch_taxid = params.taxid ? channel.value(params.taxid.split(" ")).flatten() : Channel.empty()
 
-    // extract kraken2 reads
+    // Extract kraken2 reads
     if ( params.extract_kraken2_reads ) {
         if ( params.taxid ) {
             kraken2_combined = kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ] }
@@ -88,7 +88,7 @@ workflow TAXID_READS {
         ch_taxid_reads              = ch_taxid_reads.mix(ch_taxid_reads_kraken2)
     }
 
-    // extract centrifuge reads
+    // Extract centrifuge reads
     if ( params.extract_centrifuge_reads ) {
         if ( params.taxid ) {
             centrifuge_combined = centrifuge_result
@@ -139,7 +139,7 @@ workflow TAXID_READS {
         ch_taxid_reads             = ch_taxid_reads.mix(ch_taxid_reads_centrifuge)
     }
 
-    // extract diamond reads
+    // Extract diamond reads
     if ( params.extract_diamond_reads ) {
         if ( params.taxid ) {
             diamond_combined = diamond_tsv.map { meta, diamond_tsv -> [meta.subMap( meta.keySet() - 'tool' ), diamond_tsv ] }
