@@ -32,7 +32,6 @@ workflow TAXID_BAM_FASTA {
     input_bam = bam.join( bai, by: 0 )
     // Get idxstats for input BAM
     SAMTOOLS_IDXSTATS( input_bam )
-    SAMTOOLS_IDXSTATS.out.idxstats.dump(tag:"SAMTOOLS_IDXSTATS.out.idxstats")
     // Extract accessions with meta information preserved
     ch_accession_with_meta = SAMTOOLS_IDXSTATS.out.idxstats
         .flatMap { meta, idxstats ->
