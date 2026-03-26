@@ -20,7 +20,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:49.449384941"
+        "timestamp": "2026-03-26T14:15:01.43256198"
     },
     "-profile test_taxid": {
         "content": [
@@ -75,6 +75,12 @@
                 },
                 "PIGZ_UNCOMPRESS": {
                     "pigz": 2.8
+                },
+                "RM_EMPTY_BAM": {
+                    "samtools": 1.21
+                },
+                "RM_EMPTY_BAM_PATHOGEN": {
+                    "samtools": 1.21
                 },
                 "SAMTOOLS_FAIDX": {
                     "samtools": 1.21
@@ -136,7 +142,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:47.721710577"
+        "timestamp": "2026-03-26T14:14:59.851640784"
     },
     "extracted_reads": {
         "content": [
@@ -170,7 +176,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:47.884767086"
+        "timestamp": "2026-03-26T14:14:59.998902031"
     },
     "bowtie2_build": {
         "content": [
@@ -307,7 +313,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:48.065353926"
+        "timestamp": "2026-03-26T14:15:00.151605934"
     },
     "bowtie2_align": {
         "content": [
@@ -322,16 +328,7 @@
                     "SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439802\tSM:SRR13439802, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439802 --rg SM:SRR13439802 --passthrough -1 SRR13439802_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439802_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439802.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439802.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
                 ],
                 [
-                    "SRR13439813_centrifuge_taxid_878220_mappingorganism_Candidatus-Nitrosocosmicus-hydrocola.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:CP017922.1\tLN:2989777, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_001870125.1_ASM187012v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439813_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_centrifuge_taxid_878220_mappingorganism_Candidatus-Nitrosocosmicus-hydrocola --threads 4 --reference GCA_001870125.1_ASM187012v1_genomic.fna -o SRR13439813_centrifuge_taxid_878220_mappingorganism_Candidatus-Nitrosocosmicus-hydrocola.bam -]"
-                ],
-                [
                     "SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439813_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
-                ],
-                [
-                    "SRR13439813_centrifuge_taxid_878220_mappingorganism_Homo-sapiens.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:NC_060925.1\tLN:10001, @SQ\tSN:NC_060926.1\tLN:10001, @SQ\tSN:NC_060927.1\tLN:10001, @SQ\tSN:NC_060928.1\tLN:10001, @SQ\tSN:NC_060929.1\tLN:10001, @SQ\tSN:NC_060930.1\tLN:10001, @SQ\tSN:NC_060931.1\tLN:10001, @SQ\tSN:NC_060932.1\tLN:10001, @SQ\tSN:NC_060933.1\tLN:10001, @SQ\tSN:NC_060934.1\tLN:10001, @SQ\tSN:NC_060935.1\tLN:10001, @SQ\tSN:NC_060936.1\tLN:10001, @SQ\tSN:NC_060937.1\tLN:10001, @SQ\tSN:NC_060938.1\tLN:10001, @SQ\tSN:NC_060939.1\tLN:10001, @SQ\tSN:NC_060940.1\tLN:10001, @SQ\tSN:NC_060941.1\tLN:10001, @SQ\tSN:NC_060942.1\tLN:10001, @SQ\tSN:NC_060943.1\tLN:10001, @SQ\tSN:NC_060944.1\tLN:10001, @SQ\tSN:NC_060945.1\tLN:10001, @SQ\tSN:NC_060946.1\tLN:10001, @SQ\tSN:NC_060947.1\tLN:10001, @SQ\tSN:NC_060948.1\tLN:10001, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439813_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_centrifuge_taxid_878220_mappingorganism_Homo-sapiens --threads 4 --reference GCA_009914755.4_T2T-CHM13v2.0_genomic.fna -o SRR13439813_centrifuge_taxid_878220_mappingorganism_Homo-sapiens.bam -]"
-                ],
-                [
-                    "SRR13439813_diamond_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ358387.1\tLN:72458, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020882845.1_ASM2088284v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_diamond_read1.fastq.gz -2 SRR13439813_1920753.extracted_diamond_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_diamond_taxid_1920753_mappingorganism_Shigella-virus-Moo19 --threads 4 --reference GCA_020882845.1_ASM2088284v1_genomic.fna -o SRR13439813_diamond_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam -]"
                 ],
                 [
                     "SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_diamond_read1.fastq.gz -2 SRR13439813_878220.extracted_diamond_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
@@ -392,14 +389,8 @@
                 "SRR13439790_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam.bai",
                 "SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
                 "SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
-                "SRR13439813_centrifuge_taxid_878220_mappingorganism_Candidatus-Nitrosocosmicus-hydrocola.bam",
-                "SRR13439813_centrifuge_taxid_878220_mappingorganism_Candidatus-Nitrosocosmicus-hydrocola.bam.bai",
                 "SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
                 "SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
-                "SRR13439813_centrifuge_taxid_878220_mappingorganism_Homo-sapiens.bam",
-                "SRR13439813_centrifuge_taxid_878220_mappingorganism_Homo-sapiens.bam.bai",
-                "SRR13439813_diamond_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam",
-                "SRR13439813_diamond_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam.bai",
                 "SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
                 "SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
                 "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-Bp4.bam",
@@ -440,7 +431,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:48.001869641"
+        "timestamp": "2026-03-26T14:15:00.101597948"
     },
     "blastx": {
         "content": [
@@ -503,7 +494,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:47.867606206"
+        "timestamp": "2026-03-26T14:14:59.985318181"
     },
     "blastn": {
         "content": [
@@ -563,6 +554,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-25T16:12:47.813525226"
+        "timestamp": "2026-03-26T14:14:59.930473661"
     }
 }
