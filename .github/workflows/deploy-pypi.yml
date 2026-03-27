@@ -34,6 +34,6 @@ jobs:
 
       - name: Publish dist to PyPI
         if: github.repository == 'nf-core/tools'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
         with:
           password: ${{ secrets.pypi_password }}
