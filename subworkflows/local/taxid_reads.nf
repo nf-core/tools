@@ -29,7 +29,7 @@ workflow TAXID_READS {
     ch_taxid_reads   = channel.empty()
 
     // Create taxid channel once if params.taxid is provided
-    ch_taxid = params.taxid ? channel.value(params.taxid.split(" ")).flatten() : Channel.empty()
+    ch_taxid = params.taxid ? channel.value(params.taxid.split(" ")) : channel.empty()
 
     // Extract kraken2 reads
     if ( params.extract_kraken2_reads ) {
@@ -37,7 +37,7 @@ workflow TAXID_READS {
             kraken2_combined = kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ] }
                 .join (kraken2_result, by: 0)
                 .join( reads, by: 0)
-                .combine (ch_taxid)
+                .combine (ch_taxid.flatten())
             kraken2_params_taxid = kraken2_combined
                 .multiMap { meta, kraken2_report, kraken2_result, reads, taxid  ->
                     def new_meta = meta + [taxid: taxid]
@@ -45,7 +45,7 @@ workflow TAXID_READS {
                     kraken2_result: [ new_meta, kraken2_result ]
                     reads: [ new_meta, reads ]
                     kraken2_report: [ new_meta, kraken2_report ]
-                    }
+                }
 
             KRAKENTOOLS_EXTRACTKRAKENREADS(
                 kraken2_params_taxid.taxid,
@@ -93,7 +93,7 @@ workflow TAXID_READS {
         if ( params.taxid ) {
             centrifuge_combined = centrifuge_result
                 .join( reads, by: 0 )
-                .combine(ch_taxid)
+                .combine(ch_taxid.flatten())
             centrifuge_params_taxid = centrifuge_combined
                 .multiMap { meta, centrifuge_result, reads, taxid ->
                     taxid: taxid
@@ -144,7 +144,7 @@ workflow TAXID_READS {
         if ( params.taxid ) {
             diamond_combined = diamond_tsv.map { meta, diamond_tsv -> [meta.subMap( meta.keySet() - 'tool' ), diamond_tsv ] }
                 .join( reads, by:0)
-                .combine( ch_taxid )
+                .combine( ch_taxid.flatten() )
             diamond_params_taxid = diamond_combined
                 .multiMap { meta, diamond_tsv, reads, taxid ->
                     taxid: taxid
