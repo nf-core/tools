@@ -10,6 +10,7 @@ from nf_core.modules.lint.main_nf import (
 )
 
 from ...test_modules import TestModules
+from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 from .test_lint_utils import MockModuleLint
 
 
@@ -144,7 +145,9 @@ class TestMainNfLinting(TestModules):
 
         self.mods_install_gitlab_nftest.install("fastqc")
         # Lint a module installed from the gitlab test branch; gitlab test modules that is known to have versions YAML in main.nf
-        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint = nf_core.modules.lint.ModuleLint(
+            directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_NFTEST_BRANCH
+        )
         module_lint.lint(print_results=False, module="fastqc")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
