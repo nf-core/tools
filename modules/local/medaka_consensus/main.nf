@@ -4,14 +4,14 @@ process MEDAKA_PARALLEL {
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/89/896f0302268502e1588c34048c6aada1abc64b289b5877701a7014f7ffdf4d20/data'
-        : 'community.wave.seqera.io/library/medaka:2.0.1--c15f6748e3c63d63'}"
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/0c/0cf8c90f398d06071f4e19621314341d12804355ff9865223cb4d63266801685/data'
+        : 'community.wave.seqera.io/library/medaka_seqkit:d7f3867737c05c14'}"
 
     input:
     tuple val(meta), path(reads), path(assembly)
 
     output:
-    tuple val(meta), path("*.fa.gz"), emit: assembly
+    tuple val(meta), path("*_sorted.fasta"), emit: assembly
     path "versions.yml"             , emit: versions
 
     when:
@@ -66,12 +66,13 @@ process MEDAKA_PARALLEL {
         ${args3} \\
         inference/*.hdf \$assembly ${prefix}.fa
 
-    gzip -c ${prefix}.fa > ${prefix}.fa.gz
-    rm -f ${prefix}.fa
+    # Sort the consensus by reads ID
+    seqkit sort -n ${prefix}.fa > ${prefix}_sorted.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
+        seqkit: \$( seqkit | sed '3!d; s/Version: //' )
     END_VERSIONS
     """
 }
