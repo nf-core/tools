@@ -22,7 +22,7 @@ class ConfigCreate:
     def write_to_file(self):
         ## File name option
         config_name = str(self.template_config.general_config_name).strip()
-        config_name_clean = sub(r"\W+" "_", config_name)
+        config_name_clean = sub(r"\W+", "_", config_name)
         config_name_clean = sub(r"_+$", "", config_name_clean)
         filename = f"{config_name_clean}.conf"
         filename = self.config_dir / filename

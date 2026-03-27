@@ -85,7 +85,7 @@ class NextflowSerial:
                     output += " " * current_indent * indent_start
                     if one_line:
                         # False is set here to disable quotes on strings
-                        output += f"{k}: {NextflowSerial._stringify(v, False)}{end}"
+                        output += f"{k}: {NextflowSerial._stringify(v)}{end}"
                     else:
                         output += f"{k} = {NextflowSerial._stringify(v)}{end}"
             return output
