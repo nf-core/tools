@@ -26,7 +26,7 @@ nextflow_pipeline {
             def stable_content_blastx = getAllFilesFromDir("$outputDir/blast/blastx", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
 
             //extracted_reads
-            def stable_content_extracted_reads = getAllFilesFromDir("$outputDir/blast/blastx", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def stable_content_extracted_reads = getAllFilesFromDir("$outputDir/extracted_reads/", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
 
             //igv
             def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
