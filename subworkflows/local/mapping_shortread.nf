@@ -33,16 +33,16 @@ workflow MAPPING_SHORTREAD {
 
     SAMTOOLS_FAIDX ( ch_ref_uncompressed, [ [], [] ], false )
     ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
-    ch_fai = SAMTOOLS_FAIDX.out.fai
+
+    // Join the uncompressed reference and reference index
     ch_ref_fai = ch_ref_uncompressed
-        .join(ch_fai, by:0)
-    // Join the built index back with the original paired data
+        .join(SAMTOOLS_FAIDX.out.fai, by:0)
+
+    // Join the reads, minimap2 index, reference and reference index
     ch_reads_with_index = ch_reads_reference
         .map { meta, reads, ref -> [ meta, reads ] }
         .join(ch_bowtie2_index, by: 0)
         .join(ch_ref_fai, by:0)
-
-    ch_bowtie2_input = ch_reads_with_index
         .multiMap { meta, reads, bowtie2_index, ref, fai ->
             reads: [meta, reads]
             index: [meta, bowtie2_index]
@@ -51,11 +51,11 @@ workflow MAPPING_SHORTREAD {
 
     // Mapping
     FASTQ_ALIGN_BOWTIE2 (
-        ch_bowtie2_input.reads,
-        ch_bowtie2_input.index,
+        ch_reads_with_index.reads,
+        ch_reads_with_index.index,
         false,                          // save unaligned
         false,                          // sort bam
-        ch_bowtie2_input.fasta_fai
+        ch_reads_with_index.fasta_fai
     )
 
     // Remove empty bam files
