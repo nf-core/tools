@@ -22,7 +22,8 @@ repos:
               .*\.snap$|
               nf_core/pipeline-template/subworkflows/.*|
               nf_core/pipeline-template/modules/.*|
-              tests/pipelines/__snapshots__/.*
+              tests/pipelines/__snapshots__/.*|
+              tests/configs/__snapshots__/.*
           )$
       - id: end-of-file-fixer
         exclude: |
@@ -30,7 +31,8 @@ repos:
               .*\.snap$|
               nf_core/pipeline-template/subworkflows/.*|
               nf_core/pipeline-template/modules/.*|
-              tests/pipelines/__snapshots__/.*
+              tests/pipelines/__snapshots__/.*|
+              tests/configs/__snapshots__/.*
           )$
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: "v1.19.1"
