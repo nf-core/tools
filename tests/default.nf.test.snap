@@ -147,36 +147,33 @@
     "extracted_reads": {
         "content": [
             [
-                "SRR13439790_878220_blastx.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "SRR13439799_211044_blastx.txt:md5,acbbf4d89a2f8c018ddf3c2629943eb1",
-                "SRR13439799_211044_blastx_filtered.txt:md5,635c70126c3dabb9f6204e427f89e043",
-                "SRR13439799_211044_blastx_filtered_summary.txt:md5,0c7135e73a37f2a48e1a6b2b825f01b7",
-                "SRR13439802_878220_blastx.txt:md5,9912811b3a68cdc5af88275f5f9089e5",
-                "SRR13439813_878220_blastx.txt:md5,0f4bf0e695c6b1860e84a882b8b404b8",
-                "SRR13439813_878220_blastx_filtered.txt:md5,adbc8dad9d7bd59a9df5aa369d50701a",
-                "SRR13439813_878220_blastx_filtered_summary.txt:md5,1de1a3ac921fbc1e478817317aa04749",
-                "SRR13439790_1920753_blastx.txt:md5,d0dea90b4a31443943e92a3a460d8180",
-                "SRR13439813_1920753_blastx.txt:md5,655c30608a580e8cb0728e4c63b214fe",
-                "SRR13439813_878220_blastx.txt:md5,583dc6fdc16e475808797cde08c5befb",
-                "SRR13439813_878220_blastx_filtered.txt:md5,2f9e8de0b5d800f97fb2a27d9f5809fb",
-                "SRR13439813_878220_blastx_filtered_summary.txt:md5,1d8922173df709be367b587b377457ff",
-                "SRR13439790_1920753_blastx.txt:md5,bb8b7175925fd75d8366e169edb4b776",
-                "SRR13439799_211044_blastx.txt:md5,6a2e79199dfd16a9cc523ca24c6fcd43",
-                "SRR13439799_211044_blastx_filtered.txt:md5,bd22a51920e3ba14447f107b3c8ac981",
-                "SRR13439799_211044_blastx_filtered_summary.txt:md5,f93255b5f8ea0fb89da9ecbb4bc4b728",
-                "SRR13439813_1920753_blastx.txt:md5,5b5c2846d1db4560900aeff60a751686",
-                "SRR13439813_1920753_blastx_filtered.txt:md5,02f66c9d877e4770edbfe89d0b02cacf",
-                "SRR13439813_1920753_blastx_filtered_summary.txt:md5,c30dd7076375795ead5fa6b2af4e0de0",
-                "SRR13439813_878220_blastx.txt:md5,6e9c2ca19c60e7f3ea291de1e6bef123",
-                "SRR13439813_878220_blastx_filtered.txt:md5,69d14ebb5622f1fbf6dd0d63b055fd4b",
-                "SRR13439813_878220_blastx_filtered_summary.txt:md5,f42318744be6850f66d5ba67402a6086"
+                "SRR13439790_878220.extracted_centrifuge_read1.fa:md5,5ec9f96f09847667c1a27bff29f9d697",
+                "SRR13439790_878220.extracted_centrifuge_read2.fa:md5,8486e2e949da0f392ce7123ce8623d65",
+                "SRR13439799_211044.extracted_centrifuge_read.fa:md5,de63484d995564c1bdec65408efa6a7b",
+                "SRR13439802_878220.extracted_centrifuge_read1.fa:md5,491f9867e5a307db6b1f9c05b02d12cf",
+                "SRR13439802_878220.extracted_centrifuge_read2.fa:md5,7544e195ea106dc6fb16d98c8bea72d1",
+                "SRR13439813_878220.extracted_centrifuge_read1.fa:md5,4ada0019d46103ac38bbbe4650c76a55",
+                "SRR13439813_878220.extracted_centrifuge_read2.fa:md5,348622c85a82e7e7dc18dbf6f35f6894",
+                "SRR13439790_1920753.extracted_diamond_read1.fa:md5,5fad85280d0d281d0f0688bf6cf0b6cb",
+                "SRR13439790_1920753.extracted_diamond_read2.fa:md5,16eb466f4e8d847e17a7fba6191dde3d",
+                "SRR13439813_1920753.extracted_diamond_read1.fa:md5,6ba2d1aea0b0148c53ac9a95a3178790",
+                "SRR13439813_1920753.extracted_diamond_read2.fa:md5,1209f258ba3576498c750751fa763959",
+                "SRR13439813_878220.extracted_diamond_read1.fa:md5,950ef8f2e18398d6abf48b17be044c8e",
+                "SRR13439813_878220.extracted_diamond_read2.fa:md5,fcd68f18c4768cc3ef6074ad854b386f",
+                "SRR13439790_1920753.extracted_kraken2_read_1.fa:md5,106d87a30333bf371d797b367c87d71b",
+                "SRR13439790_1920753.extracted_kraken2_read_2.fa:md5,2c0a0d0c31479667dc8130a2e7481b9b",
+                "SRR13439799_211044.extracted_kraken2_read.fa:md5,415086e10a205ff05b092304166f7415",
+                "SRR13439813_1920753.extracted_kraken2_read_1.fa:md5,5504f7cd626146efbadef859990150e6",
+                "SRR13439813_1920753.extracted_kraken2_read_2.fa:md5,c3f2ae6cc84f9f591c04ab3fdf97ff44",
+                "SRR13439813_878220.extracted_kraken2_read_1.fa:md5,1a9c931f760c3077cce015bcb18ed2da",
+                "SRR13439813_878220.extracted_kraken2_read_2.fa:md5,bb6d2a3df63da1fd93a8d6ad2f7121f1"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.0"
         },
-        "timestamp": "2026-03-27T08:26:37.796393736"
+        "timestamp": "2026-03-27T11:47:15.227676661"
     },
     "bowtie2_build": {
         "content": [
