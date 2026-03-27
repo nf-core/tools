@@ -51,6 +51,7 @@
 - Ensure release linting happens on branch named main ([#4121](https://github.com/nf-core/tools/pull/4121))
 - Add linting for meta and ext keys ([#4127](https://github.com/nf-core/tools/pull/4127))
 - Add strict syntax linting to template with pre-commit ([#4128](https://github.com/nf-core/tools/pull/4128))
+- lint against the correct repo ([#4140](https://github.com/nf-core/tools/pull/4140))
 
 ### Modules
 
