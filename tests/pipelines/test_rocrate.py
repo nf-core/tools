@@ -77,6 +77,8 @@ class TestROCrate(TestPipelines):
                 },
                 url=url,
             )
+        if url.startswith("https://api.github.com/users/"):
+            return MockResponse({"name": "Test McTestFace"}, url=url)
         if url.startswith("https://pub.orcid.org/v3.0/search/"):
             return MockResponse({"num-found": 0, "result": []}, url=url)
         raise AssertionError(f"Unexpected URL requested: {url}")
@@ -85,10 +87,16 @@ class TestROCrate(TestPipelines):
         super().setUp()
         # add fake metro map
         Path(self.pipeline_dir, "docs", "images", "nf-core-testpipeline_metro_map.png").touch()
-        # commit the changes
-        repo = Repo(self.pipeline_dir)
+        # rebuild the git history with a deterministic test author
+        shutil.rmtree(self.pipeline_dir / ".git")
+        repo = Repo.init(self.pipeline_dir)
+        with repo.config_writer() as config_writer:
+            config_writer.set_value("user", "name", "Test McTestFace")
+            config_writer.set_value("user", "email", "test@example.com")
+
+        author = git.Actor("Test McTestFace", "test@example.com")
         repo.git.add(A=True)
-        repo.index.commit("Initial commit")
+        repo.index.commit("Initial commit", author=author, committer=author)
         self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.pipeline_dir)
 
     def tearDown(self):
@@ -207,9 +215,9 @@ class TestROCrate(TestPipelines):
             # assert that author is set as a person
             elif "name" in entity_json and entity_json["name"] == "Test McTestFace":
                 self.assertEqual(entity_json["@type"], "Person")
-                # check that it is set as author of the main entity
+                # check that it is set as creator of the main entity
                 if crate.mainEntity is not None:
-                    self.assertEqual(crate.mainEntity["author"][0].id, entity_json["@id"])
+                    self.assertEqual(crate.mainEntity["creator"][0].id, entity_json["@id"])
 
     def test_rocrate_creation_wrong_pipeline_dir(self):
         """Run the nf-core rocrate command with a wrong pipeline directory"""
