@@ -2,13 +2,19 @@
 
 from unittest import mock
 
-from textual.widgets import Input
+from textual.widgets import Button, Input
 
 from nf_core.pipelines.create import PipelineCreateApp
 from nf_core.pipelines.create import utils as create_utils
 from nf_core.pipelines.create.utils import TextInput
 
 INIT_FILE = "../../nf_core/pipelines/create/__init__.py"
+
+
+async def press_screen_button(pilot, button_id: str) -> None:
+    """Press a button without relying on it being inside the visible viewport."""
+    pilot.app.screen.query_one(button_id, Button).press()
+    await pilot.pause()
 
 
 async def test_app_bindings():
@@ -132,7 +138,7 @@ def test_type_nfcore(snap_compare):
         await pilot.press("A", " ", "c", "o", "o", "l", " ", "d", "e", "s", "c", "r", "i", "p", "t", "i", "o", "n")
         await pilot.press("tab")
         await pilot.press("M", "e")
-        await pilot.click("#next")
+        await press_screen_button(pilot, "#next")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -175,7 +181,7 @@ def test_type_custom(snap_compare):
         await pilot.press("A", " ", "c", "o", "o", "l", " ", "d", "e", "s", "c", "r", "i", "p", "t", "i", "o", "n")
         await pilot.press("tab")
         await pilot.press("M", "e")
-        await pilot.click("#next")
+        await press_screen_button(pilot, "#next")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -224,9 +230,9 @@ def test_customisation_help(snap_compare):
         await pilot.press("A", " ", "c", "o", "o", "l", " ", "d", "e", "s", "c", "r", "i", "p", "t", "i", "o", "n")
         await pilot.press("tab")
         await pilot.press("M", "e")
-        await pilot.click("#next")
+        await press_screen_button(pilot, "#next")
         await pilot.pause(delay=1)
-        await pilot.click("#show_help_github_badges")
+        await press_screen_button(pilot, "#show_help_github_badges")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
