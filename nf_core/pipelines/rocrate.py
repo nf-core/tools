@@ -17,7 +17,7 @@ from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
-from nf_core.utils import Pipeline, load_tools_config
+from nf_core.utils import Pipeline, get_org_url, load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -156,9 +156,18 @@ class ROCrate:
 
     def _get_pipeline_org_url(self) -> str:
         org_name = self._get_pipeline_org()
-        if org_name == "nf-core":
-            return "https://nf-co.re/"
-        return f"https://github.com/{org_name}"
+        try:
+            _, tools_config = load_tools_config(self.pipeline_dir)
+        except (AssertionError, FileNotFoundError, UserWarning) as error:
+            log.debug(f"Could not load `.nf-core.yml` for RO-Crate org URL: {self.pipeline_dir}. {error}")
+            tools_config = None
+
+        if tools_config and getattr(tools_config, "template", None):
+            template_org_url = getattr(tools_config.template, "org_url", None)
+            if template_org_url:
+                return template_org_url
+
+        return get_org_url(org_name)
 
     def make_workflow_rocrate(self) -> None:
         """
