@@ -9,6 +9,7 @@ from unittest import mock
 
 import git
 import rocrate.rocrate
+import yaml
 from git import Repo
 
 import nf_core.pipelines.rocrate
@@ -382,6 +383,25 @@ class TestROCrate(TestPipelines):
 
         with self.assertRaises(SystemExit):
             self.rocrate_obj.parse_manifest_contributors()
+
+    def test_rocrate_creation_uses_template_org(self):
+        """Use template.org from .nf-core.yml for the RO-Crate publisher metadata"""
+        config_path = Path(self.pipeline_dir, ".nf-core.yml")
+        with open(config_path) as fh:
+            config = yaml.safe_load(fh)
+        config["template"]["org"] = "my-org"
+        with open(config_path, "w") as fh:
+            yaml.safe_dump(config, fh, sort_keys=False)
+
+        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.pipeline_dir)
+        assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
+
+        with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as fh:
+            crate = json.load(fh)
+        entities = {entity["@id"]: entity for entity in crate["@graph"]}
+
+        self.assertIn("https://github.com/my-org", entities)
+        self.assertEqual(entities["https://github.com/my-org"]["name"], "my-org")
 
     def test_rocrate_creation_for_fetchngs(self):
         """Run the nf-core rocrate command with nf-core/fetchngs"""

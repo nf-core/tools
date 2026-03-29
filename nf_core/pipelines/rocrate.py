@@ -17,7 +17,7 @@ from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
-from nf_core.utils import Pipeline
+from nf_core.utils import Pipeline, load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -143,6 +143,23 @@ class ROCrate:
 
         return True
 
+    def _get_pipeline_org(self) -> str:
+        org_name = "nf-core"
+        try:
+            _, tools_config = load_tools_config(self.pipeline_dir)
+        except (AssertionError, FileNotFoundError, UserWarning) as error:
+            log.debug(f"Could not load `.nf-core.yml` for RO-Crate: {self.pipeline_dir}. {error}")
+            tools_config = None
+        if tools_config and getattr(tools_config, "template", None):
+            org_name = getattr(tools_config.template, "org", org_name) or org_name
+        return org_name
+
+    def _get_pipeline_org_url(self) -> str:
+        org_name = self._get_pipeline_org()
+        if org_name == "nf-core":
+            return "https://nf-co.re/"
+        return f"https://github.com/{org_name}"
+
     def make_workflow_rocrate(self) -> None:
         """
         Create an RO Crate for a pipeline
@@ -191,9 +208,9 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        self.crate.add_jsonld(
-            {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
-        )
+        org_name = self._get_pipeline_org()
+        org_url = self._get_pipeline_org_url()
+        self.crate.add_jsonld({"@id": org_url, "@type": "Organization", "name": org_name, "url": org_url})
 
         # Set metadata for main entity file
         self.set_main_entity("main.nf")
@@ -213,10 +230,11 @@ class ROCrate:
         self.crate.mainEntity.append_to(
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
-        self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
+        self.crate.mainEntity.append_to("sdPublisher", {"@id": self._get_pipeline_org_url()}, compact=True)
         url = "dev" if self.version.endswith("dev") else self.version
+        crate_name = self.crate.name or ""
         self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
+            "url", f"https://nf-co.re/{crate_name.split('/', maxsplit=1)[-1]}/{url}/", compact=True
         )
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
