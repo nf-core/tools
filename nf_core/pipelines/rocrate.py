@@ -154,6 +154,23 @@ class ROCrate:
             org_name = getattr(tools_config.template, "org", org_name) or org_name
         return org_name
 
+    def _get_pipeline_org_name(self) -> str:
+        org_name = "nf-core"
+        try:
+            _, tools_config = load_tools_config(self.pipeline_dir)
+        except (AssertionError, FileNotFoundError, UserWarning) as error:
+            log.debug(f"Could not load `.nf-core.yml` for RO-Crate org name: {self.pipeline_dir}. {error}")
+            tools_config = None
+
+        if tools_config and getattr(tools_config, "template", None):
+            template_org_name = getattr(tools_config.template, "org_name", None)
+            if template_org_name:
+                return template_org_name
+
+            org_name = getattr(tools_config.template, "org", org_name) or org_name
+
+        return org_name
+
     def _get_pipeline_org_url(self) -> str:
         org_name = self._get_pipeline_org()
         try:
@@ -217,7 +234,7 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        org_name = self._get_pipeline_org()
+        org_name = self._get_pipeline_org_name()
         org_url = self._get_pipeline_org_url()
         self.crate.add_jsonld({"@id": org_url, "@type": "Organization", "name": org_name, "url": org_url})
 
@@ -250,13 +267,15 @@ class ROCrate:
         # remove duplicate entries for version
         self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
 
-        # get keywords from nf-core website
+        # default topics
+        topics = ["nf-core", "nextflow"]
+        # get topics from nf-core website
         remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
         # go through all remote workflows and find the one that matches the pipeline name
-        topics = ["nf-core", "nextflow"]
+        full_pipeline_name = f"{self._get_pipeline_org()}/{self.pipeline_obj.pipeline_name}"
         for remote_wf in remote_workflows:
             assert self.pipeline_obj.pipeline_name is not None  # mypy
-            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
+            if remote_wf["full_name"] == full_pipeline_name or remote_wf["name"] == self.pipeline_obj.pipeline_name:
                 topics = topics + remote_wf["topics"]
                 break
 

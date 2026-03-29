@@ -405,13 +405,14 @@ class TestROCrate(TestPipelines):
         self.assertIn("https://github.com/my-org", entities)
         self.assertEqual(entities["https://github.com/my-org"]["name"], "my-org")
 
-    def test_rocrate_creation_uses_template_org_url(self):
-        """Use template.org_url from .nf-core.yml for the RO-Crate publisher metadata"""
+    def test_rocrate_creation_uses_template_org_params(self):
+        """Use template.org_name and template.org_url from .nf-core.yml for the RO-Crate publisher metadata"""
         config_path = Path(self.pipeline_dir, ".nf-core.yml")
         with open(config_path) as fh:
             config = yaml.safe_load(fh)
-        config["template"]["org"] = "my-org"
+        config["template"]["org"] = "nf-core"
         config["template"]["is_nfcore"] = False
+        config["template"]["org_name"] = "My Organisation"
         config["template"]["org_url"] = "https://example.org/pipelines"
         with open(config_path, "w") as fh:
             yaml.safe_dump(config, fh, sort_keys=False)
@@ -422,9 +423,13 @@ class TestROCrate(TestPipelines):
         with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as fh:
             crate = json.load(fh)
         entities = {entity["@id"]: entity for entity in crate["@graph"]}
+        main_entity = next(entity for entity in crate["@graph"] if entity.get("@id") in {"main.nf", "#main.nf"})
 
         self.assertIn("https://example.org/pipelines", entities)
-        self.assertEqual(entities["https://example.org/pipelines"]["name"], "my-org")
+        self.assertEqual(entities["https://example.org/pipelines"]["name"], "My Organisation")
+        self.assertIn("https://example.org/pipelines/testpipeline/dev/", main_entity["url"])
+        self.assertIn("nf-core", main_entity["keywords"])
+        self.assertIn("custom", main_entity["keywords"])
 
     def test_rocrate_creation_for_fetchngs(self):
         """Run the nf-core rocrate command with nf-core/fetchngs"""
