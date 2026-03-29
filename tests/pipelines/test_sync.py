@@ -10,6 +10,7 @@ import pytest
 import yaml
 
 import nf_core.pipelines.sync
+import nf_core.utils
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
@@ -306,6 +307,37 @@ class TestModules(TestPipelines):
         pipeline_path = Path(self.pipeline_dir)
         assert (pipeline_path / "main.nf").exists()
         assert (pipeline_path / "nextflow.config").exists()
+
+    def test_create_template_pipeline_backfills_missing_org_url(self):
+        """Confirm that template rebuild still works when legacy config omits org metadata."""
+        nf_core_yml_path = Path(self.pipeline_dir) / ".nf-core.yml"
+        with open(nf_core_yml_path) as fh:
+            nf_core_yml = yaml.safe_load(fh)
+
+        nf_core_yml["template"].pop("org_name", None)
+        nf_core_yml["template"].pop("org_url", None)
+
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.safe_dump(nf_core_yml, fh)
+
+        repo = git.Repo(self.pipeline_dir)
+        repo.git.add(str(nf_core_yml_path))
+        repo.index.commit("Remove org metadata from template config")
+
+        _, loaded_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+        assert loaded_config is not None
+        assert loaded_config.template is not None
+        assert loaded_config.template.org_url == "https://nf-co.re"
+
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_tracked_template_branch_files()
+        psync.make_template_pipeline()
+
+        assert "main.nf" in os.listdir(self.pipeline_dir)
+        assert "nextflow.config" in os.listdir(self.pipeline_dir)
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""

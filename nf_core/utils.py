@@ -1476,6 +1476,19 @@ class NFCoreYamlConfig(BaseModel):
         return config
 
 
+def _populate_template_org_metadata(template: NFCoreTemplateConfig | None) -> None:
+    """Backfill derived organisation fields needed to rebuild pipeline templates."""
+    if template is None or template.org is None:
+        return
+
+    if template.is_nfcore is None:
+        template.is_nfcore = template.org == "nf-core"
+    if template.org_name is None:
+        template.org_name = template.org
+    if template.org_url is None:
+        template.org_url = get_org_url(template.org, template.is_nfcore)
+
+
 def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreYamlConfig | None]:
     """
     Parse the nf-core.yml configuration file
@@ -1555,6 +1568,8 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
                 skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
                 is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
             )
+
+    _populate_template_org_metadata(nf_core_yaml_config.template)
 
     log.debug("Using config file: %s", config_fn)
     return config_fn, nf_core_yaml_config

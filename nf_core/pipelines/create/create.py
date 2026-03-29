@@ -195,7 +195,7 @@ class PipelineCreate:
         if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
         if self.config.org_name is None and self.config.org is not None:
-            self.config.org_name = "nf-core" if self.config.is_nfcore else self.config.org
+            self.config.org_name = self.config.org
         if self.config.org_url is None and self.config.org is not None:
             self.config.org_url = nf_core.utils.get_org_url(self.config.org, self.config.is_nfcore)
 

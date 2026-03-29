@@ -114,7 +114,7 @@ class BasicDetails(Screen):
             config[text_input.field_id] = this_input.value
 
         if self.parent.NFCORE_PIPELINE:
-            config["org_name"] = "nf-core"
+            config["org_name"] = config["org"]
             config["org_url"] = get_org_url("nf-core", True)
 
         return config
