@@ -264,11 +264,61 @@ def check_script_section(self, lines):
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
-            self.passed.append(("main_nf", "main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
+            self.passed.append(
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' specified in script section",
+                    self.main_nf,
+                )
+            )
         else:
             self.failed.append(
-                ("main_nf", "main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf)
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' unspecified in script section",
+                    self.main_nf,
+                )
             )
+
+    # Validate meta keys
+    permitted_meta_keys = {"id", "single_end"}
+    invalid_meta_keys = [
+        f"{prefix}{key}"
+        for prefix, key in re.findall(r"\b(meta\d*\.)(\w+)\b(?!\()", script)
+        if key not in permitted_meta_keys
+    ]
+    if not invalid_meta_keys:
+        self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
+    else:
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_meta_key",
+                f"Invalid 'meta' keys detected: {', '.join(invalid_meta_keys)}",
+                self.main_nf,
+            )
+        )
+
+    # Validate ext keys
+    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+    invalid_ext_keys = [
+        key
+        for key in re.findall(r"\bext\.\w+", script)
+        if key not in permitted_ext_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)
+    ]
+    if not invalid_ext_keys:
+        self.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", self.main_nf))
+    else:
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_ext_key",
+                f"Invalid 'ext' keys detected: {', '.join(invalid_ext_keys)}",
+                self.main_nf,
+            )
+        )
 
 
 def check_when_section(self, lines):
