@@ -205,6 +205,7 @@ def test_submitting_infra_nfcore_hpc_details(snap_compare):
 
 def enter_infra_final_details(container):
     assert container in SUPPORTED_CONTAINERS
+
     async def _enter_infra_final_details(pilot) -> None:
         await submit_infra_nfcore_hpc_details(pilot)
         await pilot.click("#container_system")
@@ -226,7 +227,7 @@ def enter_infra_final_details(container):
         await pilot.press("tab")
         await pilot.press(*list("25"))
         await pilot.press("tab")
-        if container in ['singularity', 'charliecloud']:
+        if container in ["singularity", "charliecloud"]:
             await pilot.press(*list(f"/{container}/cachedir"))
         await pilot.press("tab")
         await pilot.press(*list("/data/igenomes/cache"))
@@ -236,6 +237,7 @@ def enter_infra_final_details(container):
         await pilot.press("enter")
         await pilot.press("tab")
         await pilot.press(*list("2"))
+
     return _enter_infra_final_details
 
 
@@ -243,17 +245,20 @@ def submit_infra_final_details(container):
     async def _submit_infra_final_details(pilot) -> None:
         await enter_infra_final_details(container)(pilot)
         await pilot.click("#finish")
+
     return _submit_infra_final_details
 
 
 def write_infra_details(container, outdir="."):
     assert isinstance(outdir, str)
     assert Path(outdir).is_dir()
+
     async def _write_infra_details(pilot) -> None:
         await submit_infra_final_details(container)(pilot)
         await pilot.click("#savelocation")
         await pilot.press(*list(outdir))
         await pilot.click("#close_app")
+
     return _write_infra_details
 
 
@@ -274,7 +279,7 @@ def test_entering_infra_final_details_docker(snap_compare):
     """
 
     async def run_before(pilot) -> None:
-        await enter_infra_final_details('docker')(pilot)
+        await enter_infra_final_details("docker")(pilot)
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
@@ -296,7 +301,7 @@ def test_entering_infra_final_details_singularity(snap_compare):
     """
 
     async def run_before(pilot) -> None:
-        await enter_infra_final_details('singularity')(pilot)
+        await enter_infra_final_details("singularity")(pilot)
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
@@ -319,7 +324,7 @@ def test_submitting_infra_final_details_singularity(snap_compare):
     """
 
     async def run_before(pilot) -> None:
-        await submit_infra_final_details('singularity')(pilot)
+        await submit_infra_final_details("singularity")(pilot)
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -346,7 +351,7 @@ async def test_writing_infra_details_singularity():
         # Make a temporary directory to store the output
         tmpdir = TemporaryDirectory()
 
-        await write_infra_details('singularity', outdir=tmpdir.name)(pilot)
+        await write_infra_details("singularity", outdir=tmpdir.name)(pilot)
 
         config_file = Path(tmpdir.name) / "myconfig.conf"
         with open(config_file) as f:

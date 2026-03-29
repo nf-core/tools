@@ -87,7 +87,7 @@ class FinalInfraDetails(Screen):
             yield TextInput(
                 "cachedir",
                 "/path/to/cache/dir",
-                "Define a global cache direcotry.",
+                "Define a global cache directory.",
                 classes="",
                 default=self._get_set_directory(f"NXF_{self.container_system.upper()}_CACHEDIR")
                 if self.container_system is not None
