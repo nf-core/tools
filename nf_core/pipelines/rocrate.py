@@ -21,6 +21,9 @@ from nf_core.utils import Pipeline, get_org_url, load_tools_config
 
 log = logging.getLogger(__name__)
 
+DEFAULT_TOPICS = ["nf-core", "nextflow"]
+TOPICS_REQUEST_TIMEOUT_SECONDS = 10
+
 
 # To identify bots, we look for names that contain "[bot]" or end with "-bot" or "_bot", case-insensitive
 BOT_PATTERNS = re.compile(r"\[bot\]|(-bot|_bot)$", re.IGNORECASE)
@@ -186,6 +189,34 @@ class ROCrate:
             "", # To have a trailing slash at the end of the URL
         ])
 
+    def _get_remote_workflow_topics(self) -> list[str]:
+        """Fetch workflow topics from the organisation pipelines index when available."""
+        assert self.pipeline_obj.pipeline_name is not None  # mypy
+        topics = DEFAULT_TOPICS.copy()
+
+        try:
+            response = requests.get(
+                f"{self._get_pipeline_org_url()}/pipelines.json",
+                timeout=TOPICS_REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            log.debug("Could not fetch workflow topics for RO-Crate from %s: %s", self._get_pipeline_org_url(), error)
+            return topics
+
+        full_pipeline_name = f"{self._get_pipeline_org()}/{self.pipeline_obj.pipeline_name}"
+        try:
+            payload = response.json()
+            remote_workflows = payload["remote_workflows"]
+            for remote_wf in remote_workflows:
+                if remote_wf["full_name"] == full_pipeline_name or remote_wf["name"] == self.pipeline_obj.pipeline_name:
+                    topics.extend(remote_wf["topics"])
+                    break
+
+        except (ValueError, KeyError, TypeError) as error:
+            log.error("Could not parse pipelines index from %s: %s", response.url, error)
+
+        return topics
 
     def make_workflow_rocrate(self) -> None:
         """
@@ -264,17 +295,7 @@ class ROCrate:
         # remove duplicate entries for version
         self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
 
-        # default topics
-        topics = ["nf-core", "nextflow"]
-        # get topics from org website
-        remote_workflows = requests.get(f"{self._get_pipeline_org_url()}/pipelines.json").json()["remote_workflows"]
-        # go through all remote workflows and find the one that matches the pipeline name
-        full_pipeline_name = f"{self._get_pipeline_org()}/{self.pipeline_obj.pipeline_name}"
-        for remote_wf in remote_workflows:
-            assert self.pipeline_obj.pipeline_name is not None  # mypy
-            if remote_wf["full_name"] == full_pipeline_name or remote_wf["name"] == self.pipeline_obj.pipeline_name:
-                topics = topics + remote_wf["topics"]
-                break
+        topics = self._get_remote_workflow_topics()
 
         log.debug(f"Adding topics: {topics}")
         self.crate.mainEntity.append_to("keywords", topics)

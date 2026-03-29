@@ -9,6 +9,7 @@ from unittest import mock
 from unittest.mock import patch
 
 import git
+import requests
 import rocrate.rocrate
 import yaml
 from git import Repo
@@ -491,6 +492,52 @@ class TestROCrate(TestPipelines):
         self.assertIn("https://example.org/pipelines/testpipeline/dev/", main_entity["url"])
         self.assertIn("nf-core", main_entity["keywords"])
         self.assertIn("custom", main_entity["keywords"])
+
+    def test_rocrate_creation_falls_back_to_default_topics_on_request_error(self):
+        """Keep RO-Crate generation working when the pipelines index cannot be fetched."""
+
+        def mock_requests_get(url: str, *args, **kwargs):
+            if url.endswith("/pipelines.json"):
+                raise requests.exceptions.ConnectionError("offline")
+            return self._mock_pipelines_response(url, *args, **kwargs)
+
+        with patch(
+            "nf_core.pipelines.rocrate.requests.get",
+            side_effect=mock_requests_get,
+        ):
+            assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
+
+        with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as fh:
+            crate = json.load(fh)
+        main_entity = next(entity for entity in crate["@graph"] if entity.get("@id") in {"main.nf", "#main.nf"})
+
+        self.assertEqual(main_entity["keywords"], ["nf-core", "nextflow"])
+
+    def test_rocrate_creation_falls_back_to_default_topics_on_invalid_json(self):
+        """Keep RO-Crate generation working when the pipelines index response cannot be parsed."""
+
+        class InvalidJsonResponse:
+            url = "https://nf-co.re/pipelines.json"
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                raise ValueError("invalid json")
+
+        def mock_requests_get(url: str, *args, **kwargs):
+            if url.endswith("/pipelines.json"):
+                return InvalidJsonResponse()
+            return self._mock_pipelines_response(url, *args, **kwargs)
+
+        with patch("nf_core.pipelines.rocrate.requests.get", side_effect=mock_requests_get):
+            assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
+
+        with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as fh:
+            crate = json.load(fh)
+        main_entity = next(entity for entity in crate["@graph"] if entity.get("@id") in {"main.nf", "#main.nf"})
+
+        self.assertEqual(main_entity["keywords"], ["nf-core", "nextflow"])
 
     def test_rocrate_creation_for_fetchngs(self):
         """Run the nf-core rocrate command with nf-core/fetchngs"""

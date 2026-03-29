@@ -7,6 +7,7 @@ from unittest import mock
 
 import git
 import pytest
+import requests
 import yaml
 
 import nf_core.pipelines.sync
@@ -29,6 +30,10 @@ class MockResponse:
 
     def json(self):
         return self.data
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.RequestException(f"Error {self.status_code}: {self.reason}")
 
 
 def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
