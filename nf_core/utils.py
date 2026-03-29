@@ -1243,23 +1243,33 @@ def get_org_url(org_name: str, is_nfcore: bool | None = None) -> str:
     return f"https://github.com/{org_name}"
 
 
-def get_usage_docs_url(org_url: str, repo_name: str, short_name: str, default_branch: str) -> str:
-    """Return a forge-aware URL for the rendered usage documentation."""
+def _get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc_name: str) -> str:
+    """Return a forge-aware URL for a rendered documentation page."""
     normalized_org_url = org_url.rstrip("/")
     parsed_url = urlparse(normalized_org_url)
     hostname = parsed_url.netloc.lower()
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
     if hostname == "github.com" or hostname.startswith("github.") or ".github." in hostname:
-        return f"{base_url}/{repo_name}/blob/{default_branch}/docs/usage.md"
+        return f"{base_url}/{repo_name}/blob/{branch}/docs/{doc_name}.md"
     if hostname == "gitlab.com" or hostname.startswith("gitlab.") or ".gitlab." in hostname:
-        return f"{base_url}/{repo_name}/-/blob/{default_branch}/docs/usage.md"
+        return f"{base_url}/{repo_name}/-/blob/{branch}/docs/{doc_name}.md"
     if hostname == "bitbucket.org" or hostname.startswith("bitbucket.") or ".bitbucket." in hostname:
-        return f"{base_url}/{repo_name}/src/{default_branch}/docs/usage.md"
+        return f"{base_url}/{repo_name}/src/{branch}/docs/{doc_name}.md"
     if hostname == "codeberg.org" or "forgejo" in hostname or "gitea" in hostname:
-        return f"{base_url}/{repo_name}/src/branch/{default_branch}/docs/usage.md"
+        return f"{base_url}/{repo_name}/src/branch/{branch}/docs/{doc_name}.md"
 
-    return f"{normalized_org_url}/{short_name}/usage"
+    return f"{normalized_org_url}/{short_name}/{doc_name}"
+
+
+def get_usage_docs_url(org_url: str, repo_name: str, short_name: str, branch: str) -> str:
+    """Return a forge-aware URL for the rendered usage documentation."""
+    return _get_docs_url(org_url, repo_name, short_name, branch, "usage")
+
+
+def get_output_docs_url(org_url: str, repo_name: str, short_name: str, branch: str) -> str:
+    """Return a forge-aware URL for the rendered output documentation."""
+    return _get_docs_url(org_url, repo_name, short_name, branch, "output")
 
 
 class NFCoreTemplateConfig(BaseModel):
