@@ -43,6 +43,7 @@ class NfcoreCreateTest(unittest.TestCase):
         assert pipeline.config.description == self.pipeline_description
         assert pipeline.config.author == self.pipeline_author
         assert pipeline.config.version == self.pipeline_version
+        assert pipeline.config.org_name == "nf-core"
         assert pipeline.config.org_url == "https://nf-co.re"
 
     @with_temporary_folder
@@ -64,6 +65,7 @@ class NfcoreCreateTest(unittest.TestCase):
         with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
+            assert "org_name" not in nfcore_yml["template"]
             assert "org_url" not in nfcore_yml["template"]
 
     @with_temporary_folder
@@ -85,6 +87,7 @@ class NfcoreCreateTest(unittest.TestCase):
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
+            assert nfcore_yml["template"]["org_name"] == "testprefix"
             assert nfcore_yml["template"]["org_url"] == "https://github.com/testprefix"
 
     @with_temporary_folder
@@ -103,6 +106,7 @@ class NfcoreCreateTest(unittest.TestCase):
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
+            assert nfcore_yml["template"]["org_name"] == "testprefix"
             assert nfcore_yml["template"]["org_url"] == "https://github.com/testprefix"
 
     @with_temporary_folder

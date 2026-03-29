@@ -66,7 +66,7 @@ class CreateConfig(NFCoreTemplateConfig):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
-    @field_validator("org", "org_url", "description", "author", "version", "outdir")
+    @field_validator("org", "org_name", "org_url", "description", "author", "version", "outdir")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
