@@ -87,9 +87,9 @@ class BasicDetails(Screen):
         if self.parent.NFCORE_PIPELINE:
             return
 
-        org_input = self.query_one("#org", TextInput).query_one(Input)
-        org_name_input = self.query_one("#org_name", TextInput).query_one(Input)
-        org_url_input = self.query_one("#org_url", TextInput).query_one(Input)
+        org_input = self._get_input_widget("org")
+        org_name_input = self._get_input_widget("org_name")
+        org_url_input = self._get_input_widget("org_url")
         suggested_name = org_input.value or "nf-core"
         suggested_url = get_org_url(org_input.value or "nf-core", self.parent.NFCORE_PIPELINE)
 
@@ -101,6 +101,10 @@ class BasicDetails(Screen):
 
         self._auto_org_name = suggested_name
         self._auto_org_url = suggested_url
+
+    def _get_input_widget(self, field_id: str) -> Input:
+        """Return the inner Textual input for a named TextInput wrapper."""
+        return self.query_one(f"#{field_id}", TextInput).query_one(Input)
 
     def _get_config_values(self) -> dict[str, str]:
         """Collect screen values and inject nf-core defaults for hidden fields."""
@@ -117,15 +121,36 @@ class BasicDetails(Screen):
 
     @on(Input.Changed)
     @on(Input.Submitted)
-    def show_exists_warn(self):
+    def show_exists_warn(self, event: Input.Changed | Input.Submitted) -> None:
         """Check if the pipeline exists on every input change or submitted.
         If the pipeline exists, show warning message saying that it will be overridden."""
-        self._sync_org_metadata_inputs()
+        if event.input is self._get_input_widget("org"):
+            self._sync_org_metadata_inputs()
         config = self._get_config_values()
         if Path(config["org"] + "-" + config["name"]).is_dir():
             remove_hide_class(self.parent, "exist_warn")
         else:
             add_hide_class(self.parent, "exist_warn")
+
+    @on(Input.Blurred)
+    def restore_empty_org_metadata_on_blur(self, event: Input.Blurred) -> None:
+        """Restore auto-managed org metadata only after the user leaves the field empty."""
+        if self.parent.NFCORE_PIPELINE:
+            return
+
+        org_input = self._get_input_widget("org")
+        for field_id in ("org_name", "org_url"):
+            if event.input is self._get_input_widget(field_id):
+                if event.input.value:
+                    break
+                if field_id == "org_name":
+                    restored_value = org_input.value or "nf-core"
+                    self._auto_org_name = restored_value
+                else:
+                    restored_value = get_org_url(org_input.value or "nf-core", self.parent.NFCORE_PIPELINE)
+                    self._auto_org_url = restored_value
+                event.input.value = restored_value
+                break
 
     def on_screen_resume(self):
         """Hide warn message on screen resume.
