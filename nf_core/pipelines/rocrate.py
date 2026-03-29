@@ -186,6 +186,16 @@ class ROCrate:
 
         return get_org_url(org_name)
 
+    def _get_main_entity_url(self) -> str:
+        """Return a stable URL for the selected workflow revision."""
+        return "/".join([
+            self._get_pipeline_org_url(),
+            self.crate.name.replace(self._get_pipeline_org() + '/', ''),
+            "dev" if self.version.endswith("dev") else self.version,
+            "", # To have a trailing slash at the end of the URL
+        ])
+
+
     def make_workflow_rocrate(self) -> None:
         """
         Create an RO Crate for a pipeline
@@ -257,11 +267,7 @@ class ROCrate:
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
         self.crate.mainEntity.append_to("sdPublisher", {"@id": self._get_pipeline_org_url()}, compact=True)
-        url = "dev" if self.version.endswith("dev") else self.version
-        crate_name = self.crate.name or ""
-        self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{crate_name.split('/', maxsplit=1)[-1]}/{url}/", compact=True
-        )
+        self.crate.mainEntity["url"] = [self._get_main_entity_url()]
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
         # remove duplicate entries for version
@@ -269,8 +275,8 @@ class ROCrate:
 
         # default topics
         topics = ["nf-core", "nextflow"]
-        # get topics from nf-core website
-        remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
+        # get topics from org website
+        remote_workflows = requests.get(f"{self._get_pipeline_org_url()}/pipelines.json").json()["remote_workflows"]
         # go through all remote workflows and find the one that matches the pipeline name
         full_pipeline_name = f"{self._get_pipeline_org()}/{self.pipeline_obj.pipeline_name}"
         for remote_wf in remote_workflows:
