@@ -10,6 +10,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.pipelines.create.utils import CreateConfig, TextInput, add_hide_class, remove_hide_class
+from nf_core.utils import get_org_url
 
 pipeline_exists_warn = """
 > ⚠️  **The pipeline you are trying to create already exists.**
@@ -21,6 +22,8 @@ pipeline_exists_warn = """
 
 class BasicDetails(Screen):
     """Name, description, author, etc."""
+
+    _auto_org_url: str | None = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -58,6 +61,13 @@ class BasicDetails(Screen):
             "Author(s)",
             "Name of the main author / authors",
         )
+        yield TextInput(
+            "org_url",
+            "Organisation URL",
+            "Website URL for the organisation",
+            get_org_url("nf-core", self.parent.NFCORE_PIPELINE),
+            disabled=self.parent.NFCORE_PIPELINE,
+        )
         yield Markdown(dedent(pipeline_exists_warn), id="exist_warn", classes="hide")
         yield Center(
             Button("Back", id="back", variant="default"),
@@ -65,11 +75,27 @@ class BasicDetails(Screen):
             classes="cta",
         )
 
+    def _sync_org_url_input(self, force: bool = False) -> None:
+        """Keep the org URL in sync with the org name until the user overrides it."""
+        # URL of nf-core pipelines is not modifiable
+        if self.parent.NFCORE_PIPELINE:
+            return
+
+        org_input = self.query_one("#org", TextInput).query_one(Input)
+        org_url_input = self.query_one("#org_url", TextInput).query_one(Input)
+        suggested_url = get_org_url(org_input.value or "nf-core", self.parent.NFCORE_PIPELINE)
+
+        if force or org_url_input.value in {"", self._auto_org_url}:
+            org_url_input.value = suggested_url
+
+        self._auto_org_url = suggested_url
+
     @on(Input.Changed)
     @on(Input.Submitted)
     def show_exists_warn(self):
         """Check if the pipeline exists on every input change or submitted.
         If the pipeline exists, show warning message saying that it will be overridden."""
+        self._sync_org_url_input()
         config = {}
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)
@@ -84,8 +110,9 @@ class BasicDetails(Screen):
         Update displayed value on screen resume."""
         add_hide_class(self.parent, "exist_warn")
         for text_input in self.query("TextInput"):
-            if text_input.field_id == "org":
+            if text_input.field_id in {"org", "org_url"}:
                 text_input.disabled = self.parent.NFCORE_PIPELINE
+        self._sync_org_url_input(force=True)
 
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:

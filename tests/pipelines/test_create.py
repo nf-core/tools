@@ -43,6 +43,7 @@ class NfcoreCreateTest(unittest.TestCase):
         assert pipeline.config.description == self.pipeline_description
         assert pipeline.config.author == self.pipeline_author
         assert pipeline.config.version == self.pipeline_version
+        assert pipeline.config.org_url == "https://nf-co.re"
 
     @with_temporary_folder
     def test_pipeline_creation_initiation(self, tmp_path):
@@ -61,7 +62,9 @@ class NfcoreCreateTest(unittest.TestCase):
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
         assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
         with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
-            assert "template" in fh.read()
+            nfcore_yml = yaml.safe_load(fh)
+            assert "template" in nfcore_yml
+            assert "org_url" not in nfcore_yml["template"]
 
     @with_temporary_folder
     def test_pipeline_creation_initiation_with_yml(self, tmp_path):
@@ -82,6 +85,7 @@ class NfcoreCreateTest(unittest.TestCase):
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
+            assert nfcore_yml["template"]["org_url"] == "https://github.com/testprefix"
 
     @with_temporary_folder
     def test_pipeline_creation_initiation_customize_template(self, tmp_path):
@@ -99,6 +103,7 @@ class NfcoreCreateTest(unittest.TestCase):
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
+            assert nfcore_yml["template"]["org_url"] == "https://github.com/testprefix"
 
     @with_temporary_folder
     def test_pipeline_creation_with_yml_skip(self, tmp_path):

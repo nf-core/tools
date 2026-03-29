@@ -194,6 +194,8 @@ class PipelineCreate:
             self.config.outdir = outdir if outdir else "."
         if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
+        if self.config.org_url is None and self.config.org is not None:
+            self.config.org_url = nf_core.utils.get_org_url(self.config.org, self.config.is_nfcore)
 
     def obtain_jinja_params_dict(self, features_to_skip: list[str], pipeline_dir: str | Path) -> tuple[dict, list[str]]:
         """Creates a dictionary of parameters for the new pipeline.

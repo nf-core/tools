@@ -1235,11 +1235,20 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
+def get_org_url(org_name: str, is_nfcore: bool | None = None) -> str:
+    """Return the canonical URL for a pipeline organisation."""
+    if is_nfcore or org_name == "nf-core":
+        return "https://nf-co.re"
+    return f"https://github.com/{org_name}"
+
+
 class NFCoreTemplateConfig(BaseModel):
     """Template configuration schema"""
 
     org: str | None = None
     """ Organisation name """
+    org_url: str | None = None
+    """ Organisation URL """
     name: str | None = None
     """ Pipeline name """
     description: str | None = None
@@ -1426,6 +1435,10 @@ class NFCoreYamlConfig(BaseModel):
         # Remove the fields based on repository_type
         for field in fields_to_exclude:
             config.pop(field, None)
+
+        template = config.get("template")
+        if isinstance(template, dict) and template.get("is_nfcore"):
+            template.pop("org_url", None)
 
         return config
 
