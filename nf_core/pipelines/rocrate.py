@@ -88,6 +88,12 @@ class ROCrate:
         self.crate: rocrate.rocrate.ROCrate
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
+        self.tools_config = None
+
+        try:
+            _, self.tools_config = load_tools_config(self.pipeline_dir)
+        except (AssertionError, FileNotFoundError, UserWarning) as error:
+            log.debug(f"Could not load `.nf-core.yml` for RO-Crate: {self.pipeline_dir}. {error}")
 
         setup_requests_cachedir()
 
@@ -145,42 +151,27 @@ class ROCrate:
 
     def _get_pipeline_org(self) -> str:
         org_name = "nf-core"
-        try:
-            _, tools_config = load_tools_config(self.pipeline_dir)
-        except (AssertionError, FileNotFoundError, UserWarning) as error:
-            log.debug(f"Could not load `.nf-core.yml` for RO-Crate: {self.pipeline_dir}. {error}")
-            tools_config = None
-        if tools_config and getattr(tools_config, "template", None):
-            org_name = getattr(tools_config.template, "org", org_name) or org_name
+        if self.tools_config and getattr(self.tools_config, "template", None):
+            org_name = getattr(self.tools_config.template, "org", org_name) or org_name
         return org_name
 
     def _get_pipeline_org_name(self) -> str:
         org_name = "nf-core"
-        try:
-            _, tools_config = load_tools_config(self.pipeline_dir)
-        except (AssertionError, FileNotFoundError, UserWarning) as error:
-            log.debug(f"Could not load `.nf-core.yml` for RO-Crate org name: {self.pipeline_dir}. {error}")
-            tools_config = None
 
-        if tools_config and getattr(tools_config, "template", None):
-            template_org_name = getattr(tools_config.template, "org_name", None)
+        if self.tools_config and getattr(self.tools_config, "template", None):
+            template_org_name = getattr(self.tools_config.template, "org_name", None)
             if template_org_name:
                 return template_org_name
 
-            org_name = getattr(tools_config.template, "org", org_name) or org_name
+            org_name = getattr(self.tools_config.template, "org", org_name) or org_name
 
         return org_name
 
     def _get_pipeline_org_url(self) -> str:
         org_name = self._get_pipeline_org()
-        try:
-            _, tools_config = load_tools_config(self.pipeline_dir)
-        except (AssertionError, FileNotFoundError, UserWarning) as error:
-            log.debug(f"Could not load `.nf-core.yml` for RO-Crate org URL: {self.pipeline_dir}. {error}")
-            tools_config = None
 
-        if tools_config and getattr(tools_config, "template", None):
-            template_org_url = getattr(tools_config.template, "org_url", None)
+        if self.tools_config and getattr(self.tools_config, "template", None):
+            template_org_url = getattr(self.tools_config.template, "org_url", None)
             if template_org_url:
                 return template_org_url
 
