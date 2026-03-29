@@ -56,6 +56,50 @@ def test_strip_ansi_codes():
     assert stripped == "ls examplefile.zip"
 
 
+@pytest.mark.parametrize(
+    ("org_url", "repo_name", "short_name", "default_branch", "expected"),
+    [
+        (
+            "https://github.com/my-org",
+            "my-org/testpipeline",
+            "testpipeline",
+            "main",
+            "https://github.com/my-org/testpipeline/blob/main/docs/usage.md",
+        ),
+        (
+            "https://gitlab.com/my-org",
+            "my-org/testpipeline",
+            "testpipeline",
+            "main",
+            "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/usage.md",
+        ),
+        (
+            "https://bitbucket.org/my-org",
+            "my-org/testpipeline",
+            "testpipeline",
+            "main",
+            "https://bitbucket.org/my-org/testpipeline/src/main/docs/usage.md",
+        ),
+        (
+            "https://codeberg.org/my-org",
+            "my-org/testpipeline",
+            "testpipeline",
+            "main",
+            "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/usage.md",
+        ),
+        (
+            "https://example.org/pipelines",
+            "my-org/testpipeline",
+            "testpipeline",
+            "main",
+            "https://example.org/pipelines/testpipeline/usage",
+        ),
+    ],
+)
+def test_get_usage_docs_url(org_url, repo_name, short_name, default_branch, expected):
+    assert nf_core.utils.get_usage_docs_url(org_url, repo_name, short_name, default_branch) == expected
+
+
 class TestUtils(TestPipelines):
     """Class for utils tests"""
 
