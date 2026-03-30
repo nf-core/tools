@@ -79,8 +79,8 @@ class TestMetaYml(TestModules):
 
         # Add a second versions channel to the output
         main_nf_modified = main_nf_original.replace(
-            "emit: versions",
-            "emit: versions_bpipe, topic: versions\n    tuple val(\"${task.process}\"), val('test2'), eval('echo 1.0'), emit: versions_test, topic: versions",
+            "topic: versions, emit: versions_bpipe",
+            "topic: versions, emit: versions_bpipe\n    tuple val(\"${task.process}\"), val('test2'), eval('echo 1.0'), emit: versions_test, topic: versions",
         )
 
         with open(main_nf_path, "w") as fh:
