@@ -311,7 +311,7 @@ class ComponentUpdate(ComponentCommand):
 
                 # Regenerate container configuration files for the pipeline when modules are updated
                 if self.component_type == "modules":
-                    try_generate_container_configs(self.directory, modules_repo.repo_path)
+                    try_generate_container_configs(self.directory)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
                 if not silent and len(modules_to_update + subworkflows_to_update) > 0 and not self.update_all:

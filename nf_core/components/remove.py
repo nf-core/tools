@@ -183,7 +183,7 @@ class ComponentRemove(ComponentCommand):
                         removed_components.append(component_name.replace("/", "_"))
             # Regenerate container configuration files for the pipeline when modules are removed
             if self.component_type == "modules":
-                try_generate_container_configs(self.directory, repo_path)
+                try_generate_container_configs(self.directory)
 
             # print removed dependencies
             dependencies = set(removed_components) - {component}

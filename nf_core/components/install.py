@@ -171,7 +171,7 @@ class ComponentInstall(ComponentCommand):
 
         # Regenerate container configuration files for the pipeline when modules are installed
         if self.component_type == "modules":
-            try_generate_container_configs(self.directory, self.modules_repo.repo_path)
+            try_generate_container_configs(self.directory)
 
         if not silent:
             modules_json.load()
