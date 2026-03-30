@@ -14,7 +14,7 @@ class ContainerConfigs:
     """Generates the container configuration files for a pipeline.
 
     Args:
-        workflow_directory (str | Path): The directory containing the workflow files.
+        workflow_directory (Path): The directory containing the workflow files.
         org (str): Organisation path.
     """
 
