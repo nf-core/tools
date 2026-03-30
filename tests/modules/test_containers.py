@@ -64,9 +64,18 @@ class TestModuleContainers:
 
     def _containers_by_system(self, prefix: str = "testC") -> dict:
         return {
-            "docker": {platform: {"name": f"{prefix}-docker-{platform}"} for platform in CONTAINER_PLATFORMS},
-            "singularity": {platform: {"name": f"{prefix}-singularity-{platform}"} for platform in CONTAINER_PLATFORMS},
-            "conda": {platform: {"lock_file": f"/path/to/{prefix}-{platform}.txt"} for platform in CONTAINER_PLATFORMS},
+            "docker": {
+                platform: {ModuleContainers.IMAGE_KEY: f"{prefix}-docker-{platform}"}
+                for platform in CONTAINER_PLATFORMS
+            },
+            "singularity": {
+                platform: {ModuleContainers.IMAGE_KEY: f"{prefix}-singularity-{platform}"}
+                for platform in CONTAINER_PLATFORMS
+            },
+            "conda": {
+                platform: {ModuleContainers.LOCK_FILE_KEY: f"/path/to/{prefix}-{platform}.txt"}
+                for platform in CONTAINER_PLATFORMS
+            },
         }
 
     def test_init_sets_paths(self, tmp_path: Path):
@@ -136,22 +145,22 @@ class TestModuleContainers:
         for system in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
                 entry = containers[system][platform]
-                assert entry["name"] == "community.wave.seqera.io/library/testC:0.1.0--abc123"
-                assert entry["buildId"] == f"bd-abc123-{system}"
+                assert entry[ModuleContainers.IMAGE_KEY] == "community.wave.seqera.io/library/testC:0.1.0--abc123"
+                assert entry[ModuleContainers.BUILD_ID_KEY] == f"bd-abc123-{system}"
                 if system == "docker":
-                    assert entry["scanId"] == f"sc-abc123-{system}"
+                    assert entry[ModuleContainers.SCAN_ID_KEY] == f"sc-abc123-{system}"
                     # Check that conda lock file path exists and is correct
                     platform_safe = platform.replace("/", "_")
                     build_id = f"bd-abc123-{system}"
                     expected_lock_path = str(module_dir / ".conda-lock" / f"{platform_safe}-{build_id}.txt")
-                    assert containers["conda"][platform]["lock_file"] == expected_lock_path
+                    assert containers["conda"][platform][ModuleContainers.LOCK_FILE_KEY] == expected_lock_path
                 else:
-                    assert "scanId" not in entry
+                    assert ModuleContainers.SCAN_ID_KEY not in entry
 
     @mock.patch.object(ModuleContainers, "request_container")
     def test_create_skips_conda_lock_when_build_id_missing(self, mock_request_container, tmp_path: Path):
         repo_root, module_dir = self._setup_modules_repo(tmp_path)
-        mock_request_container.return_value = {"name": "testC-img"}
+        mock_request_container.return_value = {ModuleContainers.IMAGE_KEY: "testC-img"}
 
         manager = ModuleContainers("testC", directory=repo_root)
         containers = manager.create()
@@ -166,9 +175,9 @@ class TestModuleContainers:
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
 
         container = ModuleContainers.request_container("docker", platform, conda_file, await_build=True)
-        assert container["name"] == "testC:latest"
-        assert container["buildId"] == "build-1"
-        assert container["scanId"] == "scan-1"
+        assert container[ModuleContainers.IMAGE_KEY] == "testC:latest"
+        assert container[ModuleContainers.BUILD_ID_KEY] == "build-1"
+        assert container[ModuleContainers.SCAN_ID_KEY] == "scan-1"
 
         args_str = mock_run_cmd.call_args[0][1]
         assert "--await" in args_str
@@ -198,9 +207,9 @@ class TestModuleContainers:
         }
 
         container = ModuleContainers.request_container("singularity", platform, conda_file, await_build=True)
-        assert container["name"] == "testC:sif"
+        assert container[ModuleContainers.IMAGE_KEY] == "testC:sif"
         expected_url = "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ab/abcde12345/data"
-        assert container["https"] == expected_url
+        assert container[ModuleContainers.HTTPS_URL_KEY] == expected_url
         mock_request_image_inspect.assert_called_once_with("testC:sif")
 
     @mock.patch.object(ModuleContainers, "request_image_inspect")
@@ -280,7 +289,7 @@ class TestModuleContainers:
         manager = ModuleContainers("testC", directory=repo_root)
         platform = CONTAINER_PLATFORMS[0]
         manager.containers = {
-            "docker": {platform: {"buildId": "test-build-123"}},
+            "docker": {platform: {ModuleContainers.BUILD_ID_KEY: "test-build-123"}},
             "conda": {platform: {"lock_file": "/some/path.txt"}},
         }
 
@@ -300,9 +309,9 @@ class TestModuleContainers:
         expected = []
         for cs in CONTAINER_SYSTEMS:
             for p in CONTAINER_PLATFORMS:
-                expected.append((cs, p, containers[cs][p]["name"]))
+                expected.append((cs, p, containers[cs][p][ModuleContainers.IMAGE_KEY]))
         for p in CONTAINER_PLATFORMS:
-            expected.append(("conda", p, containers["conda"][p]["lock_file"]))
+            expected.append(("conda", p, containers["conda"][p][ModuleContainers.LOCK_FILE_KEY]))
         assert listed == expected
 
     def test_get_containers_from_meta_missing_section(self, tmp_path: Path, caplog):
