@@ -19,7 +19,7 @@ class TestContainerConfigs(TestPipelines):
 
     def setUp(self) -> None:
         super().setUp()
-        self.container_configs = ContainerConfigs(self.pipeline_dir, "nf-core")
+        self.container_configs = ContainerConfigs(self.pipeline_dir)
 
     def test_check_nextflow_version_sufficient_ok(self) -> None:
         """check_nextflow_version should return silently when version is sufficient."""

@@ -15,7 +15,6 @@ class ContainerConfigs:
 
     Args:
         workflow_directory (Path): The directory containing the workflow files.
-        org (str): Organisation path.
     """
 
     def __init__(
