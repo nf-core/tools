@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import nf_core.modules.modules_utils
+from nf_core.modules.modules_utils import scan_modules_dir
 
 from ..test_modules import TestModules
 
@@ -105,3 +106,29 @@ class TestModulesUtils(TestModules):
             assert isinstance(first_key, str)
             assert isinstance(first_value, tuple)
             assert len(first_value) == 2
+
+    def test_scan_modules_dir_returns_module_names(self):
+        """Test that scan_modules_dir returns module names relative to the scanned directory"""
+        modules_dir = self.nfcore_modules / "modules" / "nf-core"
+        result = scan_modules_dir(modules_dir)
+        assert "bpipe/test" in result
+
+    def test_scan_modules_dir_nonexistent(self):
+        """Test that scan_modules_dir returns an empty list for a nonexistent directory"""
+        result = scan_modules_dir(self.nfcore_modules / "does" / "not" / "exist")
+        assert result == []
+
+    def test_scan_modules_dir_multiple_modules(self):
+        """Test that scan_modules_dir returns all modules when multiple are present"""
+        modules_dir = self.nfcore_modules / "modules" / "nf-core"
+        extra = modules_dir / "samtools" / "sort"
+        extra.mkdir(parents=True)
+        (extra / "main.nf").touch()
+        try:
+            result = scan_modules_dir(modules_dir)
+            assert "bpipe/test" in result
+            assert "samtools/sort" in result
+        finally:
+            import shutil
+
+            shutil.rmtree(modules_dir / "samtools")

@@ -182,6 +182,21 @@ def load_edam():
     return edam_formats
 
 
+def scan_modules_dir(modules_dir: Path) -> list[str]:
+    """
+    Scan a modules directory for main.nf files and return module names relative to modules_dir.
+
+    Args:
+        modules_dir: Directory to scan
+
+    Returns:
+        List of module names relative to modules_dir
+    """
+    if not modules_dir.exists():
+        return []
+    return [str(main_nf.parent.relative_to(modules_dir)) for main_nf in modules_dir.rglob("main.nf")]
+
+
 def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> list[NFCoreComponent]:
     """
     Filter modules by name, supporting exact matches and tool family matching.

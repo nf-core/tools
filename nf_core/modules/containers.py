@@ -14,7 +14,7 @@ from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
-from nf_core.modules.modules_utils import filter_modules_by_name, prompt_module_selection
+from nf_core.modules.modules_utils import filter_modules_by_name, prompt_module_selection, scan_modules_dir
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
@@ -69,6 +69,7 @@ class ModuleContainers:
 
         # When a module name is given, use filter_modules_by_name so that a parent folder
         # like "samtools" also selects submodules (samtools/sort, samtools/view, …).
+        matched: list[NFCoreComponent] = []
         if module is not None and not self.all_modules and self.available_modules:
             matched = filter_modules_by_name(self.available_modules, module)
             if len(matched) > 1:
@@ -83,10 +84,8 @@ class ModuleContainers:
             if module is not None and module in self.components_by_name:
                 self.nfcore_component: NFCoreComponent | None = self.components_by_name[module]
             elif module is not None and self.available_modules:
-                # filter_modules_by_name returned exactly one component (possibly prefix match)
-                matched_single = filter_modules_by_name(self.available_modules, module)
-                if matched_single:
-                    self.nfcore_component = matched_single[0]
+                if matched:
+                    self.nfcore_component = matched[0]
                 else:
                     self.nfcore_component = self._init_nfcore_component(module)
             elif module is not None:
@@ -134,48 +133,25 @@ class ModuleContainers:
             log.debug("Could not determine repository type")
             return []
 
-        modules = []
-
         if self.repo_type == "pipeline":
-            # For pipelines, only return local modules
             local_modules_dir = self.directory / "modules" / "local"
-            if local_modules_dir.exists():
-                seen_modules = set()
-                # Handle directories with main.nf files
-                for main_nf in local_modules_dir.rglob("main.nf"):
-                    # Skip if this main.nf is directly in local_modules_dir
-                    # (would be an unusual structure)
-                    if main_nf.parent == local_modules_dir:
-                        continue
-                    module_name = str(main_nf.parent.relative_to(local_modules_dir))
-                    # Only include if we haven't seen this module before (avoid duplicates from nested main.nf)
-                    if module_name not in seen_modules:
-                        seen_modules.add(module_name)
-                        modules.append(
-                            NFCoreComponent(
-                                module_name,
-                                None,
-                                main_nf.parent,
-                                self.repo_type,
-                                self.directory,
-                                "modules",
-                                remote_component=False,
-                            )
-                        )
-
+            return [
+                NFCoreComponent(
+                    name,
+                    None,
+                    local_modules_dir / name,
+                    self.repo_type,
+                    self.directory,
+                    "modules",
+                    remote_component=False,
+                )
+                for name in scan_modules_dir(local_modules_dir)
+            ]
         elif self.repo_type == "modules":
-            # For modules repos, get modules from modules directory
-            modules_dir = self.directory / "modules" / self.org
-            if modules_dir.exists():
-                seen_modules = set()
-                for main_nf in modules_dir.rglob("main.nf"):
-                    module_name = str(main_nf.parent.relative_to(modules_dir))
-                    # Only include if we haven't seen this module before (avoid duplicates from nested main.nf)
-                    if module_name not in seen_modules:
-                        seen_modules.add(module_name)
-                        modules.append(self._init_nfcore_component(module_name))
-
-        return modules
+            return [
+                self._init_nfcore_component(name) for name in scan_modules_dir(self.directory / "modules" / self.org)
+            ]
+        return []
 
     def _init_nfcore_component(self, module: str) -> NFCoreComponent:
         """Initialize NFCoreComponent for the module."""
