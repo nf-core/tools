@@ -286,7 +286,7 @@ def check_script_section(self, lines):
     permitted_meta_keys = {"id", "single_end"}
     invalid_meta_keys = [
         f"{prefix}{key}"
-        for prefix, key in re.findall(r"(meta\d*\.)(\w+)\b(?!\()", script)
+        for prefix, key in re.findall(r"\b(meta\d*\.)(\w+)\b(?!\()", script)
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
@@ -305,7 +305,7 @@ def check_script_section(self, lines):
     permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
     invalid_ext_keys = [
         key
-        for key in re.findall(r"ext\.\w+", script)
+        for key in re.findall(r"\bext\.\w+", script)
         if key not in permitted_ext_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)
     ]
     if not invalid_ext_keys:

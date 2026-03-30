@@ -18,7 +18,7 @@ jobs:
         id: get_description
         run: |
           echo "description=$(curl -s https://nf-co.re/pipelines.json | jq -r '.remote_workflows[] | select(.full_name == "${{ github.repository }}") | .description')" >> $GITHUB_OUTPUT
-      - uses: rzr/fediverse-action@master
+      - uses: rzr/fediverse-action@563159eb8d45f70ab6aaba36ed55cd037e51f441 # master
         with:
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           host: "mstdn.science" # custom host if not "mastodon.social" (default)

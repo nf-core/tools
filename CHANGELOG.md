@@ -52,6 +52,7 @@
 - Add linting for meta and ext keys ([#4127](https://github.com/nf-core/tools/pull/4127))
 - Add strict syntax linting to template with pre-commit ([#4128](https://github.com/nf-core/tools/pull/4128))
 - lint against the correct repo ([#4140](https://github.com/nf-core/tools/pull/4140))
+- Fix false positive matches to words like text in ext key linting ([#4142](https://github.com/nf-core/tools/pull/4142))
 
 ### Modules
 

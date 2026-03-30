@@ -640,3 +640,16 @@ def test_validate_ext_keys():
         ],
     )
     assert len(mock_lint.failed) == 0
+
+    # Check false positive matches, e.g. text.tokenize()
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def header = file(reference).text.tokenize('\n').first()
+    def input = context.trim()
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0
