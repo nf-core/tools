@@ -8,6 +8,8 @@ import yaml
 from nf_core.modules.containers import ModuleContainers
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
+from ..test_modules import TestModules
+
 
 class TestModuleContainers:
     """Tests for the ModuleContainers class"""
@@ -363,6 +365,51 @@ class TestModuleContainers:
         self._write_meta(module_dir, {"name": "testC", "containers": {"docker": {"linux/amd64": {"name": "old"}}}})
         manager = ModuleContainers("testC", directory=repo_root)
         containers = self._containers_by_system("new")
+        manager.containers = containers
+
+        with mock.patch.object(manager, "create") as mock_create:
+            manager.update_containers_in_meta()
+            mock_create.assert_not_called()
+
+        meta = yaml.safe_load((module_dir / "meta.yml").read_text(encoding="utf-8"))
+        assert meta["containers"] == containers
+
+
+class TestModuleContainersPipeline(TestModules):
+    """Tests for ModuleContainers against a real pipeline repository"""
+
+    def _create_local_module(self, module_name: str = "testmodule") -> Path:
+        """Create a minimal local module under pipeline's modules/local/."""
+        module_dir = self.pipeline_dir / "modules" / "local" / module_name
+        module_dir.mkdir(parents=True, exist_ok=True)
+        (module_dir / "environment.yml").write_text(
+            f"name: {module_name}\nchannels:\n  - defaults\ndependencies:\n  - python=3.11\n",
+            encoding="utf-8",
+        )
+        (module_dir / "meta.yml").write_text(f"name: {module_name}\n", encoding="utf-8")
+        (module_dir / "main.nf").write_text("", encoding="utf-8")
+        return module_dir
+
+    def test_init_pipeline_sets_local_module_paths(self):
+        """ModuleContainers should resolve paths into modules/local/ for a pipeline repo"""
+        module_dir = self._create_local_module("testmodule")
+        manager = ModuleContainers("testmodule", directory=self.pipeline_dir)
+
+        assert manager.repo_type == "pipeline"
+        assert manager.module_directory == module_dir
+        assert manager.environment_yml == module_dir / "environment.yml"
+        assert manager.meta_yml == module_dir / "meta.yml"
+
+    def test_update_containers_in_meta_pipeline(self):
+        """update_containers_in_meta writes containers to the local module's meta.yml"""
+        module_dir = self._create_local_module("testmodule")
+
+        manager = ModuleContainers("testmodule", directory=self.pipeline_dir)
+        containers = {
+            "docker": {p: {ModuleContainers.IMAGE_KEY: f"docker-{p}"} for p in CONTAINER_PLATFORMS},
+            "singularity": {p: {ModuleContainers.IMAGE_KEY: f"sif-{p}"} for p in CONTAINER_PLATFORMS},
+            "conda": {p: {ModuleContainers.LOCK_FILE_KEY: f"/lock/{p}.txt"} for p in CONTAINER_PLATFORMS},
+        }
         manager.containers = containers
 
         with mock.patch.object(manager, "create") as mock_create:

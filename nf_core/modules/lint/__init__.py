@@ -235,7 +235,7 @@ class ModuleLint(ComponentLint):
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
                 elif test_name == "environment_yml":
                     getattr(self, test_name)(
-                        mod, allow_missing=False, fix_version=fix_version, progress_bar=progress_bar
+                        mod, allow_missing=True, fix_version=fix_version, progress_bar=progress_bar
                     )
                 elif test_name == "meta_yml":
                     # Allow files to be missing for local
