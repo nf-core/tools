@@ -1,6 +1,8 @@
 import logging
 import os
 import re
+import subprocess
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import quote
@@ -266,6 +268,28 @@ class ModuleContainers:
         assert self.environment_yml is not None
         assert self.module_directory is not None
 
+        # One spinner per build target — they run visually in parallel
+        build_task_ids: dict[tuple[str, str], rich.progress.TaskID] = {}
+        if progress_bar:
+            for cs in CONTAINER_SYSTEMS:
+                for platform in CONTAINER_PLATFORMS:
+                    short_platform = platform.split("/")[-1]
+                    build_task_ids[(cs, platform)] = progress_bar.add_task(
+                        f"  [dim]{cs}/{short_platform}[/dim]",
+                        total=1,
+                        completed=0,
+                        status="submitting...",
+                    )
+
+        def make_on_build_id(cs: str, platform: str) -> Callable[[str], None]:
+            def callback(build_id: str) -> None:
+                build_tid = build_task_ids.get((cs, platform))
+                if progress_bar and build_tid is not None:
+                    url = f"https://wave.seqera.io/view/builds/{build_id}"
+                    progress_bar.update(build_tid, status=f"building… {url}")
+
+            return callback
+
         # Submit all container build tasks
         with ThreadPoolExecutor(max_workers=threads) as pool:
             for cs in CONTAINER_SYSTEMS:
@@ -277,15 +301,16 @@ class ModuleContainers:
                         self.environment_yml,
                         await_build,
                         self.verbose,
+                        make_on_build_id(cs, platform) if progress_bar else None,
                     )
                     build_tasks[fut] = (cs, platform)
 
             # Process completed container builds
             for fut in as_completed(build_tasks):
                 cs, platform = build_tasks[fut]
-
-                # Try to get the result, but continue on failure
                 short_platform = platform.split("/")[-1]
+                build_tid = build_task_ids.get((cs, platform))
+
                 try:
                     containers[cs][platform] = fut.result()
                     # Update self.containers and meta.yml after each successful build
@@ -295,8 +320,8 @@ class ModuleContainers:
                         log.debug(f"Updated meta.yml with {cs} container for {platform}")
                     except Exception as meta_error:
                         log.warning(f"Failed to update meta.yml after {cs} {platform} build: {meta_error}")
-                    if progress_bar and task_id is not None:
-                        progress_bar.update(task_id, advance=1, status=f"{cs}/{short_platform} done")
+                    if progress_bar and build_tid is not None:
+                        progress_bar.update(build_tid, completed=1, status="done")
                 except Exception as e:
                     # make it a warning for arm (not required), but fail for other platforms
                     if platform == "linux/arm64":
@@ -306,9 +331,14 @@ class ModuleContainers:
                     else:
                         log.error(f"Failed to build {cs} container for {platform}: {e}")
                         has_failures = True
-                    if progress_bar and task_id is not None:
-                        progress_bar.update(task_id, advance=1, status=f"{cs}/{short_platform} failed")
+                    if progress_bar and build_tid is not None:
+                        progress_bar.update(build_tid, completed=1, status="failed")
                     continue
+
+        # Remove the per-build spinners now that all builds are done
+        if progress_bar:
+            for tid in build_task_ids.values():
+                progress_bar.remove_task(tid)
 
         # Set containers early so get_conda_lock_file can access it
         self.containers = containers
@@ -322,7 +352,7 @@ class ModuleContainers:
             if not build_id:
                 log.debug(f"Docker image for {platform} missing - Conda-lock skipped")
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, advance=1, status=f"conda lock {short_platform} skipped")
+                    progress_bar.update(task_id, status=f"conda lock {short_platform} skipped")
                 continue
 
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
@@ -341,13 +371,13 @@ class ModuleContainers:
                 conda_lock_path.write_text(self.get_conda_lock_file(platform))
                 new_lock_files.add(conda_lock_path)
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, advance=1, status=f"conda lock {short_platform} done")
+                    progress_bar.update(task_id, status=f"conda lock {short_platform} done")
 
             except Exception as e:
                 log.error(f"Failed to download conda lock file for {platform}: {e}")
                 has_failures = True
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, advance=1, status=f"conda lock {short_platform} failed")
+                    progress_bar.update(task_id, status=f"conda lock {short_platform} failed")
 
         # Clean up stale conda-lock files
         self.cleanup_stale_conda_lock_files(new_lock_files)
@@ -387,7 +417,13 @@ class ModuleContainers:
 
     @classmethod
     def request_container(
-        cls, container_system: str, platform: str, conda_file: Path, await_build=False, verbose=False
+        cls,
+        container_system: str,
+        platform: str,
+        conda_file: Path,
+        await_build=False,
+        verbose=False,
+        on_build_id: Callable[[str], None] | None = None,
     ) -> dict:
         assert conda_file.exists()
         assert container_system in CONTAINER_SYSTEMS
@@ -414,8 +450,36 @@ class ModuleContainers:
         if await_build:
             args.append("--await")
 
-        args_str = " ".join(args)
-        out = run_cmd(executable, args_str)
+        if on_build_id is not None:
+            # Stream stdout line-by-line so we can fire on_build_id as soon as
+            # "buildId:" appears in the debug output, without waiting for the build to finish.
+            try:
+                proc = subprocess.Popen([executable] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except FileNotFoundError:
+                raise RuntimeError(
+                    f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
+                )
+            assert proc.stdout and proc.stderr
+            stdout_chunks: list[bytes] = []
+            build_id_notified = False
+            for raw_line in proc.stdout:
+                stdout_chunks.append(raw_line)
+                if not build_id_notified:
+                    m = re.search(rb"buildId:\s*(\S+)", raw_line)
+                    if m:
+                        on_build_id(m.group(1).decode().strip("\"'"))
+                        build_id_notified = True
+            stderr_bytes = proc.stderr.read()
+            proc.wait()
+            if proc.returncode != 0:
+                raise RuntimeError(
+                    f"wave command returned non-zero error code '{proc.returncode}':\n"
+                    f"{stderr_bytes.decode()}{b''.join(stdout_chunks).decode()}"
+                )
+            out: tuple[bytes, bytes] | None = (b"".join(stdout_chunks), stderr_bytes)
+        else:
+            args_str = " ".join(args)
+            out = run_cmd(executable, args_str)
 
         if out is None:
             raise RuntimeError("Wave command did not return any output")
@@ -608,10 +672,17 @@ class ModuleContainers:
 
         meta = read_meta_yml(self.meta_yml)
         meta_containers = meta.get("containers", dict())
+        # Remove stale entries for platforms that were attempted (even if they failed),
+        # so old containers don't mix with new ones when a build partially fails.
+        for cs, platforms in self.containers.items():
+            for platform in platforms:
+                meta_containers.get(cs, {}).pop(platform, None)
         for cs, platforms in self.containers.items():
             for platform, data in platforms.items():
                 if data:
                     meta_containers.setdefault(cs, {})[platform] = data
+        # Remove empty container system dicts left after clearing stale entries
+        meta_containers = {cs: platforms for cs, platforms in meta_containers.items() if platforms}
         meta["containers"] = meta_containers
 
         # Sort the YAML according to the schema's property order using ModuleLint

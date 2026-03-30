@@ -343,13 +343,9 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
 
     from nf_core.modules.containers import ModuleContainers
     from nf_core.pipelines.lint_utils import console
-    from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
     try:
         manager = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
-
-        # Calculate total tasks per module: (docker, singularity, conda) × (amd64, arm64)
-        tasks_per_module = (len(CONTAINER_SYSTEMS) + 1) * len(CONTAINER_PLATFORMS)
 
         # Handle batch processing for all modules
         if manager.all_modules:
@@ -376,7 +372,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                     # Create a task for this module (only one active at a time)
                     module_task_id = progress_bar.add_task(
                         f"[cyan]{module_name}[/cyan]",
-                        total=tasks_per_module,
+                        total=None,
                         status="building containers...",
                     )
 
@@ -419,7 +415,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
             with progress_bar:
                 module_task_id = progress_bar.add_task(
                     f"[cyan]{manager.module}[/cyan]",
-                    total=tasks_per_module,
+                    total=None,
                     status="building containers...",
                 )
                 _, success = manager.create(await_build, progress_bar=progress_bar, task_id=module_task_id, force=force)
