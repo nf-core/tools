@@ -23,7 +23,7 @@ pipeline_exists_warn = """
 class BasicDetails(Screen):
     """Name, description, author, etc."""
 
-    _auto_org_name: str | None = None
+    _auto_org_full_name: str | None = None
     _auto_org_url: str | None = None
 
     def compose(self) -> ComposeResult:
@@ -64,7 +64,7 @@ class BasicDetails(Screen):
         )
         if not self.parent.NFCORE_PIPELINE:
             yield TextInput(
-                "org_name",
+                "org_full_name",
                 "Organisation Name",
                 "Display name for the organisation",
                 "nf-core",
@@ -88,18 +88,18 @@ class BasicDetails(Screen):
             return
 
         org_input = self._get_input_widget("org")
-        org_name_input = self._get_input_widget("org_name")
+        org_full_name_input = self._get_input_widget("org_full_name")
         org_url_input = self._get_input_widget("org_url")
         suggested_name = org_input.value or "nf-core"
         suggested_url = get_org_url(org_input.value or "nf-core", self.parent.NFCORE_PIPELINE)
 
-        if force or org_name_input.value in {"", self._auto_org_name}:
-            org_name_input.value = suggested_name
+        if force or org_full_name_input.value in {"", self._auto_org_full_name}:
+            org_full_name_input.value = suggested_name
 
         if force or org_url_input.value in {"", self._auto_org_url}:
             org_url_input.value = suggested_url
 
-        self._auto_org_name = suggested_name
+        self._auto_org_full_name = suggested_name
         self._auto_org_url = suggested_url
 
     def _get_input_widget(self, field_id: str) -> Input:
@@ -114,7 +114,8 @@ class BasicDetails(Screen):
             config[text_input.field_id] = this_input.value
 
         if self.parent.NFCORE_PIPELINE:
-            config["org_name"] = config["org"]
+            # Add nf-core defaults for hidden fields, to avoid errors when creating a pipeline
+            config["org_full_name"] = config["org"]
             config["org_url"] = get_org_url("nf-core", True)
 
         return config
@@ -139,13 +140,13 @@ class BasicDetails(Screen):
             return
 
         org_input = self._get_input_widget("org")
-        for field_id in ("org_name", "org_url"):
+        for field_id in ("org_full_name", "org_url"):
             if event.input is self._get_input_widget(field_id):
                 if event.input.value:
                     break
-                if field_id == "org_name":
+                if field_id == "org_full_name":
                     restored_value = org_input.value or "nf-core"
-                    self._auto_org_name = restored_value
+                    self._auto_org_full_name = restored_value
                 else:
                     restored_value = get_org_url(org_input.value or "nf-core", self.parent.NFCORE_PIPELINE)
                     self._auto_org_url = restored_value

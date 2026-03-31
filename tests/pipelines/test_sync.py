@@ -319,7 +319,7 @@ class TestModules(TestPipelines):
         with open(nf_core_yml_path) as fh:
             nf_core_yml = yaml.safe_load(fh)
 
-        nf_core_yml["template"].pop("org_name", None)
+        nf_core_yml["template"].pop("org_full_name", None)
         nf_core_yml["template"].pop("org_url", None)
 
         with open(nf_core_yml_path, "w") as fh:

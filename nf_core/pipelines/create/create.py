@@ -194,8 +194,8 @@ class PipelineCreate:
             self.config.outdir = outdir if outdir else "."
         if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
-        if self.config.org_name is None and self.config.org is not None:
-            self.config.org_name = self.config.org
+        if self.config.org_full_name is None and self.config.org is not None:
+            self.config.org_full_name = self.config.org
         if self.config.org_url is None and self.config.org is not None:
             self.config.org_url = nf_core.utils.get_org_url(self.config.org, self.config.is_nfcore)
 

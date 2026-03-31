@@ -158,17 +158,17 @@ class ROCrate:
             org_name = getattr(self.tools_config.template, "org", org_name) or org_name
         return org_name
 
-    def _get_pipeline_org_name(self) -> str:
-        org_name = "nf-core"
+    def _get_pipeline_org_full_name(self) -> str:
+        org_full_name = "nf-core"
 
         if self.tools_config and getattr(self.tools_config, "template", None):
-            template_org_name = getattr(self.tools_config.template, "org_name", None)
-            if template_org_name:
-                return template_org_name
+            template_org_full_name = getattr(self.tools_config.template, "org_full_name", None)
+            if template_org_full_name:
+                return template_org_full_name
 
-            org_name = getattr(self.tools_config.template, "org", org_name) or org_name
+            org_full_name = getattr(self.tools_config.template, "org", org_full_name) or org_full_name
 
-        return org_name
+        return org_full_name
 
     def _get_pipeline_org_url(self) -> str:
         org_name = self._get_pipeline_org()
@@ -266,9 +266,9 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        org_name = self._get_pipeline_org_name()
+        org_full_name = self._get_pipeline_org_full_name()
         org_url = self._get_pipeline_org_url()
-        self.crate.add_jsonld({"@id": org_url, "@type": "Organization", "name": org_name, "url": org_url})
+        self.crate.add_jsonld({"@id": org_url, "@type": "Organization", "name": org_full_name, "url": org_url})
 
         # Set metadata for main entity file
         self.set_main_entity("main.nf")

@@ -45,24 +45,24 @@ async def test_custom_org_metadata_stays_empty_until_blur():
 
         screen = pilot.app.screen
         org_input = screen.query_one("#org", TextInput).query_one(Input)
-        org_name_input = screen.query_one("#org_name", TextInput).query_one(Input)
+        org_full_name_input = screen.query_one("#org_full_name", TextInput).query_one(Input)
         org_url_input = screen.query_one("#org_url", TextInput).query_one(Input)
 
         org_input.focus()
         await pilot.pause()
         await pilot.press("t", "e", "s", "t", "p", "r", "e", "f", "i", "x")
         assert org_input.value == "testprefix"
-        assert org_name_input.value == "testprefix"
+        assert org_full_name_input.value == "testprefix"
         assert org_url_input.value == "https://github.com/testprefix"
 
-        org_name_input.focus()
+        org_full_name_input.focus()
         await pilot.pause()
         await pilot.press("backspace")
-        assert org_name_input.value == ""
+        assert org_full_name_input.value == ""
 
         org_url_input.focus()
         await pilot.pause()
-        assert org_name_input.value == "testprefix"
+        assert org_full_name_input.value == "testprefix"
 
         await pilot.press("backspace")
         assert org_url_input.value == ""
