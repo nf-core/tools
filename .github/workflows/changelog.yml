@@ -72,7 +72,7 @@ jobs:
           python-version: "3.14"
 
       - name: Run pre-commit rules with prek
-        uses: j178/prek-action@79f765515bd648eb4d6bb1b17277b7cb22cb6468 # v2
+        uses: j178/prek-action@53276d8b0d10f8b6672aa85b4588c6921d0370cc # v2
         with:
           extra-args: --config .pre-commit-config.yaml --all-files
 
