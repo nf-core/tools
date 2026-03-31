@@ -193,8 +193,7 @@ workflow PIPELINE_COMPLETION {
     }
 
     workflow.onError {
-        // TODO docs-v2 where has this page gone?!
-        log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
+        log.error "Pipeline failed. Please refer to troubleshooting docs for common issues: https://nf-co.re/docs/running/troubleshooting"
     }
 }
 
