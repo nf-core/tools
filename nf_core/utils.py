@@ -1243,7 +1243,7 @@ def get_org_url(org_name: str, is_nfcore: bool | None = None) -> str:
     return f"https://github.com/{org_name}"
 
 
-def _get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc_name: str) -> str:
+def get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc_name: str) -> str:
     """Return a forge-aware URL for a rendered documentation page."""
     normalized_org_url = org_url.rstrip("/")
     parsed_url = urlparse(normalized_org_url)
@@ -1260,16 +1260,6 @@ def _get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, do
         return f"{base_url}/{repo_name}/src/branch/{branch}/docs/{doc_name}.md"
 
     return f"{normalized_org_url}/{short_name}/{doc_name}"
-
-
-def get_usage_docs_url(org_url: str, repo_name: str, short_name: str, branch: str) -> str:
-    """Return a forge-aware URL for the rendered usage documentation."""
-    return _get_docs_url(org_url, repo_name, short_name, branch, "usage")
-
-
-def get_output_docs_url(org_url: str, repo_name: str, short_name: str, branch: str) -> str:
-    """Return a forge-aware URL for the rendered output documentation."""
-    return _get_docs_url(org_url, repo_name, short_name, branch, "output")
 
 
 class NFCoreTemplateConfig(BaseModel):

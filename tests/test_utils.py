@@ -57,13 +57,14 @@ def test_strip_ansi_codes():
 
 
 @pytest.mark.parametrize(
-    ("org_url", "repo_name", "short_name", "default_branch", "expected"),
+    ("org_url", "repo_name", "short_name", "default_branch", "doc_name", "expected"),
     [
         (
             "https://github.com/my-org",
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "usage",
             "https://github.com/my-org/testpipeline/blob/main/docs/usage.md",
         ),
         (
@@ -71,6 +72,7 @@ def test_strip_ansi_codes():
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "usage",
             "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/usage.md",
         ),
         (
@@ -78,6 +80,7 @@ def test_strip_ansi_codes():
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "usage",
             "https://bitbucket.org/my-org/testpipeline/src/main/docs/usage.md",
         ),
         (
@@ -85,6 +88,7 @@ def test_strip_ansi_codes():
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "usage",
             "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/usage.md",
         ),
         (
@@ -92,22 +96,15 @@ def test_strip_ansi_codes():
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "usage",
             "https://example.org/pipelines/testpipeline/usage",
         ),
-    ],
-)
-def test_get_usage_docs_url(org_url, repo_name, short_name, default_branch, expected):
-    assert nf_core.utils.get_usage_docs_url(org_url, repo_name, short_name, default_branch) == expected
-
-
-@pytest.mark.parametrize(
-    ("org_url", "repo_name", "short_name", "default_branch", "expected"),
-    [
         (
             "https://github.com/my-org",
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "output",
             "https://github.com/my-org/testpipeline/blob/main/docs/output.md",
         ),
         (
@@ -115,6 +112,7 @@ def test_get_usage_docs_url(org_url, repo_name, short_name, default_branch, expe
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "output",
             "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/output.md",
         ),
         (
@@ -122,6 +120,7 @@ def test_get_usage_docs_url(org_url, repo_name, short_name, default_branch, expe
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "output",
             "https://bitbucket.org/my-org/testpipeline/src/main/docs/output.md",
         ),
         (
@@ -129,6 +128,7 @@ def test_get_usage_docs_url(org_url, repo_name, short_name, default_branch, expe
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "output",
             "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/output.md",
         ),
         (
@@ -136,12 +136,13 @@ def test_get_usage_docs_url(org_url, repo_name, short_name, default_branch, expe
             "my-org/testpipeline",
             "testpipeline",
             "main",
+            "output",
             "https://example.org/pipelines/testpipeline/output",
         ),
     ],
 )
-def test_get_output_docs_url(org_url, repo_name, short_name, default_branch, expected):
-    assert nf_core.utils.get_output_docs_url(org_url, repo_name, short_name, default_branch) == expected
+def test_get_docs_url(org_url, repo_name, short_name, default_branch, doc_name, expected):
+    assert nf_core.utils.get_docs_url(org_url, repo_name, short_name, default_branch, doc_name) == expected
 
 
 class TestUtils(TestPipelines):
