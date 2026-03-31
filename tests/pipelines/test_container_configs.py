@@ -47,9 +47,7 @@ class TestContainerConfigs(TestPipelines):
         """Run generate_all_container_configs in a pipeline."""
         # Install fastqc and multiqc
         mods_install = ModuleInstall(
-            self.pipeline_dir,
-            prompt=False,
-            force=False,
+            self.pipeline_dir, prompt=False, force=False, sha="79b36b51048048374b642289bfe9e591ef56fe05"
         )
         mods_install.install("fastqc")
         mods_install.install("multiqc")
@@ -59,14 +57,14 @@ class TestContainerConfigs(TestPipelines):
         conf_dir = self.pipeline_dir / "conf"
         # Expected platforms and one expected container
         platforms: dict[str, list[str]] = {
-            "docker_amd64": ["docker", "linux_amd64", "name"],
-            "docker_arm64": ["docker", "linux_arm64", "name"],
-            "singularity_oras_amd64": ["singularity", "linux_amd64", "name"],
-            "singularity_oras_arm64": ["singularity", "linux_arm64", "name"],
-            "singularity_https_amd64": ["singularity", "linux_amd64", "https"],
-            "singularity_https_arm64": ["singularity", "linux_arm64", "https"],
-            "conda_amd64_lockfile": ["conda", "linux_amd64", "lock_file"],
-            "conda_arm64_lockfile": ["conda", "linux_arm64", "lock_file"],
+            "docker_amd64": ["docker", "linux/amd64", "name"],
+            "docker_arm64": ["docker", "linux/arm64", "name"],
+            "singularity_oras_amd64": ["singularity", "linux/amd64", "name"],
+            "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
+            "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
+            "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
+            "conda_amd64_lockfile": ["conda", "linux/amd64", "lock_file"],
+            "conda_arm64_lockfile": ["conda", "linux/arm64", "lock_file"],
         }
 
         with open(self.pipeline_dir / "modules" / "nf-core" / "fastqc" / "meta.yml") as fh:
