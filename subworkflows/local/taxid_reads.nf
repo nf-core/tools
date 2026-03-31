@@ -43,6 +43,7 @@ workflow TAXID_READS {
                 [ taxid, species ]
             }
             .collect()
+	    .map { it }
         : channel.empty()
 
     // Extract kraken2 reads
