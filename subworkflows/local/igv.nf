@@ -2,7 +2,6 @@
 // IGV visualization
 //
 
-include { SAMTOOLS_VIEW       } from '../../modules/nf-core/samtools/view/main'
 include { SAMTOOLS_INDEX      } from '../../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_FAIDX      } from '../../modules/nf-core/samtools/faidx/main'
 include { BEDTOOLS_GENOMECOV  } from '../../modules/nf-core/bedtools/genomecov/main'

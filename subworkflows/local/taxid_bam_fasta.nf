@@ -32,44 +32,45 @@ workflow TAXID_BAM_FASTA {
     input_bam = bam.join( bai, by: 0 )
     // Get idxstats for input BAM
     SAMTOOLS_IDXSTATS( input_bam )
-    ch_accession = SAMTOOLS_IDXSTATS.out.idxstats
-        .map { it[1] }
-        .splitCsv( header: false, sep: "\t" )
-        .filter { it -> it[0] != "*" }  // Remove the last row
-
-    ch_versions.mix( SAMTOOLS_IDXSTATS.out.versions.first() )
+    // Extract accessions with mapped reads
+    ch_accession_with_meta = SAMTOOLS_IDXSTATS.out.idxstats
+        .flatMap { meta, idxstats ->
+            idxstats.splitCsv( header: false, sep: "\t" )
+                // The SAMTOOLS_IDXSTATS.out.idxstats file contains four columns: <reference_name> <reference_length> <mapped_reads> <unmapped_reads>
+                // The last row is "* 0 0 0" and should be filtered out, along with rows that have zero mapped reads.
+                .findAll { it[0] != "*" && it[2].toInteger() > 0 }
+                .collect{ [meta, it[0], it[2].toInteger()] }
+        }
 
     // Load accession2taxid map
     ch_accession2taxidmap = accession2taxid.splitCsv( header: false, sep: "\t" )
 
-    // Join accessions with taxids and group by taxid
-    ch_accession_taxid = ch_accession2taxidmap
-        .join( ch_accession )
-        .map { it ->
-            def num_reads = it[4].toInteger()
-            [ it[0], it[1], it[2], num_reads ]
+    // Join accessions with taxids: [meta, accession, num_reads] + [accession, taxid, organism]
+    ch_accession_taxid_with_meta = ch_accession_with_meta
+        .combine(ch_accession2taxidmap)
+        .filter { meta, accession, num_reads, ref_accession, taxid, organism ->
+            accession == ref_accession
         }
-        .filter { accessions, taxid, organism, num_reads -> num_reads > 0 }
-        .groupTuple( by: 1 )
-        .map { accession_list, taxid, organism, num_reads ->
-            def total_reads = num_reads.sum()
-            def organism_uniq = organism[0]
-            [ accession_list, taxid, organism_uniq, total_reads ]
+        .map { meta, accession, num_reads, ref_accession, taxid, organism ->
+            [meta, accession, taxid, organism, num_reads]
+        }
+        .groupTuple( by: [0, 2, 3] ) // Group by [meta, taxid, organism]
+        .map { meta, accession_list, taxid, organism, num_reads_list ->
+            [meta, accession_list, taxid, organism, num_reads_list.sum()]
         }
         .branch {
-            pass: it[3] >= min_read_counts // The number of mapped reads to a taxID greater than params.min_read_counts
-                return [it[0], it[1], it[2]]
-            fail: it[3] < min_read_counts  // The number of mapped reads to a taxID smaller than params.min_read_counts
-                return [ it[0], it[1], it[2] ]
+            pass: it[4] >= min_read_counts // The number of mapped reads to a taxID greater than params.min_read_counts
+                return [it[0], it[1], it[2], it[3]] // [meta, accession_list, taxid, organism]
+            fail: it[4] < min_read_counts  // The number of mapped reads to a taxID smaller than params.min_read_counts
+                return [it[0], it[1], it[2], it[3]] // [meta, accession_list, taxid, organism]
         }
 
     // Prepare individual BAM files for each taxID with the number of mapped reads greater than params.min_read_counts
-    ch_consensus_input = ch_consensus_input.mix(ch_accession_taxid.pass)
-        .combine( input_bam )
-        .map { accession_list, taxid, organism, meta, bam, bam_index ->
-            def new_meta = meta.clone()
-            new_meta.taxid = taxid
-            new_meta.organism = organism
+    ch_consensus_input = ch_accession_taxid_with_meta.pass
+        .join( input_bam, by: 0 ) // Join by meta (index 0)
+        .map { meta, accession_list, taxid, organism, bam, bam_index ->
+            // Create new meta with taxid and organism information
+            def new_meta = meta + [taxid: taxid, organism: organism]
             return [ new_meta, bam, bam_index, accession_list ]
         }
         .multiMap {
@@ -81,32 +82,30 @@ workflow TAXID_BAM_FASTA {
     // BAM files will be used to call consensus sequences
     SUBSET_BAM_PASS( ch_consensus_input.bam, ch_consensus_input.accession )
     ch_versions = ch_versions.mix( SUBSET_BAM_PASS.out.versions.first() )
-    SAMTOOLS_SORT_PASS( SUBSET_BAM_PASS.out.bam, [[],[]] )
-    ch_versions = ch_versions.mix( SAMTOOLS_SORT_PASS.out.versions.first() )
+    SAMTOOLS_SORT_PASS( SUBSET_BAM_PASS.out.bam, [[],[],[]], 'bai' )
     SAMTOOLS_INDEX_PASS( SAMTOOLS_SORT_PASS.out.bam )
-    ch_versions = ch_versions.mix( SAMTOOLS_INDEX_PASS.out.versions.first() )
 
     // samtools flagstat check if there are any reads mapped to the genome
-    SAMTOOLS_FLAGSTAT (SAMTOOLS_SORT_PASS.out.bam.join(SAMTOOLS_INDEX_PASS.out.bai))
-    ch_versions = ch_versions.mix(SAMTOOLS_FLAGSTAT.out.versions.first())
+    SAMTOOLS_FLAGSTAT (SAMTOOLS_SORT_PASS.out.bam.join(SAMTOOLS_INDEX_PASS.out.index))
 
     ch_mapped_reads = SAMTOOLS_FLAGSTAT.out.flagstat
         .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
 
     ch_taxid_bam = ch_taxid_bam.mix(SAMTOOLS_SORT_PASS.out.bam)
         .join (ch_mapped_reads, by: [0])
-        .map { meta, bam, mapped, pass -> if (pass) [meta, bam]}
-    ch_taxid_bai = ch_taxid_bai.mix(SAMTOOLS_INDEX_PASS.out.bai)
+        .filter { meta, bam, mapped, pass -> pass }
+        .map { meta, bam, mapped, pass -> [meta, bam] }
+    ch_taxid_bai = ch_taxid_bai.mix(SAMTOOLS_INDEX_PASS.out.index)
         .join(ch_mapped_reads, by:[0])
-        .map { meta, bai, mapped, pass -> if(pass) [meta, bai]}
+        .filter { meta, bai, mapped, pass -> pass }
+        .map { meta, bai, mapped, pass -> [meta, bai] }
 
     // Prepare individual FASTA files for each taxID with the number of mapped reads less than params.min_read_counts
-    ch_blast_input = ch_blast_input.mix(ch_accession_taxid.fail)
-        .combine(input_bam)
-        .map { accession_list, taxid, organism, meta, bam, bam_index ->
-            def new_meta = meta.clone()
-            new_meta.taxid = taxid
-            new_meta.organism = organism
+    ch_blast_input = ch_accession_taxid_with_meta.fail
+        .join( input_bam, by: 0 ) // Join by meta (index 0)
+        .map { meta, accession_list, taxid, organism, bam, bam_index ->
+            // Create new meta with taxid and organism information
+            def new_meta = meta + [taxid: taxid, organism: organism]
             return [ new_meta, bam, bam_index, accession_list ]
         }
         .multiMap {
@@ -116,27 +115,18 @@ workflow TAXID_BAM_FASTA {
         }
 
     // FASTA files will be used as BLAST input, bam file will be used in IGV
-    ch_taxid_bam_fail = channel.empty()
-    ch_taxid_bai_fail = channel.empty()
     SUBSET_BAM_FAIL(ch_blast_input.bam, ch_blast_input.accession)
-    ch_taxid_bam_fail = ch_taxid_bam_fail.mix(SUBSET_BAM_FAIL.out.bam)
     ch_versions = ch_versions.mix(SUBSET_BAM_FAIL.out.versions.first())
-    SAMTOOLS_SORT_FAIL(SUBSET_BAM_FAIL.out.bam, [[],[]])
-    ch_versions = ch_versions.mix(SAMTOOLS_SORT_FAIL.out.versions.first())
+    SAMTOOLS_SORT_FAIL(SUBSET_BAM_FAIL.out.bam, [[],[],[]], 'bai')
     SAMTOOLS_INDEX_FAIL(SAMTOOLS_SORT_FAIL.out.bam)
-    ch_taxid_bai_fail = ch_taxid_bai_fail.mix(SAMTOOLS_INDEX_FAIL.out.bai)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX_FAIL.out.versions.first())
 
-    ch_taxid_fasta = channel.empty()
     SAMTOOLS_FASTA(SAMTOOLS_SORT_FAIL.out.bam, false)
-    ch_taxid_fasta = ch_taxid_fasta.mix(SAMTOOLS_FASTA.out.fasta)
-    ch_versions = ch_versions.mix(SAMTOOLS_FASTA.out.versions.first())
 
     emit:
     versions        = ch_versions
     taxid_bam       = ch_taxid_bam
     taxid_bai       = ch_taxid_bai
-    taxid_fasta     = ch_taxid_fasta
-    taxid_bam_fail  = ch_taxid_bam_fail
-    taxid_bai_fail  = ch_taxid_bai_fail
+    taxid_fasta     = SAMTOOLS_FASTA.out.fasta
+    taxid_bam_fail  = SAMTOOLS_SORT_FAIL.out.bam
+    taxid_bai_fail  = SAMTOOLS_INDEX_FAIL.out.index
 }

@@ -92,7 +92,6 @@ workflow METAVAL {
 
     // Channels for extracting kraken2/centrifuge/diamond reads
     ch_extract_reads = ch_samplesheet.multiMap { meta, fastq_1, fastq_2, kraken2_report, kraken2_result, kraken2_taxpasta, centrifuge_report, centrifuge_result, centrifuge_taxpasta, diamond, diamond_taxpasta ->
-        meta.single_end = ( fastq_1 && !fastq_2 )
         kraken2_taxpasta: [ meta + [ tool: "kraken2" ], kraken2_taxpasta ]
         kraken2_report: [ meta + [ tool: "kraken2" ], kraken2_report ]
         kraken2_result: [ meta, kraken2_result ]

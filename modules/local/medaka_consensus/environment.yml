@@ -3,3 +3,4 @@ channels:
   - bioconda
 dependencies:
   - bioconda::medaka=2.0.1
+  - bioconda::seqkit=2.9.0

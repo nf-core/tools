@@ -99,6 +99,7 @@
                 },
                 "flye_mode": {
                     "type": "string",
+                    "default": "--nano-corr",
                     "description": "It provides `Flye` assembly modes. Our ONT reads were pre-processed by Guppy, so `--nano-corr` is the appropriate mode to use, as it is designed for ONT reads that have been corrected with other methods (with <3% error)",
                     "fa_icon": "fas fa-cogs"
                 }
@@ -111,7 +112,6 @@
             "properties": {
                 "perform_screen_pathogens": {
                     "type": "boolean",
-                    "default": "--nano-corr",
                     "description": "Screen viral pathogens for each sample",
                     "help_text": "Turn on the option to screen viral pathogens by mapping reads against genomes of a list of viral pathogens. `Bowtie2` is used for mapping of short reads and `minimap2` for long reads.",
                     "fa_icon": "fas fa-toggle-on"

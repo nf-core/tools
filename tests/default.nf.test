@@ -17,23 +17,69 @@ nextflow_pipeline {
         }
 
         then {
-            // stable_name: All files + folders in ${params.outdir}/ with a stable name
-            //def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
-            // stable_path: All files in ${params.outdir}/ with stable content
-            //def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def stable_name_all      = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+
+            //blastn
+            def stable_content_blastn = getAllFilesFromDir("$outputDir/blast/blastn/kraken2", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+
+            //blastx
+            def stable_content_blastx = getAllFilesFromDir("$outputDir/blast/blastx", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+
+            //extracted_reads
+            def stable_content_extracted_reads = getAllFilesFromDir("$outputDir/extracted_reads/", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+
+            //igv
+            def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+
+            //bowtie2 align
+            def stable_content_bowtie2_align = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def bam_files_bowtie2_align  = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", include: ['*.bam'])
+
+            //taxpasta
+            def stable_content_taxpasta     = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include: ["taxpasta/**"]     , ignoreFile: 'tests/.nftignore')
+
+             //bowtie2 build
+            def stable_content_bowtie2_build = getAllFilesFromDir("$outputDir/mapping/bowtie2/build", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+
+            //minimap2
+            def stable_content_minimap2_align = getAllFilesFromDir("$outputDir/mapping/minimap2/align", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def bam_files_minimap2_align  = getAllFilesFromDir("$outputDir/mapping/minimap2/align", include: ['*.bam'])
+
+            //pathogens
+             def stable_content_pathogens_blast = getAllFilesFromDir("$outputDir/pathogens/blast", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+
+
             assertAll(
                 { assert workflow.success},
                 { assert snapshot(
-                    // Number of successful tasks
-                    //workflow.trace.succeeded().size(),
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
                     removeNextflowVersion("$outputDir/pipeline_info/genomic-medicine-sweden_metaval_software_mqc_versions.yml"),
-                    // All stable path name, with a relative path
-                    //stable_name,
-                    // All files with stable contents
-                    //stable_path
-                ).match() }
+                ).match() },
+
+                { assert new File("$outputDir/pipeline_info/genomic-medicine-sweden_metaval_software_mqc_versions.yml").exists() },
+                { assert new File("$outputDir/multiqc/multiqc_report.html").exists() },
+                { assert snapshot(
+                    getAllFilesFromDir("$outputDir/blast/blastn/kraken2", include: ['*.txt']).collect{file -> file.getName() + '(kraken2) contains string:' + (file.text.contains("Chryseobacterium") || file.text.contains("Influenza") || file.text.contains("Shigella")) },
+                    getAllFilesFromDir("$outputDir/blast/blastn/centrifuge", include: ['*.txt']).collect{file -> file.getName() + '(centrifuge) contains string:' + (file.text.contains("Chryseobacterium") || file.text.contains("Influenza") || file.text.contains("Shigella")) },
+                    getAllFilesFromDir("$outputDir/blast/blastn/diamond", include: ['*.txt']).collect{file -> file.getName() + "(diamond) " + (file.exists() && (file.text.contains("Chryseobacterium") || file.text.contains("Influenza") || file.text.contains("Shigella")) ? "contains string:true" : file.exists() ? "exists:true" : "exists:false")},
+                    stable_content_blastn).match("blastn")},
+                 { assert snapshot(
+                    getAllFilesFromDir("$outputDir/blast/blastx/kraken2", include: ['*.txt']).collect{file -> file.getName() + '(kraken2) contains string:' + (file.text.contains("Chryseobacterium") || file.text.contains("Influenza") || file.text.contains("Shigella")) },
+                    getAllFilesFromDir("$outputDir/blast/blastx/centrifuge", include: ['*.txt']).collect{file -> file.getName() + "(centrifuge) " + (file.exists() && (file.text.contains("Chryseobacterium") || file.text.contains("Influenza") || file.text.contains("Shigella")) ? "contains string:true" : file.exists() ? "exists:true" : "exists:false")},
+                    getAllFilesFromDir("$outputDir/blast/blastx/diamond", include: ['*.txt']).collect{file -> file.getName() + "(diamond) " + (file.exists() && (file.text.contains("Chryseobacterium") || file.text.contains("Influenza") || file.text.contains("Shigella")) ? "contains string:true" : file.exists() ? "exists:true" : "exists:false")},
+                    stable_content_blastx).match("blastx")},
+                { assert snapshot (stable_content_extracted_reads).match("extracted_reads")},
+                { assert snapshot (
+                    bam_files_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_bowtie2_align.collect { file -> [file.getName() + " bowtie2 align header: " + bam(file.toString()).getHeader()] },
+                    stable_content_bowtie2_align).match("bowtie2_align")},
+                { assert snapshot (stable_content_bowtie2_build).match("bowtie2_build")},
+                { assert snapshot (
+                    bam_files_minimap2_align.isEmpty() ? 'No BAM files' : bam_files_minimap2_align.collect { file -> [file.getName() + " minimap2 align md5: " + bam(file.toString()).getReadsMD5()] },
+                    stable_content_minimap2_align).match("minimap2_align")},
+                //{ assert snapshot (stable_content_igv).match("igv")},
+               // { assert snapshot (stable_content_pathogens_blast).match("pathogens_blast")},
             )
         }
     }
+
 }
