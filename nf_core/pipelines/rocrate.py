@@ -305,6 +305,30 @@ class ROCrate:
 
         return None
 
+    def _get_git_email_for_name(self, name: str) -> str:
+        if self.pipeline_obj.repo is None:
+            return ""
+
+        names_to_try: list[str] = []
+        if "," in name:
+            # Support "First, Last" and "Last, First"
+            (one, two) = [n.strip() for n in name.split(",", 1)]
+            if one and two:
+                names_to_try = [f"{one} {two}", f"{two} {one}"]
+            elif one:
+                names_to_try = [one]
+            elif two:
+                names_to_try = [two]
+        elif name:
+            names_to_try = [name]
+
+        for full_name in names_to_try:
+            try:
+                return self.pipeline_obj.repo.git.log(f"--author={full_name}", "--pretty=format:%ae", "-1")
+            except GitCommandError:
+                pass
+        return ""
+
     def _make_progress_bar(self):
         return Progress(
             "[bold blue]{task.description}",
@@ -358,7 +382,7 @@ class ROCrate:
             log.debug(name)
 
             # get email from git log
-            email = self.pipeline_obj.repo.git.log(f"--author={name}", "--pretty=format:%ae", "-1")
+            email = self._get_git_email_for_name(name)
 
             struct = {"name": name}
             if email:
@@ -417,9 +441,7 @@ class ROCrate:
 
                 # When missing, fill in the email from the git history (if available)
                 if "email" not in author and self.pipeline_obj.repo:
-                    # get email from git log
-                    name = author["name"].split()[0].replace(",", "")
-                    email = self.pipeline_obj.repo.git.log(f"--author={name}", "--pretty=format:%ae", "-1")
+                    email = self._get_git_email_for_name(author["name"])
                     if email:
                         author["email"] = email
 

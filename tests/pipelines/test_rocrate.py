@@ -267,6 +267,29 @@ class TestROCrate(TestPipelines):
         self.assertEqual(contributors_by_name["Bob Example"]["email"], "bob@example.com")
         self.assertEqual(contributors_by_name["Bob Example"]["contribution"], ["contributor"])
 
+    def test_parse_manifest_contributors_uses_full_name_for_git_email_lookup(self):
+        """Match git author email using the full contributor name, not just the first token"""
+
+        self._set_manifest_identity(
+            """contributors = [
+                [
+                    name: 'Alex Example',
+                    affiliation: '',
+                    email: '',
+                    github: '',
+                    contribution: ['contributor'],
+                    orcid: ''
+                ]
+            ]
+            """
+        )
+        self._commit_main_nf_change("Alex Example", "alex.correct@example.com", "Commit by the right Alex")
+        self._commit_main_nf_change("Alex Wrong", "alex.wrong@example.com", "Commit by a different Alex")
+
+        contributors = self.rocrate_obj.parse_manifest_contributors()
+
+        self.assertEqual(contributors[0]["email"], "alex.correct@example.com")
+
     def test_parse_manifest_contributors_logs_parse_errors(self):
         """Emit a clear error when manifest.contributors cannot be normalised into valid JSON"""
 
