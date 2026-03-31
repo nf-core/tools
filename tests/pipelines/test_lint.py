@@ -7,6 +7,7 @@ import yaml
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
+import nf_core.utils
 
 from ..test_pipelines import TestPipelines
 from ..utils import with_temporary_folder
