@@ -2,9 +2,15 @@ import pytest
 
 import nf_core.modules.lint
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
+from nf_core.modules.lint.main_nf import (
+    _parse_output_topics,
+    check_container_link_line,
+    check_process_labels,
+    check_script_section,
+)
 
 from ...test_modules import TestModules
+from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 from .test_lint_utils import MockModuleLint
 
 
@@ -137,13 +143,15 @@ class TestMainNfLinting(TestModules):
     def test_topics_and_emits_version_check(self):
         """Test that main_nf version emit and topics check works correctly"""
 
-        self.mods_install.install("bioawk")
-        # Lint a module known to have versions YAML in main.nf (for now)
-        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="bioawk")
+        self.mods_install_gitlab_nftest.install("fastqc")
+        # Lint a module installed from the gitlab test branch; gitlab test modules that is known to have versions YAML in main.nf
+        module_lint = nf_core.modules.lint.ModuleLint(
+            directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_NFTEST_BRANCH
+        )
+        module_lint.lint(print_results=False, module="fastqc")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.warned) == 2, (
-            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 2 warnings"
+        assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
+            f"Expected warning about missing version topic, got {[w.message for w in module_lint.warned]}"
         )
         assert len(module_lint.passed) > 0
 
@@ -151,9 +159,8 @@ class TestMainNfLinting(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="bamstats/generalstats")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.warned) == 0, (
-            f"Linting warned with {[x.__dict__ for x in module_lint.warned]}, expected 1 warning"
-        )
+        assert len(module_lint.warned) == 0, f"Expected 0 warnings, got {[x.__dict__ for x in module_lint.warned]}"
+
         assert len(module_lint.passed) > 0
 
 
@@ -463,3 +470,186 @@ process TEST_PROCESS {
     output_keys = [list(out.keys())[0] for out in my_channel_output[0]]
     # Check that meta is correctly parsed despite the whitespace
     assert "meta" in output_keys, f"Expected 'meta' without spaces in output, got {output_keys}"
+
+
+def test_get_topics_version_yml_path_no_parens(tmp_path):
+    """Test that path "versions.yml" (without parentheses) with topic: versions is correctly parsed"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path "versions.yml", emit: versions, topic: versions
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_topics_from_main_nf()
+
+    assert "versions" in component.topics, f"Expected 'versions' topic, got: {component.topics}"
+    assert len(component.topics["versions"]) == 1, (
+        f"Expected 1 entry in versions topic, got {len(component.topics['versions'])}: {component.topics['versions']}"
+    )
+    entry = component.topics["versions"][0]
+    assert isinstance(entry, dict), f"Expected dict entry for single path output, got {type(entry)}"
+    assert '"versions.yml"' in entry, f"Expected '\"versions.yml\"' key in entry, got: {entry}"
+
+    # Verify linting: emit: versions on path "versions.yml" should pass wrong_version_yml_emit
+    correct_line = '    path "versions.yml", emit: versions, topic: versions'
+    mock_lint = MockModuleLint()
+    _parse_output_topics(mock_lint, correct_line)
+    assert any("wrong_version_yml_emit" in str(p) for p in mock_lint.passed), (
+        f"Expected wrong_version_yml_emit in passed, got: {mock_lint.passed}"
+    )
+    assert mock_lint.failed == [], f"Expected no failures for correct emit, got: {mock_lint.failed}"
+
+    # Verify linting: wrong emit name on path "versions.yml" should fail wrong_versions_yml_emit
+    wrong_line = '    path "versions.yml", emit: wrong_name, topic: versions'
+    mock_lint_fail = MockModuleLint()
+    _parse_output_topics(mock_lint_fail, wrong_line)
+    assert any("wrong_versions_yml_emit" in str(f) for f in mock_lint_fail.failed), (
+        f"Expected wrong_versions_yml_emit in failed, got: {mock_lint_fail.failed}"
+    )
+
+
+def test_validate_meta_keys():
+    """Test validation of meta keys in script"""
+    mock_lint = MockModuleLint()
+
+    # Valid meta keys
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def prefix = "${meta.id}"
+    def se = meta.single_end
+    def id = meta.subMap(['id'])
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0
+
+    # Invalid meta keys
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def sample = meta.sample
+    def strand = meta.strandedness
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 1
+    assert "meta.sample" in mock_lint.failed[0][2]
+    assert "meta.strandedness" in mock_lint.failed[0][2]
+
+    # meta2/meta3 with valid keys
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def id1 = meta.id
+    def id2 = meta2.id
+    def se = meta3.single_end
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0
+
+    # Mix of valid and invalid
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def sample = meta.sample
+    def single_end = meta.single_end
+    def custom = meta2.custom_field
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 1
+    assert "meta.sample" in mock_lint.failed[0][2]
+    assert "meta2.custom_field" in mock_lint.failed[0][2]
+
+
+def test_validate_ext_keys():
+    """Test validation of ext keys in script"""
+    mock_lint = MockModuleLint()
+
+    # Valid ext keys
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
+    def args3 = task.ext.args3 ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def use_gpu = task.ext.use_gpu ? '--gpu' : ''
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0
+
+    # Invalid ext keys
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def args1 = task.ext.args1 ?: ''
+    def custom = task.ext.custom ?: ''
+    def suffix = task.ext.suffix ?: '.bam'
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 1
+    assert "ext.args1" in mock_lint.failed[0][2]
+    assert "ext.custom" in mock_lint.failed[0][2]
+    assert "ext.suffix" in mock_lint.failed[0][2]
+
+    # ext.argsN where N >= 2 should be valid
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def args2 = task.ext.args2 ?: ''
+    def args10 = task.ext.args10 ?: ''
+    def args99 = task.ext.args99 ?: ''
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0
+
+    # Check false positive matches, e.g. text.tokenize()
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def header = file(reference).text.tokenize('\n').first()
+    def input = context.trim()
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0

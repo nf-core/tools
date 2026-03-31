@@ -13,6 +13,7 @@ class MockModuleLint:
         self.failed = []
 
         self.main_nf = "main_nf"
+        self.has_meta = False
 
 
 class TestModulesLint(TestModules):

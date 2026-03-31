@@ -55,7 +55,13 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     // WORKFLOW: Run pipeline
     //
     {{ short_name|upper }} (
-        samplesheet
+        samplesheet,
+        {%- if multiqc %}
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description,
+        {%- endif %}
+        params.outdir,
     )
 {%- if multiqc %}{%- if modules %}
     emit:
