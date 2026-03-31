@@ -77,6 +77,7 @@
     - [nf-teams](https://github.com/nvnieuwk/nf-teams)
 - Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
 - Fix nf-core tools version to what is specified in `.nf-core.yml` for the GitHub workflow `download_pipeline.yml` ([#4124](https://github.com/nf-core/tools/pull/4124)).
+- Update all documentation URLs to point to equivalents on the new nf-core website documentation structure([#4135](https://github.com/nf-core/tools/pull/4135))
 
 #### Version updates
 
