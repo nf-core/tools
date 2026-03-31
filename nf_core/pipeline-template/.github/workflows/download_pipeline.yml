@@ -52,7 +52,7 @@ jobs:
       - name: Setup Apptainer
         uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
         with:
-          apptainer-version: 1.3.4
+          apptainer-version: 1.3.4{% raw %}
 
       - name: Read .nf-core.yml
         uses: pietrobolcato/action-read-yaml@9f13718d61111b69f30ab4ac683e67a56d254e1d # 1.1.0
@@ -71,7 +71,7 @@ jobs:
 
       - name: Download the pipeline
         env:
-          NXF_SINGULARITY_CACHEDIR: ./singularity_container_images{% raw %}
+          NXF_SINGULARITY_CACHEDIR: ./singularity_container_images
         run: |
           nf-core pipelines download ${{ needs.configure.outputs.REPO_LOWERCASE }} \
           --revision ${{ needs.configure.outputs.REPO_BRANCH }} \
