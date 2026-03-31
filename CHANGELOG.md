@@ -13,6 +13,7 @@
 - Update python:3.14-slim Docker digest to 6a27522 ([#4072](https://github.com/nf-core/tools/pull/4072))
 - Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
+- Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
 - Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
 
   | Command                    | Subcommand                     | Aliases                           |
