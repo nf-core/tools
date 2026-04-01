@@ -297,10 +297,11 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
 
 def _check_stub_gzip_syntax(module: NFCoreComponent):
     """
-    Check that stub blocks with gzip output files use the proper syntax.
-
-    Stub files ending in .gz must use: echo "" | gzip > file.gz
-    Simply touching or creating empty .gz files will break nf-test's gzip parser.
+    Linting Checks perfomed:
+    * ``test_stub_gzip_syntax``: 
+     Check that stub blocks with gzip output files use the proper syntax. 
+     Stub files ending in .gz must use: echo "" | gzip > file.gz
+     Simply touching or creating empty .gz files will break nf-test's gzip parser
     """
     if not module.main_nf.is_file():
         return
