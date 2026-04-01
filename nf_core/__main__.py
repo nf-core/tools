@@ -1196,12 +1196,6 @@ def command_modules_remove(ctx, directory, tool):
     default=False,
     help="Create a module from the template without TODOs or examples",
 )
-@click.option(
-    "--migrate-pytest",
-    is_flag=True,
-    default=False,
-    help="Migrate a module with pytest tests to nf-test",
-)
 def command_modules_create(
     ctx,
     tool,
@@ -1214,7 +1208,6 @@ def command_modules_create(
     conda_name,
     conda_package_version,
     empty_template,
-    migrate_pytest,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -1231,7 +1224,6 @@ def command_modules_create(
         conda_name,
         conda_package_version,
         empty_template,
-        migrate_pytest,
     )
 
 
@@ -1282,19 +1274,13 @@ def command_modules_create(
     default=None,
     help="Run tests with a specific profile",
 )
-@click.option(
-    "--migrate-pytest",
-    is_flag=True,
-    default=False,
-    help="Migrate a module with pytest tests to nf-test",
-)
-def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest, verbose):
+def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, verbose):
     """
     Run nf-test for a module.
     """
     if verbose:
         ctx.obj["verbose"] = verbose
-    modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest)
+    modules_test(ctx, tool, directory, no_prompts, update, once, profile)
 
 
 # nf-core modules lint
@@ -1481,17 +1467,11 @@ def subworkflows(ctx, git_remote, branch, no_pull):
     default=False,
     help="Overwrite any files if they already exist",
 )
-@click.option(
-    "--migrate-pytest",
-    is_flag=True,
-    default=False,
-    help="Migrate a module with pytest tests to nf-test",
-)
-def command_subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest):
+def command_subworkflows_create(ctx, subworkflow, directory, author, force):
     """
     Create a new subworkflow from the nf-core template.
     """
-    subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest)
+    subworkflows_create(ctx, subworkflow, directory, author, force)
 
 
 # nf-core subworkflows test
@@ -1534,17 +1514,11 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
     default=None,
     help="Run tests with a specific profile",
 )
-@click.option(
-    "--migrate-pytest",
-    is_flag=True,
-    default=False,
-    help="Migrate a subworkflow with pytest tests to nf-test",
-)
-def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
+def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a subworkflow.
     """
-    subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest)
+    subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile)
 
 
 # nf-core subworkflows list subcommands

@@ -163,18 +163,7 @@ def modules_remove(ctx, directory, tool):
 
 
 def modules_create(
-    ctx,
-    tool,
-    directory,
-    author,
-    label,
-    meta,
-    no_meta,
-    force,
-    conda_name,
-    conda_package_version,
-    empty_template,
-    migrate_pytest,
+    ctx, tool, directory, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -208,7 +197,6 @@ def modules_create(
             conda_name,
             conda_package_version,
             empty_template,
-            migrate_pytest,
         )
         module_create.create()
     except UserWarning as e:
@@ -219,7 +207,7 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
+def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a module.
 
@@ -227,21 +215,6 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
     """
     from nf_core.components.components_test import ComponentsTest
 
-    if migrate_pytest:
-        modules_create(
-            ctx,
-            tool,
-            directory,
-            author="",
-            label="",
-            meta=True,
-            no_meta=False,
-            force=False,
-            conda_name=None,
-            conda_package_version=None,
-            empty_template=False,
-            migrate_pytest=migrate_pytest,
-        )
     try:
         module_tester = ComponentsTest(
             component_type="modules",

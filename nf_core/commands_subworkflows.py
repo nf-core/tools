@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest):
+def subworkflows_create(ctx, subworkflow, directory, author, force):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -24,7 +24,7 @@ def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pyte
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(directory, subworkflow, author, force, migrate_pytest)
+        subworkflow_create = SubworkflowCreate(directory, subworkflow, author, force)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -34,7 +34,7 @@ def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pyte
         sys.exit(1)
 
 
-def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
+def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a subworkflow.
 
@@ -42,8 +42,6 @@ def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, pro
     """
     from nf_core.components.components_test import ComponentsTest
 
-    if migrate_pytest:
-        subworkflows_create(ctx, subworkflow, directory, None, False, True)
     try:
         sw_tester = ComponentsTest(
             component_type="subworkflows",
