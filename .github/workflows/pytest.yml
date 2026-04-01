@@ -95,7 +95,7 @@ jobs:
         uses: nf-core/setup-nextflow@mashehu-patch-1
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@update-deps
+        uses: nf-core/setup-nf-test@v2
 
       - name: move coveragerc file up
         run: |
