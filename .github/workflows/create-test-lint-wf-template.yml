@@ -77,7 +77,7 @@ jobs:
           version: latest-everything
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@v1
+        uses: nf-core/setup-nf-test@update-deps # TODO: revert to v1 after nf-core/setup-nf-test#32 is merged
         with:
           version: "0.9.4"
           install-pdiff: true
