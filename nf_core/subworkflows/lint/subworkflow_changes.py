@@ -22,6 +22,14 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
     compared against the files in the remote at this SHA.
 
     Only runs when linting a pipeline, not the modules repository
+
+    The following checks are performed:
+
+    * ``subworkflow_patch``: If the subworkflow is patched, the patch must apply
+      cleanly in reverse against the remote version.
+
+    * ``check_local_copy``: Each subworkflow file must be identical to the
+      corresponding file in the remote repository at the pinned commit SHA.
     """
     if subworkflow.is_patched:
         # If the subworkflow is patched, we need to apply
