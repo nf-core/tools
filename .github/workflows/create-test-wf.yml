@@ -63,7 +63,7 @@ jobs:
           version: ${{ matrix.NXF_VER }}
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@v1
+        uses: nf-core/setup-nf-test@update-deps
         with:
           version: "0.9.4"
           install-pdiff: true
