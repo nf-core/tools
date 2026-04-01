@@ -16,7 +16,7 @@ runs:
         export NXF_WORK=$(pwd)
 
     - name: Install Nextflow
-      uses: nf-core/setup-nextflow@v2
+      uses: nf-core/setup-nextflow@mashehu-patch-1
       with:
         version: ${{ matrix.NXF_VER }}
 
