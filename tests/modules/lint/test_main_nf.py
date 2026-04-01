@@ -149,9 +149,8 @@ class TestMainNfLinting(TestModules):
             directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_NFTEST_BRANCH
         )
         module_lint.lint(print_results=False, module="fastqc")
-        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
-            f"Expected warning about missing version topic, got {[w.message for w in module_lint.warned]}"
+        assert any(f.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for f in module_lint.failed), (
+            f"Expected failure about missing version topic, got {[f.message for f in module_lint.failed]}"
         )
         assert len(module_lint.passed) > 0
 

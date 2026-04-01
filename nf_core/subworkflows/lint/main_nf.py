@@ -106,22 +106,6 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     # Check the main definition
     check_main_section(subworkflow, main_lines, included_components)
 
-    # Check that a software version is emitted
-    if outputs:
-        if "versions" in outputs:
-            subworkflow.passed.append(
-                ("main_nf", "main_nf_version_emitted", "Subworkflow emits software version", subworkflow.main_nf)
-            )
-        else:
-            subworkflow.warned.append(
-                (
-                    "main_nf",
-                    "main_nf_version_emitted",
-                    "Subworkflow does not emit software version. Can be ignored if the subworkflow is using topic channels",
-                    subworkflow.main_nf,
-                )
-            )
-
     return inputs, outputs
 
 
@@ -181,7 +165,7 @@ def check_main_section(self, lines, included_components):
                     (
                         "main_nf",
                         "main_nf_include_versions",
-                        f"Included component '{component}' versions are not added in main.nf. Can be ignored if the module is using topic channels",
+                        f"Included component '{component}' versions are not added in main.nf",
                         self.main_nf,
                     )
                 )

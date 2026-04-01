@@ -132,14 +132,15 @@ class TestModuleTests(TestModules):
         Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_NFTEST_BRANCH)
 
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
-        module_lint.lint(print_results=False, module="kallisto/quant")
+        module_lint.lint(print_results=True, module="kallisto/quant")
 
-        assert len(module_lint.failed) == 2, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.failed) == 3, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) >= 0
         assert len(module_lint.warned) >= 0
-        assert module_lint.failed[0].lint_test == "meta_yml_valid"
-        assert module_lint.failed[1].lint_test == "test_main_tags"
-        assert "kallisto/index" in module_lint.failed[1].message
+        assert module_lint.failed[0].lint_test == "main_nf_version_topic"
+        assert module_lint.failed[1].lint_test == "meta_yml_valid"
+        assert module_lint.failed[2].lint_test == "test_main_tags"
+        assert "kallisto/index" in module_lint.failed[2].message
 
     def test_modules_absent_version(self):
         """Test linting a nf-test module if the versions is absent in the snapshot file `"""

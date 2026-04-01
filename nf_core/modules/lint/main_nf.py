@@ -244,7 +244,7 @@ def main_nf(
                 ("main_nf", "main_nf_version_topic", "Module emits software versions as topic", module.main_nf)
             )
         else:
-            module.warned.append(
+            module.failed.append(
                 ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
             )
 
