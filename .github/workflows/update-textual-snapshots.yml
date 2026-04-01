@@ -1,18 +1,21 @@
 name: Update Textual snapshots from a comment
 on:
   issue_comment:
-    types: [created]
+    types: [created] # Add "@nf-core-bot update textual snapshots" as a PR comment to trigger this workflow.
 
 jobs:
   update-snapshots:
-    # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
-    if: >
-      contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot') &&
-      contains(github.event.comment.body, 'update textual snapshots') &&
-      github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
+
     steps:
+      - name: branch-deploy
+        id: branch-deploy
+        uses: github/branch-deploy@fded0351b6b79f854b335c11b3d93063461dd288 # v11.1.2
+        with:
+          trigger: "@nf-core-bot update textual snapshots"
+          reaction: "eyes"
+          stable_branch: "dev"
+
       # Use the @nf-core-bot token to check out so we can push later
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -39,7 +42,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
 

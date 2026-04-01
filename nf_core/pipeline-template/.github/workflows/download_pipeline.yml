@@ -52,12 +52,18 @@ jobs:
       - name: Setup Apptainer
         uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
         with:
-          apptainer-version: 1.3.4
+          apptainer-version: 1.3.4{% raw %}
+
+      - name: Read .nf-core.yml
+        uses: pietrobolcato/action-read-yaml@9f13718d61111b69f30ab4ac683e67a56d254e1d # 1.1.0
+        id: read_yml
+        with:
+          config: ${{ github.workspace }}/.nf-core.yml
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install git+https://github.com/nf-core/tools.git
+          pip install nf-core==${{ steps.read_yml.outputs['nf_core_version'] }}
 
       - name: Make a cache directory for the container images
         run: |
@@ -65,7 +71,7 @@ jobs:
 
       - name: Download the pipeline
         env:
-          NXF_SINGULARITY_CACHEDIR: ./singularity_container_images{% raw %}
+          NXF_SINGULARITY_CACHEDIR: ./singularity_container_images
         run: |
           nf-core pipelines download ${{ needs.configure.outputs.REPO_LOWERCASE }} \
           --revision ${{ needs.configure.outputs.REPO_BRANCH }} \
@@ -127,7 +133,7 @@ jobs:
           fi{% endraw %}
 
       - name: Upload Nextflow logfile for debugging purposes
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: nextflow_logfile.txt
           path: .nextflow.log*

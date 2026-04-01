@@ -14,7 +14,6 @@ import nf_core.modules.create
 import nf_core.modules.install
 import nf_core.modules.modules_repo
 import nf_core.modules.remove
-import nf_core.pipelines.create.create
 from nf_core import __version__
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import NFCoreYamlConfig
@@ -23,6 +22,7 @@ from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_BRANCH_TEST_OLD_SHA,
     GITLAB_DEFAULT_BRANCH,
+    GITLAB_NFTEST_BRANCH,
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
@@ -148,6 +148,13 @@ class TestModules(unittest.TestCase):
             remote_url=GITLAB_URL,
             branch=GITLAB_BRANCH_TEST_BRANCH,
             sha=GITLAB_BRANCH_TEST_OLD_SHA,
+        )
+        self.mods_install_gitlab_nftest = nf_core.modules.install.ModuleInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_NFTEST_BRANCH,
         )
 
         # Set up remove objects
