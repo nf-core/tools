@@ -132,6 +132,9 @@ class ComponentInstall(ComponentCommand):
             )
             modules_json.load()
             modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
+            if not silent:
+                modules_json.load()
+                modules_json.dump(run_prettier=True)
             return False
         try:
             version = self.get_version(component, self.current_sha, self.prompt, current_version, self.modules_repo)

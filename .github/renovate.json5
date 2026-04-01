@@ -13,6 +13,10 @@
             matchDatasources: ["docker"],
             registryUrls: ["docker.io"],
         },
+        {
+            matchCurrentValue: "/</",
+            rangeStrategy: "in-range-only",
+        },
     ],
     gitIgnoredAuthors: ["core@nf-co.re"],
 }

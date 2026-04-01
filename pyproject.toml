@@ -54,7 +54,7 @@ dependencies = [
     "repo2rocrate",
     "setuptools<81",
     "tabulate",
-    "textual==7.5.0",
+    "textual==8.0.2",
     "trogon",
     "pdiff",
     "ruamel.yaml",
@@ -96,9 +96,6 @@ nf-core = "nf_core.__main__:run_nf_core"
 
 [project.entry-points."refgenie.hooks.post_update"]
 nf-core-refgenie = "nf_core.pipelines.refgenie:update_config"
-
-[tool.uv]
-required-version = "0.10.4"
 
 [tool.pytest.ini_options]
 markers = ["datafiles: load datafiles", "integration"]

@@ -283,11 +283,61 @@ def check_script_section(self, lines):
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
-            self.passed.append(("main_nf", "main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
+            self.passed.append(
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' specified in script section",
+                    self.main_nf,
+                )
+            )
         else:
             self.failed.append(
-                ("main_nf", "main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf)
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' unspecified in script section",
+                    self.main_nf,
+                )
             )
+
+    # Validate meta keys
+    permitted_meta_keys = {"id", "single_end"}
+    invalid_meta_keys = [
+        f"{prefix}{key}"
+        for prefix, key in re.findall(r"\b(meta\d*\??\.)(\w+)\b(?!\()", script)
+        if key not in permitted_meta_keys
+    ]
+    if not invalid_meta_keys:
+        self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
+    else:
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_meta_key",
+                f"Invalid 'meta' keys detected: {', '.join(invalid_meta_keys)}",
+                self.main_nf,
+            )
+        )
+
+    # Validate ext keys
+    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+    invalid_ext_keys = [
+        key
+        for key in re.findall(r"\bext\.\w+", script)
+        if key not in permitted_ext_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)
+    ]
+    if not invalid_ext_keys:
+        self.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", self.main_nf))
+    else:
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_ext_key",
+                f"Invalid 'ext' keys detected: {', '.join(invalid_ext_keys)}",
+                self.main_nf,
+            )
+        )
 
 
 def check_when_section(self, lines):
@@ -760,24 +810,67 @@ def _parse_output_topics(self, line: str) -> list[str]:
         topic_name = topic_regex.group(1).strip()
         output.append(topic_name)
         if topic_name == "versions":
-            if not re.search(r'tuple\s+val\("\${\s*task\.process\s*}"\),\s*val\(.*\),\s*(?:eval|val)\(.*\)', line):
+            if re.search(
+                r'tuple\s+val\("\${\s*task\.process\s*}"\)\s*,\s*val\(.*\)\s*,\s*(?:eval|val)\(.*\)', line
+            ) or re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
+                self.passed.append(
+                    (
+                        "main_nf",
+                        "wrong_version_output",
+                        "Versions topic output is correctly formatted",
+                        self.main_nf,
+                    )
+                )
+
+            else:
                 self.failed.append(
                     (
                         "main_nf",
                         "wrong_version_output",
-                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")` or `tuple val(\"${task.process}\"), val('<tool>'), val('<version>')`",
+                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")|val('<version>')`` or `path version.yml` if using a template script.",
                         self.main_nf,
                     )
                 )
-            if not re.search(r"emit:\s*versions_[\d\w]+", line):
-                self.failed.append(
+
+            if re.search(r"emit:\s*versions_[\d\w]+", line):
+                self.passed.append(
                     (
                         "main_nf",
                         "wrong_version_emit",
-                        "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                        "Version emit is correctly formatted",
                         self.main_nf,
                     )
                 )
+            else:
+                if re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
+                    if re.search(r"emit:\s*versions\b", line):
+                        self.passed.append(
+                            (
+                                "main_nf",
+                                "wrong_version_yml_emit",
+                                "Version emit is correctly formatted",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        self.failed.append(
+                            (
+                                "main_nf",
+                                "wrong_versions_yml_emit",
+                                "Version emit should be `versions`",
+                                self.main_nf,
+                            )
+                        )
+                else:
+                    self.failed.append(
+                        (
+                            "main_nf",
+                            "wrong_version_emit",
+                            "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                            self.main_nf,
+                        )
+                    )
+
     return output
 
 

@@ -162,12 +162,17 @@ def get_components_to_install(
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
                 if link.startswith("../../../"):
-                    name_split = name.lower().split("_")
-                    component_name = "/".join(name_split)
-                    component_dict: dict[str, str] = {
-                        "name": component_name,
-                    }
-                    modules[component_name] = component_dict
+                    if "../subworkflows/" in link:
+                        component_name = name.lower()
+                        component_dict: dict[str, str] = {"name": component_name}
+                        subworkflows[component_name] = component_dict
+                    else:
+                        name_split = name.lower().split("_")
+                        component_name = "/".join(name_split)
+                        component_dict = {
+                            "name": component_name,
+                        }
+                        modules[component_name] = component_dict
                 elif link.startswith("../"):
                     component_name = name.lower()
                     component_dict = {"name": component_name}
