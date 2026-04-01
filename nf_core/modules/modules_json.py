@@ -1271,7 +1271,7 @@ class ModulesJson:
                             }
                         )
 
-    def recreate_dependencies(self, repo: str, org: str, subworkflow: Dict[str, str]) -> None:
+    def recreate_dependencies(self, repo: str, org: str, subworkflow: dict[str, str]) -> None:
         """
         Try to recreate the installed_by entries for subworkflows.
         Remove self installation entry from dependencies, assuming that the modules.json has been freshly created,
