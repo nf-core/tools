@@ -1464,7 +1464,9 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
     except ValidationError as e:
         error_message = f"Config file '{config_fn}' is invalid"
         for error in e.errors():
-            error_message += f"\n{error['loc'][0]}: {error['msg']}\ninput: {error['input']}"
+            error_message += (
+                f"\n{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}\nGot instead: {error['input']}"
+            )
         raise AssertionError(error_message)
 
     wf_config = fetch_wf_config(Path(directory))

@@ -23,23 +23,42 @@ log = logging.getLogger(__name__)
 def main_nf(
     module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
 ) -> tuple[list[str], list[str]]:
-    """
-    Lint a ``main.nf`` module file
+    """Lint a ``main.nf`` module file
 
     Can also be used to lint local module files,
-    in which case failures will be reported as
-    warnings.
+    in which case failures will be reported as warnings.
 
-    The test checks for the following:
+    The following checks are performed:
 
-    * Software versions and containers are valid
-    * The module has a process label and it is among
-      the standard ones.
-    * If a ``meta`` map is defined as one of the modules
-      inputs it should be defined as one of the emits,
-      and be correctly configured in the ``saveAs`` function.
-    * The module script section should contain definitions
-      of ``software`` and ``prefix``
+    * ``main_nf_exists``: The ``main.nf`` file must exist.
+
+    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
+      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+      ``publishDir``).
+
+    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+
+    * ``main_nf_container``: Container tags across the ``singularity``, ``docker``,
+      and ``conda`` directives must reference the same software version. A warning
+      is issued if they do not match.
+
+    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
+      blocks must be present.
+
+    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
+      a ``template``.
+
+    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
+      must also appear in at least one output channel.
+
+    * ``main_nf_version_topic``: The module should emit software versions using
+      a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
+      equal the number of ``emit:`` outputs whose name starts with ``versions``.
+      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+      of a topic output.
+
     """
 
     inputs: list[str] = []
@@ -144,6 +163,10 @@ def main_nf(
             shell_lines.append(line)
         if state == "exec" and not _is_empty(line):
             exec_lines.append(line)
+
+    # Check meta naming
+    if inputs:
+        check_meta_input_names(module, inputs)
 
     # Check that we have required sections
     if not len(emits):
@@ -264,11 +287,61 @@ def check_script_section(self, lines):
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
-            self.passed.append(("main_nf", "main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
+            self.passed.append(
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' specified in script section",
+                    self.main_nf,
+                )
+            )
         else:
             self.failed.append(
-                ("main_nf", "main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf)
+                (
+                    "main_nf",
+                    "main_nf_meta_prefix",
+                    "'prefix' unspecified in script section",
+                    self.main_nf,
+                )
             )
+
+    # Validate meta keys
+    permitted_meta_keys = {"id", "single_end"}
+    invalid_meta_keys = [
+        f"{prefix}{key}"
+        for prefix, key in re.findall(r"\b(meta\d*\??\.)(\w+)\b(?!\()", script)
+        if key not in permitted_meta_keys
+    ]
+    if not invalid_meta_keys:
+        self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
+    else:
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_meta_key",
+                f"Invalid 'meta' keys detected: {', '.join(invalid_meta_keys)}",
+                self.main_nf,
+            )
+        )
+
+    # Validate ext keys
+    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+    invalid_ext_keys = [
+        key
+        for key in re.findall(r"\bext\.\w+", script)
+        if key not in permitted_ext_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)
+    ]
+    if not invalid_ext_keys:
+        self.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", self.main_nf))
+    else:
+        self.failed.append(
+            (
+                "main_nf",
+                "main_nf_ext_key",
+                f"Invalid 'ext' keys detected: {', '.join(invalid_ext_keys)}",
+                self.main_nf,
+            )
+        )
 
 
 def check_when_section(self, lines):
@@ -673,6 +746,75 @@ def check_container_link_line(self, raw_line, registry):
             )
 
 
+def check_meta_input_names(self, inputs):
+    """
+    Check ``meta_input_names``: The  meta* variable names must follow the pattern `meta`, `meta2`, `meta3`, etc.
+    Args:
+        inputs (list): List of input variable names
+    """
+
+    meta_vars = [var for var in inputs if var.startswith("meta")]
+
+    if not meta_vars:
+        return  # No meta variables to check
+
+    # Expected pattern: 'meta' or 'meta' followed by a number (meta2, meta3, etc.)
+    valid_pattern = re.compile(r"^meta(\d+)?$")
+
+    invalid_meta_vars = []
+    valid_numbers = []
+
+    for var in meta_vars:
+        if not valid_pattern.match(var):
+            invalid_meta_vars.append(var)
+        else:
+            # Extract number if present
+            match = re.match(r"^meta(\d+)?$", var)
+            if match.group(1):  # Has a number
+                number_str = match.group(1)
+                number_int = int(number_str)
+
+                if number_str != str(number_int) or number_int < 2:
+                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                    invalid_meta_vars.append(var)
+                else:
+                    valid_numbers.append(number_int)
+
+    # Check for invalid names
+    if invalid_meta_vars:
+        self.failed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variables must be named 'meta', 'meta2', 'meta3', etc. Found: {', '.join(invalid_meta_vars)}",
+                self.main_nf,
+            )
+        )
+
+    # Check for proper sequencing (2, 3, 4... not 2, 5, 3)
+    if valid_numbers:
+        expected = list(range(2, len(valid_numbers) + 2))
+        if valid_numbers != expected:
+            self.warned.append(
+                (
+                    "main_nf",
+                    "meta_input_names",
+                    f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
+                    self.main_nf,
+                )
+            )
+
+    if not invalid_meta_vars and (not valid_numbers or valid_numbers == list(range(2, len(valid_numbers) + 2))):
+        self.passed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variable names follow correct pattern: {', '.join(sorted(meta_vars))}",
+                self.main_nf,
+            )
+        )
+
+
 def _parse_input(self, line_raw):
     """
     Return list of input channel names from an input line.
@@ -741,26 +883,67 @@ def _parse_output_topics(self, line: str) -> list[str]:
         topic_name = topic_regex.group(1).strip()
         output.append(topic_name)
         if topic_name == "versions":
-            if not re.search(
+            if re.search(
                 r'tuple\s+val\("\${\s*task\.process\s*}"\)\s*,\s*val\(.*\)\s*,\s*(?:eval|val)\(.*\)', line
-            ):
+            ) or re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
+                self.passed.append(
+                    (
+                        "main_nf",
+                        "wrong_version_output",
+                        "Versions topic output is correctly formatted",
+                        self.main_nf,
+                    )
+                )
+
+            else:
                 self.failed.append(
                     (
                         "main_nf",
                         "wrong_version_output",
-                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")` or `tuple val(\"${task.process}\"), val('<tool>'), val('<version>')`",
+                        "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")|val('<version>')`` or `path version.yml` if using a template script.",
                         self.main_nf,
                     )
                 )
-            if not re.search(r"emit:\s*versions_[\d\w]+", line):
-                self.failed.append(
+
+            if re.search(r"emit:\s*versions_[\d\w]+", line):
+                self.passed.append(
                     (
                         "main_nf",
                         "wrong_version_emit",
-                        "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                        "Version emit is correctly formatted",
                         self.main_nf,
                     )
                 )
+            else:
+                if re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
+                    if re.search(r"emit:\s*versions\b", line):
+                        self.passed.append(
+                            (
+                                "main_nf",
+                                "wrong_version_yml_emit",
+                                "Version emit is correctly formatted",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        self.failed.append(
+                            (
+                                "main_nf",
+                                "wrong_versions_yml_emit",
+                                "Version emit should be `versions`",
+                                self.main_nf,
+                            )
+                        )
+                else:
+                    self.failed.append(
+                        (
+                            "main_nf",
+                            "wrong_version_emit",
+                            "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
+                            self.main_nf,
+                        )
+                    )
+
     return output
 
 

@@ -113,7 +113,7 @@ def modules_update(
         exit_status = module_install.update(tool)
         if not exit_status and install_all:
             sys.exit(1)
-    except (UserWarning, LookupError) as e:
+    except (UserWarning, LookupError, AssertionError) as e:
         log.error(e)
         sys.exit(1)
 

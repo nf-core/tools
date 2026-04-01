@@ -15,7 +15,7 @@ jobs:
       - name: branch-deploy
         id: branch-deploy
         if: github.event_name == 'issue_comment'
-        uses: github/branch-deploy@c9fcc362bdcea69eecac6578dde245cd5e3a55bf # v10.4.3
+        uses: github/branch-deploy@fded0351b6b79f854b335c11b3d93063461dd288 # v11.1.2
         with:
           trigger: "@nf-core-bot changelog"
           reaction: "eyes"
@@ -72,7 +72,8 @@ jobs:
           python-version: "3.14"
 
       - name: Run pre-commit rules with prek
-        uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1
+        uses: j178/prek-action@53276d8b0d10f8b6672aa85b4588c6921d0370cc # v2
+        continue-on-error: true
         with:
           extra-args: --config .pre-commit-config.yaml --all-files
 
