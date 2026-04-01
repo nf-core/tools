@@ -52,5 +52,5 @@ repos:
       - id: lint-test-docstrings
         name: Check lint test names are documented in docstrings
         language: system
-        entry: python docs/api/check_lint_docstrings.py
+        entry: python3 docs/api/check_lint_docstrings.py
         files: ^nf_core/(modules|subworkflows)/lint/.*\.py$
