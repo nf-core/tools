@@ -489,9 +489,26 @@ class TestROCrate(TestPipelines):
 
         self.assertIn("https://example.org/pipelines", entities)
         self.assertEqual(entities["https://example.org/pipelines"]["name"], "My Organisation")
-        self.assertIn("https://example.org/pipelines/testpipeline/dev/", main_entity["url"])
+        self.assertIn("https://example.org/pipelines/testpipeline/dev", main_entity["url"])
         self.assertIn("nf-core", main_entity["keywords"])
         self.assertIn("custom", main_entity["keywords"])
+
+    def test_rocrate_creation_uses_manifest_homepage_for_release_url(self):
+        """Use manifest.homePage to build the RO-Crate main entity URL for release revisions."""
+        bump_pipeline_version(self.pipeline_obj, "1.1.0")
+        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.pipeline_dir)
+
+        with patch("nf_core.pipelines.rocrate.requests.get", side_effect=self._mock_pipelines_response):
+            assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
+
+        with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as fh:
+            crate = json.load(fh)
+        main_entity = next(entity for entity in crate["@graph"] if entity.get("@id") in {"main.nf", "#main.nf"})
+
+        self.assertEqual(
+            main_entity["url"],
+            ["https://nf-co.re/testpipeline/1.1.0"],
+        )
 
     def test_rocrate_creation_falls_back_to_default_topics_on_request_error(self):
         """Keep RO-Crate generation working when the pipelines index cannot be fetched."""

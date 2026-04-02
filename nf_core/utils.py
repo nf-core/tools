@@ -1243,23 +1243,40 @@ def get_org_url(org_name: str, is_nfcore: bool | None = None) -> str:
     return f"https://github.com/{org_name}"
 
 
-def get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc_name: str) -> str:
+def get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc_name: str | None) -> str:
     """Return a forge-aware URL for a rendered documentation page."""
     normalized_org_url = org_url.rstrip("/")
     parsed_url = urlparse(normalized_org_url)
     hostname = parsed_url.netloc.lower()
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    revision = "dev" if branch.endswith("dev") else branch
 
     if hostname == "github.com" or hostname.startswith("github.") or ".github." in hostname:
-        return f"{base_url}/{repo_name}/blob/{branch}/docs/{doc_name}.md"
+        if doc_name:
+            return f"{base_url}/{repo_name}/blob/{revision}/docs/{doc_name}.md"
+        else:
+            return f"{base_url}/{repo_name}/tree/{revision}"
     if hostname == "gitlab.com" or hostname.startswith("gitlab.") or ".gitlab." in hostname:
-        return f"{base_url}/{repo_name}/-/blob/{branch}/docs/{doc_name}.md"
+        if doc_name:
+            return f"{base_url}/{repo_name}/-/blob/{revision}/docs/{doc_name}.md"
+        else:
+            return f"{base_url}/{repo_name}/-/tree/{revision}"
     if hostname == "bitbucket.org" or hostname.startswith("bitbucket.") or ".bitbucket." in hostname:
-        return f"{base_url}/{repo_name}/src/{branch}/docs/{doc_name}.md"
+        if doc_name:
+            return f"{base_url}/{repo_name}/src/{revision}/docs/{doc_name}.md"
+        else:
+            return f"{base_url}/{repo_name}/src/{revision}"
     if hostname == "codeberg.org" or "forgejo" in hostname or "gitea" in hostname:
-        return f"{base_url}/{repo_name}/src/branch/{branch}/docs/{doc_name}.md"
+        if doc_name:
+            return f"{base_url}/{repo_name}/src/branch/{revision}/docs/{doc_name}.md"
+        else:
+            return f"{base_url}/{repo_name}/src/branch/{revision}"
 
-    return f"{normalized_org_url}/{short_name}/{doc_name}"
+    revision = "" if revision in ["main", "master"] else f"/{revision}"
+    if doc_name:
+        return f"{normalized_org_url}/{short_name}{revision}/{doc_name}"
+    else:
+        return f"{normalized_org_url}/{short_name}{revision}"
 
 
 class NFCoreTemplateConfig(BaseModel):

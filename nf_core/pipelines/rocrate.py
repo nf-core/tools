@@ -17,7 +17,7 @@ from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
-from nf_core.utils import Pipeline, get_org_url, load_tools_config
+from nf_core.utils import Pipeline, get_docs_url, get_org_url, load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -170,12 +170,13 @@ class ROCrate:
 
     def _get_main_entity_url(self) -> str:
         """Return a stable URL for the selected workflow revision."""
-        return "/".join([
+        return get_docs_url(
             self._get_pipeline_org_url(),
-            self.crate.name.replace(self._get_pipeline_org() + '/', ''),
-            "dev" if self.version.endswith("dev") else self.version,
-            "", # To have a trailing slash at the end of the URL
-        ])
+            self.crate.name,
+            self.crate.name.replace(self._get_pipeline_org() + "/", ""),
+            self.version,
+            None,
+        )
 
     def _get_remote_workflow_topics(self) -> list[str]:
         """Fetch workflow topics from the organisation pipelines index when available."""

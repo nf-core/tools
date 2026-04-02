@@ -57,92 +57,75 @@ def test_strip_ansi_codes():
 
 
 @pytest.mark.parametrize(
-    ("org_url", "repo_name", "short_name", "default_branch", "doc_name", "expected"),
+    ("doc_name", "generic_expected"),
+    [
+        ("usage", "https://example.org/pipelines/testpipeline/usage"),
+        ("output", "https://example.org/pipelines/testpipeline/output"),
+        (None, "https://example.org/pipelines/testpipeline"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("org_url", "repo_name", "short_name", "default_branch", "expected"),
     [
         (
             "https://github.com/my-org",
             "my-org/testpipeline",
             "testpipeline",
             "main",
-            "usage",
-            "https://github.com/my-org/testpipeline/blob/main/docs/usage.md",
+            {
+                "usage": "https://github.com/my-org/testpipeline/blob/main/docs/usage.md",
+                "output": "https://github.com/my-org/testpipeline/blob/main/docs/output.md",
+                None: "https://github.com/my-org/testpipeline/tree/main",
+            },
         ),
         (
             "https://gitlab.com/my-org",
             "my-org/testpipeline",
             "testpipeline",
             "main",
-            "usage",
-            "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/usage.md",
+            {
+                "usage": "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/usage.md",
+                "output": "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/output.md",
+                None: "https://gitlab.com/my-org/testpipeline/-/tree/main",
+            },
         ),
         (
             "https://bitbucket.org/my-org",
             "my-org/testpipeline",
             "testpipeline",
             "main",
-            "usage",
-            "https://bitbucket.org/my-org/testpipeline/src/main/docs/usage.md",
+            {
+                "usage": "https://bitbucket.org/my-org/testpipeline/src/main/docs/usage.md",
+                "output": "https://bitbucket.org/my-org/testpipeline/src/main/docs/output.md",
+                None: "https://bitbucket.org/my-org/testpipeline/src/main",
+            },
         ),
         (
             "https://codeberg.org/my-org",
             "my-org/testpipeline",
             "testpipeline",
             "main",
-            "usage",
-            "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/usage.md",
+            {
+                "usage": "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/usage.md",
+                "output": "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/output.md",
+                None: "https://codeberg.org/my-org/testpipeline/src/branch/main",
+            },
         ),
         (
             "https://example.org/pipelines",
             "my-org/testpipeline",
             "testpipeline",
             "main",
-            "usage",
-            "https://example.org/pipelines/testpipeline/usage",
-        ),
-        (
-            "https://github.com/my-org",
-            "my-org/testpipeline",
-            "testpipeline",
-            "main",
-            "output",
-            "https://github.com/my-org/testpipeline/blob/main/docs/output.md",
-        ),
-        (
-            "https://gitlab.com/my-org",
-            "my-org/testpipeline",
-            "testpipeline",
-            "main",
-            "output",
-            "https://gitlab.com/my-org/testpipeline/-/blob/main/docs/output.md",
-        ),
-        (
-            "https://bitbucket.org/my-org",
-            "my-org/testpipeline",
-            "testpipeline",
-            "main",
-            "output",
-            "https://bitbucket.org/my-org/testpipeline/src/main/docs/output.md",
-        ),
-        (
-            "https://codeberg.org/my-org",
-            "my-org/testpipeline",
-            "testpipeline",
-            "main",
-            "output",
-            "https://codeberg.org/my-org/testpipeline/src/branch/main/docs/output.md",
-        ),
-        (
-            "https://example.org/pipelines",
-            "my-org/testpipeline",
-            "testpipeline",
-            "main",
-            "output",
-            "https://example.org/pipelines/testpipeline/output",
+            {
+                "usage": "https://example.org/pipelines/testpipeline/usage",
+                "output": "https://example.org/pipelines/testpipeline/output",
+                None: "https://example.org/pipelines/testpipeline",
+            },
         ),
     ],
 )
-def test_get_docs_url(org_url, repo_name, short_name, default_branch, doc_name, expected):
-    assert nf_core.utils.get_docs_url(org_url, repo_name, short_name, default_branch, doc_name) == expected
+def test_get_docs_url(org_url, repo_name, short_name, default_branch, doc_name, generic_expected, expected):
+    assert nf_core.utils.get_docs_url(org_url, repo_name, short_name, default_branch, doc_name) == expected[doc_name]
 
 
 class TestUtils(TestPipelines):
