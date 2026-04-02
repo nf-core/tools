@@ -152,33 +152,21 @@ class ROCrate:
 
         return True
 
-    def _get_pipeline_org(self) -> str:
-        org_name = "nf-core"
+    def _get_template_parameter(self, param_name: str) -> str | None:
         if self.tools_config and getattr(self.tools_config, "template", None):
-            org_name = getattr(self.tools_config.template, "org", org_name) or org_name
-        return org_name
+            org_name = getattr(self.tools_config.template, param_name, None)
+            if org_name:
+                return org_name
+        return None
+
+    def _get_pipeline_org(self) -> str:
+        return self._get_template_parameter("org") or "nf-core"
 
     def _get_pipeline_org_full_name(self) -> str:
-        org_full_name = "nf-core"
-
-        if self.tools_config and getattr(self.tools_config, "template", None):
-            template_org_full_name = getattr(self.tools_config.template, "org_full_name", None)
-            if template_org_full_name:
-                return template_org_full_name
-
-            org_full_name = getattr(self.tools_config.template, "org", org_full_name) or org_full_name
-
-        return org_full_name
+        return self._get_template_parameter("org_full_name") or self._get_pipeline_org()
 
     def _get_pipeline_org_url(self) -> str:
-        org_name = self._get_pipeline_org()
-
-        if self.tools_config and getattr(self.tools_config, "template", None):
-            template_org_url = getattr(self.tools_config.template, "org_url", None)
-            if template_org_url:
-                return template_org_url
-
-        return get_org_url(org_name)
+        return self._get_template_parameter("org_url") or get_org_url(self._get_pipeline_org())
 
     def _get_main_entity_url(self) -> str:
         """Return a stable URL for the selected workflow revision."""
