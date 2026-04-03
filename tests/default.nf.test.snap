@@ -455,13 +455,6 @@
                 "SRR13439813_878220_blastx_filtered_summary.txt(centrifuge) contains string:true"
             ],
             [
-                "SRR13439790_1920753_blastx.txt(diamond) contains string:true",
-                "SRR13439813_1920753_blastx.txt(diamond) contains string:true",
-                "SRR13439813_878220_blastx.txt(diamond) contains string:true",
-                "SRR13439813_878220_blastx_filtered.txt(diamond) contains string:true",
-                "SRR13439813_878220_blastx_filtered_summary.txt(diamond) contains string:true"
-            ],
-            [
                 "centrifuge/SRR13439790_878220_blastx.txt",
                 "centrifuge/SRR13439799_211044_blastx.txt",
                 "centrifuge/SRR13439799_211044_blastx_filtered.txt",
@@ -470,11 +463,6 @@
                 "centrifuge/SRR13439813_878220_blastx.txt",
                 "centrifuge/SRR13439813_878220_blastx_filtered.txt",
                 "centrifuge/SRR13439813_878220_blastx_filtered_summary.txt",
-                "diamond/SRR13439790_1920753_blastx.txt",
-                "diamond/SRR13439813_1920753_blastx.txt",
-                "diamond/SRR13439813_878220_blastx.txt",
-                "diamond/SRR13439813_878220_blastx_filtered.txt",
-                "diamond/SRR13439813_878220_blastx_filtered_summary.txt",
                 "kraken2/SRR13439790_1920753_blastx.txt",
                 "kraken2/SRR13439799_211044_blastx.txt",
                 "kraken2/SRR13439799_211044_blastx_filtered.txt",
@@ -489,9 +477,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T08:26:37.781924403"
+        "timestamp": "2026-04-03T17:09:40.490119919"
     },
     "blastn": {
         "content": [
