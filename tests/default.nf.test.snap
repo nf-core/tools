@@ -18,9 +18,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T08:26:39.215250777"
+        "timestamp": "2026-04-03T17:46:15.862548064"
     },
     "-profile test_taxid": {
         "content": [
@@ -140,9 +140,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T08:26:37.65091197"
+        "timestamp": "2026-04-03T17:46:14.120002808"
     },
     "extracted_reads": {
         "content": [
@@ -171,9 +171,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T11:47:15.227676661"
+        "timestamp": "2026-04-03T17:46:14.268496127"
     },
     "bowtie2_build": {
         "content": [
@@ -308,9 +308,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T08:26:37.961973529"
+        "timestamp": "2026-04-03T17:46:14.459555653"
     },
     "bowtie2_align": {
         "content": [
@@ -426,9 +426,9 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T08:26:37.900518604"
+        "timestamp": "2026-04-03T17:46:14.396631465"
     },
     "blastx": {
         "content": [
@@ -479,7 +479,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-04-03T17:09:40.490119919"
+        "timestamp": "2026-04-03T17:46:14.255131482"
     },
     "blastn": {
         "content": [
@@ -537,8 +537,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.04.8"
         },
-        "timestamp": "2026-03-27T08:26:37.735812226"
+        "timestamp": "2026-04-03T17:46:14.214335789"
     }
 }
