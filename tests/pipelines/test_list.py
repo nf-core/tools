@@ -144,12 +144,15 @@ class TestList(TestCase):
         local_wf = nf_core.pipelines.list.LocalWorkflow("dummy")
         local_wf.local_path = self.tmp_nxf.parent
 
+        class BrokenCommit:
+            @property
+            def hexsha(self):
+                raise ValueError("Reference at 'refs/heads/master' does not exist")
+
         repo = mock.Mock()
         repo.remotes.origin.url = "https://github.com/nf-core/dummy"
         repo.tags = []
-        type(repo.head.commit).hexsha = mock.PropertyMock(
-            side_effect=ValueError("Reference at 'refs/heads/master' does not exist")
-        )
+        repo.head.commit = BrokenCommit()
         mock_repo.return_value = repo
 
         local_wf.get_local_nf_workflow_details()
