@@ -31,6 +31,13 @@ class TestSchema(unittest.TestCase):
 
         # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
+        self.original_nxf_home = os.environ.get("NXF_HOME")
+        self.original_nxf_assets = os.environ.get("NXF_ASSETS")
+        self.nxf_home = os.path.join(self.tmp_dir, ".nextflow")
+        self.nxf_assets = os.path.join(self.nxf_home, "assets")
+        os.makedirs(self.nxf_assets, exist_ok=True)
+        os.environ["NXF_HOME"] = self.nxf_home
+        os.environ["NXF_ASSETS"] = self.nxf_assets
         self.template_dir = os.path.join(self.tmp_dir, "wf")
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "a description", "Me", outdir=self.template_dir, no_git=True
@@ -40,6 +47,16 @@ class TestSchema(unittest.TestCase):
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
 
     def tearDown(self):
+        if self.original_nxf_home is None:
+            os.environ.pop("NXF_HOME", None)
+        else:
+            os.environ["NXF_HOME"] = self.original_nxf_home
+
+        if self.original_nxf_assets is None:
+            os.environ.pop("NXF_ASSETS", None)
+        else:
+            os.environ["NXF_ASSETS"] = self.original_nxf_assets
+
         if os.path.exists(self.tmp_dir):
             shutil.rmtree(self.tmp_dir)
 
