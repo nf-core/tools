@@ -44,6 +44,7 @@
 - fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
 - Fix GHA notification for AWS full tests job ([#4092](https://github.com/nf-core/tools/pull/4092))
 - sync: don't overwrite the defaultBranch if already set in nextflow.config ([#3939](https://github.com/nf-core/tools/pull/3939))
+- Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
 
 ### Linting
 
