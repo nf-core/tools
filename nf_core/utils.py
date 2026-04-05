@@ -1255,22 +1255,34 @@ def get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc
         if doc_name:
             return f"{base_url}/{repo_name}/blob/{revision}/docs/{doc_name}.md"
         else:
-            return f"{base_url}/{repo_name}/tree/{revision}"
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/tree/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/releases/tag/{revision}"
     if hostname == "gitlab.com" or hostname.startswith("gitlab.") or ".gitlab." in hostname:
         if doc_name:
             return f"{base_url}/{repo_name}/-/blob/{revision}/docs/{doc_name}.md"
         else:
-            return f"{base_url}/{repo_name}/-/tree/{revision}"
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/-/tree/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/-/releases/{revision}"
     if hostname == "bitbucket.org" or hostname.startswith("bitbucket.") or ".bitbucket." in hostname:
         if doc_name:
             return f"{base_url}/{repo_name}/src/{revision}/docs/{doc_name}.md"
         else:
-            return f"{base_url}/{repo_name}/src/{revision}"
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/src/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/commits/tag/{revision}"
     if hostname == "codeberg.org" or "forgejo" in hostname or "gitea" in hostname:
         if doc_name:
             return f"{base_url}/{repo_name}/src/branch/{revision}/docs/{doc_name}.md"
         else:
-            return f"{base_url}/{repo_name}/src/branch/{revision}"
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/src/branch/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/releases/tag/{revision}"
 
     revision = "" if revision in ["main", "master"] else f"/{revision}"
     if doc_name:
