@@ -278,7 +278,7 @@ class ROCrate:
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
         self.crate.mainEntity.append_to("sdPublisher", {"@id": self._get_pipeline_org_url()}, compact=True)
-        self.crate.mainEntity["url"] = [self._get_main_entity_url()]
+        self.crate.mainEntity.append_to("url", self._get_main_entity_url(), compact=True)
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
         # remove duplicate entries for version

@@ -507,7 +507,7 @@ class TestROCrate(TestPipelines):
 
         self.assertEqual(
             main_entity["url"],
-            ["https://nf-co.re/testpipeline/1.1.0"],
+            ["https://github.com/nf-core/testpipeline", "https://nf-co.re/testpipeline/1.1.0"],
         )
 
     def test_rocrate_creation_falls_back_to_default_topics_on_request_error(self):
