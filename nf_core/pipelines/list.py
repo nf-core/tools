@@ -350,7 +350,7 @@ class LocalWorkflow:
         """Initialise the LocalWorkflow object"""
         self.full_name = name
         self.repository = None
-        self.local_path = None
+        self.local_path: Path | None = None
         self.commit_sha = None
         self.remote_url = None
         self.branch = None
