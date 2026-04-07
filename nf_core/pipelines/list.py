@@ -71,19 +71,18 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         return []
 
 
-def get_local_wf(workflow: str | Path, revision=None) -> str | None:
+def get_local_wf(workflow: Path, revision=None) -> Path | None:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
     # Assume nf-core if no org given
     if str(workflow).count("/") == 0:
-        workflow = f"nf-core/{workflow}"
+        workflow = Path(f"nf-core/{workflow}")
 
-    workflow = str(workflow)
-    local_wf = LocalWorkflow(workflow)
+    local_wf = LocalWorkflow(str(workflow))
     local_wf_path = _get_nextflow_assets_dir() / workflow
     if local_wf_path.is_dir():
-        local_wf.local_path = str(local_wf_path)
+        local_wf.local_path = local_wf_path
         local_wf.get_local_nf_workflow_details()
         if local_wf.commit_sha is not None and (
             revision is None
@@ -106,7 +105,7 @@ def get_local_wf(workflow: str | Path, revision=None) -> str | None:
     if revision is not None:
         pull_cmd += f" -r {revision}"
     nf_core.utils.run_cmd("nextflow", pull_cmd)
-    local_wf = LocalWorkflow(workflow)
+    local_wf = LocalWorkflow(str(workflow))
     local_wf.get_local_nf_workflow_details()
     return local_wf.local_path
 
@@ -347,7 +346,7 @@ class RemoteWorkflow:
 class LocalWorkflow:
     """Class to handle local workflows pulled by nextflow"""
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         """Initialise the LocalWorkflow object"""
         self.full_name = name
         self.repository = None
@@ -368,7 +367,7 @@ class LocalWorkflow:
             nf_wfdir = _get_nextflow_assets_dir() / self.full_name
             if nf_wfdir.is_dir():
                 log.debug(f"Guessed nextflow assets workflow directory: {nf_wfdir}")
-                self.local_path = str(nf_wfdir)
+                self.local_path = nf_wfdir
 
             # Use `nextflow info` to get more details about the workflow
             else:
@@ -388,7 +387,7 @@ class LocalWorkflow:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
                 self.remote_url = str(repo.remotes.origin.url)
-                self.last_pull = os.stat(os.path.join(self.local_path, ".git", "FETCH_HEAD")).st_mtime
+                self.last_pull = (self.local_path / ".git" / "FETCH_HEAD").stat().st_mtime
                 self.last_pull_date = datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
                 self.last_pull_pretty = pretty_date(self.last_pull)
 

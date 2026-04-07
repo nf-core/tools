@@ -175,9 +175,9 @@ class TestList(TestCase):
 
         mock_get_local_details.side_effect = set_local_workflow_details
 
-        local_path = nf_core.pipelines.list.get_local_wf("atacseq")
+        local_path = nf_core.pipelines.list.get_local_wf(Path("atacseq"))
 
-        assert local_path == str(atacseq_path)
+        assert local_path == atacseq_path
         assert mock_get_local_details.call_count == 1
 
     def test_worflow_filter(self):
