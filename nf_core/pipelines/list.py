@@ -22,17 +22,17 @@ log = logging.getLogger(__name__)
 nf_core.utils.setup_requests_cachedir()
 
 
-def _get_nextflow_assets_dir() -> str:
+def _get_nextflow_assets_dir() -> Path:
     """Return the Nextflow assets directory used for local workflow caches."""
     nxf_assets = os.environ.get("NXF_ASSETS")
     if nxf_assets:
-        return nxf_assets
+        return Path(nxf_assets)
 
     nxf_home = os.environ.get("NXF_HOME")
     if nxf_home:
-        return os.path.join(nxf_home, "assets")
+        return Path(nxf_home) / "assets"
 
-    return os.path.join(os.getenv("HOME") or "", ".nextflow", "assets")
+    return Path(os.getenv("HOME") or "") / ".nextflow" / "assets"
 
 
 def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
@@ -81,9 +81,9 @@ def get_local_wf(workflow: str | Path, revision=None) -> str | None:
 
     workflow = str(workflow)
     local_wf = LocalWorkflow(workflow)
-    local_wf_path = os.path.join(_get_nextflow_assets_dir(), workflow)
-    if os.path.isdir(local_wf_path):
-        local_wf.local_path = local_wf_path
+    local_wf_path = _get_nextflow_assets_dir() / workflow
+    if local_wf_path.is_dir():
+        local_wf.local_path = str(local_wf_path)
         local_wf.get_local_nf_workflow_details()
         if local_wf.commit_sha is not None and (
             revision is None
@@ -152,7 +152,7 @@ class Workflows:
         """
         # Try to guess the local cache directory (much faster than calling nextflow)
         nextflow_wfdir = _get_nextflow_assets_dir()
-        if os.path.isdir(nextflow_wfdir):
+        if nextflow_wfdir.is_dir():
             log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
             for org_name in os.listdir(nextflow_wfdir):
                 for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
@@ -365,10 +365,10 @@ class LocalWorkflow:
 
         if self.local_path is None:
             # Try to guess the local cache directory
-            nf_wfdir = os.path.join(_get_nextflow_assets_dir(), self.full_name)
-            if os.path.isdir(nf_wfdir):
+            nf_wfdir = _get_nextflow_assets_dir() / self.full_name
+            if nf_wfdir.is_dir():
                 log.debug(f"Guessed nextflow assets workflow directory: {nf_wfdir}")
-                self.local_path = nf_wfdir
+                self.local_path = str(nf_wfdir)
 
             # Use `nextflow info` to get more details about the workflow
             else:
