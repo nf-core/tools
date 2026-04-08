@@ -41,7 +41,7 @@ workflow BLAST {
         ch_versions = ch_versions.mix ( BLAST_BLASTN.out.versions.first() )
 
         // Filter BLASTN hits
-        ch_blastn_hits = BLAST_BLASTN.out.txt.filter { meta, blastn_hits -> blastn_hits.size() >0 }
+        ch_blastn_hits = BLAST_BLASTN.out.txt.filter { _meta, blastn_hits -> blastn_hits.size() >0 }
         FILTER_BLASTN ( ch_blastn_hits, file( blast_header, checkIfExists: true ))
         ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
         ch_blastn_filtered = ch_blastn_filtered.mix( FILTER_BLASTN.out.filtered_blast )
@@ -51,8 +51,8 @@ workflow BLAST {
                 blastn_hits.splitCsv( sep: '\t', header: true )
                     .collect { row -> [ row.staxid, meta, blastn_hits ] }
             }
-            .unique { staxid, meta, blastn_hits -> [staxid, meta.id, meta.taxid, meta.tool]}
-            .map { staxid, meta, blastn_hits -> [ staxid, meta ] }
+            .unique { staxid, meta, _blastn_hits -> [staxid, meta.id, meta.taxid, meta.tool]}
+            .map { staxid, meta, _blastn_hits -> [ staxid, meta ] }
         ch_blast_hits_taxid = ch_blast_hits_taxid.mix( ch_blastn_hits_taxid )
     }
 
@@ -79,7 +79,7 @@ workflow BLAST {
         ch_versions = ch_versions.mix( DIAMOND_BLASTX.out.versions.first() )
 
         // Filter BLASTX hits
-        ch_blastx_hits = DIAMOND_BLASTX.out.txt.filter { meta, blastx_hits -> blastx_hits.size() > 0 }
+        ch_blastx_hits = DIAMOND_BLASTX.out.txt.filter { _meta, blastx_hits -> blastx_hits.size() > 0 }
         FILTER_BLASTX ( ch_blastx_hits, file( blast_header, checkIfExists: true ))
         ch_versions = ch_versions.mix( FILTER_BLASTX.out.versions.first() )
         ch_blastx_filtered = ch_blastx_filtered.mix( FILTER_BLASTX.out.filtered_blast)
@@ -89,8 +89,8 @@ workflow BLAST {
                 blastx_hits.splitCsv( sep: '\t', header: true )
                     .collect { row -> [ row.staxid, meta, blastx_hits ] }
             }
-            .unique { staxid, meta, blastx_hits -> [staxid, meta.id, meta.taxid, meta.tool]}
-            .map { staxid, meta, blastx_hits -> [ staxid, meta ] }
+            .unique { staxid, meta, _blastx_hits -> [staxid, meta.id, meta.taxid, meta.tool]}
+            .map { staxid, meta, _blastx_hits -> [ staxid, meta ] }
             ch_blast_hits_taxid = ch_blast_hits_taxid.mix ( ch_blastx_hits_taxid )
     }
     // Make blast taxid unique per meta.id, meta_taxid and meta.tool combination
