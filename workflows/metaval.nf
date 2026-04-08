@@ -124,7 +124,6 @@ workflow METAVAL {
         SEQKIT_FQ2FA_READS( ch_taxid_reads_transpose )
         ch_versions = ch_versions.mix(SEQKIT_FQ2FA_READS.out.versions)
         PIGZ_UNCOMPRESS ( SEQKIT_FQ2FA_READS.out.fasta )
-        ch_versions = ch_versions.mix(PIGZ_UNCOMPRESS.out.versions)
 
         //
         // MODULE: DE NOVO - SPADES/FLYE

@@ -29,7 +29,6 @@ workflow MAPPING_LONGREAD {
     PIGZ_UNCOMPRESS (
         ch_reads_reference.map { meta, _reads, ref -> [ meta, ref ] }
     )
-    ch_versions = ch_versions.mix( PIGZ_UNCOMPRESS.out.versions )
     ch_ref_uncompressed = PIGZ_UNCOMPRESS.out.file
 
     SAMTOOLS_FAIDX ( ch_ref_uncompressed, [ [], [] ], false )
