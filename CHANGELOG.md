@@ -16,7 +16,7 @@
 - Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
 - Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
 
-  | Command                    | Subcommand                     | Aliases                           |
+  <!--| Command                    | Subcommand                     | Aliases                           |
   | -------------------------- | ------------------------------ | --------------------------------- |
   | `modules` & `subworkflows` | `bump-versions` (modules only) | `bump-version`, `bump`, `bv`, `b` |
   |                            | `create`                       | `c`                               |
@@ -36,7 +36,7 @@
   |                            | `sync`                         | `s`                               |
   | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
   |                            | `list`                         | `ls`                              |
-  |                            | `list-branches`                | `lsb`                             |
+  |                            | `list-branches`                | `lsb`                             |-->
 
 - bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
