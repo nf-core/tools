@@ -45,6 +45,7 @@
 - Update pre-commit hook astral-sh/uv-pre-commit to v0.11.4 ([#4179](https://github.com/nf-core/tools/pull/4179))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.20.0 ([#4165](https://github.com/nf-core/tools/pull/4165))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 26b252e ([#4158](https://github.com/nf-core/tools/pull/4158))
+- chore(deps): update python:3.14-slim docker digest to 5e59aae ([#4159](https://github.com/nf-core/tools/pull/4159))
 
 ### Linting
 
