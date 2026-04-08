@@ -29,14 +29,14 @@ workflow TAXID_READS {
     ch_taxid_reads   = channel.empty()
 
     ch_phages_taxid = params.phages_taxid ?
-        channel.fromPath(params.phages_taxid, checkIfExists: true) :
-        channel.empty()
+        channel.fromPath(params.phages_taxid, checkIfExists: true).first() :
+        channel.value([])
     ch_taxid_list = params.taxid ?
         channel.fromPath(params.taxid, checkIfExists: true)
             .splitCsv(sep: '\t')
             .map { row ->
-                taxid = row[0]
-                species = row[1]
+                def taxid = row[0]
+                def species = row[1]
                     .replaceAll(/[^A-Za-z0-9]/, '-')  // Replace special chars with dashes
                     .replaceAll(/-+/, '-') // Replace multiple dashes with single dash
                     .replaceAll(/^-+|-+$/, '')        // Remove leading and trailing dashes
@@ -44,9 +44,9 @@ workflow TAXID_READS {
             }
             .collect()
 	    .map { it }
-        : channel.empty()
+        : channel.value([])
 
-    // Extract kraken2 reads
+    // Exyxtract kraken2 reads
     if ( params.extract_kraken2_reads ) {
         if ( params.taxid ) {
             kraken2_combined = kraken2_report.map { meta, kraken2_report -> [ meta.subMap(meta.keySet() - 'tool'), kraken2_report ] }
