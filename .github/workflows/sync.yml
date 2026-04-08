@@ -90,7 +90,7 @@ jobs:
         run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@mashehu-patch-1
+        uses: nf-core/setup-nextflow@master
         with:
           version: "latest-everything"
 

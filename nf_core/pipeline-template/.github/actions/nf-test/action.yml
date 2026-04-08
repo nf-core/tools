@@ -20,7 +20,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Nextflow
-      uses: nf-core/setup-nextflow@mashehu-patch-1
+      uses: nf-core/setup-nextflow@master
       with:
         version: "{% raw %}${{ env.NXF_VERSION }}"
 
