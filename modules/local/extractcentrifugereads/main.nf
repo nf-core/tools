@@ -26,10 +26,10 @@ process EXTRACTCENTRIFUGEREADS {
 
     if [ -s readID.txt ]; then
         if [ "${meta.single_end}" == 'true' ]; then
-            seqkit grep -f readID.txt ${fastq} | pigz -c > ${prefix}_${taxid}.extracted_centrifuge_read.fastq.gz
+            seqkit grep -f readID.txt ${fastq} | pigz -c > ${prefix}.extracted_centrifuge_read.fastq.gz
         else
-            seqkit grep -f readID.txt ${fastq[0]} | pigz -c > ${prefix}_${taxid}.extracted_centrifuge_read1.fastq.gz
-            seqkit grep -f readID.txt ${fastq[1]} | pigz -c > ${prefix}_${taxid}.extracted_centrifuge_read2.fastq.gz
+            seqkit grep -f readID.txt ${fastq[0]} | pigz -c > ${prefix}.extracted_centrifuge_read_1.fastq.gz
+            seqkit grep -f readID.txt ${fastq[1]} | pigz -c > ${prefix}.extracted_centrifuge_read_2.fastq.gz
         fi
     else
         echo "No matching read IDs found for taxid ${taxid}, skipping extraction."
