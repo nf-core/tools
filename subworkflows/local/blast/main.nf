@@ -37,8 +37,7 @@ workflow BLAST {
         }
 
         // BLASTN
-        BLAST_BLASTN ( query, ch_blastn_db )
-        ch_versions = ch_versions.mix ( BLAST_BLASTN.out.versions.first() )
+        BLAST_BLASTN ( query, ch_blastn_db, [], [], [] )
 
         // Filter BLASTN hits
         ch_blastn_hits = BLAST_BLASTN.out.txt.filter { _meta, blastn_hits -> blastn_hits.size() >0 }

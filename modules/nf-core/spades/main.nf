@@ -13,14 +13,14 @@ process SPADES {
     path hmm
 
     output:
-    tuple val(meta), path('*.scaffolds.fa')       , optional:true, emit: scaffolds
-    tuple val(meta), path('*.contigs.fa')         , optional:true, emit: contigs
+    tuple val(meta), path('*.scaffolds.fa.gz')    , optional:true, emit: scaffolds
+    tuple val(meta), path('*.contigs.fa.gz')      , optional:true, emit: contigs
     tuple val(meta), path('*.transcripts.fa.gz')  , optional:true, emit: transcripts
     tuple val(meta), path('*.gene_clusters.fa.gz'), optional:true, emit: gene_clusters
     tuple val(meta), path('*.assembly.gfa.gz')    , optional:true, emit: gfa
     tuple val(meta), path('*.warnings.log')         , optional:true, emit: warnings
     tuple val(meta), path('*.spades.log')         , emit: log
-    path  "versions.yml"                          , emit: versions
+    tuple val("${task.process}"), val('spades'), eval("spades.py --version 2>&1 | sed -n 's/^.*SPAdes genome assembler v//p'"), topic: versions, emit: versions_spades
 
     when:
     task.ext.when == null || task.ext.when
@@ -67,34 +67,17 @@ process SPADES {
     if [ -f warnings.log ]; then
         mv warnings.log ${prefix}.warnings.log
     fi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spades: \$(spades.py --version 2>&1 | sed -n 's/^.*SPAdes genome assembler v//p')
-    END_VERSIONS
     """
 
     stub:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def maxmem = task.memory.toGiga()
-    def illumina_reads = illumina ? ( meta.single_end ? "-s $illumina" : "-1 ${illumina[0]} -2 ${illumina[1]}" ) : ""
-    def pacbio_reads = pacbio ? "--pacbio $pacbio" : ""
-    def nanopore_reads = nanopore ? "--nanopore $nanopore" : ""
-    def custom_hmms = hmm ? "--custom-hmms $hmm" : ""
-    def reads = yml ? "--dataset $yml" : "$illumina_reads $pacbio_reads $nanopore_reads"
     """
-    echo "" > ${prefix}.scaffolds.fa
-    echo "" > ${prefix}.contigs.fa
+    echo "" | gzip > ${prefix}.scaffolds.fa.gz
+    echo "" | gzip > ${prefix}.contigs.fa.gz
     echo "" | gzip > ${prefix}.transcripts.fa.gz
     echo "" | gzip > ${prefix}.gene_clusters.fa.gz
     echo "" | gzip > ${prefix}.assembly.gfa.gz
     touch ${prefix}.spades.log
     touch ${prefix}.warnings.log
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spades: \$(spades.py --version 2>&1 | sed -n 's/^.*SPAdes genome assembler v//p')
-    END_VERSIONS
     """
 }

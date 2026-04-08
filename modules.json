@@ -12,7 +12,7 @@
                     },
                     "blast/blastn": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "3a9acfe9865ac6f63bc48667657bfb8293613f56",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/blast/blastn/blast-blastn.diff"
                     },
@@ -120,7 +120,7 @@
                     },
                     "spades": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "eeeb609bd37db7d81d7f6cb7d23a73c08ac4d752",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/spades/spades.diff"
                     },

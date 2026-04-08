@@ -14,8 +14,8 @@ include { FLYE                                                  } from '../modul
 
 // BLAST
 include { SEQKIT_FQ2FA                                          } from '../modules/nf-core/seqkit/fq2fa/main'
-include { BLAST                                                 } from '../subworkflows/local/blast.nf'
-include { BLAST as BLAST_PATHOGEN                               } from '../subworkflows/local/blast.nf'
+include { BLAST                                                 } from '../subworkflows/local/blast'
+include { BLAST as BLAST_PATHOGEN                               } from '../subworkflows/local/blast'
 
 // Mapping
 include { MAPPING_SHORTREAD                                     } from '../subworkflows/local/mapping_shortread'
@@ -40,22 +40,6 @@ include { softwareVersionsToYAML                                } from '../subwo
 include { methodsDescriptionText                                } from '../subworkflows/local/utils_nfcore_metaval_pipeline'
 include { getFlagstatMappedReads                                } from '../subworkflows/local/utils_nfcore_metaval_pipeline'
 
-// Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.pathogens_genomes,
-                            params.accession2taxid,
-                            params.blastn_db, params.blast_header,
-                            params.blastx_db,params.multiqc_config,
-                            params.multiqc_logo, params.multiqc_methods_description
-                        ]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
-// Check mandatory parameters
-if ( params.input ) {
-    ch_input              = file(params.input, checkIfExists: true)
-} else {
-    error("Input samplesheet not specified")
-}
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -73,7 +57,7 @@ workflow METAVAL {
     ch_fastqc_files = channel.empty()
 
     // Create input channels
-    ch_input = ch_samplesheet.branch { meta, fastq_1, fastq_2, kraken2_report, kraken2_result, kraken2_taxpasta, centrifuge_report, centrifuge_result, centrifuge_taxpasta, diamond, diamond_taxpasta ->
+    ch_input = ch_samplesheet.branch { meta, fastq_1, fastq_2, _kraken2_report, _kraken2_result, _kraken2_taxpasta, _centrifuge_report, _centrifuge_result, _centrifuge_taxpasta, _diamond, _diamond_taxpasta ->
 
         // Define single_end based on the conditions
         meta.single_end = ( fastq_1 && !fastq_2 )
@@ -170,7 +154,6 @@ workflow METAVAL {
         ch_contigs_denovo = channel.empty()
         if ( params.perform_shortread_denovo ) {
             SPADES( ch_denovo.shortreads, [], [] )
-            ch_versions = ch_versions.mix( SPADES.out.versions.first() )
             ch_contigs_denovo = ch_contigs_denovo.mix( SPADES.out.contigs )
         }
         // Long reads de novo assembly
@@ -204,11 +187,11 @@ workflow METAVAL {
         // Perform FASTQC for reads with BLASTN hits
         ch_fastqc_blastn = ch_taxid_reads.nonempty
             .join( BLAST.out.blastn_filtered, by: 0 )
-            .map { meta, reads, filtered_blast -> [ meta, reads ] }
+            .map { meta, reads, _filtered_blast -> [ meta, reads ] }
 
         ch_fastqc_blastx = ch_taxid_reads.nonempty
             .join( BLAST.out.blastx_filtered, by: 0 )
-            .map { meta, reads, filtered_blast -> [ meta, reads ] }
+            .map { meta, reads, _filtered_blast -> [ meta, reads ] }
 
         ch_fastqc_files = ch_fastqc_files.mix( ch_fastqc_blastn, ch_fastqc_blastx )
 
@@ -243,7 +226,7 @@ workflow METAVAL {
             ch_bam_bai_shortread = ch_bam_bai_shortread.mix(MAPPING_SHORTREAD.out.bam)
                 .join(MAPPING_SHORTREAD.out.bai)
                 .join (ch_mapped_shortreads, by: [0])
-                .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
+                .map { meta, bam,bai, _mapped, pass -> if (pass) [meta, bam, bai ] }
 
             ch_igv_input_shortread = channel.empty()
             ch_igv_input_shortread = ch_bam_bai_shortread
@@ -257,7 +240,7 @@ workflow METAVAL {
             ch_bam_bai_longread = ch_bam_bai_longread.mix(MAPPING_LONGREAD.out.bam)
                 .join(MAPPING_LONGREAD.out.bai)
                 .join (ch_mapped_longreads, by: [0])
-                .map { meta, bam,bai, mapped, pass -> if (pass) [meta, bam, bai ] }
+                .map { meta, bam,bai, _mapped, pass -> if (pass) [meta, bam, bai ] }
 
             ch_igv_input_longread = channel.empty()
             ch_igv_input_longread = ch_igv_input_longread.mix(ch_bam_bai_longread)
@@ -296,7 +279,7 @@ workflow METAVAL {
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_LONGREAD_PATHOGEN.out.mqc)
 
         // Subset BAM file for each taxID
-        ch_accession2taxid = Channel.fromPath ( params.accession2taxid, checkIfExists: true )
+        ch_accession2taxid = channel.fromPath ( params.accession2taxid, checkIfExists: true )
 
         TAXID_BAM_FASTA_SHORTREAD ( MAPPING_SHORTREAD_PATHOGEN.out.bam, MAPPING_SHORTREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
         ch_versions = ch_versions.mix( TAXID_BAM_FASTA_SHORTREAD.out.versions )
@@ -329,12 +312,12 @@ workflow METAVAL {
         // BLAST
         // For pair-end reads, only use read1 for BLAST
         ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
-            .filter { meta, reads ->
+            .filter { _meta, reads ->
                 reads[0].countFasta() >= 1 && reads[1].countFasta() >= 1
             }
             .map { meta, reads -> [ meta, reads[0]] }
         ch_longread_pathogen_blast = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
-            .filter { meta, reads ->
+            .filter { _meta, reads ->
                 reads.countFasta() >= 1
             }
         ch_blast_query_pathogen = ch_shortread_pathogen_blast_read1.mix(
@@ -349,13 +332,13 @@ workflow METAVAL {
     // MODULE: FASTQC
     //
     FASTQC( ch_fastqc_files )
-    ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{it[1]} )
+    ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{ zips -> zips[1]}.ifEmpty([]) )
     ch_versions = ch_versions.mix( FASTQC.out.versions.first() )
 
     //
     // Collate and save software versions
     //
-    def topic_versions = Channel.topic("versions")
+    def topic_versions = channel.topic("versions")
         .distinct()
         .branch { entry ->
             versions_file: entry instanceof Path
