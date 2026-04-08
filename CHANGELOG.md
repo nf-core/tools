@@ -52,6 +52,7 @@
 - Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
 - Update actions/github-script action to v9 ([#4182](https://github.com/nf-core/tools/pull/4182))
 - Remove deprecated cli commands and --migrate-pytest flag with all obsoleted code. ([4167](https://github.com/nf-core/tools/pull/4167))
+- Remove `--migrate-pytest` functionality and deprecated pipeline commands ([#4167](https://github.com/nf-core/tools/pull/4167))
 
 ### Linting
 
