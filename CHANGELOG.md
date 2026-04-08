@@ -15,7 +15,6 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
 - Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
 - Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
-
   <!--| Command                    | Subcommand                     | Aliases                           |
   | -------------------------- | ------------------------------ | --------------------------------- |
   | `modules` & `subworkflows` | `bump-versions` (modules only) | `bump-version`, `bump`, `bv`, `b` |
@@ -37,13 +36,13 @@
   | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
   |                            | `list`                         | `ls`                              |
   |                            | `list-branches`                | `lsb`                             |-->
-
 - bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
 - Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
 - fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
 - Fix GHA notification for AWS full tests job ([#4092](https://github.com/nf-core/tools/pull/4092))
 - sync: don't overwrite the defaultBranch if already set in nextflow.config ([#3939](https://github.com/nf-core/tools/pull/3939))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.11.4 ([#4179](https://github.com/nf-core/tools/pull/4179))
 
 ### Linting
 
