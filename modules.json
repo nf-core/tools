@@ -44,22 +44,22 @@
                     },
                     "igvreports": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "ffe8f0a85ca059893a57c00fd028cb42c48bff19",
                         "installed_by": ["modules"]
                     },
                     "krakentools/extractkrakenreads": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "2ddcb4e4aa28aa06678b6689048d05a0d2af6a97",
                         "installed_by": ["modules"]
                     },
                     "minimap2/align": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "5c9f8d5b7671237c906abadc9ff732b301ca15ca",
                         "installed_by": ["modules"]
                     },
                     "minimap2/index": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "14980f759266eec42dac401fcafeb83d6c957b41",
                         "installed_by": ["modules"]
                     },
                     "multiqc": {
@@ -69,7 +69,7 @@
                     },
                     "pigz/uncompress": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "145b0a6fb5e6b56bccd9a030a1baf75b207ac250",
                         "installed_by": ["modules"]
                     },
                     "samtools/consensus": {

@@ -15,21 +15,20 @@ include { getFlagstatMappedReads                            } from '../../../sub
 
 workflow TAXID_BAM_FASTA {
     take:
-    bam               // Channel: [ val(meta), path(bam) ]
-    bai               // Channel: [ val(meta), path(bai) ]
+    ch_bam               // Channel: [ val(meta), path(bam) ]
+    ch_bai               // Channel: [ val(meta), path(bai) ]
     accession2taxid   // Channel: path(accession2taxid)
     min_read_counts   // Value: minimum number of reads to keep a BAM file
 
     main:
     ch_versions        = channel.empty()
-    ch_multiqc_files   = channel.empty()
     ch_taxid_bam       = channel.empty()
     ch_taxid_bai       = channel.empty()
     ch_consensus_input = channel.empty()
     ch_blast_input     = channel.empty()
 
     // Combine BAM and BAI files
-    input_bam = bam.join( bai, by: 0 )
+    input_bam = ch_bam.join( ch_bai, by: 0 )
     // Get idxstats for input BAM
     SAMTOOLS_IDXSTATS( input_bam )
     // Extract accessions with mapped reads
@@ -38,8 +37,8 @@ workflow TAXID_BAM_FASTA {
             idxstats.splitCsv( header: false, sep: "\t" )
                 // The SAMTOOLS_IDXSTATS.out.idxstats file contains four columns: <reference_name> <reference_length> <mapped_reads> <unmapped_reads>
                 // The last row is "* 0 0 0" and should be filtered out, along with rows that have zero mapped reads.
-                .findAll { it[0] != "*" && it[2].toInteger() > 0 }
-                .collect{ [meta, it[0], it[2].toInteger()] }
+                .findAll { row -> row[0] != "*" && row[2].toInteger() > 0 }
+                .collect{ row -> [meta, row[0], row[2].toInteger()] }
         }
 
     // Load accession2taxid map
@@ -48,21 +47,21 @@ workflow TAXID_BAM_FASTA {
     // Join accessions with taxids: [meta, accession, num_reads] + [accession, taxid, organism]
     ch_accession_taxid_with_meta = ch_accession_with_meta
         .combine(ch_accession2taxidmap)
-        .filter { meta, accession, num_reads, ref_accession, taxid, organism ->
+        .filter { _meta, accession, _num_reads, ref_accession, _taxid, _organism ->
             accession == ref_accession
         }
-        .map { meta, accession, num_reads, ref_accession, taxid, organism ->
+        .map { meta, accession, num_reads, _ref_accession, taxid, organism ->
             [meta, accession, taxid, organism, num_reads]
         }
         .groupTuple( by: [0, 2, 3] ) // Group by [meta, taxid, organism]
         .map { meta, accession_list, taxid, organism, num_reads_list ->
             [meta, accession_list, taxid, organism, num_reads_list.sum()]
         }
-        .branch {
-            pass: it[4] >= min_read_counts // The number of mapped reads to a taxID greater than params.min_read_counts
-                return [it[0], it[1], it[2], it[3]] // [meta, accession_list, taxid, organism]
-            fail: it[4] < min_read_counts  // The number of mapped reads to a taxID smaller than params.min_read_counts
-                return [it[0], it[1], it[2], it[3]] // [meta, accession_list, taxid, organism]
+        .branch { meta, accession_list, taxid, organism, num_reads_list ->
+            pass: num_reads_list >= min_read_counts // The number of mapped reads to a taxID greater than params.min_read_counts
+                return [meta, accession_list, taxid, organism] // [meta, accession_list, taxid, organism]
+            fail: num_reads_list < min_read_counts  // The number of mapped reads to a taxID smaller than params.min_read_counts
+                return [meta, accession_list, taxid, organism] // [meta, accession_list, taxid, organism]
         }
 
     // Prepare individual BAM files for each taxID with the number of mapped reads greater than params.min_read_counts
@@ -93,12 +92,12 @@ workflow TAXID_BAM_FASTA {
 
     ch_taxid_bam = ch_taxid_bam.mix(SAMTOOLS_SORT_PASS.out.bam)
         .join (ch_mapped_reads, by: [0])
-        .filter { meta, bam, mapped, pass -> pass }
-        .map { meta, bam, mapped, pass -> [meta, bam] }
+        .filter { _meta, _bam, _mapped, pass -> pass }
+        .map { meta, bam, _mapped, _pass -> [meta, bam] }
     ch_taxid_bai = ch_taxid_bai.mix(SAMTOOLS_INDEX_PASS.out.index)
         .join(ch_mapped_reads, by:[0])
-        .filter { meta, bai, mapped, pass -> pass }
-        .map { meta, bai, mapped, pass -> [meta, bai] }
+        .filter { _meta, _bai, _mapped, pass -> pass }
+        .map { meta, bai, _mapped, _pass -> [meta, bai] }
 
     // Prepare individual FASTA files for each taxID with the number of mapped reads less than params.min_read_counts
     ch_blast_input = ch_accession_taxid_with_meta.fail

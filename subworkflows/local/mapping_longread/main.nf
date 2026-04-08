@@ -4,7 +4,7 @@
 
 include { MINIMAP2_INDEX                            } from '../../../modules/nf-core/minimap2/index'
 include { MINIMAP2_ALIGN                            } from '../../../modules/nf-core/minimap2/align'
-include { BAM_SORT_STATS_SAMTOOLS                   } from '../../../modules/nf-core/bam_sort_stats_samtools'
+include { BAM_SORT_STATS_SAMTOOLS                   } from '../../../subworkflows/nf-core/bam_sort_stats_samtools'
 include { SAMTOOLS_FAIDX                            } from '../../../modules/nf-core/samtools/faidx'
 include { PIGZ_UNCOMPRESS                           } from '../../../modules/nf-core/pigz/uncompress'
 include { RM_EMPTY_BAM                              } from '../../../modules/local/rm_empty_bam'
@@ -21,14 +21,13 @@ workflow MAPPING_LONGREAD {
 
     // Build the minimap2 index
     ch_reference = ch_reads_reference
-        .map { meta, reads, ref -> [ meta, ref ] }
+        .map { meta, _reads, ref -> [ meta, ref ] }
     MINIMAP2_INDEX ( ch_reference )
     ch_minimap2_index = MINIMAP2_INDEX.out.index
-    ch_versions = ch_versions.mix( MINIMAP2_INDEX.out.versions )
 
     // Build index fai for the reference
     PIGZ_UNCOMPRESS (
-        ch_reads_reference.map { meta, reads, ref -> [ meta, ref ] }
+        ch_reads_reference.map { meta, _reads, ref -> [ meta, ref ] }
     )
     ch_versions = ch_versions.mix( PIGZ_UNCOMPRESS.out.versions )
     ch_ref_uncompressed = PIGZ_UNCOMPRESS.out.file
@@ -42,7 +41,7 @@ workflow MAPPING_LONGREAD {
 
     // Join the reads, minimap2 index, reference and reference index
     ch_reads_with_index = ch_reads_reference
-        .map { meta, reads, ref -> [ meta, reads ] }
+        .map { meta, reads, _ref -> [ meta, reads ] }
         .join(ch_minimap2_index, by: 0)
         .join(ch_ref_fai, by:0)
         .multiMap { meta, reads, index, ref, fai ->
@@ -59,7 +58,6 @@ workflow MAPPING_LONGREAD {
         false,  // cigar_paf
         false   // cigar_bam
     )
-    ch_versions = ch_versions.mix( MINIMAP2_ALIGN.out.versions.first() )
 
     // Sort and stats
     ch_bam_ref_fai = MINIMAP2_ALIGN.out.bam
@@ -75,19 +73,19 @@ workflow MAPPING_LONGREAD {
     if (params.perform_verify_species) {
         BAM_SORT_STATS_SAMTOOLS.out.bam
             .collect()
-            .map { it -> file("${params.outdir}/mapping/minimap2/align") }
+            .map { file("${params.outdir}/mapping/minimap2/align") }
             .set { ch_bowtie2_align_dir}
         RM_EMPTY_BAM (ch_bowtie2_align_dir)
     }
     if (params.perform_screen_pathogens) {
         BAM_SORT_STATS_SAMTOOLS.out.bam
             .collect()
-            .map { it -> file("${params.outdir}/pathogens/mapping/minimap2/align") }
+            .map { file("${params.outdir}/pathogens/mapping/minimap2/align") }
             .set { ch_bowtie2_align_dir}
         RM_EMPTY_BAM_PATHOGEN (ch_bowtie2_align_dir)
     }
 
-    ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{ _meta, flagstat_file -> flagstat_file }.ifEmpty([]))
 
     emit:
     index    = MINIMAP2_INDEX.out.index              // channel: [ val(meta), [ index ] ]

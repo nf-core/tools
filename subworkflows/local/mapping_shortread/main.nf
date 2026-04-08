@@ -3,7 +3,7 @@
 //
 
 include { BOWTIE2_BUILD                             } from '../../../modules/nf-core/bowtie2/build'
-include { FASTQ_ALIGN_BOWTIE2                       } from '../../../modules/nf-core/fastq_align_bowtie2'
+include { FASTQ_ALIGN_BOWTIE2                       } from '../../../subworkflows/nf-core/fastq_align_bowtie2'
 include { SAMTOOLS_FAIDX                            } from '../../../modules/nf-core/samtools/faidx'
 include { PIGZ_UNCOMPRESS                           } from '../../../modules/nf-core/pigz/uncompress'
 include { RM_EMPTY_BAM                              } from '../../../modules/local/rm_empty_bam'
@@ -19,16 +19,15 @@ workflow MAPPING_SHORTREAD {
 
     // Build the bowtie2 index
     BOWTIE2_BUILD (
-        ch_reads_reference.map { meta, reads, ref -> [ meta, ref ] }
+        ch_reads_reference.map { meta, _reads, ref -> [ meta, ref ] }
     )
     ch_versions = ch_versions.mix( BOWTIE2_BUILD.out.versions )
     ch_bowtie2_index = BOWTIE2_BUILD.out.index
 
     // Build the reference index fai
     PIGZ_UNCOMPRESS (
-        ch_reads_reference.map { meta, reads, ref -> [ meta, ref ] }
+        ch_reads_reference.map { meta, _reads, ref -> [ meta, ref ] }
     )
-    ch_versions = ch_versions.mix( PIGZ_UNCOMPRESS.out.versions )
     ch_ref_uncompressed = PIGZ_UNCOMPRESS.out.file
 
     SAMTOOLS_FAIDX ( ch_ref_uncompressed, [ [], [] ], false )
@@ -40,7 +39,7 @@ workflow MAPPING_SHORTREAD {
 
     // Join the reads, minimap2 index, reference and reference index
     ch_reads_with_index = ch_reads_reference
-        .map { meta, reads, ref -> [ meta, reads ] }
+        .map { meta, reads, _ref -> [ meta, reads ] }
         .join(ch_bowtie2_index, by: 0)
         .join(ch_ref_fai, by:0)
         .multiMap { meta, reads, bowtie2_index, ref, fai ->
@@ -62,19 +61,19 @@ workflow MAPPING_SHORTREAD {
     if (params.perform_verify_species) {
         FASTQ_ALIGN_BOWTIE2.out.bam
             .collect()
-            .map { it -> file("${params.outdir}/mapping/bowtie2/align") }
+            .map { file("${params.outdir}/mapping/bowtie2/align") }
             .set { ch_bowtie2_align_dir}
         RM_EMPTY_BAM (ch_bowtie2_align_dir)
     }
     if (params.perform_screen_pathogens) {
         FASTQ_ALIGN_BOWTIE2.out.bam
             .collect()
-            .map { it -> file("${params.outdir}/pathogens/mapping/bowtie2/align") }
+            .map { file("${params.outdir}/pathogens/mapping/bowtie2/align") }
             .set { ch_bowtie2_align_dir}
         RM_EMPTY_BAM_PATHOGEN (ch_bowtie2_align_dir)
     }
 
-    ch_multiqc_files = ch_multiqc_files.mix ( FASTQ_ALIGN_BOWTIE2.out.flagstat.collect{it[1]}.ifEmpty([]) )
+    ch_multiqc_files = ch_multiqc_files.mix ( FASTQ_ALIGN_BOWTIE2.out.flagstat.collect{ _meta, flagstat_file -> flagstat_file }.ifEmpty([]) )
 
     emit:
     index    = BOWTIE2_BUILD.out.index               // channel: [ val(meta), [ index ] ]
