@@ -2,13 +2,13 @@
 // Screen pathogens for long reads
 //
 
-include { MINIMAP2_INDEX                            } from '../../modules/nf-core/minimap2/index/main'
-include { MINIMAP2_ALIGN                            } from '../../modules/nf-core/minimap2/align/main'
-include { BAM_SORT_STATS_SAMTOOLS                   } from '../nf-core/bam_sort_stats_samtools/main'
-include { SAMTOOLS_FAIDX                            } from '../../modules/nf-core/samtools/faidx/main'
-include { PIGZ_UNCOMPRESS                           } from '../../modules/nf-core/pigz/uncompress/main'
-include { RM_EMPTY_BAM                              } from '../../modules/local/rm_empty_bam/main'
-include { RM_EMPTY_BAM as RM_EMPTY_BAM_PATHOGEN     } from '../../modules/local/rm_empty_bam/main'
+include { MINIMAP2_INDEX                            } from '../../../modules/nf-core/minimap2/index'
+include { MINIMAP2_ALIGN                            } from '../../../modules/nf-core/minimap2/align'
+include { BAM_SORT_STATS_SAMTOOLS                   } from '../../../modules/nf-core/bam_sort_stats_samtools'
+include { SAMTOOLS_FAIDX                            } from '../../../modules/nf-core/samtools/faidx'
+include { PIGZ_UNCOMPRESS                           } from '../../../modules/nf-core/pigz/uncompress'
+include { RM_EMPTY_BAM                              } from '../../../modules/local/rm_empty_bam'
+include { RM_EMPTY_BAM as RM_EMPTY_BAM_PATHOGEN     } from '../../../modules/local/rm_empty_bam'
 
 
 workflow MAPPING_LONGREAD {

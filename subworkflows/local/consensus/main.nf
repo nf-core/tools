@@ -2,11 +2,11 @@
 // Consensus calling
 //
 
-include { SAMTOOLS_CONSENSUS as SAMTOOLS_CONSENSUS_SHORTREAD    } from '../../modules/nf-core/samtools/consensus/main'
-include { SAMTOOLS_CONSENSUS as SAMTOOLS_CONSENSUS_LONGREAD     } from '../../modules/nf-core/samtools/consensus/main'
-include { MEDAKA_PARALLEL as MEDAKA                             } from '../../modules/local/medaka_consensus/main'
-include { FILTER_CONSENSUS as FILTER_CONSENSUS_SHORTREAD        } from '../../modules/local/filter_consensus'
-include { FILTER_CONSENSUS as FILTER_CONSENSUS_LONGREAD         } from '../../modules/local/filter_consensus'
+include { SAMTOOLS_CONSENSUS as SAMTOOLS_CONSENSUS_SHORTREAD    } from '../../../modules/nf-core/samtools/consensus'
+include { SAMTOOLS_CONSENSUS as SAMTOOLS_CONSENSUS_LONGREAD     } from '../../../modules/nf-core/samtools/consensus'
+include { MEDAKA_PARALLEL as MEDAKA                             } from '../../../modules/local/medaka_consensus'
+include { FILTER_CONSENSUS as FILTER_CONSENSUS_SHORTREAD        } from '../../../modules/local/filter_consensus'
+include { FILTER_CONSENSUS as FILTER_CONSENSUS_LONGREAD         } from '../../../modules/local/filter_consensus'
 
 workflow CONSENSUS {
     take:

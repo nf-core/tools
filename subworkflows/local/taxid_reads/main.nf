@@ -2,12 +2,12 @@
 // EXTRACT READS
 //
 
-include { EXTRACT_VIRAL_TAXID as KRAKEN2_VIRAL_TAXID      } from '../../modules/local/extract_viral_taxid/main'
-include { EXTRACT_VIRAL_TAXID as CENTRIFUGE_VIRAL_TAXID   } from '../../modules/local/extract_viral_taxid/main'
-include { EXTRACT_VIRAL_TAXID as DIAMOND_VIRAL_TAXID      } from '../../modules/local/extract_viral_taxid/main'
-include { KRAKENTOOLS_EXTRACTKRAKENREADS                  } from '../../modules/nf-core/krakentools/extractkrakenreads/main'
-include { EXTRACTCENTRIFUGEREADS                          } from '../../modules/local/extractcentrifugereads/main'
-include { EXTRACTDIAMONDREADS                            } from '../../modules/local/extractdiamondreads/main'
+include { EXTRACT_VIRAL_TAXID as KRAKEN2_VIRAL_TAXID      } from '../../../modules/local/extract_viral_taxid'
+include { EXTRACT_VIRAL_TAXID as CENTRIFUGE_VIRAL_TAXID   } from '../../../modules/local/extract_viral_taxid'
+include { EXTRACT_VIRAL_TAXID as DIAMOND_VIRAL_TAXID      } from '../../../modules/local/extract_viral_taxid'
+include { KRAKENTOOLS_EXTRACTKRAKENREADS                  } from '../../../modules/nf-core/krakentools/extractkrakenreads'
+include { EXTRACTCENTRIFUGEREADS                          } from '../../../modules/local/extractcentrifugereads'
+include { EXTRACTDIAMONDREADS                            } from '../../../modules/local/extractdiamondreads'
 
 workflow TAXID_READS {
     params.taxid

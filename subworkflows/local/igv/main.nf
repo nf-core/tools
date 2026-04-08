@@ -2,11 +2,11 @@
 // IGV visualization
 //
 
-include { SAMTOOLS_INDEX      } from '../../modules/nf-core/samtools/index/main'
-include { SAMTOOLS_FAIDX      } from '../../modules/nf-core/samtools/faidx/main'
-include { BEDTOOLS_GENOMECOV  } from '../../modules/nf-core/bedtools/genomecov/main'
-include { PIGZ_UNCOMPRESS     } from '../../modules/nf-core/pigz/uncompress/main'
-include { IGVREPORTS          } from '../../modules/nf-core/igvreports/main'
+include { SAMTOOLS_INDEX      } from '../../../modules/nf-core/samtools/index'
+include { SAMTOOLS_FAIDX      } from '../../../modules/nf-core/samtools/faidx'
+include { BEDTOOLS_GENOMECOV  } from '../../../modules/nf-core/bedtools/genomecov'
+include { PIGZ_UNCOMPRESS     } from '../../../modules/nf-core/pigz/uncompress'
+include { IGVREPORTS          } from '../../../modules/nf-core/igvreports'
 
 workflow IGV {
     take:

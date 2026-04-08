@@ -2,12 +2,12 @@
 // Mapping
 //
 
-include { BOWTIE2_BUILD                             } from '../../modules/nf-core/bowtie2/build/main'
-include { FASTQ_ALIGN_BOWTIE2                       } from '../nf-core/fastq_align_bowtie2/main'
-include { SAMTOOLS_FAIDX                            } from '../../modules/nf-core/samtools/faidx/main'
-include { PIGZ_UNCOMPRESS                           } from '../../modules/nf-core/pigz/uncompress/main'
-include { RM_EMPTY_BAM                              } from '../../modules/local/rm_empty_bam/main'
-include { RM_EMPTY_BAM as RM_EMPTY_BAM_PATHOGEN     } from '../../modules/local/rm_empty_bam/main'
+include { BOWTIE2_BUILD                             } from '../../../modules/nf-core/bowtie2/build'
+include { FASTQ_ALIGN_BOWTIE2                       } from '../../../modules/nf-core/fastq_align_bowtie2'
+include { SAMTOOLS_FAIDX                            } from '../../../modules/nf-core/samtools/faidx'
+include { PIGZ_UNCOMPRESS                           } from '../../../modules/nf-core/pigz/uncompress'
+include { RM_EMPTY_BAM                              } from '../../../modules/local/rm_empty_bam'
+include { RM_EMPTY_BAM as RM_EMPTY_BAM_PATHOGEN     } from '../../../modules/local/rm_empty_bam'
 
 workflow MAPPING_SHORTREAD {
     take:

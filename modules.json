@@ -28,7 +28,7 @@
                     },
                     "diamond/blastx": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "8d52ac1b6f035f46c005a27b3510873c2a67ea41",
                         "installed_by": ["modules"]
                     },
                     "fastqc": {

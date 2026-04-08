@@ -2,12 +2,12 @@
 // BLASTN/BLASTX
 //
 
-include { UNTAR  as UNTAR_BLASTN                                } from '../../modules/nf-core/untar/main'
-include { UNTAR  as UNTAR_BLASTX                                } from '../../modules/nf-core/untar/main'
-include { BLAST_BLASTN                                          } from '../../modules/nf-core/blast/blastn/main'
-include { DIAMOND_BLASTX                                        } from '../../modules/nf-core/diamond/blastx/main'
-include { FILTER_BLAST as FILTER_BLASTN                         } from '../../modules/local/filter_blast/main'
-include { FILTER_BLAST as FILTER_BLASTX                         } from '../../modules/local/filter_blast/main'
+include { UNTAR  as UNTAR_BLASTN                                } from '../../../modules/nf-core/untar'
+include { UNTAR  as UNTAR_BLASTX                                } from '../../../modules/nf-core/untar'
+include { BLAST_BLASTN                                          } from '../../../modules/nf-core/blast/blastn'
+include { DIAMOND_BLASTX                                        } from '../../../modules/nf-core/diamond/blastx'
+include { FILTER_BLAST as FILTER_BLASTN                         } from '../../../modules/local/filter_blast'
+include { FILTER_BLAST as FILTER_BLASTX                         } from '../../../modules/local/filter_blast'
 
 workflow BLAST {
     take:
@@ -76,7 +76,6 @@ workflow BLAST {
             'txt',
             'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames'
         )
-        ch_versions = ch_versions.mix( DIAMOND_BLASTX.out.versions.first() )
 
         // Filter BLASTX hits
         ch_blastx_hits = DIAMOND_BLASTX.out.txt.filter { _meta, blastx_hits -> blastx_hits.size() > 0 }
