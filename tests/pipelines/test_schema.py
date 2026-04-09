@@ -35,6 +35,7 @@ class TestSchema(unittest.TestCase):
         self.original_nxf_assets = os.environ.get("NXF_ASSETS")
         self.nxf_home = Path(self.tmp_dir, ".nextflow")
         self.nxf_assets = Path(self.nxf_home, "assets")
+        self.nxf_home.mkdir(exist_ok=True)
         self.nxf_assets.mkdir(exist_ok=True)
         os.environ["NXF_HOME"] = str(self.nxf_home)
         os.environ["NXF_ASSETS"] = str(self.nxf_assets)
