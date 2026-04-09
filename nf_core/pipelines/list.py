@@ -30,9 +30,9 @@ def _get_nextflow_assets_dir() -> Path:
 
     nxf_home = os.environ.get("NXF_HOME")
     if nxf_home:
-        return Path(nxf_home) / "assets"
+        return Path(nxf_home, "assets")
 
-    return Path(os.environ.get("HOME", "")) / ".nextflow" / "assets"
+    return Path(os.environ.get("HOME", ""), ".nextflow", "assets")
 
 
 def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
@@ -77,7 +77,7 @@ def get_local_wf(workflow: Path, revision=None) -> Path | None:
     """
     # Assume nf-core if no org given
     if str(workflow).count("/") == 0:
-        workflow = Path(f"nf-core/{workflow}")
+        workflow = Path("nf-core", workflow)
 
     local_wf = LocalWorkflow(str(workflow))
     local_wf_path = _get_nextflow_assets_dir() / workflow
