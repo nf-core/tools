@@ -33,9 +33,9 @@ class TestSchema(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.original_nxf_home = os.environ.get("NXF_HOME")
         self.original_nxf_assets = os.environ.get("NXF_ASSETS")
-        self.nxf_home = os.path.join(self.tmp_dir, ".nextflow")
-        self.nxf_assets = os.path.join(self.nxf_home, "assets")
-        os.makedirs(self.nxf_assets, exist_ok=True)
+        self.nxf_home = Path(self.tmp_dir, ".nextflow")
+        self.nxf_assets = Path(self.nxf_home, "assets")
+        self.nxf_assets.mkdir(exist_ok=True)
         os.environ["NXF_HOME"] = self.nxf_home
         os.environ["NXF_ASSETS"] = self.nxf_assets
         self.template_dir = os.path.join(self.tmp_dir, "wf")
