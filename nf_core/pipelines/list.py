@@ -28,11 +28,11 @@ def _get_nextflow_assets_dir() -> Path:
     if nxf_assets:
         return Path(nxf_assets)
 
-    nxf_home = os.getenv("NXF_HOME")
+    nxf_home = os.environ.get("NXF_HOME")
     if nxf_home:
         return Path(nxf_home) / "assets"
 
-    return Path(os.getenv("HOME",default="")) / ".nextflow" / "assets"
+    return Path(os.environ.get("HOME", "")) / ".nextflow" / "assets"
 
 
 def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
