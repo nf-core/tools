@@ -17,16 +17,21 @@ nextflow_pipeline {
         }
 
         then {
+
+
+            def stable_content_bracken     = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['bracken/**']      , ignoreFile: 'tests/.nftignore')
+            // centrifuge:  partly unstable files, see custom assertions
             def stable_name_all      = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
 
             //blastn
-            def stable_content_blastn = getAllFilesFromDir("$outputDir/blast/blastn/kraken2", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def stable_content_blastn = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['blast/blastn/**/*'], ignoreFile: 'tests/.nftignore')
+
 
             //blastx
-            def stable_content_blastx = getAllFilesFromDir("$outputDir/blast/blastx", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def stable_content_blastx = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['blast/blastx/**/*'], ignoreFile: 'tests/.nftignore')
 
             //extracted_reads
-            def stable_content_extracted_reads = getAllFilesFromDir("$outputDir/extracted_reads/", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def stable_content_extracted_reads = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['extracted_reads/**/*'], ignoreFile: 'tests/.nftignore')
 
             //igv
             def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
@@ -39,15 +44,15 @@ nextflow_pipeline {
             def stable_content_taxpasta     = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include: ["taxpasta/**"]     , ignoreFile: 'tests/.nftignore')
 
              //bowtie2 build
-            def stable_content_bowtie2_build = getAllFilesFromDir("$outputDir/mapping/bowtie2/build", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            def stable_content_bowtie2_build = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/bowtie2/build/**/**/*'], ignoreFile: 'tests/.nftignore')
+
 
             //minimap2
-            def stable_content_minimap2_align = getAllFilesFromDir("$outputDir/mapping/minimap2/align", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
-            def bam_files_minimap2_align  = getAllFilesFromDir("$outputDir/mapping/minimap2/align", include: ['*.bam'])
+            def stable_content_minimap2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/minimap2/align/*'], ignoreFile: 'tests/.nftignore')
+            def bam_files_minimap2_align  = getAllFilesFromDir(params.outdir, include: ['*.bam'])
 
             //pathogens
              def stable_content_pathogens_blast = getAllFilesFromDir("$outputDir/pathogens/blast", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
-
 
             assertAll(
                 { assert workflow.success},
@@ -76,7 +81,7 @@ nextflow_pipeline {
                     bam_files_minimap2_align.isEmpty() ? 'No BAM files' : bam_files_minimap2_align.collect { file -> [file.getName() + " minimap2 align md5: " + bam(file.toString()).getReadsMD5()] },
                     stable_content_minimap2_align).match("minimap2_align")},
                 //{ assert snapshot (stable_content_igv).match("igv")},
-               // { assert snapshot (stable_content_pathogens_blast).match("pathogens_blast")},
+                //{ assert snapshot (stable_content_pathogens_blast).match("pathogens_blast")},
             )
         }
     }
