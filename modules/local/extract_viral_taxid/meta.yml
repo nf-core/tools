@@ -11,6 +11,9 @@ input:
   - evalue_threshold:
       type: ["number", "integer"]
       description: An e-value threshold to filter the diamond classification result
+  - phages_taxid:
+      type: file
+      description: A list of phages taxid to be excluded from the extracted viral taxid
   - - meta:
         type: map
         description: |

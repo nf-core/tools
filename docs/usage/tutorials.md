@@ -132,7 +132,7 @@ This workflow is activated by enabling the ´--perform_verify_species´ option a
 ```bash
 git clone https://github.com/genomic-medicine-sweden/metaval.git
 nextflow run metaval/main.nf -profile singularity --input samplesheet.csv --outdir identified_viruses_results \
---perform_verify_species --taxid "211044 2886042 1920753 2491323 1826872 878220" \
+--perform_verify_species --taxid taxid_list.txt \
 --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads \
 --perform_shortread_denovo --perform_longread_denovo --min_read_counts 20
 
