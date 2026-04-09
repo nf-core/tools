@@ -28,7 +28,7 @@ def _get_nextflow_assets_dir() -> Path:
     if nxf_assets:
         return Path(nxf_assets)
 
-    nxf_home = os.environ.get("NXF_HOME")
+    nxf_home = os.getenv("NXF_HOME")
     if nxf_home:
         return Path(nxf_home) / "assets"
 
