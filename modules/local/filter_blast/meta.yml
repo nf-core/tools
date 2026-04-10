@@ -1,34 +1,67 @@
 name: filter_blast
-description: Use a custom python script to filter the blast(blastn/blastx) hits
-keywards:
+description: Use a custom Python script to filter BLASTN or BLASTX hits and summarize retained matches
+keywords:
   - blastn
   - blastx
   - filter
   - summary
   - taxonomy
-
 input:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
-  - blast_hits:
-      type: file
-      description: Comma separated file containing blast hits
-      pattern: "*.txt"
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - blast_hits:
+        type: file
+        description: Tabular BLAST hit file
+        pattern: "*.txt"
   - header:
       type: file
-      description: A header file for blast hits. For instance 'qseqid,sseqid,slen,pident,qlen,length,qcovs,nident,evalue,bitscore,staxid,ssciname'.
+      description: Header file describing the BLAST columns
       pattern: "*.txt"
 output:
-  - filtered_blast:
-      type: file
-      description: Filtered and summarized blast hits by taxid and subject Scientific Name
-      pattern: "*.txt"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+  filtered_blast:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*_filtered.txt":
+          type: file
+          description: Filtered BLAST hit table
+          pattern: "*_filtered.txt"
+  summary:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*_summary.txt":
+          type: file
+          description: Summary of filtered BLAST hits
+          pattern: "*_summary.txt"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python --version | sed -e 's/Python //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python --version | sed -e 's/Python //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
   - "@LilyAnderssonLee"
+

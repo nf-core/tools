@@ -12,7 +12,8 @@ process MEDAKA_PARALLEL {
 
     output:
     tuple val(meta), path("*_sorted.fasta"), emit: assembly
-    path "versions.yml"             , emit: versions
+    tuple val("${task.process}"), val("medaka"), eval("medaka --version 2>&1 | sed 's/medaka //g'"), emit: versions_medaka, topic: versions
+    tuple val("${task.process}"), val("seqkit"), eval("seqkit | sed '3!d; s/Version: //'"), emit: versions_seqkit, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -68,11 +69,5 @@ process MEDAKA_PARALLEL {
 
     # Sort the consensus by reads ID
     seqkit sort -n ${prefix}.fa > ${prefix}_sorted.fasta
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
-        seqkit: \$( seqkit | sed '3!d; s/Version: //' )
-    END_VERSIONS
     """
 }

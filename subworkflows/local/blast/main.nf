@@ -17,7 +17,6 @@ workflow BLAST {
     blast_header    // channel: [ path(header) ]
 
     main:
-    ch_versions = channel.empty()
     ch_blast_hits_taxid = channel.empty()
 
     ch_blastn_filtered = channel.empty()
@@ -41,7 +40,6 @@ workflow BLAST {
         // Filter BLASTN hits
         ch_blastn_hits = BLAST_BLASTN.out.txt.filter { _meta, blastn_hits -> blastn_hits.size() >0 }
         FILTER_BLASTN ( ch_blastn_hits, file( blast_header, checkIfExists: true ))
-        ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
         ch_blastn_filtered = ch_blastn_filtered.mix( FILTER_BLASTN.out.filtered_blast )
         // Extract unique taxids from BLASTN hit results
         ch_blastn_hits_taxid = FILTER_BLASTN.out.filtered_blast
@@ -77,7 +75,6 @@ workflow BLAST {
         // Filter BLASTX hits
         ch_blastx_hits = DIAMOND_BLASTX.out.txt.filter { _meta, blastx_hits -> blastx_hits.size() > 0 }
         FILTER_BLASTX ( ch_blastx_hits, file( blast_header, checkIfExists: true ))
-        ch_versions = ch_versions.mix( FILTER_BLASTX.out.versions.first() )
         ch_blastx_filtered = ch_blastx_filtered.mix( FILTER_BLASTX.out.filtered_blast)
         // Extract unique taxids from BLASTX hit results
         ch_blastx_hits_taxid = FILTER_BLASTX.out.filtered_blast
@@ -97,5 +94,4 @@ workflow BLAST {
     unique_taxid = ch_blast_hits_taxid_uniq // eg: ['211044', ['id':'SRR13439799', 'instrument_platform':'OXFORD_NANOPORE', 'single_end':true, 'taxid':'211044', 'tool':'centrifuge']]
     blastn_filtered = ch_blastn_filtered    // [ meta, filtered_blast ]
     blastx_filtered = ch_blastx_filtered    // [ meta, filtered_blast ]
-    versions = ch_versions
 }

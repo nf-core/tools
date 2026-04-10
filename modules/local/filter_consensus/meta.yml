@@ -1,31 +1,54 @@
 name: filter_consensus
-description: Use a custom python script to filter the consensus
-keywards:
-  - samtools
+description: Use a custom Python script to filter consensus sequences by minimum length
+keywords:
   - consensus
+  - fasta
   - filter
-
 input:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
-  - consensus:
-      type: file
-      description: Consensus FASTA file
-      pattern: "*.{fa,fasta,fa.gz,fasta.gz}"
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - consensus:
+        type: file
+        description: Consensus FASTA file
+        pattern: "*.{fa,fasta,fa.gz,fasta.gz}"
   - consensus_min_bases:
       type: number
-      description: "The minimum number of bases used to filter consensus sequences."
+      description: The minimum number of bases required to retain a consensus sequence
 output:
-  - filtered_consensus:
-      type: file
-      description: Filtered consensus sequences
-      pattern: "*.fasta"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+  filtered_consensus:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*_filtered.fasta":
+          type: file
+          description: Filtered consensus FASTA file
+          pattern: "*_filtered.fasta"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python --version | sed -e 's/Python //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python --version | sed -e 's/Python //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
   - "@LilyAnderssonLee"
+

@@ -15,7 +15,6 @@ workflow CONSENSUS {
     consensus_min_bases // channel: [ val(consensus_min_bases) ]  default: 50bp
 
     main:
-    ch_versions = channel.empty()
     ch_consensus = channel.empty()
 
     // Separate short read and long read bam files
@@ -32,7 +31,6 @@ workflow CONSENSUS {
         SAMTOOLS_CONSENSUS_SHORTREAD ( ch_bam_bai_consensus.shortreads )
         // Remove consensus sequences shorter than params.consensus_min_bases (default: 50 bp)
         FILTER_CONSENSUS_SHORTREAD ( SAMTOOLS_CONSENSUS_SHORTREAD.out.fasta, params.consensus_min_bases )
-        ch_versions = ch_versions.mix( FILTER_CONSENSUS_SHORTREAD.out.versions )
         ch_consensus = ch_consensus.mix( FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus.ifEmpty([]) )
     }
     // Long read consensus
@@ -41,18 +39,15 @@ workflow CONSENSUS {
             input_medaka  = ch_bam_bai_consensus.longreads.combine( channel.value(ch_reference) ).map{ meta_bam, bam, _bai, _meta_ref, ref -> [ meta_bam, bam, ref ]}
             MEDAKA ( input_medaka )
             ch_consensus_longread = MEDAKA.out.assembly
-            ch_versions = ch_versions.mix(MEDAKA.out.versions)
         } else if ( params.longread_consensus_tool == 'samtools' ) {
             SAMTOOLS_CONSENSUS_LONGREAD ( ch_bam_bai_consensus.longreads )
             ch_consensus_longread = SAMTOOLS_CONSENSUS_LONGREAD.out.fasta
         }
         // Remove consensus sequences shorter than params.consensus_min_bases (default: 50 bp)
         FILTER_CONSENSUS_LONGREAD ( ch_consensus_longread, consensus_min_bases )
-        ch_versions = ch_versions.mix( FILTER_CONSENSUS_LONGREAD.out.versions )
         ch_consensus = ch_consensus.mix( FILTER_CONSENSUS_LONGREAD.out.filtered_consensus.ifEmpty([]) )
     }
 
     emit:
     consensus = ch_consensus // channel: [ val(meta), path(consensus) ]
-    versions  = ch_versions   // channel: [ versions.yml ]
 }

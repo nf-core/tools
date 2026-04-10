@@ -12,7 +12,6 @@ workflow MAPPING_SHORTREAD {
     ch_reads_reference // [ [ meta ], [ reads ], [ reference ] ]
 
     main:
-    ch_versions = channel.empty()
     ch_multiqc_files = channel.empty()
 
     // Build the bowtie2 index
@@ -62,6 +61,5 @@ workflow MAPPING_SHORTREAD {
     bam      = FASTQ_ALIGN_BOWTIE2.out.bam           // channel: [ val(meta), [ bam ] ]
     bai      = FASTQ_ALIGN_BOWTIE2.out.index           // channel: [ val(meta), [ bai ] ]
     flagstat = FASTQ_ALIGN_BOWTIE2.out.flagstat      // channel: [ val(meta), [ flagstat ] ]
-    versions = ch_versions                           // channel: [ versions.yml ]
     mqc      = ch_multiqc_files
 }

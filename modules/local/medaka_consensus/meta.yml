@@ -1,13 +1,13 @@
 name: medaka
-description: A tool to create consensus sequences and variant calls from nanopore
-  sequencing data
+description: Create polished consensus sequences from nanopore reads and an assembly using Medaka
 keywords:
   - assembly
   - polishing
   - nanopore
+  - consensus
 tools:
   - medaka:
-      description: Neural network sequence error correction.
+      description: Neural network sequence error correction
       homepage: https://nanoporetech.github.io/medaka/index.html
       documentation: https://nanoporetech.github.io/medaka/index.html
       tool_dev_url: https://github.com/nanoporetech/medaka
@@ -21,28 +21,64 @@ input:
           e.g. [ id:'test', single_end:false ]
     - reads:
         type: file
-        description: List of input nanopore fasta/FastQ files
+        description: Input nanopore FASTA or FASTQ files
         pattern: "*.{fasta,fa,fastq,fastq.gz,fq,fq.gz}"
     - assembly:
         type: file
-        description: Genome assembly
+        description: Input genome assembly
         pattern: "*.{fasta,fa}"
 output:
-  - assembly:
-      - meta:
+  assembly:
+    - - meta:
           type: map
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-      - "*.fa.gz":
+      - "*_sorted.fasta":
           type: file
           description: Polished genome assembly
-          pattern: "*.fa.gz"
-  - versions:
-      - versions.yml:
-          type: file
-          description: File containing software versions
-          pattern: "versions.yml"
+          pattern: "*_sorted.fasta"
+  versions_medaka:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - medaka:
+          type: string
+          description: The name of the tool
+      - "medaka --version 2>&1 | sed 's/medaka //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_seqkit:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - seqkit:
+          type: string
+          description: The name of the tool
+      - "seqkit | sed '3!d; s/Version: //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - medaka:
+          type: string
+          description: The name of the tool
+      - "medaka --version 2>&1 | sed 's/medaka //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - seqkit:
+          type: string
+          description: The name of the tool
+      - "seqkit | sed '3!d; s/Version: //'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
   - "@nschan"
   - "@LilyAnderssonLee"
+

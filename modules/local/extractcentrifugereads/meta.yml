@@ -1,6 +1,6 @@
 name: extractcentrifuge
-description: Use a custom python script to extract reads with specified taxonomic ID from the Centrifuge classification output
-keywards:
+description: Use a custom script to extract reads for a specified taxonomic ID from Centrifuge results
+keywords:
   - taxid
   - centrifuge
   - results
@@ -9,33 +9,71 @@ keywards:
 input:
   - taxid:
       type: integer
-      description: A taxonomic ID to extract the reads
+      description: A taxonomic ID to extract the reads for
   - - meta:
         type: map
         description: |
           Groovy Map containing sample information
           e.g. [ id:'test', single_end:false ]
-  - - results:
+    - results:
         type: file
-        description: File containing classification results
+        description: File containing Centrifuge classification results
         pattern: "*.{results.txt}"
-  - - fastq:
+    - fastq:
         type: file
-        description: FastQ files
+        description: Input FASTQ files
         pattern: "*.fastq.gz"
 output:
-  - - meta:
-        type: map
-        description: |
-          Groovy Map containing sample information
-          e.g. [ id:'test', single_end:false ]
-  - - extracted_centrifuge_reads:
-        type: file
-        description: FastQ files contain the extracted reads of a specified taxid
-        pattern: "*fastq.gz"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+  extracted_centrifuge_reads:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.fastq.gz":
+          type: file
+          description: FASTQ files containing the extracted reads for the selected taxid
+          pattern: "*.fastq.gz"
+  versions_seqkit:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - seqkit:
+          type: string
+          description: The name of the tool
+      - "seqkit version | sed 's/seqkit v//'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pigz:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pigz:
+          type: string
+          description: The name of the tool
+      - "pigz --version 2>&1 | sed -e 's/pigz //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - seqkit:
+          type: string
+          description: The name of the tool
+      - "seqkit version | sed 's/seqkit v//'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pigz:
+          type: string
+          description: The name of the tool
+      - "pigz --version 2>&1 | sed -e 's/pigz //g'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
   - "@LilyAnderssonLee"
+

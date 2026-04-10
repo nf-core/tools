@@ -21,7 +21,6 @@ workflow TAXID_BAM_FASTA {
     min_read_counts   // Value: minimum number of reads to keep a BAM file
 
     main:
-    ch_versions        = channel.empty()
     ch_taxid_bam       = channel.empty()
     ch_taxid_bai       = channel.empty()
     ch_consensus_input = channel.empty()
@@ -80,7 +79,6 @@ workflow TAXID_BAM_FASTA {
 
     // BAM files will be used to call consensus sequences
     SUBSET_BAM_PASS( ch_consensus_input.bam, ch_consensus_input.accession )
-    ch_versions = ch_versions.mix( SUBSET_BAM_PASS.out.versions.first() )
     SAMTOOLS_SORT_PASS( SUBSET_BAM_PASS.out.bam, [[],[],[]], 'bai' )
     SAMTOOLS_INDEX_PASS( SAMTOOLS_SORT_PASS.out.bam )
 
@@ -115,14 +113,12 @@ workflow TAXID_BAM_FASTA {
 
     // FASTA files will be used as BLAST input, bam file will be used in IGV
     SUBSET_BAM_FAIL(ch_blast_input.bam, ch_blast_input.accession)
-    ch_versions = ch_versions.mix(SUBSET_BAM_FAIL.out.versions.first())
     SAMTOOLS_SORT_FAIL(SUBSET_BAM_FAIL.out.bam, [[],[],[]], 'bai')
     SAMTOOLS_INDEX_FAIL(SAMTOOLS_SORT_FAIL.out.bam)
 
     SAMTOOLS_FASTA(SAMTOOLS_SORT_FAIL.out.bam, false)
 
     emit:
-    versions        = ch_versions
     taxid_bam       = ch_taxid_bam
     taxid_bai       = ch_taxid_bai
     taxid_fasta     = SAMTOOLS_FASTA.out.fasta

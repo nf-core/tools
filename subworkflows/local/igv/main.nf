@@ -13,8 +13,6 @@ workflow IGV {
     ch_bam_bai_reference   // [ [ meta ], [ bam ], [bai], [ref] ]
 
     main:
-    ch_versions = channel.empty()
-
     // Extract and index mapped reads
     BEDTOOLS_GENOMECOV (
         ch_bam_bai_reference.map { meta, bam, _bai, _ref -> [ meta, bam, "1" ] },
@@ -57,5 +55,4 @@ workflow IGV {
     report        = IGVREPORTS.out.report
     fna           = PIGZ_UNCOMPRESS.out.file
     fai           = SAMTOOLS_FAIDX.out.fai
-    versions      = ch_versions
 }

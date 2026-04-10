@@ -180,7 +180,6 @@ workflow METAVAL {
         }
 
         BLAST(ch_blast_query, params.blastn_db, params.blastx_db, params.blast_header )
-        ch_versions = ch_versions.mix( BLAST.out.versions )
 
         // Perform FASTQC for reads with BLASTN hits
         ch_fastqc_blastn = ch_taxid_reads.nonempty
@@ -218,8 +217,6 @@ workflow METAVAL {
             // Mapping - long reads
             ch_mapping_input_longread = FETCH_BLAST_GENOMES.out.longreads.join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
             MAPPING_LONGREAD ( ch_mapping_input_longread )
-            ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
-            ch_versions = ch_versions.mix ( MAPPING_LONGREAD.out.versions )
             // Remove empty bam files
             ch_bam_mapped_longreads = channel.empty()
             ch_bam_mapped_longreads = ch_bam_mapped_longreads.mix(MAPPING_LONGREAD.out.flagstat)
@@ -253,7 +250,6 @@ workflow METAVAL {
             ch_igv_input = channel.empty()
             ch_igv_input = ch_igv_input.mix ( ch_igv_input_shortread, ch_igv_input_longread )
             IGV( ch_igv_input )
-            ch_versions = ch_versions.mix ( IGV.out.versions )
         }
     }
 
@@ -270,24 +266,19 @@ workflow METAVAL {
         ch_mapping_pathogen_shortread = ch_input.short_reads
             .map { meta, reads -> [ meta, reads, ch_reference]}
         MAPPING_SHORTREAD_PATHOGEN ( ch_mapping_pathogen_shortread )
-        ch_versions = ch_versions.mix( MAPPING_SHORTREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_SHORTREAD_PATHOGEN.out.mqc)
 
         // Map long reads to the pathogens genome
         ch_mapping_pathogen_longread = ch_input.long_reads
             .map { meta, reads -> [ meta, reads, ch_reference]}
         MAPPING_LONGREAD_PATHOGEN ( ch_mapping_pathogen_longread )
-        ch_versions = ch_versions.mix( MAPPING_LONGREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_LONGREAD_PATHOGEN.out.mqc)
 
         // Subset BAM file for each taxID
         ch_accession2taxid = channel.fromPath ( params.accession2taxid, checkIfExists: true )
 
         TAXID_BAM_FASTA_SHORTREAD ( MAPPING_SHORTREAD_PATHOGEN.out.bam, MAPPING_SHORTREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
-        ch_versions = ch_versions.mix( TAXID_BAM_FASTA_SHORTREAD.out.versions )
-
         TAXID_BAM_FASTA_LONGREAD( MAPPING_LONGREAD_PATHOGEN.out.bam, MAPPING_LONGREAD_PATHOGEN.out.bai, ch_accession2taxid, params.min_read_counts )
-        ch_versions = ch_versions.mix( TAXID_BAM_FASTA_LONGREAD.out.versions )
 
         // IGV
         ch_igv_input_pathogen_shortread = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam
@@ -302,7 +293,6 @@ workflow METAVAL {
             }
         ch_igv_input_pathogen = ch_igv_input_pathogen_shortread.mix( ch_igv_input_pathogen_longread )
         IGV_PATHOGEN ( ch_igv_input_pathogen )
-        ch_versions = ch_versions.mix( IGV_PATHOGEN.out.versions )
 
         //
         // SUBWORKFLOW: CONSENSUS - BAM file with the number of mapped reads > params.min_read_counts
@@ -331,7 +321,6 @@ workflow METAVAL {
             CONSENSUS.out.consensus.ifEmpty([])
         )
         BLAST_PATHOGEN ( ch_blast_query_pathogen, params.blastn_db, params.blastx_db, params.blast_header )
-        ch_versions = ch_versions.mix( BLAST_PATHOGEN.out.versions )
     }
 
     //
