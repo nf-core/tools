@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: taxid_reads
+description: Extract reads matching requested or inferred taxids from Kraken2, Centrifuge, and DIAMOND classification results
+keywords:
+  - taxonomy
+  - kraken2
+  - centrifuge
+  - diamond
+  - fastq
+components:
+  - extract_viral_taxid
+  - krakentools/extractkrakenreads
+  - extractcentrifugereads
+  - extractdiamondreads
+input:
+  - ch_reads:
+      description: |
+        Input reads.
+        Structure: [ val(meta), path(reads) ]
+  - ch_kraken2_taxpasta:
+      description: |
+        Kraken2 taxpasta summary input.
+  - ch_kraken2_result:
+      description: |
+        Kraken2 classified reads assignment input.
+  - ch_kraken2_report:
+      description: |
+        Kraken2 report input.
+  - ch_centrifuge_taxpasta:
+      description: |
+        Centrifuge taxpasta summary input.
+  - ch_centrifuge_result:
+      description: |
+        Centrifuge result input.
+  - ch_centrifuge_report:
+      description: |
+        Centrifuge report input.
+  - ch_diamond_taxpasta:
+      description: |
+        DIAMOND taxpasta summary input.
+  - ch_diamond_tsv:
+      description: |
+        DIAMOND tabular result input.
+output:
+  - reads:
+      description: |
+        Extracted reads for each selected taxid and classifier.
+        Structure: [ val(meta), path(reads) ]
+  - versions:
+      description: |
+        Files containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"

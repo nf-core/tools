@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: consensus
+description: Generate short-read and long-read consensus sequences and filter them by minimum length
+keywords:
+  - consensus
+  - samtools
+  - medaka
+  - fasta
+  - bam
+components:
+  - samtools/consensus
+  - medaka_consensus
+  - filter_consensus
+input:
+  - ch_bam_bai:
+      description: |
+        Input BAM files and indexes.
+        Structure: [ val(meta), path(bam), path(bai) ]
+  - ch_reference:
+      description: |
+        Reference genome used by long-read consensus calling.
+  - consensus_min_bases:
+      description: |
+        Minimum consensus length to retain.
+output:
+  - consensus:
+      description: |
+        Filtered consensus FASTA files.
+        Structure: [ val(meta), path(consensus) ]
+  - versions:
+      description: |
+        Files containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"

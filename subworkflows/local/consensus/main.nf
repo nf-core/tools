@@ -38,7 +38,7 @@ workflow CONSENSUS {
     // Long read consensus
     if ( params.perform_longread_consensus ) {
         if ( params.longread_consensus_tool == 'medaka' ) {
-            input_medaka  = ch_bam_bai_consensus.longreads.combine( channel.value(ch_reference) ).map{ meta_bam, bam_file, _meta_ref, ref -> [ meta_bam, bam_file, ref ]}
+            input_medaka  = ch_bam_bai_consensus.longreads.combine( channel.value(ch_reference) ).map{ meta_bam, bam, _bai, _meta_ref, ref -> [ meta_bam, bam, ref ]}
             MEDAKA ( input_medaka )
             ch_consensus_longread = MEDAKA.out.assembly
             ch_versions = ch_versions.mix(MEDAKA.out.versions)
