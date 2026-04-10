@@ -3,11 +3,9 @@
 //
 
 include { BOWTIE2_BUILD                             } from '../../../modules/nf-core/bowtie2/build'
-include { FASTQ_ALIGN_BOWTIE2                       } from '../../../subworkflows/nf-core/fastq_align_bowtie2'
+include { FASTQ_ALIGN_BOWTIE2                       } from '../../nf-core/fastq_align_bowtie2'
 include { SAMTOOLS_FAIDX                            } from '../../../modules/nf-core/samtools/faidx'
 include { PIGZ_UNCOMPRESS                           } from '../../../modules/nf-core/pigz/uncompress'
-include { RM_EMPTY_BAM                              } from '../../../modules/local/rm_empty_bam'
-include { RM_EMPTY_BAM as RM_EMPTY_BAM_PATHOGEN     } from '../../../modules/local/rm_empty_bam'
 
 workflow MAPPING_SHORTREAD {
     take:
@@ -56,22 +54,6 @@ workflow MAPPING_SHORTREAD {
         false,                          // sort bam
         ch_reads_with_index.fasta_fai
     )
-
-    // Remove empty bam files
-    if (params.perform_verify_species) {
-        FASTQ_ALIGN_BOWTIE2.out.bam
-            .collect()
-            .map { file("${params.outdir}/mapping/bowtie2/align") }
-            .set { ch_bowtie2_align_dir}
-        RM_EMPTY_BAM (ch_bowtie2_align_dir)
-    }
-    if (params.perform_screen_pathogens) {
-        FASTQ_ALIGN_BOWTIE2.out.bam
-            .collect()
-            .map { file("${params.outdir}/pathogens/mapping/bowtie2/align") }
-            .set { ch_bowtie2_align_dir}
-        RM_EMPTY_BAM_PATHOGEN (ch_bowtie2_align_dir)
-    }
 
     ch_multiqc_files = ch_multiqc_files.mix ( FASTQ_ALIGN_BOWTIE2.out.flagstat.collect{ _meta, flagstat_file -> flagstat_file }.ifEmpty([]) )
 

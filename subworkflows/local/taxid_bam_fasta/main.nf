@@ -4,14 +4,14 @@
 
 include { SUBSET_BAM as SUBSET_BAM_PASS                     } from '../../../modules/local/subset_bam'
 include { SUBSET_BAM as SUBSET_BAM_FAIL                     } from '../../../modules/local/subset_bam'
-include { SAMTOOLS_SORT as SAMTOOLS_SORT_PASS               } from '../../../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT as SAMTOOLS_SORT_FAIL               } from '../../../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_INDEX as  SAMTOOLS_INDEX_PASS            } from '../../../modules/nf-core/samtools/index/main'
-include { SAMTOOLS_INDEX as  SAMTOOLS_INDEX_FAIL            } from '../../../modules/nf-core/samtools/index/main'
-include { SAMTOOLS_IDXSTATS                                 } from '../../../modules/nf-core/samtools/idxstats/main'
-include { SAMTOOLS_FASTA                                    } from '../../../modules/nf-core/samtools/fasta/main'
-include { SAMTOOLS_FLAGSTAT                                 } from '../../../modules/nf-core/samtools/flagstat/main'
-include { getFlagstatMappedReads                            } from '../../../subworkflows/local/utils_nfcore_metaval_pipeline'
+include { SAMTOOLS_SORT as SAMTOOLS_SORT_PASS               } from '../../../modules/nf-core/samtools/sort'
+include { SAMTOOLS_SORT as SAMTOOLS_SORT_FAIL               } from '../../../modules/nf-core/samtools/sort'
+include { SAMTOOLS_INDEX as  SAMTOOLS_INDEX_PASS            } from '../../../modules/nf-core/samtools/index'
+include { SAMTOOLS_INDEX as  SAMTOOLS_INDEX_FAIL            } from '../../../modules/nf-core/samtools/index'
+include { SAMTOOLS_IDXSTATS                                 } from '../../../modules/nf-core/samtools/idxstats'
+include { SAMTOOLS_FASTA                                    } from '../../../modules/nf-core/samtools/fasta'
+include { SAMTOOLS_FLAGSTAT                                 } from '../../../modules/nf-core/samtools/flagstat'
+include { getFlagstatMappedReads                            } from '../utils_nfcore_metaval_pipeline'
 
 workflow TAXID_BAM_FASTA {
     take:

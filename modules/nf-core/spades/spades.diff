@@ -4,6 +4,17 @@ Changes in component 'nf-core/spades'
 Changes in 'spades/main.nf':
 --- modules/nf-core/spades/main.nf
 +++ modules/nf-core/spades/main.nf
+@@ -13,8 +13,8 @@
+     path hmm
+ 
+     output:
+-    tuple val(meta), path('*.scaffolds.fa.gz')    , optional:true, emit: scaffolds
+-    tuple val(meta), path('*.contigs.fa.gz')      , optional:true, emit: contigs
++    tuple val(meta), path('*.scaffolds.fa')    , optional:true, emit: scaffolds
++    tuple val(meta), path('*.contigs.fa')      , optional:true, emit: contigs
+     tuple val(meta), path('*.transcripts.fa.gz')  , optional:true, emit: transcripts
+     tuple val(meta), path('*.gene_clusters.fa.gz'), optional:true, emit: gene_clusters
+     tuple val(meta), path('*.assembly.gfa.gz')    , optional:true, emit: gfa
 @@ -46,11 +46,9 @@
  
      if [ -f scaffolds.fasta ]; then

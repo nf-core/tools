@@ -4,12 +4,9 @@
 
 include { MINIMAP2_INDEX                            } from '../../../modules/nf-core/minimap2/index'
 include { MINIMAP2_ALIGN                            } from '../../../modules/nf-core/minimap2/align'
-include { BAM_SORT_STATS_SAMTOOLS                   } from '../../../subworkflows/nf-core/bam_sort_stats_samtools'
+include { BAM_SORT_STATS_SAMTOOLS                   } from '../../nf-core/bam_sort_stats_samtools'
 include { SAMTOOLS_FAIDX                            } from '../../../modules/nf-core/samtools/faidx'
 include { PIGZ_UNCOMPRESS                           } from '../../../modules/nf-core/pigz/uncompress'
-include { RM_EMPTY_BAM                              } from '../../../modules/local/rm_empty_bam'
-include { RM_EMPTY_BAM as RM_EMPTY_BAM_PATHOGEN     } from '../../../modules/local/rm_empty_bam'
-
 
 workflow MAPPING_LONGREAD {
     take:
@@ -67,22 +64,6 @@ workflow MAPPING_LONGREAD {
         }
 
     BAM_SORT_STATS_SAMTOOLS ( ch_bam_ref_fai.ch_bam, ch_bam_ref_fai.ch_ref_fai )
-
-    // Remove empty bam files
-    if (params.perform_verify_species) {
-        BAM_SORT_STATS_SAMTOOLS.out.bam
-            .collect()
-            .map { file("${params.outdir}/mapping/minimap2/align") }
-            .set { ch_bowtie2_align_dir}
-        RM_EMPTY_BAM (ch_bowtie2_align_dir)
-    }
-    if (params.perform_screen_pathogens) {
-        BAM_SORT_STATS_SAMTOOLS.out.bam
-            .collect()
-            .map { file("${params.outdir}/pathogens/mapping/minimap2/align") }
-            .set { ch_bowtie2_align_dir}
-        RM_EMPTY_BAM_PATHOGEN (ch_bowtie2_align_dir)
-    }
 
     ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{ _meta, flagstat_file -> flagstat_file }.ifEmpty([]))
 

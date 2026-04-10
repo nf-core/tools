@@ -9,20 +9,22 @@ include { TAXID_READS                                           } from '../subwo
 include { SEQKIT_FQ2FA as SEQKIT_FQ2FA_READS                    } from '../modules/nf-core/seqkit/fq2fa'
 include { PIGZ_UNCOMPRESS                                       } from '../modules/nf-core/pigz/uncompress'
 // De novo for extracted taxIDs reads
-include { SPADES                                                } from '../modules/nf-core/spades/main'
-include { FLYE                                                  } from '../modules/nf-core/flye/main'
+include { SPADES                                                } from '../modules/nf-core/spades'
+include { FLYE                                                  } from '../modules/nf-core/flye'
 
 // BLAST
-include { SEQKIT_FQ2FA                                          } from '../modules/nf-core/seqkit/fq2fa/main'
+include { SEQKIT_FQ2FA                                          } from '../modules/nf-core/seqkit/fq2fa'
 include { BLAST                                                 } from '../subworkflows/local/blast'
 include { BLAST as BLAST_PATHOGEN                               } from '../subworkflows/local/blast'
 
 // Mapping
+include { FETCH_BLAST_GENOMES                                   } from '../subworkflows/local/fetch_blast_genomes'
 include { MAPPING_SHORTREAD                                     } from '../subworkflows/local/mapping_shortread'
 include { MAPPING_LONGREAD                                      } from '../subworkflows/local/mapping_longread'
 include { MAPPING_SHORTREAD as MAPPING_SHORTREAD_PATHOGEN       } from '../subworkflows/local/mapping_shortread'
 include { MAPPING_LONGREAD as MAPPING_LONGREAD_PATHOGEN         } from '../subworkflows/local/mapping_longread'
-include { FETCH_BLAST_GENOMES                                   } from '../subworkflows/local/fetch_blast_genomes'
+include { SAMTOOLS_SORT as SAMTOOLS_SORT_SHORTREAD              } from '../modules/nf-core/samtools/sort'
+include { SAMTOOLS_SORT as SAMTOOLS_SORT_LONGREAD               } from '../modules/nf-core/samtools/sort'
 include { IGV                                                   } from '../subworkflows/local/igv'
 include { IGV as IGV_PATHOGEN                                   } from '../subworkflows/local/igv'
 
@@ -32,8 +34,8 @@ include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_LONGREAD           } from '../subwo
 include { CONSENSUS                                             } from '../subworkflows/local/consensus'
 
 // Summary subworkflow
-include { FASTQC                                                } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                                               } from '../modules/nf-core/multiqc/main'
+include { FASTQC                                                } from '../modules/nf-core/fastqc'
+include { MULTIQC                                               } from '../modules/nf-core/multiqc'
 include { paramsSummaryMap                                      } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc                                  } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML                                } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -202,14 +204,36 @@ workflow METAVAL {
             // Fetch genomes of blast hits
             FETCH_BLAST_GENOMES ( params.taxid2genome, BLAST.out.unique_taxid, ch_taxid_reads.nonempty )
             // Mapping - short reads
-            ch_mapping_input_sr = FETCH_BLAST_GENOMES.out.shortreads.join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0)
-            MAPPING_SHORTREAD ( ch_mapping_input_sr )
+            ch_mapping_input_shortread = FETCH_BLAST_GENOMES.out.shortreads.join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0)
+            MAPPING_SHORTREAD ( ch_mapping_input_shortread )
+            // Remove empty bam files
+            ch_bam_mapped_shortreads = channel.empty()
+            ch_bam_mapped_shortreads = ch_bam_mapped_shortreads.mix(MAPPING_SHORTREAD.out.flagstat)
+                .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
+
+            ch_bam_bai_shortread = channel.empty()
+            ch_bam_bai_shortread = ch_bam_bai_shortread.mix(MAPPING_SHORTREAD.out.bam)
+                .join (ch_bam_mapped_shortreads, by: [0])
+                .map { meta, bam, _mapped, pass -> if (pass) [meta, bam] }
+
+            SAMTOOLS_SORT_SHORTREAD(ch_bam_bai_shortread, [[],[],[]], 'bai')
 
             // Mapping - long reads
-            ch_mapping_input_lr = FETCH_BLAST_GENOMES.out.longreads.join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
-            MAPPING_LONGREAD ( ch_mapping_input_lr )
+            ch_mapping_input_longread = FETCH_BLAST_GENOMES.out.longreads.join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
+            MAPPING_LONGREAD ( ch_mapping_input_longread )
             ch_versions = ch_versions.mix ( MAPPING_SHORTREAD.out.versions )
             ch_versions = ch_versions.mix ( MAPPING_LONGREAD.out.versions )
+            // Remove empty bam files
+            ch_bam_mapped_longreads = channel.empty()
+            ch_bam_mapped_longreads = ch_bam_mapped_longreads.mix(MAPPING_LONGREAD.out.flagstat)
+                .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
+
+            ch_bam_bai_longreads = channel.empty()
+            ch_bam_bai_longreads = ch_bam_bai_longreads.mix(MAPPING_LONGREAD.out.bam)
+                .join (ch_bam_mapped_longreads, by: [0])
+                .map { meta, bam, _mapped, pass -> if (pass) [meta, bam] }
+
+            SAMTOOLS_SORT_LONGREAD(ch_bam_bai_longreads, [[],[],[]], 'bai')
 
             //
             // SUBWORKFLOW: IGV
@@ -217,38 +241,20 @@ workflow METAVAL {
 
             // Filter channels to get bam files which contains mapped reads
             // short reads
-            ch_mapped_shortreads = channel.empty()
-            ch_mapped_shortreads = ch_mapped_shortreads.mix(MAPPING_SHORTREAD.out.flagstat)
-                .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
-
-            ch_bam_bai_shortread = channel.empty()
-            ch_bam_bai_shortread = ch_bam_bai_shortread.mix(MAPPING_SHORTREAD.out.bam)
-                .join(MAPPING_SHORTREAD.out.bai)
-                .join (ch_mapped_shortreads, by: [0])
-                .map { meta, bam,bai, _mapped, pass -> if (pass) [meta, bam, bai ] }
-
             ch_igv_input_shortread = channel.empty()
-            ch_igv_input_shortread = ch_bam_bai_shortread
-                .join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0 )
+            ch_igv_input_shortread = ch_igv_input_shortread.mix(SAMTOOLS_SORT_SHORTREAD.out.bam)
+                .join(SAMTOOLS_SORT_SHORTREAD.out.index, by:0)
+                .join(FETCH_BLAST_GENOMES.out.shortreads_genome, by:0)
+
             // long reads
-            ch_mapped_longreads = channel.empty()
-            ch_mapped_longreads = ch_mapped_longreads.mix(MAPPING_LONGREAD.out.flagstat)
-                .map { meta, flagstat -> [meta] + getFlagstatMappedReads(flagstat)}
-
-            ch_bam_bai_longread = channel.empty()
-            ch_bam_bai_longread = ch_bam_bai_longread.mix(MAPPING_LONGREAD.out.bam)
-                .join(MAPPING_LONGREAD.out.bai)
-                .join (ch_mapped_longreads, by: [0])
-                .map { meta, bam,bai, _mapped, pass -> if (pass) [meta, bam, bai ] }
-
             ch_igv_input_longread = channel.empty()
-            ch_igv_input_longread = ch_igv_input_longread.mix(ch_bam_bai_longread)
+            ch_igv_input_longread = ch_igv_input_longread.mix(SAMTOOLS_SORT_LONGREAD.out.bam)
+                .join(SAMTOOLS_SORT_LONGREAD.out.index, by:0)
                 .join(FETCH_BLAST_GENOMES.out.longreads_genome, by:0)
 
             // Prepare IGV input channels
             ch_igv_input = channel.empty()
             ch_igv_input = ch_igv_input.mix ( ch_igv_input_shortread, ch_igv_input_longread )
-
             IGV( ch_igv_input )
             ch_versions = ch_versions.mix ( IGV.out.versions )
         }
@@ -264,16 +270,16 @@ workflow METAVAL {
     if ( params.perform_screen_pathogens ) {
         ch_reference = file( params.pathogens_genomes, checkIfExists: true)
         // Map short reads to the pathogens genome
-        ch_mapping_pathogen_sr = ch_input.short_reads
+        ch_mapping_pathogen_shortread = ch_input.short_reads
             .map { meta, reads -> [ meta, reads, ch_reference]}
-        MAPPING_SHORTREAD_PATHOGEN ( ch_mapping_pathogen_sr )
+        MAPPING_SHORTREAD_PATHOGEN ( ch_mapping_pathogen_shortread )
         ch_versions = ch_versions.mix( MAPPING_SHORTREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_SHORTREAD_PATHOGEN.out.mqc)
 
         // Map long reads to the pathogens genome
-        ch_mapping_pathogen_lr = ch_input.long_reads
+        ch_mapping_pathogen_longread = ch_input.long_reads
             .map { meta, reads -> [ meta, reads, ch_reference]}
-        MAPPING_LONGREAD_PATHOGEN ( ch_mapping_pathogen_lr )
+        MAPPING_LONGREAD_PATHOGEN ( ch_mapping_pathogen_longread )
         ch_versions = ch_versions.mix( MAPPING_LONGREAD_PATHOGEN.out.versions )
         ch_multiqc_files = ch_multiqc_files.mix(MAPPING_LONGREAD_PATHOGEN.out.mqc)
 
