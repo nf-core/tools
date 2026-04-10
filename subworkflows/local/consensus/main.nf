@@ -10,8 +10,8 @@ include { FILTER_CONSENSUS as FILTER_CONSENSUS_LONGREAD         } from '../../..
 
 workflow CONSENSUS {
     take:
-    bam                 // channel: [ val(meta), path(bam) ]
-    reference           // channel: [ path(fasta) ]
+    ch_bam_bai                 // channel: [ val(meta), path(bam), path(bai) ]
+    ch_reference           // channel: [ path(fasta) ]
     consensus_min_bases // channel: [ val(consensus_min_bases) ]  default: 50bp
 
     main:
@@ -19,18 +19,17 @@ workflow CONSENSUS {
     ch_consensus = channel.empty()
 
     // Separate short read and long read bam files
-    ch_bam = bam
-        .branch { meta, bam_file ->
+    ch_bam_bai_consensus = ch_bam_bai
+        .branch { meta, bam, bai ->
             shortreads: meta.instrument_platform != 'OXFORD_NANOPORE'
-                return [ meta, bam_file ]
+                return [ meta, bam, bai ]
             longreads: meta.instrument_platform == 'OXFORD_NANOPORE'
-                return [ meta, bam_file ]
+                return [ meta, bam, bai ]
         }
 
     // Short read consensus
     if ( params.perform_shortread_consensus ) {
-        SAMTOOLS_CONSENSUS_SHORTREAD ( ch_bam.shortreads )
-        ch_versions = ch_versions.mix( SAMTOOLS_CONSENSUS_SHORTREAD.out.versions )
+        SAMTOOLS_CONSENSUS_SHORTREAD ( ch_bam_bai_consensus.shortreads )
         // Remove consensus sequences shorter than params.consensus_min_bases (default: 50 bp)
         FILTER_CONSENSUS_SHORTREAD ( SAMTOOLS_CONSENSUS_SHORTREAD.out.fasta, params.consensus_min_bases )
         ch_versions = ch_versions.mix( FILTER_CONSENSUS_SHORTREAD.out.versions )
@@ -39,14 +38,13 @@ workflow CONSENSUS {
     // Long read consensus
     if ( params.perform_longread_consensus ) {
         if ( params.longread_consensus_tool == 'medaka' ) {
-            input_medaka  = ch_bam.longreads.combine( channel.value(reference) ).map{ meta_bam, bam_file, _meta_ref, ref -> [ meta_bam, bam_file, ref ]}
+            input_medaka  = ch_bam_bai_consensus.longreads.combine( channel.value(ch_reference) ).map{ meta_bam, bam_file, _meta_ref, ref -> [ meta_bam, bam_file, ref ]}
             MEDAKA ( input_medaka )
             ch_consensus_longread = MEDAKA.out.assembly
             ch_versions = ch_versions.mix(MEDAKA.out.versions)
         } else if ( params.longread_consensus_tool == 'samtools' ) {
-            SAMTOOLS_CONSENSUS_LONGREAD ( ch_bam.longreads )
+            SAMTOOLS_CONSENSUS_LONGREAD ( ch_bam_bai_consensus.longreads )
             ch_consensus_longread = SAMTOOLS_CONSENSUS_LONGREAD.out.fasta
-            ch_versions = ch_versions.mix( SAMTOOLS_CONSENSUS_LONGREAD.out.versions )
         }
         // Remove consensus sequences shorter than params.consensus_min_bases (default: 50 bp)
         FILTER_CONSENSUS_LONGREAD ( ch_consensus_longread, consensus_min_bases )

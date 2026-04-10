@@ -124,7 +124,6 @@ workflow METAVAL {
 
         // Convert fastq.gz into fasta files
         SEQKIT_FQ2FA_READS( ch_taxid_reads_transpose )
-        ch_versions = ch_versions.mix(SEQKIT_FQ2FA_READS.out.versions)
         PIGZ_UNCOMPRESS ( SEQKIT_FQ2FA_READS.out.fasta )
 
         //
@@ -160,7 +159,6 @@ workflow METAVAL {
         // Long reads de novo assembly
         if ( params.perform_longread_denovo ) {
             FLYE( ch_denovo.longreads, params.flye_mode )
-            ch_versions = ch_versions.mix( FLYE.out.versions.first() )
             ch_contigs_denovo = ch_contigs_denovo.mix( FLYE.out.fasta )
         }
 
@@ -179,7 +177,6 @@ workflow METAVAL {
             if ( params.perform_longread_denovo ) {
                 ch_blast_query = ch_blast_query.mix( FLYE.out.fasta )
             }
-            ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
         }
 
         BLAST(ch_blast_query, params.blastn_db, params.blastx_db, params.blast_header )
@@ -311,7 +308,11 @@ workflow METAVAL {
         // SUBWORKFLOW: CONSENSUS - BAM file with the number of mapped reads > params.min_read_counts
         //
 
-        ch_bam_filtered = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam.mix( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam )
+        ch_bam_filtered = channel.empty()
+        ch_bam_filtered_shortread = TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam.join(TAXID_BAM_FASTA_SHORTREAD.out.taxid_bai, by:0)
+        ch_bam_filtered_longread = TAXID_BAM_FASTA_LONGREAD.out.taxid_bam.join(TAXID_BAM_FASTA_LONGREAD.out.taxid_bai, by:0)
+        ch_bam_filtered = ch_bam_filtered.mix(ch_bam_filtered_shortread, ch_bam_filtered_longread)
+
         CONSENSUS ( ch_bam_filtered, [ [], ch_reference ], params.consensus_min_bases )
 
         // BLAST
@@ -338,7 +339,6 @@ workflow METAVAL {
     //
     FASTQC( ch_fastqc_files )
     ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{ zips -> zips[1]}.ifEmpty([]) )
-    ch_versions = ch_versions.mix( FASTQC.out.versions.first() )
 
     //
     // Collate and save software versions

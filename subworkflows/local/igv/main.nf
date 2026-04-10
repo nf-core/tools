@@ -22,15 +22,14 @@ workflow IGV {
         'bed',
         true
     )
-    ch_versions = ch_versions.mix( BEDTOOLS_GENOMECOV.out.versions )
 
     // Uncompress and index the reference genome
     PIGZ_UNCOMPRESS (
         ch_bam_bai_reference.map { meta, _bam, _bai, ref -> [ meta, ref ] }
     )
-
-    SAMTOOLS_FAIDX ( PIGZ_UNCOMPRESS.out.file, [ [], [] ], false )
-    ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
+    ch_ref_uncompressed = PIGZ_UNCOMPRESS.out.file
+        .map { meta, ref -> [meta, ref, []]}
+    SAMTOOLS_FAIDX ( ch_ref_uncompressed, false )
 
     // Join all channels together
     ch_bam_bai = ch_bam_bai_reference.map { meta, bam, bai, _ref -> [ meta, bam, bai ] }

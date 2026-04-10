@@ -31,7 +31,6 @@ workflow BLAST {
                 [ [:], file( blastn_db, checkIfExists: true ) ]
             )
             ch_blastn_db = UNTAR_BLASTN.out.untar
-            ch_versions = ch_versions.mix( UNTAR_BLASTN.out.versions )
         } else {
             ch_blastn_db = [ [:], file (blastn_db, checkIfExists: true ) ]
         }
@@ -63,7 +62,6 @@ workflow BLAST {
                 [ [:],file( blastx_db, checkIfExists: true )]
             )
             ch_blastx_db = UNTAR_BLASTX.out.untar
-            ch_versions = ch_versions.mix( UNTAR_BLASTX.out.versions )
         } else {
             ch_blastx_db = [ [:], file( blastx_db, checkIfExists: true ) ]
         }

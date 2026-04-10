@@ -19,7 +19,6 @@ workflow MAPPING_SHORTREAD {
     BOWTIE2_BUILD (
         ch_reads_reference.map { meta, _reads, ref -> [ meta, ref ] }
     )
-    ch_versions = ch_versions.mix( BOWTIE2_BUILD.out.versions )
     ch_bowtie2_index = BOWTIE2_BUILD.out.index
 
     // Build the reference index fai
@@ -27,12 +26,13 @@ workflow MAPPING_SHORTREAD {
         ch_reads_reference.map { meta, _reads, ref -> [ meta, ref ] }
     )
     ch_ref_uncompressed = PIGZ_UNCOMPRESS.out.file
+        .map { meta, ref -> [meta, ref, []]}
 
-    SAMTOOLS_FAIDX ( ch_ref_uncompressed, [ [], [] ], false )
-    ch_versions = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
+    SAMTOOLS_FAIDX ( ch_ref_uncompressed, false )
 
     // Join the uncompressed reference and reference index
     ch_ref_fai = ch_ref_uncompressed
+        .map {meta, ref, _empty -> [meta, ref]}
         .join(SAMTOOLS_FAIDX.out.fai, by:0)
 
     // Join the reads, minimap2 index, reference and reference index

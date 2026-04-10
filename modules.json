@@ -7,7 +7,7 @@
                 "nf-core": {
                     "bedtools/genomecov": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "88d43dad73a675e66bff49ebb57fe657a5909018",
                         "installed_by": ["modules"]
                     },
                     "blast/blastn": {
@@ -23,7 +23,7 @@
                     },
                     "bowtie2/build": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "2221f422f008714c13816bc5c3346d7346a56ed0",
                         "installed_by": ["modules"]
                     },
                     "diamond/blastx": {
@@ -33,12 +33,12 @@
                     },
                     "fastqc": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "79b36b51048048374b642289bfe9e591ef56fe05",
                         "installed_by": ["modules"]
                     },
                     "flye": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "1ab453187e9eada07bdd98609ce770971bfe86e4",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/flye/flye.diff"
                     },
@@ -74,12 +74,12 @@
                     },
                     "samtools/consensus": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "156feda0cb6589cd29c04902004fa3b53bc00205",
                         "installed_by": ["modules"]
                     },
                     "samtools/faidx": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "156feda0cb6589cd29c04902004fa3b53bc00205",
                         "installed_by": ["modules"]
                     },
                     "samtools/fasta": {
@@ -114,7 +114,7 @@
                     },
                     "seqkit/fq2fa": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "bf70cbf44b42ff4a81afcb673fcef604f5ef3a85",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/seqkit/fq2fa/seqkit-fq2fa.diff"
                     },
@@ -126,7 +126,7 @@
                     },
                     "untar": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "447f7bc0fa41dfc2400c8cad4c0291880dc060cf",
                         "installed_by": ["modules"]
                     }
                 }
