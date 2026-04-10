@@ -33,8 +33,8 @@ nextflow_pipeline {
             //extracted_reads
             def stable_content_extracted_reads = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['extracted_reads/**/*'], ignoreFile: 'tests/.nftignore')
 
-            //igv
-            def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            //igv:  partly unstable files, see custom assertions
+            //def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
 
             //bowtie2 align
             def stable_content_bowtie2_align = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
@@ -80,7 +80,11 @@ nextflow_pipeline {
                 { assert snapshot (
                     bam_files_minimap2_align.isEmpty() ? 'No BAM files' : bam_files_minimap2_align.collect { file -> [file.getName() + " minimap2 align md5: " + bam(file.toString()).getReadsMD5()] },
                     stable_content_minimap2_align).match("minimap2_align")},
-                //{ assert snapshot (stable_content_igv).match("igv")},
+                  // igv
+                { assert snapshot(
+                        getAllFilesFromDir("$outputDir/igv", include: ['*.html']).collect { file -> file.getName() + " exists: "+ file.exists() }
+                    ).match("igv")
+                },
                 //{ assert snapshot (stable_content_pathogens_blast).match("pathogens_blast")},
             )
         }

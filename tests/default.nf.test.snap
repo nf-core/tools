@@ -13,7 +13,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:04.100200478"
+        "timestamp": "2026-04-10T15:09:46.664549082"
     },
     "-profile test_taxid": {
         "content": [
@@ -135,7 +135,41 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:02.616734206"
+        "timestamp": "2026-04-10T15:09:45.195087557"
+    },
+    "krona": {
+        "content": [
+            [
+                "SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19_report.html exists: true",
+                "SRR13439799_centrifuge_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_report.html exists: true",
+                "SRR13439799_kraken2_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_report.html exists: true",
+                "SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19_report.html exists: true",
+                "SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-10T15:09:47.758212741"
     },
     "extracted_reads": {
         "content": [
@@ -147,7 +181,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:02.728750567"
+        "timestamp": "2026-04-10T15:09:45.312817989"
     },
     "bowtie2_build": {
         "content": [
@@ -266,7 +300,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:02.837476376"
+        "timestamp": "2026-04-10T15:09:45.422000339"
     },
     "bowtie2_align": {
         "content": [
@@ -384,7 +418,41 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:02.799749913"
+        "timestamp": "2026-04-10T15:09:45.385500797"
+    },
+    "igv": {
+        "content": [
+            [
+                "SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19_report.html exists: true",
+                "SRR13439799_centrifuge_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_report.html exists: true",
+                "SRR13439799_kraken2_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_report.html exists: true",
+                "SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1_report.html exists: true",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19_report.html exists: true",
+                "SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126_report.html exists: true"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-10T15:19:21.261660594"
     },
     "blastx": {
         "content": [
@@ -410,7 +478,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:02.718403246"
+        "timestamp": "2026-04-10T15:09:45.30238339"
     },
     "blastn": {
         "content": [
@@ -448,6 +516,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T14:14:02.691069251"
+        "timestamp": "2026-04-10T15:09:45.275001251"
     }
 }
