@@ -69,9 +69,12 @@ workflow BLAST {
             ch_blastx_db = [ [:], file( blastx_db, checkIfExists: true ) ]
         }
 
+        // Filter out blastx if meta.tools is "diamond"
+        ch_query_for_blastx = query.filter { meta, fasta -> meta.tool != 'diamond' }
+
         // BLASTX:DIAMOND
         DIAMOND_BLASTX (
-            query,
+            ch_query_for_blastx,
             ch_blastx_db,
             'txt',
             'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames'

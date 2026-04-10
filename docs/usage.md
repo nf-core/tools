@@ -209,6 +209,8 @@ The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sse
 
 You could also skip the BLAST using `params.skip_blastn` or `params.skip_blastx`.
 
+BLASTx is only used for centrifuge and kraken classification results, not DIAMOND.
+
 ### Filter BLAST(n/x)
 
 To reduce false positives hits in BLAST result, we apply filtering. Filtering thresholds can be adjusted using the parameters `params.blast(n/x)_min_qlen`, `params.blast(n/x)_min_pident`,`params.blast(n/x)_min_length`,`params.blast(n/x)_max_evalue`, which correspond to query length, percent of identical matches, alignment length, and e-value. The default values are 50, 50, 50 and 0.001.
