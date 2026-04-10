@@ -3,17 +3,17 @@
         "content": [
             "No BAM files",
             [
-                "SRR13439799_centrifuge_taxid_211044_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam:md5,8c3da548bd1d519bbf86ac06d18947b7",
-                "SRR13439799_centrifuge_taxid_211044_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam.bai:md5,a2e2b9c944d0acc6f17c0e0c7b51355f",
-                "SRR13439799_kraken2_taxid_211044_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam:md5,e6f3ed7402966da92d14cd773bbb4303",
-                "SRR13439799_kraken2_taxid_211044_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam.bai:md5,e9cac5c5d351976da6b98f2d4247d29e"
+                "SRR13439799_centrifuge_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam:md5,26025381a293dbd90155c094bfc947ac",
+                "SRR13439799_centrifuge_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam.bai:md5,31150cb6ccd6ec5ded17a4de29f3d9ce",
+                "SRR13439799_kraken2_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam:md5,7479be47b669085443d6fdc94ddbf769",
+                "SRR13439799_kraken2_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_mappingorganism_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.bam.bai:md5,53b71d51543302449fc2900a477a16bd"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:29.080837008"
+        "timestamp": "2026-04-10T14:14:04.100200478"
     },
     "-profile test_taxid": {
         "content": [
@@ -135,7 +135,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:27.578812145"
+        "timestamp": "2026-04-10T14:14:02.616734206"
     },
     "extracted_reads": {
         "content": [
@@ -147,7 +147,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:27.711162098"
+        "timestamp": "2026-04-10T14:14:02.728750567"
     },
     "bowtie2_build": {
         "content": [
@@ -212,12 +212,6 @@
                 "GCA_003307555.1_ASM330755v1_genomic.fna.4.bt2:md5,7d4acbffb24643b2aed5a3363d01b568",
                 "GCA_003307555.1_ASM330755v1_genomic.fna.rev.1.bt2:md5,9202bec95e80d204a183faeeeb5e9534",
                 "GCA_003307555.1_ASM330755v1_genomic.fna.rev.2.bt2:md5,edc751e43f471344a8435d113474fb15",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.1.bt2:md5,1c3ada3f55206c0f4492b21e8228f8bc",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.2.bt2:md5,594cde75df6e014bd0023299e376edc4",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.3.bt2:md5,076f14052ad07f9cacd617f0db8e316c",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.4.bt2:md5,4bb788861788f4a7463371d08304a947",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.1.bt2:md5,164a2754bdfe612224b9b47a5d555bb7",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.2.bt2:md5,07f034b6551fa0caf7d5dba0b0ac5123",
                 "GCA_000891295.1_ViralProj72371_genomic.fna.1.bt2:md5,5ed8b1bbd61ab59b5e19f50c94f74979",
                 "GCA_000891295.1_ViralProj72371_genomic.fna.2.bt2:md5,4cd9185a2a8c35062407a8ff7a9d0a37",
                 "GCA_000891295.1_ViralProj72371_genomic.fna.3.bt2:md5,5acf4da7fcdc1f5d5e88b17b858ff28d",
@@ -242,6 +236,12 @@
                 "GCA_013426605.1_ASM1342660v1_genomic.fna.4.bt2:md5,62de2984f37ec5b6dac802ba61c5f8e2",
                 "GCA_013426605.1_ASM1342660v1_genomic.fna.rev.1.bt2:md5,265f6f3fc992de5896a4e2b065c6450a",
                 "GCA_013426605.1_ASM1342660v1_genomic.fna.rev.2.bt2:md5,fb11758a5c28a5a21a549789ae8b49e4",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.1.bt2:md5,1c3ada3f55206c0f4492b21e8228f8bc",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.2.bt2:md5,594cde75df6e014bd0023299e376edc4",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.3.bt2:md5,076f14052ad07f9cacd617f0db8e316c",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.4.bt2:md5,4bb788861788f4a7463371d08304a947",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.1.bt2:md5,164a2754bdfe612224b9b47a5d555bb7",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.2.bt2:md5,07f034b6551fa0caf7d5dba0b0ac5123",
                 "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.1.bt2:md5,696155d14210890597358fa6331c2f37",
                 "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.2.bt2:md5,8a6b0c25e495481be465031373ccd7d2",
                 "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.3.bt2:md5,e9cbd30ddffc3202c027e7539efa8f9c",
@@ -266,149 +266,141 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:27.822118936"
+        "timestamp": "2026-04-10T14:14:02.837476376"
     },
     "bowtie2_align": {
         "content": [
             [
                 [
-                    "SRR13439790_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439790\tSM:SRR13439790, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439790 --rg SM:SRR13439790 --passthrough -1 SRR13439790_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439790_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439790.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439790.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439790_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439790_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
+                    "SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439790\tSM:SRR13439790, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439790 --rg SM:SRR13439790 --passthrough -1 SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_1.fastq.gz -2 SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439790.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439790.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam -]"
                 ],
                 [
-                    "SRR13439790_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ358387.1\tLN:72458, @RG\tID:SRR13439790\tSM:SRR13439790, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020882845.1_ASM2088284v1_genomic.fna --threads 4 --rg-id SRR13439790 --rg SM:SRR13439790 --passthrough -1 SRR13439790_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439790_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439790.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439790.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439790_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19 --threads 4 --reference GCA_020882845.1_ASM2088284v1_genomic.fna -o SRR13439790_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam -]"
+                    "SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ358387.1\tLN:72458, @RG\tID:SRR13439790\tSM:SRR13439790, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020882845.1_ASM2088284v1_genomic.fna --threads 4 --rg-id SRR13439790 --rg SM:SRR13439790 --passthrough -1 SRR13439790_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439790_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439790.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439790.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19 --threads 4 --reference GCA_020882845.1_ASM2088284v1_genomic.fna -o SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam -]"
                 ],
                 [
-                    "SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439802\tSM:SRR13439802, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439802 --rg SM:SRR13439802 --passthrough -1 SRR13439802_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439802_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439802.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439802.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
+                    "SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439802\tSM:SRR13439802, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439802 --rg SM:SRR13439802 --passthrough -1 SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_1.fastq.gz -2 SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439802.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439802.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam -]"
                 ],
                 [
-                    "SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_centrifuge_read1.fastq.gz -2 SRR13439813_878220.extracted_centrifuge_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
+                    "SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_1.fastq.gz -2 SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam -]"
                 ],
                 [
-                    "SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_diamond_read1.fastq.gz -2 SRR13439813_878220.extracted_diamond_read2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
+                    "SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_diamond_read_1.fastq.gz -2 SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_diamond_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-Bp4.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KJ135004.2\tLN:72583, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000922735.2_ViralProj248626_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-Bp4 --threads 4 --reference GCA_000922735.2_ViralProj248626_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-Bp4.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KJ135004.2\tLN:72583, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000922735.2_ViralProj248626_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4 --threads 4 --reference GCA_000922735.2_ViralProj248626_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-EC1-UPM.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KC206276.2\tLN:70912, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_002617245.1_ASM261724v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-EC1-UPM --threads 4 --reference GCA_002617245.1_ASM261724v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-EC1-UPM.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KC206276.2\tLN:70912, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_002617245.1_ASM261724v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM --threads 4 --reference GCA_002617245.1_ASM261724v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-ECBP1.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:JX415535.1\tLN:69855, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000900235.1_ViralProj177527_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-ECBP1 --threads 4 --reference GCA_000900235.1_ViralProj177527_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-ECBP1.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:JX415535.1\tLN:69855, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000900235.1_ViralProj177527_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1 --threads 4 --reference GCA_000900235.1_ViralProj177527_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-IME11.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:JX880034.1\tLN:72570, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000903115.1_ViralProj179425_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-IME11 --threads 4 --reference GCA_000903115.1_ViralProj179425_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-IME11.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:JX880034.1\tLN:72570, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000903115.1_ViralProj179425_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11 --threads 4 --reference GCA_000903115.1_ViralProj179425_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-PGN829.1.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MH733496.1\tLN:74437, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_003575565.1_ASM357556v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-PGN829.1 --threads 4 --reference GCA_003575565.1_ASM357556v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-PGN829.1.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MH733496.1\tLN:74437, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_003575565.1_ASM357556v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1 --threads 4 --reference GCA_003575565.1_ASM357556v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-St11Ph5.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MG208881.1\tLN:72444, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_002956185.1_ASM295618v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-St11Ph5 --threads 4 --reference GCA_002956185.1_ASM295618v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-St11Ph5.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MG208881.1\tLN:72444, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_002956185.1_ASM295618v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5 --threads 4 --reference GCA_002956185.1_ASM295618v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-U1G.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ394712.1\tLN:73275, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020475385.1_ASM2047538v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-U1G --threads 4 --reference GCA_020475385.1_ASM2047538v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-U1G.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ394712.1\tLN:73275, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020475385.1_ASM2047538v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G --threads 4 --reference GCA_020475385.1_ASM2047538v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-phi-G17.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MH358458.1\tLN:68270, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_003307555.1_ASM330755v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-phi-G17 --threads 4 --reference GCA_003307555.1_ASM330755v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-phi-G17.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MH358458.1\tLN:68270, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_003307555.1_ASM330755v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17 --threads 4 --reference GCA_003307555.1_ASM330755v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP-ZQ2.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MW630115.1\tLN:72231, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_019095225.1_ASM1909522v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP-ZQ2 --threads 4 --reference GCA_019095225.1_ASM1909522v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP-ZQ2.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:HQ259105.1\tLN:72917, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000891295.1_ViralProj72371_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C --threads 4 --reference GCA_000891295.1_ViralProj72371_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_G7C.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:HQ259105.1\tLN:72917, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000891295.1_ViralProj72371_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_G7C --threads 4 --reference GCA_000891295.1_ViralProj72371_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_G7C.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KF192075.1\tLN:71248, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000922515.1_ViralProj260483_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5 --threads 4 --reference GCA_000922515.1_ViralProj260483_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC5.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KF192075.1\tLN:71248, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000922515.1_ViralProj260483_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC5 --threads 4 --reference GCA_000922515.1_ViralProj260483_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC5.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KF562340.1\tLN:71778, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000924215.1_ViralProj260485_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7 --threads 4 --reference GCA_000924215.1_ViralProj260485_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC7.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KF562340.1\tLN:71778, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000924215.1_ViralProj260485_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC7 --threads 4 --reference GCA_000924215.1_ViralProj260485_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC7.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MT682708.1\tLN:72896, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_013426605.1_ASM1342660v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M --threads 4 --reference GCA_013426605.1_ASM1342660v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_SP5M.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MT682708.1\tLN:72896, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_013426605.1_ASM1342660v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_SP5M --threads 4 --reference GCA_013426605.1_ASM1342660v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_SP5M.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MW630115.1\tLN:72231, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_019095225.1_ASM1909522v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2 --threads 4 --reference GCA_019095225.1_ASM1909522v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-phage-pSb-1.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KF620435.1\tLN:71629, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000915775.1_ViralProj240039_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-phage-pSb-1 --threads 4 --reference GCA_000915775.1_ViralProj240039_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-phage-pSb-1.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:KF620435.1\tLN:71629, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000915775.1_ViralProj240039_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1 --threads 4 --reference GCA_000915775.1_ViralProj240039_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ358387.1\tLN:72458, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020882845.1_ASM2088284v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_1920753.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_1920753.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19 --threads 4 --reference GCA_020882845.1_ASM2088284v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam -]"
+                    "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:MZ358387.1\tLN:72458, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_020882845.1_ASM2088284v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19 --threads 4 --reference GCA_020882845.1_ASM2088284v1_genomic.fna -o SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam -]"
                 ],
                 [
-                    "SRR13439813_kraken2_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_878220.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_878220.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_kraken2_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam -]"
+                    "SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:AP014624.1\tLN:5503743, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-s --wrapper basic-0 -x ./bowtie2/GCA_000829375.1_ASM82937v1_genomic.fna --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_kraken2_read_1.fastq.gz -2 SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_kraken2_read_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126 --threads 4 --reference GCA_000829375.1_ASM82937v1_genomic.fna -o SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam -]"
                 ]
             ],
             [
-                "SRR13439790_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
-                "SRR13439790_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
-                "SRR13439790_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam",
-                "SRR13439790_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam.bai",
-                "SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
-                "SRR13439802_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
-                "SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
-                "SRR13439813_centrifuge_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
-                "SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
-                "SRR13439813_diamond_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-Bp4.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-Bp4.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-EC1-UPM.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-EC1-UPM.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-ECBP1.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-ECBP1.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-IME11.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-IME11.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-PGN829.1.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-PGN829.1.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-St11Ph5.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-St11Ph5.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-U1G.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-U1G.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-phi-G17.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-phi-G17.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP-ZQ2.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP-ZQ2.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_G7C.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_G7C.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC5.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC5.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC7.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_PhAPEC7.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_SP5M.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Escherichia-phage-vB_EcoP_SP5M.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-phage-pSb-1.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-phage-pSb-1.bam.bai",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam",
-                "SRR13439813_kraken2_taxid_1920753_mappingorganism_Shigella-virus-Moo19.bam.bai",
-                "SRR13439813_kraken2_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam",
-                "SRR13439813_kraken2_taxid_878220_mappingorganism_Chryseobacterium-sp.-StRB126.bam.bai"
+                "SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam",
+                "SRR13439790_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam.bai",
+                "SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam",
+                "SRR13439790_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam.bai",
+                "SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam",
+                "SRR13439802_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam.bai",
+                "SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam",
+                "SRR13439813_centrifuge_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam.bai",
+                "SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam",
+                "SRR13439813_diamond_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-Bp4.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-EC1-UPM.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-ECBP1.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-IME11.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-PGN829-1.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-St11Ph5.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-U1G.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-phi-G17.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-G7C.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC5.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-PhAPEC7.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-SP5M.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Escherichia-phage-vB-EcoP-ZQ2.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-phage-pSb-1.bam.bai",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam",
+                "SRR13439813_kraken2_taxid_1920753_Gamaleyavirus_mappingorganism_Shigella-virus-Moo19.bam.bai",
+                "SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam",
+                "SRR13439813_kraken2_taxid_878220_Chryseobacterium-sp-StRB126_mappingorganism_Chryseobacterium-sp-StRB126.bam.bai"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:27.784949491"
+        "timestamp": "2026-04-10T14:14:02.799749913"
     },
     "blastx": {
         "content": [
             [
-                "SRR13439790_1920753_blastx.txt(kraken2) contains string:true",
-                "SRR13439799_211044_blastx.txt(kraken2) contains string:true",
-                "SRR13439799_211044_blastx_filtered.txt(kraken2) contains string:true",
-                "SRR13439799_211044_blastx_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439813_1920753_blastx.txt(kraken2) contains string:true",
-                "SRR13439813_1920753_blastx_filtered.txt(kraken2) contains string:true",
-                "SRR13439813_1920753_blastx_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439813_878220_blastx.txt(kraken2) contains string:true",
-                "SRR13439813_878220_blastx_filtered.txt(kraken2) contains string:true",
-                "SRR13439813_878220_blastx_filtered_summary.txt(kraken2) contains string:true"
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blastx_filtered.txt(kraken2) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blastx_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blastx_filtered.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blastx_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blastx_filtered.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blastx_filtered_summary.txt(kraken2) contains string:true"
             ],
             [
-                "SRR13439790_878220_blastx.txt(centrifuge) exists:true",
-                "SRR13439799_211044_blastx.txt(centrifuge) contains string:true",
-                "SRR13439799_211044_blastx_filtered.txt(centrifuge) contains string:true",
-                "SRR13439799_211044_blastx_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439802_878220_blastx.txt(centrifuge) contains string:true",
-                "SRR13439813_878220_blastx.txt(centrifuge) contains string:true",
-                "SRR13439813_878220_blastx_filtered.txt(centrifuge) contains string:true",
-                "SRR13439813_878220_blastx_filtered_summary.txt(centrifuge) contains string:true"
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blastx_filtered.txt(centrifuge) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blastx_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blastx_filtered.txt(centrifuge) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blastx_filtered_summary.txt(centrifuge) contains string:true"
             ],
             [
                 
@@ -418,46 +410,35 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:27.698996285"
+        "timestamp": "2026-04-10T14:14:02.718403246"
     },
     "blastn": {
         "content": [
             [
-                "SRR13439790_1920753_blast.txt(kraken2) contains string:true",
-                "SRR13439790_1920753_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439790_1920753_blast_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439799_211044_blast.txt(kraken2) contains string:true",
-                "SRR13439799_211044_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439799_211044_blast_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439813_1920753_blast.txt(kraken2) contains string:true",
-                "SRR13439813_1920753_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439813_1920753_blast_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439813_878220_blast.txt(kraken2) contains string:true",
-                "SRR13439813_878220_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439813_878220_blast_filtered_summary.txt(kraken2) contains string:true"
+                "SRR13439790_taxid_1920753_Gamaleyavirus_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439790_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(kraken2) contains string:true"
             ],
             [
-                "SRR13439790_878220_blast.txt(centrifuge) contains string:true",
-                "SRR13439790_878220_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439790_878220_blast_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439799_211044_blast.txt(centrifuge) contains string:true",
-                "SRR13439799_211044_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439799_211044_blast_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439802_878220_blast.txt(centrifuge) contains string:true",
-                "SRR13439802_878220_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439802_878220_blast_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439813_878220_blast.txt(centrifuge) contains string:true",
-                "SRR13439813_878220_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439813_878220_blast_filtered_summary.txt(centrifuge) contains string:true"
+                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true"
             ],
             [
-                "SRR13439790_1920753_blast.txt(diamond) exists:true",
-                "SRR13439813_1920753_blast.txt(diamond) contains string:true",
-                "SRR13439813_1920753_blast_filtered.txt(diamond) contains string:true",
-                "SRR13439813_1920753_blast_filtered_summary.txt(diamond) contains string:true",
-                "SRR13439813_878220_blast.txt(diamond) contains string:true",
-                "SRR13439813_878220_blast_filtered.txt(diamond) contains string:true",
-                "SRR13439813_878220_blast_filtered_summary.txt(diamond) contains string:true"
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered.txt(diamond) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(diamond) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(diamond) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(diamond) contains string:true"
             ],
             [
                 
@@ -467,6 +448,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-09T22:47:27.663289347"
+        "timestamp": "2026-04-10T14:14:02.691069251"
     }
 }
