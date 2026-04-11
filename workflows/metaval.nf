@@ -125,7 +125,6 @@ workflow METAVAL {
         // Convert fastq.gz into fasta files
         SEQKIT_FQ2FA_READS( ch_taxid_reads_transpose )
         PIGZ_UNCOMPRESS ( SEQKIT_FQ2FA_READS.out.fasta )
-
         //
         // MODULE: DE NOVO - SPADES/FLYE
         //

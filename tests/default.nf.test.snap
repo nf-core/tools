@@ -155,20 +155,29 @@
     "extracted_reads": {
         "content": [
             [
-                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126.fa:md5,8486e2e949da0f392ce7123ce8623d65",
-                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.fa:md5,de63484d995564c1bdec65408efa6a7b",
-                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126.fa:md5,7544e195ea106dc6fb16d98c8bea72d1",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.fa:md5,4ada0019d46103ac38bbbe4650c76a55",
-                "SRR13439790_taxid_1920753_Gamaleyavirus.fa:md5,16eb466f4e8d847e17a7fba6191dde3d",
-                "SRR13439813_taxid_1920753_Gamaleyavirus.fa:md5,1209f258ba3576498c750751fa763959",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.fa:md5,fcd68f18c4768cc3ef6074ad854b386f",
-                "SRR13439790_taxid_1920753_Gamaleyavirus.fa:md5,2c0a0d0c31479667dc8130a2e7481b9b",
-                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.fa:md5,415086e10a205ff05b092304166f7415",
-                "SRR13439813_taxid_1920753_Gamaleyavirus.fa:md5,5504f7cd626146efbadef859990150e6",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.fa:md5,bb6d2a3df63da1fd93a8d6ad2f7121f1"
+                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_1.fa:md5,5ec9f96f09847667c1a27bff29f9d697",
+                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_2.fa:md5,8486e2e949da0f392ce7123ce8623d65",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.extracted_centrifuge_read.fa:md5,de63484d995564c1bdec65408efa6a7b",
+                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_1.fa:md5,491f9867e5a307db6b1f9c05b02d12cf",
+                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_2.fa:md5,7544e195ea106dc6fb16d98c8bea72d1",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_1.fa:md5,4ada0019d46103ac38bbbe4650c76a55",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_centrifuge_read_2.fa:md5,348622c85a82e7e7dc18dbf6f35f6894",
+                "SRR13439790_taxid_1920753_Gamaleyavirus.extracted_diamond_read_1.fa:md5,5fad85280d0d281d0f0688bf6cf0b6cb",
+                "SRR13439790_taxid_1920753_Gamaleyavirus.extracted_diamond_read_2.fa:md5,16eb466f4e8d847e17a7fba6191dde3d",
+                "SRR13439813_taxid_1920753_Gamaleyavirus.extracted_diamond_read_1.fa:md5,6ba2d1aea0b0148c53ac9a95a3178790",
+                "SRR13439813_taxid_1920753_Gamaleyavirus.extracted_diamond_read_2.fa:md5,1209f258ba3576498c750751fa763959",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_diamond_read_1.fa:md5,950ef8f2e18398d6abf48b17be044c8e",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_diamond_read_2.fa:md5,fcd68f18c4768cc3ef6074ad854b386f",
+                "SRR13439790_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fa:md5,106d87a30333bf371d797b367c87d71b",
+                "SRR13439790_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fa:md5,2c0a0d0c31479667dc8130a2e7481b9b",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1.extracted_kraken2_read.fa:md5,415086e10a205ff05b092304166f7415",
+                "SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_1.fa:md5,5504f7cd626146efbadef859990150e6",
+                "SRR13439813_taxid_1920753_Gamaleyavirus.extracted_kraken2_read_2.fa:md5,c3f2ae6cc84f9f591c04ab3fdf97ff44",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_kraken2_read_1.fa:md5,1a9c931f760c3077cce015bcb18ed2da",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126.extracted_kraken2_read_2.fa:md5,bb6d2a3df63da1fd93a8d6ad2f7121f1"
             ]
         ],
-        "timestamp": "2026-04-10T16:20:14.370298",
+        "timestamp": "2026-04-11T18:48:08.803879",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
