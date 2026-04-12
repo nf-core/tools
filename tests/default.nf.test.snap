@@ -13,7 +13,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:47.49953003"
+        "timestamp": "2026-04-12T16:59:03.473136084"
     },
     "-profile test_taxid": {
         "content": [
@@ -135,7 +135,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:45.742052634"
+        "timestamp": "2026-04-12T16:59:01.14917128"
     },
     "pathogens_consensus": {
         "content": [
@@ -150,7 +150,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:50.644768301"
+        "timestamp": "2026-04-12T16:59:06.845557246"
     },
     "extracted_reads": {
         "content": [
@@ -162,7 +162,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:45.84690174"
+        "timestamp": "2026-04-12T16:59:01.604153948"
     },
     "bowtie2_build": {
         "content": [
@@ -281,7 +281,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:46.156910472"
+        "timestamp": "2026-04-12T16:59:02.072603182"
     },
     "bowtie2_align": {
         "content": [
@@ -388,7 +388,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:46.104328432"
+        "timestamp": "2026-04-12T16:59:02.001833838"
     },
     "igv": {
         "content": [
@@ -422,7 +422,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:48.608950795"
+        "timestamp": "2026-04-12T16:59:04.695449809"
     },
     "blastx": {
         "content": [
@@ -448,7 +448,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:45.837469346"
+        "timestamp": "2026-04-12T16:59:01.592020964"
     },
     "blastn": {
         "content": [
@@ -486,7 +486,22 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:45.81017209"
+        "timestamp": "2026-04-12T16:59:01.493718878"
+    },
+    "pathogens_igv": {
+        "content": [
+            [
+                "SRR13439790_Homo_sapiens_report.html exists: true",
+                "SRR13439799_Influenza_A_virus_H1N1_report.html exists: true",
+                "SRR13439802_Homo_sapiens_report.html exists: true",
+                "SRR13439813_Homo_sapiens_report.html exists: true"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-12T16:59:07.99308982"
     },
     "pathogens_blast": {
         "content": [
@@ -506,6 +521,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-10T17:38:49.647740444"
+        "timestamp": "2026-04-12T16:59:05.848426247"
     }
 }

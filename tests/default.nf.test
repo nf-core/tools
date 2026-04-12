@@ -92,6 +92,11 @@ nextflow_pipeline {
                     getAllFilesFromDir("$outputDir/pathogens/blast/blastx", include: ['*.txt']).collect{file -> file.getName() + ' contains string:' + (file.exists() && file.text.contains("NC_002019.1_0")) },
                     stable_content_pathogens_blast).match("pathogens_blast")},
                  { assert snapshot (stable_content_pathogens_consensus).match("pathogens_consensus")},
+                 // pathogens igv
+                  { assert snapshot(
+                        getAllFilesFromDir("$outputDir/pathogens/igv", include: ['*.html']).collect { file -> file.getName() + " exists: "+ file.exists() }
+                    ).match("pathogens_igv")
+                },
             )
         }
     }
