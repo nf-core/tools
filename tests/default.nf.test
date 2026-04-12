@@ -45,7 +45,6 @@ nextflow_pipeline {
              //bowtie2 build
             def stable_content_bowtie2_build = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/bowtie2/build/**/**/*'], ignoreFile: 'tests/.nftignore')
 
-
             //minimap2
             def stable_content_minimap2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/minimap2/align/*'], ignoreFile: 'tests/.nftignore')
             def bam_files_minimap2_align  = getAllFilesFromDir(params.outdir, include: ['*.bam'])
@@ -55,6 +54,10 @@ nextflow_pipeline {
 
              //pathogens consensus
              def stable_content_pathogens_consensus = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['pathogens/consensus/*'], ignoreFile: 'tests/.nftignore')
+
+             //pathogens mapping bowtie2 build
+            def stable_content_pathogens_bowtie2_build = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['pathogens/mapping/bowtie2/build/**/**/*'], ignoreFile: 'tests/.nftignore')
+
 
             assertAll(
                 { assert workflow.success},
@@ -96,7 +99,8 @@ nextflow_pipeline {
                   { assert snapshot(
                         getAllFilesFromDir("$outputDir/pathogens/igv", include: ['*.html']).collect { file -> file.getName() + " exists: "+ file.exists() }
                     ).match("pathogens_igv")
-                },
+                  },
+                   { assert snapshot (stable_content_pathogens_bowtie2_build).match("pathogens_bowtie2_build")},
             )
         }
     }
