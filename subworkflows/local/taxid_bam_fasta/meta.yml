@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: taxid_bam_fasta
 description: Split mapped BAM files by taxid, keep BAMs passing the read-count threshold, and generate FASTA for downstream BLAST
+keywords:
   - bam
   - fasta
   - taxid
