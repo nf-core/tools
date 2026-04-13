@@ -1,4 +1,244 @@
 {
+    "pathogens_bowtie2_build": {
+        "content": [
+            [
+                "reference.fasta.1.bt2l:md5,678dcc98b3efeda9ba888a36135a7773",
+                "reference.fasta.2.bt2l:md5,e3754ca6be1eca15778ebeea51b502ca",
+                "reference.fasta.3.bt2l:md5,8090272074be0baec40849e11af2193e",
+                "reference.fasta.4.bt2l:md5,f94d857fe08bf0e185a1ccc2079ba8de",
+                "reference.fasta.rev.1.bt2l:md5,db16f08d0eef3a4feeb47aaec66a9bd6",
+                "reference.fasta.rev.2.bt2l:md5,061d25379a3f57db6e974ba06aeed404"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T13:34:41.647711835"
+    },
+    "bowtie2_build": {
+        "content": [
+            [
+                "GCA_001870125.1_ASM187012v1_genomic.fna.1.bt2:md5,5245c516d521244b11c216e79f28656e",
+                "GCA_001870125.1_ASM187012v1_genomic.fna.2.bt2:md5,b18b67fb8f404f166aa2e8418837e23d",
+                "GCA_001870125.1_ASM187012v1_genomic.fna.3.bt2:md5,6d2ab4219c1ffe5585c9a5a1729cbe99",
+                "GCA_001870125.1_ASM187012v1_genomic.fna.4.bt2:md5,da6fffd0f500362ad65fcc56102653b5",
+                "GCA_001870125.1_ASM187012v1_genomic.fna.rev.1.bt2:md5,f97edf3fb79ba9e704d1e8c38946edd6",
+                "GCA_001870125.1_ASM187012v1_genomic.fna.rev.2.bt2:md5,0bedb3aad46e7e1e142e956e6c7e1b33",
+                "GCA_000829375.1_ASM82937v1_genomic.fna.1.bt2:md5,b3cf9fbc744d82bb789897a378c4cc7f",
+                "GCA_000829375.1_ASM82937v1_genomic.fna.2.bt2:md5,3000c2ec3c0d8d5cc0fcac350685ca84",
+                "GCA_000829375.1_ASM82937v1_genomic.fna.3.bt2:md5,9eef52ec90710d73e5b18de0f2848b3b",
+                "GCA_000829375.1_ASM82937v1_genomic.fna.4.bt2:md5,6aa2a8d1f7b4b1f0070337975222e2c3",
+                "GCA_000829375.1_ASM82937v1_genomic.fna.rev.1.bt2:md5,d60a831466e22800763eb9c1f171e0bb",
+                "GCA_000829375.1_ASM82937v1_genomic.fna.rev.2.bt2:md5,10ffeed648b8ab04b571032d48c98147",
+                "GCA_000922735.2_ViralProj248626_genomic.fna.1.bt2:md5,a6302c93042efcdfecc63188c60d6a1d",
+                "GCA_000922735.2_ViralProj248626_genomic.fna.2.bt2:md5,a89b6b37d95c9330787f3f775035db8f",
+                "GCA_000922735.2_ViralProj248626_genomic.fna.3.bt2:md5,9d3b1dbb8504aa78ffada0c38969d6fa",
+                "GCA_000922735.2_ViralProj248626_genomic.fna.4.bt2:md5,e19db3f046ea9fbafcbafba2eeb06616",
+                "GCA_000922735.2_ViralProj248626_genomic.fna.rev.1.bt2:md5,8414241f8bd4dba561fe435a6b65dfa1",
+                "GCA_000922735.2_ViralProj248626_genomic.fna.rev.2.bt2:md5,34670b3f7c8e8e046d1eb4109a1bc10f",
+                "GCA_002617245.1_ASM261724v1_genomic.fna.1.bt2:md5,82fa69226fec125d21843aa5d049e55e",
+                "GCA_002617245.1_ASM261724v1_genomic.fna.2.bt2:md5,24ec4941cc118700f9bd48b3aeb62da1",
+                "GCA_002617245.1_ASM261724v1_genomic.fna.3.bt2:md5,913103a1c95b743484ccfb3fea9736c5",
+                "GCA_002617245.1_ASM261724v1_genomic.fna.4.bt2:md5,54a7161bb94e98ae03a859e94ad1edbe",
+                "GCA_002617245.1_ASM261724v1_genomic.fna.rev.1.bt2:md5,f216914499269b26a6fa80ec71b57421",
+                "GCA_002617245.1_ASM261724v1_genomic.fna.rev.2.bt2:md5,f2af3f55a226cfa8f9f30c80729ab7ae",
+                "GCA_000900235.1_ViralProj177527_genomic.fna.1.bt2:md5,8c2fd10c6d57fd92403651857370a50a",
+                "GCA_000900235.1_ViralProj177527_genomic.fna.2.bt2:md5,442e07de3ff2e15ed400775d498acbdc",
+                "GCA_000900235.1_ViralProj177527_genomic.fna.3.bt2:md5,ffa05f271e319b8741d73ecf932dec7e",
+                "GCA_000900235.1_ViralProj177527_genomic.fna.4.bt2:md5,4037fca7d360403f8be349dcbbc0080d",
+                "GCA_000900235.1_ViralProj177527_genomic.fna.rev.1.bt2:md5,d0d13a32ca7b17c8c9517cd03ac0914f",
+                "GCA_000900235.1_ViralProj177527_genomic.fna.rev.2.bt2:md5,23a47f4c1160f510b63379fc7cd462fb",
+                "GCA_000903115.1_ViralProj179425_genomic.fna.1.bt2:md5,b633ebd9196f0f7f55facb62f901548a",
+                "GCA_000903115.1_ViralProj179425_genomic.fna.2.bt2:md5,1f58284664cba29cf4e3fec636bb854b",
+                "GCA_000903115.1_ViralProj179425_genomic.fna.3.bt2:md5,866de3b543b9f1116a7ab2b438976369",
+                "GCA_000903115.1_ViralProj179425_genomic.fna.4.bt2:md5,238cc33582b8960725aee45f13048a02",
+                "GCA_000903115.1_ViralProj179425_genomic.fna.rev.1.bt2:md5,e39f2b9ace8eafbb18f1d450416c2d64",
+                "GCA_000903115.1_ViralProj179425_genomic.fna.rev.2.bt2:md5,97059cfbf2c43327584541c9014cf86f",
+                "GCA_003575565.1_ASM357556v1_genomic.fna.1.bt2:md5,89cbc20daaa30f60091dce8ec9b211ed",
+                "GCA_003575565.1_ASM357556v1_genomic.fna.2.bt2:md5,7b0add706c8e793706d1c4d929a61592",
+                "GCA_003575565.1_ASM357556v1_genomic.fna.3.bt2:md5,f6e6d398d5673e1d149ab1749572256d",
+                "GCA_003575565.1_ASM357556v1_genomic.fna.4.bt2:md5,00c5a5d4accaec12129090276011e0f3",
+                "GCA_003575565.1_ASM357556v1_genomic.fna.rev.1.bt2:md5,d3a65b575c701ce7545572fd4ded738c",
+                "GCA_003575565.1_ASM357556v1_genomic.fna.rev.2.bt2:md5,6bfe216f20169a73b9d9d36b31426f6b",
+                "GCA_002956185.1_ASM295618v1_genomic.fna.1.bt2:md5,506454de25af876acbdafe1c5c40c5f0",
+                "GCA_002956185.1_ASM295618v1_genomic.fna.2.bt2:md5,6d9d1a3121f6338df67118cea8973cc3",
+                "GCA_002956185.1_ASM295618v1_genomic.fna.3.bt2:md5,865ff0c7af5f59a8f5b2c28b23164c45",
+                "GCA_002956185.1_ASM295618v1_genomic.fna.4.bt2:md5,1031ee7c5dfd3c9f8bd053ed9d61e94d",
+                "GCA_002956185.1_ASM295618v1_genomic.fna.rev.1.bt2:md5,f8411057d26e59a171095a82f4f1559c",
+                "GCA_002956185.1_ASM295618v1_genomic.fna.rev.2.bt2:md5,9819bbe65bfb532b811480d6dd256487",
+                "GCA_020475385.1_ASM2047538v1_genomic.fna.1.bt2:md5,9cc6588f6bdd18b232f8ad2af37f0ad0",
+                "GCA_020475385.1_ASM2047538v1_genomic.fna.2.bt2:md5,89b7b031469256ff94837843ea650c41",
+                "GCA_020475385.1_ASM2047538v1_genomic.fna.3.bt2:md5,2be7a04fdba1019bfc88a4fbfc3bd1e2",
+                "GCA_020475385.1_ASM2047538v1_genomic.fna.4.bt2:md5,b38127ab1e849b6b1d5cdb4455f3f9a8",
+                "GCA_020475385.1_ASM2047538v1_genomic.fna.rev.1.bt2:md5,57114de592c6b78f985ade01cc9ed7db",
+                "GCA_020475385.1_ASM2047538v1_genomic.fna.rev.2.bt2:md5,0cb9093469517550cb80b393122da29a",
+                "GCA_003307555.1_ASM330755v1_genomic.fna.1.bt2:md5,8488d530ab8c644857db6a9810e0bea4",
+                "GCA_003307555.1_ASM330755v1_genomic.fna.2.bt2:md5,64b2f88528b853c69032b1e2b61ad229",
+                "GCA_003307555.1_ASM330755v1_genomic.fna.3.bt2:md5,5f5a8436b2b7bd56f5328b7a911e2fd5",
+                "GCA_003307555.1_ASM330755v1_genomic.fna.4.bt2:md5,7d4acbffb24643b2aed5a3363d01b568",
+                "GCA_003307555.1_ASM330755v1_genomic.fna.rev.1.bt2:md5,9202bec95e80d204a183faeeeb5e9534",
+                "GCA_003307555.1_ASM330755v1_genomic.fna.rev.2.bt2:md5,edc751e43f471344a8435d113474fb15",
+                "GCA_000891295.1_ViralProj72371_genomic.fna.1.bt2:md5,5ed8b1bbd61ab59b5e19f50c94f74979",
+                "GCA_000891295.1_ViralProj72371_genomic.fna.2.bt2:md5,4cd9185a2a8c35062407a8ff7a9d0a37",
+                "GCA_000891295.1_ViralProj72371_genomic.fna.3.bt2:md5,5acf4da7fcdc1f5d5e88b17b858ff28d",
+                "GCA_000891295.1_ViralProj72371_genomic.fna.4.bt2:md5,93adac2082ea4e429b09fbdfc9160d88",
+                "GCA_000891295.1_ViralProj72371_genomic.fna.rev.1.bt2:md5,e0bce8b8830b6f79c570a58acedcae2c",
+                "GCA_000891295.1_ViralProj72371_genomic.fna.rev.2.bt2:md5,c65382365d09a8de7d75d142049134a6",
+                "GCA_000922515.1_ViralProj260483_genomic.fna.1.bt2:md5,18396e06f96db773e20ce180c365dbc8",
+                "GCA_000922515.1_ViralProj260483_genomic.fna.2.bt2:md5,9ff3465c778b0938bf0613e8ebee0e87",
+                "GCA_000922515.1_ViralProj260483_genomic.fna.3.bt2:md5,18346ab205b0bbb1e8a97db482434533",
+                "GCA_000922515.1_ViralProj260483_genomic.fna.4.bt2:md5,4872a9d1e338d31ed9a71c7d969008a0",
+                "GCA_000922515.1_ViralProj260483_genomic.fna.rev.1.bt2:md5,e94fd93126580c5876feddf374b34dc7",
+                "GCA_000922515.1_ViralProj260483_genomic.fna.rev.2.bt2:md5,914d55f4653abe45c728a48d48cd048f",
+                "GCA_000924215.1_ViralProj260485_genomic.fna.1.bt2:md5,c787d96fa97b20ce8da8eaa56d97cfe8",
+                "GCA_000924215.1_ViralProj260485_genomic.fna.2.bt2:md5,20ed6ef7a2a542b1cb093dd3fefb4abd",
+                "GCA_000924215.1_ViralProj260485_genomic.fna.3.bt2:md5,d4f2d0e4e327d8a81fcafdf15ad67f36",
+                "GCA_000924215.1_ViralProj260485_genomic.fna.4.bt2:md5,729c3f464549bc5b27ae6bb966118911",
+                "GCA_000924215.1_ViralProj260485_genomic.fna.rev.1.bt2:md5,5cd6d44cfebfdb9989848348c1d4ab8a",
+                "GCA_000924215.1_ViralProj260485_genomic.fna.rev.2.bt2:md5,e002206a967ae16105328dfe98fca678",
+                "GCA_013426605.1_ASM1342660v1_genomic.fna.1.bt2:md5,a293b1d14fef92cc61d1764a818fff6f",
+                "GCA_013426605.1_ASM1342660v1_genomic.fna.2.bt2:md5,b111557714b464ec6ee1d268d0005f1b",
+                "GCA_013426605.1_ASM1342660v1_genomic.fna.3.bt2:md5,d6eb6e445eb494cdf07018b8bb4f3c72",
+                "GCA_013426605.1_ASM1342660v1_genomic.fna.4.bt2:md5,62de2984f37ec5b6dac802ba61c5f8e2",
+                "GCA_013426605.1_ASM1342660v1_genomic.fna.rev.1.bt2:md5,265f6f3fc992de5896a4e2b065c6450a",
+                "GCA_013426605.1_ASM1342660v1_genomic.fna.rev.2.bt2:md5,fb11758a5c28a5a21a549789ae8b49e4",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.1.bt2:md5,1c3ada3f55206c0f4492b21e8228f8bc",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.2.bt2:md5,594cde75df6e014bd0023299e376edc4",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.3.bt2:md5,076f14052ad07f9cacd617f0db8e316c",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.4.bt2:md5,4bb788861788f4a7463371d08304a947",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.1.bt2:md5,164a2754bdfe612224b9b47a5d555bb7",
+                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.2.bt2:md5,07f034b6551fa0caf7d5dba0b0ac5123",
+                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.1.bt2:md5,696155d14210890597358fa6331c2f37",
+                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.2.bt2:md5,8a6b0c25e495481be465031373ccd7d2",
+                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.3.bt2:md5,e9cbd30ddffc3202c027e7539efa8f9c",
+                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.4.bt2:md5,16937196a3bafb4c81d379bcbf46401d",
+                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.rev.1.bt2:md5,07add0c6304defa734d036badfa06e23",
+                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.rev.2.bt2:md5,4d50ef9a75308ea41f5da80654842d38",
+                "GCA_000915775.1_ViralProj240039_genomic.fna.1.bt2:md5,9216fab5c90076f61574d39f1c18438a",
+                "GCA_000915775.1_ViralProj240039_genomic.fna.2.bt2:md5,c366a09871c90a478fc11d4397345c91",
+                "GCA_000915775.1_ViralProj240039_genomic.fna.3.bt2:md5,618bc25bc27a5ca33a20e8eb6653cc51",
+                "GCA_000915775.1_ViralProj240039_genomic.fna.4.bt2:md5,94e777793e9e9afdc925348a06a49993",
+                "GCA_000915775.1_ViralProj240039_genomic.fna.rev.1.bt2:md5,7752fea6ca673639d375b062dee0492f",
+                "GCA_000915775.1_ViralProj240039_genomic.fna.rev.2.bt2:md5,7d8457dec74662fff499cf3f3fa1f38a",
+                "GCA_020882845.1_ASM2088284v1_genomic.fna.1.bt2:md5,0e76f788025861f84ef1807821b033c6",
+                "GCA_020882845.1_ASM2088284v1_genomic.fna.2.bt2:md5,79b601ffeca6be83298d1d0839ed9aa2",
+                "GCA_020882845.1_ASM2088284v1_genomic.fna.3.bt2:md5,2c099fb5dfd1e583635912ab8ab30bd0",
+                "GCA_020882845.1_ASM2088284v1_genomic.fna.4.bt2:md5,416eb84b125ecdd67a0c3cfb252f1f24",
+                "GCA_020882845.1_ASM2088284v1_genomic.fna.rev.1.bt2:md5,eb0321e45776940d00b7346924d299b5",
+                "GCA_020882845.1_ASM2088284v1_genomic.fna.rev.2.bt2:md5,f8ce76e79e194e6873f965a4d9381365"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T13:34:31.750780435"
+    },
+    "pathogens:bowtie2_align": {
+        "content": [
+            [
+                [
+                    "SRR13439790_aligned_pathogens_genome_sorted.bampathogens bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:NC_002205.1\tLN:2313, @SQ\tSN:NC_002206.1\tLN:2204, @SQ\tSN:NC_002207.1\tLN:1882, @SQ\tSN:NC_002208.1\tLN:1841, @SQ\tSN:NC_002209.1\tLN:1557, @SQ\tSN:NC_002210.1\tLN:1191, @SQ\tSN:NC_002211.1\tLN:1096, @SQ\tSN:NC_002204.1\tLN:2368, @SQ\tSN:NC_004910.1\tLN:2341, @SQ\tSN:NC_004911.1\tLN:2328, @SQ\tSN:NC_004912.1\tLN:2225, @SQ\tSN:NC_004908.1\tLN:1714, @SQ\tSN:NC_004905.2\tLN:1557, @SQ\tSN:NC_004909.1\tLN:1418, @SQ\tSN:NC_004907.1\tLN:1025, @SQ\tSN:NC_004906.1\tLN:890, @SQ\tSN:NC_006307.2\tLN:2365, @SQ\tSN:NC_006308.2\tLN:2363, @SQ\tSN:NC_006309.2\tLN:2183, @SQ\tSN:NC_006310.2\tLN:2073, @SQ\tSN:NC_006311.1\tLN:1807, @SQ\tSN:NC_006312.2\tLN:1180, @SQ\tSN:NC_006306.2\tLN:935, @SQ\tSN:NC_007357.1\tLN:2341, @SQ\tSN:NC_007358.1\tLN:2341, @SQ\tSN:NC_007359.1\tLN:2233, @SQ\tSN:NC_007362.1\tLN:1760, @SQ\tSN:NC_007360.1\tLN:1565, @SQ\tSN:NC_007361.1\tLN:1458, @SQ\tSN:NC_007363.1\tLN:1027, @SQ\tSN:NC_007364.1\tLN:865, @SQ\tSN:NC_007373.1\tLN:2341, @SQ\tSN:NC_007372.1\tLN:2341, @SQ\tSN:NC_007371.1\tLN:2233, @SQ\tSN:NC_007366.1\tLN:1762, @SQ\tSN:NC_007369.1\tLN:1566, @SQ\tSN:NC_007368.1\tLN:1467, @SQ\tSN:NC_007367.1\tLN:1027, @SQ\tSN:NC_007370.1\tLN:890, @SQ\tSN:NC_002023.1\tLN:2341, @SQ\tSN:NC_002021.1\tLN:2341, @SQ\tSN:NC_002022.1\tLN:2233, @SQ\tSN:NC_002017.1\tLN:1778, @SQ\tSN:NC_002019.1\tLN:1565, @SQ\tSN:NC_002018.1\tLN:1413, @SQ\tSN:NC_002016.1\tLN:1027, @SQ\tSN:NC_002020.1\tLN:890, @SQ\tSN:NC_007378.1\tLN:2341, @SQ\tSN:NC_007375.1\tLN:2341, @SQ\tSN:NC_007376.1\tLN:2233, @SQ\tSN:NC_007374.1\tLN:1773, @SQ\tSN:NC_007381.1\tLN:1497, @SQ\tSN:NC_007382.1\tLN:1410, @SQ\tSN:NC_007377.1\tLN:1027, @SQ\tSN:NC_007380.1\tLN:838, @SQ\tSN:NC_026422.1\tLN:2280, @SQ\tSN:NC_026423.1\tLN:2297, @SQ\tSN:NC_026424.1\tLN:2176, @SQ\tSN:NC_026425.1\tLN:1708, @SQ\tSN:NC_026426.1\tLN:1506, @SQ\tSN:NC_026429.1\tLN:1398, @SQ\tSN:NC_026427.1\tLN:985, @SQ\tSN:NC_026428.1\tLN:841, @SQ\tSN:NC_026438.1\tLN:2280, @SQ\tSN:NC_026435.1\tLN:2274, @SQ\tSN:NC_026437.1\tLN:2151, @SQ\tSN:NC_026433.1\tLN:1701, @SQ\tSN:NC_026436.1\tLN:1497, @SQ\tSN:NC_026434.1\tLN:1410, @SQ\tSN:NC_026431.1\tLN:982, @SQ\tSN:NC_026432.1\tLN:863, @SQ\tSN:NC_036616.1\tLN:2364, @SQ\tSN:NC_036615.1\tLN:2330, @SQ\tSN:NC_036619.1\tLN:2195, @SQ\tSN:NC_036618.1\tLN:2049, @SQ\tSN:NC_036617.1\tLN:1775, @SQ\tSN:NC_036620.1\tLN:1219, @SQ\tSN:NC_036621.1\tLN:868, @SQ\tSN:NC_060925.1\tLN:10001, @SQ\tSN:NC_060926.1\tLN:10001, @SQ\tSN:NC_060927.1\tLN:10001, @SQ\tSN:NC_060928.1\tLN:10001, @SQ\tSN:NC_060929.1\tLN:10001, @SQ\tSN:NC_060930.1\tLN:10001, @SQ\tSN:NC_060931.1\tLN:10001, @SQ\tSN:NC_060932.1\tLN:10001, @SQ\tSN:NC_060933.1\tLN:10001, @SQ\tSN:NC_060934.1\tLN:10001, @SQ\tSN:NC_060935.1\tLN:10001, @SQ\tSN:NC_060936.1\tLN:10001, @SQ\tSN:NC_060937.1\tLN:10001, @SQ\tSN:NC_060938.1\tLN:10001, @SQ\tSN:NC_060939.1\tLN:10001, @SQ\tSN:NC_060940.1\tLN:10001, @SQ\tSN:NC_060941.1\tLN:10001, @SQ\tSN:NC_060942.1\tLN:10001, @SQ\tSN:NC_060943.1\tLN:10001, @SQ\tSN:NC_060944.1\tLN:10001, @SQ\tSN:NC_060945.1\tLN:10001, @SQ\tSN:NC_060946.1\tLN:10001, @SQ\tSN:NC_060947.1\tLN:10001, @SQ\tSN:NC_060948.1\tLN:10001, @RG\tID:SRR13439790\tSM:SRR13439790, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-l --wrapper basic-0 -x ./bowtie2/reference.fasta --threads 4 --rg-id SRR13439790 --rg SM:SRR13439790 --passthrough -1 SRR13439790_SRR13439790.unmapped_1.fastq.gz -2 SRR13439790_SRR13439790.unmapped_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439790.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439790.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439790_aligned_pathogens_genome_sorted --threads 4 --reference reference.fasta -o SRR13439790_aligned_pathogens_genome_sorted.bam -]"
+                ],
+                [
+                    "SRR13439802_aligned_pathogens_genome_sorted.bampathogens bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:NC_002205.1\tLN:2313, @SQ\tSN:NC_002206.1\tLN:2204, @SQ\tSN:NC_002207.1\tLN:1882, @SQ\tSN:NC_002208.1\tLN:1841, @SQ\tSN:NC_002209.1\tLN:1557, @SQ\tSN:NC_002210.1\tLN:1191, @SQ\tSN:NC_002211.1\tLN:1096, @SQ\tSN:NC_002204.1\tLN:2368, @SQ\tSN:NC_004910.1\tLN:2341, @SQ\tSN:NC_004911.1\tLN:2328, @SQ\tSN:NC_004912.1\tLN:2225, @SQ\tSN:NC_004908.1\tLN:1714, @SQ\tSN:NC_004905.2\tLN:1557, @SQ\tSN:NC_004909.1\tLN:1418, @SQ\tSN:NC_004907.1\tLN:1025, @SQ\tSN:NC_004906.1\tLN:890, @SQ\tSN:NC_006307.2\tLN:2365, @SQ\tSN:NC_006308.2\tLN:2363, @SQ\tSN:NC_006309.2\tLN:2183, @SQ\tSN:NC_006310.2\tLN:2073, @SQ\tSN:NC_006311.1\tLN:1807, @SQ\tSN:NC_006312.2\tLN:1180, @SQ\tSN:NC_006306.2\tLN:935, @SQ\tSN:NC_007357.1\tLN:2341, @SQ\tSN:NC_007358.1\tLN:2341, @SQ\tSN:NC_007359.1\tLN:2233, @SQ\tSN:NC_007362.1\tLN:1760, @SQ\tSN:NC_007360.1\tLN:1565, @SQ\tSN:NC_007361.1\tLN:1458, @SQ\tSN:NC_007363.1\tLN:1027, @SQ\tSN:NC_007364.1\tLN:865, @SQ\tSN:NC_007373.1\tLN:2341, @SQ\tSN:NC_007372.1\tLN:2341, @SQ\tSN:NC_007371.1\tLN:2233, @SQ\tSN:NC_007366.1\tLN:1762, @SQ\tSN:NC_007369.1\tLN:1566, @SQ\tSN:NC_007368.1\tLN:1467, @SQ\tSN:NC_007367.1\tLN:1027, @SQ\tSN:NC_007370.1\tLN:890, @SQ\tSN:NC_002023.1\tLN:2341, @SQ\tSN:NC_002021.1\tLN:2341, @SQ\tSN:NC_002022.1\tLN:2233, @SQ\tSN:NC_002017.1\tLN:1778, @SQ\tSN:NC_002019.1\tLN:1565, @SQ\tSN:NC_002018.1\tLN:1413, @SQ\tSN:NC_002016.1\tLN:1027, @SQ\tSN:NC_002020.1\tLN:890, @SQ\tSN:NC_007378.1\tLN:2341, @SQ\tSN:NC_007375.1\tLN:2341, @SQ\tSN:NC_007376.1\tLN:2233, @SQ\tSN:NC_007374.1\tLN:1773, @SQ\tSN:NC_007381.1\tLN:1497, @SQ\tSN:NC_007382.1\tLN:1410, @SQ\tSN:NC_007377.1\tLN:1027, @SQ\tSN:NC_007380.1\tLN:838, @SQ\tSN:NC_026422.1\tLN:2280, @SQ\tSN:NC_026423.1\tLN:2297, @SQ\tSN:NC_026424.1\tLN:2176, @SQ\tSN:NC_026425.1\tLN:1708, @SQ\tSN:NC_026426.1\tLN:1506, @SQ\tSN:NC_026429.1\tLN:1398, @SQ\tSN:NC_026427.1\tLN:985, @SQ\tSN:NC_026428.1\tLN:841, @SQ\tSN:NC_026438.1\tLN:2280, @SQ\tSN:NC_026435.1\tLN:2274, @SQ\tSN:NC_026437.1\tLN:2151, @SQ\tSN:NC_026433.1\tLN:1701, @SQ\tSN:NC_026436.1\tLN:1497, @SQ\tSN:NC_026434.1\tLN:1410, @SQ\tSN:NC_026431.1\tLN:982, @SQ\tSN:NC_026432.1\tLN:863, @SQ\tSN:NC_036616.1\tLN:2364, @SQ\tSN:NC_036615.1\tLN:2330, @SQ\tSN:NC_036619.1\tLN:2195, @SQ\tSN:NC_036618.1\tLN:2049, @SQ\tSN:NC_036617.1\tLN:1775, @SQ\tSN:NC_036620.1\tLN:1219, @SQ\tSN:NC_036621.1\tLN:868, @SQ\tSN:NC_060925.1\tLN:10001, @SQ\tSN:NC_060926.1\tLN:10001, @SQ\tSN:NC_060927.1\tLN:10001, @SQ\tSN:NC_060928.1\tLN:10001, @SQ\tSN:NC_060929.1\tLN:10001, @SQ\tSN:NC_060930.1\tLN:10001, @SQ\tSN:NC_060931.1\tLN:10001, @SQ\tSN:NC_060932.1\tLN:10001, @SQ\tSN:NC_060933.1\tLN:10001, @SQ\tSN:NC_060934.1\tLN:10001, @SQ\tSN:NC_060935.1\tLN:10001, @SQ\tSN:NC_060936.1\tLN:10001, @SQ\tSN:NC_060937.1\tLN:10001, @SQ\tSN:NC_060938.1\tLN:10001, @SQ\tSN:NC_060939.1\tLN:10001, @SQ\tSN:NC_060940.1\tLN:10001, @SQ\tSN:NC_060941.1\tLN:10001, @SQ\tSN:NC_060942.1\tLN:10001, @SQ\tSN:NC_060943.1\tLN:10001, @SQ\tSN:NC_060944.1\tLN:10001, @SQ\tSN:NC_060945.1\tLN:10001, @SQ\tSN:NC_060946.1\tLN:10001, @SQ\tSN:NC_060947.1\tLN:10001, @SQ\tSN:NC_060948.1\tLN:10001, @RG\tID:SRR13439802\tSM:SRR13439802, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-l --wrapper basic-0 -x ./bowtie2/reference.fasta --threads 4 --rg-id SRR13439802 --rg SM:SRR13439802 --passthrough -1 SRR13439802_SRR13439802.unmapped_1.fastq.gz -2 SRR13439802_SRR13439802.unmapped_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439802.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439802.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439802_aligned_pathogens_genome_sorted --threads 4 --reference reference.fasta -o SRR13439802_aligned_pathogens_genome_sorted.bam -]"
+                ],
+                [
+                    "SRR13439813_aligned_pathogens_genome_sorted.bampathogens bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:NC_002205.1\tLN:2313, @SQ\tSN:NC_002206.1\tLN:2204, @SQ\tSN:NC_002207.1\tLN:1882, @SQ\tSN:NC_002208.1\tLN:1841, @SQ\tSN:NC_002209.1\tLN:1557, @SQ\tSN:NC_002210.1\tLN:1191, @SQ\tSN:NC_002211.1\tLN:1096, @SQ\tSN:NC_002204.1\tLN:2368, @SQ\tSN:NC_004910.1\tLN:2341, @SQ\tSN:NC_004911.1\tLN:2328, @SQ\tSN:NC_004912.1\tLN:2225, @SQ\tSN:NC_004908.1\tLN:1714, @SQ\tSN:NC_004905.2\tLN:1557, @SQ\tSN:NC_004909.1\tLN:1418, @SQ\tSN:NC_004907.1\tLN:1025, @SQ\tSN:NC_004906.1\tLN:890, @SQ\tSN:NC_006307.2\tLN:2365, @SQ\tSN:NC_006308.2\tLN:2363, @SQ\tSN:NC_006309.2\tLN:2183, @SQ\tSN:NC_006310.2\tLN:2073, @SQ\tSN:NC_006311.1\tLN:1807, @SQ\tSN:NC_006312.2\tLN:1180, @SQ\tSN:NC_006306.2\tLN:935, @SQ\tSN:NC_007357.1\tLN:2341, @SQ\tSN:NC_007358.1\tLN:2341, @SQ\tSN:NC_007359.1\tLN:2233, @SQ\tSN:NC_007362.1\tLN:1760, @SQ\tSN:NC_007360.1\tLN:1565, @SQ\tSN:NC_007361.1\tLN:1458, @SQ\tSN:NC_007363.1\tLN:1027, @SQ\tSN:NC_007364.1\tLN:865, @SQ\tSN:NC_007373.1\tLN:2341, @SQ\tSN:NC_007372.1\tLN:2341, @SQ\tSN:NC_007371.1\tLN:2233, @SQ\tSN:NC_007366.1\tLN:1762, @SQ\tSN:NC_007369.1\tLN:1566, @SQ\tSN:NC_007368.1\tLN:1467, @SQ\tSN:NC_007367.1\tLN:1027, @SQ\tSN:NC_007370.1\tLN:890, @SQ\tSN:NC_002023.1\tLN:2341, @SQ\tSN:NC_002021.1\tLN:2341, @SQ\tSN:NC_002022.1\tLN:2233, @SQ\tSN:NC_002017.1\tLN:1778, @SQ\tSN:NC_002019.1\tLN:1565, @SQ\tSN:NC_002018.1\tLN:1413, @SQ\tSN:NC_002016.1\tLN:1027, @SQ\tSN:NC_002020.1\tLN:890, @SQ\tSN:NC_007378.1\tLN:2341, @SQ\tSN:NC_007375.1\tLN:2341, @SQ\tSN:NC_007376.1\tLN:2233, @SQ\tSN:NC_007374.1\tLN:1773, @SQ\tSN:NC_007381.1\tLN:1497, @SQ\tSN:NC_007382.1\tLN:1410, @SQ\tSN:NC_007377.1\tLN:1027, @SQ\tSN:NC_007380.1\tLN:838, @SQ\tSN:NC_026422.1\tLN:2280, @SQ\tSN:NC_026423.1\tLN:2297, @SQ\tSN:NC_026424.1\tLN:2176, @SQ\tSN:NC_026425.1\tLN:1708, @SQ\tSN:NC_026426.1\tLN:1506, @SQ\tSN:NC_026429.1\tLN:1398, @SQ\tSN:NC_026427.1\tLN:985, @SQ\tSN:NC_026428.1\tLN:841, @SQ\tSN:NC_026438.1\tLN:2280, @SQ\tSN:NC_026435.1\tLN:2274, @SQ\tSN:NC_026437.1\tLN:2151, @SQ\tSN:NC_026433.1\tLN:1701, @SQ\tSN:NC_026436.1\tLN:1497, @SQ\tSN:NC_026434.1\tLN:1410, @SQ\tSN:NC_026431.1\tLN:982, @SQ\tSN:NC_026432.1\tLN:863, @SQ\tSN:NC_036616.1\tLN:2364, @SQ\tSN:NC_036615.1\tLN:2330, @SQ\tSN:NC_036619.1\tLN:2195, @SQ\tSN:NC_036618.1\tLN:2049, @SQ\tSN:NC_036617.1\tLN:1775, @SQ\tSN:NC_036620.1\tLN:1219, @SQ\tSN:NC_036621.1\tLN:868, @SQ\tSN:NC_060925.1\tLN:10001, @SQ\tSN:NC_060926.1\tLN:10001, @SQ\tSN:NC_060927.1\tLN:10001, @SQ\tSN:NC_060928.1\tLN:10001, @SQ\tSN:NC_060929.1\tLN:10001, @SQ\tSN:NC_060930.1\tLN:10001, @SQ\tSN:NC_060931.1\tLN:10001, @SQ\tSN:NC_060932.1\tLN:10001, @SQ\tSN:NC_060933.1\tLN:10001, @SQ\tSN:NC_060934.1\tLN:10001, @SQ\tSN:NC_060935.1\tLN:10001, @SQ\tSN:NC_060936.1\tLN:10001, @SQ\tSN:NC_060937.1\tLN:10001, @SQ\tSN:NC_060938.1\tLN:10001, @SQ\tSN:NC_060939.1\tLN:10001, @SQ\tSN:NC_060940.1\tLN:10001, @SQ\tSN:NC_060941.1\tLN:10001, @SQ\tSN:NC_060942.1\tLN:10001, @SQ\tSN:NC_060943.1\tLN:10001, @SQ\tSN:NC_060944.1\tLN:10001, @SQ\tSN:NC_060945.1\tLN:10001, @SQ\tSN:NC_060946.1\tLN:10001, @SQ\tSN:NC_060947.1\tLN:10001, @SQ\tSN:NC_060948.1\tLN:10001, @RG\tID:SRR13439813\tSM:SRR13439813, @PG\tID:bowtie2\tPN:bowtie2\tVN:2.5.4\tCL:\"/opt/conda/bin/bowtie2-align-l --wrapper basic-0 -x ./bowtie2/reference.fasta --threads 4 --rg-id SRR13439813 --rg SM:SRR13439813 --passthrough -1 SRR13439813_SRR13439813.unmapped_1.fastq.gz -2 SRR13439813_SRR13439813.unmapped_2.fastq.gz\", @PG\tID:samtools\tPN:samtools\tPP:bowtie2\tVN:1.21\tCL:samtools view -f 3 --threads 4 -o SRR13439813.bam -, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439813.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439813_aligned_pathogens_genome_sorted --threads 4 --reference reference.fasta -o SRR13439813_aligned_pathogens_genome_sorted.bam -]"
+                ],
+                [
+                    "SRR13439799_aligned_pathogens_genome_sorted.bampathogens bowtie2 align header: [@HD\tVN:1.6\tSO:coordinate, @SQ\tSN:NC_002205.1\tLN:2313, @SQ\tSN:NC_002206.1\tLN:2204, @SQ\tSN:NC_002207.1\tLN:1882, @SQ\tSN:NC_002208.1\tLN:1841, @SQ\tSN:NC_002209.1\tLN:1557, @SQ\tSN:NC_002210.1\tLN:1191, @SQ\tSN:NC_002211.1\tLN:1096, @SQ\tSN:NC_002204.1\tLN:2368, @SQ\tSN:NC_004910.1\tLN:2341, @SQ\tSN:NC_004911.1\tLN:2328, @SQ\tSN:NC_004912.1\tLN:2225, @SQ\tSN:NC_004908.1\tLN:1714, @SQ\tSN:NC_004905.2\tLN:1557, @SQ\tSN:NC_004909.1\tLN:1418, @SQ\tSN:NC_004907.1\tLN:1025, @SQ\tSN:NC_004906.1\tLN:890, @SQ\tSN:NC_006307.2\tLN:2365, @SQ\tSN:NC_006308.2\tLN:2363, @SQ\tSN:NC_006309.2\tLN:2183, @SQ\tSN:NC_006310.2\tLN:2073, @SQ\tSN:NC_006311.1\tLN:1807, @SQ\tSN:NC_006312.2\tLN:1180, @SQ\tSN:NC_006306.2\tLN:935, @SQ\tSN:NC_007357.1\tLN:2341, @SQ\tSN:NC_007358.1\tLN:2341, @SQ\tSN:NC_007359.1\tLN:2233, @SQ\tSN:NC_007362.1\tLN:1760, @SQ\tSN:NC_007360.1\tLN:1565, @SQ\tSN:NC_007361.1\tLN:1458, @SQ\tSN:NC_007363.1\tLN:1027, @SQ\tSN:NC_007364.1\tLN:865, @SQ\tSN:NC_007373.1\tLN:2341, @SQ\tSN:NC_007372.1\tLN:2341, @SQ\tSN:NC_007371.1\tLN:2233, @SQ\tSN:NC_007366.1\tLN:1762, @SQ\tSN:NC_007369.1\tLN:1566, @SQ\tSN:NC_007368.1\tLN:1467, @SQ\tSN:NC_007367.1\tLN:1027, @SQ\tSN:NC_007370.1\tLN:890, @SQ\tSN:NC_002023.1\tLN:2341, @SQ\tSN:NC_002021.1\tLN:2341, @SQ\tSN:NC_002022.1\tLN:2233, @SQ\tSN:NC_002017.1\tLN:1778, @SQ\tSN:NC_002019.1\tLN:1565, @SQ\tSN:NC_002018.1\tLN:1413, @SQ\tSN:NC_002016.1\tLN:1027, @SQ\tSN:NC_002020.1\tLN:890, @SQ\tSN:NC_007378.1\tLN:2341, @SQ\tSN:NC_007375.1\tLN:2341, @SQ\tSN:NC_007376.1\tLN:2233, @SQ\tSN:NC_007374.1\tLN:1773, @SQ\tSN:NC_007381.1\tLN:1497, @SQ\tSN:NC_007382.1\tLN:1410, @SQ\tSN:NC_007377.1\tLN:1027, @SQ\tSN:NC_007380.1\tLN:838, @SQ\tSN:NC_026422.1\tLN:2280, @SQ\tSN:NC_026423.1\tLN:2297, @SQ\tSN:NC_026424.1\tLN:2176, @SQ\tSN:NC_026425.1\tLN:1708, @SQ\tSN:NC_026426.1\tLN:1506, @SQ\tSN:NC_026429.1\tLN:1398, @SQ\tSN:NC_026427.1\tLN:985, @SQ\tSN:NC_026428.1\tLN:841, @SQ\tSN:NC_026438.1\tLN:2280, @SQ\tSN:NC_026435.1\tLN:2274, @SQ\tSN:NC_026437.1\tLN:2151, @SQ\tSN:NC_026433.1\tLN:1701, @SQ\tSN:NC_026436.1\tLN:1497, @SQ\tSN:NC_026434.1\tLN:1410, @SQ\tSN:NC_026431.1\tLN:982, @SQ\tSN:NC_026432.1\tLN:863, @SQ\tSN:NC_036616.1\tLN:2364, @SQ\tSN:NC_036615.1\tLN:2330, @SQ\tSN:NC_036619.1\tLN:2195, @SQ\tSN:NC_036618.1\tLN:2049, @SQ\tSN:NC_036617.1\tLN:1775, @SQ\tSN:NC_036620.1\tLN:1219, @SQ\tSN:NC_036621.1\tLN:868, @SQ\tSN:NC_060925.1\tLN:10001, @SQ\tSN:NC_060926.1\tLN:10001, @SQ\tSN:NC_060927.1\tLN:10001, @SQ\tSN:NC_060928.1\tLN:10001, @SQ\tSN:NC_060929.1\tLN:10001, @SQ\tSN:NC_060930.1\tLN:10001, @SQ\tSN:NC_060931.1\tLN:10001, @SQ\tSN:NC_060932.1\tLN:10001, @SQ\tSN:NC_060933.1\tLN:10001, @SQ\tSN:NC_060934.1\tLN:10001, @SQ\tSN:NC_060935.1\tLN:10001, @SQ\tSN:NC_060936.1\tLN:10001, @SQ\tSN:NC_060937.1\tLN:10001, @SQ\tSN:NC_060938.1\tLN:10001, @SQ\tSN:NC_060939.1\tLN:10001, @SQ\tSN:NC_060940.1\tLN:10001, @SQ\tSN:NC_060941.1\tLN:10001, @SQ\tSN:NC_060942.1\tLN:10001, @SQ\tSN:NC_060943.1\tLN:10001, @SQ\tSN:NC_060944.1\tLN:10001, @SQ\tSN:NC_060945.1\tLN:10001, @SQ\tSN:NC_060946.1\tLN:10001, @SQ\tSN:NC_060947.1\tLN:10001, @SQ\tSN:NC_060948.1\tLN:10001, @PG\tID:minimap2\tPN:minimap2\tVN:2.29-r1283\tCL:minimap2 --sam-hit-only -t 4 -a reference.fasta.mmi SRR13439799_SRR13439799.unmapped_other.fastq.gz, @PG\tID:samtools\tPN:samtools\tPP:minimap2\tVN:1.21\tCL:samtools sort -@ 3 -o SRR13439799.bam##idx##SRR13439799.bam.bai --write-index, @PG\tID:samtools.1\tPN:samtools\tPP:samtools\tVN:1.23.1\tCL:samtools cat SRR13439799.bam, @PG\tID:samtools.2\tPN:samtools\tPP:samtools.1\tVN:1.23.1\tCL:samtools sort -T SRR13439799_aligned_pathogens_genome_sorted --threads 4 --reference reference.fasta -o SRR13439799_aligned_pathogens_genome_sorted.bam -]"
+                ]
+            ],
+            [
+                "SRR13439790_aligned_pathogens_genome_sorted.bam:md5,5e7ba00544b18e43aaab83b0604a1e5c",
+                "SRR13439790_aligned_pathogens_genome_sorted.bam.bai:md5,336c11579afdd4dd73d835be6207ead3",
+                "SRR13439802_aligned_pathogens_genome_sorted.bam:md5,e9b9d868ea80a499a712830950dfa658",
+                "SRR13439802_aligned_pathogens_genome_sorted.bam.bai:md5,9056c8be396eb4992694394012496147",
+                "SRR13439813_aligned_pathogens_genome_sorted.bam:md5,08647ae9137edacce1511c912bb0c519",
+                "SRR13439813_aligned_pathogens_genome_sorted.bam.bai:md5,2acd326eb20fa549b8cb55afa842431d"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T13:34:43.062051163"
+    },
+    "blastn": {
+        "content": [
+            [
+                "SRR13439790_taxid_1920753_Gamaleyavirus_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439790_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(kraken2) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(kraken2) contains string:true"
+            ],
+            [
+                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true"
+            ],
+            [
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered.txt(diamond) contains string:true",
+                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(diamond) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(diamond) contains string:true",
+                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(diamond) contains string:true"
+            ],
+            [
+                
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T13:34:31.232870739"
+    },
+    "pathogens_igv": {
+        "content": [
+            [
+                "SRR13439790_Homo_sapiens_report.html exists: true",
+                "SRR13439799_Influenza_A_virus_H1N1_report.html exists: true",
+                "SRR13439802_Homo_sapiens_report.html exists: true",
+                "SRR13439813_Homo_sapiens_report.html exists: true"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T13:34:40.532956223"
+    },
+    "pathogens_blast": {
+        "content": [
+            [
+                "SRR13439799_Influenza_A_virus_H1N1_blast_filtered.txt contains string:true",
+                "SRR13439799_Influenza_A_virus_H1N1_blast_filtered_summary.txt contains string:true"
+            ],
+            [
+                "SRR13439799_Influenza_A_virus_H1N1_blastx_filtered.txt contains string:true",
+                "SRR13439799_Influenza_A_virus_H1N1_blastx_filtered_summary.txt contains string:true"
+            ],
+            [
+                
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T13:34:38.183694113"
+    },
     "minimap2_align": {
         "content": [
             "No BAM files",
@@ -13,7 +253,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:23:57.271008699"
+        "timestamp": "2026-04-13T13:34:34.636838708"
     },
     "-profile test_taxid": {
         "content": [
@@ -135,7 +375,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:23:55.539177869"
+        "timestamp": "2026-04-13T13:34:30.982593157"
     },
     "pathogens_consensus": {
         "content": [
@@ -150,7 +390,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:24:00.969581072"
+        "timestamp": "2026-04-13T13:34:39.303808701"
     },
     "extracted_reads": {
         "content": [
@@ -162,138 +402,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:23:55.663341594"
-    },
-    "pathogens_bowtie2_build": {
-        "content": [
-            [
-                
-            ]
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-04-12T17:24:03.302756219"
-    },
-    "bowtie2_build": {
-        "content": [
-            [
-                "GCA_001870125.1_ASM187012v1_genomic.fna.1.bt2:md5,5245c516d521244b11c216e79f28656e",
-                "GCA_001870125.1_ASM187012v1_genomic.fna.2.bt2:md5,b18b67fb8f404f166aa2e8418837e23d",
-                "GCA_001870125.1_ASM187012v1_genomic.fna.3.bt2:md5,6d2ab4219c1ffe5585c9a5a1729cbe99",
-                "GCA_001870125.1_ASM187012v1_genomic.fna.4.bt2:md5,da6fffd0f500362ad65fcc56102653b5",
-                "GCA_001870125.1_ASM187012v1_genomic.fna.rev.1.bt2:md5,f97edf3fb79ba9e704d1e8c38946edd6",
-                "GCA_001870125.1_ASM187012v1_genomic.fna.rev.2.bt2:md5,0bedb3aad46e7e1e142e956e6c7e1b33",
-                "GCA_000829375.1_ASM82937v1_genomic.fna.1.bt2:md5,b3cf9fbc744d82bb789897a378c4cc7f",
-                "GCA_000829375.1_ASM82937v1_genomic.fna.2.bt2:md5,3000c2ec3c0d8d5cc0fcac350685ca84",
-                "GCA_000829375.1_ASM82937v1_genomic.fna.3.bt2:md5,9eef52ec90710d73e5b18de0f2848b3b",
-                "GCA_000829375.1_ASM82937v1_genomic.fna.4.bt2:md5,6aa2a8d1f7b4b1f0070337975222e2c3",
-                "GCA_000829375.1_ASM82937v1_genomic.fna.rev.1.bt2:md5,d60a831466e22800763eb9c1f171e0bb",
-                "GCA_000829375.1_ASM82937v1_genomic.fna.rev.2.bt2:md5,10ffeed648b8ab04b571032d48c98147",
-                "GCA_000922735.2_ViralProj248626_genomic.fna.1.bt2:md5,a6302c93042efcdfecc63188c60d6a1d",
-                "GCA_000922735.2_ViralProj248626_genomic.fna.2.bt2:md5,a89b6b37d95c9330787f3f775035db8f",
-                "GCA_000922735.2_ViralProj248626_genomic.fna.3.bt2:md5,9d3b1dbb8504aa78ffada0c38969d6fa",
-                "GCA_000922735.2_ViralProj248626_genomic.fna.4.bt2:md5,e19db3f046ea9fbafcbafba2eeb06616",
-                "GCA_000922735.2_ViralProj248626_genomic.fna.rev.1.bt2:md5,8414241f8bd4dba561fe435a6b65dfa1",
-                "GCA_000922735.2_ViralProj248626_genomic.fna.rev.2.bt2:md5,34670b3f7c8e8e046d1eb4109a1bc10f",
-                "GCA_002617245.1_ASM261724v1_genomic.fna.1.bt2:md5,82fa69226fec125d21843aa5d049e55e",
-                "GCA_002617245.1_ASM261724v1_genomic.fna.2.bt2:md5,24ec4941cc118700f9bd48b3aeb62da1",
-                "GCA_002617245.1_ASM261724v1_genomic.fna.3.bt2:md5,913103a1c95b743484ccfb3fea9736c5",
-                "GCA_002617245.1_ASM261724v1_genomic.fna.4.bt2:md5,54a7161bb94e98ae03a859e94ad1edbe",
-                "GCA_002617245.1_ASM261724v1_genomic.fna.rev.1.bt2:md5,f216914499269b26a6fa80ec71b57421",
-                "GCA_002617245.1_ASM261724v1_genomic.fna.rev.2.bt2:md5,f2af3f55a226cfa8f9f30c80729ab7ae",
-                "GCA_000900235.1_ViralProj177527_genomic.fna.1.bt2:md5,8c2fd10c6d57fd92403651857370a50a",
-                "GCA_000900235.1_ViralProj177527_genomic.fna.2.bt2:md5,442e07de3ff2e15ed400775d498acbdc",
-                "GCA_000900235.1_ViralProj177527_genomic.fna.3.bt2:md5,ffa05f271e319b8741d73ecf932dec7e",
-                "GCA_000900235.1_ViralProj177527_genomic.fna.4.bt2:md5,4037fca7d360403f8be349dcbbc0080d",
-                "GCA_000900235.1_ViralProj177527_genomic.fna.rev.1.bt2:md5,d0d13a32ca7b17c8c9517cd03ac0914f",
-                "GCA_000900235.1_ViralProj177527_genomic.fna.rev.2.bt2:md5,23a47f4c1160f510b63379fc7cd462fb",
-                "GCA_000903115.1_ViralProj179425_genomic.fna.1.bt2:md5,b633ebd9196f0f7f55facb62f901548a",
-                "GCA_000903115.1_ViralProj179425_genomic.fna.2.bt2:md5,1f58284664cba29cf4e3fec636bb854b",
-                "GCA_000903115.1_ViralProj179425_genomic.fna.3.bt2:md5,866de3b543b9f1116a7ab2b438976369",
-                "GCA_000903115.1_ViralProj179425_genomic.fna.4.bt2:md5,238cc33582b8960725aee45f13048a02",
-                "GCA_000903115.1_ViralProj179425_genomic.fna.rev.1.bt2:md5,e39f2b9ace8eafbb18f1d450416c2d64",
-                "GCA_000903115.1_ViralProj179425_genomic.fna.rev.2.bt2:md5,97059cfbf2c43327584541c9014cf86f",
-                "GCA_003575565.1_ASM357556v1_genomic.fna.1.bt2:md5,89cbc20daaa30f60091dce8ec9b211ed",
-                "GCA_003575565.1_ASM357556v1_genomic.fna.2.bt2:md5,7b0add706c8e793706d1c4d929a61592",
-                "GCA_003575565.1_ASM357556v1_genomic.fna.3.bt2:md5,f6e6d398d5673e1d149ab1749572256d",
-                "GCA_003575565.1_ASM357556v1_genomic.fna.4.bt2:md5,00c5a5d4accaec12129090276011e0f3",
-                "GCA_003575565.1_ASM357556v1_genomic.fna.rev.1.bt2:md5,d3a65b575c701ce7545572fd4ded738c",
-                "GCA_003575565.1_ASM357556v1_genomic.fna.rev.2.bt2:md5,6bfe216f20169a73b9d9d36b31426f6b",
-                "GCA_002956185.1_ASM295618v1_genomic.fna.1.bt2:md5,506454de25af876acbdafe1c5c40c5f0",
-                "GCA_002956185.1_ASM295618v1_genomic.fna.2.bt2:md5,6d9d1a3121f6338df67118cea8973cc3",
-                "GCA_002956185.1_ASM295618v1_genomic.fna.3.bt2:md5,865ff0c7af5f59a8f5b2c28b23164c45",
-                "GCA_002956185.1_ASM295618v1_genomic.fna.4.bt2:md5,1031ee7c5dfd3c9f8bd053ed9d61e94d",
-                "GCA_002956185.1_ASM295618v1_genomic.fna.rev.1.bt2:md5,f8411057d26e59a171095a82f4f1559c",
-                "GCA_002956185.1_ASM295618v1_genomic.fna.rev.2.bt2:md5,9819bbe65bfb532b811480d6dd256487",
-                "GCA_020475385.1_ASM2047538v1_genomic.fna.1.bt2:md5,9cc6588f6bdd18b232f8ad2af37f0ad0",
-                "GCA_020475385.1_ASM2047538v1_genomic.fna.2.bt2:md5,89b7b031469256ff94837843ea650c41",
-                "GCA_020475385.1_ASM2047538v1_genomic.fna.3.bt2:md5,2be7a04fdba1019bfc88a4fbfc3bd1e2",
-                "GCA_020475385.1_ASM2047538v1_genomic.fna.4.bt2:md5,b38127ab1e849b6b1d5cdb4455f3f9a8",
-                "GCA_020475385.1_ASM2047538v1_genomic.fna.rev.1.bt2:md5,57114de592c6b78f985ade01cc9ed7db",
-                "GCA_020475385.1_ASM2047538v1_genomic.fna.rev.2.bt2:md5,0cb9093469517550cb80b393122da29a",
-                "GCA_003307555.1_ASM330755v1_genomic.fna.1.bt2:md5,8488d530ab8c644857db6a9810e0bea4",
-                "GCA_003307555.1_ASM330755v1_genomic.fna.2.bt2:md5,64b2f88528b853c69032b1e2b61ad229",
-                "GCA_003307555.1_ASM330755v1_genomic.fna.3.bt2:md5,5f5a8436b2b7bd56f5328b7a911e2fd5",
-                "GCA_003307555.1_ASM330755v1_genomic.fna.4.bt2:md5,7d4acbffb24643b2aed5a3363d01b568",
-                "GCA_003307555.1_ASM330755v1_genomic.fna.rev.1.bt2:md5,9202bec95e80d204a183faeeeb5e9534",
-                "GCA_003307555.1_ASM330755v1_genomic.fna.rev.2.bt2:md5,edc751e43f471344a8435d113474fb15",
-                "GCA_000891295.1_ViralProj72371_genomic.fna.1.bt2:md5,5ed8b1bbd61ab59b5e19f50c94f74979",
-                "GCA_000891295.1_ViralProj72371_genomic.fna.2.bt2:md5,4cd9185a2a8c35062407a8ff7a9d0a37",
-                "GCA_000891295.1_ViralProj72371_genomic.fna.3.bt2:md5,5acf4da7fcdc1f5d5e88b17b858ff28d",
-                "GCA_000891295.1_ViralProj72371_genomic.fna.4.bt2:md5,93adac2082ea4e429b09fbdfc9160d88",
-                "GCA_000891295.1_ViralProj72371_genomic.fna.rev.1.bt2:md5,e0bce8b8830b6f79c570a58acedcae2c",
-                "GCA_000891295.1_ViralProj72371_genomic.fna.rev.2.bt2:md5,c65382365d09a8de7d75d142049134a6",
-                "GCA_000922515.1_ViralProj260483_genomic.fna.1.bt2:md5,18396e06f96db773e20ce180c365dbc8",
-                "GCA_000922515.1_ViralProj260483_genomic.fna.2.bt2:md5,9ff3465c778b0938bf0613e8ebee0e87",
-                "GCA_000922515.1_ViralProj260483_genomic.fna.3.bt2:md5,18346ab205b0bbb1e8a97db482434533",
-                "GCA_000922515.1_ViralProj260483_genomic.fna.4.bt2:md5,4872a9d1e338d31ed9a71c7d969008a0",
-                "GCA_000922515.1_ViralProj260483_genomic.fna.rev.1.bt2:md5,e94fd93126580c5876feddf374b34dc7",
-                "GCA_000922515.1_ViralProj260483_genomic.fna.rev.2.bt2:md5,914d55f4653abe45c728a48d48cd048f",
-                "GCA_000924215.1_ViralProj260485_genomic.fna.1.bt2:md5,c787d96fa97b20ce8da8eaa56d97cfe8",
-                "GCA_000924215.1_ViralProj260485_genomic.fna.2.bt2:md5,20ed6ef7a2a542b1cb093dd3fefb4abd",
-                "GCA_000924215.1_ViralProj260485_genomic.fna.3.bt2:md5,d4f2d0e4e327d8a81fcafdf15ad67f36",
-                "GCA_000924215.1_ViralProj260485_genomic.fna.4.bt2:md5,729c3f464549bc5b27ae6bb966118911",
-                "GCA_000924215.1_ViralProj260485_genomic.fna.rev.1.bt2:md5,5cd6d44cfebfdb9989848348c1d4ab8a",
-                "GCA_000924215.1_ViralProj260485_genomic.fna.rev.2.bt2:md5,e002206a967ae16105328dfe98fca678",
-                "GCA_013426605.1_ASM1342660v1_genomic.fna.1.bt2:md5,a293b1d14fef92cc61d1764a818fff6f",
-                "GCA_013426605.1_ASM1342660v1_genomic.fna.2.bt2:md5,b111557714b464ec6ee1d268d0005f1b",
-                "GCA_013426605.1_ASM1342660v1_genomic.fna.3.bt2:md5,d6eb6e445eb494cdf07018b8bb4f3c72",
-                "GCA_013426605.1_ASM1342660v1_genomic.fna.4.bt2:md5,62de2984f37ec5b6dac802ba61c5f8e2",
-                "GCA_013426605.1_ASM1342660v1_genomic.fna.rev.1.bt2:md5,265f6f3fc992de5896a4e2b065c6450a",
-                "GCA_013426605.1_ASM1342660v1_genomic.fna.rev.2.bt2:md5,fb11758a5c28a5a21a549789ae8b49e4",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.1.bt2:md5,1c3ada3f55206c0f4492b21e8228f8bc",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.2.bt2:md5,594cde75df6e014bd0023299e376edc4",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.3.bt2:md5,076f14052ad07f9cacd617f0db8e316c",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.4.bt2:md5,4bb788861788f4a7463371d08304a947",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.1.bt2:md5,164a2754bdfe612224b9b47a5d555bb7",
-                "GCA_019095225.1_ASM1909522v1_genomic.fna.rev.2.bt2:md5,07f034b6551fa0caf7d5dba0b0ac5123",
-                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.1.bt2:md5,696155d14210890597358fa6331c2f37",
-                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.2.bt2:md5,8a6b0c25e495481be465031373ccd7d2",
-                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.3.bt2:md5,e9cbd30ddffc3202c027e7539efa8f9c",
-                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.4.bt2:md5,16937196a3bafb4c81d379bcbf46401d",
-                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.rev.1.bt2:md5,07add0c6304defa734d036badfa06e23",
-                "GCA_009914755.4_T2T-CHM13v2.0_genomic.fna.rev.2.bt2:md5,4d50ef9a75308ea41f5da80654842d38",
-                "GCA_000915775.1_ViralProj240039_genomic.fna.1.bt2:md5,9216fab5c90076f61574d39f1c18438a",
-                "GCA_000915775.1_ViralProj240039_genomic.fna.2.bt2:md5,c366a09871c90a478fc11d4397345c91",
-                "GCA_000915775.1_ViralProj240039_genomic.fna.3.bt2:md5,618bc25bc27a5ca33a20e8eb6653cc51",
-                "GCA_000915775.1_ViralProj240039_genomic.fna.4.bt2:md5,94e777793e9e9afdc925348a06a49993",
-                "GCA_000915775.1_ViralProj240039_genomic.fna.rev.1.bt2:md5,7752fea6ca673639d375b062dee0492f",
-                "GCA_000915775.1_ViralProj240039_genomic.fna.rev.2.bt2:md5,7d8457dec74662fff499cf3f3fa1f38a",
-                "GCA_020882845.1_ASM2088284v1_genomic.fna.1.bt2:md5,0e76f788025861f84ef1807821b033c6",
-                "GCA_020882845.1_ASM2088284v1_genomic.fna.2.bt2:md5,79b601ffeca6be83298d1d0839ed9aa2",
-                "GCA_020882845.1_ASM2088284v1_genomic.fna.3.bt2:md5,2c099fb5dfd1e583635912ab8ab30bd0",
-                "GCA_020882845.1_ASM2088284v1_genomic.fna.4.bt2:md5,416eb84b125ecdd67a0c3cfb252f1f24",
-                "GCA_020882845.1_ASM2088284v1_genomic.fna.rev.1.bt2:md5,eb0321e45776940d00b7346924d299b5",
-                "GCA_020882845.1_ASM2088284v1_genomic.fna.rev.2.bt2:md5,f8ce76e79e194e6873f965a4d9381365"
-            ]
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-04-12T17:23:55.806865829"
+        "timestamp": "2026-04-13T13:34:31.353678639"
     },
     "bowtie2_align": {
         "content": [
@@ -400,7 +509,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:23:55.759473543"
+        "timestamp": "2026-04-13T13:34:31.686824221"
     },
     "igv": {
         "content": [
@@ -434,7 +543,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:23:58.57777893"
+        "timestamp": "2026-04-13T13:34:36.946556383"
     },
     "blastx": {
         "content": [
@@ -460,79 +569,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-12T17:23:55.652246681"
-    },
-    "blastn": {
-        "content": [
-            [
-                "SRR13439790_taxid_1920753_Gamaleyavirus_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439790_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(kraken2) contains string:true",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(kraken2) contains string:true",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(kraken2) contains string:true"
-            ],
-            [
-                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439790_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439799_taxid_211044_Influenza-A-virus-A-Puerto-Rico-8-1934-H1N1_blast_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439802_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(centrifuge) contains string:true",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(centrifuge) contains string:true"
-            ],
-            [
-                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered.txt(diamond) contains string:true",
-                "SRR13439813_taxid_1920753_Gamaleyavirus_blast_filtered_summary.txt(diamond) contains string:true",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered.txt(diamond) contains string:true",
-                "SRR13439813_taxid_878220_Chryseobacterium-sp-StRB126_blast_filtered_summary.txt(diamond) contains string:true"
-            ],
-            [
-                
-            ]
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-04-12T17:23:55.621843667"
-    },
-    "pathogens_igv": {
-        "content": [
-            [
-                "SRR13439790_Homo_sapiens_report.html exists: true",
-                "SRR13439799_Influenza_A_virus_H1N1_report.html exists: true",
-                "SRR13439802_Homo_sapiens_report.html exists: true",
-                "SRR13439813_Homo_sapiens_report.html exists: true"
-            ]
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-04-12T17:24:02.145844267"
-    },
-    "pathogens_blast": {
-        "content": [
-            [
-                "SRR13439799_Influenza_A_virus_H1N1_blast_filtered.txt contains string:true",
-                "SRR13439799_Influenza_A_virus_H1N1_blast_filtered_summary.txt contains string:true"
-            ],
-            [
-                "SRR13439799_Influenza_A_virus_H1N1_blastx_filtered.txt contains string:true",
-                "SRR13439799_Influenza_A_virus_H1N1_blastx_filtered_summary.txt contains string:true"
-            ],
-            [
-                
-            ]
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-04-12T17:23:59.777165251"
+        "timestamp": "2026-04-13T13:34:31.34353669"
     }
 }
