@@ -14,7 +14,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:41.647711835"
+        "timestamp": "2026-04-13T16:23:28.224231466"
     },
     "bowtie2_build": {
         "content": [
@@ -133,7 +133,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:31.750780435"
+        "timestamp": "2026-04-13T16:23:20.728424934"
     },
     "pathogens:bowtie2_align": {
         "content": [
@@ -164,7 +164,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:43.062051163"
+        "timestamp": "2026-04-13T16:23:29.355334617"
     },
     "blastn": {
         "content": [
@@ -202,7 +202,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:31.232870739"
+        "timestamp": "2026-04-13T16:23:20.545641988"
     },
     "pathogens_igv": {
         "content": [
@@ -217,7 +217,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:40.532956223"
+        "timestamp": "2026-04-13T16:23:27.211030674"
     },
     "pathogens_blast": {
         "content": [
@@ -237,7 +237,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:38.183694113"
+        "timestamp": "2026-04-13T16:23:25.174744737"
     },
     "minimap2_align": {
         "content": [
@@ -253,7 +253,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:34.636838708"
+        "timestamp": "2026-04-13T16:23:23.098664268"
     },
     "-profile test_taxid": {
         "content": [
@@ -375,7 +375,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:30.982593157"
+        "timestamp": "2026-04-13T16:23:20.475768077"
     },
     "pathogens_consensus": {
         "content": [
@@ -390,7 +390,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:39.303808701"
+        "timestamp": "2026-04-13T16:23:26.18879239"
     },
     "extracted_reads": {
         "content": [
@@ -402,7 +402,19 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:31.353678639"
+        "timestamp": "2026-04-13T16:23:20.58223362"
+    },
+    "minimap2_index": {
+        "content": [
+            [
+                
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-04-13T16:23:21.992828309"
     },
     "bowtie2_align": {
         "content": [
@@ -509,7 +521,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:31.686824221"
+        "timestamp": "2026-04-13T16:23:20.674498413"
     },
     "igv": {
         "content": [
@@ -543,7 +555,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:36.946556383"
+        "timestamp": "2026-04-13T16:23:24.138444265"
     },
     "blastx": {
         "content": [
@@ -569,6 +581,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         },
-        "timestamp": "2026-04-13T13:34:31.34353669"
+        "timestamp": "2026-04-13T16:23:20.572649347"
     }
 }

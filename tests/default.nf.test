@@ -44,7 +44,11 @@ nextflow_pipeline {
             //bowtie2 build
             def stable_content_bowtie2_build = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/bowtie2/build/**/**/*'], ignoreFile: 'tests/.nftignore')
 
-            //minimap2
+            //minimap2 index
+            def stable_content_minimap2_index= getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/minimap2/index/*'], ignoreFile: 'tests/.nftignore')
+
+
+            //minimap2 align
             def stable_content_minimap2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/minimap2/align/*'], ignoreFile: 'tests/.nftignore')
             def bam_files_minimap2_align  = getAllFilesFromDir(params.outdir, include: ['*.bam'])
 
@@ -85,7 +89,8 @@ nextflow_pipeline {
                 { assert snapshot (
                     bam_files_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_bowtie2_align.collect { file -> [file.getName() + " bowtie2 align header: " + bam(file.toString()).getHeader()] },
                     stable_content_bowtie2_align).match("bowtie2_align")},
-                { assert snapshot (stable_content_bowtie2_build).match("bowtie2_build")},
+                 { assert snapshot (stable_content_bowtie2_build).match("bowtie2_build")},
+                 { assert snapshot (stable_content_minimap2_index).match("minimap2_index")},
                 { assert snapshot (
                     bam_files_minimap2_align.isEmpty() ? 'No BAM files' : bam_files_minimap2_align.collect { file -> [file.getName() + " minimap2 align md5: " + bam(file.toString()).getReadsMD5()] },
                     stable_content_minimap2_align).match("minimap2_align")},
