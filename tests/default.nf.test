@@ -33,7 +33,6 @@ nextflow_pipeline {
             //extracted_reads
             def stable_content_extracted_reads = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['extracted_reads/**/*'], ignoreFile: 'tests/.nftignore')
 
-            //def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
 
             //bowtie2 align
             def stable_content_bowtie2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/bowtie2/align'], ignoreFile: 'tests/.nftignore')
