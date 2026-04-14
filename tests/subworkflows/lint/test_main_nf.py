@@ -66,10 +66,10 @@ class TestMainNf(TestSubworkflows):
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) == 1
         assert any(
-            [x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed]
+            x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed
         )
         assert any(
-            [x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned]
+            x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned
         )
 
         # cleanup
@@ -108,7 +108,7 @@ class TestMainNf(TestSubworkflows):
         assert len(subworkflow_lint.failed) >= 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) >= 0
-        assert any([x.lint_test == "workflow_capitals" for x in subworkflow_lint.failed])
+        assert any(x.lint_test == "workflow_capitals" for x in subworkflow_lint.failed)
 
         # cleanup
         self.subworkflow_remove.remove("bam_stats_samtools", force=True)

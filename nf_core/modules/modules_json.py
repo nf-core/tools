@@ -185,7 +185,7 @@ class ModulesJson:
             # Loop until all directories in the base directory are covered by a remote
             self.require_prompts(
                 f"Found untracked directories in '{component_type}'.\n"
-                f"Untracked: {', '.join(str(dir.relative_to(directory)) for dir in dirs_not_covered)}\n"
+                f"Untracked: {', '.join(str(directory.relative_to(directory)) for directory in dirs_not_covered)}\n"
                 "Please configure these directories in your modules.json manually"
             )
             while len(dirs_not_covered) > 0:

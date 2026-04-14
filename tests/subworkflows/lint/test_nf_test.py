@@ -138,4 +138,4 @@ class TestSubworkflowsNfTest(TestSubworkflows):
         assert len(subworkflow_lint.failed) == 1
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) >= 0, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
-        assert any([x.lint_test == "test_dir_exists" for x in subworkflow_lint.failed])
+        assert any(x.lint_test == "test_dir_exists" for x in subworkflow_lint.failed)
