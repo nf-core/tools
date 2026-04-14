@@ -5,7 +5,6 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
-from typing import Optional, Union
 
 import rich.console
 from ruamel.yaml import YAML
@@ -129,6 +128,33 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["template", "version"],
     )
 
+    # SVG files in docs/images/ - version badges
+    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("docs/images/*.svg")]
+    for svg_file in svg_files:
+        update_file_version(
+            svg_file,
+            pipeline_obj,
+            [
+                (
+                    rf"(>v?){re.escape(current_version)}(<)",
+                    rf"\g<1>{new_version}\g<2>",
+                )
+            ],
+            required=False,
+        )
+        # Throw a warning if PDF or PNG versions of the SVG exist
+        svg_path = pipeline_obj._fp(svg_file)
+        if svg_path.exists():
+            png_path = svg_path.with_suffix(".png")
+            if png_path.exists():
+                # Future idea, add SVG to PNG conversion here
+                log.warning(f"PNG file exists: {png_path}. Please export the bumped SVG manually to PNG.")
+
+            pdf_path = svg_path.with_suffix(".pdf")
+            if pdf_path.exists():
+                # Future idea, add SVG to PDF conversion here
+                log.warning(f"PDF file exists: {pdf_path}. Please export the bumped SVG manually to PDF.")
+
     # update rocrate if ro-crate is present
     if Path(pipeline_obj.wf_path, "ro-crate-metadata.json").exists():
         ROCrate(pipeline_obj.wf_path).update_rocrate()
@@ -195,11 +221,11 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
 
 
 def update_file_version(
-    filename: Union[str, Path],
+    filename: str | Path,
     pipeline_obj: Pipeline,
     patterns: list[tuple[str, str]],
     required: bool = True,
-    yaml_key: Optional[list[str]] = None,
+    yaml_key: list[str] | None = None,
 ) -> None:
     """
     Updates a file with a new version number.
@@ -211,7 +237,7 @@ def update_file_version(
         patterns (List[Tuple[str, str]]): A list of tuples containing the regex patterns to
             match and the replacement strings.
         required (bool, optional): Whether the file is required to exist. Defaults to `True`.
-        yaml_key (Optional[List[str]], optional): The YAML key to update. Defaults to `None`.
+        yaml_key (List[str] | None, optional): The YAML key to update. Defaults to `None`.
     """
     fn: Path = pipeline_obj._fp(filename)
 
@@ -238,6 +264,7 @@ def update_yaml_file(fn: Path, patterns: list[tuple[str, str]], yaml_key: list[s
     """
     yaml = YAML()
     yaml.preserve_quotes = True
+    yaml.width = 4096  # Prevent line wrapping
     with open(fn) as file:
         yaml_content = yaml.load(file)
 
@@ -260,6 +287,7 @@ def update_yaml_file(fn: Path, patterns: list[tuple[str, str]], yaml_key: list[s
         if new_value != current_value:
             target[last_key] = new_value
             with open(fn, "w") as file:
+                yaml.indent(mapping=2, sequence=4, offset=2)  # from https://stackoverflow.com/a/44389139/1696643
                 yaml.dump(yaml_content, file)
             log.info(f"Updated version in YAML file '{fn}'")
             log_change(str(current_value), str(new_value))

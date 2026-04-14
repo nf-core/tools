@@ -19,6 +19,13 @@ def subworkflow_version(subworkflow_lint_object, subworkflow):
     It checks whether the subworkflow has an entry in the ``modules.json`` file
     containing a commit SHA. If that is true, it verifies that there are no
     newer version of the subworkflow available.
+
+    The following checks are performed:
+
+    * ``git_sha``: The subworkflow must have a ``git_sha`` entry in ``modules.json``.
+
+    * ``subworkflow_version``: The subworkflow version must match the latest commit
+      in the remote repository. A warning is issued if a newer version is available.
     """
 
     modules_json_path = Path(subworkflow_lint_object.directory, "modules.json")
@@ -27,11 +34,15 @@ def subworkflow_version(subworkflow_lint_object, subworkflow):
         subworkflow.component_name, subworkflow.repo_url, subworkflow.org
     )
     if version is None:
-        subworkflow.failed.append(("git_sha", "No git_sha entry in `modules.json`", modules_json_path))
+        subworkflow.failed.append(
+            ("subworkflow_version", "git_sha", "No git_sha entry in `modules.json`", modules_json_path)
+        )
         return
 
     subworkflow.git_sha = version
-    subworkflow.passed.append(("git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
+    subworkflow.passed.append(
+        ("subworkflow_version", "git_sha", "Found git_sha entry in `modules.json`", modules_json_path)
+    )
 
     # Check whether a new version is available
     try:
@@ -45,9 +56,18 @@ def subworkflow_version(subworkflow_lint_object, subworkflow):
         subworkflow_git_log = modules_repo.get_component_git_log(subworkflow.component_name, "subworkflows")
         if version == next(subworkflow_git_log)["git_sha"]:
             subworkflow.passed.append(
-                ("subworkflow_version", "Subworkflow is in the latest version", subworkflow.component_dir)
+                (
+                    "subworkflow_version",
+                    "subworkflow_version",
+                    "Subworkflow is in the latest version",
+                    subworkflow.component_dir,
+                )
             )
         else:
-            subworkflow.warned.append(("subworkflow_version", "New version available", subworkflow.component_dir))
+            subworkflow.warned.append(
+                ("subworkflow_version", "subworkflow_version", "New version available", subworkflow.component_dir)
+            )
     except UserWarning:
-        subworkflow.warned.append(("subworkflow_version", "Failed to fetch git log", subworkflow.component_dir))
+        subworkflow.warned.append(
+            ("subworkflow_version", "subworkflow_version", "Failed to fetch git log", subworkflow.component_dir)
+        )

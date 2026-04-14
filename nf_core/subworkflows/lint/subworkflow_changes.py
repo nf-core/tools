@@ -22,6 +22,14 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
     compared against the files in the remote at this SHA.
 
     Only runs when linting a pipeline, not the modules repository
+
+    The following checks are performed:
+
+    * ``subworkflow_patch``: If the subworkflow is patched, the patch must apply
+      cleanly in reverse against the remote version.
+
+    * ``check_local_copy``: Each subworkflow file must be identical to the
+      corresponding file in the remote repository at the pinned commit SHA.
     """
     if subworkflow.is_patched:
         # If the subworkflow is patched, we need to apply
@@ -41,8 +49,23 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
             for file, lines in new_lines.items():
                 with open(tempdir / file, "w") as fh:
                     fh.writelines(lines)
+            subworkflow.passed.append(
+                (
+                    "subworkflow_changes",
+                    "subworkflow_patch",
+                    "Subworkflow patch can be cleanly applied",
+                    f"{subworkflow.component_dir}",
+                )
+            )
         except LookupError:
-            # This error is already reported by subworkflow_patch, so just return
+            subworkflow.failed.append(
+                (
+                    "subworkflow_changes",
+                    "subworkflow_patch",
+                    "Subworkflow patch cannot be cleanly applied",
+                    f"{subworkflow.component_dir}",
+                )
+            )
             return
     else:
         tempdir = subworkflow.component_dir
@@ -57,6 +80,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
         if same:
             subworkflow.passed.append(
                 (
+                    "subworkflow_changes",
                     "check_local_copy",
                     "Local copy of subworkflow up to date",
                     f"{Path(subworkflow.component_dir, f)}",
@@ -65,6 +89,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
         else:
             subworkflow.failed.append(
                 (
+                    "subworkflow_changes",
                     "check_local_copy",
                     "Local copy of subworkflow does not match remote",
                     f"{Path(subworkflow.component_dir, f)}",

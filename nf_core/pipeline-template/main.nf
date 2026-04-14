@@ -55,7 +55,13 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     // WORKFLOW: Run pipeline
     //
     {{ short_name|upper }} (
-        samplesheet
+        samplesheet,
+        {%- if multiqc %}
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description,
+        {%- endif %}
+        params.outdir,
     )
 {%- if multiqc %}{%- if modules %}
     emit:
@@ -82,7 +88,10 @@ workflow {
         params.monochrome_logs,
         args,
         params.outdir,
-        params.input
+        params.input{% if nf_schema %},
+        params.help,
+        params.help_full,
+        params.show_hidden{% endif %}
     )
     {%- endif %}
 
@@ -109,8 +118,6 @@ workflow {
         {%- endif %}
         params.outdir,
         params.monochrome_logs,
-        {%- if adaptivecard or slackreport %}
-        params.hook_url,{% endif %}
         {%- if multiqc %}
         {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
     )

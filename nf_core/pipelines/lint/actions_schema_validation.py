@@ -12,7 +12,7 @@ def actions_schema_validation(self) -> dict[str, list[str]]:
 
     nf-core pipelines use GitHub actions workflows to run CI tests, check formatting and also linting, among others.
     These workflows are defined by ``yml`` scripts in ``.github/workflows/``. This lint test verifies that these scripts are valid
-    by comparing them against the `JSON schema for GitHub workflows <https://json.schemastore.org/github-workflow>`_.
+    by comparing them against the `JSON schema for GitHub workflows <https://www.schemastore.org/github-workflow>`_.
 
     To pass this test, make sure that all your workflows contain the required properties ``on`` and ``jobs`` and that
     all other properties are of the correct type, as specified in the schema (link above).
@@ -28,11 +28,11 @@ def actions_schema_validation(self) -> dict[str, list[str]]:
     action_workflows = list(Path(self.wf_path).glob(".github/workflows/*.y*ml"))
 
     # Load the GitHub workflow schema
-    r = requests.get("https://json.schemastore.org/github-workflow", allow_redirects=True)
+    r = requests.get("https://www.schemastore.org/github-workflow", allow_redirects=True)
     # handle "Service Unavailable" error
     if r.status_code not in [200, 301]:
         warned.append(
-            f"Failed to fetch schema: Response code for `https://json.schemastore.org/github-workflow` was {r.status_code}"
+            f"Failed to fetch schema: Response code for `https://www.schemastore.org/github-workflow` was {r.status_code}"
         )
         return {"passed": passed, "failed": failed, "warned": warned}
     schema: dict[str, Any] = r.json()

@@ -189,14 +189,6 @@
                     "fa_icon": "fas fa-palette",
                     "hidden": true
                 },{% endif %}
-                {%- if slackreport or adaptivecard %}
-                "hook_url": {
-                    "type": "string",
-                    "description": "Incoming hook URL for messaging service",
-                    "fa_icon": "fas fa-people-group",
-                    "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
-                    "hidden": true
-                },{% endif %}
                 {%- if multiqc %}
                 "multiqc_config": {
                     "type": "string",
@@ -235,7 +227,19 @@
                     "fa_icon": "far calendar",
                     "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
                     "hidden": true
-                }
+                }{% if nf_schema %},
+                "help": {
+                    "type": ["boolean", "string"],
+                    "description": "Display the help message."
+                },
+                "help_full": {
+                    "type": "boolean",
+                    "description": "Display the full detailed help message."
+                },
+                "show_hidden": {
+                    "type": "boolean",
+                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
+                }{% endif %}
             }
         }
     },

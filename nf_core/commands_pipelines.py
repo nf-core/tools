@@ -2,10 +2,10 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Union
 
 import rich
 
+import nf_core.utils
 from nf_core.pipelines.params_file import ParamsFileBuilder
 from nf_core.utils import rich_force_colors
 
@@ -54,6 +54,12 @@ def pipelines_create(ctx, name, description, author, version, force, outdir, tem
         )
         sys.exit(1)
     else:
+        if not nf_core.utils.is_interactive():
+            log.error(
+                "No pipeline arguments provided and session is not interactive (no TTY detected). "
+                "Please provide at least --name, --description, and --author to run non-interactively."
+            )
+            sys.exit(1)
         log.info("Launching interactive nf-core pipeline creation tool.")
         app = PipelineCreateApp()
         app.run()
@@ -108,6 +114,7 @@ def pipelines_lint(
     markdown,
     json,
     sort_by,
+    plain_text,
 ):
     """
     Check pipeline code against nf-core guidelines.
@@ -143,6 +150,7 @@ def pipelines_lint(
             markdown,
             json,
             ctx.obj["hide_progress"],
+            plain_text,
         )
         swf_failed = 0
         module_failed = 0
@@ -166,7 +174,7 @@ def pipelines_download(
     pipeline,
     revision,
     outdir,
-    compress,
+    compress_type,
     force,
     platform,
     download_configuration,
@@ -189,22 +197,23 @@ def pipelines_download(
         pipeline,
         revision,
         outdir,
-        compress,
-        force,
-        platform,
-        download_configuration,
-        tag,
-        container_system,
-        container_library,
-        container_cache_utilisation,
-        container_cache_index,
-        parallel_downloads,
+        compress_type=compress_type,
+        force=force,
+        platform=platform,
+        download_configuration=download_configuration,
+        additional_tags=tag,
+        container_system=container_system,
+        container_library=container_library,
+        container_cache_utilisation=container_cache_utilisation,
+        container_cache_index=container_cache_index,
+        parallel=parallel_downloads,
+        hide_progress=ctx.obj["hide_progress"],
     )
     dl.download_workflow()
 
 
 # nf-core pipelines create-params-file
-def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden):
+def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts=False):
     """
     Build a parameter file for a pipeline.
 
@@ -216,7 +225,7 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory.
     """
-    builder = ParamsFileBuilder(pipeline, revision)
+    builder = ParamsFileBuilder(pipeline, revision, no_prompts)
 
     if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):
         sys.exit(1)
@@ -234,6 +243,7 @@ def pipelines_launch(
     save_all,
     show_hidden,
     url,
+    no_prompts=False,
 ):
     """
     Launch a pipeline using a web GUI or command line prompts.
@@ -260,6 +270,7 @@ def pipelines_launch(
         show_hidden,
         url,
         id,
+        no_prompts,
     )
     if not launcher.launch_pipeline():
         sys.exit(1)
@@ -281,9 +292,9 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 # nf-core pipelines rocrate
 def pipelines_rocrate(
     ctx,
-    pipeline_dir: Union[str, Path],
-    json_path: Optional[Union[str, Path]],
-    zip_path: Optional[Union[str, Path]],
+    pipeline_dir: str | Path,
+    json_path: str | Path | None,
+    zip_path: str | Path | None,
     pipeline_version: str,
 ) -> None:
     from nf_core.pipelines.rocrate import ROCrate
@@ -306,7 +317,18 @@ def pipelines_rocrate(
 
 
 # nf-core pipelines sync
-def pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+def pipelines_sync(
+    ctx,
+    directory,
+    from_branch,
+    pull_request,
+    github_repository,
+    username,
+    template_yaml,
+    force_pr,
+    blog_post,
+    no_prompts=False,
+):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -327,7 +349,15 @@ def pipelines_sync(ctx, directory, from_branch, pull_request, github_repository,
         is_pipeline_directory(directory)
         # Sync the given pipeline dir
         sync_obj = PipelineSync(
-            directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
+            directory,
+            from_branch,
+            pull_request,
+            github_repository,
+            username,
+            template_yaml,
+            force_pr,
+            blog_post,
+            no_prompts,
         )
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:

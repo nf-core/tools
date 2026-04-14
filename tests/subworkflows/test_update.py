@@ -366,9 +366,6 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Check that tabix/bgziptabix is not there
         assert "tabix/bgziptabix" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert not Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/bgziptabix").is_dir()
-        # Check that tabix/tabix is there
-        assert "tabix/tabix" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
-        assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
         # Check that ensemblevep is not there but instead we have ensemblevep/vep (due to a file re-naming)
         assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]

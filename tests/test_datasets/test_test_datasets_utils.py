@@ -1,3 +1,4 @@
+import os
 import unittest
 
 import requests
@@ -92,7 +93,7 @@ class TestTestDatasetsUtils(unittest.TestCase):
 
     def test_modules_branch_exists(self):
         url = self.gh_urls.get_remote_tree_url_for_branch(MODULES_BRANCH_NAME)
-        resp = requests.get(url)
+        resp = self._request_with_token(url)
         self.assertTrue(resp.ok)
         self.assertTrue(len(resp.json()) != 0)
 
@@ -143,9 +144,19 @@ class TestTestDatasetsUtils(unittest.TestCase):
         self.assertTrue(url_2 is not None)
         self.assertTrue(url_3 is not None)
 
-        resp_1 = requests.get(url_1)
+        resp_1 = self._request_with_token(url_1)
         resp_2 = requests.get(url_2)
         resp_3 = requests.get(url_3)
         self.assertTrue(resp_1.ok)
         self.assertTrue(resp_2.ok)
         self.assertFalse(resp_3.ok)
+
+    def _request_with_token(self, url):
+        """Make a request with a GitHub token if available to mitigate issues with API rate limits."""
+        headers = {}
+        github_token = os.environ.get("GITHUB_TOKEN")
+        if github_token:
+            headers["authorization"] = f"Bearer {github_token}"
+
+        resp = requests.get(url, headers=headers)
+        return resp

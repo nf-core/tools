@@ -127,6 +127,7 @@ class TestCli(unittest.TestCase):
             "show-hidden" in params,
             params["url"],
             params["id"],
+            "no-prompts" in params,
         )
 
         mock_launcher.return_value.launch_pipeline.assert_called_once()
@@ -161,6 +162,7 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.pipelines.download.DownloadWorkflow")
     def test_cli_download(self, mock_dl):
         """Test nf-core pipeline is downloaded and cli parameters are passed on."""
+        toplevel_params = {"hide-progress": None}
         params = {
             "revision": "abcdef",
             "outdir": "/path/outdir",
@@ -168,7 +170,7 @@ class TestCli(unittest.TestCase):
             "force": None,
             "platform": None,
             "download-configuration": "yes",
-            "tag": "3.13=testing",
+            "tag": "3.14=testing",
             "container-system": "singularity",
             "container-library": "quay.io",
             "container-cache-utilisation": "copy",
@@ -176,7 +178,12 @@ class TestCli(unittest.TestCase):
             "parallel-downloads": 2,
         }
 
-        cmd = ["pipelines", "download"] + self.assemble_params(params) + ["pipeline_name"]
+        cmd = (
+            self.assemble_params(toplevel_params)
+            + ["pipelines", "download"]
+            + self.assemble_params(params)
+            + ["pipeline_name"]
+        )
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -185,16 +192,17 @@ class TestCli(unittest.TestCase):
             cmd[-1],
             (params["revision"],),
             params["outdir"],
-            params["compress"],
-            "force" in params,
-            "platform" in params,
-            params["download-configuration"],
-            (params["tag"],),
-            params["container-system"],
-            (params["container-library"],),
-            params["container-cache-utilisation"],
-            params["container-cache-index"],
-            params["parallel-downloads"],
+            compress_type=params["compress"],
+            force="force" in params,
+            platform="platform" in params,
+            download_configuration=params["download-configuration"],
+            additional_tags=(params["tag"],),
+            container_system=params["container-system"],
+            container_library=(params["container-library"],),
+            container_cache_utilisation=params["container-cache-utilisation"],
+            container_cache_index=params["container-cache-index"],
+            parallel=params["parallel-downloads"],
+            hide_progress="hide-progress" in toplevel_params,
         )
 
         mock_dl.return_value.download_workflow.assert_called_once()
@@ -239,7 +247,8 @@ class TestCli(unittest.TestCase):
         assert "Partial arguments supplied." in result.output
 
     @mock.patch("nf_core.pipelines.create.PipelineCreateApp")
-    def test_create_app(self, mock_create):
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
+    def test_create_app(self, mock_interactive, mock_create):
         """Test `nf-core pipelines create` runs an App."""
         cmd = ["pipelines", "create"]
         result = self.invoke_cli(cmd)
@@ -289,6 +298,7 @@ class TestCli(unittest.TestCase):
             params["markdown"],
             params["json"],
             "hide-progress" in params,
+            False,  # plain_text
         )
 
     def test_lint_no_dir(self):

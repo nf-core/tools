@@ -8,7 +8,6 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Optional, Union
 
 import git
 import git.config
@@ -47,14 +46,14 @@ class PipelineCreate:
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        author: Optional[str] = None,
+        name: str | None = None,
+        description: str | None = None,
+        author: str | None = None,
         version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
-        outdir: Optional[Union[Path, str]] = None,
-        template_config: Optional[Union[CreateConfig, str, Path]] = None,
+        outdir: Path | str | None = None,
+        template_config: CreateConfig | str | Path | None = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: str = "master",
@@ -95,8 +94,9 @@ class PipelineCreate:
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
 
-        # Get the default branch name from the Git configuration
-        self.get_default_branch()
+        # Get the default branch name from the Git configuration if it was not parsed from nextflow.config previously
+        if self.default_branch == "master":
+            self.get_default_branch()
 
         self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
             self.config.skip_features or [], str(self.config.outdir)
@@ -198,9 +198,7 @@ class PipelineCreate:
         if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
 
-    def obtain_jinja_params_dict(
-        self, features_to_skip: list[str], pipeline_dir: Union[str, Path]
-    ) -> tuple[dict, list[str]]:
+    def obtain_jinja_params_dict(self, features_to_skip: list[str], pipeline_dir: str | Path) -> tuple[dict, list[str]]:
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:

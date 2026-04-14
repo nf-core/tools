@@ -5,7 +5,7 @@ from pathlib import Path
 import ruamel.yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
+from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
@@ -22,6 +22,18 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
     The lint test checks that the ``dependencies`` section
     in the environment.yml file is valid YAML and that it
     is sorted alphabetically.
+
+    The following checks are performed:
+
+    * ``environment_yml_exists``: The ``environment.yml`` file must exist if it is
+      referenced in ``main.nf``.
+
+    * ``environment_yml_valid``: The ``environment.yml`` must be valid according to
+      the JSON schema defined at https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json.
+
+    * ``environment_yml_sorted``: The dependencies listed in ``environment.yml``
+      must be sorted alphabetically. If they are not, they will be sorted
+      automatically.
     """
     env_yml = None
     has_schema_header = False
@@ -38,6 +50,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
         if allow_missing:
             module.warned.append(
                 (
+                    "environment_yml",
                     "environment_yml_exists",
                     "Module's `environment.yml` does not exist",
                     Path(module.component_dir, "environment.yml"),
@@ -64,7 +77,14 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
         if env_yml is None:
             raise ruamel.yaml.scanner.ScannerError("Empty YAML file")
 
-        module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))
+        module.passed.append(
+            (
+                "environment_yml",
+                "environment_yml_exists",
+                "Module's `environment.yml` exists",
+                module.environment_yml,
+            )
+        )
 
     except FileNotFoundError:
         # check if the module's main.nf requires a conda environment
@@ -72,11 +92,17 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
             main_nf = fh.read()
             if 'conda "${moduleDir}/environment.yml"' in main_nf:
                 module.failed.append(
-                    ("environment_yml_exists", "Module's `environment.yml` does not exist", module.environment_yml)
+                    (
+                        "environment_yml",
+                        "environment_yml_exists",
+                        "Module's `environment.yml` does not exist",
+                        module.environment_yml,
+                    )
                 )
             else:
                 module.passed.append(
                     (
+                        "environment_yml",
                         "environment_yml_exists",
                         "Module's `environment.yml` does not exist, but it is also not included in the main.nf",
                         module.environment_yml,
@@ -91,7 +117,12 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 schema = json.load(fh)
             validators.validate(instance=env_yml, schema=schema)
             module.passed.append(
-                ("environment_yml_valid", "Module's `environment.yml` is valid", module.environment_yml)
+                (
+                    "environment_yml",
+                    "environment_yml_valid",
+                    "Module's `environment.yml` is valid",
+                    module.environment_yml,
+                )
             )
             valid_env_yml = True
         except exceptions.ValidationError as e:
@@ -102,6 +133,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 e.message = e.schema["message"]
             module.failed.append(
                 (
+                    "environment_yml",
                     "environment_yml_valid",
                     f"The `environment.yml` of the module {module.component_name} is not valid: {e.message}.{hint}",
                     module.environment_yml,
@@ -155,9 +187,9 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 is_sorted = True
 
             if is_sorted:
-                module_lint_object.passed.append(
-                    LintResult(
-                        module,
+                module.passed.append(
+                    (
+                        "environment_yml",
                         "environment_yml_sorted",
                         "The dependencies in the module's `environment.yml` are sorted correctly",
                         module.environment_yml,
@@ -189,9 +221,9 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                     # Then dump the sorted YAML
                     yaml.dump(env_yml, fh)
 
-                module_lint_object.passed.append(
-                    LintResult(
-                        module,
+                module.passed.append(
+                    (
+                        "environment_yml",
                         "environment_yml_sorted",
                         "The dependencies in the module's `environment.yml` have been sorted",
                         module.environment_yml,

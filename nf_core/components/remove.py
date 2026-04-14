@@ -53,6 +53,10 @@ class ComponentRemove(ComponentCommand):
         if repo_url is None:
             repo_url = self.modules_repo.remote_url
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1]} name:",
                 choices=self.components_from_repo(repo_path),
@@ -130,6 +134,10 @@ class ComponentRemove(ComponentCommand):
                     )
                 # ask the user if they still want to remove the component, add it back otherwise
                 if not force:
+                    self.require_prompts(
+                        f"{self.component_type[:-1].title()} '{component}' is still included in workflow files.\n"
+                        "Use '--force' to force removal"
+                    )
                     if not questionary.confirm(
                         f"Do you still want to remove the {self.component_type[:-1]} '{component}'?",
                         style=nf_core.utils.nfcore_question_style,
@@ -150,6 +158,10 @@ class ComponentRemove(ComponentCommand):
                 else False
             )
             removed_components.append(component)
+
+        # Prettify modules.json file after all changes have been made
+        modules_json.load()
+        modules_json.dump(run_prettier=True)
 
         if removed:
             if self.component_type == "subworkflows":

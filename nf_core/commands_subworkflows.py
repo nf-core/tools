@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest):
+def subworkflows_create(ctx, subworkflow, directory, author, force):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -18,13 +18,13 @@ def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pyte
     'subworkflows/local/<subworkflow_name>.nf'
 
     If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'subworkflows/', 'tests/subworkflows' and 'tests/config/pytest_modules.yml'
+    in 'subworkflows/' and 'tests/subworkflows'
     """
     from nf_core.subworkflows import SubworkflowCreate
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(directory, subworkflow, author, force, migrate_pytest)
+        subworkflow_create = SubworkflowCreate(directory, subworkflow, author, force)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -34,7 +34,7 @@ def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pyte
         sys.exit(1)
 
 
-def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
+def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a subworkflow.
 
@@ -42,8 +42,6 @@ def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, pro
     """
     from nf_core.components.components_test import ComponentsTest
 
-    if migrate_pytest:
-        subworkflows_create(ctx, subworkflow, directory, None, False, True)
     try:
         sw_tester = ComponentsTest(
             component_type="subworkflows",
@@ -104,7 +102,9 @@ def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=
         sys.exit(1)
 
 
-def subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix):
+def subworkflows_lint(
+    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix, plain_text
+):
     """
     Lint one or more subworkflows in a directory.
 
@@ -137,6 +137,7 @@ def subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warn
             local=local,
             show_passed=passed,
             sort_by=sort_by,
+            plain_text=plain_text,
         )
         if len(subworkflow_lint.failed) > 0:
             sys.exit(1)

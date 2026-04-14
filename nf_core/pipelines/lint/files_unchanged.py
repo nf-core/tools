@@ -5,7 +5,6 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Union
 
 import yaml
 
@@ -14,7 +13,7 @@ import nf_core.pipelines.create.create
 log = logging.getLogger(__name__)
 
 
-def files_unchanged(self) -> dict[str, Union[list[str], bool]]:
+def files_unchanged(self) -> dict[str, list[str] | bool]:
     """Checks that certain pipeline files are not modified from template output.
 
     Iterates through the pipeline's directory content and compares specified files
@@ -26,7 +25,6 @@ def files_unchanged(self) -> dict[str, Union[list[str], bool]]:
         .gitattributes
         .prettierrc.yml
         .github/.dockstore.yml
-        .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml
@@ -94,7 +92,6 @@ def files_unchanged(self) -> dict[str, Union[list[str], bool]]:
         [Path("CODE_OF_CONDUCT.md")],
         [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path(".github", ".dockstore.yml")],
-        [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
@@ -146,11 +143,11 @@ def files_unchanged(self) -> dict[str, Union[list[str], bool]]:
     create_obj.init_pipeline()
 
     # Helper functions for file paths
-    def _pf(file_path: Union[str, Path]) -> Path:
+    def _pf(file_path: str | Path) -> Path:
         """Helper function - get file path for pipeline file"""
         return Path(self.wf_path, file_path)
 
-    def _tf(file_path: Union[str, Path]) -> Path:
+    def _tf(file_path: str | Path) -> Path:
         """Helper function - get file path for template file"""
         return Path(test_pipeline_dir, file_path)
 

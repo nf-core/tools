@@ -1,4 +1,4 @@
-from typing import Optional
+import logging
 
 import rich.console
 import rich.table
@@ -15,6 +15,7 @@ from nf_core.test_datasets.test_datasets_utils import (
 from nf_core.utils import rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
+log = logging.getLogger(__name__)
 
 
 def search_datasets(
@@ -23,7 +24,7 @@ def search_datasets(
     generate_dl_url: bool = False,
     ignored_file_prefixes: list[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
-    query: Optional[str] = "",
+    query: str | None = "",
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
@@ -34,6 +35,10 @@ def search_datasets(
 
     The resulting file can optionally be parsed as a nextflow path or a url for downloading
     """
+
+    if generate_nf_path and generate_dl_url:
+        log.warning("Ignoring url output as nextflow path output is enabled.")
+
     branch, all_branches = get_or_prompt_branch(maybe_branch)
 
     stdout.print("Searching files on branch: ", branch)

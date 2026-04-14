@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Union, cast
+from typing import cast
 
 import rich.table
 
@@ -16,10 +16,10 @@ class ComponentList(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        pipeline_dir: Union[str, Path] = ".",
+        pipeline_dir: str | Path = ".",
         remote: bool = True,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
     ) -> None:
         self.remote = remote
@@ -34,9 +34,7 @@ class ComponentList(ComponentCommand):
             nf_dir_req = False
         return super()._configure_repo_and_paths(nf_dir_req)
 
-    def list_components(
-        self, keywords: Optional[list[str]] = None, print_json: bool = False
-    ) -> Union[rich.table.Table, str]:
+    def list_components(self, keywords: list[str] | None = None, print_json: bool = False) -> rich.table.Table | str:
         keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo

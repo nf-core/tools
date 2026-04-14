@@ -2,7 +2,6 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import questionary
 import requests
@@ -11,6 +10,7 @@ import rich
 from nf_core.utils import (
     determine_base_dir,
     fetch_wf_config,
+    is_interactive,
     load_tools_config,
     nfcore_question_style,
     rich_force_colors,
@@ -206,6 +206,8 @@ def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
                 if pipeline_name in all_branches:
                     branch_prefill = pipeline_name
 
+        if not is_interactive():
+            raise UserWarning("No branch name provided and session is not interactive (no TTY detected).")
         branch = questionary.autocomplete(
             "Branch name:",
             choices=sorted(all_branches),
@@ -217,7 +219,7 @@ def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
         return branch, all_branches
 
 
-def get_or_prompt_file_selection(files: list[str], query: Optional[str]) -> str:
+def get_or_prompt_file_selection(files: list[str], query: str | None) -> str:
     """
     Prompt with autocompletion to enter a file from a list of files until a valid file is selected.
     """
@@ -232,6 +234,8 @@ def get_or_prompt_file_selection(files: list[str], query: Optional[str]) -> str:
             file_selected = True
 
     while not file_selected:
+        if not is_interactive():
+            raise UserWarning("No file selected and session is not interactive (no TTY detected).")
         selection = questionary.autocomplete(
             "File:", choices=files, style=nfcore_question_style, default=query, qmark=AUTOCOMPLETION_HINT
         ).unsafe_ask()

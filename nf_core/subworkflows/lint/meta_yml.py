@@ -27,12 +27,34 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     Checks that all input and output channels are specified in ``meta.yml``.
     Checks that all included components in ``main.nf`` are specified in ``meta.yml``.
 
+    The following checks are performed:
+
+    * ``meta_yml_exists``: The ``meta.yml`` file must exist.
+
+    * ``meta_yml_valid``: The ``meta.yml`` must be valid according to the JSON
+      schema defined at https://raw.githubusercontent.com/nf-core/subworkflows/master/modules/environment-schema.json.
+
+    * ``meta_input``: All input channels declared in ``main.nf`` must be listed
+      under the ``input:`` key in ``meta.yml``.
+
+    * ``meta_output``: All output channels declared in ``main.nf`` must be listed
+      under the ``output:`` key in ``meta.yml``.
+
+    * ``meta_name``: The ``name`` field in ``meta.yml`` must match the workflow
+      name declared in ``main.nf``.
+
+    * ``meta_include``: All modules and subworkflows included in ``main.nf`` must
+      be listed under the ``components:`` key in ``meta.yml``.
+
+    * ``meta_modules_deprecated``: The deprecated ``modules:`` section must not
+      be present in ``meta.yml``; use ``components:`` instead.
     """
     # Read the meta.yml file
     if subworkflow.meta_yml is None:
         if allow_missing:
             subworkflow.warned.append(
                 (
+                    "meta_yml",
                     "meta_yml_exists",
                     "Subworkflow `meta.yml` does not exist",
                     Path(subworkflow.component_dir, "meta.yml"),
@@ -45,9 +67,13 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         with open(subworkflow.meta_yml) as fh:
             yaml = ruamel.yaml.YAML(typ="safe")
             meta_yaml = yaml.load(fh)
-        subworkflow.passed.append(("meta_yml_exists", "Subworkflow `meta.yml` exists", subworkflow.meta_yml))
+        subworkflow.passed.append(
+            ("meta_yml", "meta_yml_exists", "Subworkflow `meta.yml` exists", subworkflow.meta_yml)
+        )
     except FileNotFoundError:
-        subworkflow.failed.append(("meta_yml_exists", "Subworkflow `meta.yml` does not exist", subworkflow.meta_yml))
+        subworkflow.failed.append(
+            ("meta_yml", "meta_yml_exists", "Subworkflow `meta.yml` does not exist", subworkflow.meta_yml)
+        )
         return
 
     # Confirm that the meta.yml file is valid according to the JSON schema
@@ -56,7 +82,9 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         with open(Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflows/yaml-schema.json")) as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
-        subworkflow.passed.append(("meta_yml_valid", "Subworkflow `meta.yml` is valid", subworkflow.meta_yml))
+        subworkflow.passed.append(
+            ("meta_yml", "meta_yml_valid", "Subworkflow `meta.yml` is valid", subworkflow.meta_yml)
+        )
     except jsonschema.exceptions.ValidationError as e:
         valid_meta_yml = False
         hint = ""
@@ -66,6 +94,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
             hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         subworkflow.failed.append(
             (
+                "meta_yml",
                 "meta_yml_valid",
                 f"The `meta.yml` of the subworkflow {subworkflow.component_name} is not valid: {e.message}.{hint}",
                 subworkflow.meta_yml,
@@ -79,9 +108,11 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
             meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
             for input in subworkflow.inputs:
                 if input in meta_input:
-                    subworkflow.passed.append(("meta_input", f"`{input}` specified", subworkflow.meta_yml))
+                    subworkflow.passed.append(("meta_yml", "meta_input", f"`{input}` specified", subworkflow.meta_yml))
                 else:
-                    subworkflow.failed.append(("meta_input", f"`{input}` missing in `meta.yml`", subworkflow.meta_yml))
+                    subworkflow.failed.append(
+                        ("meta_yml", "meta_input", f"`{input}` missing in `meta.yml`", subworkflow.meta_yml)
+                    )
         else:
             log.debug(f"No inputs specified in subworkflow `main.nf`: {subworkflow.component_name}")
 
@@ -89,20 +120,25 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
             for output in subworkflow.outputs:
                 if output in meta_output:
-                    subworkflow.passed.append(("meta_output", f"`{output}` specified", subworkflow.meta_yml))
+                    subworkflow.passed.append(
+                        ("meta_yml", "meta_output", f"`{output}` specified", subworkflow.meta_yml)
+                    )
                 else:
                     subworkflow.failed.append(
-                        ("meta_output", f"`{output}` missing in `meta.yml`", subworkflow.meta_yml)
+                        ("meta_yml", "meta_output", f"`{output}` missing in `meta.yml`", subworkflow.meta_yml)
                     )
         else:
             log.debug(f"No outputs specified in subworkflow `main.nf`: {subworkflow.component_name}")
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == subworkflow.workflow_name:
-            subworkflow.passed.append(("meta_name", "Correct name specified in `meta.yml`", subworkflow.meta_yml))
+            subworkflow.passed.append(
+                ("meta_yml", "meta_name", "Correct name specified in `meta.yml`", subworkflow.meta_yml)
+            )
         else:
             subworkflow.failed.append(
                 (
+                    "meta_yml",
                     "meta_name",
                     f"Conflicting workflow name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{subworkflow.workflow_name}`)",
                     subworkflow.meta_yml,
@@ -120,6 +156,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
                 if component in meta_components:
                     subworkflow.passed.append(
                         (
+                            "meta_yml",
                             "meta_include",
                             f"Included module/subworkflow `{component}` specified in `meta.yml`",
                             subworkflow.meta_yml,
@@ -128,6 +165,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
                 else:
                     subworkflow.failed.append(
                         (
+                            "meta_yml",
                             "meta_include",
                             f"Included module/subworkflow `{component}` missing in `meta.yml`",
                             subworkflow.meta_yml,
@@ -136,6 +174,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         if "modules" in meta_yaml:
             subworkflow.failed.append(
                 (
+                    "meta_yml",
                     "meta_modules_deprecated",
                     "Deprecated section 'modules' found in `meta.yml`, use 'components' instead",
                     subworkflow.meta_yml,
@@ -144,6 +183,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         else:
             subworkflow.passed.append(
                 (
+                    "meta_yml",
                     "meta_modules_deprecated",
                     "Deprecated section 'modules' not found in `meta.yml`",
                     subworkflow.meta_yml,

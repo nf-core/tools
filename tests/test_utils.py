@@ -1,6 +1,7 @@
 """Tests covering for utility functions."""
 
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -15,6 +16,36 @@ from .test_pipelines import TestPipelines
 from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
+
+
+def test_is_interactive_consults_all_streams():
+    """Verify all three streams are checked — catches a forgotten stream or hardcoded return."""
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=True) as m_in,
+        mock.patch.object(sys.stdout, "isatty", return_value=True) as m_out,
+        mock.patch.object(sys.stderr, "isatty", return_value=True) as m_err,
+    ):
+        assert nf_core.utils.is_interactive() is True
+        m_in.assert_called_once()
+        m_out.assert_called_once()
+        m_err.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "stdin,stdout,stderr",
+    [
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+    ],
+)
+def test_is_interactive_false_if_any_non_tty(stdin, stdout, stderr):
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=stdin),
+        mock.patch.object(sys.stdout, "isatty", return_value=stdout),
+        mock.patch.object(sys.stderr, "isatty", return_value=stderr),
+    ):
+        assert nf_core.utils.is_interactive() is False
 
 
 def test_strip_ansi_codes():
@@ -98,16 +129,16 @@ class TestUtils(TestPipelines):
         files = pipeline_obj.list_files()
         assert tmp_fn in files
 
-    @mock.patch("os.path.exists")
-    @mock.patch("os.makedirs")
-    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.exists")
+    def test_request_cant_create_cache(self, mock_exists, mock_mkdir):
         """Test that we don't get an error when we can't create cachedirs"""
-        mock_mkd.side_effect = PermissionError()
         mock_exists.return_value = False
+        mock_mkdir.side_effect = PermissionError()
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):
-        result = nf_core.utils.pip_package("multiqc=1.10")
+        result = nf_core.utils.pip_package("multiqc=1.32")
         assert isinstance(result, dict)
 
     @mock.patch("requests.get")
@@ -118,7 +149,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     @mock.patch("requests.get")
     def test_pip_package_connection_error(self, mock_get):
@@ -128,7 +159,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     def test_pip_erroneous_package(self):
         """Tests the PyPi API package information query"""
@@ -151,10 +182,10 @@ class TestUtils(TestPipelines):
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
-            if r.get("tag_name") == "v1.10":
+            if r.get("tag_name") == "v1.32":
                 break
         else:
-            raise AssertionError("MultiQC release v1.10 not found")
+            raise AssertionError("MultiQC release v1.32 not found")
         assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
@@ -224,3 +255,22 @@ class TestUtils(TestPipelines):
         config = nf_core.utils.fetch_wf_config(".", False)
         assert len(config.keys()) == 1
         assert "params.param2" in list(config.keys())
+
+    @with_temporary_folder
+    def test_get_wf_files(self, tmpdir):
+        tmpdir = Path(tmpdir)
+        (tmpdir / ".gitignore").write_text(".nextflow*\nwork/\nresults/\n")
+        for rpath in [
+            ".git/should-ignore-1",
+            "work/should-ignore-2",
+            "results/should-ignore-3",
+            ".nextflow.should-ignore-4",
+            "dir1/should-match-1",
+            "should-match-2",
+        ]:
+            p = tmpdir / rpath
+            p.parent.mkdir(exist_ok=True)
+            p.touch()
+        files = nf_core.utils.get_wf_files(tmpdir)
+        files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
+        assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]

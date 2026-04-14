@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import questionary
 from rich import print
@@ -30,15 +29,15 @@ log = logging.getLogger(__name__)
 class ComponentInstall(ComponentCommand):
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
+        pipeline_dir: str | Path,
         component_type: str,
         force: bool = False,
         prompt: bool = False,
-        sha: Optional[str] = None,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
+        sha: str | None = None,
+        remote_url: str | None = None,
+        branch: str | None = None,
         no_pull: bool = False,
-        installed_by: Optional[list[str]] = None,
+        installed_by: list[str] | None = None,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -52,7 +51,7 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: Union[str, dict[str, str]], silent: bool = False) -> bool:
+    def install(self, component: str | dict[str, str], silent: bool = False) -> bool:
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
@@ -133,6 +132,9 @@ class ComponentInstall(ComponentCommand):
             )
             modules_json.load()
             modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
+            if not silent:
+                modules_json.load()
+                modules_json.dump(run_prettier=True)
             return False
         try:
             version = self.get_version(component, self.current_sha, self.prompt, current_version, self.modules_repo)
@@ -195,6 +197,7 @@ class ComponentInstall(ComponentCommand):
         """
         Install included modules and subworkflows
         """
+        ini_modules_repo = self.modules_repo
         modules_to_install, subworkflows_to_install = get_components_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
             original_installed = self.installed_by
@@ -209,15 +212,22 @@ class ComponentInstall(ComponentCommand):
             self.install(m_install, silent=True)
             self.component_type = original_component_type
             self.installed_by = original_installed
+        # self.install will have modified self.modules_repo. Restore its original value
+        self.modules_repo = ini_modules_repo
 
     def collect_and_verify_name(
-        self, component: Optional[str], modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
+        self, component: str | None, modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
     ) -> str:
         """
         Collect component name.
         Check that the supplied name is an available module/subworkflow.
         """
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument:\n"
+                f"  `nf-core {self.component_type} install <name>`"
+            )
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
                 choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.current_sha)),
@@ -269,6 +279,10 @@ class ComponentInstall(ComponentCommand):
                 log.info(f"{self.component_type[:-1].title()} '{component}' is already installed.")
 
             if prompt:
+                self.require_prompts(
+                    f"{self.component_type[:-1].title()} '{component}' is already installed.\n"
+                    "Use '--force' to force reinstallation"
+                )
                 message = (
                     "?" if self.component_type == "modules" else " of this subworkflow and all it's imported modules?"
                 )
@@ -299,16 +313,17 @@ class ComponentInstall(ComponentCommand):
         if sha:
             version = sha
         elif prompt:
-            try:
-                version = prompt_component_version_sha(
-                    component,
-                    self.component_type,
-                    installed_sha=current_version,
-                    modules_repo=modules_repo,
-                )
-            except SystemError as e:
-                log.error(e)
-                return False
+            self.require_prompts(
+                f"Cannot interactively select a version for '{component}'.\n"
+                "Please specify the version using the '--sha' option:\n"
+                f"  nf-core {self.component_type} install --sha <commit_sha> {component}"
+            )
+            version = prompt_component_version_sha(
+                component,
+                self.component_type,
+                installed_sha=current_version,
+                modules_repo=modules_repo,
+            )
         else:
             # Fetch the latest commit for the module
             version = modules_repo.get_latest_component_version(component, self.component_type)

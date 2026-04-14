@@ -117,6 +117,10 @@ class ComponentUpdate(ComponentCommand):
             self.modules_json.check_up_to_date()
 
         if not self.update_all and component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument or use '--all'"
+            )
             choices = [f"All {self.component_type}", f"Named {self.component_type[:-1]}"]
             self.update_all = (
                 questionary.select(
@@ -141,6 +145,10 @@ class ComponentUpdate(ComponentCommand):
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
         if not self.save_diff_fn and self.show_diff is None:
+            self.require_prompts(
+                "Diff display preference not specified.\n"
+                "Please use '--preview', '--save-diff', or neither to skip diff viewing"
+            )
             diff_type = questionary.select(
                 "Do you want to view diffs of the proposed changes?",
                 choices=[
@@ -258,7 +266,7 @@ class ComponentUpdate(ComponentCommand):
                             "It is advised to keep all your modules and subworkflows up to date.\n"
                             "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                         )
-                        if self.update_deps:
+                        if self.update_deps or self.no_prompts:
                             recursive_update = True
                         else:
                             recursive_update = questionary.confirm(
@@ -286,6 +294,10 @@ class ComponentUpdate(ComponentCommand):
                         limit_output=self.limit_output,
                     )
                     # Ask the user if they want to install the component
+                    self.require_prompts(
+                        "Cannot interactively confirm updates.\n"
+                        "Please run without '--preview' or use '--save-diff' instead"
+                    )
                     dry_run = not questionary.confirm(
                         f"Update {self.component_type[:-1]} '{component}'?",
                         default=False,
@@ -307,7 +319,7 @@ class ComponentUpdate(ComponentCommand):
                             "It is advised to keep all your modules and subworkflows up to date.\n"
                             "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                         )
-                        if self.update_deps:
+                        if self.update_deps or self.no_prompts:
                             recursive_update = True
                         else:
                             recursive_update = questionary.confirm(
@@ -374,6 +386,10 @@ class ComponentUpdate(ComponentCommand):
         ]
 
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1].title()} name:",
                 choices=sorted(choices),
@@ -451,6 +467,11 @@ class ComponentUpdate(ComponentCommand):
             log.warning(
                 f"You are trying to update the '{Path(install_dir, component)}' {self.component_type[:-1]} from "
                 f"the '{new_branch}' branch. This {self.component_type[:-1]} was installed from the '{current_branch}'"
+            )
+            self.require_prompts(
+                f"Branch mismatch for '{component}'.\n"
+                f"The {self.component_type[:-1]} was installed from '{current_branch}' but you are updating from '{new_branch}'.\n"
+                f"Please use '-b {current_branch}' to update from the original branch"
             )
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
             if switch:
@@ -725,6 +746,7 @@ class ComponentUpdate(ComponentCommand):
         Then creates the file for saving the diff.
         """
         if self.save_diff_fn is True:
+            self.require_prompts("No diff filename provided.\nPlease provide a filename with '--save-diff <filename>'")
             # From questionary - no filename yet
             self.save_diff_fn = questionary.path(
                 "Enter the filename: ", style=nf_core.utils.nfcore_question_style
@@ -740,6 +762,10 @@ class ComponentUpdate(ComponentCommand):
             return
         # Check if filename already exists (questionary or cli)
         while self.save_diff_fn.exists():
+            self.require_prompts(
+                f"Diff file '{self.save_diff_fn}' already exists.\n"
+                "Please remove the file or provide a different filename"
+            )
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
                 os.remove(self.save_diff_fn)
                 break

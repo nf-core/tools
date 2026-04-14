@@ -1,12 +1,6 @@
 {% if email -%}
 email_template.html
 {%- endif %}
-{%- if adaptivecard %}
-adaptivecard.json
-{%- endif %}
-{%- if slackreport %}
-slackreport.json
-{%- endif %}
 .nextflow*
 work/
 data/
@@ -16,6 +10,11 @@ testing/
 testing*
 *.pyc
 bin/
+.nf-test/
 {%- if rocrate %}
 ro-crate-metadata.json
+{%- endif %}
+{%- if modules %}
+modules/nf-core/
+subworkflows/nf-core/
 {%- endif %}

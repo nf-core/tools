@@ -359,6 +359,7 @@ class TestModulesCreate(TestModules):
 
         with mock.patch.object(nf_core.components.patch.questionary, "confirm") as mock_questionary:
             mock_questionary.unsafe_ask.return_value = True
+            patch_obj.no_prompts = False
             patch_obj.remove(BISMARK_ALIGN)
         # Check that the diff file has been removed
         assert not (module_path / patch_fn).exists()

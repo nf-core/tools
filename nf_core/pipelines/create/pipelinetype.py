@@ -11,7 +11,7 @@ markdown_type_nfcore = """
 ## Choose _"nf-core"_ if:
 
 * You want your pipeline to be part of the nf-core community
-* You think that there's an outside chance that it ever _could_ be part of nf-core
+* Your pipeline has been accepted via the [nf-core proposal process](https://github.com/nf-core/proposals)
 """
 markdown_type_custom = """
 ## Choose _"Custom"_ if:
