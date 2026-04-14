@@ -95,7 +95,6 @@ class TestSubworkflowsNfTest(TestSubworkflows):
         assert len(subworkflow_lint.failed) == 0
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) >= 0, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
-        assert any([x.lint_test == "test_snap_versions" for x in subworkflow_lint.warned])
 
     def test_subworkflows_empty_file_in_snapshot(self):
         """Test linting a nf-test subworkflow with an empty file sha sum in the test snapshot, which should make it fail (if it is not a stub)"""

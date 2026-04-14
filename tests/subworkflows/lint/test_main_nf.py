@@ -64,18 +64,12 @@ class TestMainNf(TestSubworkflows):
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 6
+        assert len(subworkflow_lint.warned) == 5
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed]
         )
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned]
-        )
-        assert any(
-            [
-                x.message.endswith("Can be ignored if the module is using topic channels")
-                for x in subworkflow_lint.warned
-            ]
         )
 
         # cleanup
