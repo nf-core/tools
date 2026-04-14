@@ -151,24 +151,6 @@ def check_main_section(self, lines, included_components):
                         self.main_nf,
                     )
                 )
-            if component + ".out.versions" in script:
-                self.passed.append(
-                    (
-                        "main_nf",
-                        "main_nf_include_versions",
-                        f"Included component '{component}' versions are added in main.nf",
-                        self.main_nf,
-                    )
-                )
-            else:
-                self.warned.append(
-                    (
-                        "main_nf",
-                        "main_nf_include_versions",
-                        f"Included component '{component}' versions are not added in main.nf",
-                        self.main_nf,
-                    )
-                )
 
 
 def check_subworkflow_section(self, lines: list[str]) -> list[str]:
