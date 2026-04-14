@@ -67,6 +67,7 @@
 - Lint against the correct repo ([#4140](https://github.com/nf-core/tools/pull/4140))
 - Fix false positive matches to words like text in ext key linting ([#4142](https://github.com/nf-core/tools/pull/4142))
 - Fix changelog bot failing after linting step ([#4155](https://github.com/nf-core/tools/pull/4155))
+- lint for correct syntax for compressed files in stubs ([#4048](https://github.com/nf-core/tools/pull/4048))
 
 ### Modules
 
@@ -90,6 +91,7 @@
 - Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
 - Fix nf-core tools version to what is specified in `.nf-core.yml` for the GitHub workflow `download_pipeline.yml` ([#4124](https://github.com/nf-core/tools/pull/4124)).
 - Update all documentation URLs to point to equivalents on the new nf-core website documentation structure ([#4135](https://github.com/nf-core/tools/pull/4135))
+- Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
 - Add additional fusion specific exit codes ([#4180](https://github.com/nf-core/tools/pull/4180))
 
 #### Version updates
@@ -121,6 +123,7 @@
 
 ### Template
 
+- add trainling slash for pipelines_testdata_base_path ([#3701](https://github.com/nf-core/tools/pull/3701))
 - switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
 - add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
 

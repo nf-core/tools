@@ -179,6 +179,161 @@ class TestModuleTests(TestModules):
         with open(snap_file, "w") as fh:
             fh.write(content)
 
+    def test_modules_stub_gzip_valid_syntax(self):
+        """Test linting a module with valid stub gzip syntax: echo "" | gzip > file.gz"""
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        original_content = main_nf.read_text()
+
+        # Replace the existing stub block with one that has valid gzip syntax
+        import re
+
+        new_stub = '''    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo "" | gzip > ${prefix}.txt.gz
+    touch ${prefix}.txt
+    """
+}'''
+        # Replace the existing stub block
+        new_content = re.sub(r"stub:.*?^}", new_stub, original_content, flags=re.DOTALL | re.MULTILINE)
+
+        main_nf.write_text(new_content)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Reset the file
+        main_nf.write_text(original_content)
+
+        # Check that stub gzip syntax check passed
+        passed_tests = [x.lint_test if hasattr(x, "lint_test") else x[1] for x in module_lint.passed]
+        assert "test_stub_gzip_syntax" in passed_tests, "test_stub_gzip_syntax not found in passed tests"
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+
+    def test_modules_stub_gzip_invalid_syntax_touch(self):
+        """Test linting a module with invalid stub gzip syntax using touch"""
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        original_content = main_nf.read_text()
+
+        # Replace the existing stub block with one that uses touch (invalid)
+        import re
+
+        new_stub = '''    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.txt.gz
+    touch ${prefix}.txt
+    """
+}'''
+        new_content = re.sub(r"stub:.*?^}", new_stub, original_content, flags=re.DOTALL | re.MULTILINE)
+
+        main_nf.write_text(new_content)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Reset the file
+        main_nf.write_text(original_content)
+
+        # Check that stub gzip syntax check failed
+        assert len(module_lint.failed) >= 1, "Expected linting to fail"
+        failed_tests = [x.lint_test if hasattr(x, "lint_test") else x[1] for x in module_lint.failed]
+        assert "test_stub_gzip_syntax" in failed_tests, "test_stub_gzip_syntax not found in failed tests"
+
+    def test_modules_stub_gzip_invalid_syntax_wrong_echo(self):
+        """Test linting a module with invalid stub gzip syntax using echo with non-empty string"""
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        original_content = main_nf.read_text()
+
+        # Replace the existing stub block with one that uses echo "stub" instead of echo ""
+        import re
+
+        new_stub = '''    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo "stub" | gzip > ${prefix}.txt.gz
+    touch ${prefix}.txt
+    """
+}'''
+        new_content = re.sub(r"stub:.*?^}", new_stub, original_content, flags=re.DOTALL | re.MULTILINE)
+
+        main_nf.write_text(new_content)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Reset the file
+        main_nf.write_text(original_content)
+
+        # Check that stub gzip syntax check failed
+        assert len(module_lint.failed) >= 1, "Expected linting to fail"
+        failed_tests = [x.lint_test if hasattr(x, "lint_test") else x[1] for x in module_lint.failed]
+        assert "test_stub_gzip_syntax" in failed_tests, "test_stub_gzip_syntax not found in failed tests"
+
+    def test_modules_stub_gzip_multiple_valid(self):
+        """Test linting a module with multiple valid stub gzip files"""
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        original_content = main_nf.read_text()
+
+        # Replace the existing stub block with one that has multiple valid gzip files
+        import re
+
+        new_stub = '''    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo "" | gzip > ${prefix}.txt.gz
+    echo "" | gzip > ${prefix}.vcf.gz
+    echo "" | gzip > ${prefix}.bam.gz
+    touch ${prefix}.txt
+    """
+}'''
+        new_content = re.sub(r"stub:.*?^}", new_stub, original_content, flags=re.DOTALL | re.MULTILINE)
+
+        main_nf.write_text(new_content)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Reset the file
+        main_nf.write_text(original_content)
+
+        # Check that stub gzip syntax check passed
+        passed_tests = [x.lint_test if hasattr(x, "lint_test") else x[1] for x in module_lint.passed]
+        assert "test_stub_gzip_syntax" in passed_tests, "test_stub_gzip_syntax not found in passed tests"
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+
+    def test_modules_stub_gzip_multiple_valid_and_invalid(self):
+        """Test linting a module with multiple valid and invalid stub gzip files"""
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        original_content = main_nf.read_text()
+
+        # Replace the existing stub block with one that has both valid and invalid gzip patterns
+        import re
+
+        new_stub = '''    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo "" | gzip > ${prefix}.txt.gz
+    echo | gzip > ${prefix}.vcf.gz
+    echo "" | gzip > ${prefix}.bam.gz
+    touch ${prefix}.txt
+    """
+}'''
+        new_content = re.sub(r"stub:.*?^}", new_stub, original_content, flags=re.DOTALL | re.MULTILINE)
+
+        main_nf.write_text(new_content)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Reset the file
+        main_nf.write_text(original_content)
+
+        # Check that stub gzip syntax check failed (because one pattern is invalid)
+        assert len(module_lint.failed) >= 1, "Expected linting to fail"
+        failed_tests = [x.lint_test if hasattr(x, "lint_test") else x[1] for x in module_lint.failed]
+        assert "test_stub_gzip_syntax" in failed_tests, "test_stub_gzip_syntax not found in failed tests"
+
     def test_modules_empty_file_in_stub_snapshot(self):
         """Test linting a nf-test module with an empty file sha sum in the stub test snapshot, which should make it not fail"""
         snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"

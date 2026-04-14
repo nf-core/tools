@@ -235,6 +235,9 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                             snap_file,
                         )
                     )
+            # Check that stub blocks with gzip files use proper syntax
+            _check_stub_gzip_syntax(module)
+
             # Verify that tags are correct.
             main_nf_tags = module._get_main_nf_tags(module.nftest_main_nf)
             not_alphabet = re.compile(r"[^a-zA-Z]")
@@ -288,5 +291,67 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     "test_old_test_dir",
                     "Old pytests don't exist for this module",
                     old_test_dir,
+                )
+            )
+
+
+def _check_stub_gzip_syntax(module: NFCoreComponent):
+    """
+    Linting Checks perfomed:
+    * ``test_stub_gzip_syntax``:
+     Check that stub blocks with gzip output files use the proper syntax.
+     Stub files ending in .gz must use: echo "" | gzip > file.gz
+     Simply touching or creating empty .gz files will break nf-test's gzip parser
+    """
+    if not module.main_nf.is_file():
+        return
+
+    with open(module.main_nf) as fh:
+        content = fh.read()
+
+    # Find all stub blocks (matches both """ and ''' style strings)
+    # Pattern matches: stub: followed by anything, then triple quotes, content, closing triple quotes
+    stub_pattern = re.compile(r'stub:.*?(?:"""|\'\'\')\s*(.*?)\s*(?:"""|\'\'\')', re.DOTALL)
+    stub_blocks = stub_pattern.findall(content)
+
+    invalid_gz_patterns = []
+    for i, stub_block in enumerate(stub_blocks):
+        # Look for lines that create .gz files
+        # Only valid pattern is: echo "" | gzip > file.gz
+        # Each .gz creation is always on a single line
+
+        # Find all lines containing .gz in this stub block
+        gz_lines = re.findall(r"^.*\.gz.*$", stub_block, re.MULTILINE)
+
+        for line in gz_lines:
+            line = line.strip()
+            # Skip empty lines and comments
+            if not line or line.startswith("//") or line.startswith("#"):
+                continue
+
+            # The ONLY valid pattern is: echo "" | gzip > file.gz
+            valid_pattern = r'echo\s+""\s*\|\s*gzip\s*>\s*.*\.gz$'
+
+            if not re.search(valid_pattern, line):
+                invalid_gz_patterns.append(line.strip())
+
+    if invalid_gz_patterns:
+        module.failed.append(
+            (
+                "module_tests",
+                "test_stub_gzip_syntax",
+                f"Stub gzip files must use 'echo \"\" | gzip >' syntax. Invalid patterns found: {'; '.join(set(invalid_gz_patterns))}",
+                module.main_nf,
+            )
+        )
+    else:
+        # Only add passed if there are actually stub blocks with .gz files
+        if stub_blocks and any(".gz" in block for block in stub_blocks):
+            module.passed.append(
+                (
+                    "module_tests",
+                    "test_stub_gzip_syntax",
+                    "Stub gzip files use correct syntax",
+                    module.main_nf,
                 )
             )
