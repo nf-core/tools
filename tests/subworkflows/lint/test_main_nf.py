@@ -64,7 +64,7 @@ class TestMainNf(TestSubworkflows):
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
-        assert len(subworkflow_lint.warned) == 3
+        assert len(subworkflow_lint.warned) == 6
         assert any(
             [x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed]
         )
@@ -80,6 +80,23 @@ class TestMainNf(TestSubworkflows):
 
         # cleanup
         self.subworkflow_remove.remove("bam_stats_samtools", force=True)
+
+    def test_skip_keyword_in_comment(self):
+        """Test linting a subworkflow where a comment contains a keyword (workflow, subworkflow, take, main, emit)"""
+        with open(self.main_nf) as fh:
+            content = fh.read()
+            new_content = content.replace(
+                "    SAMTOOLS_IDXSTATS ( ch_bam_bai )",
+                "    // This comment contains the word emit:\n    SAMTOOLS_IDXSTATS ( ch_bam_bai )",
+            )
+        with open(self.main_nf, "w") as fh:
+            fh.write(new_content)
+
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
+        subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
+        assert "Included component 'SAMTOOLS_IDXSTATS' not used in main.nf" not in [
+            warning.message for warning in subworkflow_lint.warned
+        ]
 
     def test_subworkflows_lint_capitalization_fail(self):
         """Test linting a subworkflow with a capitalization fail"""
