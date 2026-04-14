@@ -2,7 +2,28 @@
 
 import os
 import shutil
+import sys
 import tempfile
+from unittest import mock
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _mock_interactive_session():
+    """Mock TTY detection so tests behave as if running in an interactive session.
+
+    Tests run in CI without a TTY, which causes is_interactive() to return False
+    and auto-sets no_prompts=True. This fixture ensures consistent interactive
+    behavior by default. Tests that specifically need non-interactive behavior
+    can override with their own mock.
+    """
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=True),
+        mock.patch.object(sys.stdout, "isatty", return_value=True),
+        mock.patch.object(sys.stderr, "isatty", return_value=True),
+    ):
+        yield
 
 
 def pytest_configure(config):

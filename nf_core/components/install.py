@@ -223,6 +223,11 @@ class ComponentInstall(ComponentCommand):
         Check that the supplied name is an available module/subworkflow.
         """
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument:\n"
+                f"  `nf-core {self.component_type} install <name>`"
+            )
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
                 choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.current_sha)),
@@ -274,6 +279,10 @@ class ComponentInstall(ComponentCommand):
                 log.info(f"{self.component_type[:-1].title()} '{component}' is already installed.")
 
             if prompt:
+                self.require_prompts(
+                    f"{self.component_type[:-1].title()} '{component}' is already installed.\n"
+                    "Use '--force' to force reinstallation"
+                )
                 message = (
                     "?" if self.component_type == "modules" else " of this subworkflow and all it's imported modules?"
                 )
@@ -304,16 +313,17 @@ class ComponentInstall(ComponentCommand):
         if sha:
             version = sha
         elif prompt:
-            try:
-                version = prompt_component_version_sha(
-                    component,
-                    self.component_type,
-                    installed_sha=current_version,
-                    modules_repo=modules_repo,
-                )
-            except SystemError as e:
-                log.error(e)
-                return False
+            self.require_prompts(
+                f"Cannot interactively select a version for '{component}'.\n"
+                "Please specify the version using the '--sha' option:\n"
+                f"  nf-core {self.component_type} install --sha <commit_sha> {component}"
+            )
+            version = prompt_component_version_sha(
+                component,
+                self.component_type,
+                installed_sha=current_version,
+                modules_repo=modules_repo,
+            )
         else:
             # Fetch the latest commit for the module
             version = modules_repo.get_latest_component_version(component, self.component_type)

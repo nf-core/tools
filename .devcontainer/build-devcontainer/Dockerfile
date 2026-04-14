@@ -1,6 +1,6 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:b99720fe7bdce0346dc3c3ff54414ba78ff183d85a5a9d9a2e2e5775ce679347 AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:26b252eed80fe93ec85c48b36035098288c3082c78e5b5073b11d69562ee0897 AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
@@ -27,7 +27,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list && \
     rm -rf /var/lib/apt/lists/*
 
 # Final stage to copy only the required files after installation
-FROM mcr.microsoft.com/devcontainers/base:2.1.6-debian12@sha256:15143a8c806afb8db57ae2c92876c112d7a6a1ced31cd7aa8b414201782757a4 AS final
+FROM mcr.microsoft.com/devcontainers/base:2.1.7-debian12@sha256:4d49e42a3eda8a8fd8437ecd8830d50a9113dc0f3623226db5e5c10a2b156f1e AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda

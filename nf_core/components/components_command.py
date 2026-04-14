@@ -35,10 +35,15 @@ class ComponentCommand:
         self.directory: Path = Path(directory)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress: bool = hide_progress
-        self.no_prompts: bool = no_prompts
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
         self.repo_type: str | None = None
         self.org: str = ""
         self._configure_repo_and_paths()
+
+    def require_prompts(self, msg: str) -> None:
+        """Raise UserWarning if prompts are disabled (via --no-prompts or non-interactive session)."""
+        if self.no_prompts:
+            raise UserWarning(f"{msg} and prompts are disabled.")
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """

@@ -70,7 +70,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
     # Check for org if modules repo
     if repo_type == "modules":
         org = getattr(tools_config, "org_path", "") or ""
-        if org == "":
+        if org == "" and use_prompt:
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -107,6 +107,8 @@ def prompt_component_version_sha(
     Returns:
         git_sha (str): The selected version of the module/subworkflow
     """
+    if not nf_core.utils.is_interactive():
+        raise UserWarning("Cannot interactively select a version and session is not interactive (no TTY detected).")
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )

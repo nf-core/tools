@@ -87,6 +87,12 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
+
+def is_interactive() -> bool:
+    """Check if the current session is interactive (has a TTY on stdin, stdout, and stderr)."""
+    return sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()
+
+
 NFCORE_CACHE_DIR = Path(
     os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
@@ -1028,6 +1034,8 @@ def prompt_remote_pipeline_name(wfs):
         AssertionError, if pipeline cannot be found
     """
 
+    if not is_interactive():
+        raise UserWarning("No pipeline name provided and session is not interactive (no TTY detected).")
     pipeline = questionary.autocomplete(
         "Pipeline name:",
         choices=[wf.name for wf in wfs.remote_workflows],
@@ -1091,6 +1099,9 @@ def prompt_pipeline_release_branch(
 
     if len(choices) == 0:
         return [], []
+
+    if not is_interactive():
+        raise UserWarning("No release/branch specified and session is not interactive (no TTY detected).")
 
     if multiple:
         return (

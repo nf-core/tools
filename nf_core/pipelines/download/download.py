@@ -533,6 +533,8 @@ class DownloadWorkflow:
             raise DownloadError(e)
 
     def prompt_use_singularity(self, fail_message: str) -> None:
+        if not stderr.is_interactive:
+            raise DownloadError(fail_message)
         use_singularity = questionary.confirm(
             "Do you want to download singularity images?",
             style=nf_core.utils.nfcore_question_style,
@@ -544,6 +546,8 @@ class DownloadWorkflow:
 
     def prompt_compression_type(self) -> None:
         """Ask user if we should compress the downloaded files"""
+        if self.compress_type is None and not stderr.is_interactive:
+            return
         if self.compress_type is None:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
