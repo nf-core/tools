@@ -1,6 +1,7 @@
 """Tests covering for utility functions."""
 
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -15,6 +16,36 @@ from .test_pipelines import TestPipelines
 from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
+
+
+def test_is_interactive_consults_all_streams():
+    """Verify all three streams are checked — catches a forgotten stream or hardcoded return."""
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=True) as m_in,
+        mock.patch.object(sys.stdout, "isatty", return_value=True) as m_out,
+        mock.patch.object(sys.stderr, "isatty", return_value=True) as m_err,
+    ):
+        assert nf_core.utils.is_interactive() is True
+        m_in.assert_called_once()
+        m_out.assert_called_once()
+        m_err.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "stdin,stdout,stderr",
+    [
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+    ],
+)
+def test_is_interactive_false_if_any_non_tty(stdin, stdout, stderr):
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=stdin),
+        mock.patch.object(sys.stdout, "isatty", return_value=stdout),
+        mock.patch.object(sys.stderr, "isatty", return_value=stderr),
+    ):
+        assert nf_core.utils.is_interactive() is False
 
 
 def test_strip_ansi_codes():

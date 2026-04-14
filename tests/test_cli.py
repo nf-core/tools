@@ -127,6 +127,7 @@ class TestCli(unittest.TestCase):
             "show-hidden" in params,
             params["url"],
             params["id"],
+            "no-prompts" in params,
         )
 
         mock_launcher.return_value.launch_pipeline.assert_called_once()
@@ -246,7 +247,8 @@ class TestCli(unittest.TestCase):
         assert "Partial arguments supplied." in result.output
 
     @mock.patch("nf_core.pipelines.create.PipelineCreateApp")
-    def test_create_app(self, mock_create):
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
+    def test_create_app(self, mock_interactive, mock_create):
         """Test `nf-core pipelines create` runs an App."""
         cmd = ["pipelines", "create"]
         result = self.invoke_cli(cmd)

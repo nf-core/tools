@@ -23,23 +23,42 @@ log = logging.getLogger(__name__)
 def main_nf(
     module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
 ) -> tuple[list[str], list[str]]:
-    """
-    Lint a ``main.nf`` module file
+    """Lint a ``main.nf`` module file
 
     Can also be used to lint local module files,
-    in which case failures will be reported as
-    warnings.
+    in which case failures will be reported as warnings.
 
-    The test checks for the following:
+    The following checks are performed:
 
-    * Software versions and containers are valid
-    * The module has a process label and it is among
-      the standard ones.
-    * If a ``meta`` map is defined as one of the modules
-      inputs it should be defined as one of the emits,
-      and be correctly configured in the ``saveAs`` function.
-    * The module script section should contain definitions
-      of ``software`` and ``prefix``
+    * ``main_nf_exists``: The ``main.nf`` file must exist.
+
+    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
+      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+      ``publishDir``).
+
+    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+
+    * ``main_nf_container``: Container tags across the ``singularity``, ``docker``,
+      and ``conda`` directives must reference the same software version. A warning
+      is issued if they do not match.
+
+    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
+      blocks must be present.
+
+    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
+      a ``template``.
+
+    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
+      must also appear in at least one output channel.
+
+    * ``main_nf_version_topic``: The module should emit software versions using
+      a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
+      equal the number of ``emit:`` outputs whose name starts with ``versions``.
+      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+      of a topic output.
+
     """
 
     inputs: list[str] = []
@@ -144,6 +163,10 @@ def main_nf(
             shell_lines.append(line)
         if state == "exec" and not _is_empty(line):
             exec_lines.append(line)
+
+    # Check meta naming
+    if inputs:
+        check_meta_input_names(module, inputs)
 
     # Check that we have required sections
     if not len(emits):
@@ -286,7 +309,7 @@ def check_script_section(self, lines):
     permitted_meta_keys = {"id", "single_end"}
     invalid_meta_keys = [
         f"{prefix}{key}"
-        for prefix, key in re.findall(r"\b(meta\d*\.)(\w+)\b(?!\()", script)
+        for prefix, key in re.findall(r"\b(meta\d*\??\.)(\w+)\b(?!\()", script)
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
@@ -721,6 +744,75 @@ def check_container_link_line(self, raw_line, registry):
                     self.main_nf,
                 )
             )
+
+
+def check_meta_input_names(self, inputs):
+    """
+    Check ``meta_input_names``: The  meta* variable names must follow the pattern `meta`, `meta2`, `meta3`, etc.
+    Args:
+        inputs (list): List of input variable names
+    """
+
+    meta_vars = [var for var in inputs if var.startswith("meta")]
+
+    if not meta_vars:
+        return  # No meta variables to check
+
+    # Expected pattern: 'meta' or 'meta' followed by a number (meta2, meta3, etc.)
+    valid_pattern = re.compile(r"^meta(\d+)?$")
+
+    invalid_meta_vars = []
+    valid_numbers = []
+
+    for var in meta_vars:
+        if not valid_pattern.match(var):
+            invalid_meta_vars.append(var)
+        else:
+            # Extract number if present
+            match = re.match(r"^meta(\d+)?$", var)
+            if match.group(1):  # Has a number
+                number_str = match.group(1)
+                number_int = int(number_str)
+
+                if number_str != str(number_int) or number_int < 2:
+                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                    invalid_meta_vars.append(var)
+                else:
+                    valid_numbers.append(number_int)
+
+    # Check for invalid names
+    if invalid_meta_vars:
+        self.failed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variables must be named 'meta', 'meta2', 'meta3', etc. Found: {', '.join(invalid_meta_vars)}",
+                self.main_nf,
+            )
+        )
+
+    # Check for proper sequencing (2, 3, 4... not 2, 5, 3)
+    if valid_numbers:
+        expected = list(range(2, len(valid_numbers) + 2))
+        if valid_numbers != expected:
+            self.warned.append(
+                (
+                    "main_nf",
+                    "meta_input_names",
+                    f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
+                    self.main_nf,
+                )
+            )
+
+    if not invalid_meta_vars and (not valid_numbers or valid_numbers == list(range(2, len(valid_numbers) + 2))):
+        self.passed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variable names follow correct pattern: {', '.join(sorted(meta_vars))}",
+                self.main_nf,
+            )
+        )
 
 
 def _parse_input(self, line_raw):

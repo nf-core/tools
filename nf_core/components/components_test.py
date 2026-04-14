@@ -122,6 +122,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 except LookupError:
                     raise
 
+        assert self.component_name is not None  # Set above by user input, prompt, or guard
         self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists
@@ -170,7 +171,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 print("Displaying nf-test error")
             if "Different Snapshot:" in nftest_err.decode():
                 log.error("nf-test failed due to differences in the snapshots")
-                # prompt to update snapshot
                 if self.no_prompts:
                     log.info("Updating snapshot")
                     self.update = True

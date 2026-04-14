@@ -100,6 +100,10 @@ class WorkflowRepo(SyncedRepo):
 
     def retry_setup_local_repo(self, skip_confirm=False):
         self.retries += 1
+        if not skip_confirm and not nf_core.utils.is_interactive():
+            raise DownloadError(
+                f"Errors with locally cached repository of '{self.fullname}'. Please delete '{self.local_repo_dir}' manually and try again."
+            )
         if skip_confirm or rich.prompt.Confirm.ask(
             f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"
         ):

@@ -29,7 +29,7 @@ jobs:
         run: echo "OUTPUT=$(pip list --outdated | grep nf-core)" >> ${GITHUB_ENV}
 
       - name: Post nf-core template version comment
-        uses: mshick/add-pr-comment@ffd016c7e151d97d69d21a843022fd4cd5b96fe5 # v3
+        uses: mshick/add-pr-comment@64b8e914979889d746c99dea15a76e77ef64580a # v3
         if: |
           contains(env.OUTPUT, 'nf-core')
         with:

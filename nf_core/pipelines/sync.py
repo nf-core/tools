@@ -70,6 +70,7 @@ class PipelineSync:
         template_yaml_path: str | None = None,
         force_pr: bool = False,
         blog_post: str = "",
+        no_prompts: bool = False,
     ):
         """Initialise syncing object"""
 
@@ -93,6 +94,7 @@ class PipelineSync:
         self.gh_repo = gh_repo
         self.pr_url = ""
         self.blog_post = blog_post
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
         assert self.config_yml_path is not None and self.config_yml is not None  # mypy
@@ -102,6 +104,11 @@ class PipelineSync:
                 f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
             )
             if getattr(self.config_yml, "template", None) is not None:
+                if self.no_prompts:
+                    raise UserWarning(
+                        f"A template section already exists in '{self.config_yml_path}' and session is not interactive.\n"
+                        "Please resolve the template_yaml_path conflict manually."
+                    )
                 overwrite_template = questionary.confirm(
                     f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
                     style=nf_core.utils.nfcore_question_style,

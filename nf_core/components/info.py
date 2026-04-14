@@ -97,6 +97,10 @@ class ComponentInfo(ComponentCommand):
             module: str: Module name to check
         """
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             self.local = questionary.confirm(
                 f"Is the {self.component_type[:-1]} locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()

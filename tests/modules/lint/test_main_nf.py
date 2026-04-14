@@ -527,6 +527,425 @@ process TEST_PROCESS {
     )
 
 
+def test_meta_input_names_valid_sequential(tmp_path):
+    """Test that valid sequential meta input names (meta, meta2, meta3, meta4) pass validation"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta), path(reads)
+    tuple val(meta2), path(index)
+    tuple val(meta3), path(database)
+    tuple val(meta4), path(reference)
+
+    output:
+    tuple val(meta), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(p) for p in mock_lint.passed), (
+        f"Expected meta_input_names in passed, got: {mock_lint.passed}"
+    )
+    assert len(mock_lint.failed) == 0, f"Expected no failures, got: {mock_lint.failed}"
+    assert len(mock_lint.warned) == 0, f"Expected no warnings, got: {mock_lint.warned}"
+
+
+def test_meta_input_names_invalid_underscore(tmp_path):
+    """Test that invalid meta input names with underscores (meta_vcf, meta_gex) fail validation"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta_vcf), path(reads)
+    tuple val(meta_gex), path(index)
+    val(meta_ab)
+
+    output:
+    tuple val(meta_vcf), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(f) for f in mock_lint.failed), (
+        f"Expected meta_input_names in failed, got: {mock_lint.failed}"
+    )
+    # Check that the error message mentions the invalid names
+    failed_msg = str(mock_lint.failed[0])
+    assert "meta_vcf" in failed_msg, f"Expected 'meta_vcf' in error message, got: {failed_msg}"
+    assert "meta_gex" in failed_msg, f"Expected 'meta_gex' in error message, got: {failed_msg}"
+    assert "meta_ab" in failed_msg, f"Expected 'meta_ab' in error message, got: {failed_msg}"
+
+
+def test_meta_input_names_invalid_meta1(tmp_path):
+    """Test that meta0 and meta1 fail validation (only meta, meta2, meta3... are allowed)"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta), path(reads)
+    tuple val(meta0), path(index)
+    tuple val(meta1), path(database)
+
+    output:
+    tuple val(meta), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(f) for f in mock_lint.failed), (
+        f"Expected meta_input_names in failed, got: {mock_lint.failed}"
+    )
+    failed_msg = str(mock_lint.failed[0])
+    assert "meta0" in failed_msg, f"Expected 'meta0' in error message, got: {failed_msg}"
+    assert "meta1" in failed_msg, f"Expected 'meta1' in error message, got: {failed_msg}"
+
+
+def test_meta_input_names_invalid_leading_zeros(tmp_path):
+    """Test that meta variables with leading zeros (meta01, meta02, meta003) fail validation"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta), path(reads)
+    tuple val(meta01), path(index)
+    tuple val(meta02), path(database)
+    tuple val(meta003), path(reference)
+
+    output:
+    tuple val(meta), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(f) for f in mock_lint.failed), (
+        f"Expected meta_input_names in failed, got: {mock_lint.failed}"
+    )
+    failed_msg = str(mock_lint.failed[0])
+    assert "meta01" in failed_msg, f"Expected 'meta01' in error message, got: {failed_msg}"
+    assert "meta02" in failed_msg, f"Expected 'meta02' in error message, got: {failed_msg}"
+    assert "meta003" in failed_msg, f"Expected 'meta003' in error message, got: {failed_msg}"
+
+
+def test_meta_input_names_non_sequential_order(tmp_path):
+    """Test that non-sequential meta numbering (meta, meta3, meta2) produces a warning"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta), path(reads)
+    tuple val(meta3), path(database)
+    tuple val(meta2), path(index)
+
+    output:
+    tuple val(meta), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(w) for w in mock_lint.warned), (
+        f"Expected meta_input_names in warned, got: {mock_lint.warned}"
+    )
+    warned_msg = str(mock_lint.warned[0])
+    assert "sequential" in warned_msg.lower(), f"Expected 'sequential' in warning message, got: {warned_msg}"
+
+
+def test_meta_input_names_gap_in_sequence(tmp_path):
+    """Test that meta numbering with gaps (meta, meta2, meta5) produces a warning"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta), path(reads)
+    tuple val(meta2), path(index)
+    tuple val(meta5), path(database)
+
+    output:
+    tuple val(meta), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(w) for w in mock_lint.warned), (
+        f"Expected meta_input_names in warned, got: {mock_lint.warned}"
+    )
+    warned_msg = str(mock_lint.warned[0])
+    assert "sequential" in warned_msg.lower(), f"Expected 'sequential' in warning message, got: {warned_msg}"
+
+
+def test_meta_input_names_no_meta_variables(tmp_path):
+    """Test that modules without meta inputs don't trigger validation"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    path(reads)
+    val(sample_id)
+    tuple val(condition), path(reference)
+
+    output:
+    path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    # Should have no passed/failed/warned for meta_input_names since there are no meta inputs
+    assert not any("meta_input_names" in str(p) for p in mock_lint.passed), (
+        f"Should not have meta_input_names in passed when no meta vars, got: {mock_lint.passed}"
+    )
+    assert not any("meta_input_names" in str(f) for f in mock_lint.failed), (
+        f"Should not have meta_input_names in failed when no meta vars, got: {mock_lint.failed}"
+    )
+    assert not any("meta_input_names" in str(w) for w in mock_lint.warned), (
+        f"Should not have meta_input_names in warned when no meta vars, got: {mock_lint.warned}"
+    )
+
+
+def test_meta_input_names_only_meta(tmp_path):
+    """Test that a single 'meta' input passes validation"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    tuple val(meta), path(reads)
+
+    output:
+    tuple val(meta), path("*.bam"), emit: bam
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    mock_lint = MockModuleLint()
+    mock_lint.main_nf = main_nf_path
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_inputs_from_main_nf()
+    flattened_inputs = []
+    for inputs in component.inputs:
+        if isinstance(inputs, list):
+            flattened_inputs.extend([list(i.keys())[0] for i in inputs])
+        else:
+            flattened_inputs.append(list(inputs.keys())[0])
+
+    from nf_core.modules.lint.main_nf import check_meta_input_names
+
+    check_meta_input_names(mock_lint, flattened_inputs)
+
+    assert any("meta_input_names" in str(p) for p in mock_lint.passed), (
+        f"Expected meta_input_names in passed, got: {mock_lint.passed}"
+    )
+    assert len(mock_lint.failed) == 0, f"Expected no failures, got: {mock_lint.failed}"
+    assert len(mock_lint.warned) == 0, f"Expected no warnings, got: {mock_lint.warned}"
+
+
 def test_validate_meta_keys():
     """Test validation of meta keys in script"""
     mock_lint = MockModuleLint()
@@ -539,6 +958,7 @@ def test_validate_meta_keys():
     def prefix = "${meta.id}"
     def se = meta.single_end
     def id = meta.subMap(['id'])
+    def m2id = meta2?.id
     """
         ],
     )
@@ -552,12 +972,14 @@ def test_validate_meta_keys():
             """
     def sample = meta.sample
     def strand = meta.strandedness
+    def m2opts = meta2?.options
     """
         ],
     )
     assert len(mock_lint.failed) == 1
     assert "meta.sample" in mock_lint.failed[0][2]
     assert "meta.strandedness" in mock_lint.failed[0][2]
+    assert "meta2?.options" in mock_lint.failed[0][2]
 
     # meta2/meta3 with valid keys
     mock_lint.passed, mock_lint.failed = [], []
@@ -565,7 +987,7 @@ def test_validate_meta_keys():
         mock_lint,
         [
             """
-    def id1 = meta.id
+    def id1 = meta?.id
     def id2 = meta2.id
     def se = meta3.single_end
     """

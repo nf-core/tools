@@ -139,6 +139,47 @@ class TestList(TestCase):
         mock_stat.st_mode = 1
         local_wf.get_local_nf_workflow_details()
 
+    @mock.patch("git.Repo")
+    def test_local_workflow_broken_ref(self, mock_repo):
+        local_wf = nf_core.pipelines.list.LocalWorkflow("dummy")
+        local_wf.local_path = self.tmp_nxf.parent
+
+        class BrokenCommit:
+            @property
+            def hexsha(self):
+                raise ValueError("Reference at 'refs/heads/master' does not exist")
+
+        repo = mock.Mock()
+        repo.remotes.origin.url = "https://github.com/nf-core/dummy"
+        repo.tags = []
+        repo.head.commit = BrokenCommit()
+        mock_repo.return_value = repo
+
+        local_wf.get_local_nf_workflow_details()
+
+        assert local_wf.commit_sha is None
+
+    @mock.patch.object(nf_core.pipelines.list.LocalWorkflow, "get_local_nf_workflow_details", autospec=True)
+    def test_get_local_wf_does_not_scan_unrelated_repos(self, mock_get_local_details):
+        atacseq_path = self.tmp_nxf / "nf-core" / "atacseq"
+        exoseq_path = self.tmp_nxf / "nf-core" / "exoseq"
+        atacseq_path.mkdir(parents=True)
+        exoseq_path.mkdir(parents=True)
+
+        def set_local_workflow_details(local_wf):
+            if local_wf.full_name != "nf-core/atacseq":
+                raise AssertionError(f"Unexpected workflow lookup: {local_wf.full_name}")
+            local_wf.commit_sha = "abc1234"
+            local_wf.branch = "main"
+            local_wf.active_tag = None
+
+        mock_get_local_details.side_effect = set_local_workflow_details
+
+        local_path = nf_core.pipelines.list.get_local_wf(Path("atacseq"))
+
+        assert local_path == atacseq_path
+        assert mock_get_local_details.call_count == 1
+
     def test_worflow_filter(self):
         workflows_obj = nf_core.pipelines.list.Workflows(["rna", "myWF"])
 

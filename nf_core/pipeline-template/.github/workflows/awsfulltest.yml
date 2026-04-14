@@ -48,10 +48,10 @@ jobs:
                 enabled = false
               }
               onComplete {
-                message = ':white_check_mark: *{{ short_name }}/{% raw %}${{ matrix.profile }}{% endraw %}* completed successfully! :tada:'
+                message = ':white_check_mark: *{{ short_name }}/test_full* completed successfully! :tada:'
               }
               onError {
-                message = ':x: *{{ short_name }}/{% raw %}${{ matrix.profile }}{% endraw %}* failed :crying_cat_face:'
+                message = ':x: *{{ short_name }}/test_full* failed :crying_cat_face:'
               }
             }
           parameters: |

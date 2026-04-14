@@ -15,8 +15,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
 - Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
 - Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
-
-  | Command                    | Subcommand                     | Aliases                           |
+  <!--| Command                    | Subcommand                     | Aliases                           |
   | -------------------------- | ------------------------------ | --------------------------------- |
   | `modules` & `subworkflows` | `bump-versions` (modules only) | `bump-version`, `bump`, `bv`, `b` |
   |                            | `create`                       | `c`                               |
@@ -36,22 +35,35 @@
   |                            | `sync`                         | `s`                               |
   | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
   |                            | `list`                         | `ls`                              |
-  |                            | `list-branches`                | `lsb`                             |
-
+  |                            | `list-branches`                | `lsb`                             |-->
 - bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
 - Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
 - fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
+- Fix GHA notification for AWS full tests job ([#4092](https://github.com/nf-core/tools/pull/4092))
 - sync: don't overwrite the defaultBranch if already set in nextflow.config ([#3939](https://github.com/nf-core/tools/pull/3939))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.11.4 ([#4179](https://github.com/nf-core/tools/pull/4179))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.7 ([#4151](https://github.com/nf-core/tools/pull/4151))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.20.0 ([#4165](https://github.com/nf-core/tools/pull/4165))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 26b252e ([#4158](https://github.com/nf-core/tools/pull/4158))
+- chore(deps): update pypa/gh-action-pypi-publish digest to cef2210 ([#4178](https://github.com/nf-core/tools/pull/4178))
+- chore(deps): update python:3.14-slim docker digest to 5e59aae ([#4159](https://github.com/nf-core/tools/pull/4159))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.9 ([#4152](https://github.com/nf-core/tools/pull/4152))
+- Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
+- Update actions/github-script action to v9 ([#4182](https://github.com/nf-core/tools/pull/4182))
+- Remove deprecated cli commands and --migrate-pytest flag with all obsoleted code. ([4167](https://github.com/nf-core/tools/pull/4167))
+- Remove `--migrate-pytest` functionality and deprecated pipeline commands ([#4167](https://github.com/nf-core/tools/pull/4167))
 
 ### Linting
 
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
 - fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
+- capture correct error for invalid .nf-core.yml ([#4080](https://github.com/nf-core/tools/pull/4080))
 - allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
 - Ensure release linting happens on branch named main ([#4121](https://github.com/nf-core/tools/pull/4121))
 - Add linting for meta and ext keys ([#4127](https://github.com/nf-core/tools/pull/4127))
 - Add strict syntax linting to template with pre-commit ([#4128](https://github.com/nf-core/tools/pull/4128))
+- Lint meta variable names ([#4129](https://github.com/nf-core/tools/pull/4129))
 - Lint against the correct repo ([#4140](https://github.com/nf-core/tools/pull/4140))
 - Fix false positive matches to words like text in ext key linting ([#4142](https://github.com/nf-core/tools/pull/4142))
 - Fix changelog bot failing after linting step ([#4155](https://github.com/nf-core/tools/pull/4155))
@@ -69,7 +81,7 @@
 - Fix lint: preserve underscores for subworkflow includes via full path ([#4074](https://github.com/nf-core/tools/pull/4074))
 - update modules and subworkflows in template ([#4077](https://github.com/nf-core/tools/pull/4077))
 
-### Pipeline template
+### Template
 
 - Remove webhook notifications (hook_url, slackreport, adaptivecard) ([#4051](https://github.com/nf-core/tools/pull/4051)).
   - Use specific nextflow plugins instead:
@@ -78,6 +90,7 @@
 - Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
 - Fix nf-core tools version to what is specified in `.nf-core.yml` for the GitHub workflow `download_pipeline.yml` ([#4124](https://github.com/nf-core/tools/pull/4124)).
 - Update all documentation URLs to point to equivalents on the new nf-core website documentation structure ([#4135](https://github.com/nf-core/tools/pull/4135))
+- Add additional fusion specific exit codes ([#4180](https://github.com/nf-core/tools/pull/4180))
 
 #### Version updates
 
@@ -129,6 +142,7 @@
 ### Subworkflows
 
 - Update to new topic version handling ([#3929](https://github.com/nf-core/tools/pull/3929))
+- split subworkflow/test_lint into separate files ([#3965](https://github.com/nf-core/tools/pull/3965))
 
 #### Version updates
 

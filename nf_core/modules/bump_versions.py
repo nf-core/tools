@@ -93,6 +93,9 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Prompt for module or all
         if module is None and not all_modules:
+            self.require_prompts(
+                "No module name provided.\nPlease provide the module name as a command-line argument or use '--all'"
+            )
             question = {
                 "type": "list",
                 "name": "all_modules",

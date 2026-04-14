@@ -74,7 +74,7 @@ jobs:
           version: latest-everything
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@v1
+        uses: nf-core/setup-nf-test@ce65500579e8587607aab289ecb3a9c343c32e79 # v2
         with:
           version: "0.9.4"
           install-pdiff: true

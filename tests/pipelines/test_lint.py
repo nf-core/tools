@@ -124,6 +124,28 @@ class TestPipelinesLint(TestLint):
         assert not saved_json["has_tests_ignored"]
         assert not saved_json["has_tests_failed"]
 
+    def test_load_tools_config_malformed_lint(self):
+        """load_tools_config raises AssertionError for invalid lint config
+
+        pipeline_todos is typed bool | None but given a list value,
+        which should fail pydantic validation.
+        """
+        new_pipeline = self._make_pipeline_copy()
+        nf_core_yml_path = Path(new_pipeline, ".nf-core.yml")
+        with open(nf_core_yml_path) as fh:
+            config = yaml.safe_load(fh)
+        if "lint" not in config or config["lint"] is None:
+            config["lint"] = {}
+        config["lint"]["pipeline_todos"] = ["README.md", "main.nf"]
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.dump(config, fh)
+
+        with self.assertRaises(AssertionError) as cm:
+            nf_core.utils.load_tools_config(new_pipeline)
+        assert "is invalid" in str(cm.exception)
+        assert "lint.pipeline_todos" in str(cm.exception)
+        assert "Got instead" in str(cm.exception)
+
     def test_wrap_quotes(self):
         md = self.lint_obj._wrap_quotes(["one", "two", "three"])
         assert md == "`one` or `two` or `three`"

@@ -85,6 +85,7 @@ class ParamsFileBuilder:
         self,
         pipeline=None,
         revision=None,
+        no_prompts=False,
     ) -> None:
         """Initialise the ParamFileBuilder class
 
@@ -95,6 +96,7 @@ class ParamsFileBuilder:
         self.pipeline = pipeline
         self.pipeline_revision = revision
         self.schema_obj: PipelineSchema | None = None
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
         # Fetch remote workflows
         self.wfs = nf_core.pipelines.list.Workflows()
@@ -106,6 +108,12 @@ class ParamsFileBuilder:
         """
         # Prompt for pipeline if not supplied
         if self.pipeline is None:
+            if self.no_prompts:
+                log.error(
+                    "No pipeline name provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the pipeline name as a command-line argument."
+                )
+                return False
             launch_type = questionary.select(
                 "Generate parameter file for local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],

@@ -87,6 +87,12 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
+
+def is_interactive() -> bool:
+    """Check if the current session is interactive (has a TTY on stdin, stdout, and stderr)."""
+    return sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()
+
+
 NFCORE_CACHE_DIR = Path(
     os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
@@ -1028,6 +1034,8 @@ def prompt_remote_pipeline_name(wfs):
         AssertionError, if pipeline cannot be found
     """
 
+    if not is_interactive():
+        raise UserWarning("No pipeline name provided and session is not interactive (no TTY detected).")
     pipeline = questionary.autocomplete(
         "Pipeline name:",
         choices=[wf.name for wf in wfs.remote_workflows],
@@ -1091,6 +1099,9 @@ def prompt_pipeline_release_branch(
 
     if len(choices) == 0:
         return [], []
+
+    if not is_interactive():
+        raise UserWarning("No release/branch specified and session is not interactive (no TTY detected).")
 
     if multiple:
         return (
@@ -1464,7 +1475,9 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
     except ValidationError as e:
         error_message = f"Config file '{config_fn}' is invalid"
         for error in e.errors():
-            error_message += f"\n{error['loc'][0]}: {error['msg']}\ninput: {error['input']}"
+            error_message += (
+                f"\n{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}\nGot instead: {error['input']}"
+            )
         raise AssertionError(error_message)
 
     wf_config = fetch_wf_config(Path(directory))

@@ -14,6 +14,11 @@ def subworkflow_if_empty_null(_, subworkflow):
 
     There are multiple examples of workflows that inject null objects into channels using `ifEmpty(null)`, which can cause unhandled null pointer exceptions.
     This lint test throws warnings for those instances.
+
+    The following checks are performed:
+
+    * ``subworkflow_if_empty_null``: Warns if any ``ifEmpty(null)`` usage is found
+      in the subworkflow files.
     """
 
     # Main subworkflow directory
