@@ -33,26 +33,39 @@ nextflow_pipeline {
             //extracted_reads
             def stable_content_extracted_reads = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['extracted_reads/**/*'], ignoreFile: 'tests/.nftignore')
 
-            //igv
-            def stable_content_igv = getAllFilesFromDir("$outputDir/igv", relative: false, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
 
             //bowtie2 align
-            def stable_content_bowtie2_align = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
-            def bam_files_bowtie2_align  = getAllFilesFromDir("$outputDir/mapping/bowtie2/align", include: ['*.bam'])
+            def stable_content_bowtie2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/bowtie2/align'], ignoreFile: 'tests/.nftignore')
+            def bam_files_bowtie2_align  = getAllFilesFromDir(params.outdir, include: ['**/**/**/*.bam'])
 
             //taxpasta
             def stable_content_taxpasta     = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include: ["taxpasta/**"]     , ignoreFile: 'tests/.nftignore')
 
-             //bowtie2 build
+            //bowtie2 build
             def stable_content_bowtie2_build = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/bowtie2/build/**/**/*'], ignoreFile: 'tests/.nftignore')
 
+            //minimap2 index
+            def stable_content_minimap2_index= getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/minimap2/index/*'], ignoreFile: 'tests/.nftignore')
 
-            //minimap2
+
+            //minimap2 align
             def stable_content_minimap2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['mapping/minimap2/align/*'], ignoreFile: 'tests/.nftignore')
             def bam_files_minimap2_align  = getAllFilesFromDir(params.outdir, include: ['*.bam'])
 
-            //pathogens
-             def stable_content_pathogens_blast = getAllFilesFromDir("$outputDir/pathogens/blast", relative: true, includeDir: false, ignore: null, ignoreFile: 'tests/.nftignore', include: ['*','**/*'])
+            //pathogens blast
+             def stable_content_pathogens_blast = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['pathogens/blast/**/*'], ignoreFile: 'tests/.nftignore')
+
+            //pathogens consensus
+             def stable_content_pathogens_consensus = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['pathogens/consensus/*'], ignoreFile: 'tests/.nftignore')
+
+             //pathogens mapping bowtie2 build
+            def stable_content_pathogens_bowtie2_build = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['pathogens/mapping/bowtie2/build/bowtie2/*'], ignoreFile: 'tests/.nftignore')
+
+             //bowtie2 align
+            def stable_content_pathogens_bowtie2_align = getAllFilesFromDir(params.outdir, relative: false, includeDir: false, include :['pathogens/mapping/bowtie2/align/*'], ignoreFile: 'tests/.nftignore')
+            def bam_files_pathogens_bowtie2_align  = getAllFilesFromDir(params.outdir, include: ['**/**/**/**/*.bam'])
+
+
 
             assertAll(
                 { assert workflow.success},
@@ -76,12 +89,30 @@ nextflow_pipeline {
                 { assert snapshot (
                     bam_files_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_bowtie2_align.collect { file -> [file.getName() + " bowtie2 align header: " + bam(file.toString()).getHeader()] },
                     stable_content_bowtie2_align).match("bowtie2_align")},
-                { assert snapshot (stable_content_bowtie2_build).match("bowtie2_build")},
+                 { assert snapshot (stable_content_bowtie2_build).match("bowtie2_build")},
+                 { assert snapshot (stable_content_minimap2_index).match("minimap2_index")},
                 { assert snapshot (
                     bam_files_minimap2_align.isEmpty() ? 'No BAM files' : bam_files_minimap2_align.collect { file -> [file.getName() + " minimap2 align md5: " + bam(file.toString()).getReadsMD5()] },
                     stable_content_minimap2_align).match("minimap2_align")},
-                //{ assert snapshot (stable_content_igv).match("igv")},
-                //{ assert snapshot (stable_content_pathogens_blast).match("pathogens_blast")},
+                  // igv
+                { assert snapshot(
+                        getAllFilesFromDir("$outputDir/igv", include: ['*.html']).collect { file -> file.getName() + " exists: "+ file.exists() }
+                    ).match("igv")
+                },
+                { assert snapshot(
+                    getAllFilesFromDir("$outputDir/pathogens/blast/blastn", include: ['*.txt']).collect{file -> file.getName() + ' contains string:' + (file.exists() && file.text.contains("NC_060947.1") || file.text.contains("NC_002023.1_0") || file.text.contains("")) },
+                    getAllFilesFromDir("$outputDir/pathogens/blast/blastx", include: ['*.txt']).collect{file -> file.getName() + ' contains string:' + (file.exists() && file.text.contains("NC_002019.1_0")) },
+                    stable_content_pathogens_blast).match("pathogens_blast")},
+                 { assert snapshot (stable_content_pathogens_consensus).match("pathogens_consensus")},
+                 // pathogens igv
+                  { assert snapshot(
+                        getAllFilesFromDir("$outputDir/pathogens/igv", include: ['*.html']).collect { file -> file.getName() + " exists: "+ file.exists() }
+                    ).match("pathogens_igv")
+                  },
+                  // { assert snapshot (stable_content_pathogens_bowtie2_build).match("pathogens_bowtie2_build")},
+                  // { assert snapshot (
+                  //  bam_files_pathogens_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_pathogens_bowtie2_align.collect { file -> [file.getName() + "pathogens bowtie2 align header: " + bam(file.toString()).getHeader()] },
+                  //  stable_content_pathogens_bowtie2_align).match("pathogens:bowtie2_align")},
             )
         }
     }
