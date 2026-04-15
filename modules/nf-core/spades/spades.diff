@@ -1,4 +1,6 @@
 Changes in component 'nf-core/spades'
+'modules/nf-core/spades/environment.yml' is unchanged
+'modules/nf-core/spades/meta.yml' is unchanged
 Changes in 'spades/main.nf':
 --- modules/nf-core/spades/main.nf
 +++ modules/nf-core/spades/main.nf
@@ -8,8 +10,8 @@ Changes in 'spades/main.nf':
      output:
 -    tuple val(meta), path('*.scaffolds.fa.gz')    , optional:true, emit: scaffolds
 -    tuple val(meta), path('*.contigs.fa.gz')      , optional:true, emit: contigs
-+    tuple val(meta), path('*.scaffolds.fa')       , optional:true, emit: scaffolds
-+    tuple val(meta), path('*.contigs.fa')         , optional:true, emit: contigs
++    tuple val(meta), path('*.scaffolds.fa')    , optional:true, emit: scaffolds
++    tuple val(meta), path('*.contigs.fa')      , optional:true, emit: contigs
      tuple val(meta), path('*.transcripts.fa.gz')  , optional:true, emit: transcripts
      tuple val(meta), path('*.gene_clusters.fa.gz'), optional:true, emit: gene_clusters
      tuple val(meta), path('*.assembly.gfa.gz')    , optional:true, emit: gfa
@@ -25,56 +27,8 @@ Changes in 'spades/main.nf':
      fi
      if [ -f transcripts.fasta ]; then
          mv transcripts.fasta ${prefix}.transcripts.fa
-@@ -86,8 +84,8 @@
-     def custom_hmms = hmm ? "--custom-hmms $hmm" : ""
-     def reads = yml ? "--dataset $yml" : "$illumina_reads $pacbio_reads $nanopore_reads"
-     """
--    echo "" | gzip > ${prefix}.scaffolds.fa.gz
--    echo "" | gzip > ${prefix}.contigs.fa.gz
-+    echo "" > ${prefix}.scaffolds.fa
-+    echo "" > ${prefix}.contigs.fa
-     echo "" | gzip > ${prefix}.transcripts.fa.gz
-     echo "" | gzip > ${prefix}.gene_clusters.fa.gz
-     echo "" | gzip > ${prefix}.assembly.gfa.gz
 
-Changes in 'spades/meta.yml':
---- modules/nf-core/spades/meta.yml
-+++ modules/nf-core/spades/meta.yml
-@@ -59,26 +59,26 @@
-           description: |
-             Groovy Map containing sample information
-             e.g. [ id:'test', single_end:false ]
--          pattern: "*.fa.gz"
-+          pattern: "*.fa"
-       - "*.scaffolds.fa.gz":
-           type: map
-           description: |
-             Groovy Map containing sample information
-             e.g. [ id:'test', single_end:false ]
--          pattern: "*.fa.gz"
-+          pattern: "*.fa"
-   contigs:
-     - - meta:
-           type: map
-           description: |
-             Groovy Map containing sample information
-             e.g. [ id:'test', single_end:false ]
--          pattern: "*.fa.gz"
--      - "*.contigs.fa.gz":
-+          pattern: "*.fa"
-+      - "*.contigs.fa":
-           type: map
-           description: |
-             Groovy Map containing sample information
-             e.g. [ id:'test', single_end:false ]
--          pattern: "*.fa.gz"
-+          pattern: "*.fa"
-   transcripts:
-     - - meta:
-           type: map
-
-'modules/nf-core/spades/environment.yml' is unchanged
 'modules/nf-core/spades/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/spades/tests/main.nf.test' is unchanged
 'modules/nf-core/spades/tests/nextflow.config' is unchanged
+'modules/nf-core/spades/tests/main.nf.test' is unchanged
 ************************************************************

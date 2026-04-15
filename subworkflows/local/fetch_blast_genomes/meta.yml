@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: fetch_blast_genomes
+description: Match BLAST hit taxids to reference genomes and prepare mapping inputs for short and long reads
+keywords:
+  - taxonomy
+  - genome
+  - mapping
+  - reference
+components: []
+input:
+  - taxid2genome:
+      description: |
+        Tab-delimited mapping file linking taxids to organism names and genome paths.
+  - ch_blast_taxid:
+      description: |
+        BLAST hit taxids with associated metadata.
+        Structure: [ val(taxid), val(meta) ]
+  - ch_reads:
+      description: |
+        Input reads to pair with fetched genomes.
+        Structure: [ val(meta), path(reads) ]
+output:
+  - shortreads:
+      description: |
+        Short-read mapping inputs.
+        Structure: [ val(meta), path(reads) ]
+  - longreads:
+      description: |
+        Long-read mapping inputs.
+        Structure: [ val(meta), path(reads) ]
+  - shortreads_genome:
+      description: |
+        Reference genomes for short-read mapping.
+        Structure: [ val(meta), path(genome) ]
+  - longreads_genome:
+      description: |
+        Reference genomes for long-read mapping.
+        Structure: [ val(meta), path(genome) ]
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"

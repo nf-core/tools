@@ -14,7 +14,7 @@ process FILTER_BLAST {
     output:
     tuple val(meta), path('*_filtered.txt')        , emit: filtered_blast, optional: true
     tuple val(meta), path('*_summary.txt')         , emit: summary       , optional: true
-    path "versions.yml"                            , emit: versions
+    tuple val("${task.process}"), val("python"), eval("python --version | sed -e 's/Python //g'"), emit: versions_python, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,11 +30,6 @@ process FILTER_BLAST {
         --filtered_output ${prefix}_filtered.txt \\
         --summary_output ${prefix}_filtered_summary.txt \\
         ${args}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$( python --version | sed -e 's/Python //g')
-    END_VERSIONS
 
     """
 }

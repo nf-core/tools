@@ -23,7 +23,7 @@ input:
     - fastq:
         type: file
         description: Sequence file in fastq format
-        pattern: "*.{fastq,fq}"
+        pattern: "*.{fastq,fq}.gz"
         ontologies:
           - edam: http://edamontology.org/format_1930 # FASTQ
 output:
@@ -33,17 +33,31 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. `[ id:'test', single_end:false ]`
-      - "*.fa":
+      - "*.fa.gz":
           type: file
           description: Sequence file in fasta format
-          pattern: "*.{fasta,fa}"
+          pattern: "*.{fasta,fa}.gz"
           ontologies: []
+  versions_seqkit:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - seqkit:
+          type: string
+          description: The name of the tool
+      - seqkit version | sed 's/^.*v//':
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
-        ontologies:
-          - edam: http://edamontology.org/format_3750 # YAML
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - seqkit:
+          type: string
+          description: The name of the tool
+      - seqkit version | sed 's/^.*v//':
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
   - "@d-jch"
