@@ -151,7 +151,7 @@ jobs:
       # Run code style linting
       - name: Run pre-commit
         run: uv run pre-commit run --all-files
-        working-directory: create-test-lint-wf
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Remove TODO statements
       - name: remove TODO
