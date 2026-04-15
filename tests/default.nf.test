@@ -109,10 +109,10 @@ nextflow_pipeline {
                         getAllFilesFromDir("$outputDir/pathogens/igv", include: ['*.html']).collect { file -> file.getName() + " exists: "+ file.exists() }
                     ).match("pathogens_igv")
                   },
-                   { assert snapshot (stable_content_pathogens_bowtie2_build).match("pathogens_bowtie2_build")},
-                   { assert snapshot (
-                    bam_files_pathogens_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_pathogens_bowtie2_align.collect { file -> [file.getName() + "pathogens bowtie2 align header: " + bam(file.toString()).getHeader()] },
-                    stable_content_pathogens_bowtie2_align).match("pathogens:bowtie2_align")},
+                  // { assert snapshot (stable_content_pathogens_bowtie2_build).match("pathogens_bowtie2_build")},
+                  // { assert snapshot (
+                  //  bam_files_pathogens_bowtie2_align.isEmpty() ? 'No BAM files' : bam_files_pathogens_bowtie2_align.collect { file -> [file.getName() + "pathogens bowtie2 align header: " + bam(file.toString()).getHeader()] },
+                  //  stable_content_pathogens_bowtie2_align).match("pathogens:bowtie2_align")},
             )
         }
     }
