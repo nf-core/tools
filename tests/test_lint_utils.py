@@ -9,7 +9,7 @@ JSON_WITH_SYNTAX_ERROR = "{'a':1, 1}"
 JSON_MALFORMED = "{'a':1}"
 JSON_FORMATTED = '{ "a": 1 }\n'
 
-WHICH_PRE_COMMIT = shutil.which("pre-commit")
+WHICH_PREK = shutil.which("prek")
 
 
 @pytest.fixture()

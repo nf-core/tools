@@ -151,7 +151,7 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
     is_git = check_git_repo()
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
-    args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+    args = ["prek", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
     if isinstance(file, list):
         args.extend(["--files", *file])
     else:
