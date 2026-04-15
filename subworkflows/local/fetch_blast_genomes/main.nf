@@ -54,7 +54,9 @@ workflow FETCH_BLAST_GENOMES {
             by:0
         )
         .map { _meta_joined, blast_taxid, _meta1, organism, genome, meta2, reads ->
-            def new_meta = meta2 + [mapping_taxid: blast_taxid, organism: organism]
+            // Keep a genome-specific key in meta so downstream joins cannot mix references
+            def genome_id = genome.name.tokenize('_').take(2).join('_')
+            def new_meta = meta2 + [mapping_taxid: blast_taxid, organism: organism, genome_id: genome_id]
             [ new_meta, reads, genome ]
         }
 
