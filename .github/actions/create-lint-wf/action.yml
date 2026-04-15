@@ -40,11 +40,12 @@ runs:
         pwd
         ls -l
       working-directory: create-lint-wf/nf-core-testpipeline
+
     # Run code style linting
     - name: run prek
       shell: bash
-      run: uv run prek run --all-files
-      working-directory: create-lint-wf
+      run: uv run prek run --config .pre-commit-config.yaml --all-files
+      working-directory: create-lint-wf/nf-core-testpipeline
 
     # Update modules to the latest version
     - name: nf-core modules update
