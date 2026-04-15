@@ -149,8 +149,8 @@ jobs:
         run: uv run nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
-      - name: Run pre-commit
-        run: uv run pre-commit run --all-files
+      - name: Run prek
+        run: uv run prek run --all-files
         working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Remove TODO statements
@@ -181,7 +181,7 @@ jobs:
       # Run code style linting
       - name: run pre-commit
         shell: bash
-        run: uv run pre-commit run --all-files
+        run: uv run prek run --all-files
         working-directory: create-test-lint-wf
 
       # Run bump-version
