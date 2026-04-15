@@ -54,6 +54,7 @@
 - Remove deprecated cli commands and --migrate-pytest flag with all obsoleted code. ([4167](https://github.com/nf-core/tools/pull/4167))
 - Remove `--migrate-pytest` functionality and deprecated pipeline commands ([#4167](https://github.com/nf-core/tools/pull/4167))
 - Add more ruff rules (B, PTH) ([#4034](https://github.com/nf-core/tools/pull/4034))
+- Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 
 ### Linting
 
