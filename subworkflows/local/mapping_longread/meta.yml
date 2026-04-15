@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: mapping_longread
+description: Build long-read mapping indexes, align reads with minimap2, and generate BAM statistics
+keywords:
+  - minimap2
+  - mapping
+  - long reads
+  - bam
+components:
+  - minimap2/index
+  - minimap2/align
+  - pigz/uncompress
+  - samtools/faidx
+  - bam_sort_stats_samtools
+input:
+  - ch_reads_reference:
+      description: |
+        Long reads paired with reference genomes.
+        Structure: [ val(meta), path(reads), path(reference) ]
+output:
+  - index:
+      description: |
+        Minimap2 index files.
+        Structure: [ val(meta), path(index) ]
+  - bam:
+      description: |
+        Sorted BAM alignment files.
+        Structure: [ val(meta), path(bam) ]
+  - bai:
+      description: |
+        BAM index files.
+        Structure: [ val(meta), path(bai) ]
+  - flagstat:
+      description: |
+        Samtools flagstat reports.
+        Structure: [ val(meta), path(flagstat) ]
+  - versions:
+      description: |
+        Files containing software versions.
+        Structure: [ path(versions.yml) ]
+  - mqc:
+      description: |
+        MultiQC-ready summary files.
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"

@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: igv
+description: Prepare coverage tracks and indexed references for IGV report generation
+keywords:
+  - igv
+  - visualization
+  - bam
+  - reference
+components:
+  - bedtools/genomecov
+  - pigz/uncompress
+  - samtools/faidx
+  - igvreports
+input:
+  - ch_bam_bai_reference:
+      description: |
+        BAM, index, and reference inputs for IGV report creation.
+        Structure: [ val(meta), path(bam), path(bai), path(reference) ]
+output:
+  - report:
+      description: |
+        HTML IGV report files.
+  - fna:
+      description: |
+        Uncompressed reference FASTA files.
+        Structure: [ val(meta), path(fasta) ]
+  - fai:
+      description: |
+        FASTA index files.
+        Structure: [ val(meta), path(fai) ]
+  - versions:
+      description: |
+        Files containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"

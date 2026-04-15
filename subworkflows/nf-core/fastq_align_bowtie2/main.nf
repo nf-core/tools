@@ -18,7 +18,7 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     //
     // Map reads with Bowtie2
     //
-    ch_fasta = ch_fasta_fai.map { meta, fasta, fai -> [meta, fasta]}
+    ch_fasta = ch_fasta_fai.map { meta, fasta, _fai -> [meta, fasta]}
     BOWTIE2_ALIGN(ch_reads, ch_index, ch_fasta, save_unaligned, sort_bam)
 
     //

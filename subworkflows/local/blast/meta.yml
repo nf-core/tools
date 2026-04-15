@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: blast
+description: Run BLASTN and DIAMOND BLASTX searches for query sequences and collect unique hit taxids
+keywords:
+  - blast
+  - diamond
+  - taxonomy
+  - fasta
+components:
+  - untar
+  - blast/blastn
+  - diamond/blastx
+  - filter_blast
+input:
+  - query:
+      description: |
+        Query sequences to search.
+        Structure: [ val(meta), path(fasta) ]
+  - blastn_db:
+      description: |
+        BLASTN database path or tarball.
+  - blastx_db:
+      description: |
+        DIAMOND BLASTX database path or tarball.
+  - blast_header:
+      description: |
+        Header file used by the local BLAST filtering module.
+output:
+  - unique_taxid:
+      description: |
+        Unique taxids collected from filtered BLAST hits.
+        Structure: [ val(meta), val(taxid) ]
+  - blastn_filtered:
+      description: |
+        Filtered BLASTN result table.
+        Structure: [ val(meta), path(filtered_blast) ]
+  - blastx_filtered:
+      description: |
+        Filtered BLASTX result table.
+        Structure: [ val(meta), path(filtered_blast) ]
+  - versions:
+      description: |
+        Files containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"

@@ -14,7 +14,7 @@ process SUBSET_BAM {
 
     output:
     tuple val(meta), path("*.bam"), emit: bam
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val("samtools"), eval("samtools --version |& sed '1!d ; s/samtools //'"), emit: versions_samtools, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,10 +25,5 @@ process SUBSET_BAM {
 
     """
     samtools view ${bam} ${accessions} -o ${prefix}.bam
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(samtools --version |& sed '1!d ; s/samtools //')
-    END_VERSIONS
     """
 }

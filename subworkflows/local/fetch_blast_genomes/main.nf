@@ -5,12 +5,12 @@
 workflow FETCH_BLAST_GENOMES {
     take:
     taxid2genome          // [ path(taxid2genome) ]
-    blast_taxid           // [ taxid, meta ]
+    ch_blast_taxid           // [ taxid, meta ]
     ch_reads              // [ meta, reads ]
 
     main:
 
-    ch_taxid2genome = Channel.fromPath ( taxid2genome, checkIfExists: true )
+    ch_taxid2genome = channel.fromPath ( taxid2genome, checkIfExists: true )
         .splitCsv ( sep:'\t', header: true )
         .map { row ->
             def organism_reformat = row.organism
@@ -23,11 +23,11 @@ workflow FETCH_BLAST_GENOMES {
     if ( !params.skip_blastn || !params.skip_blastx ) {
         // Collect all available taxids for checking
         ch_available_taxids = ch_taxid2genome
-            .map { taxid, organism, genome -> taxid }
+            .map { taxid, _organism, _genome -> taxid }
             .collect()
-            .map { it.toSet() }  // Stores all taxids in a Set, automatically removing any duplicates.
+            .map { taxid -> taxid.toSet() }  // Stores all taxids in a Set, automatically removing any duplicates.
         // Check for missing taxids and emit warnings
-        ch_genomes_blast = blast_taxid
+        ch_genomes_blast = ch_blast_taxid
             .combine(ch_available_taxids)
             .map { blast_taxid, meta, available_taxids ->
                 if (!available_taxids.contains(blast_taxid)) {
@@ -36,10 +36,10 @@ workflow FETCH_BLAST_GENOMES {
                 }
                 return [ blast_taxid, meta ]
             }
-            .filter { it != null }
+            .filter { item -> item != null }
             .combine(ch_taxid2genome)
-            .filter { blast_taxid, meta, genome_taxid, organism, genome -> blast_taxid == genome_taxid } // Filter to keep only matching taxids
-            .map { blast_taxid, meta, genome_taxid, organism, genome -> [blast_taxid, meta, organism, genome] }
+            .filter { blast_taxid, _meta, genome_taxid, _organism, _genome -> blast_taxid == genome_taxid } // Filter to keep only matching taxids
+            .map { blast_taxid, meta, _genome_taxid, organism, genome -> [blast_taxid, meta, organism, genome] }
     } else {
         // Create empty channel if BLAST steps are skipped
         ch_genomes_blast = channel.empty()
@@ -53,8 +53,10 @@ workflow FETCH_BLAST_GENOMES {
             ch_reads.map { meta, reads -> [ "${meta.id}_${meta.taxid}_${meta.tool}", meta, reads ]},
             by:0
         )
-        .map { meta_joined, blast_taxid, meta1, organism, genome, meta2, reads ->
-            def new_meta = meta2 + [mapping_taxid: blast_taxid, organism: organism]
+        .map { _meta_joined, blast_taxid, _meta1, organism, genome, meta2, reads ->
+            // Keep a genome-specific key in meta so downstream joins cannot mix references
+            def genome_id = genome.name.tokenize('_').take(2).join('_')
+            def new_meta = meta2 + [mapping_taxid: blast_taxid, organism: organism, genome_id: genome_id]
             [ new_meta, reads, genome ]
         }
 

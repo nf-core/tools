@@ -14,7 +14,8 @@ process EXTRACTCENTRIFUGEREADS {
 
     output:
     tuple val(meta), path("*.fastq.gz"), optional: true, emit: extracted_centrifuge_reads
-    path "versions.yml"                                , emit: versions
+    tuple val("${task.process}"), val("seqkit"), eval("seqkit version | sed 's/seqkit v//'"), emit: versions_seqkit, topic: versions
+    tuple val("${task.process}"), val("pigz"), eval("pigz --version 2>&1 | sed -e 's/pigz //g'"), emit: versions_pigz, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -36,11 +37,5 @@ process EXTRACTCENTRIFUGEREADS {
     fi
 
     rm -f readID.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        seqkit: \$( seqkit version | sed 's/seqkit v//' )
-        pigz: \$(pigz --version 2>&1 | sed -e 's/pigz //g')
-    END_VERSIONS
     """
 }

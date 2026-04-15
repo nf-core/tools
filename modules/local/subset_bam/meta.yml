@@ -1,7 +1,6 @@
 name: subset_bam
-description: |
-  Subset bam file for each taxid
-keywards:
+description: Subset a BAM file by a list of taxid-associated reference accessions
+keywords:
   - samtools
   - view
   - subset
@@ -11,7 +10,6 @@ tools:
       description: |
         SAMtools is a set of utilities for interacting with and post-processing
         short DNA sequence read alignments in the SAM, BAM and CRAM formats, written by Heng Li.
-        These files are generated as output by short read aligners like BWA.
       homepage: http://www.htslib.org/
       documentation: http://www.htslib.org/doc/samtools.html
       doi: 10.1093/bioinformatics/btp352
@@ -22,32 +20,49 @@ input:
         type: map
         description: |
           Groovy map containing sample information
-          e.g. [ id:''test, single_end:false]
-  - - bam:
+          e.g. [ id:'test', single_end:false ]
+    - bam:
         type: file
-        description: BAM file of reads aligned to the pathogen genomes
+        description: BAM file aligned against pathogen genomes
         pattern: "*.{bam}"
-  - - bai:
+    - bai:
         type: file
-        description: BAI file (BAM index) of BAM reads aligned to the pathogen genome
+        description: BAM index file
         pattern: "*.{bai}"
   - taxid_accession:
       type: list
-      description: A list of acessions of a taxid
+      description: A list of reference accessions associated with the selected taxid
 output:
-  - - meta:
-        type: map
-        description: |
-          Groovy map containing sample information
-          e.g. [ id:''test, single_end:false]
-  - - bam:
-        type: file
-        description: A subset bam file
-        pattern: "*.{bam}"
-  - versions:
-      - versions.yml:
+  bam:
+    - - meta:
+          type: map
+          description: |
+            Groovy map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.bam":
           type: file
-          description: File containing software versions
-          pattern: "versions.yml"
+          description: BAM file subset to the selected accessions
+          pattern: "*.{bam}"
+  versions_samtools:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - samtools:
+          type: string
+          description: The name of the tool
+      - "samtools --version |& sed '1!d ; s/samtools //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - samtools:
+          type: string
+          description: The name of the tool
+      - "samtools --version |& sed '1!d ; s/samtools //'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
   - "@LilyAnderssonLee"

@@ -15,7 +15,8 @@ process EXTRACTDIAMONDREADS {
 
     output:
     tuple val(meta), path("*.fastq.gz"), optional: true, emit: extracted_diamond_reads
-    path "versions.yml", emit: versions
+    tuple val("${task.process}"), val("python"), eval("python --version | sed -e 's/Python //g'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val("pigz"), eval("pigz --version 2>&1 | sed -e 's/pigz //g'"), emit: versions_pigz, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -35,12 +36,5 @@ process EXTRACTDIAMONDREADS {
 
     # Compress the resulting fastq files
     pigz -p ${task.cpus} *.fastq
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        seqkit: \$( seqkit version | sed -e 's/seqkit v//g' )
-        python: \$( python --version | sed -e 's/Python //g')
-        pigz: \$(pigz --version 2>&1 | sed -e 's/pigz //g')
-    END_VERSIONS
     """
 }

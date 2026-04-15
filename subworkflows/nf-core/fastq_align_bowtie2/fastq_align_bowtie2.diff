@@ -1,4 +1,5 @@
 Changes in component 'nf-core/fastq_align_bowtie2'
+'subworkflows/nf-core/fastq_align_bowtie2/meta.yml' is unchanged
 Changes in 'fastq_align_bowtie2/main.nf':
 --- subworkflows/nf-core/fastq_align_bowtie2/main.nf
 +++ subworkflows/nf-core/fastq_align_bowtie2/main.nf
@@ -7,14 +8,13 @@ Changes in 'fastq_align_bowtie2/main.nf':
      // Map reads with Bowtie2
      //
 -    BOWTIE2_ALIGN(ch_reads, ch_index, ch_fasta_fai, save_unaligned, sort_bam)
-+    ch_fasta = ch_fasta_fai.map { meta, fasta, fai -> [meta, fasta]}
++    ch_fasta = ch_fasta_fai.map { meta, fasta, _fai -> [meta, fasta]}
 +    BOWTIE2_ALIGN(ch_reads, ch_index, ch_fasta, save_unaligned, sort_bam)
  
      //
      // Sort, index BAM file and run samtools stats, flagstat and idxstats
 
-'subworkflows/nf-core/fastq_align_bowtie2/meta.yml' is unchanged
 'subworkflows/nf-core/fastq_align_bowtie2/tests/main.nf.test.snap' is unchanged
-'subworkflows/nf-core/fastq_align_bowtie2/tests/main.nf.test' is unchanged
 'subworkflows/nf-core/fastq_align_bowtie2/tests/nextflow.config' is unchanged
+'subworkflows/nf-core/fastq_align_bowtie2/tests/main.nf.test' is unchanged
 ************************************************************

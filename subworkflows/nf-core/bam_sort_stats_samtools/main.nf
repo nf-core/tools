@@ -15,8 +15,8 @@ workflow BAM_SORT_STATS_SAMTOOLS {
     ch_combined = ch_bam.join(ch_fasta_fai, by:0)
 
     SAMTOOLS_SORT(
-        ch_combined.map { meta, bam, fasta, fai -> [meta, bam]},
-        ch_combined.map { meta, bam, fasta, fai -> [meta, fasta, fai]},
+        ch_combined.map { meta, bam, _fasta, _fai -> [meta, bam]},
+        ch_combined.map { meta, _bam, fasta, fai -> [meta, fasta, fai]},
         ''
     )
 

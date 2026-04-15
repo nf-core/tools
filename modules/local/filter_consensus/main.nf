@@ -13,13 +13,12 @@ process FILTER_CONSENSUS {
 
     output:
     tuple val(meta), path('*_filtered.fasta') , emit: filtered_consensus, optional: true
-    path "versions.yml"                       , emit: versions
+    tuple val("${task.process}"), val("python"), eval("python --version | sed -e 's/Python //g'"), emit: versions_python, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
@@ -27,11 +26,6 @@ process FILTER_CONSENSUS {
         ${consensus} \\
         ${prefix}_filtered.fasta \\
         --min-bases ${consensus_min_bases}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$( python --version | sed -e 's/Python //g')
-    END_VERSIONS
 
     """
 }

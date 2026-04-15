@@ -29,7 +29,7 @@ workflow PIPELINE_INITIALISATION {
     take:
     version           // boolean: Display version and exit
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
-    monochrome_logs   // boolean: Do not use coloured log outputs
+    _monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
@@ -97,7 +97,7 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
 
-    ch_samplesheet = channel.fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+    ch_samplesheet = channel.fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
 
     emit:
     samplesheet = ch_samplesheet
@@ -251,7 +251,7 @@ def getFlagstatMappedReads(flagstat_file) {
     }
 
     def pass = false
-    def logname = flagstat_file.getBaseName() - 'flagstat'
+   // def logname = flagstat_file.getBaseName() - 'flagstat'
     if (mapped_reads > 0) {
         pass = true
     }

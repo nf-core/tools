@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: taxid_bam_fasta
+description: Split mapped BAM files by taxid, keep BAMs passing the read-count threshold, and generate FASTA for downstream BLAST
+keywords:
+  - bam
+  - fasta
+  - taxid
+  - samtools
+components:
+  - subset_bam
+  - samtools/sort
+  - samtools/index
+  - samtools/idxstats
+  - samtools/flagstat
+  - samtools/fasta
+input:
+  - ch_bam:
+      description: |
+        Input BAM files.
+        Structure: [ val(meta), path(bam) ]
+  - ch_bai:
+      description: |
+        Input BAM index files.
+        Structure: [ val(meta), path(bai) ]
+  - accession2taxid:
+      description: |
+        Tab-delimited accession to taxid mapping file.
+  - min_read_counts:
+      description: |
+        Minimum number of mapped reads required to retain a taxid-specific BAM.
+output:
+  - versions:
+      description: |
+        Files containing software versions.
+        Structure: [ path(versions.yml) ]
+  - taxid_bam:
+      description: |
+        Taxid-specific BAM files passing the mapped-read threshold.
+        Structure: [ val(meta), path(bam) ]
+  - taxid_bai:
+      description: |
+        Index files for passing taxid-specific BAMs.
+        Structure: [ val(meta), path(bai) ]
+  - taxid_fasta:
+      description: |
+        FASTA files for taxids below the mapped-read threshold.
+        Structure: [ val(meta), path(fasta) ]
+  - taxid_bam_fail:
+      description: |
+        Taxid-specific BAM files below the mapped-read threshold.
+        Structure: [ val(meta), path(bam) ]
+  - taxid_bai_fail:
+      description: |
+        Index files for taxid-specific BAMs below the mapped-read threshold.
+        Structure: [ val(meta), path(bai) ]
+authors:
+  - "@LilyAnderssonLee"
+maintainers:
+  - "@LilyAnderssonLee"
