@@ -126,8 +126,8 @@ process {{ component_name_underscore|upper }} {
     {% if not_empty_template -%}
     // TODO nf-core: A stub section should mimic the execution of the original module as best as possible
     //               Have a look at the following examples:
-    //               Simple example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bcftools/annotate/main.nf#L47-L63
-    //               Complex example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bedtools/split/main.nf#L38-L54
+    //               Simple example: https://github.com/nf-core/modules/blob/624977dfaf562211e68a8a868ca80acc8461f1ac/modules/nf-core/cutadapt/main.nf#L34-L46
+    //               Complex example: https://github.com/nf-core/modules/blob/88d43dad73a675e66bff49ebb57fe657a5909018/modules/nf-core/bedtools/split/main.nf#L32-L43
     // TODO nf-core: If the module doesn't use arguments ($args), you SHOULD remove:
     //               - The definition of args `def args = task.ext.args ?: ''` above.
     //               - The use of the variable in the script `echo $args ` below.
