@@ -150,6 +150,7 @@ jobs:
 
       # Run code style linting
       - name: Run prek
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
         run: uv run prek run --config .pre-commit-config.yaml --all-files
         working-directory: create-test-lint-wf/my-prefix-testpipeline
 
@@ -180,6 +181,7 @@ jobs:
 
       # Run code style linting
       - name: Run prek
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
         run: uv run prek run --config .pre-commit-config.yaml --all-files
         working-directory: create-test-lint-wf/my-prefix-testpipeline
 
