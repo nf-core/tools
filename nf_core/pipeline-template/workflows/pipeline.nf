@@ -40,7 +40,7 @@ workflow {{ short_name|upper }} {
 
     def ch_versions = channel.empty()
     {%- if multiqc %}
-    def ch_multiqc_files = channel.empty(){% endif %}
+    def ch_multiqc_files = Channel.empty(){% endif %}
 
     {%- if fastqc %}
     //
@@ -48,7 +48,7 @@ workflow {{ short_name|upper }} {
     //
     FASTQC(ch_samplesheet)
     {%- if multiqc %}
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.map{ meta, file -> file })
     {%- endif %}
     {%- endif %}
 
