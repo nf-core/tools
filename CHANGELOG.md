@@ -96,6 +96,7 @@
 - Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
 - Add additional fusion specific exit codes ([#4180](https://github.com/nf-core/tools/pull/4180))
 - fix: rename variables in pipeline nf-test template default.nf.test for clarity ([#4189](https://github.com/nf-core/tools/pull/4189))
+- bump nextflow to 25.10.4 ([#4190](https://github.com/nf-core/tools/pull/4190))
 
 #### Version updates
 
