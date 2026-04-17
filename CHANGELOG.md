@@ -57,6 +57,7 @@
 - Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 - use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.11 ([#4195](https://github.com/nf-core/tools/pull/4195))
+- Update nf-core/setup-nextflow action to v3 ([#4199](https://github.com/nf-core/tools/pull/4199))
 
 ### Download
 
