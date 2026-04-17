@@ -57,6 +57,7 @@
 - Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 - use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
 - Update nf-core/setup-nextflow action to v3 ([#4199](https://github.com/nf-core/tools/pull/4199))
+- Update python:3.14-slim Docker digest to bc389f7 ([#4200](https://github.com/nf-core/tools/pull/4200))
 
 ### Download
 
