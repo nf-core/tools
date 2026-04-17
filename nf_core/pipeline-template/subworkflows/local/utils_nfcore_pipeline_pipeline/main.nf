@@ -77,7 +77,11 @@ workflow PIPELINE_INITIALISATION {
 
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
-"""{% endif %}
+"""
+    if (monochrome_logs) {
+        before_text = before_text.replaceAll(/\033\[[0-9;]*m/, '')
+    }
+{% endif %}
     command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     UTILS_NFSCHEMA_PLUGIN (
@@ -113,8 +117,8 @@ workflow PIPELINE_INITIALISATION {
     //
 
     channel{% if nf_schema %}
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json")){% else %}
-        .fromPath(params.input)
+        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json")){% else %}
+        .fromPath(input)
         .splitCsv(header: true, strip: true)
         .map { row ->
             [[id:row.sample], row.fastq_1, row.fastq_2]
