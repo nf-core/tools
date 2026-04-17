@@ -340,9 +340,9 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         psync.make_template_pipeline()
-
-        assert "main.nf" in os.listdir(self.pipeline_dir)
-        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+        pipeline_path = Path(self.pipeline_dir)
+        assert (pipeline_path / "main.nf").exists()
+        assert (pipeline_path / "nextflow.config").exists()
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""
