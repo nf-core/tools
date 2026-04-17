@@ -56,6 +56,7 @@
 - Add more ruff rules (B, PTH) ([#4034](https://github.com/nf-core/tools/pull/4034))
 - Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 - use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
+- Update dependency textual to v8.2.3 ([#4194](https://github.com/nf-core/tools/pull/4194))
 
 ### Download
 
