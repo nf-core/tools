@@ -85,7 +85,7 @@ def readme(self):
         else:
             warned.append("README did not have an nf-core template version badge.")
 
-    if "zenodo_doi" not in ignore_configs:
+    if "zenodo_release" not in ignore_configs:
         # Check that zenodo.XXXXXXX has been replaced with the zendo.DOI
         zenodo_re = r"/zenodo\.X+"
         match = re.search(zenodo_re, content)
