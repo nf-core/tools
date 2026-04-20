@@ -179,7 +179,7 @@ def nf_test_content(self) -> dict[str, list[str]]:
         "configFile": {
             "pattern": r'configFile\s*=?\s*"tests/nextflow\.config"',
             "description": "sets a `configFile`",
-            "failure_msg": 'does not set a `configFile`, it should contain `configFile = "tests/nextflow.config"`',
+            "failure_msg": 'does not set a `configFile`, it should contain `configFile = "tests/nextflow.config"`.',
         },
     }
 
