@@ -242,3 +242,19 @@ class TestMetaYml(TestModules):
                 fh.write(main_nf_original)
             with open(meta_yml_path, "w") as fh:
                 fh.write(meta_yml_original)
+
+    def test_modules_meta_yml_no_input_section(self):
+        """Test that lint --fix does not crash when meta.yml has no input section (e.g. parameter-only modules)"""
+        meta_yml_path = self.bpipe_test_module_path / "meta.yml"
+
+        with open(meta_yml_path) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        del meta_yml["input"]
+
+        with open(meta_yml_path, "w") as fh:
+            fh.write(yaml.dump(meta_yml))
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules, fix=True)
+        module_lint.lint(print_results=False, module="bpipe/test")
+        # Should not raise UnboundLocalError — just complete without crashing
