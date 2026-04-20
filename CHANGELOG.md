@@ -78,6 +78,7 @@
 - Fix false positive matches to words like text in ext key linting ([#4142](https://github.com/nf-core/tools/pull/4142))
 - Fix changelog bot failing after linting step ([#4155](https://github.com/nf-core/tools/pull/4155))
 - lint for correct syntax for compressed files in stubs ([#4048](https://github.com/nf-core/tools/pull/4048))
+- fix linting with missing input ([#4202](https://github.com/nf-core/tools/pull/4202))
 
 ### Modules
 
