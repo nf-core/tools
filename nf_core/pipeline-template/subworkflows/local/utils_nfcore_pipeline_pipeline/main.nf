@@ -60,6 +60,8 @@ workflow PIPELINE_INITIALISATION {
     // Validate parameters and generate parameter summary to stdout
     //
 
+    def before_text = ""
+    def after_text = ""
     {%- if is_nfcore %}
     before_text = """
 -\033[2m----------------------------------------------------\033[0m-
@@ -78,10 +80,11 @@ workflow PIPELINE_INITIALISATION {
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
 """
+    {%- endif %}
     if (monochrome_logs) {
         before_text = before_text.replaceAll(/\033\[[0-9;]*m/, '')
     }
-{% endif %}
+
     command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     UTILS_NFSCHEMA_PLUGIN (
@@ -91,8 +94,8 @@ workflow PIPELINE_INITIALISATION {
         help,
         help_full,
         show_hidden,
-        {% if is_nfcore -%}before_text{%- else %}""{%- endif %},
-        {% if is_nfcore -%}after_text{%- else %}""{%- endif %},
+        before_text,
+        after_text,
         command
     )
     {%- endif %}
