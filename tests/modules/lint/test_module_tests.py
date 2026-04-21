@@ -191,6 +191,7 @@ class TestModuleTests(TestModules):
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > ${prefix}.txt.gz
+    touch ${prefix}.txt.gz.stats
     touch ${prefix}.txt
     """
 }'''
