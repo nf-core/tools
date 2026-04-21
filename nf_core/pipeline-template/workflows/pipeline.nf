@@ -31,7 +31,9 @@ workflow {{ short_name|upper }} {
     {%- if multiqc %}
     multiqc_config
     multiqc_logo
+    {%- if citations %}
     multiqc_methods_description
+    {%- endif %}
     {%- endif %}
     outdir
 
