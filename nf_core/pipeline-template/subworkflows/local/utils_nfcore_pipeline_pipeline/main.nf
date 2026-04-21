@@ -162,13 +162,14 @@ workflow PIPELINE_COMPLETION {
     email           //  string: email address
     email_on_fail   //  string: email address sent on pipeline failure
     plaintext_email // boolean: Send plain-text email instead of HTML
-    {%- endif %}
     outdir          //    path: Path to output directory where results will be published
+    {%- endif %}
     monochrome_logs // boolean: Disable ANSI colour codes in log output
     {%- if multiqc %}
     multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
+    {%- if email %}
     {%- if nf_schema %}
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     {%- else %}
@@ -177,6 +178,7 @@ workflow PIPELINE_COMPLETION {
 
     {%- if multiqc %}
     def multiqc_reports = multiqc_report.toList()
+    {%- endif %}
     {%- endif %}
 
     //
