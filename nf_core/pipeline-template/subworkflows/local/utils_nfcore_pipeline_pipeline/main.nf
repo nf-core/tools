@@ -168,7 +168,9 @@ workflow PIPELINE_COMPLETION {
     {%- endif %}
     monochrome_logs // boolean: Disable ANSI colour codes in log output
     {%- if multiqc %}
+    {%- if email %}
     multiqc_report  //  string: Path to MultiQC report{% endif %}
+    {%- endif %}
 
     main:
     {%- if email %}
