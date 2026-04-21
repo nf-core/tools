@@ -248,6 +248,14 @@ class ConfigsCreateConfig(BaseModel):
             raise ValueError("Cannot be left empty.")
         return v
 
+    @field_validator("general_config_name")
+    @classmethod
+    def all_lower_case(cls, v: str) -> str:
+        """Check that string values are all lower-case."""
+        if not v.islower():
+            raise ValueError("Config names must not contain upper-case letters.")
+        return v
+
     @field_validator("config_pipeline_path")
     @classmethod
     def path_valid(cls, v: str, info: ValidationInfo) -> str:
@@ -447,7 +455,7 @@ class ConfigsCreateConfig(BaseModel):
                 raise ValueError("Must be a positive number.")
         return v
 
-    @field_validator("scheduler", "queue")
+    @field_validator("scheduler")
     @classmethod
     def nonemtpy_hpc_details(cls, v: str, info: ValidationInfo) -> str:
         """Check that HPC infrastructure details are non-empty"""
@@ -523,7 +531,7 @@ class ConfigsCreateConfig(BaseModel):
         context = info.context
         if context and context["is_infrastructure"] and context["is_hpc"]:
             if v.strip() == "":
-                raise ValueError("Must not be empty.")
+                return v
             try:
                 vf = float(v.strip())
             except ValueError:

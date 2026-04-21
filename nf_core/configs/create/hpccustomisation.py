@@ -6,14 +6,44 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown
+from textual.widgets import Button, Footer, Header, Input, Markdown, Select
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
 markdown_intro = """
 # Configure the options for your HPC
+
+Use the following fields to provide important details about your HPC.
 """
 
+markdown_scheduler = """
+First, select your HPC's scheduler.
+The program will attempt to automatically determine your HPC's scheduler.
+If it was unsuccessful, you can select one of the supported schedulers from
+the drop-down list.
+You can also select "Local execution" which will result in jobs defaulting
+to run on the same node as Nextflow; this is generally not recommended.
+"""
+
+markdown_queue = """
+Next, supply your HPC's default queue, if required. Again, this will be
+auto-filled if possible.
+You can leave this field blank if your HPC automatically submits jobs
+to a default queue when not specified.
+
+For more complex queue selection (e.g. based on memory or CPU requirements),
+you will need to manually edit the configuration file after completion.
+
+If you wish to submit different processes to different queues, you will
+need to additionally create a pipeline configuration, which will let you
+specify alternative HPC queues for each process.
+"""
+
+markdown_queuestat = """
+Finally, use the following field to control how frequently (in minutes) Nextflow should
+request the queue status from the scheduler. This is optional, and will
+default to 1 minute if not provided.
+"""
 
 class HpcCustomisation(Screen):
     """Customise the options to create a config for an HPC."""
@@ -25,30 +55,36 @@ class HpcCustomisation(Screen):
         queues = self._get_queues(scheduler)
         default_queue = self._get_default_queue(scheduler)
         module_system_used = self._detect_module_system()
+        supported_schedulers = {
+            "Local execution": "local",
+            "PBS/Torque": "pbs",
+            "PBS Pro": "pbspro",
+            "SLURM": "slurm",
+        }
         yield Markdown(markdown_intro)
-        with Horizontal():
-            yield TextInput(
-                "scheduler",
-                "Scheduler",
-                "The scheduler in your HPC.",
-                default=scheduler if scheduler is not None else "local",
-                classes="column",
-            )
-            yield TextInput(
-                "queue",
-                "Queue",
-                "The default queue in your HPC.",
-                default=default_queue if default_queue else "",
-                classes="column",
-                suggestions=queues,
-            )
-            yield TextInput(
-                "queue_stat_interval",
-                "Queue stat interval",
-                "How often to get the queue status from the scheduler (minutes).",
-                default="0.5",
-                classes="column",
-            )
+        yield Markdown(markdown_scheduler)
+        yield Select(
+            [(name, keyword) for name, keyword in supported_schedulers.items()],
+            prompt="Select your HPC's scheduler.",
+            value=scheduler if scheduler is not None else "local",
+            classes="column",
+            id="scheduler"
+        )
+        yield Markdown(markdown_queue)
+        yield TextInput(
+            "queue",
+            "Queue",
+            "The default queue in your HPC (if required).",
+            default=default_queue if default_queue else "",
+            classes="column",
+            suggestions=queues,
+        )
+        yield TextInput(
+            "queue_stat_interval",
+            "Queue stat interval",
+            "How often to get the queue status from the scheduler (minutes).",
+            classes="column",
+        )
         yield TextInput(
             "module_system",
             "Other modules to load",
@@ -176,6 +212,11 @@ class HpcCustomisation(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         new_config = {}
+
+        # Get scheduler value
+        select = self.query_one("#scheduler", Select)
+        new_config["scheduler"] = select.value
+
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)

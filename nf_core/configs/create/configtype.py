@@ -12,7 +12,7 @@ markdown_intro = """
 markdown_type_nfcore = """
 ## Choose _"Infrastructure config"_ if:
 
-* You want to only define the computational environment you will run all pipelines on
+* You want to only define the computational environment you will run all pipelines on.
 
 
 """
@@ -28,7 +28,7 @@ markdown_details = """
 _Infrastructure_ configs:
 
 - Describe the basic necessary information for any nf-core pipeline to
-execute
+execute.
 - Define things such as which container engine to use, if there is a scheduler and
 which queues to use etc.
 - Are suitable for _all_ users on a given computing environment.
@@ -36,12 +36,12 @@ which queues to use etc.
 configs](https://github.com/nf-core/tools/configs) to be directly accessible
 in a nf-core pipeline with `-profile <infrastructure_name>`.
 - Are not used to tweak specific parts of a given pipeline (such as a process or
-module)
+module).
 
 _Pipeline_ configs
 
 - Are config files that target specific component of a particular pipeline or pipeline run.
-    - Example: you have a particular step of the pipeline that often runs out
+    - Example: you have a particular step of the pipeline that often runs out.
 of memory using the pipeline's default settings. You would use this config to
 increase the amount of memory Nextflow supplies that given task.
 - Are normally only used by a _single or small group_ of users.
