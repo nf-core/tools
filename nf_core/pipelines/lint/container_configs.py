@@ -41,7 +41,7 @@ def container_configs(self):
     modified = {
         Path(d.a_path).name
         for d in repo.index.diff(None)
-        if Path(d.a_path).parent.name == "conf" and Path(d.a_path).name.startswith("containers_")
+        if d.a_path and Path(d.a_path).parent.name == "conf" and Path(d.a_path).name.startswith("containers_")
     }
     # Newly created files (generated but not previously tracked)
     new = {
