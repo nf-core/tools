@@ -61,6 +61,7 @@
 - Update python:3.14-slim Docker digest to bc389f7 ([#4200](https://github.com/nf-core/tools/pull/4200))
 - trigger full nf-test run if CI changes ([#4203](https://github.com/nf-core/tools/pull/4203))
 - Parse manifest.contributors to fill in the RO-Crate ([#4147](https://github.com/nf-core/tools/pull/4147))
+- only check for compressed stubs with .gz as final extension ([#4206](https://github.com/nf-core/tools/pull/4206))
 
 ### Download
 
