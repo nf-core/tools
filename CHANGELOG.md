@@ -62,6 +62,7 @@
 - trigger full nf-test run if CI changes ([#4203](https://github.com/nf-core/tools/pull/4203))
 - Parse manifest.contributors to fill in the RO-Crate ([#4147](https://github.com/nf-core/tools/pull/4147))
 - only check for compressed stubs with .gz as final extension ([#4206](https://github.com/nf-core/tools/pull/4206))
+- Update astral-sh/setup-uv action to v8 ([#4207](https://github.com/nf-core/tools/pull/4207))
 
 ### Download
 
