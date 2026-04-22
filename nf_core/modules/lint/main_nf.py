@@ -450,7 +450,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if line.startswith(registry):
+            if line.startswith((registry, "community.wave.seqera.io/library/")):
                 l_stripped = re.sub(r"\W+$", "", line)
                 self.passed.append(
                     (
