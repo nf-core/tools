@@ -49,7 +49,7 @@ class TestLintContainerConfigs(TestLint):
             return {"containers_docker_amd64.config"}
 
         with patch(
-            "nf_core.pipelines.lint.container_configs.ContainerConfigs.generate_container_configs",
+            "nf_core.pipelines.containers_utils.ContainerConfigs.generate_container_configs",
             autospec=True,
             side_effect=generate,
         ):
@@ -69,7 +69,7 @@ class TestLintContainerConfigs(TestLint):
             return {"containers_docker_amd64.config"}
 
         with patch(
-            "nf_core.pipelines.lint.container_configs.ContainerConfigs.generate_container_configs",
+            "nf_core.pipelines.containers_utils.ContainerConfigs.generate_container_configs",
             autospec=True,
             side_effect=generate,
         ):
@@ -86,7 +86,7 @@ class TestLintContainerConfigs(TestLint):
             return {"containers_docker_amd64.config"}
 
         with patch(
-            "nf_core.pipelines.lint.container_configs.ContainerConfigs.generate_container_configs",
+            "nf_core.pipelines.containers_utils.ContainerConfigs.generate_container_configs",
             autospec=True,
             side_effect=generate,
         ):
@@ -105,7 +105,7 @@ class TestLintContainerConfigs(TestLint):
             return {"containers_docker_amd64.config"}
 
         with patch(
-            "nf_core.pipelines.lint.container_configs.ContainerConfigs.generate_container_configs",
+            "nf_core.pipelines.containers_utils.ContainerConfigs.generate_container_configs",
             autospec=True,
             side_effect=generate,
         ):
@@ -120,7 +120,7 @@ class TestLintContainerConfigs(TestLint):
     def test_container_configs_user_warning_warns(self):
         """A UserWarning from ContainerConfigs (e.g. low NF version) produces a lint warning."""
         with patch(
-            "nf_core.pipelines.lint.container_configs.ContainerConfigs.generate_container_configs",
+            "nf_core.pipelines.containers_utils.ContainerConfigs.generate_container_configs",
             autospec=True,
             side_effect=UserWarning("Nextflow version too low"),
         ):
