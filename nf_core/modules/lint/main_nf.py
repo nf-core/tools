@@ -452,16 +452,23 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 docker_tag = None
             if line.startswith(registry):
                 l_stripped = re.sub(r"\W+$", "", line)
-                self.failed.append(
+                self.passed.append(
                     (
                         "main_nf",
                         "container_links",
-                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
+                        f"Container prefix is correct: {l_stripped}",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("main_nf", "container_links", "Container prefix is correct", self.main_nf))
+                self.failed.append(
+                    (
+                        "main_nf",
+                        "container_links",
+                        "Container prefix is not correct. Please add the registry prefix (e.g. 'quay.io/')",
+                        self.main_nf,
+                    )
+                )
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
