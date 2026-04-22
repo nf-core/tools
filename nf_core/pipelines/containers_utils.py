@@ -25,7 +25,7 @@ class ContainerConfigs:
 
     def check_nextflow_version_sufficient(self) -> None:
         """Check if the Nextflow version is sufficient to run `nextflow inspect`."""
-        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
+        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
             raise UserWarning(
                 f"To use Seqera containers Nextflow version >= {pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)} is required.\n"
                 f"Please update your Nextflow version with [magenta]'nextflow self-update'[/]\n"

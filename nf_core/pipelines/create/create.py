@@ -16,6 +16,7 @@ import yaml
 
 import nf_core
 import nf_core.utils
+from nf_core.pipelines.containers_utils import ContainerConfigs
 from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
@@ -392,6 +393,12 @@ class PipelineCreate:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+
+        # generate container configs
+        try:
+            ContainerConfigs(self.outdir).generate_container_configs()
+        except UserWarning as e:
+            log.warning(f"Could not generate container configuration files: {e}")
 
         # Run prettier on files for pipelines sync
         log.debug("Running prettier on pipeline files")
