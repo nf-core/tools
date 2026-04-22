@@ -85,9 +85,9 @@ workflow {
     // SUBWORKFLOW: Run initialisation tasks
     //
     PIPELINE_INITIALISATION (
-        params.version,
+        params.version{% if nf_schema %},
         params.validate_params,
-        params.monochrome_logs,
+        params.monochrome_logs{% endif %},
         args,
         params.outdir,
         params.input{% if nf_schema %},
