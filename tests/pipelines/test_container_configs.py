@@ -29,7 +29,7 @@ class TestContainerConfigs(TestPipelines):
         ) as mocked_check:
             self.container_configs.check_nextflow_version_sufficient()
 
-        mocked_check.assert_called_once_with(NF_INSPECT_MIN_NF_VERSION)
+        mocked_check.assert_called_once_with(NF_INSPECT_MIN_NF_VERSION, silent=True)
 
     def test_check_nextflow_version_sufficient_too_low(self) -> None:
         """check_nextflow_version should raise UserWarning when version is too low."""
@@ -65,8 +65,8 @@ class TestContainerConfigs(TestPipelines):
             "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
             "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
             "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
-            "conda_amd64_lockfile": ["conda", "linux/amd64", "lock_file"],
-            "conda_arm64_lockfile": ["conda", "linux/arm64", "lock_file"],
+            "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
+            "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],
         }
 
         with open(self.pipeline_dir / "modules" / "nf-core" / "fastqc" / "meta.yml") as fh:
