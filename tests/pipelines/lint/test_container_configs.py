@@ -78,8 +78,12 @@ class TestLintContainerConfigs(TestLint):
         assert any("out of date" in f for f in result["failed"])
 
     def test_container_configs_missing_file(self):
-        """Linting fails when a generated config is not present on disk."""
+        """Linting fails when generate produces a config that has never been committed to the repo."""
         content = "process { withName: 'FASTQC' { container = 'docker.io/biocontainers/fastqc:0.12.1' } }\n"
+
+        repo = git.Repo(self.new_pipeline)
+        repo.index.remove(["conf/containers_docker_amd64.config"], working_tree=True)
+        repo.index.commit("remove container config to simulate missing file")
 
         def generate(cc_self):
             (cc_self.workflow_directory / "conf" / "containers_docker_amd64.config").write_text(content)
