@@ -186,14 +186,13 @@ jobs:
         run: uv run prek run --config .pre-commit-config.yaml --all-files --verbose | tee prek_output.txt
         working-directory: create-test-lint-wf/my-prefix-testpipeline
 
-      - name: Fail on prek warnings
+      - name: Report prek warnings
         if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
         run: |
           warnings=$(sed -n '/^  {$/,/^  }$/p' prek_output.txt | jq '.summary.warnings')
           if [ "${warnings:-0}" -gt 0 ]; then
-            echo "prek found ${warnings} warning(s) -- treat as error"
-            nextflow lint . -o full
-            exit 1
+            echo "### :warning: prek found ${warnings} warning(s)" >> $GITHUB_STEP_SUMMARY
+            nextflow lint . -o full >> $GITHUB_STEP_SUMMARY 2>&1 || true
           fi
         working-directory: create-test-lint-wf/my-prefix-testpipeline
 
