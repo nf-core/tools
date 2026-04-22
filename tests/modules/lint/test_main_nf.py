@@ -125,7 +125,7 @@ class TestMainNfLinting(TestModules):
         """Test main.nf linting with alternative container registry"""
         # Test with alternative registry - should warn/fail when containers don't match the registry
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, registry="public.ecr.aws")
-        module_lint.lint(print_results=False, module="samtools/sort")
+        module_lint.lint(print_results=True, module="samtools/sort")
 
         # Alternative registry should produce warnings or failures for container mismatches
         # since samtools/sort module likely uses biocontainers/quay.io, not public.ecr.aws
