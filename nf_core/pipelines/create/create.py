@@ -328,8 +328,7 @@ class PipelineCreate:
         for template_fn_path in template_files:
             # Skip files that are in the self.skip_paths list
             for skip_path in self.skip_paths:
-                # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
-                if str(template_fn_path.relative_to(template_dir)).startswith(skip_path):
+                if template_fn_path.relative_to(template_dir).is_relative_to(skip_path):
                     break
             else:
                 if template_fn_path.is_dir():
