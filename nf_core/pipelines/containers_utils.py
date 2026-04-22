@@ -19,7 +19,7 @@ class ContainerConfigs:
 
     def __init__(
         self,
-        workflow_directory: Path = Path("."),
+        workflow_directory: Path = Path(),
     ):
         self.workflow_directory = workflow_directory
 
@@ -72,7 +72,7 @@ class ContainerConfigs:
                         module_paths[process_name] = Path(module_path_str)
                         log.debug(f"Found include: {process_name} -> {module_path_str}")
 
-                except Exception as e:
+                except OSError as e:
                     log.debug(f"Error parsing {nf_file}: {e}")
                     continue
 
@@ -101,7 +101,7 @@ class ContainerConfigs:
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error:")
-            raise UserWarning(e)
+            raise UserWarning(e) from e
 
         module_names = [p.get("name") for p in out_json["processes"] if p.get("name")]
         log.debug(f"Found {len(module_names)} modules: {', '.join(module_names)}")
@@ -123,6 +123,7 @@ class ContainerConfigs:
 
         # Build containers dict from module meta.yml files
         # Pre-initialize all platforms to avoid repeated existence checks
+        has_warnings = False
         containers: dict[str, dict[str, str]] = {platform: {} for platform in platforms}
         for m_name in module_names:
             # Try to get module path from include statements
@@ -132,11 +133,7 @@ class ContainerConfigs:
             else:
                 # Fallback to old heuristic method
                 log.debug(f"No parsed path found for {m_name}, using heuristic")
-                parts = m_name.split("_", 1)
-                if len(parts) == 2:
-                    module_path = Path(parts[0].lower()) / parts[1].lower()
-                else:
-                    module_path = Path(m_name.lower())
+                module_path = Path(*m_name.lower().split("_", 1))
 
             # Look for meta.yml in the module path
             meta_path = self.workflow_directory / module_path / "meta.yml"

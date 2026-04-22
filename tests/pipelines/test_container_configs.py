@@ -33,12 +33,14 @@ class TestContainerConfigs(TestPipelines):
 
     def test_check_nextflow_version_sufficient_too_low(self) -> None:
         """check_nextflow_version should raise UserWarning when version is too low."""
-        with patch(
-            "nf_core.pipelines.containers_utils.check_nextflow_version",
-            return_value=False,
+        with (
+            patch(
+                "nf_core.pipelines.containers_utils.check_nextflow_version",
+                return_value=False,
+            ),
+            pytest.raises(UserWarning) as excinfo,
         ):
-            with pytest.raises(UserWarning) as excinfo:
-                self.container_configs.check_nextflow_version_sufficient()
+            self.container_configs.check_nextflow_version_sufficient()
 
         # Error message should mention the minimal required version
         assert pretty_nf_version(NF_INSPECT_MIN_NF_VERSION) in str(excinfo.value)
