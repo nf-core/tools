@@ -34,7 +34,7 @@ NFCORE_CONFIG_GLOBAL: bool = True
 INFRA_ISHPC_GLOBAL: bool = False
 _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 # Used by finalinfradetails as it already imports create.utils
-SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter"]
+SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter", "conda"]
 SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
 
 
@@ -161,7 +161,7 @@ class ConfigsCreateConfig(BaseModel):
             **params,
             "executor": {
                 "queueStatInterval": str(float(self.queue_stat_interval)) + "m" if self.queue_stat_interval else None,
-                "queueSize": int(self.queue_size) or None,
+                "queueSize": int(self.queue_size) if self.queue_size else None,
                 "pollInterval": str(float(self.poll_interval)) + "m" if self.poll_interval else None,
                 "submitRateLimit": str(int(self.submit_rate)) + "min" if self.submit_rate else None,
             },
@@ -174,12 +174,12 @@ class ConfigsCreateConfig(BaseModel):
                     {"time": str(float(self.time)) + "h" if self.time else None},
                 ],
                 "scratch": self.scratch_dir or None,
-                "maxRetries": int(self.retries) or None,
+                "maxRetries": int(self.retries) if self.retries else None,
                 "module": modules_to_load or None,
             },
             self.container_system: {
                 "enabled": True,
-                "cacheDir": self.cachedir or None,
+                "cacheDir": self.cachedir if self.container_system in ["singularity", "apptainer", "charliecloud", "conda"] else None,
                 "autoMounts": True if self.container_system in ["singularity", "apptainer"] else None,
             },
             "cleanup": self.delete_work_dir,
@@ -401,11 +401,11 @@ class ConfigsCreateConfig(BaseModel):
         # TODO: Any other invalid characters?
         return v
 
-    @field_validator("cpus", "memory", "retries", "queue_size", "submit_rate")
+    @field_validator("cpus", "memory", "retries")
     @classmethod
     def pos_integer_valid_infra(cls, v: str, info: ValidationInfo) -> str:
         """
-        Check that integer values are either empty or positive.
+        Check that integer values are positive.
 
         This contains the same validation as self.pos_integer_valid().
         However, keep infrastructure and pipeline methods decoupled for
@@ -415,6 +415,27 @@ class ConfigsCreateConfig(BaseModel):
         if context and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be empty.")
+            try:
+                v_int = int(v.strip())
+            except ValueError:
+                raise ValueError("Must be an integer.")
+            if not v_int > 0:
+                raise ValueError("Must be a positive integer.")
+        return v
+
+    @field_validator("queue_size", "submit_rate")
+    @classmethod
+    def pos_integer_optional_valid_infra(cls, v: str, info: ValidationInfo) -> str:
+        """
+        Check that integer values are either empty or positive.
+
+        This contains the same validation as self.pos_integer_valid_infra(),
+        but allows for empty values as well
+        """
+        context = info.context
+        if context and context["is_infrastructure"]:
+            if v.strip() == "":
+                return v
             try:
                 v_int = int(v.strip())
             except ValueError:
@@ -446,7 +467,7 @@ class ConfigsCreateConfig(BaseModel):
         context = info.context
         if context and context["is_infrastructure"]:
             if v.strip() == "":
-                raise ValueError("Cannot be empty.")
+                return v
             try:
                 vf = float(v.strip())
             except ValueError:
