@@ -1135,7 +1135,7 @@ def command_modules_patch(ctx, tool, directory, remove):
     "--force",
     is_flag=True,
     default=False,
-    help="Force removal of the module, even if it is in included in the pipeline.",
+    help="Force removal of the module, even if it is included in the pipeline.",
 )
 def command_modules_remove(ctx, directory, tool, force):
     """
