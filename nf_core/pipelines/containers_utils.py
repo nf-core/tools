@@ -162,6 +162,9 @@ class ContainerConfigs:
         else:
             log.info("Generated container configs for the pipeline successfully.")
 
+        # remove all generated config files, to handle removed modules
+        for platform in PLATFORMS:
+            (self.workflow_directory / "conf" / f"containers_{platform}.config").unlink(missing_ok=True)
         # write config files
         written: set[str] = set()
         for platform, module_containers in containers.items():

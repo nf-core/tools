@@ -67,3 +67,23 @@ class TestContainerConfigs(TestPipelines):
                 content = fh.readlines()
                 value = fastqc_meta_yml["containers"][runtime][arch][protocol]
                 assert f"process {{ withName: 'FASTQC' {{ container = '{value}' }} }}\n" in content
+
+    def test_generate_container_configs_removes_stale_entries(self) -> None:
+        """Stale config files are deleted when all their modules have been removed."""
+        conf_dir = self.pipeline_dir / "conf"
+        stale_line = "process { withName: 'REMOVED_MODULE' { container = 'stale/image:latest' } }\n"
+        for p_name in PLATFORMS:
+            (conf_dir / f"containers_{p_name}.config").write_text(stale_line)
+
+        with (
+            patch("nf_core.pipelines.containers_utils.check_nextflow_version", return_value=True),
+            patch(
+                "nf_core.pipelines.containers_utils.run_cmd",
+                return_value=('{"processes": []}', ""),
+            ),
+        ):
+            self.container_configs.generate_container_configs()
+
+        for p_name in PLATFORMS:
+            cfg_path = conf_dir / f"containers_{p_name}.config"
+            assert not cfg_path.exists(), f"{cfg_path.name} should be deleted when all modules are removed"
