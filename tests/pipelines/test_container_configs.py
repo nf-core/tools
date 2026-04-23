@@ -6,7 +6,7 @@ import pytest
 import ruamel.yaml
 
 from nf_core.modules.install import ModuleInstall
-from nf_core.pipelines.containers_utils import ContainerConfigs
+from nf_core.pipelines.containers_utils import PLATFORMS, ContainerConfigs
 from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, pretty_nf_version
 
 from ..test_pipelines import TestPipelines
@@ -57,22 +57,10 @@ class TestContainerConfigs(TestPipelines):
         self.container_configs.generate_container_configs()
 
         conf_dir = self.pipeline_dir / "conf"
-        # Expected platforms and one expected container
-        platforms: dict[str, list[str]] = {
-            "docker_amd64": ["docker", "linux/amd64", "name"],
-            "docker_arm64": ["docker", "linux/arm64", "name"],
-            "singularity_oras_amd64": ["singularity", "linux/amd64", "name"],
-            "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
-            "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
-            "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
-            "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
-            "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],
-        }
-
         with open(self.pipeline_dir / "modules" / "nf-core" / "fastqc" / "meta.yml") as fh:
             fastqc_meta_yml = yaml.load(fh)
 
-        for p_name, (runtime, arch, protocol) in platforms.items():
+        for p_name, (runtime, arch, protocol) in PLATFORMS.items():
             cfg_path = conf_dir / f"containers_{p_name}.config"
             assert cfg_path.exists()
             with cfg_path.open("r") as fh:

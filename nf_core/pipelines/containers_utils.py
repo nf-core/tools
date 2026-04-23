@@ -9,6 +9,17 @@ from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, pre
 
 log = logging.getLogger(__name__)
 
+PLATFORMS: dict[str, list[str]] = {
+    "docker_amd64": ["docker", "linux/amd64", "name"],
+    "docker_arm64": ["docker", "linux/arm64", "name"],
+    "singularity_oras_amd64": ["singularity", "linux/amd64", "name"],
+    "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
+    "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
+    "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
+    "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
+    "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],
+}
+
 
 class ContainerConfigs:
     """Generates the container configuration files for a pipeline.
@@ -110,21 +121,10 @@ class ContainerConfigs:
         module_path_map = self.parse_module_paths()
         log.debug(f"Parsed {len(module_path_map)} module paths from include statements")
 
-        platforms: dict[str, list[str]] = {
-            "docker_amd64": ["docker", "linux/amd64", "name"],
-            "docker_arm64": ["docker", "linux/arm64", "name"],
-            "singularity_oras_amd64": ["singularity", "linux/amd64", "name"],
-            "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
-            "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
-            "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
-            "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
-            "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],
-        }
-
         # Build containers dict from module meta.yml files
         # Pre-initialize all platforms to avoid repeated existence checks
         has_warnings = False
-        containers: dict[str, dict[str, str]] = {platform: {} for platform in platforms}
+        containers: dict[str, dict[str, str]] = {platform: {} for platform in PLATFORMS}
         for m_name in module_names:
             # Try to get module path from include statements
             if m_name in module_path_map:
@@ -147,12 +147,11 @@ class ContainerConfigs:
                 continue
 
             # Extract containers for all platforms
-            has_warnings = False
-            for platform_name, (runtime, arch, protocol) in platforms.items():
+            for platform_name, (runtime, arch, protocol) in PLATFORMS.items():
                 try:
                     containers[platform_name][m_name] = meta["containers"][runtime][arch][protocol]
                 except (KeyError, TypeError):
-                    log.debug(f"Could not find {platform_name} container for {m_name}")
+                    log.info(f"Could not find {platform_name} container for {m_name}")
                     has_warnings = True
                     continue
         if has_warnings:
