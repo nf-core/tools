@@ -89,6 +89,7 @@
 - Always prettify modules.json ([#4063](https://github.com/nf-core/tools/pull/4063))
 - Update nf-test module template to topics ([#4113](https://github.com/nf-core/tools/pull/4113))
 - switch to gitlab module to test with old version syntax ([#4126](https://github.com/nf-core/tools/pull/4126))
+- add apptainer support to module template ([#4210](https://github.com/nf-core/tools/pull/4210))
 
 ### Subworkflows
 
