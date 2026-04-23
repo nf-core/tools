@@ -175,3 +175,10 @@ class ContainerConfigs:
             config_path.write_text("".join(lines))
             written.add(config_path.name)
         return written
+
+
+def try_generate_container_configs(directory: Path) -> None:
+    try:
+        ContainerConfigs(directory).generate_container_configs()
+    except UserWarning as e:
+        log.warning(f"Could not regenerate container configuration files: {e}")

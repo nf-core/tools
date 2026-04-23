@@ -8,8 +8,8 @@ from rich.syntax import Syntax
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import try_generate_container_configs
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 
 from .install import ComponentInstall
 

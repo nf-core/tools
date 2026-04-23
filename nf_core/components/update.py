@@ -11,12 +11,12 @@ from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import (
     get_components_to_install,
     prompt_component_version_sha,
-    try_generate_container_configs,
 )
 from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 from nf_core.utils import plural_es, plural_s, plural_y
 
 log = logging.getLogger(__name__)
