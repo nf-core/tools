@@ -203,7 +203,7 @@ def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
         sys.exit(1)
 
 
-def subworkflows_remove(ctx, directory, subworkflow):
+def subworkflows_remove(ctx, directory, subworkflow, force):
     """
     Remove a subworkflow from a pipeline.
     """
@@ -216,7 +216,7 @@ def subworkflows_remove(ctx, directory, subworkflow):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        module_remove.remove(subworkflow)
+        module_remove.remove(subworkflow, force=force)
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
