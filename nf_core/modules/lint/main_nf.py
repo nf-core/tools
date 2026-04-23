@@ -710,7 +710,7 @@ def check_container_link_line(self, raw_line, registry):
     # Look for container link as single item surrounded by quotes
     # (if there are multiple links, this will be warned in the next check)
     container_link = None
-    if len(single_quoted_items) == 3:
+    if len(single_quoted_items) == 3 or len(single_quoted_items) == 5 and " in [" in raw_line:
         container_link = single_quoted_items[1]
     elif len(double_quoted_items) == 3:
         container_link = double_quoted_items[1]
