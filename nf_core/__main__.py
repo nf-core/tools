@@ -1801,7 +1801,7 @@ def subworkflows_patch(ctx, subworkflow, directory, remove):
     "--force",
     is_flag=True,
     default=False,
-    help="Force removal of the subworkflow, even if it is in included in the pipeline.",
+    help="Force removal of the subworkflow, even if it is included in the pipeline.",
 )
 def command_subworkflows_remove(ctx, directory, subworkflow, force):
     """
