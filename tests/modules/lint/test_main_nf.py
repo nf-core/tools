@@ -52,7 +52,7 @@ def test_process_labels(content, passed, warned, failed):
         ('container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package', 2, 0, 0),
         # Multi-line container definition should pass
         (
-            '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+            '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0':
                 'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
             6,
@@ -61,7 +61,7 @@ def test_process_labels(content, passed, warned, failed):
         ),
         # Space in container URL should fail
         (
-            '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+            '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
                 'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
             5,
@@ -70,7 +70,7 @@ def test_process_labels(content, passed, warned, failed):
         ),
         # Incorrect quoting of container string should fail
         (
-            '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+            '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
                 "biocontainers/gatk4:4.4.0.0--py36hdfd78af_0" }"''',
             4,

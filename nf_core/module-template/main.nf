@@ -25,7 +25,7 @@ process {{ component_name_underscore|upper }} {
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     {% endif -%}
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
         '{{ 'quay.io/' + docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"
 
