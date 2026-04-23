@@ -150,8 +150,9 @@ class ContainerConfigs:
             for platform_name, (runtime, arch, protocol) in PLATFORMS.items():
                 try:
                     containers[platform_name][m_name] = meta["containers"][runtime][arch][protocol]
+                    log.debug(f"Found {platform_name} container for {m_name}")
                 except (KeyError, TypeError):
-                    log.info(f"Could not find {platform_name} container for {m_name}")
+                    log.debug(f"Could not find {platform_name} container for {m_name}")
                     has_warnings = True
                     continue
         if has_warnings:

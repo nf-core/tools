@@ -9,6 +9,7 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 
 log = logging.getLogger(__name__)
 
@@ -118,7 +119,8 @@ class ComponentPatch(ComponentCommand):
             )
 
         # Write the patch to a temporary location (otherwise it is printed to the screen later)
-        patch_temp_path = tempfile.mktemp()
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            patch_temp_path = tmp.name
         try:
             ComponentsDiffer.write_diff_file(
                 patch_temp_path,
@@ -156,6 +158,10 @@ class ComponentPatch(ComponentCommand):
         shutil.move(patch_temp_path, patch_path)
         log.info(f"Patch file of '{component_fullname}' written to '{patch_path}'")
 
+        # Regenerate container configuration files for the pipeline when modules are removed
+        if self.component_type == "modules":
+            try_generate_container_configs(self.directory)
+
     def remove(self, component):
         # Check modules directory structure
         self.check_modules_structure()
@@ -163,6 +169,8 @@ class ComponentPatch(ComponentCommand):
         self.modules_json.check_up_to_date()
         self._parameter_checks(component)
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
+        if components is None:
+            raise ValueError(f"No components found for {self.component_type} in the pipeline")
 
         if component is None:
             self.require_prompts(
