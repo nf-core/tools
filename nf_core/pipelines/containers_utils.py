@@ -89,7 +89,9 @@ class ContainerConfigs:
 
         return module_paths
 
-    def generate_container_configs(self) -> set[str]:
+    def generate_container_configs(
+        self, new_module_path: Path | None = None, new_module_name: str | None = None
+    ) -> set[str]:
         """
         Generate the container configuration files for a pipeline.
         Requires Nextflow >= 25.04.4
@@ -114,12 +116,16 @@ class ContainerConfigs:
             log.error("Running 'nextflow inspect' failed with the following error:")
             raise UserWarning(e) from e
 
-        module_names = [p.get("name") for p in out_json["processes"] if p.get("name")]
+        module_names = {p.get("name") for p in out_json["processes"] if p.get("name")}
         log.debug(f"Found {len(module_names)} modules: {', '.join(module_names)}")
 
         # Parse module paths from include statements
         module_path_map = self.parse_module_paths()
         log.debug(f"Parsed {len(module_path_map)} module paths from include statements")
+
+        if new_module_name and new_module_path:
+            module_names.add(new_module_name.upper())
+            module_path_map[new_module_name.upper()] = new_module_path
 
         # Build containers dict from module meta.yml files
         # Pre-initialize all platforms to avoid repeated existence checks
@@ -180,8 +186,10 @@ class ContainerConfigs:
         return written
 
 
-def try_generate_container_configs(directory: Path) -> None:
+def try_generate_container_configs(
+    directory: Path, new_module_path: Path | None = None, new_module_name: str | None = None
+) -> None:
     try:
-        ContainerConfigs(directory).generate_container_configs()
+        ContainerConfigs(directory).generate_container_configs(new_module_path, new_module_name)
     except UserWarning as e:
         log.warning(f"Could not regenerate container configuration files: {e}")
