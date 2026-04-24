@@ -216,28 +216,24 @@ class ModuleContainers:
             log.warning(f"No docker image found for {linux_amd64}")
             return
 
-        # Get just the image:tag (last component after /)
-        # e.g., "community.wave.seqera.io/library/image:tag" -> "image:tag"
-        container_name = docker_image.split("/")[-1]
-
         # Read main.nf
         main_nf_path = self.nfcore_component.main_nf
         content = main_nf_path.read_text()
 
         # Check if container name is already correct
-        if container_name in content and not force:
+        if docker_image in content and not force:
             log.info(
-                f"Container name in `{self.nfcore_component.component_name}/main.nf` is already correct: `{container_name}`"
+                f"Container name in `{self.nfcore_component.component_name}/main.nf` is already correct: `{docker_image}`"
             )
             return
 
         # Replace container directive (may span multiple lines), preserving indentation
         new_content = re.sub(
-            r"(\s*)container\s+\".*?\"", rf'\1container "{container_name}"', content, count=1, flags=re.DOTALL
+            r"(\s*)container\s+\".*?\"", rf'\1container "{docker_image}"', content, count=1, flags=re.DOTALL
         )
 
         main_nf_path.write_text(new_content)
-        log.info(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{container_name}`")
+        log.info(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{docker_image}`")
 
     def create(
         self,
