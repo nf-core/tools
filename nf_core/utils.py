@@ -387,7 +387,7 @@ def read_module_name(main_nf: Path) -> str | None:
     except OSError:
         return None
 
-def nextflow_inspect(main_nf: Path, format: str = "json", profile: str = "docker") -> dict | None:
+def nextflow_inspect(main_nf: Path, output_format: str = "json", profile: str = "docker") -> dict:
     if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
         raise ValueError(
             f"Nextflow inspect cannot be run with this version of nextflow. nextflow >={NF_INSPECT_MIN_NF_VERSION} required"
@@ -397,14 +397,14 @@ def nextflow_inspect(main_nf: Path, format: str = "json", profile: str = "docker
         raise ValueError(f"Specified main.nf file {main_nf.absolute()} does not exist!")
 
     valid_formats = ("json",)
-    if format and format.lower() not in valid_formats:
-        raise ValueError(f"Invalid format: {format} Must be one of ({','.join(valid_formats)})")
+    if output_format and output_format.lower() not in valid_formats:
+        raise ValueError(f"Invalid format: {output_format} Must be one of ({','.join(valid_formats)})")
 
     main_nf = Path(main_nf).absolute()
     with set_wd_tempdir():
         executable = "nextflow"
         cmd_params = " inspect "
-        cmd_params += f" -format {format} " if format else ""
+        cmd_params += f" -format {output_format} " if output_format else ""
         cmd_params += f" -profile {profile} " if profile else ""
         cmd_params += str(main_nf)
 
@@ -413,7 +413,7 @@ def nextflow_inspect(main_nf: Path, format: str = "json", profile: str = "docker
 
         if cmd_out is None:
             log.debug(f"Failed to run `{executable} {cmd_params}`")
-            return dict()
+            return {}
 
         out, _ = cmd_out
         out_str = str(out, encoding="utf-8")
@@ -1729,9 +1729,8 @@ def set_wd_tempdir() -> Generator[None, None, None]:
     Context manager to provide and change into a tempdir and ensure its removal and return to the
     original_dir upon exceptions.
     """
-    with tempfile.TemporaryDirectory() as tmp:
-        with set_wd(Path(tmp)):
-            yield
+    with tempfile.TemporaryDirectory() as tmp, set_wd(Path(tmp)):
+        yield
 
 
 def get_wf_files(wf_path: Path):

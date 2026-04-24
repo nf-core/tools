@@ -48,10 +48,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     ("meta_yml", "containers_name", f"Missing {system} container name for {platform}", meta_path)
                 )
                 continue
-            if "://" in name:
-                scheme = name.split("://", 1)[0].lower()
-            else:
-                scheme = ""
+            scheme = name.split("://", 1)[0].lower() if "://" in name else ""
             if system == "singularity":
                 if scheme != "oras":
                     module.warned.append(
@@ -97,10 +94,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 parts = build_id_clean.split("_")
                 build_hash = parts[0] if parts else ""
 
-                if "://" in name:
-                    name_no_scheme = name.split("://", 1)[1]
-                else:
-                    name_no_scheme = name
+                name_no_scheme = name.split("://", 1)[1] if "://" in name else name
                 if "@" in name_no_scheme:
                     name_no_scheme = name_no_scheme.split("@", 1)[0]
                 if ":" not in name_no_scheme:
@@ -178,7 +172,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
                 )
                 continue
-            if docker_name.startswith("http://") or docker_name.startswith("https://"):
+            if docker_name.startswith(("http://", "https://")):
                 docker_url = docker_name
             elif "://" in docker_name:
                 docker_url = ""
@@ -352,7 +346,7 @@ def lint_main_nf_container(
     main_path = Path(module.component_dir, "main.nf")
     meta_path = Path(module.component_dir, "meta.yml")
 
-    nf_insp_out = nextflow_inspect(main_path, format="json", profile="docker")
+    nf_insp_out = nextflow_inspect(main_path, output_format="json", profile="docker")
     try:
         main_nf_docker_img = nf_insp_out["processes"][0]["container"]
     except (KeyError, IndexError):

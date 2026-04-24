@@ -99,6 +99,14 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
       match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
       to auto-correct.
 
+    * ``has_meta_containers``: If ``main.nf`` declares containers, ``meta.yml``
+      must also contain a non-empty ``containers:`` block. Run
+      ``nf-core modules lint --fix`` to auto-correct.
+
+    * ``correct_meta_containers``: The containers listed in ``meta.yml`` must
+      exactly match those parsed from ``main.nf``. Run
+      ``nf-core modules lint --fix`` to auto-correct.
+
     If the module has inputs or outputs, they are expected to be formatted as:
 
     .. code-block:: groovy
@@ -503,10 +511,10 @@ def obtain_containers(_, containers: dict) -> dict:
         formatted_containers (dict): A dictionary containing the containers and their elements obtained from meta.yml files.
     """
     formatted_containers: dict = {}
-    for system in containers.keys():
+    for system in containers:
         sys_containers = containers[system]
         platform_dict: dict = {}
-        for platform in sys_containers.keys():
+        for platform in sys_containers:
             entry = sys_containers[platform]
             platform_dict[platform] = entry
         formatted_containers[system] = platform_dict

@@ -188,7 +188,7 @@ class ModuleContainers:
                 try:
                     lock_file.unlink()
                     log.debug(f"Removed stale conda-lock file: {lock_file}")
-                except Exception as e:
+                except OSError as e:
                     log.warning(f"Failed to remove stale conda-lock file {lock_file}: {e}")
 
         # Clean up empty directory
@@ -196,7 +196,7 @@ class ModuleContainers:
             if not any(conda_lock_dir.iterdir()):
                 conda_lock_dir.rmdir()
                 log.debug(f"Removed empty .conda-lock directory: {conda_lock_dir}")
-        except Exception as e:
+        except OSError as e:
             log.debug(f"Could not remove .conda-lock directory: {e}")
 
     def update_main_nf_container(self, force=False) -> None:
@@ -260,8 +260,8 @@ class ModuleContainers:
         # Check for TOWER_ACCESS_TOKEN and warn about API limits
         self.check_tower_token()
 
-        containers: dict = {cs: {p: dict() for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS + ["conda"]}
-        build_tasks = dict()
+        containers: dict = {cs: {p: {} for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS + ["conda"]}
+        build_tasks = {}
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
         has_failures = False
 
@@ -318,11 +318,11 @@ class ModuleContainers:
                     try:
                         self.update_containers_in_meta()
                         log.debug(f"Updated meta.yml with {cs} container for {platform}")
-                    except Exception as meta_error:
+                    except (ValueError, RuntimeError, OSError) as meta_error:
                         log.warning(f"Failed to update meta.yml after {cs} {platform} build: {meta_error}")
                     if progress_bar and build_tid is not None:
-                        progress_bar.update(build_tid, completed=1, status="done")
-                except Exception as e:
+                        progress_bar.update(build_tid, completed=1, status="[green]done[/green]")
+                except (ValueError, RuntimeError, OSError) as e:
                     # make it a warning for arm (not required), but fail for other platforms
                     if platform == "linux/arm64":
                         log.warning(
@@ -332,7 +332,7 @@ class ModuleContainers:
                         log.error(f"Failed to build {cs} container for {platform}: {e}")
                         has_failures = True
                     if progress_bar and build_tid is not None:
-                        progress_bar.update(build_tid, completed=1, status="failed")
+                        progress_bar.update(build_tid, completed=1, status="[red]failed[/red]")
                     continue
 
         # Remove the per-build spinners now that all builds are done
@@ -359,7 +359,7 @@ class ModuleContainers:
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Store the local file path in containers
-            conda_data = containers.get("conda", dict())
+            conda_data = containers.get("conda", {})
             conda_data.update({platform: {self.LOCK_FILE_KEY: str(conda_lock_path)}})
             containers["conda"] = conda_data
 
@@ -373,7 +373,7 @@ class ModuleContainers:
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, status=f"conda lock {short_platform} done")
 
-            except Exception as e:
+            except (ValueError, OSError, requests.RequestException) as e:
                 log.error(f"Failed to download conda lock file for {platform}: {e}")
                 has_failures = True
                 if progress_bar and task_id is not None:
@@ -385,7 +385,7 @@ class ModuleContainers:
         # Update main.nf with new container name (docker amd64 without registry)
         try:
             self.update_main_nf_container(force)
-        except Exception as e:
+        except OSError as e:
             log.warning(f"Failed to update main.nf with container name: {e}")
             has_failures = True
 
@@ -429,7 +429,7 @@ class ModuleContainers:
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
 
-        container: dict[str, str] = dict()
+        container: dict[str, str] = {}
         executable = "wave"
         log_level = "DEBUG" if verbose else "INFO"
         args = [
@@ -455,10 +455,10 @@ class ModuleContainers:
             # "buildId:" appears in the debug output, without waiting for the build to finish.
             try:
                 proc = subprocess.Popen([executable] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except FileNotFoundError:
+            except FileNotFoundError as e:
                 raise RuntimeError(
                     f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
-                )
+                ) from e
             assert proc.stdout and proc.stderr
             stdout_chunks: list[bytes] = []
             build_id_notified = False
@@ -499,7 +499,7 @@ class ModuleContainers:
             stdout_output = cls._extract_yaml_from_wave_output(stdout_output)
 
         try:
-            meta_data = yaml.safe_load(stdout_output) or dict()
+            meta_data = yaml.safe_load(stdout_output) or {}
             log.debug(f"Wave YAML metadata: \n{pretty_repr(meta_data)}")
         except (KeyError, AttributeError, yaml.YAMLError) as e:
             log.error(f"Failed to parse Wave output. Raw output:\n{stdout_output}")
@@ -535,7 +535,7 @@ class ModuleContainers:
 
         elif container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
-            container_layers = inspect_out.get("container", dict()).get("manifest", dict()).get("layers", dict())
+            container_layers = inspect_out.get("container", {}).get("manifest", {}).get("layers", {})
 
             if not (
                 len(container_layers) == 1
@@ -569,7 +569,7 @@ class ModuleContainers:
             raise RuntimeError("Wave command did not return any output")
 
         try:
-            inspect_out = yaml.safe_load(out[0].decode()) or dict()
+            inspect_out = yaml.safe_load(out[0].decode()) or {}
         except (KeyError, AttributeError, yaml.YAMLError) as e:
             raise RuntimeError(f"Could not parse wave inspect yaml output for image {image}") from e
 
@@ -591,10 +591,10 @@ class ModuleContainers:
         """
         assert platform in CONTAINER_PLATFORMS
 
-        containers = self.containers or self.get_containers_from_meta() or self.create()[0] or dict()
+        containers = self.containers or self.get_containers_from_meta() or self.create()[0] or {}
 
         # Get build_id from docker container for this platform
-        build_id = containers.get("docker", dict()).get(platform, dict()).get(self.BUILD_ID_KEY)
+        build_id = containers.get("docker", {}).get(platform, {}).get(self.BUILD_ID_KEY)
         if not build_id:
             raise ValueError(f"No build_id found for docker container on platform {platform}")
 
@@ -637,22 +637,22 @@ class ModuleContainers:
         assert self.meta_yml and self.meta_yml.exists()
 
         meta = read_meta_yml(self.meta_yml)
-        containers = meta.get("containers", dict())
+        containers = meta.get("containers", {})
         if not containers:
             log.debug(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
-            return dict()
+            return {}
 
         for system in CONTAINER_SYSTEMS:
             cs = containers.get(system)
             if not cs:
                 log.debug(f"Container missing for {system}")
-                return dict()
+                return {}
 
             for pf in CONTAINER_PLATFORMS:
                 spec = cs.get(pf)
                 if not spec:
                     log.debug(f"Platform build {pf} missing for {system} container for module {self.module}")
-                    return dict()
+                    return {}
 
         return containers
 
@@ -671,7 +671,7 @@ class ModuleContainers:
         assert self.meta_yml
 
         meta = read_meta_yml(self.meta_yml)
-        meta_containers = meta.get("containers", dict())
+        meta_containers = meta.get("containers", {})
         # Remove stale entries for platforms that were attempted (even if they failed),
         # so old containers don't mix with new ones when a build partially fails.
         for cs, platforms in self.containers.items():
@@ -689,13 +689,13 @@ class ModuleContainers:
         if module_lint is None:
             try:
                 module_lint = ModuleLint(self.directory)
-            except Exception as e:
+            except (UserWarning, ValueError, OSError) as e:
                 log.warning(f"Failed to initialize ModuleLint for sorting: {e}")
 
         if module_lint is not None:
             try:
                 meta = module_lint.sort_meta_yml(meta)
-            except Exception as e:
+            except UserWarning as e:
                 log.warning(f"Failed to sort meta.yml: {e}")
 
         assert self.meta_yml and self.meta_yml.exists()
@@ -706,5 +706,5 @@ class ModuleContainers:
         # Format with prettier for consistent styling
         try:
             run_prettier_on_file(self.meta_yml)
-        except Exception as e:
+        except (FileNotFoundError, OSError) as e:
             log.debug(f"Could not run prettier on meta.yml: {e}")

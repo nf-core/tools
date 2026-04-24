@@ -357,7 +357,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
             failed_modules = []
 
             progress_bar = rich.progress.Progress(
-                rich.progress.SpinnerColumn(),
+                rich.progress.SpinnerColumn(finished_text="[green]✓[/green]"),
                 "[bold blue]{task.description}",
                 rich.progress.TextColumn("[dim]{task.fields[status]}"),
                 transient=True,
@@ -388,7 +388,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                             module_manager.update_containers_in_meta()
                         else:
                             failed_modules.append(module_name)
-                    except Exception as e:
+                    except (ValueError, RuntimeError, OSError) as e:
                         log.error(f"✗ Failed to build containers for {module_name}: {e}")
                         failed_modules.append(module_name)
                     finally:
@@ -404,7 +404,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
         else:
             # Single module mode - create progress bar for single module
             progress_bar = rich.progress.Progress(
-                rich.progress.SpinnerColumn(),
+                rich.progress.SpinnerColumn(finished_text="[green]✓[/green]"),
                 "[bold blue]{task.description}",
                 rich.progress.TextColumn("[dim]{task.fields[status]}"),
                 transient=True,

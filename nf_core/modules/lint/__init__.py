@@ -312,7 +312,7 @@ class ModuleLint(ComponentLint):
             schema = self.load_meta_schema()
             schema_keys = list(schema["properties"].keys())
         except (LintExceptionError, KeyError) as e:
-            raise UserWarning("Failed to load meta schema", e)
+            raise UserWarning("Failed to load meta schema", e) from e
 
         result: dict = {}
 
@@ -322,7 +322,7 @@ class ModuleLint(ComponentLint):
                 result[key] = meta_yml[key]
 
         # Then add any keys that aren't in the schema (to preserve custom keys)
-        for key in meta_yml.keys():
+        for key in meta_yml:
             if key not in result:
                 result[key] = meta_yml[key]
 
