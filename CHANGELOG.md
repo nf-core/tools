@@ -66,6 +66,7 @@
 - Update astral-sh/setup-uv action to v8 ([#4207](https://github.com/nf-core/tools/pull/4207))
 - nextflow source CI: set up uv ([#4208](https://github.com/nf-core/tools/pull/4208))
 - Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
+- update fastqc and multiqc to latest version ([#4214](https://github.com/nf-core/tools/pull/4214))
 
 ### Download
 
