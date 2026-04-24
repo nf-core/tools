@@ -29,8 +29,10 @@ workflow PIPELINE_INITIALISATION {
 
     take:
     version           // boolean: Display version and exit
+    {%- if nf_schema %}
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
     monochrome_logs   // boolean: Do not use coloured log outputs
+    {%- endif %}
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
@@ -60,6 +62,8 @@ workflow PIPELINE_INITIALISATION {
     // Validate parameters and generate parameter summary to stdout
     //
 
+    def before_text = ""
+    def after_text = ""
     {%- if is_nfcore %}
     before_text = """
 -\033[2m----------------------------------------------------\033[0m-
@@ -77,7 +81,12 @@ workflow PIPELINE_INITIALISATION {
 
 * Software dependencies
     https://github.com/{{ name }}/blob/{{ default_branch }}/CITATIONS.md
-"""{% endif %}
+"""
+    {%- endif %}
+    if (monochrome_logs) {
+        before_text = before_text.replaceAll(/\033\[[0-9;]*m/, '')
+    }
+
     command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
 
     UTILS_NFSCHEMA_PLUGIN (
@@ -87,8 +96,8 @@ workflow PIPELINE_INITIALISATION {
         help,
         help_full,
         show_hidden,
-        {% if is_nfcore -%}before_text{%- else %}""{%- endif %},
-        {% if is_nfcore -%}after_text{%- else %}""{%- endif %},
+        before_text,
+        after_text,
         command
     )
     {%- endif %}
@@ -113,8 +122,8 @@ workflow PIPELINE_INITIALISATION {
     //
 
     channel{% if nf_schema %}
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json")){% else %}
-        .fromPath(params.input)
+        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json")){% else %}
+        .fromPath(input)
         .splitCsv(header: true, strip: true)
         .map { row ->
             [[id:row.sample], row.fastq_1, row.fastq_2]
@@ -155,13 +164,16 @@ workflow PIPELINE_COMPLETION {
     email           //  string: email address
     email_on_fail   //  string: email address sent on pipeline failure
     plaintext_email // boolean: Send plain-text email instead of HTML
-    {%- endif %}
     outdir          //    path: Path to output directory where results will be published
+    {%- endif %}
     monochrome_logs // boolean: Disable ANSI colour codes in log output
     {%- if multiqc %}
+    {%- if email %}
     multiqc_report  //  string: Path to MultiQC report{% endif %}
+    {%- endif %}
 
     main:
+    {%- if email %}
     {%- if nf_schema %}
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     {%- else %}
@@ -170,6 +182,7 @@ workflow PIPELINE_COMPLETION {
 
     {%- if multiqc %}
     def multiqc_reports = multiqc_report.toList()
+    {%- endif %}
     {%- endif %}
 
     //

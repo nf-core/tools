@@ -320,8 +320,8 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
         # Only valid pattern is: echo "" | gzip > file.gz
         # Each .gz creation is always on a single line
 
-        # Find all lines containing .gz in this stub block
-        gz_lines = re.findall(r"^.*\.gz.*$", stub_block, re.MULTILINE)
+        # Find all lines where .gz is the final extension
+        gz_lines = re.findall(r"^.*\.gz\s*$", stub_block, re.MULTILINE)
 
         for line in gz_lines:
             line = line.strip()

@@ -40,6 +40,19 @@ If you are not used to this workflow with Git, see the [GitHub documentation](ht
 
 {% if is_nfcore -%}
 
+## Use of AI and LLMs
+
+The nf-core stance on the use of AI and LLMs is that humans are still ultimately responsible for their submitted code, regardless of the tools they use.
+
+If you’re using AI tools, try to stick by these guidelines:
+
+- Keep PRs as small and focussed as possible
+- Avoid any unnecessary changes, such as moving or refactoring code (unless that is the explicit intention of the PR)
+- Review all generated code yourself before opening a PR, and ensure that you understand it
+- Engage with the community review process and expect to make revisions
+
+For more detail, see the the [blog post](https://nf-co.re/blog/2026/statement-on-ai) for a statement from the nf-core/core team.
+
 ### Getting help
 
 For further information and help, see the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) or ask on the nf-core [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) Slack channel ([join our Slack here](https://nf-co.re/join/slack)).

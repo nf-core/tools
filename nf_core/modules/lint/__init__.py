@@ -394,13 +394,10 @@ class ModuleLint(ComponentLint):
         # Obtain inputs, outputs and topics from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
         # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
-        if "input" in meta_yml:
-            correct_inputs = self.obtain_inputs(mod.inputs)
-            meta_inputs = self.obtain_inputs(meta_yml["input"])
-        if "output" in meta_yml:
-            correct_outputs = self.obtain_outputs(mod.outputs)
-            meta_outputs = self.obtain_outputs(meta_yml["output"])
-
+        correct_inputs = self.obtain_inputs(mod.inputs)
+        meta_inputs = self.obtain_inputs(meta_yml.get("input", []))
+        correct_outputs = self.obtain_outputs(mod.outputs)
+        meta_outputs = self.obtain_outputs(meta_yml.get("output", {}))
         correct_topics = self.obtain_topics(mod.topics)
         meta_topics = self.obtain_topics(meta_yml.get("topics", {}))
 
@@ -413,7 +410,7 @@ class ModuleLint(ComponentLint):
                 versions_entry = template_meta.get("topics", {}).get("versions", [[]])[0]
                 if len(versions_entry) == 3:
                     topic_metadata = [next(iter(item.values())) for item in versions_entry]
-        except (OSError, yaml.YAMLError, IndexError, StopIteration) as e:
+        except (OSError, ruamel.yaml.YAMLError, IndexError, StopIteration) as e:
             log.debug(f"Could not load topic template metadata: {e}")
 
         def _populate_channel_elements(io_type, correct_value, meta_value, mod_io_data, meta_yml_io, check_exists=True):

@@ -450,18 +450,25 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if line.startswith(registry):
+            if line.startswith((registry, "community.wave.seqera.io/library/")):
                 l_stripped = re.sub(r"\W+$", "", line)
-                self.failed.append(
+                self.passed.append(
                     (
                         "main_nf",
                         "container_links",
-                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
+                        f"Container prefix is correct: {l_stripped}",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("main_nf", "container_links", "Container prefix is correct", self.main_nf))
+                self.failed.append(
+                    (
+                        "main_nf",
+                        "container_links",
+                        "Container prefix is not correct. Please add the registry prefix (e.g. 'quay.io/')",
+                        self.main_nf,
+                    )
+                )
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
@@ -703,7 +710,7 @@ def check_container_link_line(self, raw_line, registry):
     # Look for container link as single item surrounded by quotes
     # (if there are multiple links, this will be warned in the next check)
     container_link = None
-    if len(single_quoted_items) == 3:
+    if len(single_quoted_items) == 3 or len(single_quoted_items) == 5 and " in [" in raw_line:
         container_link = single_quoted_items[1]
     elif len(double_quoted_items) == 3:
         container_link = double_quoted_items[1]

@@ -31,7 +31,9 @@ workflow {{ short_name|upper }} {
     {%- if multiqc %}
     multiqc_config
     multiqc_logo
+    {%- if citations %}
     multiqc_methods_description
+    {%- endif %}
     {%- endif %}
     outdir
 
@@ -48,7 +50,7 @@ workflow {{ short_name|upper }} {
     //
     FASTQC(ch_samplesheet)
     {%- if multiqc %}
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.map{ _meta, file -> file })
     {%- endif %}
     {%- endif %}
 

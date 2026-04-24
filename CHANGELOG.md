@@ -57,6 +57,14 @@
 - Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 - use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
 - Update dependency textual to v8.2.3 ([#4194](https://github.com/nf-core/tools/pull/4194))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.11 ([#4195](https://github.com/nf-core/tools/pull/4195))
+- Update nf-core/setup-nextflow action to v3 ([#4199](https://github.com/nf-core/tools/pull/4199))
+- Update python:3.14-slim Docker digest to bc389f7 ([#4200](https://github.com/nf-core/tools/pull/4200))
+- trigger full nf-test run if CI changes ([#4203](https://github.com/nf-core/tools/pull/4203))
+- Parse manifest.contributors to fill in the RO-Crate ([#4147](https://github.com/nf-core/tools/pull/4147))
+- only check for compressed stubs with .gz as final extension ([#4206](https://github.com/nf-core/tools/pull/4206))
+- nextflow source CI: set up uv ([#4208](https://github.com/nf-core/tools/pull/4208))
+- Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
 
 ### Download
 
@@ -76,6 +84,7 @@
 - Fix false positive matches to words like text in ext key linting ([#4142](https://github.com/nf-core/tools/pull/4142))
 - Fix changelog bot failing after linting step ([#4155](https://github.com/nf-core/tools/pull/4155))
 - lint for correct syntax for compressed files in stubs ([#4048](https://github.com/nf-core/tools/pull/4048))
+- fix linting with missing input ([#4202](https://github.com/nf-core/tools/pull/4202))
 
 ### Modules
 
@@ -83,12 +92,14 @@
 - Always prettify modules.json ([#4063](https://github.com/nf-core/tools/pull/4063))
 - Update nf-test module template to topics ([#4113](https://github.com/nf-core/tools/pull/4113))
 - switch to gitlab module to test with old version syntax ([#4126](https://github.com/nf-core/tools/pull/4126))
+- add apptainer support to module template ([#4210](https://github.com/nf-core/tools/pull/4210))
 
 ### Subworkflows
 
 - update test to new upstream subworkflow structure ([#4038](https://github.com/nf-core/tools/pull/4038))
 - Fix lint: preserve underscores for subworkflow includes via full path ([#4074](https://github.com/nf-core/tools/pull/4074))
 - update modules and subworkflows in template ([#4077](https://github.com/nf-core/tools/pull/4077))
+- add `--force` parameter to `modules remove` and `subworkflow remove` ([#4213](https://github.com/nf-core/tools/pull/4213))
 
 ### Template
 

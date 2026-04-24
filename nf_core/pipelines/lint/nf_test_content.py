@@ -167,19 +167,19 @@ def nf_test_content(self) -> dict[str, list[str]]:
     nf_test_conf_fn = Path(self.wf_path, "nf-test.config")
     nf_test_checks: dict[str, dict[str, str]] = {
         "testsDir": {
-            "pattern": r'testsDir "\."',
+            "pattern": r'testsDir\s*=?\s*"\."',
             "description": "sets a `testsDir`",
-            "failure_msg": 'does not set a `testsDir`, it should contain `testsDir "."`',
+            "failure_msg": 'does not set a `testsDir`, it should contain `testsDir = "."`.',
         },
         "workDir": {
-            "pattern": r'workDir System\.getenv\("NFT_WORKDIR"\) \?: "\.nf-test"',
+            "pattern": r'workDir\s*=?\s*System\.getenv\("NFT_WORKDIR"\) \?: "\.nf-test"',
             "description": "sets a `workDir`",
-            "failure_msg": 'does not set a `workDir`, it should contain `workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"`',
+            "failure_msg": 'does not set a `workDir`, it should contain `workDir = System.getenv("NFT_WORKDIR") ?: ".nf-test"`.',
         },
         "configFile": {
-            "pattern": r'configFile "tests/nextflow\.config"',
+            "pattern": r'configFile\s*=?\s*"tests/nextflow\.config"',
             "description": "sets a `configFile`",
-            "failure_msg": 'does not set a `configFile`, it should contain `configFile "tests/nextflow.config"`',
+            "failure_msg": 'does not set a `configFile`, it should contain `configFile = "tests/nextflow.config"`.',
         },
     }
 
