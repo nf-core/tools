@@ -282,7 +282,7 @@ class ComponentCommand:
         """
         include_stmts: dict[str, list[dict[str, int | str]]] = {}
         if self.repo_type == "pipeline":
-            workflow_files = Path(self.directory, "workflows").glob("*.nf")
+            workflow_files = Path(self.directory, "workflows").rglob("*.nf")
             for workflow_file in workflow_files:
                 with open(workflow_file) as fh, mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
                     # Check if component path is in the file using mmap

@@ -63,6 +63,8 @@
 - Parse manifest.contributors to fill in the RO-Crate ([#4147](https://github.com/nf-core/tools/pull/4147))
 - only check for compressed stubs with .gz as final extension ([#4206](https://github.com/nf-core/tools/pull/4206))
 - Update astral-sh/setup-uv action to v8 ([#4207](https://github.com/nf-core/tools/pull/4207))
+- nextflow source CI: set up uv ([#4208](https://github.com/nf-core/tools/pull/4208))
+- Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
 
 ### Download
 
@@ -90,12 +92,14 @@
 - Always prettify modules.json ([#4063](https://github.com/nf-core/tools/pull/4063))
 - Update nf-test module template to topics ([#4113](https://github.com/nf-core/tools/pull/4113))
 - switch to gitlab module to test with old version syntax ([#4126](https://github.com/nf-core/tools/pull/4126))
+- add apptainer support to module template ([#4210](https://github.com/nf-core/tools/pull/4210))
 
 ### Subworkflows
 
 - update test to new upstream subworkflow structure ([#4038](https://github.com/nf-core/tools/pull/4038))
 - Fix lint: preserve underscores for subworkflow includes via full path ([#4074](https://github.com/nf-core/tools/pull/4074))
 - update modules and subworkflows in template ([#4077](https://github.com/nf-core/tools/pull/4077))
+- add `--force` parameter to `modules remove` and `subworkflow remove` ([#4213](https://github.com/nf-core/tools/pull/4213))
 
 ### Template
 

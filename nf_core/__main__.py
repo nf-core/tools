@@ -1130,11 +1130,18 @@ def command_modules_patch(ctx, tool, directory, remove):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def command_modules_remove(ctx, directory, tool):
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Force removal of the module, even if it is included in the pipeline.",
+)
+def command_modules_remove(ctx, directory, tool, force):
     """
     Remove a module from a pipeline.
     """
-    modules_remove(ctx, directory, tool)
+    modules_remove(ctx, directory, tool, force)
 
 
 # nf-core modules create
@@ -1789,11 +1796,18 @@ def subworkflows_patch(ctx, subworkflow, directory, remove):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def command_subworkflows_remove(ctx, directory, subworkflow):
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Force removal of the subworkflow, even if it is included in the pipeline.",
+)
+def command_subworkflows_remove(ctx, directory, subworkflow, force):
     """
     Remove a subworkflow from a pipeline.
     """
-    subworkflows_remove(ctx, directory, subworkflow)
+    subworkflows_remove(ctx, directory, subworkflow, force)
 
 
 # nf-core subworkflows update

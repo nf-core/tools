@@ -143,7 +143,7 @@ def modules_patch(ctx, tool, directory, remove):
         sys.exit(1)
 
 
-def modules_remove(ctx, directory, tool):
+def modules_remove(ctx, directory, tool, force):
     """
     Remove a module from a pipeline.
     """
@@ -156,7 +156,7 @@ def modules_remove(ctx, directory, tool):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        module_remove.remove(tool)
+        module_remove.remove(tool, force=force)
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
