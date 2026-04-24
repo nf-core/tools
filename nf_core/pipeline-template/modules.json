@@ -8,12 +8,12 @@
                     {%- if fastqc %}
                     "fastqc": {
                         "branch": "master",
-                        "git_sha": "3009f27c4e4b6e99da4eeebe82799e13924a4a1f",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     }{% endif %}{%- if multiqc %}{% if fastqc %},{% endif %}
                     "multiqc": {
                         "branch": "master",
-                        "git_sha": "2c73cc8fa92cf48de3da0b643fdf357a8a290b36",
+                        "git_sha": "008f9d3e61209bf995edac3ba531f54e269e1215",
                         "installed_by": ["modules"]
                     }
                     {%- endif %}
