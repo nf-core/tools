@@ -66,6 +66,7 @@
 - Update astral-sh/setup-uv action to v8 ([#4207](https://github.com/nf-core/tools/pull/4207))
 - nextflow source CI: set up uv ([#4208](https://github.com/nf-core/tools/pull/4208))
 - Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
+- Update conda-incubator/setup-miniconda action to v4 ([#4215](https://github.com/nf-core/tools/pull/4215))
 
 ### Download
 
