@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,10 @@ from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.utils import unquote
+
+# Output paths that are bare variable refs or pure ``${var}`` GStrings are
+# resolved at runtime in the script: block and can't be reconciled statically.
+DYNAMIC_PATH_RE = re.compile(r"^(?:\$\{[a-zA-Z_]\w*\}|[a-zA-Z_]\w*)$")
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
@@ -219,6 +224,11 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         if "output" in meta_yaml:
             correct_outputs = obtain_outputs(module_lint_object, module.outputs)
             meta_outputs = obtain_outputs(module_lint_object, meta_yaml["output"])
+            dynamic_channels = _channels_with_dynamic_paths(module.outputs)
+            if dynamic_channels:
+                log.debug(f"Skipping comparison for dynamic-path channels: {sorted(dynamic_channels)}")
+                correct_outputs = _drop_channels(correct_outputs, dynamic_channels)
+                meta_outputs = _drop_channels(meta_outputs, dynamic_channels)
             log.debug(f"Correct outputs: {correct_outputs}")
             log.debug(f"Outputs in `meta.yml`: {meta_outputs}")
             if correct_outputs == meta_outputs:
@@ -376,6 +386,33 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
         return [{k: v} for k, v in formatted_outputs.items()]
     else:
         return formatted_outputs
+
+
+def _channels_with_dynamic_paths(raw_outputs: dict) -> set[str]:
+    """Return channel names whose ``path(...)`` values are bare variables or
+    pure ``${var}`` GStrings.
+
+    Operates on the raw ``module.outputs`` dict (with ``_keyword`` info) so it
+    can target only ``path`` elements and ignore ``val``/``eval`` keys that
+    happen to look like identifiers.
+    """
+    dynamic = set()
+    for channel_name, channel_elements in raw_outputs.items():
+        for element in channel_elements:
+            entries = element if isinstance(element, list) else [element]
+            for entry in entries:
+                key, info = next(iter(entry.items()))
+                if info.get("_keyword") == "path" and DYNAMIC_PATH_RE.match(unquote(key)):
+                    dynamic.add(channel_name)
+                    break
+    return dynamic
+
+
+def _drop_channels(formatted_outputs: dict | list, channel_names: set[str]) -> dict | list:
+    """Return ``formatted_outputs`` with the given channels removed."""
+    if isinstance(formatted_outputs, list):
+        return [d for d in formatted_outputs if not any(k in channel_names for k in d)]
+    return {k: v for k, v in formatted_outputs.items() if k not in channel_names}
 
 
 def obtain_topics(_, topics: dict) -> dict:

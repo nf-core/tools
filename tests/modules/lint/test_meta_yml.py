@@ -217,6 +217,42 @@ class TestMetaYml(TestModules):
             f"Version element should have type: string (since it's val()), but got type: {version_meta['type']}"
         )
 
+    def test_modules_meta_yml_dynamic_output_path_skipped(self):
+        """`correct_meta_outputs` should not flag mismatches for ``path`` outputs
+        that are bare variables or pure ``${var}`` GStrings, since those are
+        resolved in the script: block and cannot be reconciled statically."""
+        from nf_core.modules.lint.meta_yml import _channels_with_dynamic_paths
+
+        raw_outputs = {
+            "reads": [
+                [
+                    {"meta": {"_keyword": "val"}},
+                    {"reads_glob": {"_keyword": "path"}},
+                ]
+            ],
+            "log": [
+                [
+                    {"meta": {"_keyword": "val"}},
+                    {"${report_glob}": {"_keyword": "path"}},
+                ]
+            ],
+            "static": [
+                [
+                    {"meta": {"_keyword": "val"}},
+                    {"*.bam": {"_keyword": "path"}},
+                ]
+            ],
+            "versions": [
+                [
+                    {"${task.process}": {"_keyword": "val"}},
+                    {"trimgalore": {"_keyword": "val"}},
+                    {"trim_galore --version": {"_keyword": "eval"}},
+                ]
+            ],
+        }
+        dynamic = _channels_with_dynamic_paths(raw_outputs)
+        assert dynamic == {"reads", "log"}, f"Expected {{'reads', 'log'}}, got {dynamic}"
+
     def test_modules_meta_yml_no_input_section(self):
         """Test that lint --fix does not crash when meta.yml has no input section (e.g. parameter-only modules)"""
         meta_yml_path = self.bpipe_test_module_path / "meta.yml"
