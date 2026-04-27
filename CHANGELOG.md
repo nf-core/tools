@@ -1,21 +1,14 @@
 # nf-core/tools: Changelog
 
-## v3.6.0dev
+## [v4.0.0 - Bold Boa](https://github.com/nf-core/tools/releases/tag/4.0.0) - [2026-04-27]
 
 ### General
 
-- Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
-- Lock file maintenance ([#4045](https://github.com/nf-core/tools/pull/4045))
-- Update actions/stale digest to b5d41d4 ([#4047](https://github.com/nf-core/tools/pull/4047))
-- hinder renovate from updating packages with a fixed range ([#4058](https://github.com/nf-core/tools/pull/4058))
-- Update actions/upload-artifact action to v7 ([#4061](https://github.com/nf-core/tools/pull/4061))
-- allow harshil alignment™ in version channels ([#4064](https://github.com/nf-core/tools/pull/4064))
-- Update python:3.14-slim Docker digest to 6a27522 ([#4072](https://github.com/nf-core/tools/pull/4072))
-- Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
-- Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
+- Add command to generate pipeline container config files ([#3955](https://github.com/nf-core/tools/pull/3955))
+- sync: don't overwrite the defaultBranch if already set in nextflow.config ([#3939](https://github.com/nf-core/tools/pull/3939))
 - Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
-  <!--| Command                    | Subcommand                     | Aliases                           |
+
+  | Command                    | Subcommand                     | Aliases                           |
   | -------------------------- | ------------------------------ | --------------------------------- |
   | `modules` & `subworkflows` | `bump-versions` (modules only) | `bump-version`, `bump`, `bv`, `b` |
   |                            | `create`                       | `c`                               |
@@ -35,44 +28,18 @@
   |                            | `sync`                         | `s`                               |
   | `test-datasets`            | (command group)                | `t`, `td`, `tds`, `test-datasets` |
   |                            | `list`                         | `ls`                              |
-  |                            | `list-branches`                | `lsb`                             |-->
-- bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
+  |                            | `list-branches`                | `lsb`                             |
+
+- Add more ruff rules (B, PTH, RSE, SIM, C4, BLE, A) ([#4034](https://github.com/nf-core/tools/pull/4034))
+- hinder renovate from updating packages with a fixed range ([#4058](https://github.com/nf-core/tools/pull/4058))
 - nf-core bot: collect all snapshots before commiting ([#4082](https://github.com/nf-core/tools/pull/4082))
-- Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
 - fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
 - Fix GHA notification for AWS full tests job ([#4092](https://github.com/nf-core/tools/pull/4092))
-- sync: don't overwrite the defaultBranch if already set in nextflow.config ([#3939](https://github.com/nf-core/tools/pull/3939))
-- Update pre-commit hook astral-sh/uv-pre-commit to v0.11.4 ([#4179](https://github.com/nf-core/tools/pull/4179))
-- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.7 ([#4151](https://github.com/nf-core/tools/pull/4151))
-- Update pre-commit hook pre-commit/mirrors-mypy to v1.20.0 ([#4165](https://github.com/nf-core/tools/pull/4165))
-- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 26b252e ([#4158](https://github.com/nf-core/tools/pull/4158))
-- chore(deps): update pypa/gh-action-pypi-publish digest to cef2210 ([#4178](https://github.com/nf-core/tools/pull/4178))
-- chore(deps): update python:3.14-slim docker digest to 5e59aae ([#4159](https://github.com/nf-core/tools/pull/4159))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.9 ([#4152](https://github.com/nf-core/tools/pull/4152))
-- Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
-- Update actions/github-script action to v9 ([#4182](https://github.com/nf-core/tools/pull/4182))
-- Update actions/upload-artifact digest to 043fb46 ([#4184](https://github.com/nf-core/tools/pull/4184))
-- Remove deprecated cli commands and --migrate-pytest flag with all obsoleted code. ([4167](https://github.com/nf-core/tools/pull/4167))
-- Remove `--migrate-pytest` functionality and deprecated pipeline commands ([#4167](https://github.com/nf-core/tools/pull/4167))
-- Add more ruff rules (B, PTH) ([#4034](https://github.com/nf-core/tools/pull/4034))
-- Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
-- use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
-- Update dependency textual to v8.2.3 ([#4194](https://github.com/nf-core/tools/pull/4194))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.11 ([#4195](https://github.com/nf-core/tools/pull/4195))
-- Update nf-core/setup-nextflow action to v3 ([#4199](https://github.com/nf-core/tools/pull/4199))
-- Update python:3.14-slim Docker digest to bc389f7 ([#4200](https://github.com/nf-core/tools/pull/4200))
-- trigger full nf-test run if CI changes ([#4203](https://github.com/nf-core/tools/pull/4203))
 - Parse manifest.contributors to fill in the RO-Crate ([#4147](https://github.com/nf-core/tools/pull/4147))
-- only check for compressed stubs with .gz as final extension ([#4206](https://github.com/nf-core/tools/pull/4206))
-- Update astral-sh/setup-uv action to v8 ([#4207](https://github.com/nf-core/tools/pull/4207))
+- Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
+- Remove `--migrate-pytest` functionality and deprecated pipeline commands ([#4167](https://github.com/nf-core/tools/pull/4167))
+- use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
 - nextflow source CI: set up uv ([#4208](https://github.com/nf-core/tools/pull/4208))
-- Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
-- Update conda-incubator/setup-miniconda action to v4 ([#4215](https://github.com/nf-core/tools/pull/4215))
-- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.8 ([#4218](https://github.com/nf-core/tools/pull/4218))
-- Update pre-commit hooks ([#4219](https://github.com/nf-core/tools/pull/4219))
-- Update dependency textual to v8.2.4 ([#4217](https://github.com/nf-core/tools/pull/4217))
-- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 1a85cf3 ([#4220](https://github.com/nf-core/tools/pull/4220))
-- Update python:3.14-slim Docker digest to 5b3879b ([#4221](https://github.com/nf-core/tools/pull/4221))
 - automatically handle merge conflicts for changelog files with union ([#4223](https://github.com/nf-core/tools/pull/4223))
 
 ### Download
@@ -83,9 +50,7 @@
 ### Linting
 
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
-- fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 - capture correct error for invalid .nf-core.yml ([#4080](https://github.com/nf-core/tools/pull/4080))
-- allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
 - Ensure release linting happens on branch named main ([#4121](https://github.com/nf-core/tools/pull/4121))
 - Add linting for meta and ext keys ([#4127](https://github.com/nf-core/tools/pull/4127))
 - Add strict syntax linting to template with pre-commit ([#4128](https://github.com/nf-core/tools/pull/4128))
@@ -96,13 +61,21 @@
 - lint for correct syntax for compressed files in stubs ([#4048](https://github.com/nf-core/tools/pull/4048))
 - fix linting with missing input ([#4202](https://github.com/nf-core/tools/pull/4202))
 - fix(lint): use correct config key zenodo_doi ([#4201](https://github.com/nf-core/tools/pull/4201))
+- add missing lint test documentation and add pre-commit check for them ([#4052](https://github.com/nf-core/tools/pull/4052))
 
 ### Modules
 
+- fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 - Template: have a `main:` section in workflow even when modules are skipped ([#4043](https://github.com/nf-core/tools/pull/4043))
+- allow harshil alignment™ in version channels ([#4064](https://github.com/nf-core/tools/pull/4064))
+- Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 - Always prettify modules.json ([#4063](https://github.com/nf-core/tools/pull/4063))
-- Update nf-test module template to topics ([#4113](https://github.com/nf-core/tools/pull/4113))
+- Allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
 - switch to gitlab module to test with old version syntax ([#4126](https://github.com/nf-core/tools/pull/4126))
+- linting: Fix version emit for version.yml ([#4095](https://github.com/nf-core/tools/pull/4095))
+- linting: make version topics mandatory ([#4163](https://github.com/nf-core/tools/pull/4163))
+- only check for compressed stubs with .gz as final extension ([#4206](https://github.com/nf-core/tools/pull/4206))
+- modules linting: require registry prefix in container link ([#4209](https://github.com/nf-core/tools/pull/4209))
 - add apptainer support to module template ([#4210](https://github.com/nf-core/tools/pull/4210))
 
 ### Subworkflows
@@ -119,20 +92,78 @@
     - [nf-slack](https://github.com/seqeralabs/nf-slack)
     - [nf-teams](https://github.com/nvnieuwk/nf-teams)
 - Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
+- Update nf-test module template to topics ([#4113](https://github.com/nf-core/tools/pull/4113))
 - Fix nf-core tools version to what is specified in `.nf-core.yml` for the GitHub workflow `download_pipeline.yml` ([#4124](https://github.com/nf-core/tools/pull/4124)).
 - Update all documentation URLs to point to equivalents on the new nf-core website documentation structure ([#4135](https://github.com/nf-core/tools/pull/4135))
 - Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
 - Add additional fusion specific exit codes ([#4180](https://github.com/nf-core/tools/pull/4180))
 - fix: rename variables in pipeline nf-test template default.nf.test for clarity ([#4189](https://github.com/nf-core/tools/pull/4189))
+-
 - bump nextflow to 25.10.4 ([#4190](https://github.com/nf-core/tools/pull/4190))
+- fix jinja variable in template ([#4156](https://github.com/nf-core/tools/pull/4156))
+- fix some nextflow lint warnings in different skipped template versions ([#4191](https://github.com/nf-core/tools/pull/4191))
+- trigger full nf-test run if CI changes ([#4203](https://github.com/nf-core/tools/pull/4203))
+- Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
 
 #### Version updates
 
+- Update GitHub Actions ([#4001](https://github.com/nf-core/tools/pull/4001))
+- Update dependency prettier to v3.8.1 ([#4003](https://github.com/nf-core/tools/pull/4003))
+- Update dawidd6/action-download-artifact action to v14 ([#4018](https://github.com/nf-core/tools/pull/4018))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to b99720f ([#4022](https://github.com/nf-core/tools/pull/4022))
 - Update apptainer setup action version ([#4036](https://github.com/nf-core/tools/pull/4036))
 - Update pre-commit hook astral-sh/uv-pre-commit to v0.10.2 ([#4037](https://github.com/nf-core/tools/pull/4037))
-- Update dependency prettier to v3.8.1 ([#4003](https://github.com/nf-core/tools/pull/4003))
-- Update pre-commit hook astral-sh/uv-pre-commit to v0.10.2 ([#4037](https://github.com/nf-core/tools/pull/4037))
 - Update python:3.14-slim Docker digest to 486b809 ([#4039](https://github.com/nf-core/tools/pull/4039))
+- Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
+- Lock file maintenance ([#4045](https://github.com/nf-core/tools/pull/4045))
+- Update actions/stale digest to b5d41d4 ([#4047](https://github.com/nf-core/tools/pull/4047))
+- Update dawidd6/action-download-artifact action to v15 ([#4053](https://github.com/nf-core/tools/pull/4053))
+- Lock file maintenance ([#4055](https://github.com/nf-core/tools/pull/4055))
+- Update dawidd6/action-download-artifact action to v16 ([#4059](https://github.com/nf-core/tools/pull/4059))
+- Update actions/upload-artifact action to v7 ([#4061](https://github.com/nf-core/tools/pull/4061))
+- Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.10.7 ([#4070](https://github.com/nf-core/tools/pull/4070))
+- Update python:3.14-slim Docker digest to 6a27522 ([#4072](https://github.com/nf-core/tools/pull/4072))
+- Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
+- bump nf-test to 0.9.4 ([#4079](https://github.com/nf-core/tools/pull/4079))
+- Update GitHub Actions to v4 (major) ([#4081](https://github.com/nf-core/tools/pull/4081))
+- Pin dependencies ([#4090](https://github.com/nf-core/tools/pull/4090))
+- Update GitHub Actions ([#4091](https://github.com/nf-core/tools/pull/4091))
+- Update GitHub Actions ([#4137](https://github.com/nf-core/tools/pull/4137))
+- Update codecov/codecov-action action to v6 ([#4138](https://github.com/nf-core/tools/pull/4138))
+- Update astral-sh/setup-uv action to v8 ([#4148](https://github.com/nf-core/tools/pull/4148))
+- Update GitHub Actions ([#4150](https://github.com/nf-core/tools/pull/4150))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.7 ([#4151](https://github.com/nf-core/tools/pull/4151))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.9 ([#4152](https://github.com/nf-core/tools/pull/4152))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.11.2 ([#4153](https://github.com/nf-core/tools/pull/4153))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 26b252e ([#4158](https://github.com/nf-core/tools/pull/4158))
+- chore(deps): update python:3.14-slim docker digest to 5e59aae ([#4159](https://github.com/nf-core/tools/pull/4159))
+- Update dependency textual to v8.2.1 ([#4161](https://github.com/nf-core/tools/pull/4161))
+- Update mshick/add-pr-comment digest to f102bb3 ([#4162](https://github.com/nf-core/tools/pull/4162))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.20.0 ([#4165](https://github.com/nf-core/tools/pull/4165))
+- Update nf-core/setup-nf-test action to v2 ([#4166](https://github.com/nf-core/tools/pull/4166))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.11.3 ([#4169](https://github.com/nf-core/tools/pull/4169))
+- Update GitHub Actions ([#4170](https://github.com/nf-core/tools/pull/4170))
+- Update dawidd6/action-download-artifact action to v20 ([#4171](https://github.com/nf-core/tools/pull/4171))
+- chore(deps): update pypa/gh-action-pypi-publish digest to cef2210 ([#4178](https://github.com/nf-core/tools/pull/4178))
+- Update pre-commit hook astral-sh/uv-pre-commit to v0.11.4 ([#4179](https://github.com/nf-core/tools/pull/4179))
+- Update actions/github-script action to v9 ([#4182](https://github.com/nf-core/tools/pull/4182))
+- Update actions/upload-artifact digest to 043fb46 ([#4184](https://github.com/nf-core/tools/pull/4184))
+- Update dependency prettier to v3.8.3 ([#4192](https://github.com/nf-core/tools/pull/4192))
+- Update dependency textual to v8.2.3 ([#4194](https://github.com/nf-core/tools/pull/4194))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.11 ([#4195](https://github.com/nf-core/tools/pull/4195))
+- Lock file maintenance ([#4198](https://github.com/nf-core/tools/pull/4198))
+- Update nf-core/setup-nextflow action to v3 ([#4199](https://github.com/nf-core/tools/pull/4199))
+- Update python:3.14-slim Docker digest to bc389f7 ([#4200](https://github.com/nf-core/tools/pull/4200))
+- Update astral-sh/setup-uv action to v8 ([#4207](https://github.com/nf-core/tools/pull/4207))
+- Update conda-incubator/setup-miniconda action to v4 ([#4215](https://github.com/nf-core/tools/pull/4215))
+- Update dependency textual to v8.2.4 ([#4217](https://github.com/nf-core/tools/pull/4217))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.8 ([#4218](https://github.com/nf-core/tools/pull/4218))
+- Update pre-commit hooks ([#4219](https://github.com/nf-core/tools/pull/4219))
+- Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 1a85cf3 ([#4220](https://github.com/nf-core/tools/pull/4220))
+- Update python:3.14-slim Docker digest to 5b3879b ([#4221](https://github.com/nf-core/tools/pull/4221))
+- Update GitHub Actions ([#4222](https://github.com/nf-core/tools/pull/4222))
 
 ## v3.5.2
 
