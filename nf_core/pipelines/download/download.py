@@ -107,7 +107,7 @@ class DownloadWorkflow:
         self.platform = platform
         self.fullname: str | None = None
         # downloading configs is not supported for Seqera Platform downloads.
-        self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
+        self.include_configs = bool(download_configuration == "yes" and not bool(platform))
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
@@ -258,7 +258,7 @@ class DownloadWorkflow:
 
         # Set an output filename now that we have the outdir
         if self.platform:
-            self.output_filename = self.outdir.parent / (self.outdir.name + ".git")
+            self.output_filename = self.outdir / f"{self.pipeline.split('/')[-1]}.git"
             summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
             self.output_filename = self.outdir.parent / (self.outdir.name + "." + self.compress_type)
@@ -317,7 +317,9 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        for revision, wf_sha, download_url in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
+        for revision, wf_sha, download_url in zip(
+            self.revision, self.wf_sha.values(), self.wf_download_url.values(), strict=False
+        ):
             revision_dirname = self.download_wf_files(revision=revision, wf_sha=wf_sha, download_url=download_url)
 
             if self.include_configs:
@@ -350,7 +352,7 @@ class DownloadWorkflow:
         self.workflow_repo = WorkflowRepo(
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
-            commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            revision_commits=self.wf_sha if bool(self.wf_sha) else None,
             additional_tags=self.additional_tags,
             location=location if location else None,  # manual location is required for the tests to work
             in_cache=False,
@@ -360,7 +362,7 @@ class DownloadWorkflow:
         self.workflow_repo.tidy_tags_and_branches()
 
         # create a bare clone of the modified repository needed for Seqera Platform
-        self.workflow_repo.bare_clone(self.outdir / self.output_filename)
+        self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
         if self.container_system in {"singularity", "docker"}:
@@ -428,7 +430,7 @@ class DownloadWorkflow:
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
-            if revision in self.wf_branches.keys():
+            if revision in self.wf_branches:
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
             else:
@@ -530,9 +532,11 @@ class DownloadWorkflow:
             else:
                 self.container_fetcher = None
         except OSError as e:
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
     def prompt_use_singularity(self, fail_message: str) -> None:
+        if not stderr.is_interactive:
+            raise DownloadError(fail_message)
         use_singularity = questionary.confirm(
             "Do you want to download singularity images?",
             style=nf_core.utils.nfcore_question_style,
@@ -544,6 +548,8 @@ class DownloadWorkflow:
 
     def prompt_compression_type(self) -> None:
         """Ask user if we should compress the downloaded files"""
+        if self.compress_type is None and not stderr.is_interactive:
+            return
         if self.compress_type is None:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
@@ -686,11 +692,11 @@ class DownloadWorkflow:
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error")
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
         except KeyError as e:
             log.error("Failed to parse output of 'nextflow inspect' to extract containers")
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
     def get_container_output_dir(self) -> Path:
         assert self.outdir is not None  # mypy

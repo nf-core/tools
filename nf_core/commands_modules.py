@@ -143,7 +143,7 @@ def modules_patch(ctx, tool, directory, remove):
         sys.exit(1)
 
 
-def modules_remove(ctx, directory, tool):
+def modules_remove(ctx, directory, tool, force):
     """
     Remove a module from a pipeline.
     """
@@ -156,25 +156,14 @@ def modules_remove(ctx, directory, tool):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        module_remove.remove(tool)
+        module_remove.remove(tool, force=force)
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
 
 def modules_create(
-    ctx,
-    tool,
-    directory,
-    author,
-    label,
-    meta,
-    no_meta,
-    force,
-    conda_name,
-    conda_package_version,
-    empty_template,
-    migrate_pytest,
+    ctx, tool, directory, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -208,7 +197,6 @@ def modules_create(
             conda_name,
             conda_package_version,
             empty_template,
-            migrate_pytest,
         )
         module_create.create()
     except UserWarning as e:
@@ -219,7 +207,7 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
+def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a module.
 
@@ -227,21 +215,6 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
     """
     from nf_core.components.components_test import ComponentsTest
 
-    if migrate_pytest:
-        modules_create(
-            ctx,
-            tool,
-            directory,
-            author="",
-            label="",
-            meta=True,
-            no_meta=False,
-            force=False,
-            conda_name=None,
-            conda_package_version=None,
-            empty_template=False,
-            migrate_pytest=migrate_pytest,
-        )
     try:
         module_tester = ComponentsTest(
             component_type="modules",
@@ -262,7 +235,7 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
 
 
 def modules_lint(
-    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
+    ctx, tool, directory, registry, key, all_modules, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
 ):
     """
     Lint one or more modules in a directory.
@@ -291,7 +264,7 @@ def modules_lint(
             module=tool,
             registry=registry,
             key=key,
-            all_modules=all,
+            all_modules=all_modules,
             print_results=True,
             local=local,
             show_passed=passed,
@@ -337,7 +310,7 @@ def modules_info(ctx, tool, directory):
         sys.exit(1)
 
 
-def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
+def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
@@ -352,7 +325,7 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        version_bumper.bump_versions(module=tool, all_modules=all, show_up_to_date=show_all, dry_run=dry_run)
+        version_bumper.bump_versions(module=tool, all_modules=all_modules, show_up_to_date=show_all, dry_run=dry_run)
     except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)

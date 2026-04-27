@@ -40,7 +40,7 @@ dependencies = [
     "markdown>=3.3",
     "packaging",
     "pillow",
-    "pre-commit",
+    "prek",
     "prompt_toolkit<=3.0.52",
     "pydantic>=2.2.1",
     "pyyaml",
@@ -54,7 +54,7 @@ dependencies = [
     "repo2rocrate",
     "setuptools<81",
     "tabulate",
-    "textual==8.2.1",
+    "textual==8.2.3",
     "trogon",
     "pdiff",
     "ruamel.yaml",
@@ -67,7 +67,6 @@ dev = [
     "pytest-cov",
     "pytest-datafiles",
     "responses",
-    "prek",
     "ruff",
     "Sphinx",
     "sphinx-rtd-theme",
@@ -121,7 +120,23 @@ target-version = "py310"
 cache-dir = "~/.cache/ruff"
 
 [tool.ruff.lint]
-select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
+select = [
+    "I",                     # isort
+    "E1", "E4", "E7", "E9","E902",  # pycodestyle errors (partial)
+    "F",                     # pyflakes
+    "UP",                    # pyupgrade
+    "N",                     # pep8-naming
+    "B",                     # flake8-bugbear - catches common bugs and design problems
+    "RSE",                   # flake8-raise - unnecessary parentheses on raised exceptions
+    "PTH",                   # flake8-use-pathlib - prefer pathlib over os.path
+    "SIM",                   # flake8-simplify - simplifies code patterns
+    "C4",                    # flake8-comprehensions - better list/dict/set comprehensions
+    "BLE",                   # flake8-blind-except - catches blind except clauses
+    "W",                     # pycodestyle warnings
+    "A",                     # flake8-builtins - catches shadowing of Python builtins
+    "PIE",                   # flake8-pie - misc lints for common issues
+]
+ignore = ["PTH123", "PIE790"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["nf_core"]

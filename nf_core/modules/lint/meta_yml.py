@@ -358,7 +358,7 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
     if old_structure:
         outputs = {k: v for d in outputs for k, v in d.items()}
     assert isinstance(outputs, dict)  # mypy
-    for channel_name in outputs.keys():
+    for channel_name in outputs:
         output_channel = outputs[channel_name]
         channel_elements: list = []
         for element in output_channel:
@@ -389,7 +389,7 @@ def obtain_topics(_, topics: dict) -> dict:
         formatted_topics (dict): A dictionary containing the topics and their elements obtained from main.nf or meta.yml files.
     """
     formatted_topics: dict = {}
-    for name in topics.keys():
+    for name in topics:
         content = topics[name]
         t_elements: list = []
         for element in content:

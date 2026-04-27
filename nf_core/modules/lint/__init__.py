@@ -375,7 +375,7 @@ class ModuleLint(ComponentLint):
                 schema = self.load_meta_schema()
                 schema_keys = list(schema["properties"].keys())
             except (LintExceptionError, KeyError) as e:
-                raise UserWarning("Failed to load meta schema", e)
+                raise UserWarning("Failed to load meta schema", e) from e
 
             result: dict = {}
 
@@ -385,7 +385,7 @@ class ModuleLint(ComponentLint):
                     result[key] = meta_yml[key]
 
             # Then add any keys that aren't in the schema (to preserve custom keys)
-            for key in meta_yml.keys():
+            for key in meta_yml:
                 if key not in result:
                     result[key] = meta_yml[key]
 
@@ -394,13 +394,10 @@ class ModuleLint(ComponentLint):
         # Obtain inputs, outputs and topics from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
         # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
-        if "input" in meta_yml:
-            correct_inputs = self.obtain_inputs(mod.inputs)
-            meta_inputs = self.obtain_inputs(meta_yml["input"])
-        if "output" in meta_yml:
-            correct_outputs = self.obtain_outputs(mod.outputs)
-            meta_outputs = self.obtain_outputs(meta_yml["output"])
-
+        correct_inputs = self.obtain_inputs(mod.inputs)
+        meta_inputs = self.obtain_inputs(meta_yml.get("input", []))
+        correct_outputs = self.obtain_outputs(mod.outputs)
+        meta_outputs = self.obtain_outputs(meta_yml.get("output", {}))
         correct_topics = self.obtain_topics(mod.topics)
         meta_topics = self.obtain_topics(meta_yml.get("topics", {}))
 
@@ -413,7 +410,7 @@ class ModuleLint(ComponentLint):
                 versions_entry = template_meta.get("topics", {}).get("versions", [[]])[0]
                 if len(versions_entry) == 3:
                     topic_metadata = [next(iter(item.values())) for item in versions_entry]
-        except Exception as e:
+        except (OSError, ruamel.yaml.YAMLError, IndexError, StopIteration) as e:
             log.debug(f"Could not load topic template metadata: {e}")
 
         def _populate_channel_elements(io_type, correct_value, meta_value, mod_io_data, meta_yml_io, check_exists=True):
@@ -488,7 +485,7 @@ class ModuleLint(ComponentLint):
                 # Only update structure when it differs from main.nf
                 corrected_data = meta_yml_io.copy() if meta_yml_io else mod_io_data.copy()
 
-                for ch_name in mod_io_data.keys():
+                for ch_name in mod_io_data:
                     # Ensure channel exists in corrected_data
                     if ch_name not in corrected_data:
                         corrected_data[ch_name] = []
@@ -603,7 +600,7 @@ class ModuleLint(ComponentLint):
                         if extension in edam_formats:
                             expected_ontologies.append((edam_formats[extension][0], extension))
                 # remove duplicated entries
-                expected_ontologies = list({k: v for k, v in expected_ontologies}.items())
+                expected_ontologies = list(dict(expected_ontologies).items())
             if "ontologies" in section:
                 for ontology in section["ontologies"]:
                     try:
@@ -639,7 +636,7 @@ class ModuleLint(ComponentLint):
                     )
 
         if "output" in meta_yml:
-            for ch_name in corrected_meta_yml["output"].keys():
+            for ch_name in corrected_meta_yml["output"]:
                 ch_content = corrected_meta_yml["output"][ch_name][0]
                 if isinstance(ch_content, list):
                     for i, element in enumerate(ch_content):
@@ -667,7 +664,7 @@ class ModuleLint(ComponentLint):
         # Create YAML anchors for versions_* keys in output that match "versions" in topics
         # Since we now populate metadata for both output and topics, set up anchors to reference output from topics
         if "output" in corrected_meta_yml and "topics" in corrected_meta_yml:
-            versions_keys = [key for key in corrected_meta_yml["output"].keys() if key.startswith("versions_")]
+            versions_keys = [key for key in corrected_meta_yml["output"] if key.startswith("versions_")]
 
             if versions_keys and "versions" in corrected_meta_yml["topics"]:
                 # Set topics["versions"] to reference output versions (now with populated metadata)

@@ -106,12 +106,12 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     if valid_meta_yml:
         if "input" in meta_yaml:
             meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
-            for input in subworkflow.inputs:
-                if input in meta_input:
-                    subworkflow.passed.append(("meta_yml", "meta_input", f"`{input}` specified", subworkflow.meta_yml))
+            for inp in subworkflow.inputs:
+                if inp in meta_input:
+                    subworkflow.passed.append(("meta_yml", "meta_input", f"`{inp}` specified", subworkflow.meta_yml))
                 else:
                     subworkflow.failed.append(
-                        ("meta_yml", "meta_input", f"`{input}` missing in `meta.yml`", subworkflow.meta_yml)
+                        ("meta_yml", "meta_input", f"`{inp}` missing in `meta.yml`", subworkflow.meta_yml)
                     )
         else:
             log.debug(f"No inputs specified in subworkflow `main.nf`: {subworkflow.component_name}")

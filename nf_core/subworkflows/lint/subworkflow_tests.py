@@ -162,7 +162,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                     with open(snap_file) as snap_fh:
                         try:
                             snap_content = json.load(snap_fh)
-                            for test_name in snap_content.keys():
+                            for test_name in snap_content:
                                 if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
                                     if "stub" not in test_name:
                                         subworkflow.failed.append(
@@ -219,24 +219,6 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                             snap_file,
                                         )
                                     )
-                            if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
-                                subworkflow.passed.append(
-                                    (
-                                        "subworkflow_tests",
-                                        "test_snap_versions",
-                                        "versions found in snapshot file",
-                                        snap_file,
-                                    )
-                                )
-                            else:
-                                subworkflow.warned.append(
-                                    (
-                                        "subworkflow_tests",
-                                        "test_snap_versions",
-                                        "versions not found in snapshot file. Can be ignored if the subworkflow is using topic channels",
-                                        snap_file,
-                                    )
-                                )
                         except json.decoder.JSONDecodeError as e:
                             subworkflow.failed.append(
                                 (

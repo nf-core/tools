@@ -3,6 +3,7 @@ Bump versions for all modules on nf-core/modules
 or for a single module
 """
 
+import contextlib
 import logging
 import os
 import re
@@ -93,6 +94,9 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Prompt for module or all
         if module is None and not all_modules:
+            self.require_prompts(
+                "No module name provided.\nPlease provide the module name as a command-line argument or use '--all'"
+            )
             question = {
                 "type": "list",
                 "name": "all_modules",
@@ -313,10 +317,8 @@ class ModuleVersionBumper(ComponentCommand):
         # Find maximum module name length
         max_mod_name_len = 40
         for m in [self.up_to_date, self.updated, self.failed]:
-            try:
+            with contextlib.suppress(Exception):
                 max_mod_name_len = max(len(m[2]), max_mod_name_len)
-            except Exception:
-                pass
 
         def format_result(module_updates: list[tuple[str, str]], table: Table) -> Table:
             """
@@ -328,10 +330,7 @@ class ModuleVersionBumper(ComponentCommand):
             row_style = None
             for module_update in module_updates:
                 if last_modname and module_update[1] != last_modname:
-                    if row_style:
-                        row_style = None
-                    else:
-                        row_style = "magenta"
+                    row_style = None if row_style else "magenta"
                 last_modname = module_update[1]
                 table.add_row(
                     Markdown(f"{module_update[1]}"),

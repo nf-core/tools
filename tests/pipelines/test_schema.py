@@ -27,7 +27,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_draft = "https://json-schema.org/draft/2020-12/schema"
         self.schema_obj.defs_notation = "$defs"
         self.schema_obj.validation_plugin = "nf-schema"
-        self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        self.root_repo_dir = Path(__file__).resolve().parent.parent
 
         # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
@@ -39,13 +39,13 @@ class TestSchema(unittest.TestCase):
         self.nxf_assets.mkdir(exist_ok=True)
         os.environ["NXF_HOME"] = str(self.nxf_home)
         os.environ["NXF_ASSETS"] = str(self.nxf_assets)
-        self.template_dir = os.path.join(self.tmp_dir, "wf")
+        self.template_dir = Path(self.tmp_dir, "wf")
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "a description", "Me", outdir=self.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 
-        self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
+        self.template_schema = self.template_dir / "nextflow_schema.json"
 
     def tearDown(self):
         if self.original_nxf_home is None:
@@ -58,7 +58,7 @@ class TestSchema(unittest.TestCase):
         else:
             os.environ["NXF_ASSETS"] = self.original_nxf_assets
 
-        if os.path.exists(self.tmp_dir):
+        if Path(self.tmp_dir).exists():
             shutil.rmtree(self.tmp_dir)
 
     def test_load_lint_schema(self):
@@ -73,7 +73,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_notjson(self):
         """Check that linting raises properly if a non-JSON file is given"""
-        self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
+        self.schema_obj.get_schema_path(self.template_dir / "nextflow.config")
         with pytest.raises(AssertionError):
             self.schema_obj.load_lint_schema()
 

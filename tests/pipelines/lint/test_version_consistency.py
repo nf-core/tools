@@ -3,7 +3,6 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
 from nf_core.utils import NFCoreYamlConfig
 

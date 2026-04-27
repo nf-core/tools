@@ -5,10 +5,8 @@ Verify that a module has a correct entry in the modules.json file
 import logging
 from pathlib import Path
 
-import nf_core
 import nf_core.modules.lint
 import nf_core.modules.modules_repo
-import nf_core.modules.modules_utils
 from nf_core.modules.modules_utils import NFCoreComponent
 
 log = logging.getLogger(__name__)

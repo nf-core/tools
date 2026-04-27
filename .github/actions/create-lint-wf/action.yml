@@ -16,7 +16,7 @@ runs:
         export NXF_WORK=$(pwd)
 
     - name: Install Nextflow
-      uses: nf-core/setup-nextflow@v2
+      uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
       with:
         version: ${{ matrix.NXF_VER }}
 
@@ -40,11 +40,12 @@ runs:
         pwd
         ls -l
       working-directory: create-lint-wf/nf-core-testpipeline
+
     # Run code style linting
-    - name: run pre-commit
+    - name: run prek
       shell: bash
-      run: uv run pre-commit run --all-files
-      working-directory: create-lint-wf
+      run: uv run prek run --config .pre-commit-config.yaml --all-files
+      working-directory: create-lint-wf/nf-core-testpipeline
 
     # Update modules to the latest version
     - name: nf-core modules update

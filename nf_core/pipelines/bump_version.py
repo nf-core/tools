@@ -336,7 +336,7 @@ def log_change(old_content: str, new_content: str):
     old_lines = old_content.splitlines()
     new_lines = new_content.splitlines()
 
-    for old_line, new_line in zip(old_lines, new_lines):
+    for old_line, new_line in zip(old_lines, new_lines, strict=False):
         if old_line != new_line:
             stderr.print(f"          [red] - {old_line.strip()}", highlight=False)
             stderr.print(f"          [green] + {new_line.strip()}", highlight=False)

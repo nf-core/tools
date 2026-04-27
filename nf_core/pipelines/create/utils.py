@@ -19,7 +19,7 @@ import nf_core
 from nf_core.utils import NFCoreTemplateConfig
 
 # Use ContextVar to define a context on the model initialization
-_init_context_var: ContextVar = ContextVar("_init_context_var", default={})
+_init_context_var: ContextVar = ContextVar("_init_context_var", default=None)
 
 
 @contextmanager
@@ -45,10 +45,11 @@ class CreateConfig(NFCoreTemplateConfig):
 
     def __init__(self, /, **data: Any) -> None:
         """Custom init method to allow using a context on the model initialization."""
+        context = _init_context_var.get()
         self.__pydantic_validator__.validate_python(
             data,
             self_instance=self,
-            context=_init_context_var.get(),
+            context=context if context is not None else {},
         )
 
     @field_validator("name")

@@ -62,8 +62,8 @@ class TestTestComponentsUtils(TestComponents):
         with responses.RequestsMock() as rsps:
             mock_biotools_api_calls(rsps, "bpipe")
             response = nf_core.components.components_utils.get_biotools_response("bpipe")
-            id = nf_core.components.components_utils.get_biotools_id(response, "bpipe")
-            assert id == "biotools:bpipe"
+            biotools_id = nf_core.components.components_utils.get_biotools_id(response, "bpipe")
+            assert biotools_id == "biotools:bpipe"
 
     def test_get_biotools_id_warn(self):
         """Test getting the bio.tools ID for a tool and failing"""
@@ -117,11 +117,11 @@ class TestTestComponentsUtils(TestComponents):
         try:
             with mock.patch.dict(os.environ, mock_env):
                 importlib.reload(nf_core.components.constants)
-                assert nf_core.components.constants.NF_CORE_MODULES_NAME == mock_env["NF_CORE_MODULES_NAME"]
-                assert nf_core.components.constants.NF_CORE_MODULES_REMOTE == mock_env["NF_CORE_MODULES_REMOTE"]
+                assert mock_env["NF_CORE_MODULES_NAME"] == nf_core.components.constants.NF_CORE_MODULES_NAME
+                assert mock_env["NF_CORE_MODULES_REMOTE"] == nf_core.components.constants.NF_CORE_MODULES_REMOTE
                 assert (
-                    nf_core.components.constants.NF_CORE_MODULES_DEFAULT_BRANCH
-                    == mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
+                    mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
+                    == nf_core.components.constants.NF_CORE_MODULES_DEFAULT_BRANCH
                 )
         finally:
             importlib.reload(nf_core.components.constants)

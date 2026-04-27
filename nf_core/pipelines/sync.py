@@ -9,7 +9,6 @@ from typing import Any
 
 import git
 import questionary
-import requests
 import requests.auth
 import requests_cache
 import rich
@@ -18,7 +17,6 @@ from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
 import nf_core.pipelines.create.create
-import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
 
@@ -70,6 +68,7 @@ class PipelineSync:
         template_yaml_path: str | None = None,
         force_pr: bool = False,
         blog_post: str = "",
+        no_prompts: bool = False,
     ):
         """Initialise syncing object"""
 
@@ -93,6 +92,7 @@ class PipelineSync:
         self.gh_repo = gh_repo
         self.pr_url = ""
         self.blog_post = blog_post
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
         assert self.config_yml_path is not None and self.config_yml is not None  # mypy
@@ -102,6 +102,11 @@ class PipelineSync:
                 f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
             )
             if getattr(self.config_yml, "template", None) is not None:
+                if self.no_prompts:
+                    raise UserWarning(
+                        f"A template section already exists in '{self.config_yml_path}' and session is not interactive.\n"
+                        "Please resolve the template_yaml_path conflict manually."
+                    )
                 overwrite_template = questionary.confirm(
                     f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
                     style=nf_core.utils.nfcore_question_style,
@@ -166,7 +171,7 @@ class PipelineSync:
                 self.make_pull_request()
             except PullRequestExceptionError as e:
                 self.reset_target_dir()
-                raise PullRequestExceptionError(e)
+                raise PullRequestExceptionError(e) from e
 
         self.reset_target_dir()
 
@@ -184,8 +189,8 @@ class PipelineSync:
         # Check that the pipeline_dir is a git repo
         try:
             self.repo = git.Repo(self.pipeline_dir)
-        except InvalidGitRepositoryError:
-            raise SyncExceptionError(f"'{self.pipeline_dir}' does not appear to be a git repository")
+        except InvalidGitRepositoryError as e:
+            raise SyncExceptionError(f"'{self.pipeline_dir}' does not appear to be a git repository") from e
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
@@ -211,8 +216,8 @@ class PipelineSync:
             if self.from_branch and self.repo.active_branch.name != self.from_branch:
                 log.info(f"Checking out workflow branch '{self.from_branch}'")
                 self.repo.git.checkout(self.from_branch)
-        except GitCommandError:
-            raise SyncExceptionError(f"Branch `{self.from_branch}` not found!")
+        except GitCommandError as e:
+            raise SyncExceptionError(f"Branch `{self.from_branch}` not found!") from e
 
         # If not specified, get the name of the active branch
         if not self.from_branch:
@@ -242,8 +247,8 @@ class PipelineSync:
             # Try to check out an existing local branch called TEMPLATE
             try:
                 self.repo.git.checkout("TEMPLATE")
-            except GitCommandError:
-                raise SyncExceptionError("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
+            except GitCommandError as e:
+                raise SyncExceptionError("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'") from e
 
     def delete_tracked_template_branch_files(self):
         """
@@ -264,7 +269,7 @@ class PipelineSync:
             try:
                 file_path.unlink()
             except Exception as e:
-                raise SyncExceptionError(e)
+                raise SyncExceptionError(e) from e
 
     def _clean_up_empty_dirs(self):
         """
@@ -280,14 +285,14 @@ class PipelineSync:
             if curr_dir == str(self.pipeline_dir):
                 continue
 
-            subdir_set = set(Path(curr_dir) / d for d in sub_dirs)
+            subdir_set = {Path(curr_dir) / d for d in sub_dirs}
             currdir_is_empty = (len(subdir_set - deleted) == 0) and (len(files) == 0)
             if currdir_is_empty:
                 log.debug(f"Deleting empty directory {curr_dir}")
                 try:
                     Path(curr_dir).rmdir()
                 except Exception as e:
-                    raise SyncExceptionError(e)
+                    raise SyncExceptionError(e) from e
                 deleted.add(Path(curr_dir))
 
     def make_template_pipeline(self) -> None:
@@ -333,7 +338,7 @@ class PipelineSync:
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
-            raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}")
+            raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}") from err
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
@@ -351,7 +356,7 @@ class PipelineSync:
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
         except Exception as e:
-            raise SyncExceptionError(f"Could not commit changes to TEMPLATE:\n{e}")
+            raise SyncExceptionError(f"Could not commit changes to TEMPLATE:\n{e}") from e
         return True
 
     def push_template_branch(self):
@@ -359,11 +364,11 @@ class PipelineSync:
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.info(f"Pushing TEMPLATE branch to remote: '{os.path.basename(self.pipeline_dir)}'")
+        log.info(f"Pushing TEMPLATE branch to remote: '{self.pipeline_dir.name}'")
         try:
             self.repo.git.push()
         except GitCommandError as e:
-            raise PullRequestExceptionError(f"Could not push TEMPLATE branch:\n  {e}")
+            raise PullRequestExceptionError(f"Could not push TEMPLATE branch:\n  {e}") from e
 
     def create_merge_base_branch(self):
         """Create a new branch from the updated TEMPLATE branch
@@ -390,7 +395,7 @@ class PipelineSync:
         try:
             self.repo.create_head(self.merge_branch)
         except GitCommandError as e:
-            raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}")
+            raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}") from e
 
     def push_merge_branch(self):
         """Push the newly created merge branch to the remote repository"""
@@ -399,7 +404,7 @@ class PipelineSync:
             origin = self.repo.remote()
             origin.push(self.merge_branch)
         except GitCommandError as e:
-            raise PullRequestExceptionError(f"Could not push branch '{self.merge_branch}':\n  {e}")
+            raise PullRequestExceptionError(f"Could not push branch '{self.merge_branch}':\n  {e}") from e
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
@@ -420,7 +425,7 @@ class PipelineSync:
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
             "For instructions on how to merge this PR, please see "
-            "[https://nf-co.re/docs/contributing/sync/](https://nf-co.re/docs/contributing/sync/#merging-automated-prs).\n\n"
+            "[the template sync documentation](https://nf-co.re/docs/developing/template-syncs/merge-automated-pull-requests).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
             "\n\n> [!NOTE]\n"
@@ -444,7 +449,7 @@ class PipelineSync:
                 )
             except Exception as e:
                 stderr.print_exception()
-                raise PullRequestExceptionError(f"Something went badly wrong - {e}")
+                raise PullRequestExceptionError(f"Something went badly wrong - {e}") from e
             else:
                 self.gh_pr_returned_data = r.json()
                 self.pr_url = self.gh_pr_returned_data["html_url"]
@@ -464,7 +469,8 @@ class PipelineSync:
         try:
             json_data = json.loads(response.content)
             return json_data, json.dumps(json_data, indent=4)
-        except Exception:
+        except json.JSONDecodeError:
+            # Response content is not valid JSON
             return response.content, str(response.content)
 
     def reset_target_dir(self):
@@ -475,7 +481,7 @@ class PipelineSync:
         try:
             self.repo.git.checkout(self.original_branch)
         except GitCommandError as e:
-            raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}")
+            raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}") from e
 
     def _get_ignored_files(self) -> list[str]:
         """

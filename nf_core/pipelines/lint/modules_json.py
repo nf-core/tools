@@ -24,7 +24,7 @@ def modules_json(self) -> dict[str, list[str]]:
     if _modules_json and modules_json_dict is not None:
         all_modules_passed = True
 
-        for repo in modules_json_dict["repos"].keys():
+        for repo in modules_json_dict["repos"]:
             # Check if the modules.json has been updated to keep the
             if "modules" not in modules_json_dict["repos"][repo] or not repo.startswith("http"):
                 failed.append(
@@ -33,18 +33,22 @@ def modules_json(self) -> dict[str, list[str]]:
                 )
                 continue
 
-            for dir in modules_json_dict["repos"][repo]["modules"].keys():
-                for module, module_entry in modules_json_dict["repos"][repo]["modules"][dir].items():
-                    if not Path(modules_dir, dir, module).exists():
+            for install_dir in modules_json_dict["repos"][repo]["modules"]:
+                for module, module_entry in modules_json_dict["repos"][repo]["modules"][install_dir].items():
+                    if not Path(modules_dir, install_dir, module).exists():
                         failed.append(
-                            f"Entry for `{Path(modules_dir, dir, module)}` found in `modules.json` but module is not installed in "
+                            f"Entry for `{Path(modules_dir, install_dir, module)}` found in `modules.json` but module is not installed in "
                             "pipeline."
                         )
                         all_modules_passed = False
                     if module_entry.get("branch") is None:
-                        failed.append(f"Entry for `{Path(modules_dir, dir, module)}` is missing branch information.")
+                        failed.append(
+                            f"Entry for `{Path(modules_dir, install_dir, module)}` is missing branch information."
+                        )
                     if module_entry.get("git_sha") is None:
-                        failed.append(f"Entry for `{Path(modules_dir, dir, module)}` is missing version information.")
+                        failed.append(
+                            f"Entry for `{Path(modules_dir, install_dir, module)}` is missing version information."
+                        )
         if all_modules_passed:
             passed.append("Only installed modules found in `modules.json`")
     else:

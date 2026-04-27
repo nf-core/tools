@@ -1,12 +1,10 @@
 import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
 
 import questionary
 
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_differ import ComponentsDiffer
@@ -18,6 +16,7 @@ from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 from nf_core.utils import plural_es, plural_s, plural_y
 
 log = logging.getLogger(__name__)
@@ -117,6 +116,10 @@ class ComponentUpdate(ComponentCommand):
             self.modules_json.check_up_to_date()
 
         if not self.update_all and component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument or use '--all'"
+            )
             choices = [f"All {self.component_type}", f"Named {self.component_type[:-1]}"]
             self.update_all = (
                 questionary.select(
@@ -141,6 +144,10 @@ class ComponentUpdate(ComponentCommand):
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
         if not self.save_diff_fn and self.show_diff is None:
+            self.require_prompts(
+                "Diff display preference not specified.\n"
+                "Please use '--preview', '--save-diff', or neither to skip diff viewing"
+            )
             diff_type = questionary.select(
                 "Do you want to view diffs of the proposed changes?",
                 choices=[
@@ -190,13 +197,12 @@ class ComponentUpdate(ComponentCommand):
             else:
                 version = modules_repo.get_latest_component_version(component, self.component_type)
 
-            if current_version is not None and not self.force:
-                if current_version == version:
-                    if self.sha or self.prompt:
-                        log.info(f"'{component_fullname}' is already installed at {version}")
-                    else:
-                        log.info(f"'{component_fullname}' is already up to date")
-                    continue
+            if current_version is not None and not self.force and current_version == version:
+                if self.sha or self.prompt:
+                    log.info(f"'{component_fullname}' is already installed at {version}")
+                else:
+                    log.info(f"'{component_fullname}' is already up to date")
+                continue
 
             # Download component files
             if not self.install_component_files(component, version, modules_repo, str(install_tmp_dir)):
@@ -258,7 +264,7 @@ class ComponentUpdate(ComponentCommand):
                             "It is advised to keep all your modules and subworkflows up to date.\n"
                             "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                         )
-                        if self.update_deps:
+                        if self.update_deps or self.no_prompts:
                             recursive_update = True
                         else:
                             recursive_update = questionary.confirm(
@@ -286,6 +292,10 @@ class ComponentUpdate(ComponentCommand):
                         limit_output=self.limit_output,
                     )
                     # Ask the user if they want to install the component
+                    self.require_prompts(
+                        "Cannot interactively confirm updates.\n"
+                        "Please run without '--preview' or use '--save-diff' instead"
+                    )
                     dry_run = not questionary.confirm(
                         f"Update {self.component_type[:-1]} '{component}'?",
                         default=False,
@@ -298,23 +308,26 @@ class ComponentUpdate(ComponentCommand):
                 # Update modules.json with newly installed component
                 self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
+
+                # Regenerate container configuration files for the pipeline when modules are updated
+                if self.component_type == "modules":
+                    try_generate_container_configs(self.directory)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
-                if not silent and len(modules_to_update + subworkflows_to_update) > 0:
-                    if not self.update_all:
-                        log.warning(
-                            f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
-                            "It is advised to keep all your modules and subworkflows up to date.\n"
-                            "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
-                        )
-                        if self.update_deps:
-                            recursive_update = True
-                        else:
-                            recursive_update = questionary.confirm(
-                                "Would you like to continue updating all modules and subworkflows?",
-                                default=True,
-                                style=nf_core.utils.nfcore_question_style,
-                            ).unsafe_ask()
+                if not silent and len(modules_to_update + subworkflows_to_update) > 0 and not self.update_all:
+                    log.warning(
+                        f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
+                        "It is advised to keep all your modules and subworkflows up to date.\n"
+                        "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
+                    )
+                    if self.update_deps or self.no_prompts:
+                        recursive_update = True
+                    else:
+                        recursive_update = questionary.confirm(
+                            "Would you like to continue updating all modules and subworkflows?",
+                            default=True,
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask()
                 if recursive_update and len(modules_to_update + subworkflows_to_update) > 0:
                     # Update linked components
                     self.update_linked_components(modules_to_update, subworkflows_to_update, updated)
@@ -374,6 +387,10 @@ class ComponentUpdate(ComponentCommand):
         ]
 
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1].title()} name:",
                 choices=sorted(choices),
@@ -382,9 +399,9 @@ class ComponentUpdate(ComponentCommand):
 
         # Get component installation directory
         try:
-            install_dir = [dir for dir, m in components if component == m][0]
-        except IndexError:
-            raise UserWarning(f"{self.component_type[:-1].title()} '{component}' not found in 'modules.json'.")
+            install_dir = [comp_dir for comp_dir, m in components if component == m][0]
+        except IndexError as e:
+            raise UserWarning(f"{self.component_type[:-1].title()} '{component}' not found in 'modules.json'.") from e
 
         # Check if component is installed before trying to update
         if component not in choices:
@@ -403,12 +420,10 @@ class ComponentUpdate(ComponentCommand):
         config_entry = None
         if self.update_config is not None:
             if any(
-                [
-                    entry.count("/") == 1
-                    and (entry.endswith("modules") or entry.endswith("subworkflows"))
-                    and not (entry.endswith(".git") or entry.endswith(".git/"))
-                    for entry in self.update_config.keys()
-                ]
+                entry.count("/") == 1
+                and entry.endswith(("modules", "subworkflows"))
+                and not entry.endswith((".git", ".git/"))
+                for entry in self.update_config
             ):
                 raise UserWarning(
                     "Your '.nf-core.yml' file format is outdated. "
@@ -423,7 +438,7 @@ class ComponentUpdate(ComponentCommand):
                 config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
         if config_entry is not None and config_entry is not True:
             if config_entry is False:
-                log.warn(
+                log.warning(
                     f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' for '{component}' is set to False"
                 )
                 return (self.modules_repo, None, None, None)
@@ -451,6 +466,11 @@ class ComponentUpdate(ComponentCommand):
             log.warning(
                 f"You are trying to update the '{Path(install_dir, component)}' {self.component_type[:-1]} from "
                 f"the '{new_branch}' branch. This {self.component_type[:-1]} was installed from the '{current_branch}'"
+            )
+            self.require_prompts(
+                f"Branch mismatch for '{component}'.\n"
+                f"The {self.component_type[:-1]} was installed from '{current_branch}' but you are updating from '{new_branch}'.\n"
+                f"Please use '-b {current_branch}' to update from the original branch"
             )
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
             if switch:
@@ -517,13 +537,13 @@ class ComponentUpdate(ComponentCommand):
                         ]
             elif isinstance(self.update_config, dict) and isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual components or component directories
-                for component_dir in set([dir for dir, _ in components]):
+                for component_dir in {comp_dir for comp_dir, _ in components}:
                     if isinstance(self.update_config[repo_name][component_dir], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = self.update_config[repo_name][component_dir]
                         components_info[repo_name] = {}
-                        for dir, component in components:
-                            if component_dir == dir:
+                        for comp_dir, component in components:
+                            if component_dir == comp_dir:
                                 try:
                                     components_info[repo_name][component_dir].append(
                                         (
@@ -547,7 +567,7 @@ class ComponentUpdate(ComponentCommand):
                         if self.sha is not None:
                             overridden_repos.append(repo_name)
                     elif self.update_config[repo_name][component_dir] is False:
-                        for directory, component in components:
+                        for directory, _component in components:
                             if directory == component_dir:
                                 skipped_components.append(f"{component_dir}/{components}")
                     elif isinstance(self.update_config[repo_name][component_dir], dict):
@@ -664,7 +684,7 @@ class ComponentUpdate(ComponentCommand):
         # Loop through components_info and create on ModulesRepo object per remote and branch
         repos_and_branches = {}
         for repo_name, repo_content in components_info.items():
-            for component_dir, comps in repo_content.items():
+            for _component_dir, comps in repo_content.items():
                 for comp, sha, comp_branch in comps:
                     if branch is not None:
                         comp_branch = branch
@@ -725,6 +745,7 @@ class ComponentUpdate(ComponentCommand):
         Then creates the file for saving the diff.
         """
         if self.save_diff_fn is True:
+            self.require_prompts("No diff filename provided.\nPlease provide a filename with '--save-diff <filename>'")
             # From questionary - no filename yet
             self.save_diff_fn = questionary.path(
                 "Enter the filename: ", style=nf_core.utils.nfcore_question_style
@@ -740,8 +761,12 @@ class ComponentUpdate(ComponentCommand):
             return
         # Check if filename already exists (questionary or cli)
         while self.save_diff_fn.exists():
+            self.require_prompts(
+                f"Diff file '{self.save_diff_fn}' already exists.\n"
+                "Please remove the file or provide a different filename"
+            )
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
-                os.remove(self.save_diff_fn)
+                self.save_diff_fn.unlink()
                 break
             self.save_diff_fn = questionary.path(
                 "Enter a new filename: ",
@@ -768,6 +793,7 @@ class ComponentUpdate(ComponentCommand):
         if pipeline_path.exists():
             pipeline_files = [f.name for f in pipeline_path.iterdir() if f.is_file()]
             # check if any *.config file exists in the pipeline
+            # TODO: Use f.suffix == ".config" instead of str(f).endswith(".config")
             config_files = [f for f in pipeline_files if str(f).endswith(".config")]
             for config_file in config_files:
                 log.debug(f"Moving '{component}/{config_file}' to updated component")
@@ -905,16 +931,20 @@ class ComponentUpdate(ComponentCommand):
         elif self.component_type == "subworkflows":
             for repo, repo_content in mods_json["repos"].items():
                 for component_type, dir_content in repo_content.items():
-                    for dir, components in dir_content.items():
+                    for install_dir, components in dir_content.items():
                         for comp, comp_content in components.items():
                             # If the updated subworkflow name appears in the installed_by section of the checked component
                             # The checked component is used by the updated subworkflow
                             # We need to update it too
                             if component in comp_content["installed_by"]:
                                 if component_type == "modules":
-                                    modules_to_update.append({"name": comp, "git_remote": repo, "org_path": dir})
+                                    modules_to_update.append(
+                                        {"name": comp, "git_remote": repo, "org_path": install_dir}
+                                    )
                                 elif component_type == "subworkflows":
-                                    subworkflows_to_update.append({"name": comp, "git_remote": repo, "org_path": dir})
+                                    subworkflows_to_update.append(
+                                        {"name": comp, "git_remote": repo, "org_path": install_dir}
+                                    )
 
         return modules_to_update, subworkflows_to_update
 

@@ -10,7 +10,6 @@ from pathlib import Path
 
 import git
 import requests
-import rich.console
 import rich.table
 from click.shell_completion import CompletionItem
 
@@ -66,12 +65,12 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         matches = [CompletionItem(wor) for wor in available_workflows if wor.startswith(incomplete)]
 
         return matches
-    except Exception as e:
+    except (OSError, AttributeError) as e:
         print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
         return []
 
 
-def get_local_wf(workflow: Path, revision=None) -> Path | None:
+def get_local_wf(workflow: str | Path, revision=None) -> Path | None:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
@@ -153,9 +152,13 @@ class Workflows:
         nextflow_wfdir = _get_nextflow_assets_dir()
         if nextflow_wfdir.is_dir():
             log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
-            for org_name in os.listdir(nextflow_wfdir):
-                for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
-                    self.local_workflows.append(LocalWorkflow(f"{org_name}/{wf_name}"))
+            self.local_workflows.extend(
+                LocalWorkflow(f"{org_dir.name}/{wf_dir.name}")
+                for org_dir in nextflow_wfdir.iterdir()
+                if org_dir.is_dir()
+                for wf_dir in org_dir.iterdir()
+                if wf_dir.is_dir()
+            )
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
@@ -237,7 +240,8 @@ class Workflows:
             def sort_pulled_date(wf):
                 try:
                     return wf.local_wf.last_pull * -1
-                except Exception:
+                except AttributeError:
+                    # local_wf is None or doesn't have last_pull attribute
                     return 0
 
             filtered_workflows.sort(key=sort_pulled_date)
@@ -272,10 +276,7 @@ class Workflows:
                     revision = f"{wf.local_wf.branch} - {wf.local_wf.commit_sha[:7]}"
                 else:
                     revision = wf.local_wf.commit_sha
-                if wf.local_is_latest:
-                    is_latest = f"[green]Yes ({revision})"
-                else:
-                    is_latest = f"[red]No ({revision})"
+                is_latest = f"[green]Yes ({revision})" if wf.local_is_latest else f"[red]No ({revision})"
             else:
                 is_latest = "[dim]-"
 
@@ -424,10 +425,7 @@ def pretty_date(time):
     """
 
     now = datetime.now()
-    if isinstance(time, datetime):
-        diff = now - time
-    else:
-        diff = now - datetime.fromtimestamp(time)
+    diff = now - time if isinstance(time, datetime) else now - datetime.fromtimestamp(time)
     second_diff = diff.seconds
     day_diff = diff.days
 

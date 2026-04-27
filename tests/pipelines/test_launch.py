@@ -325,7 +325,7 @@ class TestLaunch(TestPipelines):
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{self.nf_params_fn}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{self.nf_params_fn}' due to error {e}") from e
 
         assert saved_json == {"input": "custom_input"}
 

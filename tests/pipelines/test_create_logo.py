@@ -88,7 +88,7 @@ class TestCreateLogo(TestPipelines):
         """Test that the create-logo command works for SVGs"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, format="svg")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, img_format="svg")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a SVG
@@ -104,7 +104,7 @@ class TestCreateLogo(TestPipelines):
         """Test that the create-logo command works for svgs and dark theme"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, format="svg", theme="dark")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, img_format="svg", theme="dark")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a SVG

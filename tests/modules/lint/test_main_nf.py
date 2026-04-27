@@ -52,7 +52,7 @@ def test_process_labels(content, passed, warned, failed):
         ('container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package', 2, 0, 0),
         # Multi-line container definition should pass
         (
-            '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+            '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0':
                 'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
             6,
@@ -61,7 +61,7 @@ def test_process_labels(content, passed, warned, failed):
         ),
         # Space in container URL should fail
         (
-            '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+            '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
                 'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
             5,
@@ -70,7 +70,7 @@ def test_process_labels(content, passed, warned, failed):
         ),
         # Incorrect quoting of container string should fail
         (
-            '''container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+            '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
                 "biocontainers/gatk4:4.4.0.0--py36hdfd78af_0" }"''',
             4,
@@ -125,7 +125,7 @@ class TestMainNfLinting(TestModules):
         """Test main.nf linting with alternative container registry"""
         # Test with alternative registry - should warn/fail when containers don't match the registry
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, registry="public.ecr.aws")
-        module_lint.lint(print_results=False, module="samtools/sort")
+        module_lint.lint(print_results=True, module="samtools/sort")
 
         # Alternative registry should produce warnings or failures for container mismatches
         # since samtools/sort module likely uses biocontainers/quay.io, not public.ecr.aws
@@ -149,9 +149,8 @@ class TestMainNfLinting(TestModules):
             directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_NFTEST_BRANCH
         )
         module_lint.lint(print_results=False, module="fastqc")
-        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
-            f"Expected warning about missing version topic, got {[w.message for w in module_lint.warned]}"
+        assert any(f.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for f in module_lint.failed), (
+            f"Expected failure about missing version topic, got {[f.message for f in module_lint.failed]}"
         )
         assert len(module_lint.passed) > 0
 
@@ -426,13 +425,13 @@ process TEST_PROCESS {
 
     # Check that the path pattern doesn't include "hidden: true"
     path_key = list(prof_output[0][1].keys())[0]
-    assert '"*.{prof,pidx}*"' == path_key, f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
+    assert path_key == '"*.{prof,pidx}*"', f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
     assert "hidden" not in path_key, f"Pattern should not contain 'hidden': {path_key}"
 
     # Check the data output also doesn't include "hidden: true"
     data_output = component.outputs["data"]
     data_path_key = list(data_output[0].keys())[0]
-    assert '"data.csv"' == data_path_key, f"Expected '\"data.csv\"', got '{data_path_key}'"
+    assert data_path_key == '"data.csv"', f"Expected '\"data.csv\"', got '{data_path_key}'"
     assert "hidden" not in data_path_key, f"Pattern should not contain 'hidden': {data_path_key}"
 
 

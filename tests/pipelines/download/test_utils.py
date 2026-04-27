@@ -1,4 +1,3 @@
-import os
 import subprocess
 import unittest
 from pathlib import Path
@@ -33,7 +32,7 @@ class DownloadUtilsTest(unittest.TestCase):
             tmp.write(b"Hello, World!")
 
         assert output_path.exists()
-        assert os.path.getsize(output_path) == 13
+        assert output_path.stat().st_size == 13
         assert not tmp_path.exists()
 
         # Run an external command as in pull_image
@@ -43,40 +42,36 @@ class DownloadUtilsTest(unittest.TestCase):
             subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
 
         assert (output_path).exists()
-        assert os.path.getsize(output_path) == 14  # Extra \n !
+        assert output_path.stat().st_size == 14  # Extra \n !
         assert not (tmp_path).exists()
 
         # Code that fails. The file shall not exist
 
         # Directly write to the file and raise an exception
         output_path = outdir / "testfile3"
-        with pytest.raises(ValueError):
-            with intermediate_file(output_path) as tmp:
-                tmp_path = Path(tmp.name)
-                tmp.write(b"Hello, World!")
-                raise ValueError("This is a test error")
+        with pytest.raises(ValueError), intermediate_file(output_path) as tmp:
+            tmp_path = Path(tmp.name)
+            tmp.write(b"Hello, World!")
+            raise ValueError("This is a test error")
 
         assert not (output_path).exists()
         assert not (tmp_path).exists()
 
         # Run an external command and raise an exception
         output_path = outdir / "testfile4"
-        with pytest.raises(subprocess.CalledProcessError):
-            with intermediate_file(output_path) as tmp:
-                tmp_path = Path(tmp.name)
-                subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
-                subprocess.check_call(["ls", "/dummy"])
+        with pytest.raises(subprocess.CalledProcessError), intermediate_file(output_path) as tmp:
+            tmp_path = Path(tmp.name)
+            subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
+            subprocess.check_call(["ls", "/dummy"])
 
         assert not (output_path).exists()
         assert not (tmp_path).exists()
 
         # Test for invalid output paths
-        with pytest.raises(DownloadError):
-            with intermediate_file(outdir) as tmp:
-                pass
+        with pytest.raises(DownloadError), intermediate_file(outdir) as tmp:
+            pass
 
         output_path = outdir / "testfile5"
-        os.symlink("/dummy", output_path)
-        with pytest.raises(DownloadError):
-            with intermediate_file(output_path) as tmp:
-                pass
+        output_path.symlink_to("/dummy")
+        with pytest.raises(DownloadError), intermediate_file(output_path) as tmp:
+            pass

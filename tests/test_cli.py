@@ -101,21 +101,21 @@ class TestCli(unittest.TestCase):
         """Test nf-core pipeline is launched and cli parameters are passed on."""
         mock_launcher.return_value.launch_pipeline.return_value = True
 
-        temp_params_in = tempfile.NamedTemporaryFile()
-        params = {
-            "revision": "abcdef",
-            "id": "idgui",
-            "command-only": None,
-            "params-out": "/path/params/out",
-            "params-in": temp_params_in.name,
-            "save-all": None,
-            "show-hidden": None,
-            "url": "builder_url",
-        }
-        cmd = ["pipelines", "launch"] + self.assemble_params(params) + ["pipeline_name"]
-        result = self.invoke_cli(cmd)
+        with tempfile.NamedTemporaryFile() as temp_params_in:
+            params = {
+                "revision": "abcdef",
+                "id": "idgui",
+                "command-only": None,
+                "params-out": "/path/params/out",
+                "params-in": temp_params_in.name,
+                "save-all": None,
+                "show-hidden": None,
+                "url": "builder_url",
+            }
+            cmd = ["pipelines", "launch"] + self.assemble_params(params) + ["pipeline_name"]
+            result = self.invoke_cli(cmd)
 
-        assert result.exit_code == 0
+            assert result.exit_code == 0
 
         mock_launcher.assert_called_once_with(
             cmd[-1],
@@ -127,6 +127,7 @@ class TestCli(unittest.TestCase):
             "show-hidden" in params,
             params["url"],
             params["id"],
+            "no-prompts" in params,
         )
 
         mock_launcher.return_value.launch_pipeline.assert_called_once()
@@ -246,7 +247,8 @@ class TestCli(unittest.TestCase):
         assert "Partial arguments supplied." in result.output
 
     @mock.patch("nf_core.pipelines.create.PipelineCreateApp")
-    def test_create_app(self, mock_create):
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
+    def test_create_app(self, mock_interactive, mock_create):
         """Test `nf-core pipelines create` runs an App."""
         cmd = ["pipelines", "create"]
         result = self.invoke_cli(cmd)
@@ -267,37 +269,37 @@ class TestCli(unittest.TestCase):
         mock_lint_results[2].failed = []
         mock_lint.return_value = mock_lint_results
 
-        temp_pipeline_dir = tempfile.NamedTemporaryFile()
-        params = {
-            "dir": temp_pipeline_dir.name,
-            "release": None,
-            "fix": "fix test",
-            "key": "key test",
-            "show-passed": None,
-            "fail-ignored": None,
-            "fail-warned": None,
-            "markdown": "output_file.md",
-            "json": "output_file.json",
-        }
+        with tempfile.NamedTemporaryFile() as temp_pipeline_dir:
+            params = {
+                "dir": temp_pipeline_dir.name,
+                "release": None,
+                "fix": "fix test",
+                "key": "key test",
+                "show-passed": None,
+                "fail-ignored": None,
+                "fail-warned": None,
+                "markdown": "output_file.md",
+                "json": "output_file.json",
+            }
 
-        cmd = ["pipelines", "lint"] + self.assemble_params(params)
-        result = self.invoke_cli(cmd)
+            cmd = ["pipelines", "lint"] + self.assemble_params(params)
+            result = self.invoke_cli(cmd)
 
-        assert result.exit_code == 0
-        mock_lint.assert_called_once_with(
-            params["dir"],
-            "release" in params,
-            (params["fix"],),
-            (params["key"],),
-            "show-passed" in params,
-            "fail-ignored" in params,
-            "fail-warned" in params,
-            "test",
-            params["markdown"],
-            params["json"],
-            "hide-progress" in params,
-            False,  # plain_text
-        )
+            assert result.exit_code == 0
+            mock_lint.assert_called_once_with(
+                params["dir"],
+                "release" in params,
+                (params["fix"],),
+                (params["key"],),
+                "show-passed" in params,
+                "fail-ignored" in params,
+                "fail-warned" in params,
+                "test",
+                params["markdown"],
+                params["json"],
+                "hide-progress" in params,
+                False,  # plain_text
+            )
 
     def test_lint_no_dir(self):
         """Test nf-core pipelines lint fails if --dir does not exist"""

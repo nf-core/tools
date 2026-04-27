@@ -52,12 +52,12 @@ def _print_nf_config(rgc):
         for asset in asset_list:
             try:
                 pth = rgc.seek(genome, asset)
-            # Catch general exception instead of refgencof exception --> no refgenconf import needed
-            except Exception:
+            # Catch refgenconf exceptions without importing refgenconf
+            except (OSError, RuntimeError):
                 log.warning(f"{genome}/{asset} is incomplete, ignoring...")
             else:
                 # Translate an alias name to the alias used in the pipeline
-                if asset in alias_translations.keys():
+                if asset in alias_translations:
                     log.info(f"Translating refgenie asset alias {asset} to {alias_translations[asset]}.")
                     asset = alias_translations[asset]
                 genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'
@@ -72,23 +72,24 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
     for the 'refgenie_genomes_config_file' if not already defined
     """
     # Check if NXF_HOME/config exists and has a
+    refgenie_config_path = Path(refgenie_genomes_config_file).resolve()
     include_config_string = dedent(
         f"""
         ///// >>> nf-core + RefGenie >>> /////
         // !! Contents within this block are managed by 'nf-core/tools' !!
         // Includes auto-generated config file with RefGenie genome assets
-        includeConfig '{os.path.abspath(refgenie_genomes_config_file)}'
+        includeConfig '{refgenie_config_path}'
         ///// <<< nf-core + RefGenie <<< /////
         """
     )
     nxf_home_config = Path(nxf_home) / "config"
-    if os.path.exists(nxf_home_config):
+    if nxf_home_config.exists():
         # look for include statement in config
         has_include_statement = False
         with open(nxf_home_config) as fh:
             lines = fh.readlines()
             for line in lines:
-                if re.match(rf"\s*includeConfig\s*'{os.path.abspath(refgenie_genomes_config_file)}'", line):
+                if re.match(rf"\s*includeConfig\s*'{re.escape(str(refgenie_config_path))}'", line):
                     has_include_statement = True
                     break
 
@@ -164,9 +165,9 @@ def update_config(rgc):
     if not nxf_home:
         try:
             nxf_home = Path.home() / ".nextflow"
-            if not os.path.exists(nxf_home):
+            if not nxf_home.exists():
                 log.info(f"Creating NXF_HOME directory at {nxf_home}")
-                os.makedirs(nxf_home, exist_ok=True)
+                nxf_home.mkdir(parents=True, exist_ok=True)
         except RuntimeError:
             nxf_home = False
 

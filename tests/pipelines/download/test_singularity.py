@@ -658,7 +658,7 @@ class FileDownloaderTest(unittest.TestCase):
                 output_path = outdir / Path(src_url).name
                 downloader.download_file(src_url, output_path)
                 assert (output_path).exists()
-                assert os.path.getsize(output_path) == 27
+                assert output_path.stat().st_size == 27
                 assert (
                     "nf_core.pipelines.download.singularity",
                     logging.DEBUG,
@@ -704,7 +704,7 @@ class FileDownloaderTest(unittest.TestCase):
             # Fire in the hole ! The download will be aborted and no output file will be created
             src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
             output_path = outdir / Path(src_url).name
-            os.unlink(output_path)
+            output_path.unlink()
             downloader.kill_with_fire = True
             with pytest.raises(KeyboardInterrupt):
                 downloader.download_file(src_url, output_path)

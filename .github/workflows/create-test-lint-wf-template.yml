@@ -64,7 +64,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
 
@@ -72,7 +72,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
         with:
           version: latest-everything
 
@@ -149,13 +149,14 @@ jobs:
         run: uv run nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
-      - name: Run pre-commit
-        run: uv run pre-commit run --all-files
-        working-directory: create-test-lint-wf
+      - name: Run prek
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
+        run: uv run prek run --config .pre-commit-config.yaml --all-files
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Remove TODO statements
       - name: remove TODO
-        run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/TODO nf-core:/TODONT nf-core:/g' {} \;
         working-directory: create-test-lint-wf
 
       # Uncomment includeConfig statement
@@ -179,10 +180,21 @@ jobs:
         working-directory: create-test-lint-wf
 
       # Run code style linting
-      - name: run pre-commit
-        shell: bash
-        run: uv run pre-commit run --all-files
-        working-directory: create-test-lint-wf
+      - name: Run prek
+        id: prek
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
+        run: uv run prek run --config .pre-commit-config.yaml --all-files --verbose | tee prek_output.txt
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
+
+      - name: Report prek warnings
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
+        run: |
+          warnings=$(sed -n '/^  {$/,/^  }$/p' prek_output.txt | jq '.summary.warnings')
+          if [ "${warnings:-0}" -gt 0 ]; then
+            echo "### :warning: prek found ${warnings} warning(s)" >> $GITHUB_STEP_SUMMARY
+            nextflow lint . -o full >> $GITHUB_STEP_SUMMARY 2>&1 || true
+          fi
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Run bump-version
       - name: nf-core pipelines bump-version

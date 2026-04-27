@@ -13,7 +13,6 @@ import yaml
 from rich.progress import Progress
 
 import nf_core
-import nf_core.modules.modules_utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 
@@ -84,15 +83,12 @@ def main_nf(
             with open(module.main_nf) as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf", "main_nf_exists", "Module file exists", module.main_nf))
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             module.failed.append(("main_nf", "main_nf_exists", "Module file does not exist", module.main_nf))
-            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}")
+            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}") from e
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
-    if len(lines) > 0:
-        lines_j = "\n".join(lines)
-    else:
-        lines_j = ""
+    lines_j = "\n".join(lines) if len(lines) > 0 else ""
 
     for i in deprecated_i:
         if i in lines_j:
@@ -214,28 +210,27 @@ def main_nf(
             )
 
     # Check whether 'meta' is emitted when given as input
-    if inputs:
-        if "meta" in inputs:
-            module.has_meta = True
-            if emits:
-                if "meta" in emits:
-                    module.passed.append(
-                        (
-                            "main_nf",
-                            "main_nf_meta_output",
-                            "'meta' map emitted in output channel(s)",
-                            module.main_nf,
-                        )
+    if inputs and "meta" in inputs:
+        module.has_meta = True
+        if emits:
+            if "meta" in emits:
+                module.passed.append(
+                    (
+                        "main_nf",
+                        "main_nf_meta_output",
+                        "'meta' map emitted in output channel(s)",
+                        module.main_nf,
                     )
-                else:
-                    module.failed.append(
-                        (
-                            "main_nf",
-                            "main_nf_meta_output",
-                            "'meta' map not emitted in output channel(s)",
-                            module.main_nf,
-                        )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "main_nf",
+                        "main_nf_meta_output",
+                        "'meta' map not emitted in output channel(s)",
+                        module.main_nf,
                     )
+                )
 
     # Check that a software version is emitted
     if topics:
@@ -244,7 +239,7 @@ def main_nf(
                 ("main_nf", "main_nf_version_topic", "Module emits software versions as topic", module.main_nf)
             )
         else:
-            module.warned.append(
+            module.failed.append(
                 ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
             )
 
@@ -400,7 +395,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     check_process_labels(self, lines)
 
     # Deprecated enable_conda
-    for i, raw_line in enumerate(lines):
+    for _i, raw_line in enumerate(lines):
         url = None
         line = raw_line.strip(" \n'\"}:?")
 
@@ -455,18 +450,25 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if line.startswith(registry):
+            if line.startswith((registry, "community.wave.seqera.io/library/")):
                 l_stripped = re.sub(r"\W+$", "", line)
-                self.failed.append(
+                self.passed.append(
                     (
                         "main_nf",
                         "container_links",
-                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
+                        f"Container prefix is correct: {l_stripped}",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("main_nf", "container_links", "Container prefix is correct", self.main_nf))
+                self.failed.append(
+                    (
+                        "main_nf",
+                        "container_links",
+                        "Container prefix is not correct. Please add the registry prefix (e.g. 'quay.io/')",
+                        self.main_nf,
+                    )
+                )
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
@@ -481,7 +483,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         if url is None:
             continue
         try:
-            container_url = "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url)
+            container_url = "https://" + urlunparse(url) if url.scheme != "https" else urlunparse(url)
             log.debug(f"Trying to connect to URL: {container_url}")
             response = requests.head(
                 container_url,
@@ -489,7 +491,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 allow_redirects=True,
             )
             log.debug(
-                f"Connected to URL: {'https://' + urlunparse(url) if not url.scheme == 'https' else urlunparse(url)}, "
+                f"Connected to URL: {'https://' + urlunparse(url) if url.scheme != 'https' else urlunparse(url)}, "
                 f"status_code: {response.status_code}"
             )
         except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
@@ -688,7 +690,7 @@ def check_container_link_line(self, raw_line, registry):
             (
                 "main_nf",
                 "container_links",
-                f"Too many double quotes found when specifying container: {line.lstrip('container ')}",
+                f"Too many double quotes found when specifying container: {line.removeprefix('container ')}",
                 self.main_nf,
             )
         )
@@ -697,7 +699,7 @@ def check_container_link_line(self, raw_line, registry):
             (
                 "main_nf",
                 "container_links",
-                f"Correct number of double quotes found when specifying container: {line.lstrip('container ')}",
+                f"Correct number of double quotes found when specifying container: {line.removeprefix('container ')}",
                 self.main_nf,
             )
         )
@@ -708,7 +710,7 @@ def check_container_link_line(self, raw_line, registry):
     # Look for container link as single item surrounded by quotes
     # (if there are multiple links, this will be warned in the next check)
     container_link = None
-    if len(single_quoted_items) == 3:
+    if len(single_quoted_items) == 3 or len(single_quoted_items) == 5 and " in [" in raw_line:
         container_link = single_quoted_items[1]
     elif len(double_quoted_items) == 3:
         container_link = double_quoted_items[1]
@@ -1023,7 +1025,7 @@ def _container_type(line):
     """Returns the container type of a build."""
     if line.startswith("conda"):
         return "conda"
-    if line.startswith("https://") or line.startswith("https://depot"):
+    if line.startswith("https://"):
         # Look for a http download URL.
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
         url_regex = (

@@ -19,7 +19,7 @@ nextflow_process {
         // TODO nf-core: If you are created a test for a chained module
         // (the module requires running more than one process to generate the required output)
         // add the 'setup' method here.
-        // You can find more information about how to use a 'setup' method in the docs (https://nf-co.re/docs/contributing/modules#steps-for-creating-nf-test-for-chained-modules).
+        // You can find more information about how to use a 'setup' method in the nf-test docs (https://www.nf-test.com/docs/testcases/setup/).
 
         when {
             process {
@@ -45,7 +45,7 @@ nextflow_process {
                     process.out.findAll { key, val -> key.startsWith('versions') }
                 ).match() }
                 //TODO nf-core: Add all required assertions to verify the test output.
-                // See https://nf-co.re/docs/contributing/tutorials/nf-test_assertions for more information and examples.
+                // See https://nf-co.re/docs/developing/testing/assertions for more information and examples.
             )
         }
 

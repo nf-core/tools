@@ -388,7 +388,7 @@ class DownloadTest(unittest.TestCase):
         assert isinstance(download_obj.outdir, Path)
         assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", str(download_obj.outdir), re.S))
 
-        download_obj.output_filename = download_obj.outdir.with_suffix(".git")
+        download_obj.output_filename = download_obj.outdir / "rnaseq.git"
         download_obj.download_workflow_platform(location=tmp_dir)
 
         assert download_obj.workflow_repo
@@ -478,7 +478,7 @@ class DownloadTest(unittest.TestCase):
             ) = nf_core.utils.get_repo_releases_branches(download_obj.pipeline, wfs)
 
             download_obj.get_revision_hash()
-            download_obj.output_filename = f"{download_obj.outdir}.git"
+            download_obj.output_filename = download_obj.outdir / "rnaseq.git"
             download_obj.download_workflow_platform(location=tmp_dir)
 
             assert download_obj.workflow_repo
