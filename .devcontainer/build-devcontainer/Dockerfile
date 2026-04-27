@@ -1,6 +1,6 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:26b252eed80fe93ec85c48b36035098288c3082c78e5b5073b11d69562ee0897 AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:1a85cf3e3da9d999f994f74cf501b1d02c9aa73ebfa3552f806dbe4570d7d5b5 AS build
 
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
