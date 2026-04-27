@@ -73,6 +73,7 @@
 - Update dependency textual to v8.2.4 ([#4217](https://github.com/nf-core/tools/pull/4217))
 - Update mcr.microsoft.com/devcontainers/miniconda Docker digest to 1a85cf3 ([#4220](https://github.com/nf-core/tools/pull/4220))
 - Update python:3.14-slim Docker digest to 5b3879b ([#4221](https://github.com/nf-core/tools/pull/4221))
+- automatically handle merge conflicts for changelog files with union ([#4223](https://github.com/nf-core/tools/pull/4223))
 
 ### Download
 
