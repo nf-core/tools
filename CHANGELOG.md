@@ -67,6 +67,7 @@
 - nextflow source CI: set up uv ([#4208](https://github.com/nf-core/tools/pull/4208))
 - Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
 - Update conda-incubator/setup-miniconda action to v4 ([#4215](https://github.com/nf-core/tools/pull/4215))
+- Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.8 ([#4218](https://github.com/nf-core/tools/pull/4218))
 
 ### Download
 
