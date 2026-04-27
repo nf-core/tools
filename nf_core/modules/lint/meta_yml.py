@@ -388,14 +388,17 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
         return formatted_outputs
 
 
-def _channels_with_dynamic_paths(raw_outputs: dict) -> set[str]:
+def _channels_with_dynamic_paths(raw_outputs: dict | list) -> set[str]:
     """Return channel names whose ``path(...)`` values are bare variables or
     pure ``${var}`` GStrings.
 
     Operates on the raw ``module.outputs`` dict (with ``_keyword`` info) so it
     can target only ``path`` elements and ignore ``val``/``eval`` keys that
-    happen to look like identifiers.
+    happen to look like identifiers. Subworkflows expose outputs as a flat
+    ``list[str]`` with no keyword info, so this returns an empty set there.
     """
+    if not isinstance(raw_outputs, dict):
+        return set()
     return {name for name, elements in raw_outputs.items() if _has_dynamic_path(elements)}
 
 
