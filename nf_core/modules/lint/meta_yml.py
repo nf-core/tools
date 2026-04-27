@@ -15,7 +15,7 @@ from nf_core.utils import unquote
 
 # Output paths that are bare variable refs or pure ``${var}`` GStrings are
 # resolved at runtime in the script: block and can't be reconciled statically.
-DYNAMIC_PATH_RE = re.compile(r"^(?:\$\{[a-zA-Z_]\w*\}|[a-zA-Z_]\w*)$")
+_DYNAMIC_PATH_RE = re.compile(r"^(?:\$\{[a-zA-Z_]\w*\}|[a-zA-Z_]\w*)$")
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
@@ -396,20 +396,21 @@ def _channels_with_dynamic_paths(raw_outputs: dict) -> set[str]:
     can target only ``path`` elements and ignore ``val``/``eval`` keys that
     happen to look like identifiers.
     """
-    dynamic = set()
-    for channel_name, channel_elements in raw_outputs.items():
-        for element in channel_elements:
-            entries = element if isinstance(element, list) else [element]
-            for entry in entries:
-                key, info = next(iter(entry.items()))
-                if info.get("_keyword") == "path" and DYNAMIC_PATH_RE.match(unquote(key)):
-                    dynamic.add(channel_name)
-                    break
-    return dynamic
+    return {name for name, elements in raw_outputs.items() if _has_dynamic_path(elements)}
+
+
+def _has_dynamic_path(channel_elements: list) -> bool:
+    for element in channel_elements:
+        entries = element if isinstance(element, list) else [element]
+        for entry in entries:
+            key = next(iter(entry))
+            info = entry[key]
+            if info.get("_keyword") == "path" and _DYNAMIC_PATH_RE.match(unquote(key)):
+                return True
+    return False
 
 
 def _drop_channels(formatted_outputs: dict | list, channel_names: set[str]) -> dict | list:
-    """Return ``formatted_outputs`` with the given channels removed."""
     if isinstance(formatted_outputs, list):
         return [d for d in formatted_outputs if not any(k in channel_names for k in d)]
     return {k: v for k, v in formatted_outputs.items() if k not in channel_names}

@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 import nf_core.modules.lint
+from nf_core.modules.lint.meta_yml import _channels_with_dynamic_paths
 
 from ...test_modules import TestModules
 
@@ -218,11 +219,9 @@ class TestMetaYml(TestModules):
         )
 
     def test_modules_meta_yml_dynamic_output_path_skipped(self):
-        """`correct_meta_outputs` should not flag mismatches for ``path`` outputs
-        that are bare variables or pure ``${var}`` GStrings, since those are
-        resolved in the script: block and cannot be reconciled statically."""
-        from nf_core.modules.lint.meta_yml import _channels_with_dynamic_paths
-
+        """`correct_meta_outputs` should flag only ``path`` outputs whose value
+        is a bare variable or pure ``${var}`` GString, ignoring ``val``/``eval``
+        keys that happen to look like identifiers."""
         raw_outputs = {
             "reads": [
                 [
@@ -250,8 +249,7 @@ class TestMetaYml(TestModules):
                 ]
             ],
         }
-        dynamic = _channels_with_dynamic_paths(raw_outputs)
-        assert dynamic == {"reads", "log"}, f"Expected {{'reads', 'log'}}, got {dynamic}"
+        assert _channels_with_dynamic_paths(raw_outputs) == {"reads", "log"}
 
     def test_modules_meta_yml_no_input_section(self):
         """Test that lint --fix does not crash when meta.yml has no input section (e.g. parameter-only modules)"""
