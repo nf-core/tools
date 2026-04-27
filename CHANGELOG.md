@@ -51,6 +51,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.9 ([#4152](https://github.com/nf-core/tools/pull/4152))
 - Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
 - Update actions/github-script action to v9 ([#4182](https://github.com/nf-core/tools/pull/4182))
+- Update actions/upload-artifact digest to 043fb46 ([#4184](https://github.com/nf-core/tools/pull/4184))
 - Remove deprecated cli commands and --migrate-pytest flag with all obsoleted code. ([4167](https://github.com/nf-core/tools/pull/4167))
 - Remove `--migrate-pytest` functionality and deprecated pipeline commands ([#4167](https://github.com/nf-core/tools/pull/4167))
 - Add more ruff rules (B, PTH) ([#4034](https://github.com/nf-core/tools/pull/4034))
@@ -68,6 +69,7 @@
 - Include AI and LLM usage guidelines in CONTRIBUTING.md ([#4211](https://github.com/nf-core/tools/pull/4211))
 - Update conda-incubator/setup-miniconda action to v4 ([#4215](https://github.com/nf-core/tools/pull/4215))
 - Update mcr.microsoft.com/devcontainers/base Docker tag to v2.1.8 ([#4218](https://github.com/nf-core/tools/pull/4218))
+- Update dependency textual to v8.2.4 ([#4217](https://github.com/nf-core/tools/pull/4217))
 
 ### Download
 

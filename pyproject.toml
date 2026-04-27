@@ -54,7 +54,7 @@ dependencies = [
     "repo2rocrate",
     "setuptools<81",
     "tabulate",
-    "textual==8.2.3",
+    "textual==8.2.4",
     "trogon",
     "pdiff",
     "ruamel.yaml",
