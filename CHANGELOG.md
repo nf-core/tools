@@ -92,6 +92,7 @@
 - Fix changelog bot failing after linting step ([#4155](https://github.com/nf-core/tools/pull/4155))
 - lint for correct syntax for compressed files in stubs ([#4048](https://github.com/nf-core/tools/pull/4048))
 - fix linting with missing input ([#4202](https://github.com/nf-core/tools/pull/4202))
+- fix(lint): use correct config key zenodo_doi ([#4201](https://github.com/nf-core/tools/pull/4201))
 
 ### Modules
 
