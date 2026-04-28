@@ -2,14 +2,11 @@ name: Update CHANGELOG.md
 on:
   issue_comment:
     types: [created] # Add "@nf-core-bot changelog" as a PR comment to trigger this workflow.
-  pull_request_target:
-    types: [opened]
-    branches:
-      - dev
 
 jobs:
   update_changelog:
     runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '@nf-core-bot changelog')
 
     steps:
       - name: branch-deploy
@@ -31,11 +28,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
         run: |
-          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            PR_NUMBER="${{ github.event.issue.number }}"
-          elif [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-          fi
+          PR_NUMBER="${{ github.event.issue.number }}"
           gh pr checkout $PR_NUMBER
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -86,5 +79,5 @@ jobs:
           git config user.name "nf-core-bot"
           git add ${GITHUB_WORKSPACE}/CHANGELOG.md
           git status
-          git commit -m "[automated] Update CHANGELOG.md"
+          git commit -m "[automated] Update CHANGELOG.md [skip ci]"
           git push
