@@ -1,6 +1,7 @@
 import json
 import logging
 import subprocess
+import sys
 from pathlib import Path
 
 import rich
@@ -151,7 +152,13 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
     is_git = check_git_repo()
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
-    args = ["prek", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+    # Resolve prek relative to the current interpreter so it works in isolated
+    # environments (uv tool, pipx, conda) where only the main entry point is on
+    # PATH. Fall back to the bare name for system-wide pip installs where the
+    # scripts directory differs from the interpreter location.
+    prek_bin = Path(sys.executable).parent / "prek"
+    prek = str(prek_bin) if prek_bin.exists() else "prek"
+    args = [prek, "run", "--config", str(nf_core_pre_commit_config), "prettier"]
     if isinstance(file, list):
         args.extend(["--files", *file])
     else:
