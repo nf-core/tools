@@ -4,6 +4,8 @@
 
 ### General
 
+- fix failing api doc generation script ([#4239](https://github.com/nf-core/tools/pull/4239))
+
 ### Linting
 
 ### Modules
