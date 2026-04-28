@@ -1,5 +1,3 @@
-import shutil
-
 import git
 import pytest
 
@@ -8,8 +6,6 @@ import nf_core.pipelines.lint_utils
 JSON_WITH_SYNTAX_ERROR = "{'a':1, 1}"
 JSON_MALFORMED = "{'a':1}"
 JSON_FORMATTED = '{ "a": 1 }\n'
-
-WHICH_PREK = shutil.which("prek")
 
 
 @pytest.fixture()
@@ -63,3 +59,10 @@ def test_run_prettier_on_syntax_error_file(syntax_error_json, caplog):
     nf_core.pipelines.lint_utils.run_prettier_on_file(syntax_error_json)
     expected_critical_log = "SyntaxError: Unexpected token (1:10)"
     assert expected_critical_log in caplog.text
+
+
+def test_run_prettier_prek_not_in_path(formatted_json, monkeypatch, tmp_path):
+    """prek must be found via sys.executable when not on PATH (e.g. uv tool install)."""
+    monkeypatch.setenv("PATH", str(tmp_path))
+    nf_core.pipelines.lint_utils.run_prettier_on_file(formatted_json)
+    assert formatted_json.read_text() == JSON_FORMATTED
