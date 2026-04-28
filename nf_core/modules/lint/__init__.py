@@ -611,13 +611,21 @@ class ModuleLint(ComponentLint):
                 section["ontologies"] = []
             log.debug(f"expected ontologies for {desc}: {expected_ontologies}")
             log.debug(f"current ontologies for {desc}: {current_ontologies}")
-            for ontology, ext in expected_ontologies:
-                if ontology not in current_ontologies:
+            for ontology_url, ext in expected_ontologies:
+                comment_text = edam_formats[ext][1]
+                if ontology_url not in current_ontologies:
                     try:
-                        section["ontologies"].append(ruamel.yaml.comments.CommentedMap({"edam": ontology}))
-                        section["ontologies"][-1].yaml_add_eol_comment(f"{edam_formats[ext][1]}", "edam")
+                        cm = ruamel.yaml.comments.CommentedMap()
+                        cm["edam"] = ontology_url
+                        cm.yaml_add_eol_comment(comment_text, key="edam")
+                        section["ontologies"].append(cm)
                     except KeyError:
                         log.warning(f"Could not add ontologies in {desc}")
+                else:
+                    for item in section["ontologies"]:
+                        if isinstance(item, ruamel.yaml.comments.CommentedMap) and item.get("edam") == ontology_url:
+                            item.yaml_add_eol_comment(comment_text, key="edam")
+                            break
 
         # EDAM ontologies
         edam_formats = nf_core.modules.modules_utils.load_edam()
@@ -681,7 +689,17 @@ class ModuleLint(ComponentLint):
 
         def _ensure_string_keys(obj):
             """Recursively ensure all dict keys are strings (e.g., convert 1.2 -> "1.2")"""
-            if isinstance(obj, dict):
+            if isinstance(obj, ruamel.yaml.comments.CommentedMap):
+                for key in list(obj.keys()):
+                    value = obj.pop(key)
+                    new_key = str(key) if not isinstance(key, str) else key
+                    obj[new_key] = _ensure_string_keys(value)
+                return obj
+            elif isinstance(obj, ruamel.yaml.comments.CommentedSeq):
+                for i, item in enumerate(obj):
+                    obj[i] = _ensure_string_keys(item)
+                return obj
+            elif isinstance(obj, dict):
                 return {str(k) if not isinstance(k, str) else k: _ensure_string_keys(v) for k, v in obj.items()}
             elif isinstance(obj, list):
                 return [_ensure_string_keys(item) for item in obj]

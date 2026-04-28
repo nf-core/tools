@@ -2,8 +2,6 @@ import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
-import requests
-
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
@@ -99,15 +97,17 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
+    local_path = Path(__file__).parent.parent / "assets" / "EDAM_1.25.csv"
     try:
-        response = requests.get("https://edamontology.org/EDAM.tsv")
-    except requests.exceptions.RequestException as e:
+        with local_path.open("rb") as f:
+            data_bytes = f.read()
+    except (FileNotFoundError, OSError) as e:
         log.warning(f"Failed to load EDAM ontology: {e}")
-        return edam_formats
-    for line in response.content.splitlines():
-        fields = line.decode("utf-8").split("\t")
-        if fields[0].split("/")[-1].startswith("format") and fields[14]:  # We choose an already provided extension
-            extensions = fields[14].split("|")
+        return {}
+    for line in data_bytes.splitlines():
+        fields = line.decode("utf-8").split(",")
+        if fields[0].split("/")[-1].startswith("format") and fields[2]:  # We choose an already provided extension
+            extensions = fields[2].split("|")
             for extension in extensions:
                 if extension not in edam_formats:
                     edam_formats[extension] = (fields[0], fields[1])  # URL, name
