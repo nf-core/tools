@@ -4,6 +4,32 @@
 
 ### General
 
+- ## [Codecov](https://app.codecov.io/gh/nf-core/tools/pull/4238?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core) Report
+  :x: Patch coverage is `85.71429%` with `1 line` in your changes missing coverage. Please review.
+  :white_check_mark: Project coverage is 20.06%. Comparing base ([`33d9944`](https://app.codecov.io/gh/nf-core/tools/commit/33d9944622d081645def84318b04e73ebaaebfdc?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core)) to head ([`b27bd38`](https://app.codecov.io/gh/nf-core/tools/commit/b27bd38c182a21ec6dd15f176e3c5ad8c42ada33?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core)).
+
+| [Files with missing lines](https://app.codecov.io/gh/nf-core/tools/pull/4238?dropdown=coverage&src=pr&el=tree&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core)                                                                                     | Patch % | Lines                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [nf_core/pipelines/lint_utils.py](https://app.codecov.io/gh/nf-core/tools/pull/4238?src=pr&el=tree&filepath=nf_core%2Fpipelines%2Flint_utils.py&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core#diff-bmZfY29yZS9waXBlbGluZXMvbGludF91dGlscy5weQ==) | 85.71%  | [1 Missing :warning: ](https://app.codecov.io/gh/nf-core/tools/pull/4238?src=pr&el=tree&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core) |
+
+> :exclamation: There is a different number of reports uploaded between BASE (33d9944) and HEAD (b27bd38). Click for more details.
+>
+> <details><summary>HEAD has 41 uploads less than BASE</summary>
+>
+> | Flag        | BASE (33d9944) | HEAD (b27bd38) |
+> | ----------- | -------------- | -------------- |
+> | python-3.10 | 54             | 13             |
+>
+> </details>
+
+[:umbrella: View full report in Codecov by Sentry](https://app.codecov.io/gh/nf-core/tools/pull/4238?dropdown=coverage&src=pr&el=continue&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core).  
+:loudspeaker: Have feedback on the report? [Share it here](https://about.codecov.io/codecov-pr-comment-feedback/?utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core).
+
+<details><summary> :rocket: New features to boost your workflow: </summary>
+
+- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.
+</details> ([#4238](https://github.com/nf-core/tools/pull/4238))
+
 ### Linting
 
 ### Modules
