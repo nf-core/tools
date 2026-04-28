@@ -1,0 +1,62 @@
+Class ID Preferred Label File extension
+http://edamontology.org/format_1930 FASTQ fq|fastq
+http://edamontology.org/format_2332 XML xml
+http://edamontology.org/format_3256 N-Triples nt
+http://edamontology.org/format_3257 Notation3 n3
+http://edamontology.org/format_3261 RDF/XML rdf
+http://edamontology.org/format_3464 JSON json
+http://edamontology.org/format_3475 TSV tsv|tab
+http://edamontology.org/format_3556 MHTML mhtml|mht|eml
+http://edamontology.org/format_3665 K-mer countgraph oxlicg
+http://edamontology.org/format_3682 imzML metadata file imzML
+http://edamontology.org/format_3710 WIFF format wiff
+http://edamontology.org/format_3746 BIOM format biom
+http://edamontology.org/format_3749 JSON-LD jsonld
+http://edamontology.org/format_3750 YAML yaml|yml
+http://edamontology.org/format_3752 CSV csv
+http://edamontology.org/format_3788 SQL sql
+http://edamontology.org/format_3789 XQuery xq|xqy|xquery
+http://edamontology.org/format_3839 ibd ibd
+http://edamontology.org/format_3857 CWL cwl
+http://edamontology.org/format_3911 msh msh
+http://edamontology.org/format_3913 Loom loom
+http://edamontology.org/format_3915 Zarr zarray|zgroup
+http://edamontology.org/format_3916 MTX mtx
+http://edamontology.org/format_3956 N-Quads nq
+http://edamontology.org/format_3969 Vega json
+http://edamontology.org/format_3970 Vega-lite json
+http://edamontology.org/format_3972 BNGL bngl
+http://edamontology.org/format_3973 Docker image format dockerfile
+http://edamontology.org/format_3975 GFA 1 gfa
+http://edamontology.org/format_3976 GFA 2 gfa
+http://edamontology.org/format_3977 ObjTables xlsx
+http://edamontology.org/format_3978 CONTIG contig
+http://edamontology.org/format_3979 WEGO wego
+http://edamontology.org/format_3980 RPKM rpkm
+http://edamontology.org/format_3981 TAR format tar
+http://edamontology.org/format_3982 CHAIN chain
+http://edamontology.org/format_3983 NET net
+http://edamontology.org/format_3984 QMAP qmap
+http://edamontology.org/format_3985 gxformat2 ga
+http://edamontology.org/format_3986 WMV wmv
+http://edamontology.org/format_3987 ZIP format zip
+http://edamontology.org/format_3988 LSM lsm
+http://edamontology.org/format_3989 GZIP format gz|gzip
+http://edamontology.org/format_3990 AVI avi
+http://edamontology.org/format_3991 TrackDB trackDb
+http://edamontology.org/format_3992 CIGAR format cigar
+http://edamontology.org/format_3993 Stereolithography format stl
+http://edamontology.org/format_3994 U3D u3d
+http://edamontology.org/format_3995 Texture file format tex
+http://edamontology.org/format_3996 Python script py
+http://edamontology.org/format_3997 MPEG-4 mp4
+http://edamontology.org/format_3998 Perl script pl
+http://edamontology.org/format_3999 R script R
+http://edamontology.org/format_4000 R markdown Rmd
+http://edamontology.org/format_4001 NIFTI format nii
+http://edamontology.org/format_4002 pickle pickle
+http://edamontology.org/format_4003 NumPy format npy
+http://edamontology.org/format_4004 SimTools repertoire file format repz
+http://edamontology.org/format_4005 Configuration file format cfg
+http://edamontology.org/format_4006 Zstandard format zst
+http://edamontology.org/format_4007 MATLAB script m

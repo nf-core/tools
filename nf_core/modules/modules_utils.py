@@ -97,7 +97,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    local_path = Path(__file__).parent.parent / "assets" / "EDAM_1.25.csv"
+    local_path = Path(__file__).parent.parent / "assets" / "EDAM.tsv"
     try:
         with local_path.open("rb") as f:
             data_bytes = f.read()
@@ -105,7 +105,7 @@ def load_edam():
         log.warning(f"Failed to load EDAM ontology: {e}")
         return {}
     for line in data_bytes.splitlines():
-        fields = line.decode("utf-8").split(",")
+        fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format") and fields[2]:  # We choose an already provided extension
             extensions = fields[2].split("|")
             for extension in extensions:
