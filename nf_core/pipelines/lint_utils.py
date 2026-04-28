@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import git
 import rich
 import yaml
 from rich.console import Console
@@ -133,9 +134,9 @@ def print_fixes(lint_obj, plain_text=False):
 def check_git_repo() -> bool:
     """Check if the current directory is a git repository."""
     try:
-        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
+        git.Repo(search_parent_directories=True)
         return True
-    except subprocess.CalledProcessError:
+    except git.InvalidGitRepositoryError:
         return False
 
 
