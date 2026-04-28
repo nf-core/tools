@@ -41,7 +41,6 @@ jobs:
               enabled = true
               bot {
                 token = '{% raw %}${{ secrets.NFSLACK_BOT_TOKEN }}{% endraw %}'
-                # TODO nf-core: Set the Slack channel for CI notifications
                 channel = '{{ short_name }}'
               }
               onStart {
