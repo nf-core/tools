@@ -157,6 +157,9 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             log.debug("nf-test output:\n%s", nftest_out.decode())
             if nftest_err:
                 log.debug("nf-test error:\n%s", nftest_err.decode())
+            if "Different Snapshot:" in nftest_err.decode() and self.update:
+                log.info("Updating snapshot")
+                self.generate_snapshot()
         else:
             # Interactive mode: use Rich formatting
             print("Displaying nf-test output")
@@ -171,10 +174,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 print("Displaying nf-test error")
             if "Different Snapshot:" in nftest_err.decode():
                 log.error("nf-test failed due to differences in the snapshots")
-                if self.no_prompts:
-                    log.info("Updating snapshot")
-                    self.update = True
-                elif self.update is None:
+                if self.update is None:
                     answer = Confirm.ask(
                         "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
                         default=True,
@@ -221,6 +221,8 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 self.obsolete_snapshots = True
             # check if nf-test was successful
             if "Assertion failed:" in nftest_out.decode():
+                if "Different Snapshot:" not in nftest_err.decode():
+                    self.errors.append("Assertion failed.")
                 return False
             elif "No tests to execute." in nftest_out.decode():
                 log.error("Nothing to execute. Is the file 'main.nf.test' missing?")

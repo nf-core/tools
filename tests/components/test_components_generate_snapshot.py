@@ -124,6 +124,26 @@ class TestTestComponentsUtils(TestComponents):
             assert "Single-End" in snap_content
             assert snap_content["Single-End"]["timestamp"] != original_timestamp
 
+    def test_assertion_failure_no_prompts(self):
+        """Assertion failures in no_prompts mode should raise UserWarning, not silently pass"""
+        with set_wd(self.nfcore_modules):
+            test_file = Path("modules", "nf-core-test", "bwa", "mem", "tests", "main.nf.test")
+            original_content = test_file.read_text()
+            test_file.write_text(original_content.replace("then {", "then {\n            assert false", 1))
+            try:
+                snap_generator = ComponentsTest(
+                    component_type="modules",
+                    component_name="bwa/mem",
+                    no_prompts=True,
+                    remote_url=GITLAB_URL,
+                    branch=GITLAB_NFTEST_BRANCH,
+                )
+                with pytest.raises(UserWarning) as e:
+                    snap_generator.run()
+            finally:
+                test_file.write_text(original_content)
+        assert "Assertion failed." in str(e.value)
+
     def test_test_not_found(self):
         """Generate the snapshot for a module in nf-core/modules clone which doesn't contain tests"""
         with set_wd(self.nfcore_modules):
