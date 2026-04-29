@@ -6,6 +6,9 @@
 
 - fix failing api doc generation script ([#4239](https://github.com/nf-core/tools/pull/4239))
 - .noop ([#4236](https://github.com/nf-core/tools/pull/4236))
+- ### Branch automerge failure
+
+This PR was configured for branch automerge. However, this is not possible, so it has been raised as a PR instead. ([#4244](https://github.com/nf-core/tools/pull/4244))
 
 ### Linting
 
