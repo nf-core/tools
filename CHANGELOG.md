@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v4.0.1dev
+## v4.0.1
 
 ### General
 
@@ -13,7 +13,7 @@
 
 ### Modules
 
-- https://github.com/nf-core/website/pull/4182 ([#4234](https://github.com/nf-core/tools/pull/4234))
+- Allow task.ext.prefix2 in modules linting ([#4234](https://github.com/nf-core/tools/pull/4234))
 
 ### Subworkflows
 
