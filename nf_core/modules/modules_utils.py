@@ -132,7 +132,7 @@ def load_edam():
         log.debug("Using EDAM.tsv file found in NFCORE_CACHE_DIR")
         try:
             data_bytes = cache_path.read_bytes()
-        except (OSError) as e:
+        except OSError as e:
             log.warning(f"Failed to load EDAM ontology: {e}")
             return edam_formats
 
