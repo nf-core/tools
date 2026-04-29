@@ -9,6 +9,8 @@
 - switch changelog bot trigger only on comments ([#4241](https://github.com/nf-core/tools/pull/4241))
 - fix indentation in generated api docs ([#4245](https://github.com/nf-core/tools/pull/4245))
 
+### Linting
+
 - use static edam.csv and fix yaml comment loss ([#4242](https://github.com/nf-core/tools/pull/4242))
 
 ### Modules
