@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -9,6 +10,9 @@ from nf_core.utils import NFCORE_CACHE_DIR
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
+
+EDAM_TSV_URL = "https://edamontology.org/EDAM.tsv"
+EDAM_CACHE_TTL = 7 * 24 * 60 * 60  # one week
 
 
 class ModuleExceptionError(Exception):
@@ -98,27 +102,40 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
     return local_modules, nfcore_modules
 
 
+def cache_is_expired(path: Path) -> bool:
+    """Return True if the cache file is older than the configured TTL."""
+    age = time.time() - path.stat().st_mtime
+    return age > EDAM_CACHE_TTL
+
+
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
     cache_path = Path(NFCORE_CACHE_DIR) / "EDAM.tsv"
+
+    # Remove stale cache file
+    if cache_path.exists() and cache_is_expired(cache_path):
+        log.debug("Cached EDAM ontology expired; removing old cache file")
+        cache_path.unlink(missing_ok=True)
+
     if not cache_path.exists():
-        log.debug("EDAM.tsv file not found in NFCORE_CACHE_DIR")
+        log.debug("EDAM.tsv file not found in NFCORE_CACHE_DIR; downloading")
         try:
-            response = requests.get("https://edamontology.org/EDAM.tsv", timeout=15)
+            response = requests.get(EDAM_TSV_URL, timeout=15)
+            response.raise_for_status()
             data_bytes = response.content
-            with open(cache_path, "wb") as fh:
-                fh.write(data_bytes)
-        except requests.exceptions.RequestException:
+            cache_path.write_bytes(data_bytes)
+        except requests.exceptions.RequestException as e:
+            log.warning(f"Failed to download EDAM ontology: {e}")
             return edam_formats
     else:
-        log.debug("EDAM.tsv file found in NFCORE_CACHE_DIR")
+        log.debug("Using EDAM.tsv file found in NFCORE_CACHE_DIR")
         try:
-            with cache_path.open("rb") as f:
-                data_bytes = f.read()
+            data_bytes = cache_path.read_bytes()
         except (OSError) as e:
             log.warning(f"Failed to load EDAM ontology: {e}")
             return edam_formats
+
     for line in data_bytes.splitlines():
         fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format") and fields[2]:  # We choose an already provided extension

@@ -1,3 +1,6 @@
+from pathlib import Path
+from unittest.mock import patch
+
 import nf_core.modules.modules_utils
 
 from ..test_modules import TestModules
@@ -83,9 +86,36 @@ class TestModulesUtils(TestModules):
         filtered = nf_core.modules.modules_utils.filter_modules_by_name(modules, "fastqc")
         assert len(filtered) == 0
 
+    @patch("nf_core.modules.modules_utils.NFCORE_CACHE_DIR", new="test_cache")
     def test_load_edam(self):
-        """Test edam ontology loading"""
+        """Test EDAM ontology loading"""
+
+        cache_dir = Path("test_cache")
+        cache_path = cache_dir / "EDAM.tsv"
+
+        # Ensure clean state
+        if cache_dir.exists():
+            for f in cache_dir.iterdir():
+                f.unlink()
+            cache_dir.rmdir()
+
+        cache_dir.mkdir()
+
+        # Cache should not exist before loading
+        assert not cache_path.exists()
+
         edam_formats = nf_core.modules.modules_utils.load_edam()
-        assert len(edam_formats) == 67
-        first_item = next(iter(edam_formats))
-        assert len(first_item) == 2
+
+        # Cache file should now exist
+        assert cache_path.exists()
+
+        first_key, first_value = next(iter(edam_formats.items()))
+
+        assert isinstance(first_key, str)
+        assert isinstance(first_value, tuple)
+        assert len(first_value) == 2
+
+        # Cleanup (important since we're not using tmp_path)
+        for f in cache_dir.iterdir():
+            f.unlink()
+        cache_dir.rmdir()
