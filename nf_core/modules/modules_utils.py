@@ -116,7 +116,7 @@ def load_edam():
         try:
             with cache_path.open("rb") as f:
                 data_bytes = f.read()
-        except (FileNotFoundError, OSError) as e:
+        except (OSError) as e:
             log.warning(f"Failed to load EDAM ontology: {e}")
             return edam_formats
     for line in data_bytes.splitlines():
