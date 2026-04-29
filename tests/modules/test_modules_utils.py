@@ -82,7 +82,7 @@ class TestModulesUtils(TestModules):
 
         filtered = nf_core.modules.modules_utils.filter_modules_by_name(modules, "fastqc")
         assert len(filtered) == 0
-    
+
     def test_load_edam(self):
         """Test edam ontology loading"""
         edam_formats = nf_core.modules.modules_utils.load_edam()
