@@ -22,7 +22,7 @@ RUN mkdir -p /usr/share/man/man1 \
 
 # Setup ARG for NXF_VER ENV
 ARG NXF_VER=""
-ENV NXF_VER ${NXF_VER}
+ENV NXF_VER=${NXF_VER}
 # Install Nextflow
 RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
