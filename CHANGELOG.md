@@ -7,6 +7,7 @@
 - handle prek not being exposed to $PATH ([#4238](https://github.com/nf-core/tools/pull/4238))
 - fix failing api doc generation script ([#4239](https://github.com/nf-core/tools/pull/4239))
 - switch changelog bot trigger only on comments ([#4241](https://github.com/nf-core/tools/pull/4241))
+- fix indentation in generated api docs ([#4245](https://github.com/nf-core/tools/pull/4245))
 
 ### Linting
 
