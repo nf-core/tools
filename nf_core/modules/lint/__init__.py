@@ -689,15 +689,12 @@ class ModuleLint(ComponentLint):
 
         def _ensure_string_keys(obj):
             """Recursively ensure all dict keys are strings (e.g., convert 1.2 -> "1.2")"""
+            # This first block is needed to keep the comments in the yml
             if isinstance(obj, ruamel.yaml.comments.CommentedMap):
                 for key in list(obj.keys()):
                     value = obj.pop(key)
                     new_key = str(key) if not isinstance(key, str) else key
                     obj[new_key] = _ensure_string_keys(value)
-                return obj
-            elif isinstance(obj, ruamel.yaml.comments.CommentedSeq):
-                for i, item in enumerate(obj):
-                    obj[i] = _ensure_string_keys(item)
                 return obj
             elif isinstance(obj, dict):
                 return {str(k) if not isinstance(k, str) else k: _ensure_string_keys(v) for k, v in obj.items()}
