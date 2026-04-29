@@ -320,7 +320,7 @@ def check_script_section(self, lines):
         )
 
     # Validate ext keys
-    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.prefix2", "ext.use_gpu"}
     invalid_ext_keys = [
         key
         for key in re.findall(r"\bext\.\w+", script)

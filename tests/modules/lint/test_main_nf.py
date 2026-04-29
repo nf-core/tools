@@ -1025,6 +1025,7 @@ def test_validate_ext_keys():
     def args2 = task.ext.args2 ?: ''
     def args3 = task.ext.args3 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix2 = task.ext.prefix2 ?: ''
     def use_gpu = task.ext.use_gpu ? '--gpu' : ''
     """
         ],
@@ -1040,6 +1041,9 @@ def test_validate_ext_keys():
     def args1 = task.ext.args1 ?: ''
     def custom = task.ext.custom ?: ''
     def suffix = task.ext.suffix ?: '.bam'
+    def prefix1 = task.ext.prefix1 ?: ''
+    def prefix3 = task.ext.prefix3 ?: ''
+    def prefix22 = task.ext.prefix22 ?: ''
     """
         ],
     )
@@ -1047,6 +1051,9 @@ def test_validate_ext_keys():
     assert "ext.args1" in mock_lint.failed[0][2]
     assert "ext.custom" in mock_lint.failed[0][2]
     assert "ext.suffix" in mock_lint.failed[0][2]
+    assert "ext.prefix1" in mock_lint.failed[0][2]
+    assert "ext.prefix3" in mock_lint.failed[0][2]
+    assert "ext.prefix22" in mock_lint.failed[0][2]
 
     # ext.argsN where N >= 2 should be valid
     mock_lint.passed, mock_lint.failed = [], []

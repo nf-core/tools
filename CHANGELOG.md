@@ -1,23 +1,19 @@
 # nf-core/tools: Changelog
 
-## v4.0.1dev
+## v4.0.1
 
 ### General
 
+- handle prek not being exposed to $PATH ([#4238](https://github.com/nf-core/tools/pull/4238))
 - fix failing api doc generation script ([#4239](https://github.com/nf-core/tools/pull/4239))
-- .noop ([#4236](https://github.com/nf-core/tools/pull/4236))
-
-### Linting
+- switch changelog bot trigger only on comments ([#4241](https://github.com/nf-core/tools/pull/4241))
+- fix indentation in generated api docs ([#4245](https://github.com/nf-core/tools/pull/4245))
 
 - use static edam.csv and fix yaml comment loss ([#4242](https://github.com/nf-core/tools/pull/4242))
 
 ### Modules
 
-### Subworkflows
-
-### Template
-
-#### Version updates
+- Allow task.ext.prefix2 in modules linting ([#4234](https://github.com/nf-core/tools/pull/4234))
 
 ## [v4.0.0 - Bold Boa](https://github.com/nf-core/tools/releases/tag/4.0.0) - [2026-04-27]
 
