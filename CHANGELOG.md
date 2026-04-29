@@ -4,28 +4,9 @@
 
 ### General
 
+- handle prek not being exposed to $PATH ([#4238](https://github.com/nf-core/tools/pull/4238))
 - fix failing api doc generation script ([#4239](https://github.com/nf-core/tools/pull/4239))
-- ## [Codecov](https://app.codecov.io/gh/nf-core/tools/pull/4241?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core) Report
-  :white_check_mark: All modified and coverable lines are covered by tests.
-  :white_check_mark: Project coverage is 17.00%. Comparing base ([`33d9944`](https://app.codecov.io/gh/nf-core/tools/commit/33d9944622d081645def84318b04e73ebaaebfdc?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core)) to head ([`e57bb1f`](https://app.codecov.io/gh/nf-core/tools/commit/e57bb1f376e09ee1fce186396e745d849c0f3629?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core)).
-  :warning: Report is 5 commits behind head on dev.
-  > :exclamation: There is a different number of reports uploaded between BASE (33d9944) and HEAD (e57bb1f). Click for more details.
-  >
-  > <details><summary>HEAD has 74 uploads less than BASE</summary>
-  >
-  > | Flag        | BASE (33d9944) | HEAD (e57bb1f) |
-  > | ----------- | -------------- | -------------- |
-  > | python-3.10 | 88             | 14             |
-  >
-  > </details>
-
-[:umbrella: View full report in Codecov by Sentry](https://app.codecov.io/gh/nf-core/tools/pull/4241?dropdown=coverage&src=pr&el=continue&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core).  
-:loudspeaker: Have feedback on the report? [Share it here](https://about.codecov.io/codecov-pr-comment-feedback/?utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nf-core).
-
-<details><summary> :rocket: New features to boost your workflow: </summary>
-
-- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.
-</details> ([#4241](https://github.com/nf-core/tools/pull/4241))
+- switch changelog bot trigger only on comments ([#4241](https://github.com/nf-core/tools/pull/4241))
 
 ### Linting
 
