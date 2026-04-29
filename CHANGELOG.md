@@ -1,6 +1,20 @@
 # nf-core/tools: Changelog
 
-## v4.0.1
+## v4.0.2dev
+
+### General
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### Template
+
+#### Version updates
+
+## [v4.0.1 - Bold Boa Patch](https://github.com/nf-core/tools/releases/tag/4.0.1) - [2026-04-29]
 
 ### General
 
@@ -13,7 +27,7 @@
 
 - Allow task.ext.prefix2 in modules linting ([#4234](https://github.com/nf-core/tools/pull/4234))
 
-## [v4.0.0 - Bold Boa](https://github.com/nf-core/tools/releases/tag/4.0.0) - [2026-04-27]
+## [v4.0.0 - Bold Boa](https://github.com/nf-core/tools/releases/tag/4.0.0) - [2026-04-28]
 
 ### General
 
