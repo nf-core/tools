@@ -86,5 +86,6 @@ class TestModulesUtils(TestModules):
     def test_load_edam(self):
         """Test edam ontology loading"""
         edam_formats = nf_core.modules.modules_utils.load_edam()
-        assert len(edam_formats) == 62
-        assert len(edam_formats[1]) == 2
+        assert len(edam_formats) == 67
+        first_item = next(iter(edam_formats))
+        assert len(first_item) == 2
