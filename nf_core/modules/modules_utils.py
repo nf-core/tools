@@ -2,6 +2,10 @@ import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
+import requests
+
+from nf_core.utils import NFCORE_CACHE_DIR
+
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
@@ -97,13 +101,24 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    local_path = Path(__file__).parent.parent / "assets" / "EDAM.tsv"
-    try:
-        with local_path.open("rb") as f:
-            data_bytes = f.read()
-    except (FileNotFoundError, OSError) as e:
-        log.warning(f"Failed to load EDAM ontology: {e}")
-        return {}
+    cache_path = Path(NFCORE_CACHE_DIR) / "EDAM.tsv"
+    if not cache_path.exists():
+        log.debug("EDAM.tsv file not found in NFCORE_CACHE_DIR")
+        try:
+            response = requests.get("https://edamontology.org/EDAM.tsv", timeout=15)
+            data_bytes = response.content
+            with open(cache_path, "wb") as fh:
+                fh.write(data_bytes)
+        except requests.exceptions.RequestException:
+            return edam_formats
+    else:
+        log.debug("EDAM.tsv file found in NFCORE_CACHE_DIR")
+        try:
+            with cache_path.open("rb") as f:
+                data_bytes = f.read()
+        except (FileNotFoundError, OSError) as e:
+            log.warning(f"Failed to load EDAM ontology: {e}")
+            return edam_formats
     for line in data_bytes.splitlines():
         fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format") and fields[2]:  # We choose an already provided extension

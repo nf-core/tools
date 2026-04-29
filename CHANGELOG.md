@@ -11,7 +11,7 @@
 
 ### Linting
 
-- use static edam.csv and fix yaml comment loss ([#4242](https://github.com/nf-core/tools/pull/4242))
+- Store `EDAM.tsv` in `NFCORE_CACHE_DIR` and fix yaml comment loss ([#4242](https://github.com/nf-core/tools/pull/4242))
 
 ### Modules
 
