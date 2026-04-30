@@ -57,35 +57,37 @@ class ContainerConfigs:
         # Captures the first name (original) and the path, ignoring any alias
         include_pattern = re.compile(r"include\s*\{\s*(\w+).*?\}\s*from\s+['\"]([^'\"]+)['\"]")
 
-        # Search in workflows, modules, and subworkflows directories
+        # Search in root (main.nf), workflows, modules, and subworkflows directories
         search_dirs = ["workflows", "modules", "subworkflows"]
 
+        nf_files_to_search = list(self.workflow_directory.glob("*.nf"))
         for search_dir in search_dirs:
             search_path = self.workflow_directory / search_dir
             if not search_path.exists():
                 continue
+            nf_files_to_search.extend(search_path.rglob("*.nf"))
 
-            for nf_file in search_path.rglob("*.nf"):
-                try:
-                    content = nf_file.read_text()
-                    for match in include_pattern.finditer(content):
-                        process_name = match.group(1)
-                        relative_path = match.group(2)
+        for nf_file in nf_files_to_search:
+            try:
+                content = nf_file.read_text()
+                for match in include_pattern.finditer(content):
+                    process_name = match.group(1)
+                    relative_path = match.group(2)
 
-                        # Only process paths that contain 'modules/'
-                        if "modules/" not in relative_path:
-                            continue
+                    # Only process paths that contain 'modules/'
+                    if "modules/" not in relative_path:
+                        continue
 
-                        # Extract everything from 'modules/' onwards, removing any '/main' suffix
-                        module_path_str = relative_path[relative_path.find("modules/") :]
-                        module_path_str = module_path_str.replace("/main", "")
+                    # Extract everything from 'modules/' onwards, removing any '/main' suffix
+                    module_path_str = relative_path[relative_path.find("modules/") :]
+                    module_path_str = module_path_str.replace("/main", "")
 
-                        module_paths[process_name] = Path(module_path_str)
-                        log.debug(f"Found include: {process_name} -> {module_path_str}")
+                    module_paths[process_name] = Path(module_path_str)
+                    log.debug(f"Found include: {process_name} -> {module_path_str}")
 
-                except OSError as e:
-                    log.debug(f"Error parsing {nf_file}: {e}")
-                    continue
+            except OSError as e:
+                log.debug(f"Error parsing {nf_file}: {e}")
+                continue
 
         return module_paths
 
@@ -162,7 +164,7 @@ class ContainerConfigs:
                     has_warnings = True
                     continue
         if has_warnings:
-            log.info(
+            log.debug(
                 "Generated container configs for the pipeline. Not all containers were found. Run with `-v` to see detailed warning messages."
             )
         else:
