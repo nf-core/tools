@@ -164,7 +164,7 @@ class ContainerConfigs:
                     has_warnings = True
                     continue
         if has_warnings:
-            log.info(
+            log.debug(
                 "Generated container configs for the pipeline. Not all containers were found. Run with `-v` to see detailed warning messages."
             )
         else:
