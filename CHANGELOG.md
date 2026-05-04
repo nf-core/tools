@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+## v4.1.0dev
+
+### General
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### Template
+
+#### Version updates
+
 ## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]
 
 ### General
