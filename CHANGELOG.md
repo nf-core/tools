@@ -6,7 +6,7 @@
 
 ### Linting
 
-- Accept `process_low_memory` as a standard module label.
+- accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
 
 ### Modules
 
@@ -14,7 +14,7 @@
 
 ### Template
 
-- Add `process_low_memory` resource label to the pipeline-template `base.config`. Mirrors `process_high_memory` so it can be stacked with one of the cpu/time bands (e.g. `process_high` + `process_low_memory` for cpu-bound, memory-light tools).
+- add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
 
 #### Version updates
 
