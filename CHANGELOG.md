@@ -6,11 +6,15 @@
 
 ### Linting
 
+- Accept `process_low_memory` as a standard module label.
+
 ### Modules
 
 ### Subworkflows
 
 ### Template
+
+- Add `process_low_memory` resource label to the pipeline-template `base.config`. Mirrors `process_high_memory` so it can be stacked with one of the cpu/time bands (e.g. `process_high` + `process_low_memory` for cpu-bound, memory-light tools).
 
 #### Version updates
 
