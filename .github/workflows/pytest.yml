@@ -84,12 +84,6 @@ jobs:
       - name: Set up Apptainer
         if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
         uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
-        with:
-          apptainer-version: 1.3.4
-
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
