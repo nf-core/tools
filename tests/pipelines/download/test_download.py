@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -325,11 +326,13 @@ class DownloadTest(unittest.TestCase):
             nonlocal has_retried
             if not has_retried:
                 has_retried = True
-                raise RuntimeError(
-                    """The following invalid input values have been detected:\n
-                 * Missing required parameter: --outdir
-                 """
+                nf_output = (
+                    b"The following invalid input values have been detected:\n * Missing required parameter: --outdir\n"
                 )
+                cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=nf_output)
+                exc = RuntimeError("Command failed")
+                exc.__cause__ = cause
+                raise exc
 
             assert "-params-file" in cmd_params
             params_file_match = re.search(r'-params-file\s+"([^"]+)"', cmd_params)
@@ -353,6 +356,22 @@ class DownloadTest(unittest.TestCase):
         mock_run_cmd.side_effect = RuntimeError("unexpected inspect failure")
 
         with pytest.raises(DownloadError, match="unexpected inspect failure"):
+            download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+        assert mock_run_cmd.call_count == 1
+        mock_get_remote_workflows.assert_called_once()
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
+        """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
+        download_obj = DownloadWorkflow(container_system="docker")
+        cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=b"Error: Invalid process directive\n")
+        exc = RuntimeError("Command failed")
+        exc.__cause__ = cause
+        mock_run_cmd.side_effect = exc
+
+        with pytest.raises(DownloadError, match="downgrade to Nextflow"):
             download_obj.find_container_images(Path("workflow"), "dummy-revision")
 
         assert mock_run_cmd.call_count == 1

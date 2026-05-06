@@ -693,10 +693,27 @@ class DownloadWorkflow:
         try:
             out_json = run_nextflow_inspect()
         except RuntimeError as e:
+            # Extract Nextflow stdout from the chained CalledProcessError (errors go to stdout in NF)
+            nf_stdout = b""
+            if e.__cause__ is not None and hasattr(e.__cause__, "output") and e.__cause__.output:
+                nf_stdout = e.__cause__.output
+
+            # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
+            # if/else container blocks with "Invalid process directive". Users need an older NF.
+            if b"Invalid process directive" in nf_stdout:
+                raise DownloadError(
+                    "nextflow inspect failed because the pipeline uses old-style process syntax "
+                    "that the default strict syntax of Nextflow >= 26.04 no longer accepts.\n"
+                    "Please downgrade to Nextflow 25.10 or lower to download this pipeline, "
+                    "or ask the pipeline maintainers to update their container directives."
+                ) from e
+
             # Some workflow revisions explicitly require an outdir parameter. If this is the
             # only issue, retry inspect with an ephemeral params file that provides one.
             if re.search(
-                r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b", str(e), flags=re.IGNORECASE
+                r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b",
+                nf_stdout.decode("utf-8", errors="replace"),
+                flags=re.IGNORECASE,
             ):
                 try:
                     with tempfile.TemporaryDirectory(prefix="nf-core-inspect-") as tmp_dir:
