@@ -558,6 +558,15 @@ def check_process_name_format(self, process_name, component_name):
 
 def check_process_labels(self, lines):
     correct_process_labels = [
+        # Axis-decomposed labels (preferred)
+        "process_cpus_single",
+        "process_cpus_low",
+        "process_cpus_medium",
+        "process_cpus_high",
+        "process_mem_low",
+        "process_mem_medium",
+        "process_mem_high",
+        # Legacy combined labels (kept for backwards compatibility, to be deprecated)
         "process_single",
         "process_low",
         "process_medium",

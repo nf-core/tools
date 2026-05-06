@@ -244,6 +244,15 @@ class ComponentCreate(ComponentCommand):
 
     def _get_module_structure_components(self):
         process_label_defaults = [
+            # Axis-decomposed labels (preferred)
+            "process_cpus_single",
+            "process_cpus_low",
+            "process_cpus_medium",
+            "process_cpus_high",
+            "process_mem_low",
+            "process_mem_medium",
+            "process_mem_high",
+            # Legacy combined labels (kept for backwards compatibility, to be deprecated)
             "process_single",
             "process_low",
             "process_medium",
