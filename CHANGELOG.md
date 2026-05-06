@@ -17,6 +17,7 @@
 - improve linting for `modules.json` to add support for only installing subworkflows from a repository and provide more explicit error messages ([#4287](https://github.com/nf-core/tools/pull/4287))
 - improve singularity_tag linting check (add skip, handle exceptions correctly, check against oras) ([#4358](https://github.com/nf-core/tools/pull/4358))
 - accept axis-decomposed `process_cpus_*` and `process_mem_*` labels alongside the legacy combined labels ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- accept axis-decomposed `process_cpus_*` and `process_mem_*` labels alongside the legacy combined labels ([#4265](https://github.com/nf-core/tools/pull/4265))
 
 ### Modules
 
@@ -35,6 +36,7 @@
 - remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
 - Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
 - add axis-decomposed `process_cpus_{single,low,medium,high}` and `process_mem_{low,medium,high}` labels to `base.config`; legacy combined labels remain in place pending deprecation ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- add axis-decomposed `process_cpus_{single,low,medium,high}` and `process_mem_{low,medium,high}` labels to `base.config`; legacy combined labels remain in place pending deprecation ([#4265](https://github.com/nf-core/tools/pull/4265))
 
 #### Version updates
 
