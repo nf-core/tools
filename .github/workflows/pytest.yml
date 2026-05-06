@@ -46,7 +46,7 @@ jobs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
   test:
-    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} on ubuntu-latest
+    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} and Nextflow ${{ matrix.nextflow-version }}
     needs: list_tests
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
@@ -93,6 +93,9 @@ jobs:
 
       - name: Install nf-test
         uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+        with:
+          version: 0.9.5
+          install-fast-diff: true
 
       - name: move coveragerc file up
         run: |
