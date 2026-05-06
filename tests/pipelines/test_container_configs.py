@@ -67,7 +67,8 @@ class TestContainerConfigs(TestPipelines):
             with cfg_path.open("r") as fh:
                 content = fh.readlines()
                 value = fastqc_meta_yml["containers"][runtime][arch][protocol]
-                assert f"process {{ withName: 'FASTQC' {{ container = '{value}' }} }}\n" in content
+                key = "conda" if p_name.startswith("conda_lock_") else "container"
+                assert f"process {{ withName: 'FASTQC' {{ {key} = '{value}' }} }}\n" in content
 
     def test_generate_container_configs_new_module_injected(self) -> None:
         """new_module_name/path are used when nextflow inspect doesn't yet know about the module."""
@@ -96,7 +97,8 @@ class TestContainerConfigs(TestPipelines):
             cfg_path = conf_dir / f"containers_{p_name}.config"
             assert cfg_path.exists()
             value = fastqc_meta_yml["containers"][runtime][arch][protocol]
-            assert f"process {{ withName: 'FASTQC' {{ container = '{value}' }} }}\n" in cfg_path.read_text()
+            key = "conda" if p_name.startswith("conda_lock_") else "container"
+            assert f"process {{ withName: 'FASTQC' {{ {key} = '{value}' }} }}\n" in cfg_path.read_text()
 
     def test_generate_container_configs_removes_stale_entries(self) -> None:
         """Stale config files are deleted when all their modules have been removed."""

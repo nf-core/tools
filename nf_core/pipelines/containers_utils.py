@@ -184,8 +184,9 @@ class ContainerConfigs:
         for platform, module_containers in containers.items():
             if not module_containers:
                 continue
+            container_key = "conda" if platform.startswith("conda_lock_") else "container"
             lines = [
-                f"process {{ withName: '{module_name}' {{ container = '{container}' }} }}\n"
+                f"process {{ withName: '{module_name}' {{ {container_key} = '{container}' }} }}\n"
                 for module_name, container in sorted(module_containers.items())
             ]
             config_path = self.workflow_directory / "conf" / f"containers_{platform}.config"
