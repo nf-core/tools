@@ -252,6 +252,9 @@ class ComponentCreate(ComponentCommand):
             "process_mem_low",
             "process_mem_medium",
             "process_mem_high",
+            "process_time_short",
+            "process_time_medium",
+            "process_time_long",
             # Legacy combined labels (kept for backwards compatibility, to be deprecated)
             "process_single",
             "process_low",
