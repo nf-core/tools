@@ -20,6 +20,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      nextflow-version:
+        description: "Nextflow version to test against"
+        required: false
+        default: "latest-stable"
 
 # Cancel if a newer run with the same workflow name is queued
 concurrency:
@@ -54,9 +59,9 @@ jobs:
     strategy:
       matrix:
         # On main branch test with 3.10 and 3.14, otherwise just 3.10
-        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
+        python-version: ${{ (github.base_ref == 'main' || github.event_name == 'push') && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
         test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
-        nextflow-version: ["25.10", "latest-stable"]
+        nextflow-version: ${{ (github.base_ref == 'main' || github.event_name == 'push') && fromJson('["25.10.4", "latest-stable"]') || fromJson('["25.10.4"]') }}
       fail-fast: false # run all tests even if one fails
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -89,7 +94,7 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
         with:
-          version: ${{ matrix.nextflow-version }}
+          version: ${{ github.event.inputs.nextflow-version || matrix.nextflow-version }}
 
       - name: Install nf-test
         uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
