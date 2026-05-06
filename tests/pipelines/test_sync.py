@@ -7,9 +7,11 @@ from unittest import mock
 
 import git
 import pytest
+import requests
 import yaml
 
 import nf_core.pipelines.sync
+import nf_core.utils
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
@@ -28,6 +30,10 @@ class MockResponse:
 
     def json(self):
         return self.data
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.RequestException(f"Error {self.status_code}: {self.reason}")
 
 
 def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
@@ -302,6 +308,37 @@ class TestModules(TestPipelines):
         pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
         assert pipeline_contents == {".git"}.union(top_level_ignored)
         # Now create the new template
+        psync.make_template_pipeline()
+        pipeline_path = Path(self.pipeline_dir)
+        assert (pipeline_path / "main.nf").exists()
+        assert (pipeline_path / "nextflow.config").exists()
+
+    def test_create_template_pipeline_backfills_missing_org_url(self):
+        """Confirm that template rebuild still works when legacy config omits org metadata."""
+        nf_core_yml_path = Path(self.pipeline_dir) / ".nf-core.yml"
+        with open(nf_core_yml_path) as fh:
+            nf_core_yml = yaml.safe_load(fh)
+
+        nf_core_yml["template"].pop("org_full_name", None)
+        nf_core_yml["template"].pop("org_url", None)
+
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.safe_dump(nf_core_yml, fh)
+
+        repo = git.Repo(self.pipeline_dir)
+        repo.git.add(str(nf_core_yml_path))
+        repo.index.commit("Remove org metadata from template config")
+
+        _, loaded_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+        assert loaded_config is not None
+        assert loaded_config.template is not None
+        assert loaded_config.template.org_url == "https://nf-co.re"
+
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_tracked_template_branch_files()
         psync.make_template_pipeline()
         pipeline_path = Path(self.pipeline_dir)
         assert (pipeline_path / "main.nf").exists()

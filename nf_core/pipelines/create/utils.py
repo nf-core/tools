@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
@@ -65,12 +66,21 @@ class CreateConfig(NFCoreTemplateConfig):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
-    @field_validator("org", "description", "author", "version", "outdir")
+    @field_validator("org", "org_full_name", "org_url", "description", "author", "version", "outdir")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
         if v.strip() == "":
             raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("org_url")
+    @classmethod
+    def valid_org_url(cls, v: str) -> str:
+        """Check that the organisation URL is a valid HTTP(S) URL."""
+        parsed_url = urlparse(v)
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            raise ValueError("Must be a valid http(s) URL.")
         return v
 
     @field_validator("version")

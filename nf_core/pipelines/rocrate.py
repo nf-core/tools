@@ -17,9 +17,12 @@ from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
-from nf_core.utils import Pipeline
+from nf_core.utils import Pipeline, get_docs_url, get_org_url, load_tools_config
 
 log = logging.getLogger(__name__)
+
+DEFAULT_TOPICS = ["nf-core", "nextflow"]
+TOPICS_REQUEST_TIMEOUT_SECONDS = 10
 
 
 # To identify bots, we look for names that contain "[bot]" or end with "-bot" or "_bot", case-insensitive
@@ -88,6 +91,12 @@ class ROCrate:
         self.crate: rocrate.rocrate.ROCrate
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
+        self.tools_config = None
+
+        try:
+            _, self.tools_config = load_tools_config(self.pipeline_dir)
+        except (AssertionError, FileNotFoundError, UserWarning) as error:
+            log.debug(f"Could not load `.nf-core.yml` for RO-Crate: {self.pipeline_dir}. {error}")
 
         setup_requests_cachedir()
 
@@ -143,6 +152,61 @@ class ROCrate:
 
         return True
 
+    def _get_template_parameter(self, param_name: str) -> str | None:
+        if self.tools_config and getattr(self.tools_config, "template", None):
+            org_name = getattr(self.tools_config.template, param_name, None)
+            if org_name:
+                return org_name
+        return None
+
+    def _get_pipeline_org(self) -> str:
+        return self._get_template_parameter("org") or "nf-core"
+
+    def _get_pipeline_org_full_name(self) -> str:
+        return self._get_template_parameter("org_full_name") or self._get_pipeline_org()
+
+    def _get_pipeline_org_url(self) -> str:
+        return self._get_template_parameter("org_url") or get_org_url(self._get_pipeline_org())
+
+    def _get_main_entity_url(self) -> str:
+        """Return a stable URL for the selected workflow revision."""
+        return get_docs_url(
+            self._get_pipeline_org_url(),
+            self.crate.name,
+            self.crate.name.replace(self._get_pipeline_org() + "/", ""),
+            self.version,
+            None,
+        )
+
+    def _get_remote_workflow_topics(self) -> list[str]:
+        """Fetch workflow topics from the organisation pipelines index when available."""
+        assert self.pipeline_obj.pipeline_name is not None  # mypy
+        topics = DEFAULT_TOPICS.copy()
+
+        try:
+            response = requests.get(
+                f"{self._get_pipeline_org_url()}/pipelines.json",
+                timeout=TOPICS_REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            log.debug("Could not fetch workflow topics for RO-Crate from %s: %s", self._get_pipeline_org_url(), error)
+            return topics
+
+        full_pipeline_name = f"{self._get_pipeline_org()}/{self.pipeline_obj.pipeline_name}"
+        try:
+            payload = response.json()
+            remote_workflows = payload["remote_workflows"]
+            for remote_wf in remote_workflows:
+                if remote_wf["full_name"] == full_pipeline_name or remote_wf["name"] == self.pipeline_obj.pipeline_name:
+                    topics.extend(remote_wf["topics"])
+                    break
+
+        except (ValueError, KeyError, TypeError) as error:
+            log.error("Could not parse pipelines index from %s: %s", response.url, error)
+
+        return topics
+
     def make_workflow_rocrate(self) -> None:
         """
         Create an RO Crate for a pipeline
@@ -191,9 +255,9 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        self.crate.add_jsonld(
-            {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
-        )
+        org_full_name = self._get_pipeline_org_full_name()
+        org_url = self._get_pipeline_org_url()
+        self.crate.add_jsonld({"@id": org_url, "@type": "Organization", "name": org_full_name, "url": org_url})
 
         # Set metadata for main entity file
         self.set_main_entity("main.nf")
@@ -213,25 +277,14 @@ class ROCrate:
         self.crate.mainEntity.append_to(
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
-        self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
-        url = "dev" if self.version.endswith("dev") else self.version
-        self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
-        )
+        self.crate.mainEntity.append_to("sdPublisher", {"@id": self._get_pipeline_org_url()}, compact=True)
+        self.crate.mainEntity.append_to("url", self._get_main_entity_url(), compact=True)
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
         # remove duplicate entries for version
         self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
 
-        # get keywords from nf-core website
-        remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
-        # go through all remote workflows and find the one that matches the pipeline name
-        topics = ["nf-core", "nextflow"]
-        for remote_wf in remote_workflows:
-            assert self.pipeline_obj.pipeline_name is not None  # mypy
-            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
-                topics = topics + remote_wf["topics"]
-                break
+        topics = self._get_remote_workflow_topics()
 
         log.debug(f"Adding topics: {topics}")
         self.crate.mainEntity.append_to("keywords", topics)

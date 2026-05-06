@@ -23,6 +23,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
+from urllib.parse import urlparse
 
 import git
 import prompt_toolkit.styles
@@ -1235,11 +1236,70 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
+def get_org_url(org_name: str, is_nfcore: bool | None = None) -> str:
+    """Return the canonical URL for a pipeline organisation."""
+    if is_nfcore or org_name == "nf-core":
+        return "https://nf-co.re"
+    return f"https://github.com/{org_name}"
+
+
+def get_docs_url(org_url: str, repo_name: str, short_name: str, branch: str, doc_name: str | None) -> str:
+    """Return a forge-aware URL for a rendered documentation page."""
+    normalized_org_url = org_url.rstrip("/")
+    parsed_url = urlparse(normalized_org_url)
+    hostname = parsed_url.netloc.lower()
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    revision = "dev" if branch.endswith("dev") else branch
+
+    if hostname == "github.com" or hostname.startswith("github.") or ".github." in hostname:
+        if doc_name:
+            return f"{base_url}/{repo_name}/blob/{revision}/docs/{doc_name}.md"
+        else:
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/tree/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/releases/tag/{revision}"
+    if hostname == "gitlab.com" or hostname.startswith("gitlab.") or ".gitlab." in hostname:
+        if doc_name:
+            return f"{base_url}/{repo_name}/-/blob/{revision}/docs/{doc_name}.md"
+        else:
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/-/tree/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/-/releases/{revision}"
+    if hostname == "bitbucket.org" or hostname.startswith("bitbucket.") or ".bitbucket." in hostname:
+        if doc_name:
+            return f"{base_url}/{repo_name}/src/{revision}/docs/{doc_name}.md"
+        else:
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/src/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/commits/tag/{revision}"
+    if hostname == "codeberg.org" or "forgejo" in hostname or "gitea" in hostname:
+        if doc_name:
+            return f"{base_url}/{repo_name}/src/branch/{revision}/docs/{doc_name}.md"
+        else:
+            if revision == "dev":
+                return f"{base_url}/{repo_name}/src/branch/{revision}"
+            else:
+                return f"{base_url}/{repo_name}/releases/tag/{revision}"
+
+    revision = "" if revision in ["main", "master"] else f"/{revision}"
+    if doc_name:
+        return f"{normalized_org_url}/{short_name}{revision}/{doc_name}"
+    else:
+        return f"{normalized_org_url}/{short_name}{revision}"
+
+
 class NFCoreTemplateConfig(BaseModel):
     """Template configuration schema"""
 
     org: str | None = None
     """ Organisation name """
+    org_full_name: str | None = None
+    """ Full organisation name """
+    org_url: str | None = None
+    """ Organisation URL """
     name: str | None = None
     """ Pipeline name """
     description: str | None = None
@@ -1429,7 +1489,25 @@ class NFCoreYamlConfig(BaseModel):
         for field in fields_to_exclude:
             config.pop(field, None)
 
+        template = config.get("template")
+        if isinstance(template, dict) and template.get("is_nfcore"):
+            template.pop("org_full_name", None)
+            template.pop("org_url", None)
+
         return config
+
+
+def _populate_template_org_metadata(template: NFCoreTemplateConfig | None) -> None:
+    """Backfill derived organisation fields needed to rebuild pipeline templates."""
+    if template is None or template.org is None:
+        return
+
+    if template.is_nfcore is None:
+        template.is_nfcore = template.org == "nf-core"
+    if template.org_full_name is None:
+        template.org_full_name = template.org
+    if template.org_url is None:
+        template.org_url = get_org_url(template.org, template.is_nfcore)
 
 
 def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreYamlConfig | None]:
@@ -1511,6 +1589,8 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
                 skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
                 is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
             )
+
+    _populate_template_org_metadata(nf_core_yaml_config.template)
 
     log.debug("Using config file: %s", config_fn)
     return config_fn, nf_core_yaml_config

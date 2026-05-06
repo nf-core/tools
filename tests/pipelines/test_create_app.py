@@ -2,9 +2,19 @@
 
 from unittest import mock
 
+from textual.widgets import Button, Input
+
 from nf_core.pipelines.create import PipelineCreateApp
+from nf_core.pipelines.create import utils as create_utils
+from nf_core.pipelines.create.utils import TextInput
 
 INIT_FILE = "../../nf_core/pipelines/create/__init__.py"
+
+
+async def press_screen_button(pilot, button_id: str) -> None:
+    """Press a button without relying on it being inside the visible viewport."""
+    pilot.app.screen.query_one(button_id, Button).press()
+    await pilot.pause()
 
 
 async def test_app_bindings():
@@ -21,6 +31,45 @@ async def test_app_bindings():
         # Test pressing the Q key
         await pilot.press("q")
         assert app.return_code == 0
+
+
+async def test_custom_org_metadata_stays_empty_until_blur():
+    """Empty org metadata fields should only be restored after the input loses focus."""
+    app = PipelineCreateApp()
+
+    async with app.run_test() as pilot:
+        pilot.app.NFCORE_PIPELINE = False
+        create_utils.NFCORE_PIPELINE_GLOBAL = False
+        pilot.app.push_screen("basic_details")
+        await pilot.pause()
+
+        screen = pilot.app.screen
+        org_input = screen.query_one("#org", TextInput).query_one(Input)
+        org_full_name_input = screen.query_one("#org_full_name", TextInput).query_one(Input)
+        org_url_input = screen.query_one("#org_url", TextInput).query_one(Input)
+
+        org_input.focus()
+        await pilot.pause()
+        await pilot.press("t", "e", "s", "t", "p", "r", "e", "f", "i", "x")
+        assert org_input.value == "testprefix"
+        assert org_full_name_input.value == "testprefix"
+        assert org_url_input.value == "https://github.com/testprefix"
+
+        org_full_name_input.focus()
+        await pilot.pause()
+        await pilot.press("backspace")
+        assert org_full_name_input.value == ""
+
+        org_url_input.focus()
+        await pilot.pause()
+        assert org_full_name_input.value == "testprefix"
+
+        await pilot.press("backspace")
+        assert org_url_input.value == ""
+
+        screen.query_one("#name", TextInput).query_one(Input).focus()
+        await pilot.pause()
+        assert org_url_input.value == "https://github.com/testprefix"
 
 
 def test_welcome(snap_compare):
@@ -89,7 +138,7 @@ def test_type_nfcore(snap_compare):
         await pilot.press("A", " ", "c", "o", "o", "l", " ", "d", "e", "s", "c", "r", "i", "p", "t", "i", "o", "n")
         await pilot.press("tab")
         await pilot.press("M", "e")
-        await pilot.click("#next")
+        await press_screen_button(pilot, "#next")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -132,7 +181,7 @@ def test_type_custom(snap_compare):
         await pilot.press("A", " ", "c", "o", "o", "l", " ", "d", "e", "s", "c", "r", "i", "p", "t", "i", "o", "n")
         await pilot.press("tab")
         await pilot.press("M", "e")
-        await pilot.click("#next")
+        await press_screen_button(pilot, "#next")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -181,9 +230,9 @@ def test_customisation_help(snap_compare):
         await pilot.press("A", " ", "c", "o", "o", "l", " ", "d", "e", "s", "c", "r", "i", "p", "t", "i", "o", "n")
         await pilot.press("tab")
         await pilot.press("M", "e")
-        await pilot.click("#next")
+        await press_screen_button(pilot, "#next")
         await pilot.pause(delay=1)
-        await pilot.click("#show_help_github_badges")
+        await press_screen_button(pilot, "#show_help_github_badges")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
