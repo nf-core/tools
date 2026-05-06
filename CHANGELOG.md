@@ -6,11 +6,15 @@
 
 ### Linting
 
+- accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
+
 ### Modules
 
 ### Subworkflows
 
 ### Template
+
+- add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
 
 #### Version updates
 
