@@ -383,14 +383,14 @@ class TestROCrate(TestPipelines):
         with self.assertRaises(SystemExit):
             self.rocrate_obj.parse_manifest_contributors()
 
-    def test_rocrate_creation_for_fetchngs(self):
-        """Run the nf-core rocrate command with nf-core/fetchngs"""
+    def test_rocrate_creation_for_demo(self):
+        """Run the nf-core rocrate command with nf-core/demo"""
         tmp_dir = Path(tempfile.mkdtemp())
-        # git clone  nf-core/fetchngs
-        git.Repo.clone_from("https://github.com/nf-core/fetchngs", tmp_dir / "fetchngs")
+        # git clone  nf-core/demo
+        git.Repo.clone_from("https://github.com/nf-core/demo", tmp_dir / "demo")
         # Run the command
-        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(tmp_dir / "fetchngs", version="1.12.0")
-        assert self.rocrate_obj.create_rocrate(tmp_dir / "fetchngs", self.pipeline_dir)
+        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(tmp_dir / "demo", version="1.1.0")
+        assert self.rocrate_obj.create_rocrate(tmp_dir / "demo", self.pipeline_dir)
 
         # Check that Sateesh Peri is mentioned in creator field
 

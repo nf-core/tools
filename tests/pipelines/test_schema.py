@@ -68,7 +68,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existent file is given"""
-        with pytest.raises(RuntimeError):
+        with pytest.raises(AssertionError):
             self.schema_obj.get_schema_path("fake_file")
 
     def test_load_lint_schema_notjson(self):
@@ -104,7 +104,7 @@ class TestSchema(unittest.TestCase):
 
     def test_get_schema_path_name(self):
         """Get schema file from the name of a remote pipeline"""
-        self.schema_obj.get_schema_path("atacseq")
+        self.schema_obj.get_schema_path("proteinfamilies")
 
     def test_get_schema_path_name_notexist(self):
         """

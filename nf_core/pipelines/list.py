@@ -25,13 +25,33 @@ def _get_nextflow_assets_dir() -> Path:
     """Return the Nextflow assets directory used for local workflow caches."""
     nxf_assets = os.environ.get("NXF_ASSETS")
     if nxf_assets:
-        return Path(nxf_assets)
+        base = Path(nxf_assets)
+    elif nxf_home := os.environ.get("NXF_HOME"):
+        base = Path(nxf_home, "assets")
+    else:
+        base = Path(os.environ.get("HOME", ""), ".nextflow", "assets")
 
-    nxf_home = os.environ.get("NXF_HOME")
-    if nxf_home:
-        return Path(nxf_home, "assets")
+    # Newer Nextflow versions store clones under assets/.repos/
+    repos_dir = base / ".repos"
+    if repos_dir.is_dir():
+        return repos_dir
+    return base
 
-    return Path(os.environ.get("HOME", ""), ".nextflow", "assets")
+
+def _resolve_wf_path(path: Path) -> Path:
+    """Resolve the actual pipeline working tree for a given assets dir / workflow path.
+
+    Nextflow 26.04+ uses a worktree layout under .repos:
+        <org>/<pipeline>/clones/<sha>/   ← working tree
+        <org>/<pipeline>/bare/           ← bare git repo
+    Returns the SHA-named clone dir when present, otherwise path unchanged.
+    """
+    clones_dir = path / "clones"
+    if clones_dir.is_dir():
+        sha_dirs = sorted(clones_dir.iterdir())
+        if sha_dirs:
+            return sha_dirs[-1]
+    return path
 
 
 def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
@@ -79,7 +99,7 @@ def get_local_wf(workflow: str | Path, revision=None) -> Path | None:
         workflow = Path("nf-core", workflow)
 
     local_wf = LocalWorkflow(str(workflow))
-    local_wf_path = _get_nextflow_assets_dir() / workflow
+    local_wf_path = _resolve_wf_path(_get_nextflow_assets_dir() / workflow)
     if local_wf_path.is_dir():
         local_wf.local_path = local_wf_path
         local_wf.get_local_nf_workflow_details()
@@ -103,7 +123,11 @@ def get_local_wf(workflow: str | Path, revision=None) -> Path | None:
     pull_cmd = f"pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
-    nf_core.utils.run_cmd("nextflow", pull_cmd)
+    try:
+        nf_core.utils.run_cmd("nextflow", pull_cmd)
+    except RuntimeError as e:
+        log.warning(f"Could not pull workflow '{workflow}': {e}")
+        return None
     local_wf = LocalWorkflow(str(workflow))
     local_wf.get_local_nf_workflow_details()
     return local_wf.local_path
@@ -365,7 +389,7 @@ class LocalWorkflow:
 
         if self.local_path is None:
             # Try to guess the local cache directory
-            nf_wfdir = _get_nextflow_assets_dir() / self.full_name
+            nf_wfdir = _resolve_wf_path(_get_nextflow_assets_dir() / self.full_name)
             if nf_wfdir.is_dir():
                 log.debug(f"Guessed nextflow assets workflow directory: {nf_wfdir}")
                 self.local_path = nf_wfdir

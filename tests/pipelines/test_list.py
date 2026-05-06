@@ -111,7 +111,7 @@ class TestList(TestCase):
         if not test_path.is_dir():
             test_path.mkdir(parents=True)
         # Create a dummy workflow directory (not just a file)
-        dummy_wf_path = self.tmp_nxf / "nf-core" / "dummy-wf"
+        dummy_wf_path = self.tmp_nxf / ".repos" / "nf-core" / "dummy-wf"
         dummy_wf_path.mkdir(parents=True, exist_ok=True)
         assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
         workflows_obj = nf_core.pipelines.list.Workflows()
