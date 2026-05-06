@@ -14,7 +14,8 @@
     },
 
     "remoteEnv": {
-        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+        "DOCKER_API_VERSION": "1.43"
     },
 
     "remoteUser": "root",

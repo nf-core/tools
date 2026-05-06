@@ -4,6 +4,8 @@
 
 ### General
 
+- Fix incompatible Docker Daemon Version in Devcontainer ([#4029](https://github.com/nf-core/tools/pull/4029))
+
 ### Linting
 
 - accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
