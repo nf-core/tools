@@ -276,14 +276,10 @@ class TestROCrate(TestPipelines):
     def test_parse_manifest_contributors_logs_parse_errors(self):
         """Emit a clear error when manifest.contributors cannot be normalised into valid JSON"""
 
-        self._set_manifest_identity(
-            """contributors = [
-                [
-                    name: 'Alice Example',
-                    github: alice
-                ]
-            ]
-            """
+        # Set nf_config directly to avoid running nextflow config -flat on invalid Groovy syntax
+        # (unquoted `alice` is valid Groovy but references an undefined variable, causing nextflow to fail)
+        self.rocrate_obj.pipeline_obj.nf_config["manifest.contributors"] = (
+            "[[\n    name: 'Alice Example',\n    github: alice\n]]"
         )
 
         with self.assertLogs("nf_core.pipelines.rocrate", level="ERROR") as logs:
