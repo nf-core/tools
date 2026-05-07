@@ -20,6 +20,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      nextflow-version:
+        description: "Nextflow version to test against"
+        required: false
+        default: "latest-stable"
 
 # Cancel if a newer run with the same workflow name is queued
 concurrency:
@@ -46,7 +51,7 @@ jobs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
   test:
-    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} on ubuntu-latest
+    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} and Nextflow ${{ matrix.nextflow-version }}
     needs: list_tests
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
@@ -54,8 +59,9 @@ jobs:
     strategy:
       matrix:
         # On main branch test with 3.10 and 3.14, otherwise just 3.10
-        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
+        python-version: ${{ (github.base_ref == 'main' || github.event_name == 'push') && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
         test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
+        nextflow-version: ${{ (github.base_ref == 'main' || github.event_name == 'push') && fromJson('["25.10.4", "latest-stable"]') || fromJson('["25.10.4"]') }}
       fail-fast: false # run all tests even if one fails
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -84,18 +90,17 @@ jobs:
       - name: Set up Apptainer
         if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
         uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
-        with:
-          apptainer-version: 1.3.4
-
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
+        with:
+          version: ${{ github.event.inputs.nextflow-version || matrix.nextflow-version }}
 
       - name: Install nf-test
         uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+        with:
+          version: 0.9.5
+          install-fast-diff: true
 
       - name: move coveragerc file up
         run: |

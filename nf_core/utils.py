@@ -479,8 +479,14 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=False)
+        if proc.returncode != 0:
+            if executable == "nf-test":
+                return (proc.stdout, proc.stderr)
+            raise subprocess.CalledProcessError(proc.returncode, proc.args, output=proc.stdout, stderr=proc.stderr)
         return (proc.stdout, proc.stderr)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Command '{full_cmd}' failed: {e}") from e
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
@@ -488,14 +494,6 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
             ) from e
         else:
             return None
-    except subprocess.CalledProcessError as e:
-        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
-        if executable == "nf-test":
-            return (e.stdout, e.stderr)
-        else:
-            raise RuntimeError(
-                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-            ) from e
 
 
 def setup_nfcore_dir() -> bool:
