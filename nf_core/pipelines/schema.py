@@ -93,16 +93,17 @@ class PipelineSchema:
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
             self.defs_notation = "$defs"
+            validation = conf.get("validation", {})
+            help_config = validation.get("help", {})
             ignored_params = [
-                conf.get("validation.help.shortParameter", "help"),
-                conf.get("validation.help.fullParameter", "helpFull"),
-                conf.get("validation.help.showHiddenParameter", "showHidden"),
+                help_config.get("shortParameter", "help"),
+                help_config.get("fullParameter", "helpFull"),
+                help_config.get("showHiddenParameter", "showHidden"),
                 "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
-            ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
-            ignored_params_config = [
-                item.strip().strip("'") for item in ignored_params_config_str[1:-1].split(",")
-            ]  # Extract list elements and remove whitespace
+            ignored_params_config = validation.get("defaultIgnoreParams", [])
+            if not isinstance(ignored_params_config, list):
+                ignored_params_config = []
 
             if len(ignored_params_config) > 0:
                 log.debug(f"Ignoring parameters from config: {ignored_params_config}")
@@ -761,16 +762,15 @@ class PipelineSchema:
         log.debug("Collecting pipeline parameter defaults\n")
         config = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
         skipped_params = []
-        # Pull out just the params. values
-        for ckey, cval in config.items():
-            if ckey.startswith("params."):
-                # skip anything that's not a flat variable
-                if "." in ckey[7:]:
-                    skipped_params.append(ckey)
-                    continue
-                self.pipeline_params[ckey[7:]] = cval
-            if ckey.startswith("manifest."):
-                self.pipeline_manifest[ckey[9:]] = cval
+        # Pull out just the params values (top-level flat keys only)
+        for pkey, pval in config.get("params", {}).items():
+            if isinstance(pval, dict):
+                skipped_params.append(f"params.{pkey}")
+                continue
+            self.pipeline_params[pkey] = pval
+        # Pull out manifest values
+        for mkey, mval in config.get("manifest", {}).items():
+            self.pipeline_manifest[mkey] = mval
         # Log skipped params
         if len(skipped_params) > 0:
             log.debug(

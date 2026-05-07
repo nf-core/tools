@@ -1,4 +1,3 @@
-import ast
 import logging
 import re
 from pathlib import Path
@@ -12,7 +11,7 @@ def plugin_includes(self) -> dict[str, list[str]]:
     When nf-schema is used in an nf-core pipeline, the include statements of the plugin
     functions have to use nf-schema instead of nf-validation and vice versa
     """
-    config_plugins = [plugin.split("@")[0] for plugin in ast.literal_eval(self.nf_config.get("plugins", "[]"))]
+    config_plugins = [plugin.split("@")[0] for plugin in self.nf_config.get("plugins", [])]
     validation_plugin = "nf-validation" if "nf-validation" in config_plugins else "nf-schema"
 
     passed: list[str] = []

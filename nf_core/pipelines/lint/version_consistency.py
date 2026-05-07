@@ -32,15 +32,16 @@ def version_consistency(self):
     # Get the version definitions
     # Get version from nextflow.config
     versions = {}
-    versions["manifest.version"] = self.nf_config.get("manifest.version", "").strip(" '\"")
+    versions["manifest.version"] = self.nf_config.get("manifest", {}).get("version", "") or ""
 
     # Get version from the docker tag
-    if self.nf_config.get("process.container", "") and ":" not in self.nf_config.get("process.container", ""):
-        failed.append(f"Docker slug seems not to have a version tag: {self.nf_config.get('process.container', '')}")
+    process_container = self.nf_config.get("process", {}).get("container", "") or ""
+    if process_container and ":" not in process_container:
+        failed.append(f"Docker slug seems not to have a version tag: {process_container}")
 
     # Get config container tag (if set; one container per workflow)
-    if self.nf_config.get("process.container", ""):
-        versions["process.container"] = self.nf_config.get("process.container", "").strip(" '\"").split(":")[-1]
+    if process_container:
+        versions["process.container"] = process_container.split(":")[-1]
 
     # Get version from the $GITHUB_REF env var if this is a release
     if (

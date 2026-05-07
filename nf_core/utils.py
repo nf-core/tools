@@ -272,10 +272,11 @@ class Pipeline:
         Once loaded, set a few convenience reference class attributes
         """
         self.nf_config = fetch_wf_config(self.wf_path)
+        manifest = self.nf_config.get("manifest", {})
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = manifest.get("name", "/").split("/")
 
-        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", manifest.get("nextflowVersion", "") or "")
         if nextflow_version_match:
             self.minNextflowVersion = nextflow_version_match.group(0)
             return True
@@ -396,7 +397,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
 
     log.debug(f"Got '{wf_path}' as path")
     wf_path = Path(wf_path)
-    config = {}
+    config: dict[str, Any] = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
@@ -441,19 +442,14 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    result = run_cmd("nextflow", f"config -flat -o json {wf_path}")
+    result = run_cmd("nextflow", f"config -o json {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
         try:
             parsed = json.loads(nfconfig_raw.decode("utf-8"))
-            for k, v in parsed.items():
-                if v is None or v == "":
-                    config[k] = "null"
-                elif isinstance(v, bool):
-                    config[k] = str(v).lower()
-                else:
-                    config[k] = str(v)
-                log.debug(f"Config key: {k}, value: {config[k]}")
+            config.update(parsed)
+            for k in parsed:
+                log.debug(f"Config section: {k}")
         except json.JSONDecodeError as e:
             log.warning(f"Unable to parse nextflow config output as JSON: {e}")
 
@@ -1488,22 +1484,23 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
         template = tools_config.get("template")
         config_template_keys = template.keys() if template is not None else []
         # Get author names from contributors first, then fallback to author
-        if "manifest.contributors" in wf_config:
-            contributors = wf_config["manifest.contributors"]
-            names = re.findall(r"name:'([^']+)'", contributors)
+        manifest = wf_config.get("manifest", {})
+        contributors = manifest.get("contributors", [])
+        if contributors:
+            names = [c.get("name", "") for c in contributors if c.get("name")]
             author_names = ", ".join(names)
-        elif "manifest.author" in wf_config:
-            author_names = wf_config["manifest.author"].strip("'\"")
+        elif manifest.get("author"):
+            author_names = manifest.get("author", "")
         else:
             author_names = None
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org="nf-core",
-                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
-                description=wf_config["manifest.description"].strip("'\""),
+                name=manifest.get("name", "/").split("/")[-1],
+                description=manifest.get("description", ""),
                 author=author_names,
-                version=wf_config["manifest.version"].strip("'\""),
+                version=manifest.get("version", ""),
                 outdir=str(directory),
                 is_nfcore=True,
             )
@@ -1511,10 +1508,10 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
             # The .nf-core.yml file contained the old prefix or skip keys
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
-                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
-                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                name=tools_config["template"].get("name", manifest.get("name", "/").split("/")[-1]),
+                description=tools_config["template"].get("description", manifest.get("description", "")),
                 author=tools_config["template"].get("author", author_names),
-                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                version=tools_config["template"].get("version", manifest.get("version", "")),
                 outdir=tools_config["template"].get("outdir", str(directory)),
                 skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
                 is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",

@@ -81,10 +81,10 @@ class PipelineSync:
         self.make_pr = make_pr
         self.gh_pr_returned_data: dict = {}
         self.required_config_vars = [
-            "manifest.name",
-            "manifest.description",
-            "manifest.version",
-            "manifest.contributors",
+            "name",
+            "description",
+            "version",
+            "contributors",
         ]
         self.force_pr = force_pr
 
@@ -232,8 +232,8 @@ class PipelineSync:
 
         # Check that we have the required variables
         for rvar in self.required_config_vars:
-            if rvar not in self.wf_config:
-                raise SyncExceptionError(f"Workflow config variable `{rvar}` not found!")
+            if rvar not in self.wf_config.get("manifest", {}):
+                raise SyncExceptionError(f"Workflow config variable `manifest.{rvar}` not found!")
 
     def checkout_template_branch(self):
         """
@@ -320,7 +320,7 @@ class PipelineSync:
                 from_config_file=True,
                 no_git=True,
                 force=True,
-                default_branch=self.wf_config.get("manifest.defaultBranch") or "master",
+                default_branch=self.wf_config.get("manifest", {}).get("defaultBranch") or "master",
             )
             pipeline_create_obj.init_pipeline()
 

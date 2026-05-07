@@ -249,10 +249,10 @@ class TestUtils(TestPipelines):
     @mock.patch("nf_core.utils.run_cmd")
     def test_fetch_wf_config(self, mock_run_cmd):
         """Test the fetch_wf_config() regular expression to read config params."""
-        mock_run_cmd.return_value = (b"params.param1 ? 'a=b' : ''\nparams.param2 = foo", b"mock")
-        config = nf_core.utils.fetch_wf_config(".", False)
-        assert len(config.keys()) == 1
-        assert "params.param2" in list(config.keys())
+        mock_run_cmd.return_value = (b'{"params": {"param2": "foo"}}', b"mock")
+        config = nf_core.utils.fetch_wf_config(Path(), False)
+        assert "params" in config
+        assert config["params"].get("param2") == "foo"
 
     @with_temporary_folder
     def test_get_wf_files(self, tmpdir):
