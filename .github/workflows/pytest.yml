@@ -58,10 +58,12 @@ jobs:
       - runner=4cpu-linux-x64
     strategy:
       matrix:
-        # On main branch test with 3.10 and 3.14, otherwise just 3.10
-        python-version: ${{ (github.base_ref == 'main' || github.event_name == 'push') && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
+        # On PRs to main test with 3.10 and 3.14, otherwise just 3.10
+        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
         test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
-        nextflow-version: ${{ (github.base_ref == 'main' || github.event_name == 'push') && fromJson('["25.10.4", "latest-stable"]') || fromJson('["25.10.4"]') }}
+        # On push/release test both NF versions, otherwise just 25.10.4
+        # Note: python×nextflow must stay ≤2 with 88 tests to stay under GitHub's 256-config limit
+        nextflow-version: ${{ (github.event_name == 'push' || github.event_name == 'release') && fromJson('["25.10.4", "latest-stable"]') || fromJson('["25.10.4"]') }}
       fail-fast: false # run all tests even if one fails
     steps:
       - name: go to subdirectory and change nextflow workdir

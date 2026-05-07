@@ -62,7 +62,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "mypy",
+    "mypy>=2.0.0",
     "myst_parser",
     "pytest-cov",
     "pytest-datafiles",
