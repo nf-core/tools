@@ -4,6 +4,8 @@
 
 ### General
 
+- Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
+
 ### Linting
 
 - accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
