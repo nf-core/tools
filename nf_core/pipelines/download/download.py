@@ -694,9 +694,7 @@ class DownloadWorkflow:
             out_json = run_nextflow_inspect()
         except RuntimeError as e:
             # Extract Nextflow stdout from the chained CalledProcessError (errors go to stdout in NF)
-            nf_stdout = b""
-            if e.__cause__ is not None and hasattr(e.__cause__, "output") and e.__cause__.output:
-                nf_stdout = e.__cause__.output
+            nf_stdout = getattr(e.__cause__, "output", None) or b""
 
             # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
             # if/else container blocks with "Invalid process directive". Users need an older NF.
