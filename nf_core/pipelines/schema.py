@@ -924,32 +924,30 @@ class PipelineSchema:
         """
         Build a pipeline schema dictionary for an param interactively
         """
+        if p_val is None:
+            return {"type": "string"}
+        if isinstance(p_val, bool):
+            return {"type": "boolean", "default": p_val} if p_val else {"type": "boolean"}
+        if isinstance(p_val, int):
+            return {"type": "integer", "default": p_val}
+        if isinstance(p_val, float):
+            return {"type": "number", "default": p_val}
+
+        # TODO: remove string branch once old text-format config caches are no longer supported
         p_val = p_val.strip("\"'")
-        # p_val is always a string as it is parsed from nextflow config this way
+        if not p_val or p_val == "null":
+            return {"type": "string"}
+        if p_val in ("true", "True"):
+            return {"type": "boolean", "default": True}
+        if p_val in ("false", "False"):
+            return {"type": "boolean"}
         try:
-            p_val = float(p_val)
-            if p_val == int(p_val):
-                p_val = int(p_val)
-                p_type = "integer"
-            else:
-                p_type = "number"
+            num = float(p_val)
+            if num == int(num):
+                return {"type": "integer", "default": int(num)}
+            return {"type": "number", "default": num}
         except ValueError:
-            p_type = "string"
-
-        # Anything can be "null", means that it is not set
-        if p_val == "null":
-            p_val = None
-
-        # Booleans
-        if p_val in ["true", "false", "True", "False"]:
-            p_val = p_val in ["true", "True"]  # Convert to bool
-            p_type = "boolean"
-
-        # Don't return a default for anything false-y except 0
-        if not p_val and not (p_val == 0 and p_val is not False):
-            return {"type": p_type}
-
-        return {"type": p_type, "default": p_val}
+            return {"type": "string", "default": p_val}
 
     def launch_web_builder(self):
         """
