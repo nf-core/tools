@@ -140,6 +140,7 @@ class TestList(TestCase):
         (git_dir / "FETCH_HEAD").touch()
         mock_repo.return_value.head.commit.hexsha = "h00r4y"
         mock_repo.return_value.remotes.origin.url = "https://github.com/nf-core/dummy"
+        mock_repo.return_value.common_dir = str(git_dir)
         local_wf.get_local_nf_workflow_details()
 
     @mock.patch("git.Repo")

@@ -44,11 +44,22 @@ def _resolve_wf_path(path: Path) -> Path:
     Nextflow 26.04+ uses a worktree layout under .repos:
         <org>/<pipeline>/clones/<sha>/   ← working tree
         <org>/<pipeline>/bare/           ← bare git repo
-    Returns the SHA-named clone dir when present, otherwise path unchanged.
+    Prefers the clone matching the bare repo's HEAD; falls back to the most
+    recently modified clone if HEAD's clone is missing or the bare repo is unreadable.
+    Returns path unchanged for the old (pre-26.04) flat layout.
     """
     clones_dir = path / "clones"
+    bare_dir = path / "bare"
     if clones_dir.is_dir():
-        sha_dirs = sorted(clones_dir.iterdir())
+        if bare_dir.is_dir():
+            try:
+                sha = git.Repo(bare_dir).head.commit.hexsha
+                clone = clones_dir / sha
+                if clone.is_dir():
+                    return clone
+            except git.GitCommandError:
+                pass
+        sha_dirs = sorted(clones_dir.iterdir(), key=lambda p: p.stat().st_mtime)
         if sha_dirs:
             return sha_dirs[-1]
     return path
@@ -215,7 +226,7 @@ class Workflows:
                 if rwf.full_name == lwf.full_name:
                     rwf.local_wf = lwf
                     if rwf.releases:
-                        if rwf.releases[-1]["tag_sha"] == lwf.commit_sha:
+                        if rwf.releases[0]["tag_sha"] == lwf.commit_sha:
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
@@ -253,7 +264,7 @@ class Workflows:
         if not self.sort_workflows_by or self.sort_workflows_by == "release":
             filtered_workflows.sort(
                 key=lambda wf: (
-                    (wf.releases[-1].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
+                    (wf.releases[0].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
                     wf.archived,
                     wf.full_name.lower(),
                 )
@@ -403,7 +414,10 @@ class LocalWorkflow:
                     for key, pattern in re_patterns.items():
                         m = re.search(pattern, str(nfinfo_raw))
                         if m:
-                            setattr(self, key, m.group(1))
+                            value = Path(m.group(1)) if key == "local_path" else m.group(1)
+                            if key == "local_path":
+                                value = _resolve_wf_path(value)
+                            setattr(self, key, value)
 
         # Pull information from the local git repository
         if self.local_path is not None:
@@ -412,7 +426,8 @@ class LocalWorkflow:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
                 self.remote_url = str(repo.remotes.origin.url)
-                self.last_pull = (self.local_path / ".git" / "FETCH_HEAD").stat().st_mtime
+                self.last_pull = Path(repo.common_dir) / "FETCH_HEAD"
+                self.last_pull = self.last_pull.stat().st_mtime
                 self.last_pull_date = datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
                 self.last_pull_pretty = pretty_date(self.last_pull)
 
@@ -434,7 +449,7 @@ class LocalWorkflow:
                     f"Could not fetch status of local Nextflow copy of '{self.full_name}':"
                     f"\n   [red]{type(e).__name__}:[/] {str(e)}"
                     "\n\nThis git repository looks broken. It's probably a good idea to delete this local copy and pull again:"
-                    f"\n   [magenta]rm -rf {self.local_path}"
+                    f"\n   [magenta]rm -rf {_get_nextflow_assets_dir() / self.full_name}"
                     f"\n   [magenta]nextflow pull {self.full_name}",
                 )
 
