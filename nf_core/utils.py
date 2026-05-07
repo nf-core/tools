@@ -449,6 +449,8 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             raw_str = nfconfig_raw.decode("utf-8")
             json_start = raw_str.find("{")
             parsed = json.loads(raw_str[json_start:] if json_start >= 0 else raw_str)
+            if "params" in parsed:
+                parsed["params"] = {k: "null" if v is None else v for k, v in parsed["params"].items()}
             config.update(parsed)
             for k in parsed:
                 log.debug(f"Config section: {k}")
