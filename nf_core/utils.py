@@ -440,24 +440,21 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    result = run_cmd("nextflow", f"config -flat -o json {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        nfconfig = nfconfig_raw.decode("utf-8")
-        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=\s]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
-
-        for config_match in multiline_key_value_pattern.finditer(nfconfig):
-            k = config_match.group(2).strip()
-            v = config_match.group(3).strip().strip("'\"")
-            if k and v == "":
-                config[k] = "null"
-                log.debug(f"Config key: {k}, value: empty string")
-            elif k and v:
-                config[k] = v
-                log.debug(f"Config key: {k}, value: {v}")
-            else:
-                log.debug(f"Couldn't find key=value config pair:\n  {config_match.group(0)}")
-            del config_match
+        try:
+            parsed = json.loads(nfconfig_raw.decode("utf-8"))
+            for k, v in parsed.items():
+                if v is None or v == "":
+                    config[k] = "null"
+                elif isinstance(v, bool):
+                    config[k] = str(v).lower()
+                else:
+                    config[k] = str(v)
+                log.debug(f"Config key: {k}, value: {config[k]}")
+        except json.JSONDecodeError as e:
+            log.warning(f"Unable to parse nextflow config output as JSON: {e}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
