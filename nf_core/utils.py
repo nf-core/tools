@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import git
+import git.exc
 import prompt_toolkit.styles
 import questionary
 import requests.auth
@@ -119,7 +120,7 @@ def unquote(s: str) -> str:
     Returns:
         String with outer quotes removed if present, otherwise original string
     """
-    import ruamel.yaml
+    import ruamel.yaml.scalarstring
 
     if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
         return s
@@ -458,8 +459,9 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
+
+    main_nf = Path(wf_path, "main.nf")
     try:
-        main_nf = Path(wf_path, "main.nf")
         with open(main_nf, "rb") as fh:
             for line in fh:
                 line_str = line.decode("utf-8")
@@ -645,7 +647,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         log.debug("Initialising GitHub API requests session")
         cache_config = setup_requests_cachedir()
-        super().__init__(**cache_config)
+        super().__init__(**cache_config)  # type: ignore[arg-type]
         self.setup_github_auth()
         self.has_init = True
 
@@ -734,13 +736,13 @@ class GitHubAPISession(requests_cache.CachedSession):
 
         return request
 
-    def get(self, url, **kwargs):
+    def get(self, url, params=None, **kwargs):
         """
         Initialise the session if we haven't already, then call the superclass get method.
         """
         if not self.has_init:
             self.lazy_init()
-        return super().get(url, **kwargs)
+        return super().get(url, params=params, **kwargs)
 
     def request_retry(self, url, post_data=None):
         """
@@ -1124,17 +1126,12 @@ class SingularityCacheFilePathValidator(questionary.Validator):
     Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
-    def validate(self, value):
-        if len(value.text):
-            if Path(value.text).is_file():
-                return True
-            else:
-                raise questionary.ValidationError(
-                    message="Invalid remote cache index file",
-                    cursor_position=len(value.text),
-                )
-        else:
-            return True
+    def validate(self, document) -> None:
+        if len(document.text) and not Path(document.text).is_file():
+            raise questionary.ValidationError(
+                message="Invalid remote cache index file",
+                cursor_position=len(document.text),
+            )
 
 
 def get_repo_releases_branches(pipeline, wfs):
