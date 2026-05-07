@@ -112,7 +112,13 @@ class ContainerConfigs:
                 raise UserWarning("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
             out, _ = cmd_out
-            out_json = json.loads(out)
+            out_str = out.decode("utf-8", errors="replace")
+            try:
+                # Newer Nextflow versions print [PIPELINE]/[WORKDIR] headers before and [SUCCESS] after the JSON
+                json_start = out_str.find("{")
+                out_json, _ = json.JSONDecoder().raw_decode(out_str, json_start if json_start >= 0 else 0)
+            except json.JSONDecodeError:
+                out_json = json.loads(out)
 
         except RuntimeError as e:
             log.error("Running 'nextflow inspect' failed with the following error:")
