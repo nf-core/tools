@@ -183,6 +183,106 @@ def test_environment_yml_invalid_files(tmp_path, invalid_content, filename):
         environment_yml(lint, module)
 
 
+@pytest.mark.parametrize(
+    "input_content,expected_status,expected_unpinned",
+    [
+        # All pip deps pinned with == → passes
+        (
+            """
+            dependencies:
+                - python=3.12
+                - pip:
+                    - foo==1.2.3
+                    - bar==4.5.6
+            """,
+            "passed",
+            [],
+        ),
+        # Range specifiers (~=, >=, compound) are NOT considered pinned
+        (
+            """
+            dependencies:
+                - pip:
+                    - foo==1.2.3
+                    - bar~=2.0
+                    - baz>=1.0,<2.0
+            """,
+            "warned",
+            ["bar~=2.0", "baz>=1.0,<2.0"],
+        ),
+        # URL / VCS form is treated as pinned
+        (
+            """
+            dependencies:
+                - pip:
+                    - foo @ git+https://github.com/x/foo@v1.2.3
+            """,
+            "passed",
+            [],
+        ),
+        # All unpinned → warned, all entries reported
+        (
+            """
+            dependencies:
+                - pip:
+                    - foo
+                    - bar
+            """,
+            "warned",
+            ["foo", "bar"],
+        ),
+        # Mix → warned, only unpinned entries reported
+        (
+            """
+            dependencies:
+                - python=3.12
+                - pip:
+                    - foo==1.2.3
+                    - bar
+            """,
+            "warned",
+            ["bar"],
+        ),
+        # Empty pip block → passes (no entries to flag)
+        (
+            """
+            dependencies:
+                - python=3.12
+                - pip: []
+            """,
+            "passed",
+            [],
+        ),
+    ],
+)
+def test_environment_yml_pip_pinned(tmp_path, input_content, expected_status, expected_unpinned):
+    """Test the pip-pinned check on environment.yml with a pip block."""
+    test_file, module, lint = setup_test_environment(tmp_path, input_content)
+
+    environment_yml(lint, module)
+
+    bucket = getattr(module, expected_status)
+    pip_pinned = [entry for entry in bucket if entry[1] == "environment_yml_pip_pinned"]
+    assert len(pip_pinned) == 1, f"Expected one pip_pinned {expected_status} entry, got {bucket}"
+    for unpinned in expected_unpinned:
+        assert unpinned in pip_pinned[0][2]
+
+
+def test_environment_yml_pip_pinned_skipped_when_no_pip_block(tmp_path):
+    """Without a pip: block, the pip-pinned check should not appear at all."""
+    content = """
+    dependencies:
+        - python=3.12
+        - bioconda::samtools=1.21
+    """
+    test_file, module, lint = setup_test_environment(tmp_path, content)
+
+    environment_yml(lint, module)
+
+    all_checks = module.passed + module.failed + module.warned
+    assert not any(entry[1] == "environment_yml_pip_pinned" for entry in all_checks)
+
+
 def test_environment_yml_missing_dependencies(tmp_path):
     """Test handling of environment.yml without dependencies section"""
     content = "channels:\n  - conda-forge\n"

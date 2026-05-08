@@ -4,6 +4,7 @@ from pathlib import Path
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
+from packaging.requirements import InvalidRequirement, Requirement
 
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
@@ -34,6 +35,11 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
     * ``environment_yml_sorted``: The dependencies listed in ``environment.yml``
       must be sorted alphabetically. If they are not, they will be sorted
       automatically.
+
+    * ``environment_yml_pip_pinned``: If a ``pip:`` block is present, every entry
+      must be pinned with ``==`` (e.g. ``pkg==1.2.3``) or installed from a pinned
+      URL/VCS reference (``pkg @ url``). Range specifiers like ``>=`` and ``~=``
+      are not treated as pinned.
     """
     env_yml = None
     has_schema_header = False
@@ -229,3 +235,67 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                         module.environment_yml,
                     )
                 )
+
+            # Check that any pip dependencies are pinned to a version
+            if "dependencies" in env_yml:
+                has_pip_block, unpinned_pip = _find_unpinned_pip_deps(env_yml["dependencies"])
+                if has_pip_block:
+                    if unpinned_pip:
+                        module.warned.append(
+                            (
+                                "environment_yml",
+                                "environment_yml_pip_pinned",
+                                (
+                                    f"Module's `environment.yml` has unpinned pip "
+                                    f"dependencies: {', '.join(unpinned_pip)}. Pin each "
+                                    f"entry with `==` (e.g. `pkg==1.2.3`) or a URL/VCS "
+                                    f"reference."
+                                ),
+                                module.environment_yml,
+                            )
+                        )
+                    else:
+                        module.passed.append(
+                            (
+                                "environment_yml",
+                                "environment_yml_pip_pinned",
+                                "All pip dependencies in the module's `environment.yml` are pinned",
+                                module.environment_yml,
+                            )
+                        )
+
+
+def _find_unpinned_pip_deps(dependencies):
+    """Return ``(has_pip_block, unpinned)`` for the dependencies list of an environment.yml.
+
+    A pip entry counts as pinned when it has a single ``==`` (or ``===``)
+    specifier, or installs from a URL/VCS reference. Range operators
+    (``>=``, ``~=``, ``<``, ...) and compound specifiers are flagged as
+    unpinned. Entries that fail to parse as PEP 508 (e.g. ``-r
+    requirements.txt``) are skipped, leaving stricter checks to the
+    conda/pip schema.
+    """
+    has_pip_block = False
+    unpinned = []
+    for term in dependencies:
+        if not isinstance(term, dict):
+            continue
+        pip_entries = term.get("pip")
+        if not isinstance(pip_entries, list):
+            continue
+        has_pip_block = True
+        for entry in pip_entries:
+            entry = str(entry).strip()
+            if not entry:
+                continue
+            try:
+                req = Requirement(entry)
+            except InvalidRequirement:
+                continue
+            if req.url:
+                continue
+            specs = list(req.specifier)
+            if len(specs) == 1 and specs[0].operator in ("==", "==="):
+                continue
+            unpinned.append(entry)
+    return has_pip_block, unpinned
