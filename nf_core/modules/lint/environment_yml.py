@@ -42,6 +42,13 @@ def environment_yml(
     * ``environment_yml_sorted``: The dependencies listed in ``environment.yml``
       must be sorted alphabetically. If they are not, they will be sorted
       automatically.
+
+    * ``bioconda_version``: The version specified for each bioconda package must
+      be a valid, known version available in the bioconda channel.
+
+    * ``bioconda_latest``: Each bioconda package should be pinned to the latest
+      available version. A warning is raised (or the version updated if
+      ``fix_version`` is set) when a newer version exists.
     """
     env_yml = None
     has_schema_header = False
