@@ -29,8 +29,11 @@ log = logging.getLogger(__name__)
 
 def _get_prettier_files(outdir: Path) -> list[str]:
     """Return non-gitignored files in outdir, further filtered by .prettierignore if present."""
-    repo = git.Repo(outdir)
-    files = [f for f in repo.git.ls_files("--cached", "--others", "--exclude-standard").splitlines() if f]
+    try:
+        repo = git.Repo(outdir)
+        files = [f for f in repo.git.ls_files("--cached", "--others", "--exclude-standard").splitlines() if f]
+    except git.InvalidGitRepositoryError:
+        files = [str(f.relative_to(outdir)) for f in outdir.rglob("*") if f.is_file()]
 
     prettierignore = outdir / ".prettierignore"
     if prettierignore.exists() and files:
