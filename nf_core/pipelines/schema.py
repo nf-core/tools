@@ -384,13 +384,13 @@ class PipelineSchema:
                 return
 
         # if default is null, we're good
-        if config_default == "null":
+        if config_default is None or config_default == "null":
             return
 
         # Check variable types in nextflow.config
-        if schema_param["type"] == "string" and str(config_default) in ["false", "true", "''"]:
+        if schema_param["type"] == "string" and str(config_default).lower() in ["false", "true", "''"]:
             self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
-        if schema_param["type"] == "boolean" and str(config_default) not in ["false", "true"]:
+        if schema_param["type"] == "boolean" and str(config_default).lower() not in ["false", "true"]:
             self.invalid_nextflow_config_default_parameters[param] = (
                 f"Booleans should only be true or false, not `{config_default}`"
             )
