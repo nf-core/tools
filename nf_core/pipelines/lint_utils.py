@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+import click
 import git
 import rich
 import yaml
@@ -155,10 +156,15 @@ def run_prettier_on_file(*files: Path) -> None:
         log.debug("Not in a git repository, skipping prettier hook.")
         return
 
+    ctx = click.get_current_context(silent=True)
+    verbose = bool(ctx and ctx.obj and ctx.obj.get("verbose"))
+
     config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
     # `python -m prek` lets prek locate its own binary, so isolated installs (uv tool, pipx, conda) work too
     proc = subprocess.run(
-        [sys.executable, "-m", "prek", "run", "--config", str(config), "prettier", "--files", *map(str, files)],
+        [sys.executable, "-m", "prek", "run", "--config", str(config), "prettier"]
+        + (["--verbose"] if verbose else [])
+        + ["--files", *map(str, files)],
         capture_output=True,
         text=True,
     )
