@@ -53,7 +53,7 @@ class PipelineSync:
         original_branch (str): Repo branch that was checked out before we started.
         made_changes (bool): Whether making the new template pipeline introduced any changes
         make_pr (bool): Whether to try to automatically make a PR on GitHub.com
-        required_config_vars (list): List of nextflow variables required to make template pipeline
+        required_config_vars (dict): Nextflow config variables required to make template pipeline, keyed by section
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
     """
@@ -80,12 +80,9 @@ class PipelineSync:
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data: dict = {}
-        self.required_config_vars = [
-            "name",
-            "description",
-            "version",
-            "contributors",
-        ]
+        self.required_config_vars: dict[str, list[str]] = {
+            "manifest": ["name", "description", "version", "contributors"],
+        }
         self.force_pr = force_pr
 
         self.gh_username = gh_username
@@ -231,9 +228,10 @@ class PipelineSync:
         self.wf_config = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
 
         # Check that we have the required variables
-        for rvar in self.required_config_vars:
-            if rvar not in self.wf_config.get("manifest", {}):
-                raise SyncExceptionError(f"Workflow config variable `manifest.{rvar}` not found!")
+        for section, keys in self.required_config_vars.items():
+            for key in keys:
+                if key not in self.wf_config.get(section, {}):
+                    raise SyncExceptionError(f"Workflow config variable `{section}.{key}` not found!")
 
     def checkout_template_branch(self):
         """
