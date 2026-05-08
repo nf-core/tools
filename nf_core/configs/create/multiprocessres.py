@@ -30,23 +30,23 @@ class ProcessConfig(HorizontalGroup):
         )
         yield TextInput(
             "custom_process_ncpus",
-            "2",
+            "1",
             "# CPUs:",
-            "2",
+            "1",
             classes="column",
         )
         yield TextInput(
             "custom_process_memgb",
-            "8",
+            "6",
             "Memory (GB):",
-            "8",
+            "6",
             classes="column",
         )
         yield TextInput(
             "custom_process_hours",
-            "1",
+            "4",
             "Walltime (hours):",
-            "1",
+            "4",
             classes="column",
         )
         yield TextInput(

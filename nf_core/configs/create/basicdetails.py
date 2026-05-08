@@ -2,12 +2,13 @@
 displaying such info in the pipeline run header on run execution"""
 
 from textwrap import dedent
+from requests import get
 
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown
+from textual.widgets import Button, Footer, Header, Input, Markdown, Select
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 from nf_core.utils import add_hide_class, remove_hide_class
@@ -54,10 +55,21 @@ class BasicDetails(Screen):
                 "Author Git(Hub) handle.",
                 classes="column hide" if self.parent.CONFIG_TYPE == "pipeline" else "column",
             )
-        yield TextInput(
-            "config_pipeline_name",
-            "Pipeline name",
-            "The pipeline name you want to create the config for.",
+        if self.parent.CONFIG_TYPE == "pipeline" and self.parent.NFCORE_CONFIG:
+            pipelines = self.get_valid_nfcore_pipelines()
+        else:
+            pipelines = []
+        yield Markdown(
+            "Pipeline name.",
+            id="config_pipeline_name_text",
+            classes="hide" if self.parent.CONFIG_TYPE == "infrastructure" or not self.parent.NFCORE_CONFIG else "field_help",
+        )
+        yield Select(
+            [(c, c) for c in pipelines],
+            prompt="The name of the nf-core pipeline you want to configure",
+            id="config_pipeline_name",
+            allow_blank=True,
+            type_to_search=True,
             classes="hide" if self.parent.CONFIG_TYPE == "infrastructure" or not self.parent.NFCORE_CONFIG else "",
         )
         yield TextInput(
@@ -83,6 +95,23 @@ class BasicDetails(Screen):
             Button("Next", id="next", variant="success"),
             classes="cta",
         )
+
+    def get_valid_nfcore_pipelines(self) -> list[str]:
+        url = "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json"
+        response = get(url)
+        if response.status_code != 200:
+            # Allow fetch to fail safely
+            return []
+        data = response.json()
+        # If fetch was successful, ensure pipeline list is valid
+        msg = "Error fetching nf-core pipeline list"
+        assert isinstance(data, dict), msg
+        assert "pipeline" in data, msg
+        pipelines = data["pipeline"]
+        assert isinstance(pipelines, list), msg
+        assert len(pipelines) > 0, msg
+        assert all([isinstance(p, str) for p in pipelines]), msg
+        return pipelines
 
     ## Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
     @on(Button.Pressed)
@@ -119,13 +148,16 @@ class BasicDetails(Screen):
             add_hide_class(self.parent, "config_profile_url")
             if self.parent.NFCORE_CONFIG:
                 remove_hide_class(self.parent, "config_pipeline_name")
+                remove_hide_class(self.parent, "config_pipeline_name_text")
                 add_hide_class(self.parent, "config_pipeline_path")
             else:
                 remove_hide_class(self.parent, "config_pipeline_path")
                 add_hide_class(self.parent, "config_pipeline_name")
+                add_hide_class(self.parent, "config_pipeline_name_text")
         if self.parent.CONFIG_TYPE == "infrastructure":
             remove_hide_class(self.parent, "config_profile_contact")
             remove_hide_class(self.parent, "config_profile_handle")
             remove_hide_class(self.parent, "config_profile_url")
             add_hide_class(self.parent, "config_pipeline_name")
+            add_hide_class(self.parent, "config_pipeline_name_text")
             add_hide_class(self.parent, "config_pipeline_path")

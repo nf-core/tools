@@ -26,23 +26,23 @@ class DefaultProcess(Screen):
         )
         yield TextInput(
             "default_process_ncpus",
-            "2",
+            "1",
             "Number of CPUs to use by default for all processes.",
-            "2",
+            "1",
             classes="column",
         )
         yield TextInput(
             "default_process_memgb",
-            "8",
+            "6",
             "Amount of memory in GB to use by default for all processes.",
-            "8",
+            "6",
             classes="column",
         )
         yield TextInput(
             "default_process_hours",
-            "1",
+            "4",
             "The default number of hours of walltime required for processes:",
-            "1",
+            "4",
             classes="column",
         )
         yield Center(

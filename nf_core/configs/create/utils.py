@@ -240,7 +240,7 @@ class ConfigsCreateConfig(BaseModel):
         else:
             return self.serial_pipeline()
 
-    @field_validator("general_config_name", "config_profile_description")
+    @field_validator("general_config_name")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
@@ -248,11 +248,21 @@ class ConfigsCreateConfig(BaseModel):
             raise ValueError("Cannot be left empty.")
         return v
 
+    @field_validator("config_profile_description")
+    @classmethod
+    def notempty_nfcore(cls, v: str, info: ValidationInfo) -> str:
+        """Check that string values are not empty."""
+        context = info.context
+        if context and context["is_nfcore"] and v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        return v
+
     @field_validator("general_config_name")
     @classmethod
-    def all_lower_case(cls, v: str) -> str:
+    def all_lower_case(cls, v: str, info: ValidationInfo) -> str:
         """Check that string values are all lower-case."""
-        if not v.islower():
+        context = info.context
+        if context and context["is_nfcore"] and not v.islower():
             raise ValueError("Config names must not contain upper-case letters.")
         return v
 
@@ -293,7 +303,7 @@ class ConfigsCreateConfig(BaseModel):
     def notempty_contact(cls, v: str, info: ValidationInfo) -> str:
         """Check that contact values are not empty when the config is infrastructure."""
         context = info.context
-        if context and context["is_infrastructure"]:
+        if context and context["is_infrastructure"] and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
@@ -306,7 +316,7 @@ class ConfigsCreateConfig(BaseModel):
         """Check that GitHub handles start with '@'.
         Make providing a handle mandatory for nf-core configs"""
         context = info.context
-        if context and context["is_infrastructure"]:
+        if context and context["is_infrastructure"] and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         if not v.strip() == "" and not re.match(r"^@[aA-zZ\d](?:[aA-zZ\d]|-(?=[aA-zZ\d])){0,38}$", v):
@@ -321,7 +331,7 @@ class ConfigsCreateConfig(BaseModel):
     def url_prefix(cls, v: str, info: ValidationInfo) -> str:
         """Check that institutional web links start with valid URL prefix."""
         context = info.context
-        if context and context["is_infrastructure"]:
+        if context and context["is_infrastructure"] and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(
