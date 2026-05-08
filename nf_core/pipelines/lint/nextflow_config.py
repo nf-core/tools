@@ -204,7 +204,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
 
     def _config_has_key(key: str) -> bool:
         section, name = key.split(".", 1)
-        return self.nf_config.get(section, {}).get(name) is not None
+        return name in self.nf_config.get(section, {})
 
     for configs, not_found in [(config_fail, failed), (config_warn, warned)]:
         for cfs in configs:

@@ -461,11 +461,12 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     main_nf = Path(wf_path, "main.nf")
     try:
         with open(main_nf, "rb") as fh:
+            params_section = config.setdefault("params", {})
             for line in fh:
                 line_str = line.decode("utf-8")
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
-                if match and match.group(1):
-                    config[match.group(1)] = "null"
+                match = re.match(r"^\s*params\.([a-zA-Z0-9_]+)\s*=(?!=)", line_str)
+                if match and match.group(1) not in params_section:
+                    params_section[match.group(1)] = None
 
     except FileNotFoundError as e:
         log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
