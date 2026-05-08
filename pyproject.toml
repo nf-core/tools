@@ -57,6 +57,7 @@ dependencies = [
     "trogon",
     "pdiff",
     "ruamel.yaml",
+    "pathspec>=1.1.1",
 ]
 
 [dependency-groups]
