@@ -106,8 +106,12 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 2
         assert (
+            result["failed"][0]
+            == "Config `params.custom_config_base` is not set to `https://raw.githubusercontent.com/nf-core/configs/master`"
+        )
+        assert (
             result["failed"][1]
-            == "Config default value incorrect: `params.custom_config_base` is set as `https://raw.githubusercontent.com/nf-core/configs/master` in `nextflow_schema.json` but is `null` in `nextflow.config`."
+            == "Default value from the Nextflow schema `params.custom_config_base = `https://raw.githubusercontent.com/nf-core/configs/master`` not found in `nextflow.config`."
         )
 
     def test_allow_params_reference_in_main_nf(self):

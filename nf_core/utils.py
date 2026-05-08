@@ -465,7 +465,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             for line in fh:
                 line_str = line.decode("utf-8")
                 match = re.match(r"^\s*params\.([a-zA-Z0-9_]+)\s*=(?!=)", line_str)
-                if match and match.group(1) not in params_section:
+                if match:
                     params_section[match.group(1)] = None
 
     except FileNotFoundError as e:
