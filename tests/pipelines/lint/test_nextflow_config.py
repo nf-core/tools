@@ -34,7 +34,7 @@ class TestLintNextflowConfig(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
 
-        lint_obj.nf_config["manifest.name"] = "bad_name"
+        lint_obj.nf_config["manifest"]["name"] = "bad_name"
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
         assert len(result["warned"]) == 0
@@ -45,7 +45,7 @@ class TestLintNextflowConfig(TestLint):
         lint_obj.load_pipeline_config()
 
         lint_obj.release_mode = True
-        lint_obj.nf_config["manifest.version"] = "dev_is_bad_name"
+        lint_obj.nf_config["manifest"]["version"] = "dev_is_bad_name"
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
         assert len(result["warned"]) == 0

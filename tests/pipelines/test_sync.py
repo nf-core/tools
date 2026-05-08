@@ -148,7 +148,7 @@ class TestModules(TestPipelines):
             psync.inspect_sync_dir()
             psync.get_wf_config()
         # Check that we did actually get some config back
-        assert psync.wf_config["params.validate_params"] == "true"
+        assert psync.wf_config["params"]["validate_params"] == "true"
         # Check that we raised because of the missing fake config var
         assert exc_info.value.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
 

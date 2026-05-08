@@ -35,7 +35,7 @@ class TestLintVersionConsistency(TestLint):
         lint_obj.load_pipeline_config()
         lint_obj.nextflow_config()
         # Set the version for the container
-        lint_obj.nf_config["process.container"] = "nfcore/pipeline:1.0.0"
+        lint_obj.nf_config["process"]["container"] = "nfcore/pipeline:1.0.0"
         result = lint_obj.version_consistency()
         assert result["passed"] == [
             "Version tags are consistent: manifest.version = 1.0.0, process.container = 1.0.0, nfcore_yml.version = 1.0.0",
@@ -73,7 +73,7 @@ class TestLintVersionConsistency(TestLint):
         lint_obj.load_pipeline_config()
         lint_obj.nextflow_config()
 
-        lint_obj.nf_config["process.container"] = "nfcore/pipeline:0.1"
+        lint_obj.nf_config["process"]["container"] = "nfcore/pipeline:0.1"
         result = lint_obj.version_consistency()
         assert len(result["passed"]) == 0
         assert result["failed"] == [

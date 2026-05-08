@@ -104,7 +104,7 @@ class TestUtils(TestPipelines):
     def testload_pipeline_config(self):
         """Load the pipeline Nextflow config"""
         self.pipeline_obj.load_pipeline_config()
-        assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
+        assert self.pipeline_obj.nf_config["dag"]["enabled"] == "true"
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2
 
