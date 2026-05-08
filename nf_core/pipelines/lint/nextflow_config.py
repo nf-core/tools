@@ -255,13 +255,14 @@ def nextflow_config(self) -> dict[str, list[str]]:
         ("name", f"{org_name}/"),
         ("homePage", f"https://github.com/{org_name}/"),
     ]:
-        value = manifest.get(key, "")
-        if value in ignore_configs:
+        config_key = f"manifest.{key}"
+        if config_key in ignore_configs:
             continue
+        value = manifest.get(key, "")
         if value.startswith(expected_prefix):
-            passed.append(f"Config ``{value}`` began with ``{expected_prefix}``")
+            passed.append(f"Config ``{config_key}`` began with ``{expected_prefix}``")
         else:
-            failed.append(f"Config ``{value}`` did not begin with ``{expected_prefix}``")
+            failed.append(f"Config ``{config_key}`` did not begin with ``{expected_prefix}``")
 
     dag_file = self.nf_config.get("dag", {}).get("file", "")
     if dag_file:
@@ -272,7 +273,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
             failed.append(f"Config ``dag.file`` did not end with ``{default_dag_format}``")
 
     # Check that the minimum nextflowVersion is set properly
-    nextflow_version = self.nf_config.get("manifest", {}).get("nextflowVersion", "")
+    nextflow_version = manifest.get("nextflowVersion", "")
     if nextflow_version:
         if nextflow_version.lstrip("!").startswith(">="):
             passed.append("Config variable ``manifest.nextflowVersion`` started with >= or !>=")

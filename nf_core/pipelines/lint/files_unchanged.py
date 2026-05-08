@@ -114,12 +114,11 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     tmp_dir.mkdir(parents=True)
 
     # Create a template.yaml file for the pipeline creation
-    names = ""
-    if manifest_config.get("author"):
-        names = manifest_config.get("author", "")
     contributors = manifest_config.get("contributors", [])
     if contributors:
-        names = ", ".join([c.get("name", "") for c in contributors if c.get("name")])
+        names = ", ".join(c.get("name", "") for c in contributors if c.get("name"))
+    else:
+        names = manifest_config.get("author", "")
     template_yaml = {
         "name": short_name,
         "description": manifest_config.get("description", ""),

@@ -927,7 +927,7 @@ class PipelineSchema:
         if p_val is None:
             return {"type": "string"}
         if isinstance(p_val, bool):
-            return {"type": "boolean", "default": p_val} if p_val else {"type": "boolean"}
+            return {"type": "boolean", "default": p_val} if p_val else {"type": "boolean"}  # no default for False
         if isinstance(p_val, int):
             return {"type": "integer", "default": p_val}
         if isinstance(p_val, float):
