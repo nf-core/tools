@@ -78,6 +78,8 @@ dev = [
     "types-setuptools",
     "typing_extensions>=4.0.0",
     "pytest-asyncio",
+    "pytest-clarity>=1.0.1",
+    "pytest-sugar>=1.1.1",
     "pytest-textual-snapshot==1.1.0",
     "pytest-workflow>=2.0.0",
     "pytest-xdist>=3.7.0",
