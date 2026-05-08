@@ -12,6 +12,7 @@ from pathlib import Path
 import git
 import git.config
 import jinja2
+import pathspec
 import yaml
 
 import nf_core
@@ -24,6 +25,19 @@ from nf_core.pipelines.rocrate import ROCrate
 from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig, custom_yaml_dumper
 
 log = logging.getLogger(__name__)
+
+
+def _get_prettier_files(outdir: Path) -> list[str]:
+    """Return non-gitignored files in outdir, further filtered by .prettierignore if present."""
+    repo = git.Repo(outdir)
+    files = [f for f in repo.git.ls_files("--cached", "--others", "--exclude-standard").splitlines() if f]
+
+    prettierignore = outdir / ".prettierignore"
+    if prettierignore.exists() and files:
+        spec = pathspec.PathSpec.from_lines("gitwildmatch", prettierignore.read_text().splitlines())
+        files = [f for f in files if not spec.match_file(f)]
+
+    return [str(outdir / f) for f in files]
 
 
 class PipelineCreate:
@@ -281,7 +295,7 @@ class PipelineCreate:
             ):
                 current_dir = Path.cwd()
                 os.chdir(self.outdir)
-                run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+                run_prettier_on_file(_get_prettier_files(self.outdir))
                 os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
@@ -399,7 +413,7 @@ class PipelineCreate:
 
         # Run prettier on files for pipelines sync
         log.debug("Running prettier on pipeline files")
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+        run_prettier_on_file(_get_prettier_files(self.outdir))
 
     def fix_linting(self):
         """
