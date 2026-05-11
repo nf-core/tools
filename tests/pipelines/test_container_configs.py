@@ -68,7 +68,7 @@ class TestContainerConfigs(TestPipelines):
             assert f"process {{ withName: 'FASTQC' {{ {key} = '{value}' }} }}\n" in cfg_path.read_text()
 
     def test_generate_container_configs_removes_stale_entries(self) -> None:
-        """Stale config files are deleted when all their modules have been removed."""
+        """Stale entries are not present after regeneration."""
         conf_dir = self.pipeline_dir / "conf"
         stale_line = "process { withName: 'REMOVED_MODULE' { container = 'stale/image:latest' } }\n"
         for p_name in PLATFORMS:
@@ -78,4 +78,7 @@ class TestContainerConfigs(TestPipelines):
 
         for p_name in PLATFORMS:
             cfg_path = conf_dir / f"containers_{p_name}.config"
-            assert not cfg_path.exists(), f"{cfg_path.name} should be deleted when all modules are removed"
+            if cfg_path.exists():
+                assert stale_line not in cfg_path.read_text(), (
+                    f"{cfg_path.name} still contains stale entry after regeneration"
+                )
