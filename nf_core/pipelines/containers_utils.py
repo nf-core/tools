@@ -1,13 +1,13 @@
-import json
+import contextlib
 import logging
 import re
 from pathlib import Path
 
 import yaml
 
-from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, pretty_nf_version, run_cmd
-
 log = logging.getLogger(__name__)
+
+_PROCESS_NAME_RE = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
 
 PLATFORMS: dict[str, list[str]] = {
     "docker_amd64": ["docker", "linux/amd64", "name"],
@@ -34,147 +34,48 @@ class ContainerConfigs:
     ):
         self.workflow_directory = workflow_directory
 
-    def check_nextflow_version_sufficient(self) -> None:
-        """Check if the Nextflow version is sufficient to run `nextflow inspect`."""
-        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
-            raise UserWarning(
-                f"To use Seqera containers Nextflow version >= {pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)} is required.\n"
-                f"Please update your Nextflow version with [magenta]'nextflow self-update'[/]\n"
-            )
-
-    def parse_module_paths(self) -> dict[str, Path]:
-        """Parse include statements from workflow files to extract module paths.
-
-        Only processes includes pointing to 'modules/' directories.
-        Extracts the path from 'modules/' onwards, ignoring any '../' prefixes.
-
-        Returns:
-            dict: Mapping of process names to their module paths (e.g., 'modules/nf-core/fastqc')
-        """
-        module_paths = {}
-
-        # Pattern matches: include { NAME ... } from 'path'
-        # Captures the first name (original) and the path, ignoring any alias
-        include_pattern = re.compile(r"include\s*\{\s*(\w+).*?\}\s*from\s+['\"]([^'\"]+)['\"]")
-
-        # Search in root (main.nf), workflows, modules, and subworkflows directories
-        search_dirs = ["workflows", "modules", "subworkflows"]
-
-        nf_files_to_search = list(self.workflow_directory.glob("*.nf"))
-        for search_dir in search_dirs:
-            search_path = self.workflow_directory / search_dir
-            if not search_path.exists():
-                continue
-            nf_files_to_search.extend(search_path.rglob("*.nf"))
-
-        for nf_file in nf_files_to_search:
-            try:
-                content = nf_file.read_text()
-                for match in include_pattern.finditer(content):
-                    process_name = match.group(1)
-                    relative_path = match.group(2)
-
-                    # Only process paths that contain 'modules/'
-                    if "modules/" not in relative_path:
-                        continue
-
-                    # Extract everything from 'modules/' onwards, removing any '/main' suffix
-                    module_path_str = relative_path[relative_path.find("modules/") :]
-                    module_path_str = module_path_str.replace("/main", "")
-
-                    module_paths[process_name] = Path(module_path_str)
-                    log.debug(f"Found include: {process_name} -> {module_path_str}")
-
-            except OSError as e:
-                log.debug(f"Error parsing {nf_file}: {e}")
-                continue
-
-        return module_paths
-
     def generate_container_configs(
         self, new_module_path: Path | None = None, new_module_name: str | None = None
     ) -> set[str]:
         """
-        Generate the container configuration files for a pipeline.
-        Requires Nextflow >= 25.04.4
+        Generate the container configuration files for a pipeline by scanning
+        all ``main.nf`` files under the ``modules/`` directory and reading the
+        accompanying ``meta.yml`` for container information.
 
         Returns:
             set[str]: Names of config files written (e.g. ``{'containers_docker_amd64.config'}``).
         """
-        self.check_nextflow_version_sufficient()
-        log.debug("Generating container config file with [magenta bold]nextflow inspect[/].")
-        try:
-            # Run nextflow inspect
-            executable = "nextflow"
-            cmd_params = f"inspect -format json {self.workflow_directory}"
-            cmd_out = run_cmd(executable, cmd_params)
-            if cmd_out is None:
-                raise UserWarning("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
-
-            out, _ = cmd_out
-            out_str = out.decode("utf-8", errors="replace")
-            try:
-                # Newer Nextflow versions print [PIPELINE]/[WORKDIR] headers before and [SUCCESS] after the JSON
-                json_start = out_str.find("{")
-                out_json, _ = json.JSONDecoder().raw_decode(out_str, json_start if json_start >= 0 else 0)
-            except json.JSONDecodeError:
-                out_json = json.loads(out)
-
-        except RuntimeError as e:
-            log.error("Running 'nextflow inspect' failed with the following error:")
-            raise UserWarning(e) from e
-
-        module_names = {p.get("name") for p in out_json["processes"] if p.get("name")}
-        log.debug(f"Found {len(module_names)} modules: {', '.join(module_names)}")
-
-        # Parse module paths from include statements
-        module_path_map = self.parse_module_paths()
-        log.debug(f"Parsed {len(module_path_map)} module paths from include statements")
-
-        if new_module_name and new_module_path:
-            module_names.add(new_module_name.upper())
-            module_path_map[new_module_name.upper()] = new_module_path
-
-        # Build containers dict from module meta.yml files
-        # Pre-initialize all platforms to avoid repeated existence checks
-        has_warnings = False
         containers: dict[str, dict[str, str]] = {platform: {} for platform in PLATFORMS}
-        for m_name in module_names:
-            # Try to get module path from include statements
-            if m_name in module_path_map:
-                module_path = module_path_map[m_name]
-                log.debug(f"Using parsed path for {m_name}: {module_path}")
-            else:
-                # Fallback to old heuristic method
-                log.debug(f"No parsed path found for {m_name}, using heuristic")
-                module_path = Path(*m_name.lower().split("_", 1))
 
-            # Look for meta.yml in the module path
-            meta_path = self.workflow_directory / module_path / "meta.yml"
-
+        for meta_path in (self.workflow_directory / "modules").rglob("meta.yml"):
             try:
-                with open(meta_path) as fh:
-                    meta = yaml.safe_load(fh)
-                    log.debug(f"Loaded meta.yml for {m_name} from {meta_path}")
-            except FileNotFoundError:
-                log.warning(f"Could not find meta.yml for {m_name} at {meta_path}")
+                content = meta_path.read_text()
+            except OSError as e:
+                log.debug(f"Could not read {meta_path}: {e}")
                 continue
 
-            # Extract containers for all platforms
+            # TODO: remove this early-exit once containers are present in the majority of modules
+            if "containers:" not in content:
+                continue
+
+            meta = yaml.safe_load(content)
+
+            main_nf = meta_path.parent / "main.nf"
+            try:
+                match = _PROCESS_NAME_RE.search(main_nf.read_text())
+            except OSError:
+                log.debug(f"No main.nf next to {meta_path}, skipping")
+                continue
+            if not match:
+                log.debug(f"No process definition found in {main_nf}, skipping")
+                continue
+            process_name = match.group(1)
+
             for platform_name, (runtime, arch, protocol) in PLATFORMS.items():
-                try:
-                    containers[platform_name][m_name] = meta["containers"][runtime][arch][protocol]
-                    log.debug(f"Found {platform_name} container for {m_name}")
-                except (KeyError, TypeError):
-                    log.debug(f"Could not find {platform_name} container for {m_name}")
-                    has_warnings = True
-                    continue
-        if has_warnings:
-            log.debug(
-                "Generated container configs for the pipeline. Not all containers were found. Run with `-v` to see detailed warning messages."
-            )
-        else:
-            log.info("Generated container configs for the pipeline successfully.")
+                with contextlib.suppress(KeyError, TypeError):
+                    containers[platform_name][process_name] = meta["containers"][runtime][arch][protocol]
+
+        log.info("Generated container configs for the pipeline.")
 
         # remove all generated config files, to handle removed modules
         for platform in PLATFORMS:
