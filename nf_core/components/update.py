@@ -266,7 +266,9 @@ class ComponentUpdate(ComponentCommand):
                             updated.append(component)
                     recursive_update = True
                     modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
-                    if not silent and len(modules_to_update + subworkflows_to_update) > 0:
+                    if self.skip_deps:
+                        recursive_update = False
+                    elif not silent and len(modules_to_update + subworkflows_to_update) > 0:
                         log.warning(
                             f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be added to the same diff file.\n"
                             "It is advised to keep all your modules and subworkflows up to date.\n"

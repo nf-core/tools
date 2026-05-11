@@ -60,6 +60,29 @@ class TestSubworkflowsUpdate(TestSubworkflows):
             == old_dep_sha
         )
 
+    def test_subworkflow_update_skip_deps_save_diff_only_named_component(self):
+        """`--skip-deps --save-diff` writes a diff for only the named subworkflow, no linked components."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        diff_path = Path(tempfile.mkdtemp()) / "skipdeps.diff"
+        update_obj = SubworkflowUpdate(
+            self.pipeline_dir,
+            show_diff=False,
+            save_diff_fn=diff_path,
+            skip_deps=True,
+        )
+        assert update_obj.update("fastq_align_bowtie2") is True
+
+        diff_text = diff_path.read_text()
+        # The named subworkflow's main.nf should be in the diff
+        assert "subworkflows/nf-core/fastq_align_bowtie2/main.nf" in diff_text
+        # Transitively-linked module files (e.g. samtools/*) must not be in the diff
+        for linked in (
+            "modules/nf-core/samtools/flagstat/main.nf",
+            "modules/nf-core/samtools/index/main.nf",
+            "modules/nf-core/samtools/sort/main.nf",
+        ):
+            assert linked not in diff_text, f"unexpected linked component in --skip-deps diff: {linked}"
+
     def test_subworkflow_update_skip_deps_with_update_deps_errors(self):
         """`--skip-deps` and `--update-deps` are mutually exclusive."""
         with pytest.raises(UserWarning, match="mutually exclusive"):
