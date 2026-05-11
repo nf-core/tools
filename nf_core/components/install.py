@@ -37,6 +37,7 @@ class ComponentInstall(ComponentCommand):
         branch: str | None = None,
         no_pull: bool = False,
         installed_by: list[str] | None = None,
+        skip_deps: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -45,6 +46,7 @@ class ComponentInstall(ComponentCommand):
         self.prompt = prompt
         self.sha = sha
         self.current_sha = sha
+        self.skip_deps = skip_deps
         if installed_by is not None:
             self.installed_by = installed_by
         else:
@@ -166,8 +168,18 @@ class ComponentInstall(ComponentCommand):
         )
 
         if self.component_type == "subworkflows":
-            # Install included modules and subworkflows
-            self.install_included_components(component_dir)
+            # Under --skip-deps, don't propagate --force to transitive deps so
+            # already-installed ones keep their pinned SHAs and just have
+            # installed_by tracking refreshed.
+            if self.skip_deps:
+                original_force = self.force
+                self.force = False
+                try:
+                    self.install_included_components(component_dir)
+                finally:
+                    self.force = original_force
+            else:
+                self.install_included_components(component_dir)
 
         # Regenerate container configuration files for the pipeline when modules are installed
         if self.component_type == "modules":
