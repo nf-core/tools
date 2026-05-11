@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -43,6 +44,12 @@ class TestModulesCreate(TestModules):
         """Test installing a module - TrimGalore! already there"""
         self.mods_install.install("trimgalore")
         assert self.mods_install.install("trimgalore") is True
+
+    @mock.patch("nf_core.components.install.try_generate_container_configs")
+    def test_modules_install_regenerates_container_configs_once(self, mock_gen):
+        """Container config regen runs exactly once for a top-level module install."""
+        assert self.mods_install.install("trimgalore") is not False
+        assert mock_gen.call_count == 1
 
     def test_modules_install_from_gitlab(self):
         """Test installing a module from GitLab"""

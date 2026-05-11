@@ -34,17 +34,22 @@ class TestSubworkflowsUpdate(TestSubworkflows):
 
     @mock.patch("nf_core.components.update.try_generate_container_configs")
     def test_subworkflow_update_regenerates_container_configs_once(self, mock_gen):
-        """Container config regeneration runs once for a top-level update, not once
-        per linked component. Updating ``fastq_align_bowtie2`` from an old SHA with
-        ``--update-deps`` cascades to several samtools modules; before this fix that
-        triggered ``nextflow inspect`` per dependency."""
+        """Container config regen runs once for a top-level update, not per linked component."""
         assert self.subworkflow_install_old.install("fastq_align_bowtie2")
         mock_gen.reset_mock()
         update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True)
         assert update_obj.update("fastq_align_bowtie2") is True
-        assert mock_gen.call_count == 1, (
-            f"Expected try_generate_container_configs to run once per top-level update, got {mock_gen.call_count} calls"
-        )
+        assert mock_gen.call_count == 1
+
+    @mock.patch("nf_core.components.update.try_generate_container_configs")
+    def test_subworkflow_update_save_diff_skips_container_configs(self, mock_gen):
+        """``--save-diff`` is a dry run; container configs must not be regenerated."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        mock_gen.reset_mock()
+        patch_path = Path(self.pipeline_dir, "fastq_align_bowtie2.patch")
+        update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True)
+        assert update_obj.update("fastq_align_bowtie2") is True
+        assert mock_gen.call_count == 0
 
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""

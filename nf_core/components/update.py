@@ -353,9 +353,8 @@ class ComponentUpdate(ComponentCommand):
             self.modules_json.load()
             self.modules_json.dump(run_prettier=True)
 
-        # Regenerate container configuration files for the pipeline once per
-        # top-level update. The previous in-loop call ran `nextflow inspect`
-        # for every transitive linked component, which dominated wall time.
+        # Regenerate container configs once per top-level invocation
+        # (recursive updates pass silent=True; skip in --save-diff dry runs).
         if not silent and updated and not self.save_diff_fn:
             try_generate_container_configs(self.directory)
 
