@@ -32,6 +32,21 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         assert update_obj.update("bam_stats_samtools") is True
         assert cmp_component(tmpdir, sw_path) is True
 
+    @mock.patch("nf_core.components.update.try_generate_container_configs")
+    def test_subworkflow_update_regenerates_container_configs_once(self, mock_gen):
+        """Container config regeneration runs once for a top-level update, not once
+        per linked component. Updating ``fastq_align_bowtie2`` from an old SHA with
+        ``--update-deps`` cascades to several samtools modules; before this fix that
+        triggered ``nextflow inspect`` per dependency."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        mock_gen.reset_mock()
+        update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True)
+        assert update_obj.update("fastq_align_bowtie2") is True
+        assert mock_gen.call_count == 1, (
+            f"Expected try_generate_container_configs to run once per top-level "
+            f"update, got {mock_gen.call_count} calls"
+        )
+
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""
         assert self.subworkflow_install_old.install("fastq_align_bowtie2")

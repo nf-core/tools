@@ -169,9 +169,15 @@ class ComponentInstall(ComponentCommand):
             # Install included modules and subworkflows
             self.install_included_components(component_dir)
 
-        # Regenerate container configuration files for the pipeline when modules are installed
-        if self.component_type == "modules":
-            try_generate_container_configs(self.directory, component_dir, component)
+        # Regenerate container configuration files for the pipeline once per
+        # top-level install. Recursive installs of dependent modules pass
+        # silent=True and would otherwise re-run `nextflow inspect` for every
+        # transitive dependency.
+        if not silent:
+            if self.component_type == "modules":
+                try_generate_container_configs(self.directory, component_dir, component)
+            else:
+                try_generate_container_configs(self.directory)
 
         if not silent:
             modules_json.load()

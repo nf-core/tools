@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -190,6 +191,18 @@ class TestSubworkflowsInstall(TestSubworkflows):
                 "bam_stats_samtools"
             ]["installed_by"]
         ) == sorted(["subworkflows", "bam_sort_stats_samtools"])
+
+    @mock.patch("nf_core.components.install.try_generate_container_configs")
+    def test_subworkflows_install_regenerates_container_configs_once(self, mock_gen):
+        """Container config regeneration runs once for a top-level subworkflow install,
+        not once per transitive module dependency. ``bam_sort_stats_samtools`` pulls
+        in five samtools modules plus the ``bam_stats_samtools`` sub-subworkflow, so
+        the previous per-component behaviour would have called this many times."""
+        assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
+        assert mock_gen.call_count == 1, (
+            f"Expected try_generate_container_configs to run once per top-level "
+            f"install, got {mock_gen.call_count} calls"
+        )
 
     def test_subworkflows_install_alternate_remote(self):
         """Test installing a module from a different remote with the same organization path"""

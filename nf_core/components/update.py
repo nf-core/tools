@@ -309,9 +309,6 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
 
-                # Regenerate container configuration files for the pipeline when modules are updated
-                if self.component_type == "modules":
-                    try_generate_container_configs(self.directory)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
                 if not silent and len(modules_to_update + subworkflows_to_update) > 0 and not self.update_all:
@@ -355,6 +352,12 @@ class ComponentUpdate(ComponentCommand):
             log.info("Updates complete :sparkles:")
             self.modules_json.load()
             self.modules_json.dump(run_prettier=True)
+
+        # Regenerate container configuration files for the pipeline once per
+        # top-level update. The previous in-loop call ran `nextflow inspect`
+        # for every transitive linked component, which dominated wall time.
+        if not silent and updated and not self.save_diff_fn:
+            try_generate_container_configs(self.directory)
 
         return exit_value
 
