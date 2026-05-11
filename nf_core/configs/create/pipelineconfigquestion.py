@@ -65,7 +65,8 @@ class PipelineConfigQuestion(Screen):
 
                 ## What's the difference?
 
-                Choosing _"Yes"_ will allow you to configure additional HPC-specific directives for each process, including `queue` and `executor`.
+                Choosing _"Yes"_ will allow you to additionally specify an HPC `queue` for each process or label.
+                **Note** that this field can be left blank to use the default queue.
                 """
             )
         )

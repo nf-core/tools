@@ -63,8 +63,10 @@ class ConfigsCreateConfig(BaseModel):
     """ Default amount of memory """
     default_process_hours: str | None = None
     """ Default walltime - hours """
-    custom_process_id: str | None = None
-    """" Name or label of a process to configure """
+    custom_process_name_id: str | None = None
+    """" Name of a process to configure """
+    custom_process_label_id: str | None = None
+    """" Label of a process to configure """
     custom_process_ncpus: str | None = None
     """ Number of CPUs for process """
     custom_process_memgb: str | None = None
@@ -351,14 +353,34 @@ class ConfigsCreateConfig(BaseModel):
                 )
         return v
 
-    @field_validator("custom_process_id")
+    @field_validator("custom_process_name_id")
     @classmethod
-    def notempty_process_name(cls, v: str, info: ValidationInfo) -> str:
-        """Check that the custom process name or label isn't empty."""
+    def valid_process_name(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the custom process name isn't empty and is valid."""
         context = info.context
         if context and not context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
+            if context["is_nfcore"] and not re.match(
+                r"^[A-Z0-9_:.*]+$",
+                v,
+            ):
+                raise ValueError("Must be uppercase and contain only letters, numbers, `_`, `:`, `.`, and `*`")
+        return v
+
+    @field_validator("custom_process_label_id")
+    @classmethod
+    def valid_process_label(cls, v: str, info: ValidationInfo) -> str:
+        """Check that the custom process label isn't empty and is valid."""
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+            if context["is_nfcore"] and not re.match(
+                r"^[a-z0-9_]+$",
+                v,
+            ):
+                raise ValueError("Must be lowercase and contain only letters, numbers, and `_`")
         return v
 
     @field_validator("default_process_ncpus", "default_process_memgb", "custom_process_ncpus", "custom_process_memgb")

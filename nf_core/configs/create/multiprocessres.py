@@ -18,71 +18,47 @@ class ProcessConfig(HorizontalGroup):
         assert selector in ["name", "label"]
         self.selector = selector
         self.hpc = hpc
-        self.use_local_exec = False
 
     def compose(self) -> ComposeResult:
         yield TextInput(
-            "custom_process_id",
+            f"custom_process_{self.selector}_id",
             "",
             f"Process {self.selector}:",
             "",
-            classes="column",
+            classes="custom-process-id",
         )
         yield TextInput(
             "custom_process_ncpus",
             "1",
             "# CPUs:",
             "1",
-            classes="column",
+            classes="custom-process-number",
         )
         yield TextInput(
             "custom_process_memgb",
             "6",
             "Memory (GB):",
             "6",
-            classes="column",
+            classes="custom-process-number",
         )
         yield TextInput(
             "custom_process_hours",
             "4",
             "Walltime (hours):",
             "4",
-            classes="column",
+            classes="custom-process-number",
         )
         yield TextInput(
             "custom_process_queue",
             "queue name",
-            "HPC queue:",
+            "HPC queue (optional):",
             "",
-            classes=("column" + (" hide" if not self.hpc else "")),
+            classes=("custom-process-queue" + (" hide" if not self.hpc else "")),
         )
-        with Vertical(
-            classes=("labelled-toggle column" + (" hide" if not self.hpc else "")), id="toggle_use_local_exec_group"
-        ):
-            yield Label("Use local executor?", id="toggle_use_local_exec_label", classes="field_help")
-            with Horizontal(classes="labelled-toggle"):
-                yield Switch(id="toggle_use_local_exec", value=self.use_local_exec)
-                yield Label(
-                    "Yes" if self.use_local_exec else "No",
-                    id="toggle_use_local_exec_state_label",
-                    classes="toggle_use_local_exec_state_label",
-                )
-            yield Static(classes="labelled-toggle-filler")  # Filler
-        with Vertical(classes="labelled-toggle"):
+        with Vertical(classes="remove-process-group"):
             yield Label("Remove", id="remove-process-config", classes="field_help")
             yield Button("-", id="remove", variant="error", classes="remove-process-button")
-            yield Static(classes="labelled-toggle-filler")  # Filler
-
-    @on(Switch.Changed, "#toggle_use_local_exec")
-    def on_toggle_switch(self, event: Switch.Changed) -> None:
-        """Handle toggling the local executor switch"""
-
-        self.use_local_exec = event.value
-
-        # Update the switch label
-        for label in self.query(Label):
-            if label.id == f"{event.switch.id}_state_label":
-                label.update("Yes" if event.value else "No")
+            yield Static(classes="remove-process-group-filler")  # Filler
 
     @on(Button.Pressed, "#remove")
     def remove_widget(self) -> None:
@@ -90,11 +66,11 @@ class ProcessConfig(HorizontalGroup):
 
     def update_hpc_status(self, hpc: bool) -> None:
         self.hpc = hpc
-        for id in ["custom_process_queue", "toggle_use_local_exec_group"]:
-            if self.hpc:
-                self.get_widget_by_id(id).remove_class("hide")
-            else:
-                self.get_widget_by_id(id).add_class("hide")
+        id = "custom_process_queue"
+        if self.hpc:
+            self.get_widget_by_id(id).remove_class("hide")
+        else:
+            self.get_widget_by_id(id).add_class("hide")
 
 
 class MultiProcessConfig(Screen):
@@ -105,6 +81,7 @@ class MultiProcessConfig(Screen):
         assert isinstance(title, str) and title
         self.title = title
         assert isinstance(selector_type, str) and selector_type
+        assert selector_type in ["name", "label"]
         self.selector_type = selector_type
         assert isinstance(config_key, str) and config_key
         self.config_key = config_key
@@ -154,10 +131,6 @@ class MultiProcessConfig(Screen):
                         )
                     else:
                         text_input.query_one(".validation_msg").update("")
-                if self.parent.PIPE_CONF_HPC:
-                    local_exec_switch = config_widget.query_one("#toggle_use_local_exec")
-                    if local_exec_switch.value:
-                        tmp_config["executor"] = "local"
                 # Validate the config
                 with init_context(self.parent.get_context()):
                     ConfigsCreateConfig(**tmp_config)
@@ -166,7 +139,8 @@ class MultiProcessConfig(Screen):
             # Add to the final config
             new_config = {}
             for tmp_config in config_list:
-                process_id = tmp_config.get("custom_process_id")
+                process_id_field = f"custom_process_{self.selector_type}_id"
+                process_id = tmp_config.get(process_id_field)
                 new_config[process_id] = tmp_config
             self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update={self.config_key: new_config})
             # Push the next screen

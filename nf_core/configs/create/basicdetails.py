@@ -24,6 +24,10 @@ config_exists_warn = """
 class BasicDetails(Screen):
     """Name, description, author, etc."""
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.nf_core_pipelines = self.get_valid_nfcore_pipelines()
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
@@ -55,17 +59,13 @@ class BasicDetails(Screen):
                 "Author Git(Hub) handle.",
                 classes="column hide" if self.parent.CONFIG_TYPE == "pipeline" else "column",
             )
-        if self.parent.CONFIG_TYPE == "pipeline" and self.parent.NFCORE_CONFIG:
-            pipelines = self.get_valid_nfcore_pipelines()
-        else:
-            pipelines = []
         yield Markdown(
             "Pipeline name.",
             id="config_pipeline_name_text",
             classes="hide" if self.parent.CONFIG_TYPE == "infrastructure" or not self.parent.NFCORE_CONFIG else "field_help",
         )
         yield Select(
-            [(c, c) for c in pipelines],
+            [(c, c) for c in self.nf_core_pipelines],
             prompt="The name of the nf-core pipeline you want to configure",
             id="config_pipeline_name",
             allow_blank=True,
@@ -98,13 +98,13 @@ class BasicDetails(Screen):
 
     def get_valid_nfcore_pipelines(self) -> list[str]:
         url = "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json"
+        msg = "Error fetching nf-core pipeline list"
         response = get(url)
         if response.status_code != 200:
-            # Allow fetch to fail safely
+            # Allow the fetch to fail, e.g. while offline and configuring non-nf-core pipelines
             return []
         data = response.json()
         # If fetch was successful, ensure pipeline list is valid
-        msg = "Error fetching nf-core pipeline list"
         assert isinstance(data, dict), msg
         assert "pipeline" in data, msg
         pipelines = data["pipeline"]
@@ -129,6 +129,9 @@ class BasicDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
+        if self.parent.NFCORE_CONFIG:
+            select = self.query_one("#config_pipeline_name", Select)
+            config["config_pipeline_name"] = select.value
         try:
             with init_context(self.parent.get_context()):
                 self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)

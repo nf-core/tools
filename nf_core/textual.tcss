@@ -29,22 +29,34 @@
 .custom_grid Button {
     width: auto;
 }
-.labelled-toggle {
-    padding: 1 1 1 1;
+.custom-process-id {
+    width: 4fr;
+    min-width: 10;
+}
+.custom-process-number {
+    width: 1fr;
+    min-width: 10;
+}
+.custom-process-queue {
+    width: 2fr;
+    min-width: 10;
+}
+.remove-process-group {
+    padding: 1 0 1 0;
     content-align-vertical: middle;
     height: 100%;
+    width: 10;
 }
-.toggle_use_local_exec_state_label {
-    padding: 1 1 1 1;
-    align-vertical: middle;
-}
-.labelled-toggle-filler {
+.remove-process-group-filler {
     padding: 1 1 1 1;
     content-align-vertical: middle;
 }
 .remove-process-button {
-    margin: 1 1 1 1;
+    margin: 1 0 1 0;
+    padding: 0 0 0 0;
     align-vertical: middle;
+    min-width: 7;
+    width: 7;
 }
 .text-input-grid {
     padding: 1 1 1 1;
