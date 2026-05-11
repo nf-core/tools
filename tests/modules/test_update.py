@@ -48,11 +48,11 @@ class TestModulesInstall(TestModules):
         "nf_core.components.update.ComponentUpdate.get_components_to_update",
         return_value=([], [{"name": "fake_sw", "git_remote": "x"}]),
     )
-    def test_module_update_only_does_not_cascade(self, mock_get_linked, mock_cascade):
-        """`module update --only` skips cascade even when linked subworkflows exist."""
+    def test_module_update_skip_deps_does_not_cascade(self, mock_get_linked, mock_cascade):
+        """`module update --skip-deps` skips cascade even when linked subworkflows exist."""
         assert self.mods_install_old.install("trimgalore")
         update_obj = ModuleUpdate(
-            self.pipeline_dir, show_diff=False, only=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+            self.pipeline_dir, show_diff=False, skip_deps=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
         )
         assert update_obj.update("trimgalore") is True
         assert not mock_cascade.called

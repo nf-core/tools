@@ -16,7 +16,7 @@ class ModuleUpdate(ComponentUpdate):
         branch=None,
         no_pull=False,
         limit_output=False,
-        only=False,
+        skip_deps=False,
     ):
         super().__init__(
             pipeline_dir,
@@ -32,5 +32,5 @@ class ModuleUpdate(ComponentUpdate):
             branch,
             no_pull,
             limit_output,
-            only,
+            skip_deps,
         )

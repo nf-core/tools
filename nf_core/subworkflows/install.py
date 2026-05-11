@@ -12,7 +12,7 @@ class SubworkflowInstall(ComponentInstall):
         branch=None,
         no_pull=False,
         installed_by=None,
-        only=False,
+        skip_deps=False,
     ):
         super().__init__(
             pipeline_dir,
@@ -24,5 +24,5 @@ class SubworkflowInstall(ComponentInstall):
             branch=branch,
             no_pull=no_pull,
             installed_by=installed_by,
-            only=only,
+            skip_deps=skip_deps,
         )

@@ -33,15 +33,15 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         assert update_obj.update("bam_stats_samtools") is True
         assert cmp_component(tmpdir, sw_path) is True
 
-    def test_subworkflow_update_only_skips_linked_components(self):
-        """`--only` updates the named subworkflow's SHA but leaves transitive deps untouched."""
+    def test_subworkflow_update_skip_deps_skips_linked_components(self):
+        """`--skip-deps` updates the named subworkflow's SHA but leaves transitive deps untouched."""
         assert self.subworkflow_install_old.install("fastq_align_bowtie2")
         old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
         old_dep_sha = old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][
             "samtools/flagstat"
         ]["git_sha"]
 
-        update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, only=True)
+        update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, skip_deps=True)
         assert update_obj.update("fastq_align_bowtie2") is True
 
         mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
@@ -60,15 +60,15 @@ class TestSubworkflowsUpdate(TestSubworkflows):
             == old_dep_sha
         )
 
-    def test_subworkflow_update_only_with_update_deps_errors(self):
-        """`--only` and `--update-deps` are mutually exclusive."""
+    def test_subworkflow_update_skip_deps_with_update_deps_errors(self):
+        """`--skip-deps` and `--update-deps` are mutually exclusive."""
         with pytest.raises(UserWarning, match="mutually exclusive"):
-            SubworkflowUpdate(self.pipeline_dir, only=True, update_deps=True, show_diff=False)._parameter_checks()
+            SubworkflowUpdate(self.pipeline_dir, skip_deps=True, update_deps=True, show_diff=False)._parameter_checks()
 
-    def test_subworkflow_update_only_with_all_errors(self):
-        """`--only` and `--all` are mutually exclusive."""
+    def test_subworkflow_update_skip_deps_with_all_errors(self):
+        """`--skip-deps` and `--all` are mutually exclusive."""
         with pytest.raises(UserWarning, match="mutually exclusive"):
-            SubworkflowUpdate(self.pipeline_dir, only=True, update_all=True, show_diff=False)._parameter_checks()
+            SubworkflowUpdate(self.pipeline_dir, skip_deps=True, update_all=True, show_diff=False)._parameter_checks()
 
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""

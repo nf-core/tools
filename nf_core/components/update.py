@@ -38,7 +38,7 @@ class ComponentUpdate(ComponentCommand):
         branch=None,
         no_pull=False,
         limit_output=False,
-        only=False,
+        skip_deps=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -51,7 +51,7 @@ class ComponentUpdate(ComponentCommand):
         self.save_diff_fn = save_diff_fn
         self.limit_output = limit_output
         self.update_deps = update_deps
-        self.only = only
+        self.skip_deps = skip_deps
         self.component = None
         self.update_config = None
         self.modules_json = ModulesJson(self.directory)
@@ -70,11 +70,11 @@ class ComponentUpdate(ComponentCommand):
         if self.update_all and self.component:
             raise UserWarning(f"Either a {self.component_type[:-1]} or the '--all' flag can be specified, not both.")
 
-        if self.only and self.update_deps:
-            raise UserWarning("`--only` and `--update-deps` are mutually exclusive: pick single-target or cascade.")
+        if self.skip_deps and self.update_deps:
+            raise UserWarning("`--skip-deps` and `--update-deps` are mutually exclusive.")
 
-        if self.only and self.update_all:
-            raise UserWarning("`--only` and `--all` are mutually exclusive.")
+        if self.skip_deps and self.update_all:
+            raise UserWarning("`--skip-deps` and `--all` are mutually exclusive.")
 
         if self.repo_type == "modules":
             raise UserWarning(
@@ -322,7 +322,7 @@ class ComponentUpdate(ComponentCommand):
                     try_generate_container_configs(self.directory)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
-                if self.only:
+                if self.skip_deps:
                     # Caller asked for single-target update; skip linked components entirely.
                     recursive_update = False
                 elif not silent and len(modules_to_update + subworkflows_to_update) > 0 and not self.update_all:
