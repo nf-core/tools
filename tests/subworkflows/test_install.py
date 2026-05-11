@@ -18,14 +18,21 @@ from ..utils import (
 
 
 class TestSubworkflowsInstall(TestSubworkflows):
-    def test_subworkflow_install_only_skips_included_components(self):
-        """`--only` installs the named subworkflow but does not pull in transitive modules."""
-        install_obj = SubworkflowInstall(self.pipeline_dir, prompt=False, force=False, only=True)
-        assert install_obj.install("bam_sort_stats_samtools") is not False
-        subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+    def test_subworkflow_install_force_only_does_not_reinstall_deps(self):
+        """`install --force --only` leaves transitive deps' SHAs pinned."""
+        assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
         samtools_index_path = Path(self.pipeline_dir, "modules", "nf-core", "samtools", "index")
-        assert subworkflow_path.exists(), "Named subworkflow should be installed"
-        assert not samtools_index_path.exists(), "Transitive module dep must not be installed under --only"
+        assert samtools_index_path.exists()
+        before_sha = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
+
+        force_only = SubworkflowInstall(self.pipeline_dir, prompt=False, force=True, only=True)
+        assert force_only.install("bam_sort_stats_samtools") is not False
+        after_sha = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
+        assert before_sha == after_sha
 
     def test_subworkflows_install_bam_sort_stats_samtools(self):
         """Test installing a subworkflow - bam_sort_stats_samtools"""

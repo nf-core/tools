@@ -167,9 +167,19 @@ class ComponentInstall(ComponentCommand):
             self.component_type, self.modules_repo, component, version, self.installed_by, install_track
         )
 
-        if self.component_type == "subworkflows" and not self.only:
-            # Install included modules and subworkflows
-            self.install_included_components(component_dir)
+        if self.component_type == "subworkflows":
+            # Under --only, don't propagate --force to transitive deps so
+            # already-installed ones keep their pinned SHAs and just have
+            # installed_by tracking refreshed.
+            if self.only:
+                original_force = self.force
+                self.force = False
+                try:
+                    self.install_included_components(component_dir)
+                finally:
+                    self.force = original_force
+            else:
+                self.install_included_components(component_dir)
 
         # Regenerate container configuration files for the pipeline when modules are installed
         if self.component_type == "modules":
