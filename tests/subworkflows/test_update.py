@@ -32,6 +32,15 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         assert update_obj.update("bam_stats_samtools") is True
         assert cmp_component(tmpdir, sw_path) is True
 
+    @mock.patch("nf_core.components.update.questionary.select")
+    def test_subworkflow_update_skips_diff_prompt_when_non_interactive(self, mock_select):
+        """Non-interactive update applies directly instead of prompting for diff mode."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        update_obj = SubworkflowUpdate(self.pipeline_dir, update_deps=True)
+        update_obj.no_prompts = True
+        assert update_obj.update("fastq_align_bowtie2") is True
+        assert not mock_select.called
+
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""
         assert self.subworkflow_install_old.install("fastq_align_bowtie2")

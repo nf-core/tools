@@ -144,23 +144,23 @@ class ComponentUpdate(ComponentCommand):
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
         if not self.save_diff_fn and self.show_diff is None:
-            self.require_prompts(
-                "Diff display preference not specified.\n"
-                "Please use '--preview', '--save-diff', or neither to skip diff viewing"
-            )
-            diff_type = questionary.select(
-                "Do you want to view diffs of the proposed changes?",
-                choices=[
-                    {"name": "No previews, just update everything", "value": 0},
-                    {"name": "Preview diff in terminal, choose whether to update files", "value": 1},
-                    {"name": "Just write diffs to a patch file", "value": 2},
-                ],
-                default={"name": "No previews, just update everything", "value": 0},
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask()
+            if self.no_prompts:
+                # Non-interactive: take the prompt's default (apply changes without preview).
+                self.show_diff = False
+            else:
+                diff_type = questionary.select(
+                    "Do you want to view diffs of the proposed changes?",
+                    choices=[
+                        {"name": "No previews, just update everything", "value": 0},
+                        {"name": "Preview diff in terminal, choose whether to update files", "value": 1},
+                        {"name": "Just write diffs to a patch file", "value": 2},
+                    ],
+                    default={"name": "No previews, just update everything", "value": 0},
+                    style=nf_core.utils.nfcore_question_style,
+                ).unsafe_ask()
 
-            self.show_diff = diff_type == 1
-            self.save_diff_fn = diff_type == 2
+                self.show_diff = diff_type == 1
+                self.save_diff_fn = diff_type == 2
 
         if self.save_diff_fn:  # True or a string
             self.setup_diff_file(check_diff_exist)
