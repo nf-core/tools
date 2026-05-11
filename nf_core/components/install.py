@@ -181,8 +181,9 @@ class ComponentInstall(ComponentCommand):
             else:
                 self.install_included_components(component_dir)
 
-        # Regenerate container configs once after all components are on disk (skip for recursive dependency installs)
-        if not silent:
+        # Update container configs for the installed module. Subworkflows have no container entries of their
+        # own; their included modules each trigger this when installed above.
+        if self.component_type == "modules":
             try_generate_container_configs(self.directory, component_dir)
 
         if not silent:

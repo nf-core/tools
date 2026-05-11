@@ -1,6 +1,6 @@
 """Tests for the ContainerConfigs helper used by pipelines."""
 
-from pathlib import Path
+import shutil
 
 import ruamel.yaml
 
@@ -53,11 +53,7 @@ class TestContainerConfigs(TestPipelines):
         with open(self.pipeline_dir / "modules" / "nf-core" / "fastqc" / "meta.yml") as fh:
             fastqc_meta_yml = yaml.load(fh)
 
-        # new_module_path/name are kept for backward compat but the scan finds the module regardless
-        self.container_configs.generate_container_configs(
-            new_module_path=Path("modules/nf-core/fastqc"),
-            new_module_name="fastqc",
-        )
+        self.container_configs.generate_container_configs()
 
         conf_dir = self.pipeline_dir / "conf"
         for p_name, (runtime, arch, protocol) in PLATFORMS.items():
@@ -82,3 +78,47 @@ class TestContainerConfigs(TestPipelines):
                 assert stale_line not in cfg_path.read_text(), (
                     f"{cfg_path.name} still contains stale entry after regeneration"
                 )
+
+    def test_generate_container_configs_no_modules_dir(self) -> None:
+        """Returns an empty set immediately when there is no modules/ directory."""
+        shutil.rmtree(self.pipeline_dir / "modules", ignore_errors=True)
+        result = self.container_configs.generate_container_configs()
+        assert result == set()
+
+    def test_generate_container_configs_skips_meta_without_containers(self) -> None:
+        """meta.yml files without a containers key are silently ignored."""
+        module_dir = self.pipeline_dir / "modules" / "local" / "fake"
+        module_dir.mkdir(parents=True, exist_ok=True)
+        (module_dir / "meta.yml").write_text("name: fake\ndescription: no containers here\n")
+        (module_dir / "main.nf").write_text('process FAKE {\n  script:\n  """\n  echo hello\n  """\n}\n')
+
+        self.container_configs.generate_container_configs()
+
+        conf_dir = self.pipeline_dir / "conf"
+        for p_name in PLATFORMS:
+            cfg_path = conf_dir / f"containers_{p_name}.config"
+            if cfg_path.exists():
+                assert "FAKE" not in cfg_path.read_text(), f"{cfg_path.name} contains entry for FAKE module"
+
+    def test_generate_container_configs_skips_unchanged_write(self) -> None:
+        """Config files are not rewritten when content has not changed."""
+        mods_install = ModuleInstall(
+            self.pipeline_dir, prompt=False, force=False, sha="79b36b51048048374b642289bfe9e591ef56fe05"
+        )
+        mods_install.install("fastqc")
+
+        self.container_configs.generate_container_configs()
+
+        conf_dir = self.pipeline_dir / "conf"
+        mtimes = {
+            p: (conf_dir / f"containers_{p}.config").stat().st_mtime_ns
+            for p in PLATFORMS
+            if (conf_dir / f"containers_{p}.config").exists()
+        }
+        assert mtimes, "Expected at least one config file to be generated on the first run"
+
+        self.container_configs.generate_container_configs()
+
+        for p_name, mtime_before in mtimes.items():
+            mtime_after = (conf_dir / f"containers_{p_name}.config").stat().st_mtime_ns
+            assert mtime_after == mtime_before, f"conf/{p_name}.config was rewritten unnecessarily"

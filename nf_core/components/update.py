@@ -318,6 +318,8 @@ class ComponentUpdate(ComponentCommand):
                 # Update modules.json with newly installed component
                 self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
+                if self.component_type == "modules":
+                    try_generate_container_configs(self.directory, component_dir)
 
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
@@ -342,10 +344,6 @@ class ComponentUpdate(ComponentCommand):
                     # Update linked components
                     self.update_linked_components(modules_to_update, subworkflows_to_update, updated)
                     self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
-
-        # Regenerate container configs once after all components are updated
-        if updated:
-            try_generate_container_configs(self.directory)
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
