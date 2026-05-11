@@ -65,6 +65,11 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         with pytest.raises(UserWarning, match="mutually exclusive"):
             SubworkflowUpdate(self.pipeline_dir, only=True, update_deps=True, show_diff=False)._parameter_checks()
 
+    def test_subworkflow_update_only_with_all_errors(self):
+        """`--only` and `--all` are mutually exclusive."""
+        with pytest.raises(UserWarning, match="mutually exclusive"):
+            SubworkflowUpdate(self.pipeline_dir, only=True, update_all=True, show_diff=False)._parameter_checks()
+
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""
         assert self.subworkflow_install_old.install("fastq_align_bowtie2")

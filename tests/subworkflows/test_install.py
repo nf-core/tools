@@ -34,6 +34,17 @@ class TestSubworkflowsInstall(TestSubworkflows):
         ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
         assert before_sha == after_sha
 
+    def test_subworkflow_install_only_preserves_installed_by_tracking(self):
+        """`install --only` of a parent records the new dependent in shared subcomponents' installed_by."""
+        # Install the sub-subworkflow first so it's already on disk before we --only the parent.
+        assert self.subworkflow_install.install("bam_stats_samtools") is not False
+        only_install = SubworkflowInstall(self.pipeline_dir, prompt=False, force=False, only=True)
+        assert only_install.install("bam_sort_stats_samtools") is not False
+        installed_by = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["subworkflows"]["nf-core"]["bam_stats_samtools"]["installed_by"]
+        assert sorted(installed_by) == sorted(["subworkflows", "bam_sort_stats_samtools"])
+
     def test_subworkflows_install_bam_sort_stats_samtools(self):
         """Test installing a subworkflow - bam_sort_stats_samtools"""
         assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False

@@ -993,17 +993,11 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
     help="Force reinstallation of module if it already exists",
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-@click.option(
-    "--only",
-    is_flag=True,
-    default=False,
-    help="Restrict the install to the named component; do not recurse into included modules/subworkflows.",
-)
-def command_modules_install(ctx, tool, directory, prompt, force, sha, only):
+def command_modules_install(ctx, tool, directory, prompt, force, sha):
     """
     Install DSL2 modules within a pipeline.
     """
-    modules_install(ctx, tool, directory, prompt, force, sha, only)
+    modules_install(ctx, tool, directory, prompt, force, sha)
 
 
 # nf-core modules update
@@ -1075,7 +1069,7 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha, only):
     "--only",
     is_flag=True,
     default=False,
-    help="Restrict the update to the named module; do not touch transitively linked components. Mutually exclusive with --update-deps.",
+    help="Single-target update: don't cascade to linked components. Conflicts with --update-deps and --all.",
 )
 def command_modules_update(
     ctx,
@@ -1744,7 +1738,7 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     "--only",
     is_flag=True,
     default=False,
-    help="Restrict the install to the named subworkflow; do not recurse into included modules/subworkflows.",
+    help="With --force, refresh only the named subworkflow; leave transitive deps' files and SHAs pinned.",
 )
 def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, only):
     """
@@ -1907,7 +1901,7 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     "--only",
     is_flag=True,
     default=False,
-    help="Restrict the update to the named subworkflow; do not touch transitively linked components. Mutually exclusive with --update-deps.",
+    help="Single-target update: don't cascade to linked components. Conflicts with --update-deps and --all.",
 )
 def command_subworkflows_update(
     ctx,

@@ -73,6 +73,9 @@ class ComponentUpdate(ComponentCommand):
         if self.only and self.update_deps:
             raise UserWarning("`--only` and `--update-deps` are mutually exclusive: pick single-target or cascade.")
 
+        if self.only and self.update_all:
+            raise UserWarning("`--only` and `--all` are mutually exclusive.")
+
         if self.repo_type == "modules":
             raise UserWarning(
                 f"{self.component_type.title()} can not be updated in clones of the nf-core/modules repository."
