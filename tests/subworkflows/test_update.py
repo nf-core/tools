@@ -43,8 +43,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True)
         assert update_obj.update("fastq_align_bowtie2") is True
         assert mock_gen.call_count == 1, (
-            f"Expected try_generate_container_configs to run once per top-level "
-            f"update, got {mock_gen.call_count} calls"
+            f"Expected try_generate_container_configs to run once per top-level update, got {mock_gen.call_count} calls"
         )
 
     def test_install_at_hash_and_update(self):
