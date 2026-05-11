@@ -181,9 +181,9 @@ class ComponentInstall(ComponentCommand):
             else:
                 self.install_included_components(component_dir)
 
-        # Regenerate container configuration files for the pipeline when modules are installed
-        if self.component_type == "modules":
-            try_generate_container_configs(self.directory, component_dir, component)
+        # Regenerate container configs once after all components are on disk (skip for recursive dependency installs)
+        if not silent:
+            try_generate_container_configs(self.directory, component_dir)
 
         if not silent:
             modules_json.load()
