@@ -304,7 +304,7 @@ def check_script_section(self, lines):
     permitted_meta_keys = {"id", "single_end"}
     invalid_meta_keys = [
         f"{prefix}{key}"
-        for prefix, key in re.findall(r"\b(meta\d*\??\.)(\w+)\b(?!\()", script)
+        for prefix, key in re.findall(r"\b({(meta\d*\??\.)(\w+)\b(?!\()})", script)
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
