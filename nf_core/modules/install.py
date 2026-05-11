@@ -12,6 +12,7 @@ class ModuleInstall(ComponentInstall):
         branch=None,
         no_pull=False,
         installed_by=None,
+        only=False,
     ):
         super().__init__(
             pipeline_dir,
@@ -23,4 +24,5 @@ class ModuleInstall(ComponentInstall):
             branch=branch,
             no_pull=no_pull,
             installed_by=installed_by,
+            only=only,
         )

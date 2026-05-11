@@ -993,11 +993,17 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
     help="Force reinstallation of module if it already exists",
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def command_modules_install(ctx, tool, directory, prompt, force, sha):
+@click.option(
+    "--only",
+    is_flag=True,
+    default=False,
+    help="Restrict the install to the named component; do not recurse into included modules/subworkflows.",
+)
+def command_modules_install(ctx, tool, directory, prompt, force, sha, only):
     """
     Install DSL2 modules within a pipeline.
     """
-    modules_install(ctx, tool, directory, prompt, force, sha)
+    modules_install(ctx, tool, directory, prompt, force, sha, only)
 
 
 # nf-core modules update
@@ -1065,6 +1071,12 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
+@click.option(
+    "--only",
+    is_flag=True,
+    default=False,
+    help="Restrict the update to the named module; do not touch transitively linked components. Mutually exclusive with --update-deps.",
+)
 def command_modules_update(
     ctx,
     tool,
@@ -1077,11 +1089,14 @@ def command_modules_update(
     save_diff,
     update_deps,
     limit_output,
+    only,
 ):
     """
     Update DSL2 modules within a pipeline.
     """
-    modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output)
+    modules_update(
+        ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output, only
+    )
 
 
 # nf-core modules patch
@@ -1725,11 +1740,17 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     metavar="<commit sha>",
     help="Install subworkflow at commit SHA",
 )
-def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
+@click.option(
+    "--only",
+    is_flag=True,
+    default=False,
+    help="Restrict the install to the named subworkflow; do not recurse into included modules/subworkflows.",
+)
+def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, only):
     """
     Install DSL2 subworkflow within a pipeline.
     """
-    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha)
+    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, only)
 
 
 # nf-core subworkflows patch
@@ -1882,6 +1903,12 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
+@click.option(
+    "--only",
+    is_flag=True,
+    default=False,
+    help="Restrict the update to the named subworkflow; do not touch transitively linked components. Mutually exclusive with --update-deps.",
+)
 def command_subworkflows_update(
     ctx,
     subworkflow,
@@ -1894,12 +1921,24 @@ def command_subworkflows_update(
     save_diff,
     update_deps,
     limit_output,
+    only,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
     """
     subworkflows_update(
-        ctx, subworkflow, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
+        ctx,
+        subworkflow,
+        directory,
+        force,
+        prompt,
+        sha,
+        install_all,
+        preview,
+        save_diff,
+        update_deps,
+        limit_output,
+        only,
     )
 
 

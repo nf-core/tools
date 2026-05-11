@@ -37,6 +37,7 @@ class ComponentInstall(ComponentCommand):
         branch: str | None = None,
         no_pull: bool = False,
         installed_by: list[str] | None = None,
+        only: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -45,6 +46,7 @@ class ComponentInstall(ComponentCommand):
         self.prompt = prompt
         self.sha = sha
         self.current_sha = sha
+        self.only = only
         if installed_by is not None:
             self.installed_by = installed_by
         else:
@@ -165,7 +167,7 @@ class ComponentInstall(ComponentCommand):
             self.component_type, self.modules_repo, component, version, self.installed_by, install_track
         )
 
-        if self.component_type == "subworkflows":
+        if self.component_type == "subworkflows" and not self.only:
             # Install included modules and subworkflows
             self.install_included_components(component_dir)
 

@@ -18,6 +18,15 @@ from ..utils import (
 
 
 class TestSubworkflowsInstall(TestSubworkflows):
+    def test_subworkflow_install_only_skips_included_components(self):
+        """`--only` installs the named subworkflow but does not pull in transitive modules."""
+        install_obj = SubworkflowInstall(self.pipeline_dir, prompt=False, force=False, only=True)
+        assert install_obj.install("bam_sort_stats_samtools") is not False
+        subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+        samtools_index_path = Path(self.pipeline_dir, "modules", "nf-core", "samtools", "index")
+        assert subworkflow_path.exists(), "Named subworkflow should be installed"
+        assert not samtools_index_path.exists(), "Transitive module dep must not be installed under --only"
+
     def test_subworkflows_install_bam_sort_stats_samtools(self):
         """Test installing a subworkflow - bam_sort_stats_samtools"""
         assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False

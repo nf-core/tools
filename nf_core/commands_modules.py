@@ -49,7 +49,7 @@ def modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redef
         sys.exit(1)
 
 
-def modules_install(ctx, tool, directory, prompt, force, sha):
+def modules_install(ctx, tool, directory, prompt, force, sha, only=False):
     """
     Install DSL2 modules within a pipeline.
 
@@ -66,6 +66,7 @@ def modules_install(ctx, tool, directory, prompt, force, sha):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            only=only,
         )
         exit_status = module_install.install(tool)
         if not exit_status:
@@ -87,6 +88,7 @@ def modules_update(
     save_diff,
     update_deps,
     limit_output,
+    only,
 ):
     """
     Update DSL2 modules within a pipeline.
@@ -109,6 +111,7 @@ def modules_update(
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
             limit_output,
+            only,
         )
         exit_status = module_install.update(tool)
         if not exit_status and install_all:
