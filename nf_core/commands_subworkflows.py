@@ -130,7 +130,6 @@ def subworkflows_lint(
         )
         subworkflow_lint.lint(
             subworkflow=subworkflow,
-            registry=registry,
             key=key,
             all_subworkflows=all_subworkflows,
             print_results=True,
