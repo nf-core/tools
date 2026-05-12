@@ -1316,8 +1316,8 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library/",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1608,8 +1608,8 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library/",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",

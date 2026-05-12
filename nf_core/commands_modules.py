@@ -262,7 +262,6 @@ def modules_lint(
         )
         module_lint.lint(
             module=tool,
-            registry=registry,
             key=key,
             all_modules=all_modules,
             print_results=True,

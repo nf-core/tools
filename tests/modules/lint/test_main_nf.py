@@ -142,7 +142,14 @@ def test_check_process_section_additional_registries(container_line, additional_
 
     with patch("requests.head") as mock_head:
         mock_head.return_value = MagicMock(status_code=200)
-        check_process_section(mock_lint, [container_line], "quay.io", False, None, additional_registries)
+        check_process_section(
+            mock_lint,
+            [container_line],
+            ["quay.io", "community.wave.seqera.io/library/"],
+            False,
+            None,
+            additional_registries,
+        )
 
     prefix_passed = any(r[1] == "container_links" and "Container prefix is correct" in r[2] for r in mock_lint.passed)
     prefix_failed = any(

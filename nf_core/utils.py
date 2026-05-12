@@ -1405,7 +1405,7 @@ class NFCoreYamlConfig(BaseModel):
     update: dict[str, str | bool | dict[str, str | dict[str, str | bool]]] | None = None
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
     container_registry: list[str] | None = Field(default=None, alias="container-registry")
-    """ Additional container registry prefixes allowed when linting container directives (modules repo_type only). """
+    """ Additional container registry prefixes allowed when linting container directives. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
@@ -1425,7 +1425,7 @@ class NFCoreYamlConfig(BaseModel):
             fields_to_exclude = ["template", "update"]
         else:  # pipeline
             # Fields to exclude for pipeline
-            fields_to_exclude = ["bump_version", "org_path", "container_registry"]
+            fields_to_exclude = ["bump_version", "org_path"]
 
         # Remove the fields based on repository_type
         for field in fields_to_exclude:

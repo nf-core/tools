@@ -62,7 +62,7 @@ class ComponentLint(ComponentCommand):
         remote_url: str | None = None,
         branch: str | None = None,
         no_pull: bool = False,
-        registry: str | None = None,
+        registry: str = "quay.io,community.wave.seqera.io/library/",
         hide_progress: bool = False,
     ):
         super().__init__(
@@ -156,14 +156,11 @@ class ComponentLint(ComponentCommand):
     def __repr__(self) -> str:
         return f"ComponentLint({self.component_type}, {self.directory})"
 
-    def _set_registry(self, registry) -> None:
-        if registry is None:
-            self.registry = self.config.get("docker.registry", "quay.io")
-        else:
-            self.registry = registry
-        log.debug(f"Registry set to {self.registry}")
+    def _set_registry(self, registry: str) -> None:
         _, tools_config = nf_core.utils.load_tools_config(self.directory)
-        self.additional_registries: list[str] = (tools_config.container_registry or []) if tools_config else []
+        user_registries: list[str] = (tools_config.container_registry or []) if tools_config else []
+        self.registry: tuple[str, ...] = (*registry.split(","), *user_registries)
+        log.debug(f"Registries set to {self.registry}")
 
     @property
     def local_module_exclude_tests(self):

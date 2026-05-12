@@ -69,7 +69,7 @@ class ModuleLint(ComponentLint):
         remote_url: str | None = None,
         branch: str | None = None,
         no_pull: bool = False,
-        registry: str | None = None,
+        registry: str = "quay.io,community.wave.seqera.io/library/",
         hide_progress: bool = False,
     ):
         super().__init__(
@@ -88,7 +88,6 @@ class ModuleLint(ComponentLint):
     def lint(
         self,
         module=None,
-        registry="quay.io",
         key=(),
         all_modules=False,
         print_results=True,
@@ -173,25 +172,22 @@ class ModuleLint(ComponentLint):
 
         # Lint local modules
         if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
+            self.lint_modules(local_modules, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
         if not local and len(remote_modules) > 0:
-            self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
+            self.lint_modules(remote_modules, local=False, fix_version=fix_version)
 
         if print_results:
             self._print_results(show_passed=show_passed, sort_by=sort_by, plain_text=plain_text)
             self.print_summary(plain_text=plain_text)
 
-    def lint_modules(
-        self, modules: list[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
-    ) -> None:
+    def lint_modules(self, modules: list[NFCoreComponent], local: bool = False, fix_version: bool = False) -> None:
         """
         Lint a list of modules
 
         Args:
             modules ([NFCoreComponent]): A list of module objects
-            registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core modules
             fix_version (boolean): Fix the module version if a newer version is available
         """
