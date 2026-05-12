@@ -273,7 +273,7 @@ class ConfigsCreateConfig(BaseModel):
     def path_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that a path is valid."""
         context = info.context
-        if context and (not context["is_infrastructure"] and not context["is_nfcore"]):
+        if context and not context["is_infrastructure"] and not context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             if not Path(v).is_dir():
@@ -295,7 +295,7 @@ class ConfigsCreateConfig(BaseModel):
     def nfcore_name_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that an nf-core pipeline name is valid."""
         context = info.context
-        if context and (not context["is_infrastructure"] and context["is_nfcore"]):
+        if context and not context["is_infrastructure"] and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v

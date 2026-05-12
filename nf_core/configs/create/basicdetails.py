@@ -7,6 +7,7 @@ from requests import get
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
+from textual.events import Mount, ScreenResume
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select
 
@@ -97,20 +98,26 @@ class BasicDetails(Screen):
         )
 
     def get_valid_nfcore_pipelines(self) -> list[str]:
+        """Get a list of valid pipeline names. If the list can't be pulled, return an empty list."""
         url = "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json"
-        msg = "Error fetching nf-core pipeline list"
-        response = get(url)
+        try:
+            response = get(url)
+        except:
+            return []
         if response.status_code != 200:
-            # Allow the fetch to fail, e.g. while offline and configuring non-nf-core pipelines
             return []
         data = response.json()
-        # If fetch was successful, ensure pipeline list is valid
-        assert isinstance(data, dict), msg
-        assert "pipeline" in data, msg
+        if not isinstance(data, dict):
+            return []
+        if not "pipeline" in data:
+            return []
         pipelines = data["pipeline"]
-        assert isinstance(pipelines, list), msg
-        assert len(pipelines) > 0, msg
-        assert all([isinstance(p, str) for p in pipelines]), msg
+        if not isinstance(pipelines, list):
+            return []
+        if not len(pipelines) > 0:
+            return []
+        if not all([isinstance(p, str) for p in pipelines]):
+            return []
         return pipelines
 
     ## Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
@@ -129,9 +136,12 @@ class BasicDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
-        if self.parent.NFCORE_CONFIG:
+        if self.parent.CONFIG_TYPE == "pipeline" and self.parent.NFCORE_CONFIG:
             select = self.query_one("#config_pipeline_name", Select)
-            config["config_pipeline_name"] = select.value
+            if select.value != Select.BLANK:
+                config["config_pipeline_name"] = select.value
+            elif not config.get("config_pipeline_name", ""):
+                config["config_pipeline_name"] = ""
         try:
             with init_context(self.parent.get_context()):
                 self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
@@ -143,24 +153,35 @@ class BasicDetails(Screen):
         except ValueError:
             pass
 
-    def on_screen_resume(self):
-        """Show or hide form fields on resume depending on config type."""
-        if self.parent.CONFIG_TYPE == "pipeline":
-            add_hide_class(self.parent, "config_profile_contact")
-            add_hide_class(self.parent, "config_profile_handle")
-            add_hide_class(self.parent, "config_profile_url")
-            if self.parent.NFCORE_CONFIG:
-                remove_hide_class(self.parent, "config_pipeline_name")
-                remove_hide_class(self.parent, "config_pipeline_name_text")
-                add_hide_class(self.parent, "config_pipeline_path")
-            else:
-                remove_hide_class(self.parent, "config_pipeline_path")
-                add_hide_class(self.parent, "config_pipeline_name")
-                add_hide_class(self.parent, "config_pipeline_name_text")
-        if self.parent.CONFIG_TYPE == "infrastructure":
+    @on(Mount)
+    @on(ScreenResume)
+    def show_hide_fields(self) -> None:
+        """Show/hide fields depending on config type."""
+        # Show/hide nf-core required fields
+        if self.parent.NFCORE_CONFIG:
             remove_hide_class(self.parent, "config_profile_contact")
             remove_hide_class(self.parent, "config_profile_handle")
             remove_hide_class(self.parent, "config_profile_url")
+        else:
+            add_hide_class(self.parent, "config_profile_contact")
+            add_hide_class(self.parent, "config_profile_handle")
+            add_hide_class(self.parent, "config_profile_url")
+
+        # Hide pipeline fields when in infrastructure mode
+        if self.parent.CONFIG_TYPE == "infrastructure":
             add_hide_class(self.parent, "config_pipeline_name")
             add_hide_class(self.parent, "config_pipeline_name_text")
             add_hide_class(self.parent, "config_pipeline_path")
+            return
+
+        # Hide pipeline name fields and show pipeline path field for custom pipeline configs
+        if not self.parent.NFCORE_CONFIG:
+            remove_hide_class(self.parent, "config_pipeline_path")
+            add_hide_class(self.parent, "config_pipeline_name")
+            add_hide_class(self.parent, "config_pipeline_name_text")
+            return
+
+        # For nf-core pipelines, hide the pipeline path field and show the dropdown box
+        add_hide_class(self.parent, "config_pipeline_path")
+        remove_hide_class(self.parent, "config_pipeline_name")
+        remove_hide_class(self.parent, "config_pipeline_name_text")
