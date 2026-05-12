@@ -162,6 +162,8 @@ class ComponentLint(ComponentCommand):
         else:
             self.registry = registry
         log.debug(f"Registry set to {self.registry}")
+        _, tools_config = nf_core.utils.load_tools_config(self.directory)
+        self.additional_registries: list[str] = (tools_config.container_registry or []) if tools_config else []
 
     @property
     def local_module_exclude_tests(self):

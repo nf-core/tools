@@ -171,7 +171,9 @@ def main_nf(
         module.passed.append(("main_nf", "main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines, registry, fix_version, progress_bar):
+    if check_process_section(
+        module, process_lines, registry, fix_version, progress_bar, module_lint_object.additional_registries
+    ):
         module.passed.append(("main_nf", "main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf", "main_nf_container", "Container versions do not match", module.main_nf))
@@ -359,7 +361,7 @@ def check_when_section(self, lines):
     self.passed.append(("main_nf", "when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines, registry, fix_version, progress_bar):
+def check_process_section(self, lines, registry, fix_version, progress_bar, additional_registries=None):
     """Lint the section of a module between the process definition
     and the 'input:' definition
     Specifically checks for correct software versions
@@ -370,6 +372,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         registry (str): Base Docker registry for containers. Typically quay.io.
         fix_version (bool): Fix software version
         progress_bar (ProgressBar): Progress bar to update.
+        additional_registries (list[str]): Extra registry prefixes from .nf-core.yml ``container-registry``.
 
     Returns:
         bool | None: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
@@ -384,6 +387,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     singularity_tag = None
     docker_tag = None
     bioconda_packages = []
+    allowed_registries = (registry, *(additional_registries or ()))
 
     # Process name should be all capital letters
     if all(x.upper() for x in self.process_name):
@@ -450,7 +454,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if line.startswith((registry, "community.wave.seqera.io/library/")):
+            if line.startswith(allowed_registries):
                 l_stripped = re.sub(r"\W+$", "", line)
                 self.passed.append(
                     (

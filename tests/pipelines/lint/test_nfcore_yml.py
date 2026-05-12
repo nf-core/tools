@@ -48,6 +48,15 @@ class TestLintNfCoreYml(TestLint):
         assert len(results.get("passed", [])) >= 0
         assert len(results.get("ignored", [])) == 0
 
+    def test_nfcore_yml_container_registry_accepted(self):
+        """Lint test: nfcore_yml - PASS - container-registry field is accepted without errors"""
+        self.nf_core_yml["container-registry"] = ["community.wave.seqera.io/library/", "ghcr.io/"]
+        self.yaml.dump(self.nf_core_yml, self.nf_core_yml_path)
+
+        assert self.lint_obj._load()
+        results = self.lint_obj.nfcore_yml()
+        assert len(results.get("failed", [])) == 0
+
     def test_nfcore_yml_nested_lint_config(self) -> None:
         """Lint test: nfcore_yml with nested lint config - PASS"""
         valid_yaml = """
