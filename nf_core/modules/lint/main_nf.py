@@ -8,6 +8,7 @@ from pathlib import Path
 
 from rich.progress import Progress
 
+import nf_core.utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
@@ -69,7 +70,26 @@ def main_nf(
       equal the number of ``emit:`` outputs whose name starts with ``versions``.
       A warning is issued if a legacy YAML-based ``versions`` emit is used instead
       of a topic output.
-
+    * ``process_standard_label``: Process labels should follow the standard format.
+      A warning is issued if a legacy label is used. Allowed standard labels are:
+          "process_cpus_single",
+          "process_cpus_low",
+          "process_cpus_medium",
+          "process_cpus_high",
+          "process_mem_low",
+          "process_mem_medium",
+          "process_mem_high",
+          "process_time_short",
+          "process_time_medium",
+          "process_time_long"
+      Legacy labels are:
+          "process_single",
+          "process_low",
+          "process_medium",
+          "process_high",
+          "process_long",
+          "process_low_memory",
+          "process_high_memory"
     """
 
     inputs: list[str] = []
@@ -585,9 +605,8 @@ def check_process_labels(self, lines):
     legacy_labels = []
     if len(all_labels) > 0:
         for label in all_labels:
-            try:
-                label = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label).group(1)
-            except AttributeError:
+            match = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label)
+            if match is None:
                 self.warned.append(
                     (
                         "main_nf",
@@ -597,6 +616,7 @@ def check_process_labels(self, lines):
                     )
                 )
                 continue
+            label = match.group(1)
             if label not in correct_process_labels and label not in legacy_process_labels:
                 bad_labels.append(label)
             if label in legacy_process_labels:
