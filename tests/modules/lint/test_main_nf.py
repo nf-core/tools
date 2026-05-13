@@ -67,19 +67,25 @@ def test_process_name_format(process_name, component_name, passed, warned, faile
 @pytest.mark.parametrize(
     "content,passed,warned,failed",
     [
-        # Valid process label
-        ("label 'process_high'\ncpus 12", 1, 0, 0),
-        # Non-alphanumeric characters in label
+        # Valid new-style axis-decomposed label
+        ("label 'process_cpus_high'\ncpus 12", 1, 0, 0),
+        # Multiple axis-decomposed labels on different axes — allowed
+        ("label 'process_cpus_high'\nlabel 'process_mem_low'\ncpus 12", 1, 0, 0),
+        # Same axis twice — conflict
+        ("label 'process_cpus_high'\nlabel 'process_cpus_low'\ncpus 12", 0, 1, 0),
+        # Legacy label warns (no new-style label present, so also warns "not found")
+        ("label 'process_high'\ncpus 12", 0, 2, 0),
+        # Two legacy labels warn legacy + not-found (distinct, so no dup warn)
+        ("label 'process_high'\nlabel 'process_low'\ncpus 12", 0, 2, 0),
+        # Duplicate legacy labels: not-found + legacy + duplicate
+        ("label 'process_high'\nlabel 'process_high'\ncpus 12", 0, 3, 0),
+        # Non-alphanumeric characters in label: non-alphanumeric warn + not-found warn
         ("label 'a:label:with:colons'\ncpus 12", 0, 2, 0),
-        # Conflicting labels
-        ("label 'process_high'\nlabel 'process_low'\ncpus 12", 0, 1, 0),
-        # Duplicate labels
-        ("label 'process_high'\nlabel 'process_high'\ncpus 12", 0, 2, 0),
-        # Valid and non-standard labels
-        ("label 'process_high'\nlabel 'process_extra_label'\ncpus 12", 1, 1, 0),
-        # Non-standard label only
-        ("label 'process_extra_label'\ncpus 12", 0, 2, 0),
-        # Non-standard duplicates without quotes
+        # Non-standard (bad) label only: passes axis check but warns non-standard
+        ("label 'process_extra_label'\ncpus 12", 1, 1, 0),
+        # Legacy + non-standard: passes axis check, warns legacy and non-standard
+        ("label 'process_high'\nlabel 'process_extra_label'\ncpus 12", 1, 2, 0),
+        # Non-standard duplicates without quotes: conflict + non-standard + duplicate
         ("label process_extra_label\nlabel process_extra_label\ncpus 12", 0, 3, 0),
         # No label found
         ("cpus 12", 0, 1, 0),
