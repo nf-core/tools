@@ -647,17 +647,17 @@ def check_process_labels(self, lines):
                     self.main_nf,
                 )
             )
-        else:
-            self.warned.append(("main_nf", "process_standard_label", "Standard process label not found", self.main_nf))
-        if legacy_labels:
+        elif legacy_labels:
             self.warned.append(
                 (
                     "main_nf",
                     "process_standard_label",
-                    f"Deprecated process labels found: `{'`,`'.join(legacy_labels)}`. Use the new standard labels instead:  https://nf-co.re/docs/developing/migration-guides/resource-labels",
+                    f"Deprecated process label found: `{legacy_labels[0]}`. Use the new standard labels instead:  https://nf-co.re/docs/developing/migration-guides/resource-labels",
                     self.main_nf,
                 )
             )
+        else:
+            self.warned.append(("main_nf", "process_standard_label", "Standard process label not found", self.main_nf))
         if len(bad_labels) > 0:
             self.warned.append(
                 (
@@ -676,6 +676,7 @@ def check_process_labels(self, lines):
                     self.main_nf,
                 )
             )
+
     else:
         self.warned.append(("main_nf", "process_standard_label", "Process label not specified", self.main_nf))
 
