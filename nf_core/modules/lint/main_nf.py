@@ -359,7 +359,9 @@ def check_when_section(self, lines):
     self.passed.append(("main_nf", "when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines: list[str], registry: tuple[str, ...], fix_version: bool, progress_bar: Progress):
+def check_process_section(
+    self, lines: list[str], registry: tuple[str, ...], fix_version: bool, progress_bar: Progress | None
+):
     """Lint the section of a module between the process definition
     and the 'input:' definition
     Specifically checks for correct software versions
@@ -561,7 +563,10 @@ def check_process_section(self, lines: list[str], registry: tuple[str, ...], fix
                         log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
                         if fixed:
-                            progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                            if progress_bar is not None:
+                                progress_bar.print(
+                                    f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}"
+                                )
                             log.debug(f"Updating package {package} {ver} -> {last_ver}")
                             self.passed.append(
                                 (
@@ -572,9 +577,10 @@ def check_process_section(self, lines: list[str], registry: tuple[str, ...], fix
                                 )
                             )
                         else:
-                            progress_bar.print(
-                                f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                            )
+                            if progress_bar is not None:
+                                progress_bar.print(
+                                    f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                                )
                             log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
                             self.warned.append(
                                 (
