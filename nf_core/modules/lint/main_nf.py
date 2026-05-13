@@ -623,6 +623,15 @@ def check_process_labels(self, lines):
                 legacy_labels.append(label)
             else:
                 good_labels.append(label)
+        if legacy_labels:
+            self.warned.append(
+                (
+                    "main_nf",
+                    "process_standard_label",
+                    f"Deprecated process label found: `{legacy_labels[0]}`. Use the new standard labels instead:  https://nf-co.re/docs/developing/migration-guides/resource-labels",
+                    self.main_nf,
+                )
+            )
         axes = [label.split("_")[1] for label in good_labels if len(label.split("_")) > 1]
         if len(axes) != len(set(axes)):
             conflicting = [
@@ -644,15 +653,6 @@ def check_process_labels(self, lines):
                     "main_nf",
                     "process_standard_label",
                     f"Correct process labels: `{'`,`'.join(good_labels)}`",
-                    self.main_nf,
-                )
-            )
-        elif legacy_labels:
-            self.warned.append(
-                (
-                    "main_nf",
-                    "process_standard_label",
-                    f"Deprecated process label found: `{legacy_labels[0]}`. Use the new standard labels instead:  https://nf-co.re/docs/developing/migration-guides/resource-labels",
                     self.main_nf,
                 )
             )
