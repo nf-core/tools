@@ -110,7 +110,7 @@ class MultiProcessConfig(Screen):
 
     @on(Button.Pressed, "#another")
     def add_config(self) -> None:
-        new_config = ProcessConfig(selector="name", hpc=self.parent.PIPE_CONF_HPC)
+        new_config = ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC)
         self.query_one("#configs").mount(new_config)
 
     @on(Button.Pressed, "#next")

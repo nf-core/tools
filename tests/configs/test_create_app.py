@@ -325,7 +325,7 @@ def test_submitting_infra_final_details_singularity(snap_compare):
     async def run_before(pilot) -> None:
         await submit_infra_final_details("singularity")(pilot)
 
-    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 async def test_writing_infra_details_singularity():
@@ -346,7 +346,7 @@ async def test_writing_infra_details_singularity():
     """
 
     app = ConfigsCreateApp()
-    async with app.run_test(size=(100, 50)) as pilot:
+    async with app.run_test(size=(100, 100)) as pilot:
         # Make a temporary directory to store the output
         tmpdir = TemporaryDirectory()
 
@@ -602,7 +602,7 @@ def test_submitting_infra_custom_final_details_singularity(snap_compare):
     async def run_before(pilot) -> None:
         await submit_infra_custom_final_details("singularity")(pilot)
 
-    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 async def test_writing_infra_custom_details_singularity():
@@ -622,7 +622,7 @@ async def test_writing_infra_custom_details_singularity():
     """
 
     app = ConfigsCreateApp()
-    async with app.run_test(size=(100, 50)) as pilot:
+    async with app.run_test(size=(100, 100)) as pilot:
         # Make a temporary directory to store the output
         tmpdir = TemporaryDirectory()
 
@@ -766,7 +766,7 @@ def test_setting_pipe_nfcore_options(snap_compare):
     async def run_before(pilot) -> None:
         await set_pipe_nfcore_options(pilot)
 
-    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 def test_submitting_pipe_nfcore_options(snap_compare):
@@ -787,7 +787,7 @@ def test_submitting_pipe_nfcore_options(snap_compare):
     async def run_before(pilot) -> None:
         await submit_pipe_nfcore_options(pilot)
 
-    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 async def enter_pipe_nfcore_default_res(pilot) -> None:
@@ -808,7 +808,7 @@ async def submit_pipe_nfcore_default_res(pilot) -> None:
 
 async def enter_pipe_nfcore_named_proc_res(pilot) -> None:
     await submit_pipe_nfcore_default_res(pilot)
-    await pilot.click("#custom_process_name_id")
+    await pilot.press("tab")
     await pilot.press(*list("SOME:PROC.NAME*"))
     await pilot.press("tab")
     await pilot.press("3")
@@ -844,8 +844,8 @@ async def submit_pipe_nfcore_named_proc_res(pilot) -> None:
 
 
 async def enter_pipe_nfcore_labelled_proc_res(pilot) -> None:
-    await submit_pipe_nfcore_default_res(pilot)
-    await pilot.click("#custom_process_name_id")
+    await submit_pipe_nfcore_named_proc_res(pilot)
+    await pilot.press("tab")
     await pilot.press(*list("some_proc_label"))
     await pilot.press("tab")
     await pilot.press("1")
@@ -897,7 +897,143 @@ async def submit_pipe_nfcore_labelled_proc_res(pilot) -> None:
     await pilot.click("#next")
 
 
-# TODO: Write test_ functions for entering and submitting info on the three resource screens
+def test_enter_pipe_nfcore_default_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press nf-core >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_nfcore_default_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submit_pipe_nfcore_default_res(snap_compare):
+    """Test snapshot for the submitting default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press nf-core >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_nfcore_default_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_enter_pipe_nfcore_named_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press nf-core >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_nfcore_named_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submit_pipe_nfcore_named_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press nf-core >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources >
+        click Next >
+        screen labelled_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_nfcore_named_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_enter_pipe_nfcore_labelled_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press nf-core >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources >
+        click Next >
+        screen labelled_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_nfcore_labelled_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submit_pipe_nfcore_labelled_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press nf-core >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources >
+        click Next >
+        screen labelled_process_resources >
+        click Next >
+        screen labelled_process_resources >
+        click Next
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_nfcore_labelled_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 def write_pipe_nfcore_details(outdir="."):
@@ -936,7 +1072,7 @@ async def test_writing_pipe_nfcore_details():
     """
 
     app = ConfigsCreateApp()
-    async with app.run_test(size=(100, 50)) as pilot:
+    async with app.run_test(size=(100, 100)) as pilot:
         # Make a temporary directory to store the output
         tmpdir = TemporaryDirectory()
 
@@ -949,6 +1085,424 @@ async def test_writing_pipe_nfcore_details():
         tmpdir.cleanup()
 
 
-# TODO: Add custom pipeline config functions and tests
-# TODO: Update INFRA_SINGULARITY_CONFIG
-# TODO: Add comparison configs for INFRA_CUSTOM_SINGULARITY_CONFIG, PIPE_NFCORE_CONFIG, and PIPE_CUSTOM_CONFIG
+async def click_pipe_custom(pilot) -> None:
+    await click_type_pipe(pilot)
+    await pilot.click("#type_custom")
+
+
+def test_pipe_custom_basic_details(snap_compare):
+    """Test snapshot for the custom basic details screen
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        screen basic_details
+    """
+
+    async def run_before(pilot) -> None:
+        await click_pipe_custom(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+
+
+async def enter_pipe_custom_basic_details(pilot) -> None:
+    await click_pipe_custom(pilot)
+    await pilot.click("#general_config_name")
+    await pilot.press(*list("myconfig"))
+    await pilot.press("tab")
+    await pilot.press(*list("."))
+    await pilot.press("tab")
+    await pilot.press(*list("A cool description"))
+
+
+async def submit_pipe_custom_basic_details(pilot) -> None:
+    await enter_pipe_custom_basic_details(pilot)
+    await pilot.click("#next")
+
+
+def test_entering_pipe_custom_basic_details(snap_compare):
+    """Test snapshot for the entering basic details
+    on the custom basic_details screen
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        screen basic_details
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_custom_basic_details(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+
+
+def test_submitting_pipe_custom_basic_details(snap_compare):
+    """Test snapshot for the entering basic details
+    on the custom basic_details screen
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_custom_basic_details(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+
+
+async def set_pipe_custom_options(pilot) -> None:
+    await submit_pipe_custom_basic_details(pilot)
+    await pilot.click("#toggle_configure_defaults")
+    await pilot.press("tab")
+    await pilot.press("enter")
+    await pilot.press("tab")
+    await pilot.press("enter")
+    await pilot.press("tab")
+    await pilot.press("enter")
+
+
+async def submit_pipe_custom_options(pilot) -> None:
+    await set_pipe_custom_options(pilot)
+    await pilot.click("#next")
+
+
+def test_setting_pipe_custom_options(snap_compare):
+    """Test snapshot for the setting the configure options
+    on the custom pipeline_config_question screen
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question
+    """
+
+    async def run_before(pilot) -> None:
+        await set_pipe_custom_options(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submitting_pipe_custom_options(snap_compare):
+    """Test snapshot for the setting the configure options
+    on the custom pipeline_config_question screen
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_custom_options(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+async def enter_pipe_custom_default_res(pilot) -> None:
+    await submit_pipe_custom_options(pilot)
+    await pilot.click("#default_process_ncpus")
+    await pilot.press("2")
+    await pilot.press("tab")
+    await pilot.press("8")
+    await pilot.press("tab")
+    await pilot.press(*list("9.5"))
+    await pilot.press("tab")
+
+
+async def submit_pipe_custom_default_res(pilot) -> None:
+    await enter_pipe_custom_default_res(pilot)
+    await pilot.click("#next")
+
+
+async def enter_pipe_custom_named_proc_res(pilot) -> None:
+    await submit_pipe_custom_default_res(pilot)
+    await pilot.press("tab")
+    await pilot.press(*list("some_proc"))
+    await pilot.press("tab")
+    await pilot.press("3")
+    await pilot.press("tab")
+    await pilot.press("4")
+    await pilot.press("tab")
+    await pilot.press(*list("5.5"))
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press(*list("another_proc"))
+    await pilot.press("tab")
+    await pilot.press("2")
+    await pilot.press("tab")
+    await pilot.press("3")
+    await pilot.press("tab")
+    await pilot.press(*list("4.4"))
+    await pilot.press("tab")
+    await pilot.press(*list("customqueue"))
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("enter")
+
+
+async def submit_pipe_custom_named_proc_res(pilot) -> None:
+    await enter_pipe_custom_named_proc_res(pilot)
+    await pilot.click("#next")
+
+
+async def enter_pipe_custom_labelled_proc_res(pilot) -> None:
+    await submit_pipe_custom_named_proc_res(pilot)
+    await pilot.press("tab")
+    await pilot.press(*list("some_proc_label"))
+    await pilot.press("tab")
+    await pilot.press("1")
+    await pilot.press("tab")
+    await pilot.press("1")
+    await pilot.press("tab")
+    await pilot.press(*list("1.1"))
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press(*list("another_label"))
+    await pilot.press("tab")
+    await pilot.press("2")
+    await pilot.press("tab")
+    await pilot.press("2")
+    await pilot.press("tab")
+    await pilot.press(*list("2.2"))
+    await pilot.press("tab")
+    await pilot.press(*list("customqueue"))
+    await pilot.press("tab")
+    await pilot.press("tab")
+    await pilot.press(*list("a_third_label"))
+    await pilot.press("tab")
+    await pilot.press("backspace")
+    await pilot.press("tab")
+    await pilot.press("backspace")
+    await pilot.press("tab")
+    await pilot.press("backspace")
+    await pilot.click("#another")
+    await pilot.press("shift+tab")
+    await pilot.press("shift+tab")
+    await pilot.press("shift+tab")
+    await pilot.press("shift+tab")
+    await pilot.press("shift+tab")
+    await pilot.press("shift+tab")
+    await pilot.press(*list("fourth_label"))
+    await pilot.press("tab")
+    await pilot.press("4")
+    await pilot.press("tab")
+    await pilot.press("backspace")
+    await pilot.press("tab")
+    await pilot.press(*list("4.4"))
+    await pilot.press("tab")
+    await pilot.press(*list("anotherqueue"))
+
+
+async def submit_pipe_custom_labelled_proc_res(pilot) -> None:
+    await enter_pipe_custom_labelled_proc_res(pilot)
+    await pilot.click("#next")
+
+
+def test_enter_pipe_custom_default_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_custom_default_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submit_pipe_custom_default_res(snap_compare):
+    """Test snapshot for the submitting default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_custom_default_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_enter_pipe_custom_named_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_custom_named_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submit_pipe_custom_named_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources >
+        click Next >
+        screen labelled_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_custom_named_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_enter_pipe_custom_labelled_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources >
+        click Next >
+        screen labelled_process_resources
+    """
+
+    async def run_before(pilot) -> None:
+        await enter_pipe_custom_labelled_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def test_submit_pipe_custom_labelled_proc_res(snap_compare):
+    """Test snapshot for the entering default resources
+    when configuring a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        click Next >
+        screen named_process_resources >
+        click Next >
+        screen labelled_process_resources >
+        click Next >
+        screen labelled_process_resources >
+        click Next
+    """
+
+    async def run_before(pilot) -> None:
+        await submit_pipe_custom_labelled_proc_res(pilot)
+
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
+
+
+def write_pipe_custom_details(outdir="."):
+    assert isinstance(outdir, str)
+    assert Path(outdir).is_dir()
+
+    async def _write_pipe_custom_details(pilot) -> None:
+        await submit_pipe_custom_labelled_proc_res(pilot)
+        await pilot.click("#savelocation")
+        await pilot.press(*list(outdir))
+        await pilot.click("#close_app")
+
+    return _write_pipe_custom_details
+
+
+async def test_writing_pipe_custom_details():
+    """Test snapshot for writing a pipeline config.
+    Steps to get to this screen:
+        screen welcome > press Let's go! >
+        press Pipeline config >
+        press custom >
+        enter basic details >
+        click Next >
+        screen pipeline_config_question >
+        click Next >
+        screen default_process_resources >
+        enter resources >
+        click Next >
+        screen named_process_resources >
+        enter resources >
+        click Next >
+        screen labelled_process_resources >
+        enter resources >
+        click next >
+        click Save and close!
+    """
+
+    app = ConfigsCreateApp()
+    async with app.run_test(size=(100, 100)) as pilot:
+        # Make a temporary directory to store the output
+        tmpdir = TemporaryDirectory()
+
+        await write_pipe_custom_details(outdir=tmpdir.name)(pilot)
+
+        config_file = Path(tmpdir.name) / "myconfig.conf"
+        with open(config_file) as f:
+            config = f.read()
+        assert config == PIPE_CUSTOM_CONFIG
+        tmpdir.cleanup()
