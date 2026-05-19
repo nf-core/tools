@@ -208,7 +208,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
             if cf in ignore_configs:
                 ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
                 break
-            if cf in self.nf_config.keys():
+            if cf in self.nf_config:
                 passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
                 break
         else:
@@ -218,7 +218,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
             if cf in ignore_configs:
                 ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
                 break
-            if cf in self.nf_config.keys():
+            if cf in self.nf_config:
                 passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
                 break
         else:
@@ -227,7 +227,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
         if cf in ignore_configs:
             ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
             break
-        if cf not in self.nf_config.keys():
+        if cf not in self.nf_config:
             passed.append(f"Config variable (correctly) not found: {self._wrap_quotes(cf)}")
         else:
             failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
@@ -235,13 +235,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
     # Check and warn if the process configuration is done with deprecated syntax
 
     process_with_deprecated_syntax = list(
-        set(
-            [
-                match.group(1)
-                for ck in self.nf_config.keys()
-                if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None
-            ]
-        )
+        {match.group(1) for ck in self.nf_config if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None}
     )
     for pd in process_with_deprecated_syntax:
         warned.append(f"Process configuration is done with deprecated_syntax: {pd}")
@@ -265,7 +259,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
         try:
             manifest_name = self.nf_config.get("manifest.name", "").strip("'\"")
             if not manifest_name.startswith(f"{org_name}/"):
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, IndexError):
             failed.append(f"Config ``manifest.name`` did not begin with ``{org_name}/``:\n    {manifest_name}")
         else:
@@ -276,7 +270,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
         try:
             manifest_homepage = self.nf_config.get("manifest.homePage", "").strip("'\"")
             if not manifest_homepage.startswith(f"https://github.com/{org_name}/"):
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, IndexError):
             failed.append(
                 f"Config variable ``manifest.homePage`` did not begin with https://github.com/{org_name}/:\n    {manifest_homepage}"
@@ -415,11 +409,11 @@ def nextflow_config(self) -> dict[str, list[str]]:
     schema.load_schema()
     schema.get_schema_defaults()  # Get default values from schema
     schema.get_schema_types()  # Get types from schema
-    for param_name in schema.schema_defaults.keys():
+    for param_name in schema.schema_defaults:
         param = "params." + param_name
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
-        elif param in self.nf_config.keys():
+        elif param in self.nf_config:
             config_default: str | float | int | None = None
             schema_default: str | float | int | None = None
             if schema.schema_types[param_name] == "boolean":

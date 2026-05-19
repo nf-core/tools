@@ -179,7 +179,7 @@ def test_environment_yml_invalid_files(tmp_path, invalid_content, filename):
     """Test that invalid YAML files raise exceptions"""
     test_file, module, lint = setup_test_environment(tmp_path, invalid_content, filename)
 
-    with pytest.raises(Exception):
+    with pytest.raises(ruamel.yaml.YAMLError):
         environment_yml(lint, module)
 
 

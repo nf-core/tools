@@ -30,11 +30,15 @@ def subworkflow_todos(_, subworkflow):
               in a given project directory. This is a very quick and convenient way to get
               started on your pipeline!
 
+    The following checks are performed:
+
+    * ``subworkflow_todo``: Warns if any ``TODO nf-core:`` comment lines are found
+      in the subworkflow files.
     """
 
     # Main subworkflow directory
     swf_results = pipeline_todos(None, root_dir=subworkflow.component_dir)
     for i, warning in enumerate(swf_results["warned"]):
         subworkflow.warned.append(("subworkflow_todos", "subworkflow_todo", warning, swf_results["file_paths"][i]))
-    for i, passed in enumerate(swf_results["passed"]):
+    for _i, passed in enumerate(swf_results["passed"]):
         subworkflow.passed.append(("subworkflow_todos", "subworkflow_todo", passed, subworkflow.component_dir))

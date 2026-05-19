@@ -13,7 +13,8 @@ from textual.app import ComposeResult
 from textual.containers import Grid
 from textual.suggester import SuggestFromList
 from textual.validation import ValidationResult, Validator
-from textual.widgets import Input, Static
+from textual.widget import Widget
+from textual.widgets import Input, RichLog, Static
 
 # Use ContextVar to define a context on the model initialization
 _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
@@ -677,3 +678,21 @@ class ValidateConfig(Validator):
 def generate_config_entry(self, key, value):
     parsed_entry = "  " + key + ' = "' + value + '"\n'
     return parsed_entry
+
+
+class LoggingConsole(RichLog):
+    file = False
+    console: Widget
+
+    def print(self, content):
+        self.write(content)
+
+
+def add_hide_class(app, widget_id: str) -> None:
+    """Add class 'hide' to a widget. Not display widget."""
+    app.get_widget_by_id(widget_id).add_class("hide")
+
+
+def remove_hide_class(app, widget_id: str) -> None:
+    """Remove class 'hide' to a widget. Display widget."""
+    app.get_widget_by_id(widget_id).remove_class("hide")

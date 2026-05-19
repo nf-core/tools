@@ -27,6 +27,27 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     Checks that all input and output channels are specified in ``meta.yml``.
     Checks that all included components in ``main.nf`` are specified in ``meta.yml``.
 
+    The following checks are performed:
+
+    * ``meta_yml_exists``: The ``meta.yml`` file must exist.
+
+    * ``meta_yml_valid``: The ``meta.yml`` must be valid according to the JSON
+      schema defined at https://raw.githubusercontent.com/nf-core/subworkflows/master/modules/environment-schema.json.
+
+    * ``meta_input``: All input channels declared in ``main.nf`` must be listed
+      under the ``input:`` key in ``meta.yml``.
+
+    * ``meta_output``: All output channels declared in ``main.nf`` must be listed
+      under the ``output:`` key in ``meta.yml``.
+
+    * ``meta_name``: The ``name`` field in ``meta.yml`` must match the workflow
+      name declared in ``main.nf``.
+
+    * ``meta_include``: All modules and subworkflows included in ``main.nf`` must
+      be listed under the ``components:`` key in ``meta.yml``.
+
+    * ``meta_modules_deprecated``: The deprecated ``modules:`` section must not
+      be present in ``meta.yml``; use ``components:`` instead.
     """
     # Read the meta.yml file
     if subworkflow.meta_yml is None:
@@ -85,12 +106,12 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     if valid_meta_yml:
         if "input" in meta_yaml:
             meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
-            for input in subworkflow.inputs:
-                if input in meta_input:
-                    subworkflow.passed.append(("meta_yml", "meta_input", f"`{input}` specified", subworkflow.meta_yml))
+            for inp in subworkflow.inputs:
+                if inp in meta_input:
+                    subworkflow.passed.append(("meta_yml", "meta_input", f"`{inp}` specified", subworkflow.meta_yml))
                 else:
                     subworkflow.failed.append(
-                        ("meta_yml", "meta_input", f"`{input}` missing in `meta.yml`", subworkflow.meta_yml)
+                        ("meta_yml", "meta_input", f"`{inp}` missing in `meta.yml`", subworkflow.meta_yml)
                     )
         else:
             log.debug(f"No inputs specified in subworkflow `main.nf`: {subworkflow.component_name}")

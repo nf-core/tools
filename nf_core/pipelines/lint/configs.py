@@ -30,7 +30,7 @@ class LintConfig:
             try:
                 with open(fn) as fh:
                     config = fh.read()
-            except Exception as e:
+            except OSError as e:
                 return {"failed": [f"Could not parse file: {fn}, {e}"]}
 
             # find sections with a withName: prefix

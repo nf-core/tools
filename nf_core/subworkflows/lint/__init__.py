@@ -262,14 +262,12 @@ class SubworkflowLint(ComponentLint):
         # Compare inputs and add them if missing
         if "input" in meta_yaml:
             # Delete inputs from meta.yml which are not present in main.nf
-            meta_yaml_corrected["input"] = [
-                input for input in meta_yaml["input"] if list(input.keys())[0] in swf.inputs
-            ]
+            meta_yaml_corrected["input"] = [inp for inp in meta_yaml["input"] if list(inp.keys())[0] in swf.inputs]
             # Obtain inputs from main.nf missing in meta.yml
             inputs_correct = [
-                list(input.keys())[0] for input in meta_yaml_corrected["input"] if list(input.keys())[0] in swf.inputs
+                list(inp.keys())[0] for inp in meta_yaml_corrected["input"] if list(inp.keys())[0] in swf.inputs
             ]
-            inputs_missing = [input for input in swf.inputs if input not in inputs_correct]
+            inputs_missing = [inp for inp in swf.inputs if inp not in inputs_correct]
             # Add missing inputs to meta.yml
             for missing_input in inputs_missing:
                 meta_yaml_corrected["input"].append({missing_input: {"description": ""}})

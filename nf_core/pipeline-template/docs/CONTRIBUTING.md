@@ -40,6 +40,19 @@ If you are not used to this workflow with Git, see the [GitHub documentation](ht
 
 {% if is_nfcore -%}
 
+## Use of AI and LLMs
+
+The nf-core stance on the use of AI and LLMs is that humans are still ultimately responsible for their submitted code, regardless of the tools they use.
+
+If you’re using AI tools, try to stick by these guidelines:
+
+- Keep PRs as small and focused as possible
+- Avoid any unnecessary changes, such as moving or refactoring code (unless that is the explicit intention of the PR)
+- Review all generated code yourself before opening a PR, and ensure that you understand it
+- Engage with the community review process and expect to make revisions
+
+For more detail, see the [blog post](https://nf-co.re/blog/2026/statement-on-ai) for a statement from the nf-core/core team.
+
 ### Getting help
 
 For further information and help, see the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) or ask on the nf-core [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) Slack channel ([join our Slack here](https://nf-co.re/join/slack)).
@@ -84,7 +97,7 @@ Pull requests are typically reviewed when these tests are passing.
 
 #### Lint tests
 
-nf-core has a [set of guidelines](https://nf-co.re/docs/contributing/guidelines) which all pipelines must follow.
+nf-core has a [set of guidelines](https://nf-co.re/docs/specifications/overview) which all pipelines must follow.
 To enforce these, run linting with nf-core/tools:
 
 ```bash
@@ -183,7 +196,7 @@ nf-core pipelines bump-version --nextflow . <min_nf_version>
 
 #### Images and figures guidelines
 
-If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/guidelines/graphic_design/overview).
+If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/community/brand/workflow-schematics).
 
 ## Pipeline specific contribution guidelines
 

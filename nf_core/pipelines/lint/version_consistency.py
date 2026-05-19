@@ -47,7 +47,7 @@ def version_consistency(self):
         os.environ.get("GITHUB_REF", "").startswith("refs/tags/")
         and os.environ.get("GITHUB_REPOSITORY", "") != "nf-core/tools"
     ):
-        versions["GITHUB_REF"] = os.path.basename(os.environ["GITHUB_REF"].strip(" '\""))
+        versions["GITHUB_REF"] = Path(os.environ["GITHUB_REF"].strip(" '\"")).name
 
     # Get version from the .nf-core.yml template
     yaml = YAML()

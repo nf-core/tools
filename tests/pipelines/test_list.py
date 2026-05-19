@@ -106,14 +106,14 @@ class TestList(TestCase):
 
         rwf_ex.releases = None
 
-    @mock.patch("nf_core.pipelines.list.LocalWorkflow")
-    def test_parse_local_workflow_and_succeed(self, mock_local_wf):
+    def test_parse_local_workflow_and_succeed(self):
         test_path = self.tmp_nxf / "nf-core"
-        if not os.path.isdir(test_path):
-            os.makedirs(test_path)
+        if not test_path.is_dir():
+            test_path.mkdir(parents=True)
+        # Create a dummy workflow directory (not just a file)
+        dummy_wf_path = self.tmp_nxf / ".repos" / "nf-core" / "dummy-wf"
+        dummy_wf_path.mkdir(parents=True, exist_ok=True)
         assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
-        with open(self.tmp_nxf / "nf-core/dummy-wf", "w") as f:
-            f.write("dummy")
         workflows_obj = nf_core.pipelines.list.Workflows()
         workflows_obj.get_local_nf_workflows()
         assert len(workflows_obj.local_workflows) == 1
@@ -122,22 +122,67 @@ class TestList(TestCase):
     @mock.patch("subprocess.check_output")
     def test_parse_local_workflow_home(self, mock_local_wf, mock_subprocess):
         test_path = self.tmp_nxf / "nf-core"
-        if not os.path.isdir(test_path):
-            os.makedirs(test_path)
+        if not test_path.is_dir():
+            test_path.mkdir(parents=True)
         assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
         with open(self.tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
         workflows_obj = nf_core.pipelines.list.Workflows()
         workflows_obj.get_local_nf_workflows()
 
-    @mock.patch("os.stat")
     @mock.patch("git.Repo")
-    def test_local_workflow_investigation(self, mock_repo, mock_stat):
+    def test_local_workflow_investigation(self, mock_repo):
         local_wf = nf_core.pipelines.list.LocalWorkflow("dummy")
         local_wf.local_path = self.tmp_nxf.parent
-        mock_repo.head.commit.hexsha = "h00r4y"
-        mock_stat.st_mode = 1
+        # Create the .git/FETCH_HEAD file that the code expects
+        git_dir = self.tmp_nxf.parent / ".git"
+        git_dir.mkdir(parents=True, exist_ok=True)
+        (git_dir / "FETCH_HEAD").touch()
+        mock_repo.return_value.head.commit.hexsha = "h00r4y"
+        mock_repo.return_value.remotes.origin.url = "https://github.com/nf-core/dummy"
+        mock_repo.return_value.common_dir = str(git_dir)
         local_wf.get_local_nf_workflow_details()
+
+    @mock.patch("git.Repo")
+    def test_local_workflow_broken_ref(self, mock_repo):
+        local_wf = nf_core.pipelines.list.LocalWorkflow("dummy")
+        local_wf.local_path = self.tmp_nxf.parent
+
+        class BrokenCommit:
+            @property
+            def hexsha(self):
+                raise ValueError("Reference at 'refs/heads/master' does not exist")
+
+        repo = mock.Mock()
+        repo.remotes.origin.url = "https://github.com/nf-core/dummy"
+        repo.tags = []
+        repo.head.commit = BrokenCommit()
+        mock_repo.return_value = repo
+
+        local_wf.get_local_nf_workflow_details()
+
+        assert local_wf.commit_sha is None
+
+    @mock.patch.object(nf_core.pipelines.list.LocalWorkflow, "get_local_nf_workflow_details", autospec=True)
+    def test_get_local_wf_does_not_scan_unrelated_repos(self, mock_get_local_details):
+        atacseq_path = self.tmp_nxf / "nf-core" / "atacseq"
+        exoseq_path = self.tmp_nxf / "nf-core" / "exoseq"
+        atacseq_path.mkdir(parents=True)
+        exoseq_path.mkdir(parents=True)
+
+        def set_local_workflow_details(local_wf):
+            if local_wf.full_name != "nf-core/atacseq":
+                raise AssertionError(f"Unexpected workflow lookup: {local_wf.full_name}")
+            local_wf.commit_sha = "abc1234"
+            local_wf.branch = "main"
+            local_wf.active_tag = None
+
+        mock_get_local_details.side_effect = set_local_workflow_details
+
+        local_path = nf_core.pipelines.list.get_local_wf(Path("atacseq"))
+
+        assert local_path == atacseq_path
+        assert mock_get_local_details.call_count == 1
 
     def test_worflow_filter(self):
         workflows_obj = nf_core.pipelines.list.Workflows(["rna", "myWF"])

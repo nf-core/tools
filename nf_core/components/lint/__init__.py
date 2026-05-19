@@ -259,7 +259,7 @@ class ComponentLint(ComponentCommand):
             try:
                 for lint_result in tests:
                     max_name_len = max(len(lint_result.component_name), max_name_len)
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
 
         # Helper function to format test links nicely
@@ -285,8 +285,9 @@ class ComponentLint(ComponentCommand):
                     module_name = lint_result.component_name
 
                 # Make the filename clickable to open in VSCode
-                file_path = os.path.relpath(lint_result.file_path, self.directory)
-                file_path_link = f"[link=vscode://file/{os.path.abspath(file_path)}]{file_path}[/link]"
+                file_path_obj = Path(lint_result.file_path)
+                file_path_rel = file_path_obj.relative_to(self.directory)
+                file_path_link = f"[link=vscode://file/{file_path_obj.resolve()}]{file_path_rel}[/link]"
 
                 # Add link to the test documentation
                 tools_version = __version__

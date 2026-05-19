@@ -18,11 +18,10 @@ from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.welcome import WelcomeScreen
-from nf_core.utils import LoggingConsole
 
 logger = logging.getLogger(__name__)
 rich_log_handler = RichHandler(
-    console=LoggingConsole(classes="log_console"),
+    console=utils.LoggingConsole(classes="log_console"),
     level=logging.INFO,
     rich_tracebacks=True,
     show_time=False,
@@ -33,10 +32,10 @@ rich_log_handler = RichHandler(
 logger.addHandler(rich_log_handler)
 
 
-class PipelineCreateApp(App[utils.PipelinesCreateConfig]):
+class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
-    CSS_PATH = "../../textual.tcss"
+    CSS_PATH = "create.tcss"
     TITLE = "nf-core pipelines create"
     SUB_TITLE = "Create a new pipeline with the nf-core pipeline template"
     BINDINGS = [
@@ -58,7 +57,7 @@ class PipelineCreateApp(App[utils.PipelinesCreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = utils.PipelinesCreateConfig()
+    TEMPLATE_CONFIG = utils.CreateConfig()
 
     # Initialise pipeline type
     NFCORE_PIPELINE = True

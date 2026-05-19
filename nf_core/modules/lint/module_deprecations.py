@@ -1,5 +1,4 @@
 import logging
-import os
 
 log = logging.getLogger(__name__)
 
@@ -7,9 +6,14 @@ log = logging.getLogger(__name__)
 def module_deprecations(_, module):
     """
     Check that the modules are up to the latest nf-core standard
+
+    The following checks are performed:
+
+    * ``module_deprecations``: Deprecated files (e.g. ``functions.nf``) must not
+      be present in the module directory.
     """
     module.wf_path = module.component_dir
-    if "functions.nf" in os.listdir(module.component_dir):
+    if (module.component_dir / "functions.nf").exists():
         module.failed.append(
             (
                 "module_deprecations",

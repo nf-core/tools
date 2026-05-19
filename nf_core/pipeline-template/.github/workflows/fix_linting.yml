@@ -31,22 +31,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
-      # Install and run pre-commit
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with:
-          python-version: "3.14"
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
 
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run pre-commit
-        id: pre-commit
-        run: pre-commit run --all-files
+      # Install and run prek
+      - name: Run prek
+        id: prek
+        uses: j178/prek-action@6ad80277337ad479fe43bd70701c3f7f8aa74db3 # v2
         continue-on-error: true
 
       # indication that the linting has finished
       - name: react if linting finished succesfully
-        if: steps.pre-commit.outcome == 'success'
+        if: steps.prek.outcome == 'success'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           comment-id: ${{ github.event.comment.id }}
@@ -54,7 +50,7 @@ jobs:
 
       - name: Commit & push changes
         id: commit-and-push
-        if: steps.pre-commit.outcome == 'failure'
+        if: steps.prek.outcome == 'failure'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"

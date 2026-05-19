@@ -1,10 +1,8 @@
-import os
 import re
 from pathlib import Path
 
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
@@ -55,12 +53,13 @@ class TestLintNextflowConfig(TestLint):
     def test_nextflow_config_missing_test_profile_failed(self):
         """Test failure if config file does not contain `test` profile."""
         # Change the name of the test profile so there is no such profile
-        nf_conf_file = os.path.join(self.new_pipeline, "nextflow.config")
+        nf_conf_file = Path(self.new_pipeline, "nextflow.config")
         with open(nf_conf_file) as f:
             content = f.read()
             fail_content = re.sub(r"\btest\b", "testfail", content)
         with open(nf_conf_file, "w") as f:
             f.write(fail_content)
+        Path(self.new_pipeline, "conf", "testfail.config").touch()
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
@@ -157,7 +156,7 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             fail_content = re.sub(
                 r"validate_params\s*=\s*true",
-                "params.validate_params = true\ndummy = 0.000000001",
+                "validate_params = true\ndummy = 0.000000001",
                 content,
             )
         with open(nf_conf_file, "w") as f:
@@ -189,7 +188,7 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             fail_content = re.sub(
                 r"validate_params\s*=\s*true",
-                "params.validate_params = true\ndummy = 0.000000001",
+                "validate_params = true\ndummy = 0.000000001",
                 content,
             )
         with open(nf_conf_file, "w") as f:

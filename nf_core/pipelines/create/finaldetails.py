@@ -1,5 +1,6 @@
 """A Textual app to create a pipeline."""
 
+import contextlib
 from pathlib import Path
 from textwrap import dedent
 
@@ -10,8 +11,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.pipelines.create.create import PipelineCreate
-from nf_core.pipelines.create.utils import TextInput
-from nf_core.utils import ShowLogs, add_hide_class, remove_hide_class
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, remove_hide_class
 
 pipeline_exists_warn = """
 > ⚠️  **The pipeline you are trying to create already exists.**
@@ -72,10 +72,8 @@ class FinalDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
-        try:
+        with contextlib.suppress(ValueError):
             self.parent.TEMPLATE_CONFIG.__dict__.update(new_config)
-        except ValueError:
-            pass
 
         # Create the new pipeline
         self._create_pipeline()

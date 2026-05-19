@@ -35,6 +35,7 @@ class Launch:
         show_hidden=False,
         url=None,
         web_id=None,
+        no_prompts=False,
     ):
         """Initialise the Launcher class
 
@@ -45,7 +46,7 @@ class Launch:
         self.pipeline = pipeline
         self.pipeline_revision = revision
         self.schema_obj = None
-        self.use_params_file = False if command_only else True
+        self.use_params_file = not command_only
         self.params_in = params_in
         self.params_out = params_out if params_out else Path.cwd() / "nf-params.json"
         self.save_all = save_all
@@ -58,6 +59,7 @@ class Launch:
             self.web_schema_launch_web_url = f"{self.web_schema_launch_url}?id={web_id}"
             self.web_schema_launch_api_url = f"{self.web_schema_launch_url}?id={web_id}&api=true"
         self.nextflow_cmd = None
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
         # Fetch remote workflows
         self.wfs = nf_core.pipelines.list.Workflows()
@@ -99,6 +101,12 @@ class Launch:
     def launch_pipeline(self):
         # Prompt for pipeline if not supplied and no web launch ID
         if self.pipeline is None and self.web_id is None:
+            if self.no_prompts:
+                log.error(
+                    "No pipeline name provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the pipeline name as a command-line argument."
+                )
+                return False
             launch_type = questionary.select(
                 "Launch local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],
@@ -117,21 +125,28 @@ class Launch:
                 ).unsafe_ask()
 
         # Check if the output file exists already
-        if os.path.exists(self.params_out):
+        if self.params_out.exists():
             # if params_in has the same name as params_out, don't ask to overwrite
-            if self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out):
+            params_in_path = Path(self.params_in) if self.params_in else None
+            if params_in_path and params_in_path.exists() and params_in_path.samefile(self.params_out):
                 log.warning(
                     f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
                 )
+            elif self.no_prompts:
+                log.error(
+                    f"Parameter output file '{os.path.relpath(self.params_out)}' already exists and session is not interactive (no TTY detected).\n"
+                    "Please remove the file or use '--params-out' to specify a different filename."
+                )
+                return False
             else:
                 log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
-            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
-                if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
-                    os.remove(self.params_out)
-                    log.info(f"Deleted {self.params_out}\n")
-            else:
-                log.info("Exiting. Use --params-out to specify a custom output filename.")
-                return False
+                if Confirm.ask("[yellow]Do you want to overwrite this file?"):
+                    if not (params_in_path and params_in_path.exists() and params_in_path.samefile(self.params_out)):
+                        self.params_out.unlink()
+                        log.info(f"Deleted {self.params_out}\n")
+                else:
+                    log.info("Exiting. Use --params-out to specify a custom output filename.")
+                    return False
 
         log.info(
             "NOTE: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n"
@@ -195,10 +210,10 @@ class Launch:
         self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
 
         # Check if this is a local directory
-        localpath = os.path.abspath(os.path.expanduser(self.pipeline))
-        if os.path.exists(localpath):
+        localpath = Path(self.pipeline).expanduser().resolve()
+        if localpath.exists():
             # Set the nextflow launch command to use full paths
-            self.pipeline = localpath
+            self.pipeline = str(localpath)
             self.nextflow_cmd = f"nextflow run {localpath}"
         else:
             # Assume nf-core if no org given
@@ -225,12 +240,11 @@ class Launch:
         except AssertionError:
             # No schema found
             # Check that this was actually a pipeline
-            if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
+            pipeline_dir_path = Path(self.schema_obj.pipeline_dir) if self.schema_obj.pipeline_dir else None
+            if pipeline_dir_path is None or not pipeline_dir_path.exists():
                 log.error(f"Could not find pipeline: {self.pipeline} ({self.schema_obj.pipeline_dir})")
                 return False
-            if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
-                os.path.join(self.schema_obj.pipeline_dir, "main.nf")
-            ):
+            if not (pipeline_dir_path / "nextflow.config").exists() and not (pipeline_dir_path / "main.nf").exists():
                 log.error("Could not find a 'main.nf' or 'nextflow.config' file, are you sure this is a pipeline?")
                 return False
 
@@ -321,12 +335,12 @@ class Launch:
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
                 )
-        except AssertionError:
+        except AssertionError as e:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
                 f"Web launch response not recognised: {self.web_schema_launch_url}\n "
                 "See verbose log for full response (nf-core -v launch)"
-            )
+            ) from e
         else:
             self.web_schema_launch_web_url = web_response["web_url"]
             self.web_schema_launch_api_url = web_response["api_url"]
@@ -363,10 +377,12 @@ class Launch:
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except KeyError as e:
-                raise AssertionError(f"Missing return key from web API: {e}")
+                raise AssertionError(f"Missing return key from web API: {e}") from e
             except Exception as e:
                 log.debug(web_response)
-                raise AssertionError(f"Unknown exception ({type(e).__name__}) - see verbose log for details. {e}")
+                raise AssertionError(
+                    f"Unknown exception ({type(e).__name__}) - see verbose log for details. {e}"
+                ) from e
             return True
         else:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
@@ -571,7 +587,7 @@ class Launch:
         # Overwrite default with parsed schema, includes --params-in etc
         if self.schema_obj is not None and param_id in self.schema_obj.input_params:
             if param_obj["type"] == "boolean" and isinstance(self.schema_obj.input_params[param_id], str):
-                question["default"] = "true" == self.schema_obj.input_params[param_id].lower()
+                question["default"] = self.schema_obj.input_params[param_id].lower() == "true"
             else:
                 question["default"] = self.schema_obj.input_params[param_id]
 
@@ -725,7 +741,7 @@ class Launch:
                     if isinstance(val, bool) and val:
                         self.nextflow_cmd += f" --{param}"
                     # No quotes for numbers
-                    elif (isinstance(val, int) or isinstance(val, float)) and val:
+                    elif (isinstance(val, (int, float))) and val:
                         self.nextflow_cmd += " --{} {}".format(param, str(val).replace('"', '\\"'))
                     # everything else
                     else:

@@ -1,4 +1,4 @@
-FROM python:3.14-slim@sha256:6a27522252aef8432841f224d9baaa6e9fce07b07584154fa0b9a96603af7456
+FROM python:3.14-slim@sha256:5b3879b6f3cb77e712644d50262d05a7c146b7312d784a18eff7ff5462e77033
 LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for nf-core/tools"
 
@@ -22,7 +22,7 @@ RUN mkdir -p /usr/share/man/man1 \
 
 # Setup ARG for NXF_VER ENV
 ARG NXF_VER=""
-ENV NXF_VER ${NXF_VER}
+ENV NXF_VER=${NXF_VER}
 # Install Nextflow
 RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \

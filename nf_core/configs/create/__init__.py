@@ -25,7 +25,7 @@ from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
 from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
-from nf_core.utils import LoggingConsole
+from nf_core.configs.create.utils import LoggingConsole
 
 ## Logging
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ logger.addHandler(rich_log_handler)
 class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     """A Textual app to create nf-core configs."""
 
-    CSS_PATH = "../../textual.tcss"
+    CSS_PATH = "create.tcss"
     TITLE = "nf-core configs create"
     SUB_TITLE = "Create a new nextflow config with an interactive interface"
     BINDINGS = [

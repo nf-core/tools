@@ -5,6 +5,7 @@
     - [actions_nf_test](./actions_nf_test/)
     - [actions_schema_validation](./actions_schema_validation/)
     - [base_config](./base_config/)
+    - [container_configs](./container_configs/)
     - [files_exist](./files_exist/)
     - [files_unchanged](./files_unchanged/)
     - [included_configs](./included_configs/)

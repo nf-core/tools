@@ -27,20 +27,38 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_draft = "https://json-schema.org/draft/2020-12/schema"
         self.schema_obj.defs_notation = "$defs"
         self.schema_obj.validation_plugin = "nf-schema"
-        self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        self.root_repo_dir = Path(__file__).resolve().parent.parent
 
         # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
-        self.template_dir = os.path.join(self.tmp_dir, "wf")
+        self.original_nxf_home = os.environ.get("NXF_HOME")
+        self.original_nxf_assets = os.environ.get("NXF_ASSETS")
+        self.nxf_home = Path(self.tmp_dir, ".nextflow")
+        self.nxf_assets = Path(self.nxf_home, "assets")
+        self.nxf_home.mkdir(exist_ok=True)
+        self.nxf_assets.mkdir(exist_ok=True)
+        os.environ["NXF_HOME"] = str(self.nxf_home)
+        os.environ["NXF_ASSETS"] = str(self.nxf_assets)
+        self.template_dir = Path(self.tmp_dir, "wf")
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "a description", "Me", outdir=self.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 
-        self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
+        self.template_schema = self.template_dir / "nextflow_schema.json"
 
     def tearDown(self):
-        if os.path.exists(self.tmp_dir):
+        if self.original_nxf_home is None:
+            os.environ.pop("NXF_HOME", None)
+        else:
+            os.environ["NXF_HOME"] = self.original_nxf_home
+
+        if self.original_nxf_assets is None:
+            os.environ.pop("NXF_ASSETS", None)
+        else:
+            os.environ["NXF_ASSETS"] = self.original_nxf_assets
+
+        if Path(self.tmp_dir).exists():
             shutil.rmtree(self.tmp_dir)
 
     def test_load_lint_schema(self):
@@ -50,12 +68,12 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existent file is given"""
-        with pytest.raises(RuntimeError):
+        with pytest.raises(AssertionError):
             self.schema_obj.get_schema_path("fake_file")
 
     def test_load_lint_schema_notjson(self):
         """Check that linting raises properly if a non-JSON file is given"""
-        self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
+        self.schema_obj.get_schema_path(self.template_dir / "nextflow.config")
         with pytest.raises(AssertionError):
             self.schema_obj.load_lint_schema()
 
@@ -86,7 +104,7 @@ class TestSchema(unittest.TestCase):
 
     def test_get_schema_path_name(self):
         """Get schema file from the name of a remote pipeline"""
-        self.schema_obj.get_schema_path("atacseq")
+        self.schema_obj.get_schema_path("proteinfamilies")
 
     def test_get_schema_path_name_notexist(self):
         """

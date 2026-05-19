@@ -10,14 +10,16 @@ from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validato
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Grid, HorizontalScroll
+from textual.message import Message
 from textual.validation import ValidationResult, Validator
-from textual.widgets import Button, Input, Static, Switch
+from textual.widget import Widget
+from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 
 import nf_core
-from nf_core.utils import HelpText, NFCoreTemplateConfig
+from nf_core.utils import NFCoreTemplateConfig
 
 # Use ContextVar to define a context on the model initialization
-_init_context_var: ContextVar = ContextVar("_init_context_var", default={})
+_init_context_var: ContextVar = ContextVar("_init_context_var", default=None)
 
 
 @contextmanager
@@ -36,17 +38,18 @@ NFCORE_PIPELINE_GLOBAL: bool = True
 features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "template_features.yml"
 
 
-class PipelinesCreateConfig(NFCoreTemplateConfig):
-    """Pydantic model for the nf-core pipelines create config."""
+class CreateConfig(NFCoreTemplateConfig):
+    """Pydantic model for the nf-core create config."""
 
     model_config = ConfigDict(extra="allow")
 
     def __init__(self, /, **data: Any) -> None:
         """Custom init method to allow using a context on the model initialization."""
+        context = _init_context_var.get()
         self.__pydantic_validator__.validate_python(
             data,
             self_instance=self,
-            context=_init_context_var.get(),
+            context=context if context is not None else {},
         )
 
     @field_validator("name")
@@ -151,10 +154,25 @@ class ValidateConfig(Validator):
         If it fails, return the error messages."""
         try:
             with init_context({"is_nfcore": NFCORE_PIPELINE_GLOBAL}):
-                PipelinesCreateConfig(**{f"{self.key}": value})
+                CreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:
             return self.failure(", ".join([err["msg"] for err in e.errors()]))
+
+
+class HelpText(Markdown):
+    """A class to show a text box with help text."""
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    def show(self) -> None:
+        """Method to show the help text box."""
+        self.add_class("displayed")
+
+    def hide(self) -> None:
+        """Method to hide the help text box."""
+        self.remove_class("displayed")
 
 
 class PipelineFeature(Static):
@@ -191,6 +209,31 @@ class PipelineFeature(Static):
             classes="custom_grid",
         )
         yield HelpText(markdown=self.markdown, classes="help_box")
+
+
+class LoggingConsole(RichLog):
+    file = False
+    console: Widget
+
+    def print(self, content):
+        self.write(content)
+
+
+class ShowLogs(Message):
+    """Custom message to show the logging messages."""
+
+    pass
+
+
+## Functions
+def add_hide_class(app, widget_id: str) -> None:
+    """Add class 'hide' to a widget. Not display widget."""
+    app.get_widget_by_id(widget_id).add_class("hide")
+
+
+def remove_hide_class(app, widget_id: str) -> None:
+    """Remove class 'hide' to a widget. Display widget."""
+    app.get_widget_by_id(widget_id).remove_class("hide")
 
 
 def load_features_yaml() -> dict:

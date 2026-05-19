@@ -82,7 +82,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
 
@@ -90,9 +90,9 @@ jobs:
         run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
         with:
-          version: "latest-everything"
+          version: "25.10.4"
 
       - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
 
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

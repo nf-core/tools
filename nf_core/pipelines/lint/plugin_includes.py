@@ -1,7 +1,7 @@
 import ast
-import glob
 import logging
 import re
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -22,20 +22,19 @@ def plugin_includes(self) -> dict[str, list[str]]:
 
     plugin_include_pattern = re.compile(r"^include\s*{[^}]+}\s*from\s*[\"']plugin/([^\"']+)[\"']\s*$", re.MULTILINE)
     workflow_files = [
-        file for file in glob.glob(f"{self.wf_path}/**/*.nf", recursive=True) if not file.startswith("./modules/")
+        file for file in Path(self.wf_path).rglob("*.nf") if file.relative_to(self.wf_path).parts[0] != "modules"
     ]
     test_passed = True
     for file in workflow_files:
-        with open(file) as of:
-            plugin_includes = re.findall(plugin_include_pattern, of.read())
-            for include in plugin_includes:
-                if include not in ["nf-validation", "nf-schema"]:
-                    continue
-                if include != validation_plugin:
-                    test_passed = False
-                    failed.append(
-                        f"Found a `{include}` plugin import in `{file[2:]}`, but `{validation_plugin}` was used in `nextflow.config`"
-                    )
+        plugin_includes = re.findall(plugin_include_pattern, file.read_text())
+        for include in plugin_includes:
+            if include not in ["nf-validation", "nf-schema"]:
+                continue
+            if include != validation_plugin:
+                test_passed = False
+                failed.append(
+                    f"Found a `{include}` plugin import in `{file.relative_to(self.wf_path)}`, but `{validation_plugin}` was used in `nextflow.config`"
+                )
 
     if test_passed:
         passed.append("No wrong validation plugin imports have been found")

@@ -59,7 +59,9 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
         {%- if multiqc %}
         params.multiqc_config,
         params.multiqc_logo,
+        {%- if citations %}
         params.multiqc_methods_description,
+        {%- endif %}
         {%- endif %}
         params.outdir,
     )
@@ -83,9 +85,9 @@ workflow {
     // SUBWORKFLOW: Run initialisation tasks
     //
     PIPELINE_INITIALISATION (
-        params.version,
+        params.version{% if nf_schema %},
         params.validate_params,
-        params.monochrome_logs,
+        params.monochrome_logs{% endif %},
         args,
         params.outdir,
         params.input{% if nf_schema %},
@@ -115,11 +117,11 @@ workflow {
         params.email,
         params.email_on_fail,
         params.plaintext_email,
-        {%- endif %}
         params.outdir,
+        {%- endif %}
         params.monochrome_logs,
-        {%- if multiqc %}
-        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
+        {%- if multiqc %}{%- if email %}
+        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}{% endif %}
     )
     {%- endif %}
 }

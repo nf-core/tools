@@ -9,7 +9,6 @@ import requests_cache
 import responses
 import ruamel.yaml
 
-import nf_core.modules
 import nf_core.modules.create
 import nf_core.modules.install
 import nf_core.modules.modules_repo

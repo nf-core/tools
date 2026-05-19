@@ -1,6 +1,5 @@
 import filecmp
 import logging
-import os
 import re
 import shutil
 import tempfile
@@ -156,11 +155,11 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     # Files that must be completely unchanged from template
     for files in files_exact:
         # Ignore if file specified in linting config
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in files]):
+        elif not any(_pf(f).is_file() for f in files):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
@@ -170,8 +169,8 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if f.name.endswith(".png") and int(os.stat(_pf(f)).st_size / 500) == int(
-                            os.stat(_tf(f)).st_size / 500
+                        if f.name.endswith(".png") and int(_pf(f).stat().st_size / 500) == int(
+                            _tf(f).stat().st_size / 500
                         ):
                             # almost the same file, good enough for the logo
                             log.debug(f"Files are almost the same. Will pass: {f}")
@@ -196,11 +195,11 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in files]):
+        elif not any(_pf(f).is_file() for f in files):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents

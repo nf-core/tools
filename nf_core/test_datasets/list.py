@@ -56,7 +56,7 @@ def list_datasets(
     tree = list_files_by_branch(branch, all_branches, ignored_file_prefixes)
 
     out = []
-    for b in tree.keys():
+    for b in tree:
         files = sorted(tree[b])
         for f in files:
             if generate_nf_path:

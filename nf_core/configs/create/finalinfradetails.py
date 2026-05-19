@@ -8,7 +8,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select, Static, Switch
 
 from nf_core.configs.create.utils import SUPPORTED_CONTAINERS, ConfigsCreateConfig, TextInput, init_context
-from nf_core.utils import add_hide_class, remove_hide_class
+from nf_core.configs.create.utils import add_hide_class, remove_hide_class
 
 markdown_intro = """
 # Configure the options for your infrastructure config

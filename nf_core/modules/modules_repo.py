@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 
 import git
-import rich
 import rich.progress
 import rich.prompt
 from git.exc import GitCommandError, InvalidGitRepositoryError
@@ -61,8 +60,8 @@ class ModulesRepo(SyncedRepo):
             raise UserWarning(f"Could not find a configuration file in {self.local_repo_dir}")
         try:
             self.repo_path = repo_config.org_path
-        except KeyError:
-            raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+        except KeyError as e:
+            raise UserWarning(f"'org_path' key not present in {config_fn.name}") from e
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
@@ -94,7 +93,7 @@ class ModulesRepo(SyncedRepo):
         """
         self.local_repo_dir = Path(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
-            if not os.path.exists(self.local_repo_dir):
+            if not self.local_repo_dir.exists():
                 try:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
@@ -110,8 +109,8 @@ class ModulesRepo(SyncedRepo):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                     ModulesRepo.update_local_repo_status(self.fullname, True)
-                except GitCommandError:
-                    raise LookupError(f"Failed to clone from the remote: `{remote}`")
+                except GitCommandError as e:
+                    raise LookupError(f"Failed to clone from the remote: `{remote}`") from e
                 # Verify that the requested branch exists by checking it out
                 self.setup_branch(branch)
             else:
@@ -150,4 +149,4 @@ class ModulesRepo(SyncedRepo):
                 shutil.rmtree(self.local_repo_dir)
                 self.setup_local_repo(remote, branch, hide_progress)
             else:
-                raise LookupError("Exiting due to error with local modules git repo")
+                raise LookupError("Exiting due to error with local modules git repo") from e

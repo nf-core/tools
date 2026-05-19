@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -32,9 +31,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
         path = urlparse(remote_url).path
 
     # Remove the file extension from the path
-    path, _ = os.path.splitext(path)
-
-    return path
+    return str(Path(path).with_suffix(""))
 
 
 def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[str], list[NFCoreComponent]]:
@@ -62,12 +59,11 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 
         # Filter local modules
         if local_modules_dir.exists():
-            local_modules = os.listdir(local_modules_dir)
-            local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
+            local_modules = sorted([x.name for x in local_modules_dir.iterdir() if x.suffix == ".nf"])
 
     # Get nf-core modules
     if nfcore_modules_dir.exists():
-        for m in sorted([m for m in nfcore_modules_dir.iterdir() if not m == "lib"]):
+        for m in sorted([m for m in nfcore_modules_dir.iterdir() if m != "lib"]):
             if not m.is_dir():
                 raise ModuleExceptionError(
                     f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
@@ -83,7 +79,7 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
 
     # Make full (relative) file paths and create NFCoreComponent objects
     if local_modules_dir:
-        local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+        local_modules = [str(local_modules_dir / m) for m in local_modules]
 
     nfcore_modules = [
         NFCoreComponent(
@@ -110,13 +106,11 @@ def load_edam():
         return edam_formats
     for line in response.content.splitlines():
         fields = line.decode("utf-8").split("\t")
-        if fields[0].split("/")[-1].startswith("format"):
-            # We choose an already provided extension
-            if fields[14]:
-                extensions = fields[14].split("|")
-                for extension in extensions:
-                    if extension not in edam_formats:
-                        edam_formats[extension] = (fields[0], fields[1])  # URL, name
+        if fields[0].split("/")[-1].startswith("format") and fields[14]:  # We choose an already provided extension
+            extensions = fields[14].split("|")
+            for extension in extensions:
+                if extension not in edam_formats:
+                    edam_formats[extension] = (fields[0], fields[1])  # URL, name
     return edam_formats
 
 

@@ -113,10 +113,7 @@ class SingularityFetcher(ContainerFetcher):
                             f"Proceeding without consideration of the remote ${SINGULARITY_CACHE_DIR_ENV_VAR} index."
                         )
                         self.container_cache_index = None
-                        if os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR):
-                            container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
-                        else:
-                            container_cache_utilisation = None
+                        container_cache_utilisation = "copy" if os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) else None
             else:
                 log.warning("[red]No remote cache index specified, skipping remote container download.[/]")
 
@@ -230,6 +227,8 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_creation() -> bool:
         """Prompt about using singularity cache directory if not already set"""
+        if not nf_core.utils.is_interactive():
+            return False
         stderr.print(
             f"\nNextflow and nf-core can use an environment variable called [blue]${SINGULARITY_CACHE_DIR_ENV_VAR}[/] that is a path to a directory where remote Singularity images are stored. "
             f"This allows downloaded images to be cached in a central location."
@@ -253,6 +252,9 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_path() -> Path | None:
         """Prompt for the name of the Singularity cache directory"""
+        if not nf_core.utils.is_interactive():
+            log.warning("Cannot prompt for Singularity cache directory in a non-interactive session.")
+            return None
         # Prompt user for a cache directory path
         cachedir_path = None
         while cachedir_path is None:
@@ -291,6 +293,9 @@ class SingularityFetcher(ContainerFetcher):
                 shellprofile_path = profile_path
                 break
 
+        if shellprofile_path is not None and not nf_core.utils.is_interactive():
+            log.debug("Skipping shell profile prompt in non-interactive session.")
+            return
         if shellprofile_path is not None:
             stderr.print(
                 f"\nSo that [blue]${SINGULARITY_CACHE_DIR_ENV_VAR}[/] is always defined, you can add it to your [blue not bold]~/{shellprofile_path.name}[/] file ."
@@ -316,6 +321,8 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_utilization() -> str:
         """Ask if we should *only* use singularity cache directory without copying into target"""
+        if not nf_core.utils.is_interactive():
+            return "copy"
         stderr.print(
             "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
             f"[blue not bold]${SINGULARITY_CACHE_DIR_ENV_VAR}[/] folder, Nextflow will automatically find them. "
@@ -330,6 +337,9 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_remote() -> Path | None:
         """Prompt about the index of a remote singularity cache directory"""
+        if not nf_core.utils.is_interactive():
+            log.warning("Cannot prompt for remote cache index in a non-interactive session.")
+            return None
         # Prompt user for a file listing the contents of the remote cache directory
         cachedir_index = None
         while cachedir_index is None:
@@ -372,7 +382,7 @@ class SingularityFetcher(ContainerFetcher):
                     containers_remote.append(match.group(0))
             if n_total_images == 0:
                 raise LookupError("Could not find valid container names in the index file.")
-            containers_remote = sorted(list(set(containers_remote)))
+            containers_remote = sorted(set(containers_remote))
             log.debug(containers_remote)
             return containers_remote
 
@@ -487,7 +497,8 @@ class SingularityFetcher(ContainerFetcher):
             container, output_path = input_params
             try:
                 self.progress.advance_remote_fetch_task()
-            except Exception as e:
+            except RuntimeError as e:
+                # Rich progress may raise RuntimeError if called from wrong thread
                 log.error(f"Error updating progress bar: {e}")
 
             if status == FileDownloader.Status.DONE:
@@ -635,6 +646,12 @@ class SingularityFetcher(ContainerFetcher):
         if not self.get_container_output_dir().is_dir():
             log.debug(f"Container output directory not found, creating: {self.get_container_output_dir()}")
             self.get_container_output_dir().mkdir(parents=True, exist_ok=True)
+
+    def cleanup(self) -> None:
+        """
+        Cleanup any temporary files or resources.
+        """
+        super().cleanup()
 
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions
@@ -889,31 +906,34 @@ class FileDownloader:
         # Set up download progress bar as a new task
         nice_name = self.nice_name(remote_path)
 
-        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
+        with (
+            self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task,
+            intermediate_file(output_path) as fh,
+        ):
             # Open file handle and download
             # This temporary will be automatically renamed to the target if there are no errors
-            with intermediate_file(output_path) as fh:
-                # Disable caching as this breaks streamed downloads
-                with requests_cache.disabled():
-                    r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
-                    filesize = r.headers.get("Content-length")
-                    if filesize:
-                        self.progress.update(task, total=int(filesize))
-                        self.progress.start_task(task)
 
-                    # Stream download
-                    has_content = False
-                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
-                        # Check that the user didn't hit ctrl-c
-                        if self.kill_with_fire:
-                            raise KeyboardInterrupt
-                        self.progress.update(task, advance=len(data))
-                        fh.write(data)
-                        has_content = True
+            # Disable caching as this breaks streamed downloads
+            with requests_cache.disabled():
+                r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
+                filesize = r.headers.get("Content-length")
+                if filesize:
+                    self.progress.update(task, total=int(filesize))
+                    self.progress.start_task(task)
 
-                    # Check that we actually downloaded something
-                    if not has_content:
-                        raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+                # Stream download
+                has_content = False
+                for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
+                    # Check that the user didn't hit ctrl-c
+                    if self.kill_with_fire:
+                        raise KeyboardInterrupt
+                    self.progress.update(task, advance=len(data))
+                    fh.write(data)
+                    has_content = True
 
-                # Set image file permissions to user=read,write,execute group/all=read,execute
-                os.chmod(fh.name, 0o755)
+                # Check that we actually downloaded something
+                if not has_content:
+                    raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+
+            # Set image file permissions to user=read,write,execute group/all=read,execute
+            Path(fh.name).chmod(0o755)

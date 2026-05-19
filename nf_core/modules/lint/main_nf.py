@@ -13,7 +13,6 @@ import yaml
 from rich.progress import Progress
 
 import nf_core
-import nf_core.modules.modules_utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 
@@ -23,23 +22,42 @@ log = logging.getLogger(__name__)
 def main_nf(
     module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
 ) -> tuple[list[str], list[str]]:
-    """
-    Lint a ``main.nf`` module file
+    """Lint a ``main.nf`` module file
 
     Can also be used to lint local module files,
-    in which case failures will be reported as
-    warnings.
+    in which case failures will be reported as warnings.
 
-    The test checks for the following:
+    The following checks are performed:
 
-    * Software versions and containers are valid
-    * The module has a process label and it is among
-      the standard ones.
-    * If a ``meta`` map is defined as one of the modules
-      inputs it should be defined as one of the emits,
-      and be correctly configured in the ``saveAs`` function.
-    * The module script section should contain definitions
-      of ``software`` and ``prefix``
+    * ``main_nf_exists``: The ``main.nf`` file must exist.
+
+    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
+      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+      ``publishDir``).
+
+    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+
+    * ``main_nf_container``: Container tags across the ``singularity``, ``docker``,
+      and ``conda`` directives must reference the same software version. A warning
+      is issued if they do not match.
+
+    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
+      blocks must be present.
+
+    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
+      a ``template``.
+
+    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
+      must also appear in at least one output channel.
+
+    * ``main_nf_version_topic``: The module should emit software versions using
+      a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
+      equal the number of ``emit:`` outputs whose name starts with ``versions``.
+      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+      of a topic output.
+
     """
 
     inputs: list[str] = []
@@ -65,15 +83,12 @@ def main_nf(
             with open(module.main_nf) as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf", "main_nf_exists", "Module file exists", module.main_nf))
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             module.failed.append(("main_nf", "main_nf_exists", "Module file does not exist", module.main_nf))
-            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}")
+            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}") from e
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
-    if len(lines) > 0:
-        lines_j = "\n".join(lines)
-    else:
-        lines_j = ""
+    lines_j = "\n".join(lines) if len(lines) > 0 else ""
 
     for i in deprecated_i:
         if i in lines_j:
@@ -145,6 +160,10 @@ def main_nf(
         if state == "exec" and not _is_empty(line):
             exec_lines.append(line)
 
+    # Check meta naming
+    if inputs:
+        check_meta_input_names(module, inputs)
+
     # Check that we have required sections
     if not len(emits):
         module.failed.append(("main_nf", "main_nf_script_outputs", "No process 'output' block found", module.main_nf))
@@ -191,28 +210,27 @@ def main_nf(
             )
 
     # Check whether 'meta' is emitted when given as input
-    if inputs:
-        if "meta" in inputs:
-            module.has_meta = True
-            if emits:
-                if "meta" in emits:
-                    module.passed.append(
-                        (
-                            "main_nf",
-                            "main_nf_meta_output",
-                            "'meta' map emitted in output channel(s)",
-                            module.main_nf,
-                        )
+    if inputs and "meta" in inputs:
+        module.has_meta = True
+        if emits:
+            if "meta" in emits:
+                module.passed.append(
+                    (
+                        "main_nf",
+                        "main_nf_meta_output",
+                        "'meta' map emitted in output channel(s)",
+                        module.main_nf,
                     )
-                else:
-                    module.failed.append(
-                        (
-                            "main_nf",
-                            "main_nf_meta_output",
-                            "'meta' map not emitted in output channel(s)",
-                            module.main_nf,
-                        )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "main_nf",
+                        "main_nf_meta_output",
+                        "'meta' map not emitted in output channel(s)",
+                        module.main_nf,
                     )
+                )
 
     # Check that a software version is emitted
     if topics:
@@ -221,7 +239,7 @@ def main_nf(
                 ("main_nf", "main_nf_version_topic", "Module emits software versions as topic", module.main_nf)
             )
         else:
-            module.warned.append(
+            module.failed.append(
                 ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
             )
 
@@ -286,7 +304,7 @@ def check_script_section(self, lines):
     permitted_meta_keys = {"id", "single_end"}
     invalid_meta_keys = [
         f"{prefix}{key}"
-        for prefix, key in re.findall(r"\b(meta\d*\.)(\w+)\b(?!\()", script)
+        for prefix, key in re.findall(r"\b(meta\d*\??\.)(\w+)\b(?!\()", script)
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
@@ -302,7 +320,7 @@ def check_script_section(self, lines):
         )
 
     # Validate ext keys
-    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.use_gpu"}
+    permitted_ext_keys = {"ext.args", "ext.prefix", "ext.prefix2", "ext.use_gpu"}
     invalid_ext_keys = [
         key
         for key in re.findall(r"\bext\.\w+", script)
@@ -377,7 +395,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     check_process_labels(self, lines)
 
     # Deprecated enable_conda
-    for i, raw_line in enumerate(lines):
+    for _i, raw_line in enumerate(lines):
         url = None
         line = raw_line.strip(" \n'\"}:?")
 
@@ -432,18 +450,25 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if line.startswith(registry):
+            if line.startswith((registry, "community.wave.seqera.io/library/")):
                 l_stripped = re.sub(r"\W+$", "", line)
-                self.failed.append(
+                self.passed.append(
                     (
                         "main_nf",
                         "container_links",
-                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
+                        f"Container prefix is correct: {l_stripped}",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("main_nf", "container_links", "Container prefix is correct", self.main_nf))
+                self.failed.append(
+                    (
+                        "main_nf",
+                        "container_links",
+                        "Container prefix is not correct. Please add the registry prefix (e.g. 'quay.io/')",
+                        self.main_nf,
+                    )
+                )
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
@@ -458,7 +483,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         if url is None:
             continue
         try:
-            container_url = "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url)
+            container_url = "https://" + urlunparse(url) if url.scheme != "https" else urlunparse(url)
             log.debug(f"Trying to connect to URL: {container_url}")
             response = requests.head(
                 container_url,
@@ -466,7 +491,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 allow_redirects=True,
             )
             log.debug(
-                f"Connected to URL: {'https://' + urlunparse(url) if not url.scheme == 'https' else urlunparse(url)}, "
+                f"Connected to URL: {'https://' + urlunparse(url) if url.scheme != 'https' else urlunparse(url)}, "
                 f"status_code: {response.status_code}"
             )
         except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
@@ -596,6 +621,7 @@ def check_process_labels(self, lines):
         "process_medium",
         "process_high",
         "process_long",
+        "process_low_memory",
         "process_high_memory",
     ]
     all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
@@ -665,7 +691,7 @@ def check_container_link_line(self, raw_line, registry):
             (
                 "main_nf",
                 "container_links",
-                f"Too many double quotes found when specifying container: {line.lstrip('container ')}",
+                f"Too many double quotes found when specifying container: {line.removeprefix('container ')}",
                 self.main_nf,
             )
         )
@@ -674,7 +700,7 @@ def check_container_link_line(self, raw_line, registry):
             (
                 "main_nf",
                 "container_links",
-                f"Correct number of double quotes found when specifying container: {line.lstrip('container ')}",
+                f"Correct number of double quotes found when specifying container: {line.removeprefix('container ')}",
                 self.main_nf,
             )
         )
@@ -685,7 +711,7 @@ def check_container_link_line(self, raw_line, registry):
     # Look for container link as single item surrounded by quotes
     # (if there are multiple links, this will be warned in the next check)
     container_link = None
-    if len(single_quoted_items) == 3:
+    if len(single_quoted_items) == 3 or len(single_quoted_items) == 5 and " in [" in raw_line:
         container_link = single_quoted_items[1]
     elif len(double_quoted_items) == 3:
         container_link = double_quoted_items[1]
@@ -721,6 +747,75 @@ def check_container_link_line(self, raw_line, registry):
                     self.main_nf,
                 )
             )
+
+
+def check_meta_input_names(self, inputs):
+    """
+    Check ``meta_input_names``: The  meta* variable names must follow the pattern `meta`, `meta2`, `meta3`, etc.
+    Args:
+        inputs (list): List of input variable names
+    """
+
+    meta_vars = [var for var in inputs if var.startswith("meta")]
+
+    if not meta_vars:
+        return  # No meta variables to check
+
+    # Expected pattern: 'meta' or 'meta' followed by a number (meta2, meta3, etc.)
+    valid_pattern = re.compile(r"^meta(\d+)?$")
+
+    invalid_meta_vars = []
+    valid_numbers = []
+
+    for var in meta_vars:
+        if not valid_pattern.match(var):
+            invalid_meta_vars.append(var)
+        else:
+            # Extract number if present
+            match = re.match(r"^meta(\d+)?$", var)
+            if match.group(1):  # Has a number
+                number_str = match.group(1)
+                number_int = int(number_str)
+
+                if number_str != str(number_int) or number_int < 2:
+                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                    invalid_meta_vars.append(var)
+                else:
+                    valid_numbers.append(number_int)
+
+    # Check for invalid names
+    if invalid_meta_vars:
+        self.failed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variables must be named 'meta', 'meta2', 'meta3', etc. Found: {', '.join(invalid_meta_vars)}",
+                self.main_nf,
+            )
+        )
+
+    # Check for proper sequencing (2, 3, 4... not 2, 5, 3)
+    if valid_numbers:
+        expected = list(range(2, len(valid_numbers) + 2))
+        if valid_numbers != expected:
+            self.warned.append(
+                (
+                    "main_nf",
+                    "meta_input_names",
+                    f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
+                    self.main_nf,
+                )
+            )
+
+    if not invalid_meta_vars and (not valid_numbers or valid_numbers == list(range(2, len(valid_numbers) + 2))):
+        self.passed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variable names follow correct pattern: {', '.join(sorted(meta_vars))}",
+                self.main_nf,
+            )
+        )
 
 
 def _parse_input(self, line_raw):
@@ -931,7 +1026,7 @@ def _container_type(line):
     """Returns the container type of a build."""
     if line.startswith("conda"):
         return "conda"
-    if line.startswith("https://") or line.startswith("https://depot"):
+    if line.startswith("https://"):
         # Look for a http download URL.
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
         url_regex = (

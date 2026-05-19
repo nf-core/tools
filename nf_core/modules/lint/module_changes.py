@@ -22,6 +22,11 @@ def module_changes(module_lint_object, module):
     compared against the files in the remote at this SHA.
 
     Only runs when linting a pipeline, not the modules repository
+
+    The following checks are performed:
+
+    * ``check_local_copy``: Each module file must be identical to the corresponding
+      file in the remote repository at the pinned commit SHA.
     """
     if module.is_patched:
         # If the module is patched, we need to apply

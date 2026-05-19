@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 import questionary
@@ -97,6 +96,10 @@ class ComponentInfo(ComponentCommand):
             module: str: Module name to check
         """
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             self.local = questionary.confirm(
                 f"Is the {self.component_type[:-1]} locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -200,9 +203,9 @@ class ComponentInfo(ComponentCommand):
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
         else:
             component_base_path = Path(self.directory, self.component_type, self.org)
-            if self.component in os.listdir(component_base_path):
-                comp_dir = Path(component_base_path, self.component)
-                meta_fn = Path(comp_dir, "meta.yml")
+            comp_dir = component_base_path / self.component
+            if comp_dir.is_dir():
+                meta_fn = comp_dir / "meta.yml"
                 if meta_fn.exists():
                     log.debug(f"Found local file: {meta_fn}")
                     with open(meta_fn) as fh:
@@ -228,10 +231,10 @@ class ComponentInfo(ComponentCommand):
         self.remote_location = self.modules_repo.remote_url
         return yaml.safe_load(file_contents)
 
-    def generate_params_table(self, type) -> Table:
+    def generate_params_table(self, io_type) -> Table:
         "Generate a rich table for inputs and outputs"
         table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
-        table.add_column(f":inbox_tray: {type}")
+        table.add_column(f":inbox_tray: {io_type}")
         table.add_column("Description")
         if self.component_type == "modules":
             table.add_column("Pattern", justify="right", style="green")
@@ -296,10 +299,10 @@ class ComponentInfo(ComponentCommand):
         # Inputs
         if self.meta.get("input"):
             inputs_table = self.generate_params_table("Inputs")
-            for i, input in enumerate(self.meta["input"]):
+            for i, input_channel in enumerate(self.meta["input"]):
                 inputs_table.add_row(f"[italic]input[{i}][/]", "", "")
                 if self.component_type == "modules":
-                    for element in input:
+                    for element in input_channel:
                         for key, info in element.items():
                             inputs_table.add_row(
                                 f"[orange1 on black] {key} [/][dim i] ({info['type']})",
@@ -307,7 +310,7 @@ class ComponentInfo(ComponentCommand):
                                 info.get("pattern", ""),
                             )
                 elif self.component_type == "subworkflows":
-                    for key, info in input.items():
+                    for key, info in input_channel.items():
                         inputs_table.add_row(
                             f"[orange1 on black] {key} [/][dim i]",
                             Markdown(info["description"] if info["description"] else ""),
@@ -375,7 +378,7 @@ class ComponentInfo(ComponentCommand):
             )
             if self.component_type == "subworkflows":
                 subworkflow_config = Path(install_folder, self.component, "nextflow.config").relative_to(self.directory)
-                if os.path.isfile(subworkflow_config):
+                if subworkflow_config.exists():
                     renderables.append(
                         Text.from_markup("\n [blue]Add the following config statement to use this subworkflow:")
                     )
