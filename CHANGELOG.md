@@ -18,6 +18,7 @@
 ### Template
 
 - add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
+- add README badge with link to full pipeline documentation on website ([#4288](https://github.com/nf-core/tools/pull/4288))
 
 #### Version updates
 
