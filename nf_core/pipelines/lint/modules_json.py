@@ -26,7 +26,7 @@ def modules_json(self) -> dict[str, list[str]]:
 
         for repo in modules_json_dict["repos"]:
             if not repo.startswith("http"):
-                failed.append(f"Repository link for {repo} doesn't start with \"http\" in `modules.json`.")
+                failed.append(f'Repository link for {repo} doesn\'t start with "http" in `modules.json`.')
 
             if "modules" in modules_json_dict["repos"][repo]:
                 # Module linting
