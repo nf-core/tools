@@ -26,7 +26,7 @@ def modules_json(self) -> dict[str, list[str]]:
 
         for repo in modules_json_dict["repos"]:
             if not repo.startswith("http"):
-                failed.append(f'Repository link for {repo} doesn\'t start with "http" in `modules.json`.')
+                failed.append(f"Repository link for {repo} doesn't start with "http" in `modules.json`.")
 
             if "modules" in modules_json_dict["repos"][repo]:
                 # Module linting
@@ -50,7 +50,7 @@ def modules_json(self) -> dict[str, list[str]]:
                     passed.append("Only installed modules found in `modules.json`")
 
             if not any(component in modules_json_dict["repos"][repo] for component in ["modules", "subworkflows"]):
-                failed.append(f'No "modules" or "subworkflows" installed for {repo} in `modules.json`.')
+                failed.append(f"No "modules" or "subworkflows" installed for {repo} in `modules.json`.")
     else:
         warned.append("Could not open `modules.json` file.")
 
