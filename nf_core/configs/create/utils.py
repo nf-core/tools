@@ -304,9 +304,9 @@ class ConfigsCreateConfig(BaseModel):
     @field_validator("config_profile_contact")
     @classmethod
     def notempty_contact(cls, v: str, info: ValidationInfo) -> str:
-        """Check that contact values are not empty when the config is infrastructure."""
+        """Check that contact values are not empty when the config is nf-core."""
         context = info.context
-        if context and context["is_infrastructure"] and context["is_nfcore"]:
+        if context and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
@@ -319,12 +319,12 @@ class ConfigsCreateConfig(BaseModel):
         """Check that GitHub handles start with '@'.
         Make providing a handle mandatory for nf-core configs"""
         context = info.context
-        if context and context["is_infrastructure"] and context["is_nfcore"]:
+        if context and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
-        if not v.strip() == "" and not re.match(r"^@[aA-zZ\d](?:[aA-zZ\d]|-(?=[aA-zZ\d])){0,38}$", v):
-            ## Regex adapted from: https://github.com/shinnn/github-username-regex
-            raise ValueError("Handle must start with '@'.")
+            if not re.match(r"^@[aA-zZ\d](?:[aA-zZ\d]|-(?=[aA-zZ\d])){0,38}$", v):
+                ## Regex adapted from: https://github.com/shinnn/github-username-regex
+                raise ValueError("Handle must start with '@'.")
         return v
 
     @field_validator(
@@ -334,18 +334,10 @@ class ConfigsCreateConfig(BaseModel):
     def url_prefix(cls, v: str, info: ValidationInfo) -> str:
         """Check that institutional web links start with valid URL prefix."""
         context = info.context
-        if context and context["is_infrastructure"] and context["is_nfcore"]:
+        if context and context["is_nfcore"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(
-                r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
-                v,
-            ):  ## Regex from: https://stackoverflow.com/a/3809435
-                raise ValueError(
-                    "Handle must be a valid URL starting with 'https://' or 'http://' and include the domain (e.g. .com)."
-                )
-        else:
-            if not v.strip() == "" and not re.match(
                 r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
                 v,
             ):  ## Regex from: https://stackoverflow.com/a/3809435
