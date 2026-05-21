@@ -203,7 +203,7 @@ class Pipeline:
         self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
-        self.wf_path = Path(wf_path)
+        self.wf_path = Path(wf_path).resolve()
         self.pipeline_name: str | None = None
         self.pipeline_prefix: str | None = None
         self.schema_obj: PipelineSchema | None = None
