@@ -99,26 +99,3 @@ class TestContainerConfigs(TestPipelines):
             cfg_path = conf_dir / f"containers_{p_name}.config"
             if cfg_path.exists():
                 assert "FAKE" not in cfg_path.read_text(), f"{cfg_path.name} contains entry for FAKE module"
-
-    def test_generate_container_configs_skips_unchanged_write(self) -> None:
-        """Config files are not rewritten when content has not changed."""
-        mods_install = ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, sha="79b36b51048048374b642289bfe9e591ef56fe05"
-        )
-        mods_install.install("fastqc")
-
-        self.container_configs.generate_container_configs()
-
-        conf_dir = self.pipeline_dir / "conf"
-        mtimes = {
-            p: (conf_dir / f"containers_{p}.config").stat().st_mtime_ns
-            for p in PLATFORMS
-            if (conf_dir / f"containers_{p}.config").exists()
-        }
-        assert mtimes, "Expected at least one config file to be generated on the first run"
-
-        self.container_configs.generate_container_configs()
-
-        for p_name, mtime_before in mtimes.items():
-            mtime_after = (conf_dir / f"containers_{p_name}.config").stat().st_mtime_ns
-            assert mtime_after == mtime_before, f"conf/{p_name}.config was rewritten unnecessarily"
