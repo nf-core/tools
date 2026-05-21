@@ -67,19 +67,19 @@ runs:
     # Remove TODO statements
     - name: remove TODO
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's#TODO nf-core:##g' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's#TODO nf-core:##g' {} \;
       working-directory: create-lint-wf
 
     # Uncomment includeConfig statement
     - name: uncomment include config
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
       working-directory: create-lint-wf
 
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
     # Run nf-core pipelines linting
