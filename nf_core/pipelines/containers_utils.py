@@ -79,6 +79,7 @@ def _process_meta(meta_path: Path) -> tuple[str, dict[str, str]] | None:
 
     platform_containers: dict[str, str] = {}
     for platform_name, (runtime, arch, protocol) in PLATFORMS.items():
+        log.debug(f"Adding container for platform {platform_name}, runtime={runtime}, arch={arch}, protocol={protocol}")
         with contextlib.suppress(KeyError, TypeError):
             platform_containers[platform_name] = meta["containers"][runtime][arch][protocol]
 
@@ -146,13 +147,17 @@ class ContainerConfigs:
                 for platform_name, container in platform_containers.items():
                     containers[platform_name][module_name] = container
 
-        log.info("Generated container configs for the pipeline.")
+        # remove all generated config files, to handle removed modules
+        for platform in PLATFORMS:
+            (self.workflow_directory / "conf" / f"containers_{platform}.config").unlink(missing_ok=True)
 
         written: set[str] = set()
         for platform, module_containers in containers.items():
             config_path = self.workflow_directory / "conf" / f"containers_{platform}.config"
             if _write_platform_config(config_path, module_containers, _container_key(platform)):
                 written.add(config_path.name)
+
+        log.info("Generated container configs for the pipeline.")
         return written
 
 
