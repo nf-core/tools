@@ -14,7 +14,8 @@ class TestLintModulesJson(TestLint):
         self._modules_json_object: ModulesJson = ModulesJson(self.pipeline_dir)
         self._modules_json_object.load()
         self.modules_json_path = self._modules_json_object.modules_json_path
-        self.modules_json: ModulesJsonType | None = self._modules_json_object.modules_json
+        assert self._modules_json_object.modules_json is not None
+        self.modules_json: ModulesJsonType = self._modules_json_object.modules_json
 
     def _update_modules_json(self, new_modules_json) -> None:
         # Update modules_json so that it is concordant at all levels of the class
