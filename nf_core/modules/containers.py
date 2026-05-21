@@ -213,7 +213,7 @@ class ModuleContainers:
         linux_amd64 = CONTAINER_PLATFORMS[0]
         docker_image = self.containers.get("docker", {}).get(linux_amd64, {}).get(self.IMAGE_KEY, "")
         if not docker_image:
-            log.warning(f"No docker image found for {linux_amd64}")
+            log.error(f"No docker image found for {linux_amd64}")
             return
 
         # Read main.nf
@@ -233,7 +233,7 @@ class ModuleContainers:
         )
 
         main_nf_path.write_text(new_content)
-        log.info(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{docker_image}`")
+        log.debug(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{docker_image}`")
 
     def create(
         self,

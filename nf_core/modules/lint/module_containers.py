@@ -64,7 +64,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                         (
                             "meta_yml",
                             "containers_protocol",
-                            f"Singularity container protocol ok for {platform}",
+                            f"Singularity container uses `oras` for {platform}",
                             meta_path,
                         )
                     )
@@ -83,7 +83,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                         (
                             "meta_yml",
                             "containers_protocol",
-                            f"Docker container protocol ok for {platform}",
+                            f"Docker container uses `http/https` for {platform}",
                             meta_path,
                         )
                     )

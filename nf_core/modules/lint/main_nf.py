@@ -458,7 +458,7 @@ def check_process_section(
                 (
                     "main_nf",
                     "deprecated_container_syntax",
-                    "Singularity container URL syntax is deprecated. Please migrate to wave.yml-based containers.",
+                    f"Singularity container URL syntax is deprecated. Please migrate to seqera containers using `nf-core modules container create {self.component_name}`.",
                     self.main_nf,
                 )
             )
@@ -468,7 +468,8 @@ def check_process_section(
                 (
                     "main_nf",
                     "deprecated_container_syntax",
-                    "Docker container URL syntax is deprecated. Please migrate to wave.yml-based containers.",
+                    f"Docker container URL syntax is deprecated. Please migrate to seqera containers using `nf-core modules container create {self.component_name}`.",
+                    # TODO Test if it is actually sefl.component_name here
                     self.main_nf,
                 )
             )
