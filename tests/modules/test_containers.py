@@ -3,10 +3,12 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import ruamel.yaml
 import yaml
 
+from nf_core import __version__
 from nf_core.modules.containers import ModuleContainers
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, NFCoreYamlConfig
 
 from ..test_modules import TestModules
 
@@ -55,6 +57,16 @@ class TestModuleContainers:
         repo_root = tmp_path / "modules_repo"
         repo_root.mkdir()
         (repo_root / "modules" / "nf-core").mkdir(parents=True)
+
+        # Create .nf-core.yml so get_repo_info doesn't prompt
+        _yaml = ruamel.yaml.YAML()
+        nf_core_yml = NFCoreYamlConfig(nf_core_version=__version__, repository_type="modules", org_path="nf-core")
+        with open(repo_root / ".nf-core.yml", "w") as fh:
+            _yaml.dump(nf_core_yml.model_dump(), fh)
+
+        # Create tests/config so nextflow config -flat succeeds during ModuleLint init
+        (repo_root / "tests" / "config").mkdir(parents=True)
+        (repo_root / "tests" / "config" / "nextflow.config").write_text("", encoding="utf-8")
 
         # Copy module to the repo
         shutil.copytree(temp_module_dir, repo_root / "modules" / "nf-core" / module_name)
