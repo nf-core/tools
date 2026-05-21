@@ -53,6 +53,15 @@ runs:
       run: uv run nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
       working-directory: create-lint-wf
 
+    # Commit regenerated container configs so lint sees them as up to date
+    - name: commit updated container configs
+      shell: bash
+      run: |
+        cd nf-core-testpipeline
+        git add conf/containers_*.config
+        git diff --cached --quiet || git commit -m "Update container configs after modules update"
+      working-directory: create-lint-wf
+
     # Remove TODO statements
     - name: remove TODO
       shell: bash
