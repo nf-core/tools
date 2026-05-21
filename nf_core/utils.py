@@ -421,6 +421,16 @@ def nextflow_inspect(main_nf: Path, output_format: str = "json", profile: str = 
         return json.loads(out_str)
 
 
+def read_module_name(main_nf: Path) -> str | None:
+    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    nf_process_name_regex = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
+    match = nf_process_name_regex.search(main_nf.read_text())
+    try:
+        return match.group(1) if match else None
+    except OSError:
+        return None
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
