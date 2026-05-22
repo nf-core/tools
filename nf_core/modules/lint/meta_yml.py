@@ -333,11 +333,9 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
 
-        # Check that all containers are correctly specified
-        if "containers" in meta_yaml or module.container_from_main_nf:
-            correct_containers = obtain_containers(module_lint_object, module.container)
-            meta_containers = obtain_containers(module_lint_object, meta_yaml.get("containers", {}))
-            if not meta_containers:
+        # Check that meta_yml specifies containers
+        if module.container_from_main_nf:
+            if "containers" not in meta_yaml:
                 module.failed.append(
                     (
                         "meta_yml",
@@ -346,36 +344,18 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                         module.meta_yml,
                     )
                 )
-            else:
-                module.passed.append(
-                    (
-                        "meta_yml",
-                        "has_meta_containers",
-                        "Module `meta.yml` and `main.nf` contain containers.",
-                        module.meta_yml,
-                    )
-                )
+                return
 
-            if correct_containers == meta_containers:
-                module.passed.append(
-                    (
-                        "meta_yml",
-                        "correct_meta_containers",
-                        "Correct containers specified in module `meta.yml`",
-                        module.meta_yml,
-                    )
+            module.passed.append(
+                (
+                    "meta_yml",
+                    "has_meta_containers",
+                    "Module `meta.yml` and `main.nf` contain container definition.",
+                    module.meta_yml,
                 )
-            else:
-                module.failed.append(
-                    (
-                        "meta_yml",
-                        "correct_meta_containers",
-                        f"Module `meta.yml` does not match `main.nf`. Containers should contain: {correct_containers}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
-                        module.meta_yml,
-                    )
-                )
+            )
 
-        meta_yml_containers(module)
+            meta_yml_containers(module)
 
 
 def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
@@ -498,25 +478,3 @@ def obtain_topics(_, topics: dict) -> dict:
         formatted_topics[name] = t_elements
 
     return formatted_topics
-
-
-def obtain_containers(_, containers: dict) -> dict:
-    """
-    Obtain the dictionary of containers and their elements.
-
-    Args:
-        containers (dict): The dictionary of containers from meta.yml files.
-
-    Returns:
-        formatted_containers (dict): A dictionary containing the containers and their elements obtained from meta.yml files.
-    """
-    formatted_containers: dict = {}
-    for system in containers:
-        sys_containers = containers[system]
-        platform_dict: dict = {}
-        for platform in sys_containers:
-            entry = sys_containers[platform]
-            platform_dict[platform] = entry
-        formatted_containers[system] = platform_dict
-
-    return formatted_containers
