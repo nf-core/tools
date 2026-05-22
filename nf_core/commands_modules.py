@@ -341,7 +341,9 @@ def modules_containers_create(ctx, module: str, directory: Path, await_build: bo
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
-    import rich.progress
+    from rich.console import Group
+    from rich.live import Live
+    from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn
 
     from nf_core.modules.containers import ModuleContainers
     from nf_core.pipelines.lint_utils import console
@@ -359,33 +361,36 @@ def modules_containers_create(ctx, module: str, directory: Path, await_build: bo
             log.info(f"Building containers for {len(manager.available_modules)} module(s)")
             failed_modules = []
 
-            progress_bar = rich.progress.Progress(
-                rich.progress.SpinnerColumn(finished_text="[green]✓[/green]"),
+            overall_progress = Progress(
                 "[bold blue]{task.description}",
-                rich.progress.TextColumn("{task.fields}"),
-                transient=True,
+                BarColumn(),
+                MofNCompleteColumn(),
+                console=console,
+                disable=ctx.obj["hide_progress"],
+            )
+            module_progress = Progress(
+                SpinnerColumn(finished_text="[green]✓[/green]"),
+                "[bold blue]{task.description}",
+                TextColumn("{task.fields[status]}"),
                 console=console,
                 disable=ctx.obj["hide_progress"],
             )
 
-            with progress_bar:
+            with Live(Group(overall_progress, module_progress), console=console, transient=True):
+                overall_task_id = overall_progress.add_task("modules", total=len(manager.available_modules))
                 for component in manager.available_modules:
                     module_name = component.component_name
-
-                    # Create a task for this module (only one active at a time)
-                    module_task_id = progress_bar.add_task(
+                    module_task_id = module_progress.add_task(
                         f"[cyan]{module_name}[/cyan]",
                         total=None,
                         status="building containers...",
                     )
-
                     try:
-                        # Create a new manager for each module
                         module_manager = ModuleContainers(
                             module=module_name, directory=directory, verbose=ctx.obj["verbose"]
                         )
                         _, success = module_manager.create(
-                            await_build, progress_bar=progress_bar, task_id=module_task_id, force=force
+                            await_build, progress_bar=module_progress, task_id=module_task_id, force=force
                         )
                         if success:
                             module_manager.update_containers_in_meta()
@@ -397,8 +402,8 @@ def modules_containers_create(ctx, module: str, directory: Path, await_build: bo
                         log.error(f"✗ Failed to build containers for {module_name}: {e}")
                         failed_modules.append(module_name)
                     finally:
-                        # Remove task so only the current module shows in the spinner
-                        progress_bar.remove_task(module_task_id)
+                        overall_progress.advance(overall_task_id)
+                        module_progress.remove_task(module_task_id)
 
             if failed_modules:
                 log.warning(
