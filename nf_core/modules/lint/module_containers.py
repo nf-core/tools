@@ -14,11 +14,7 @@ log = logging.getLogger(__name__)
 
 def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_conda=False, skip_singularity=False):
     meta_path = Path(module.component_dir, "meta.yml")
-    meta_yml = read_meta_yml(meta_path)
-    assert "containers" in meta_yml
-
-    containers_raw = meta_yml["containers"]
-
+    containers = module.container
     # Protocol and hash checks for docker/singularity
     skip_system = {"docker": skip_docker, "singularity": skip_singularity, "conda": skip_conda}
 
@@ -197,22 +193,30 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
     # Conda lock files and hash checks
     if skip_conda:
         pass
-    elif not containers.conda:
-        # TODO / NOTE: This will never happen
-        module.warned.append(
-            ("meta_yml", "containers_conda_lock_exists", "Conda containers section missing or empty", meta_path)
-        )
-    else:
-        for platform in containers.conda:
-            lock_file = containers.conda[platform].lock_file
+    elif isinstance(conda_containers, dict) and conda_containers:
+        conda_platforms = [
+            k for k in conda_containers if isinstance(conda_containers[k], dict) and k in CONTAINER_PLATFORMS
+        ]
+        if not conda_platforms:
+            module.warned.append(
+                (
+                    "meta_yml",
+                    "containers_conda_lock_exists",
+                    "No conda entries found for expected platforms",
+                    meta_path,
+                )
+            )
+        for platform in conda_platforms:
+            entry = conda_containers.get(platform, {})
+            if not isinstance(entry, dict):
+                entry = {}
+            lock_file = entry.get("lock_file", "")
             if not lock_file:
                 module.warned.append(
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
                 )
                 continue
             lock_path = Path(lock_file)
-            if not lock_path.is_absolute():
-                lock_path = module.component_dir / lock_path
             if lock_path.exists():
                 module.passed.append(
                     (
@@ -240,11 +244,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
             )
             _conda_plat = conda_containers.get(plat)
             conda_plat: dict = _conda_plat if isinstance(_conda_plat, dict) else {}
-            conda_lock: str | None = None
-            for key in lock_keys:
-                if conda_plat.get(key):
-                    conda_lock = conda_plat.get(key)
-                    break
+            conda_lock = conda_plat.get("lock_file", "")
             if docker_build_id and conda_lock:
                 docker_build_id_clean = docker_build_id[3:] if docker_build_id.startswith("bd-") else docker_build_id
                 parts = docker_build_id_clean.split("_")
