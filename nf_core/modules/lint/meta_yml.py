@@ -34,7 +34,7 @@ def meta_yml_containers(module: NFCoreComponent) -> None:
     skip_docker = False
     skip_singularity = False
     skip_conda = False
-    module_path = "modules/nf-core/" + module.component_name
+    module_path = str(module.component_dir)
     if skip_file.is_file():
         with open(skip_file) as fh:
             data = json.load(fh)
