@@ -348,6 +348,7 @@ def modules_containers_create(ctx, module: str, directory: Path, await_build: bo
 
     try:
         manager = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
+        ModuleContainers.check_tower_token()
 
         # Handle batch processing for all modules
         if manager.all_modules:

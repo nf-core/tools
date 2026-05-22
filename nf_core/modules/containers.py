@@ -253,9 +253,6 @@ class ModuleContainers:
         Returns:
             Tuple of (containers dict, success boolean). Success is False if any build failed.
         """
-        # Check for TOWER_ACCESS_TOKEN and warn about API limits
-        self.check_tower_token()
-
         containers: dict = {cs: {p: {} for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS + ["conda"]}
         build_tasks = {}
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
