@@ -2,10 +2,12 @@ import logging
 from pathlib import Path
 
 import requests
+from pydantic_core import ValidationError
 
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, nextflow_inspect
+from nf_core.modules.modules_utils import MetaYmlContainers
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
 log = logging.getLogger(__name__)
 
@@ -343,25 +345,27 @@ def lint_main_nf_container(
         log.debug("Skipping main.nf container linting")
         return
 
+    if not module.container_from_main_nf:
+        log.debug("Skipping main.nf container linting")
+        module.warned.append(
+            ("main_nf", "has_container", "Module `main.nf` does not specify a container.", module.main_nf)
+        )
+        return
+
     main_path = Path(module.component_dir, "main.nf")
     meta_path = Path(module.component_dir, "meta.yml")
 
-    nf_insp_out = nextflow_inspect(main_path, output_format="json", profile="docker")
-    try:
-        main_nf_docker_img = nf_insp_out["processes"][0]["container"]
-    except (KeyError, IndexError):
-        log.debug("Docker image could not be extracted. Skipping container linting.")
-        module.warned.append(("main_nf", "main_nf_container", "Docker container could not be extracted", main_path))
-        return
-
     meta_yml = read_meta_yml(meta_path)
     try:
-        meta_yml_docker_img = meta_yml["containers"]["docker"]["linux/amd64"]["name"]
-    except KeyError:
-        log.debug(f"Docker linux/amd64 image could not be read from {meta_path.absolute()}")
+        containers = MetaYmlContainers.model_validate(meta_yml.get("containers", {}))
+        linux_amd = CONTAINER_PLATFORMS[0]
+        meta_yml_docker_img = containers.docker.get(linux_amd).name  # type: ignore
+    except (ValidationError, AttributeError) as e:
+        log.debug(f"Docker {linux_amd} image could not be read from {meta_path.absolute()}")
+        log.debug(e)
         return
 
-    if meta_yml_docker_img != main_nf_docker_img:
+    if meta_yml_docker_img != module.container_from_main_nf:
         module.warned.append(
             (
                 "main_nf",
