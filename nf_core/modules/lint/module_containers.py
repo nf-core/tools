@@ -358,10 +358,9 @@ def lint_main_nf_container(
     meta_yml = read_meta_yml(meta_path)
     try:
         containers = MetaYmlContainers.model_validate(meta_yml.get("containers", {}))
-        linux_amd = CONTAINER_PLATFORMS[0]
-        meta_yml_docker_img = containers.docker.get(linux_amd).name  # type: ignore
+        meta_yml_docker_img = containers.docker.linux_amd64.name
     except (ValidationError, AttributeError) as e:
-        log.debug(f"Docker {linux_amd} image could not be read from {meta_path.absolute()}")
+        log.debug(f"Docker linux/amd64 image could not be read from {meta_path.absolute()}")
         log.debug(e)
         return
 

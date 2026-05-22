@@ -29,7 +29,7 @@ T = TypeVar("T")
 class MetaYmlContainers(BaseModel):
     class Platforms(BaseModel, Generic[T]):
         linux_amd64: T = Field(alias="linux/amd64")
-        linux_arm64: T | None = Field(None, alias="linux/arm64")
+        linux_arm64: T = Field(alias="linux/arm64")
 
     class DockerContainer(BaseModel):
         name: str
@@ -44,9 +44,9 @@ class MetaYmlContainers(BaseModel):
     class CondaEnvironment(BaseModel):
         lock_file: str
 
-    docker: Platforms["MetaYmlContainers.DockerContainer"] | None = None
-    singularity: Platforms["MetaYmlContainers.SingularityContainer"] | None = None
-    conda: Platforms["MetaYmlContainers.CondaEnvironment"] | None = None
+    docker: Platforms["MetaYmlContainers.DockerContainer"]
+    singularity: Platforms["MetaYmlContainers.SingularityContainer"]
+    conda: Platforms["MetaYmlContainers.CondaEnvironment"]
 
 
 def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
