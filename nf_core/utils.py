@@ -203,7 +203,7 @@ class Pipeline:
         self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
-        self.wf_path = Path(wf_path)
+        self.wf_path = Path(wf_path).resolve()
         self.pipeline_name: str | None = None
         self.pipeline_prefix: str | None = None
         self.schema_obj: PipelineSchema | None = None
@@ -367,6 +367,18 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
         log.info(f"Detected Nextflow version {parsed_version_str}")
 
     return nf_version >= minimal_nf_version
+
+
+_NF_PROCESS_NAME_RE = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
+
+
+def read_module_name(main_nf: Path) -> str | None:
+    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    try:
+        match = _NF_PROCESS_NAME_RE.search(main_nf.read_text())
+        return match.group(1) if match else None
+    except OSError:
+        return None
 
 
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:

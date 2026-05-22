@@ -11,9 +11,11 @@ log = logging.getLogger(__name__)
 def container_configs(self):
     """Check that the container configuration files in ``conf/`` are up to date.
 
-    Runs ``nextflow inspect`` to regenerate container configuration files directly
-    in ``conf/`` and uses ``git diff`` to detect changes.  If not in ``--fix`` mode
-    the working tree is restored to its original state afterwards.
+    Scans all ``meta.yml`` files under ``modules/`` that contain a ``containers``
+    key, reads the process name from the sibling ``main.nf``, and regenerates
+    the container configuration files in ``conf/``.  Uses ``git diff`` to detect
+    changes.  If not in ``--fix`` mode the working tree is restored to its
+    original state afterwards.
 
     Can be skipped by adding the following to the ``.nf-core.yml`` file:
 
@@ -37,6 +39,8 @@ def container_configs(self):
         warned.append(f"Could not generate container configuration files: {e}")
         return {"passed": passed, "failed": failed, "warned": warned}
 
+    log.debug(f"Generated {len(generated)} container config file(s): {', '.join(sorted(generated)) or 'none'}")
+
     # Files modified in the working tree (tracked and changed by generation)
     modified = {
         Path(d.a_path).name
@@ -52,6 +56,8 @@ def container_configs(self):
     # Already-correct files: generated, tracked, and unchanged
     correct = generated - modified - new
 
+    log.debug(f"Container config status — correct: {len(correct)}, modified: {len(modified)}, new: {len(new)}")
+
     fixing = "container_configs" in self.fix
 
     for name in sorted(correct):
@@ -59,6 +65,7 @@ def container_configs(self):
 
     for name in sorted(modified | new):
         if fixing:
+            log.debug(f"Overwriting `conf/{name}` with regenerated container configuration")
             passed.append(f"`conf/{name}` is up to date")
             fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
         else:
@@ -70,6 +77,7 @@ def container_configs(self):
 
     if not fixing:
         # Restore working tree: reset modified tracked files and delete new untracked ones
+        log.debug(f"Restoring working tree: resetting {len(modified)} modified, removing {len(new)} new file(s)")
         for name in modified:
             repo.git.restore(str(conf_dir / name))
         for name in new:
