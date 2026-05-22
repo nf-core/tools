@@ -119,8 +119,9 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
     # Check docker container images exist for all platforms (unless skipped)
     if not skip_docker:
         for platform in CONTAINER_PLATFORMS:
-            assert containers.docker is not None
-            docker_name = containers.docker[platform].name
+            _entry = docker_containers.get(platform)
+            docker_entry: dict = _entry if isinstance(_entry, dict) else {}
+            docker_name = docker_entry.get("name") or docker_entry.get("image") or docker_entry.get("container") or ""
             if not docker_name:
                 module.warned.append(
                     (
@@ -216,9 +217,43 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 )
 
         for plat in CONTAINER_PLATFORMS:
-            conda_lock = containers.conda[plat].lock_file
-
-            if not (containers.docker and containers.docker[plat].build_id and conda_lock):
+            _docker_plat = docker_containers.get(plat) if isinstance(docker_containers, dict) else None
+            docker_plat: dict = _docker_plat if isinstance(_docker_plat, dict) else {}
+            docker_build_id = (
+                docker_plat.get("buildId") or docker_plat.get("build_id") or docker_plat.get("buildid") or ""
+            )
+            _conda_plat = conda_containers.get(plat)
+            conda_plat: dict = _conda_plat if isinstance(_conda_plat, dict) else {}
+            conda_lock: str | None = None
+            for key in lock_keys:
+                if conda_plat.get(key):
+                    conda_lock = conda_plat.get(key)
+                    break
+            if docker_build_id and conda_lock:
+                docker_build_id_clean = docker_build_id[3:] if docker_build_id.startswith("bd-") else docker_build_id
+                parts = docker_build_id_clean.split("_")
+                if len(parts) >= 3 and parts[-1].isdigit() and parts[-2].isdigit():
+                    parts = parts[:-2]
+                docker_hash = "_".join([p for p in parts if p])
+                if docker_hash and docker_hash in conda_lock:
+                    module.passed.append(
+                        (
+                            "meta_yml",
+                            "containers_conda_lock_hash",
+                            f"Conda lock_file matches docker {plat} buildId hash",
+                            meta_path,
+                        )
+                    )
+                else:
+                    module.failed.append(
+                        (
+                            "meta_yml",
+                            "containers_conda_lock_hash",
+                            f"Conda lock_file does not match docker {plat} buildId hash",
+                            meta_path,
+                        )
+                    )
+            elif docker_build_id:
                 module.warned.append(
                     (
                         "meta_yml",

@@ -16,7 +16,7 @@ from nf_core.modules.lint.module_containers import (
     lint_main_nf_container,
     lint_meta_yml_containers,
 )
-from nf_core.utils import CONTAINER_SYSTEMS, unquote
+from nf_core.utils import unquote
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
@@ -34,19 +34,14 @@ def meta_yml_containers(module: NFCoreComponent) -> None:
     skip_docker = False
     skip_singularity = False
     skip_conda = False
-    module_prefix = "modules/nf-core/" + module.component_name
+    module_path = "modules/nf-core/" + module.component_name
     if skip_file.is_file():
         with open(skip_file) as fh:
             data = json.load(fh)
-        for system in CONTAINER_SYSTEMS + ["conda"]:
-            skip_module_paths = data.get(system, [])
-            if any(isinstance(x, str) and x == module_prefix for x in skip_module_paths):
-                if system == "docker":
-                    skip_docker = True
-                elif system == "singularity":
-                    skip_singularity = True
-                elif system == "conda":
-                    skip_conda = True
+        skip_sets = {k: set(v) for k, v in data.items() if isinstance(v, list)}
+        skip_docker = module_path in skip_sets.get("docker", set())
+        skip_singularity = module_path in skip_sets.get("singularity", set())
+        skip_conda = module_path in skip_sets.get("conda", set())
         if skip_docker or skip_singularity or skip_conda:
             log.debug(
                 f"Skip entries found for {module.component_name}: "
