@@ -85,24 +85,40 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 if "--" in tag:
                     name_hash = tag.rsplit("--", 1)[1]
                 else:
-                    tag_lower = tag.lower()
-                    name_hash = tag if len(tag_lower) >= 8 and all(c in "0123456789abcdef" for c in tag_lower) else ""
-            if build_hash and name_hash:
-                if build_hash != name_hash:
-                    module.failed.append(
-                        (
-                            "meta_yml",
-                            "containers_build_id_hash",
-                            f"Build ID hash does not match {system} container tag for {platform}",
-                            meta_path,
+                    tag = name_no_scheme.rsplit(":", 1)[1]
+                    if "--" in tag:
+                        name_hash = tag.rsplit("--", 1)[1]
+                    else:
+                        tag_lower = tag.lower()
+                        if len(tag_lower) >= 8 and all(c in "0123456789abcdef" for c in tag_lower):
+                            name_hash = tag
+                        else:
+                            name_hash = ""
+                if build_hash and name_hash:
+                    if build_hash != name_hash:
+                        module.failed.append(
+                            (
+                                "meta_yml",
+                                "containers_build_id_hash",
+                                f"Build ID `{build_hash}` hash does not match {system} container tag `{name_hash}` for {platform}",
+                                meta_path,
+                            )
                         )
-                    )
+                    else:
+                        module.passed.append(
+                            (
+                                "meta_yml",
+                                "containers_build_id_hash",
+                                f"Build ID hash matches {system} container tag for {platform}",
+                                meta_path,
+                            )
+                        )
                 else:
-                    module.passed.append(
+                    module.warned.append(
                         (
                             "meta_yml",
                             "containers_build_id_hash",
-                            f"Build ID hash matches {system} container tag for {platform}",
+                            f"Could not compare build ID hash with {system} container tag for {platform}, because either build_hash:`{build_hash}` or  name_hash:`{name_hash}` is `None`.",
                             meta_path,
                         )
                     )
