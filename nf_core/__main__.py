@@ -1474,7 +1474,7 @@ def modules_containers(ctx):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
@@ -1486,7 +1486,7 @@ def modules_containers(ctx):
     default=False,
     help="Force container creation even if the container already exists.",
 )
-def command_modules_containers_create(ctx, await_build, module, directory, force):
+def command_modules_containers_create(ctx, await_build: bool, module: str, directory: Path, force: bool) -> None:
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
@@ -1503,7 +1503,7 @@ def command_modules_containers_create(ctx, await_build, module, directory, force
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-def command_modules_containers_conda_lock(ctx, module):
+def command_modules_containers_conda_lock(ctx, module: str) -> None:
     """
     Build a Docker linux/arm64 container and fetch the conda lock file for a module.
     """

@@ -271,7 +271,7 @@ class ModuleContainers:
                 for platform in CONTAINER_PLATFORMS:
                     short_platform = platform.split("/")[-1]
                     build_task_ids[(cs, platform)] = progress_bar.add_task(
-                        f"  [dim]{cs}/{short_platform}[/dim]",
+                        f"  {cs}/{short_platform}",
                         total=1,
                         completed=0,
                         status="submitting...",

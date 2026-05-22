@@ -1,8 +1,10 @@
 import logging
 import sys
+from pathlib import Path
 
 import rich
 
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 from nf_core.utils import CONTAINER_PLATFORMS, rich_force_colors
 
 log = logging.getLogger(__name__)
@@ -335,7 +337,7 @@ def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
         sys.exit(1)
 
 
-def modules_containers_create(ctx, module, directory, await_build: bool, force: bool):
+def modules_containers_create(ctx, module: str, directory: Path, await_build: bool, force: bool) -> None:
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
@@ -359,7 +361,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
             progress_bar = rich.progress.Progress(
                 rich.progress.SpinnerColumn(finished_text="[green]✓[/green]"),
                 "[bold blue]{task.description}",
-                rich.progress.TextColumn("[dim]{task.fields[status]}"),
+                rich.progress.TextColumn("{task.fields}"),
                 transient=True,
                 console=console,
                 disable=ctx.obj["hide_progress"],
@@ -386,6 +388,8 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                         )
                         if success:
                             module_manager.update_containers_in_meta()
+                            if module_manager.repo_type == "pipeline":
+                                try_generate_container_configs(directory, module_manager.module_directory)
                         else:
                             failed_modules.append(module_name)
                     except (ValueError, RuntimeError, OSError) as e:
@@ -406,7 +410,7 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
             progress_bar = rich.progress.Progress(
                 rich.progress.SpinnerColumn(finished_text="[green]✓[/green]"),
                 "[bold blue]{task.description}",
-                rich.progress.TextColumn("[dim]{task.fields[status]}"),
+                rich.progress.TextColumn("{task.fields[status]}"),
                 transient=True,
                 console=console,
                 disable=ctx.obj["hide_progress"],
@@ -421,6 +425,8 @@ def modules_containers_create(ctx, module, directory, await_build: bool, force: 
                 _, success = manager.create(await_build, progress_bar=progress_bar, task_id=module_task_id, force=force)
                 if success:
                     manager.update_containers_in_meta()
+                    if manager.repo_type == "pipeline":
+                        try_generate_container_configs(directory, manager.module_directory)
                 else:
                     log.error(f"✗ Some container builds failed for {manager.module}")
                     sys.exit(1)
