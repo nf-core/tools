@@ -30,7 +30,7 @@ def meta_yml_containers(module: NFCoreComponent) -> None:
     Respects per-system skips from `skip_nf_test.json`.
     """
     # Determine per-system skips from skip_nf_test.json
-    skip_file = Path(module.component_dir.parent.parent.parent, ".github", "skip_nf_test.json")
+    skip_file = Path(module.base_dir, ".github", "skip_nf_test.json")
     skip_docker = False
     skip_singularity = False
     skip_conda = False
