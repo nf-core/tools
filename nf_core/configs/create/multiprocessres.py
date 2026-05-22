@@ -2,10 +2,10 @@
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, HorizontalGroup, Vertical, VerticalScroll
+from textual.containers import Center, HorizontalGroup, Vertical, VerticalScroll
 from textual.events import Mount, ScreenResume
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Label, Markdown, Static, Switch
+from textual.widgets import Button, Footer, Header, Input, Label, Markdown, Static
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
@@ -66,11 +66,11 @@ class ProcessConfig(HorizontalGroup):
 
     def update_hpc_status(self, hpc: bool) -> None:
         self.hpc = hpc
-        id = "custom_process_queue"
+        field_id = "custom_process_queue"
         if self.hpc:
-            self.get_widget_by_id(id).remove_class("hide")
+            self.get_widget_by_id(field_id).remove_class("hide")
         else:
-            self.get_widget_by_id(id).add_class("hide")
+            self.get_widget_by_id(field_id).add_class("hide")
 
 
 class MultiProcessConfig(Screen):

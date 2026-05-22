@@ -22,10 +22,10 @@ from nf_core.configs.create.hpcquestion import ChooseHpc
 from nf_core.configs.create.multiprocessres import MultiLabelledProcessConfig, MultiNamedProcessConfig
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.pipelineconfigquestion import PipelineConfigQuestion
-from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
 from nf_core.configs.create.utils import LoggingConsole
+from nf_core.configs.create.welcome import WelcomeScreen
 
 ## Logging
 logger = logging.getLogger(__name__)

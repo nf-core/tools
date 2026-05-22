@@ -2,8 +2,9 @@
 displaying such info in the pipeline run header on run execution"""
 
 from textwrap import dedent
-from requests import get
 
+from requests import get
+from requests.exceptions import RequestException
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
@@ -11,8 +12,7 @@ from textual.events import Mount, ScreenResume
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select
 
-from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
-from nf_core.configs.create.utils import add_hide_class, remove_hide_class
+from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, add_hide_class, init_context, remove_hide_class
 
 config_exists_warn = """
 > ⚠️  **The config file you are trying to create already exists.**
@@ -104,21 +104,21 @@ class BasicDetails(Screen):
         url = "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json"
         try:
             response = get(url)
-        except:
+        except RequestException:
             return []
         if response.status_code != 200:
             return []
         data = response.json()
         if not isinstance(data, dict):
             return []
-        if not "pipeline" in data:
+        if "pipeline" not in data:
             return []
         pipelines = data["pipeline"]
         if not isinstance(pipelines, list):
             return []
         if not len(pipelines) > 0:
             return []
-        if not all([isinstance(p, str) for p in pipelines]):
+        if not all(isinstance(p, str) for p in pipelines):
             return []
         return pipelines
 

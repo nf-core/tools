@@ -10,7 +10,7 @@ from nf_core.configs.create.utils import ConfigsCreateConfig
 
 
 class ConfigCreate:
-    def __init__(self, template_config: ConfigsCreateConfig, config_type: str, config_dir: Path | str = Path(".")):
+    def __init__(self, template_config: ConfigsCreateConfig, config_type: str, config_dir: Path | str = Path()):
         self.template_config = template_config
         self.config_type = config_type
         config_dir_path = config_dir if isinstance(config_dir, Path) else Path(config_dir)

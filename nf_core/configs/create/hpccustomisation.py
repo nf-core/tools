@@ -4,7 +4,7 @@ import subprocess
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select
 
@@ -65,7 +65,7 @@ class HpcCustomisation(Screen):
         yield Markdown(markdown_intro)
         yield Markdown(markdown_scheduler)
         yield Select(
-            [(name, keyword) for name, keyword in supported_schedulers.items()],
+            list(supported_schedulers.items()),
             prompt="Select your HPC's scheduler.",
             value=scheduler if scheduler is not None else "local",
             classes="column",
@@ -169,7 +169,7 @@ class HpcCustomisation(Screen):
             config = self._parse_slurm_config(fp)
 
         for conf in config:
-            if (conf["Default"] if "Default" in conf.keys() else "NO") == "YES":
+            if conf.get("Default", "NO") == "YES":
                 return conf["PartitionName"]
 
         # If no default is set, use the first option

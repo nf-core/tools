@@ -17,7 +17,8 @@ from textual.widget import Widget
 from textual.widgets import Input, RichLog, Static
 
 # Use ContextVar to define a context on the model initialization
-_init_context_var: ContextVar = ContextVar("_init_context_var", default={})
+_init_context_var: ContextVar = ContextVar("_init_context_var", default=None)
+_init_context_var.set({})
 
 
 @contextmanager
@@ -298,9 +299,8 @@ class ConfigsCreateConfig(BaseModel):
     def nfcore_name_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that an nf-core pipeline name is valid."""
         context = info.context
-        if context and not context["is_infrastructure"] and context["is_nfcore"]:
-            if v.strip() == "":
-                raise ValueError("Cannot be left empty.")
+        if context and not context["is_infrastructure"] and context["is_nfcore"] and v.strip() == "":
+            raise ValueError("Cannot be left empty.")
         return v
 
     @field_validator("config_profile_contact")
@@ -308,9 +308,8 @@ class ConfigsCreateConfig(BaseModel):
     def notempty_contact(cls, v: str, info: ValidationInfo) -> str:
         """Check that contact values are not empty when the config is nf-core."""
         context = info.context
-        if context and context["is_nfcore"]:
-            if v.strip() == "":
-                raise ValueError("Cannot be left empty.")
+        if context and context["is_nfcore"] and v.strip() == "":
+            raise ValueError("Cannot be left empty.")
         return v
 
     @field_validator(
@@ -394,7 +393,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 v_int = int(v.strip())
             except ValueError:
-                raise ValueError("Must be an integer.")
+                raise ValueError("Must be an integer.") from None
             if not v_int > 0:
                 raise ValueError("Must be a positive integer.")
         return v
@@ -410,7 +409,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 vf = float(v.strip())
             except ValueError:
-                raise ValueError("Must be a number.")
+                raise ValueError("Must be a number.") from None
             if not vf >= 0:
                 raise ValueError("Must be a non-negative number.")
         return v
@@ -445,7 +444,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 v_int = int(v.strip())
             except ValueError:
-                raise ValueError("Must be an integer.")
+                raise ValueError("Must be an integer.") from None
             if not v_int > 0:
                 raise ValueError("Must be a positive integer.")
         return v
@@ -466,7 +465,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 v_int = int(v.strip())
             except ValueError:
-                raise ValueError("Must be an integer.")
+                raise ValueError("Must be an integer.") from None
             if not v_int > 0:
                 raise ValueError("Must be a positive integer.")
         return v
@@ -482,7 +481,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 vf = float(v.strip())
             except ValueError:
-                raise ValueError("Must be a number.")
+                raise ValueError("Must be a number.") from None
             if not vf >= 0:
                 raise ValueError("Must be a non-negative number.")
         return v
@@ -498,7 +497,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 vf = float(v.strip())
             except ValueError:
-                raise ValueError("Must be a number.")
+                raise ValueError("Must be a number.") from None
             if not vf > 0:
                 raise ValueError("Must be a positive number.")
         return v
@@ -508,9 +507,8 @@ class ConfigsCreateConfig(BaseModel):
     def nonemtpy_hpc_details(cls, v: str, info: ValidationInfo) -> str:
         """Check that HPC infrastructure details are non-empty"""
         context = info.context
-        if context and context["is_infrastructure"] and context["is_hpc"]:
-            if v.strip() == "":
-                raise ValueError("Cannot be left empty.")
+        if context and context["is_infrastructure"] and context["is_hpc"] and v.strip() == "":
+            raise ValueError("Cannot be left empty.")
         return v
 
     @field_validator("scheduler")
@@ -518,9 +516,8 @@ class ConfigsCreateConfig(BaseModel):
     def valid_scheduler(cls, v: str, info: ValidationInfo) -> str:
         """Check that the HPC scheduler is supported"""
         context = info.context
-        if context and context["is_infrastructure"] and context["is_hpc"]:
-            if v.strip() not in SUPPORTED_SCHEDULERS:
-                raise ValueError(f"Must be one of: {', '.join(SUPPORTED_SCHEDULERS)}")
+        if context and context["is_infrastructure"] and context["is_hpc"] and v.strip() not in SUPPORTED_SCHEDULERS:
+            raise ValueError(f"Must be one of: {', '.join(SUPPORTED_SCHEDULERS)}")
         return v
 
     @field_validator("cachedir", "scratch_dir")
@@ -583,7 +580,7 @@ class ConfigsCreateConfig(BaseModel):
             try:
                 vf = float(v.strip())
             except ValueError:
-                raise ValueError("Must be a number.")
+                raise ValueError("Must be a number.") from None
             if not vf > 0:
                 raise ValueError("Must be a positive number.")
         return v
@@ -598,7 +595,7 @@ class TextInput(Static):
     """
 
     def __init__(
-        self, field_id, placeholder, description, default=None, password=None, suggestions=[], **kwargs
+        self, field_id, placeholder, description, default=None, password=None, suggestions=None, **kwargs
     ) -> None:
         """Initialise the widget with our values.
 
@@ -610,7 +607,7 @@ class TextInput(Static):
         self.description: str = description
         self.default: str = default
         self.password: bool = password
-        self.suggestions: list[str] = suggestions
+        self.suggestions: list[str] = suggestions or []
 
     def compose(self) -> ComposeResult:
         yield Grid(

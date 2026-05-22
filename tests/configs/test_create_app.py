@@ -7,10 +7,10 @@ from nf_core.configs.create import ConfigsCreateApp
 from nf_core.configs.create.utils import SUPPORTED_CONTAINERS
 
 from ..test_configs import (
-    INFRA_SINGULARITY_CONFIG,
     INFRA_CUSTOM_SINGULARITY_CONFIG,
-    PIPE_NFCORE_CONFIG,
+    INFRA_SINGULARITY_CONFIG,
     PIPE_CUSTOM_CONFIG,
+    PIPE_NFCORE_CONFIG,
 )
 
 INIT_FILE = "../../nf_core/configs/create/__init__.py"

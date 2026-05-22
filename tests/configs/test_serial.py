@@ -1,19 +1,20 @@
-from nf_core.configs.create.serial import NextflowSerial
-from nf_core.configs.create.utils import ConfigsCreateConfig, init_context
-from nf_core.configs.create.create import ConfigCreate
-
-from ..test_configs import (
-    INFRA_SINGULARITY_CONFIG,
-    INFRA_CUSTOM_SINGULARITY_CONFIG,
-    PIPE_NFCORE_CONFIG,
-    PIPE_CUSTOM_CONFIG,
-    INFRA_NFCORE_SINGULARITY_LOCAL_CONFIG,
-    INFRA_CUSTOM_SINGULARITY_LOCAL_CONFIG,
-)
-
-from pydantic import ValidationError
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+from pydantic import ValidationError
+
+from nf_core.configs.create.create import ConfigCreate
+from nf_core.configs.create.serial import NextflowSerial
+from nf_core.configs.create.utils import ConfigsCreateConfig, init_context
+
+from ..test_configs import (
+    INFRA_CUSTOM_SINGULARITY_CONFIG,
+    INFRA_CUSTOM_SINGULARITY_LOCAL_CONFIG,
+    INFRA_NFCORE_SINGULARITY_LOCAL_CONFIG,
+    INFRA_SINGULARITY_CONFIG,
+    PIPE_CUSTOM_CONFIG,
+    PIPE_NFCORE_CONFIG,
+)
 
 # Valid configs
 
@@ -587,7 +588,7 @@ def test_serial_invalid_nfcore_infra_hpc():
         expected_error = None
 
         try:
-            c = ConfigsCreateConfig(**INVALID_NFCORE_INFRA_HPC_CONFIG)
+            ConfigsCreateConfig(**INVALID_NFCORE_INFRA_HPC_CONFIG)
         except ValidationError as e:
             expected_error = e
 
@@ -601,7 +602,7 @@ def test_serial_invalid_nfcore_infra_hpc():
             "Value error, Must be one of: local, pbs, pbspro, slurm, sge",
             "Value error, Must be an integer.",
         }
-        assert set([e["msg"] for e in errors]) == expected_error_msgs
+        assert {e["msg"] for e in errors} == expected_error_msgs
 
 
 def test_serial_invalid_custom_infra_hpc():
@@ -615,7 +616,7 @@ def test_serial_invalid_custom_infra_hpc():
         expected_error = None
 
         try:
-            c = ConfigsCreateConfig(**INVALID_CUSTOM_INFRA_HPC_CONFIG)
+            ConfigsCreateConfig(**INVALID_CUSTOM_INFRA_HPC_CONFIG)
         except ValidationError as e:
             expected_error = e
 
@@ -627,7 +628,7 @@ def test_serial_invalid_custom_infra_hpc():
             "Value error, Must be one of: local, pbs, pbspro, slurm, sge",
             "Value error, Must be an absolute path (/data/scratch), a path relative to home (~/scratch), or a path with an environmental variable (e.g. ${DIR}/scratch)",
         }
-        assert set([e["msg"] for e in errors]) == expected_error_msgs
+        assert {e["msg"] for e in errors} == expected_error_msgs
 
 
 def test_serial_invalid_nfcore_pipe_hpc():
@@ -641,7 +642,7 @@ def test_serial_invalid_nfcore_pipe_hpc():
         expected_error = None
 
         try:
-            c = ConfigsCreateConfig(**INVALID_NFCORE_PIPE_HPC_CONFIG)
+            ConfigsCreateConfig(**INVALID_NFCORE_PIPE_HPC_CONFIG)
         except ValidationError as e:
             expected_error = e
 
@@ -652,7 +653,7 @@ def test_serial_invalid_nfcore_pipe_hpc():
             "Value error, Handle must be a valid URL starting with 'https://' or 'http://' and include the domain (e.g. .com).",
             "Value error, Cannot be left empty.",
         }
-        assert set([e["msg"] for e in errors]) == expected_error_msgs
+        assert {e["msg"] for e in errors} == expected_error_msgs
 
 
 def test_serial_invalid_custom_pipe_hpc():
@@ -666,7 +667,7 @@ def test_serial_invalid_custom_pipe_hpc():
         expected_error = None
 
         try:
-            c = ConfigsCreateConfig(**INVALID_CUSTOM_PIPE_HPC_CONFIG)
+            ConfigsCreateConfig(**INVALID_CUSTOM_PIPE_HPC_CONFIG)
         except ValidationError as e:
             expected_error = e
 
@@ -678,7 +679,7 @@ def test_serial_invalid_custom_pipe_hpc():
             "Value error, Must be a number.",
             "Value error, Must be a valid path to a directory.",
         }
-        assert set([e["msg"] for e in errors]) == expected_error_msgs
+        assert {e["msg"] for e in errors} == expected_error_msgs
 
 
 def test_serial_invalid_nfcore_infra_local():
@@ -692,7 +693,7 @@ def test_serial_invalid_nfcore_infra_local():
         expected_error = None
 
         try:
-            c = ConfigsCreateConfig(**INVALID_NFCORE_INFRA_LOCAL_CONFIG)
+            ConfigsCreateConfig(**INVALID_NFCORE_INFRA_LOCAL_CONFIG)
         except ValidationError as e:
             expected_error = e
 
@@ -703,7 +704,7 @@ def test_serial_invalid_nfcore_infra_local():
             "Value error, Handle must be a valid URL starting with 'https://' or 'http://' and include the domain (e.g. .com).",
             "Value error, Must be a valid path to a directory.",
         }
-        assert set([e["msg"] for e in errors]) == expected_error_msgs
+        assert {e["msg"] for e in errors} == expected_error_msgs
 
 
 def test_serial_invalid_custom_infra_local():
@@ -717,7 +718,7 @@ def test_serial_invalid_custom_infra_local():
         expected_error = None
 
         try:
-            c = ConfigsCreateConfig(**INVALID_CUSTOM_INFRA_LOCAL_CONFIG)
+            ConfigsCreateConfig(**INVALID_CUSTOM_INFRA_LOCAL_CONFIG)
         except ValidationError as e:
             expected_error = e
 
@@ -730,4 +731,4 @@ def test_serial_invalid_custom_infra_local():
             "Value error, Must be one of: singularity, docker, apptainer, charliecloud, podman, sarus, shifter, conda",
             "Value error, Must be an absolute path (/data/scratch), a path relative to home (~/scratch), or a path with an environmental variable (e.g. ${DIR}/scratch)",
         }
-        assert set([e["msg"] for e in errors]) == expected_error_msgs
+        assert {e["msg"] for e in errors} == expected_error_msgs

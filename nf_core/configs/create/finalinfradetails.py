@@ -7,8 +7,12 @@ from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select, Static, Switch
 
-from nf_core.configs.create.utils import SUPPORTED_CONTAINERS, ConfigsCreateConfig, TextInput, init_context
-from nf_core.configs.create.utils import add_hide_class, remove_hide_class
+from nf_core.configs.create.utils import (
+    SUPPORTED_CONTAINERS,
+    ConfigsCreateConfig,
+    TextInput,
+    init_context,
+)
 
 markdown_intro = """
 # Configure the options for your infrastructure config
@@ -182,10 +186,10 @@ class FinalInfraDetails(Screen):
             return False
         return True
 
-    def _get_set_directory(self, dir: str) -> str | None:
+    def _get_set_directory(self, directory: str) -> str | None:
         """Get the available cache directories"""
-        if dir:
-            set_dir = os.environ.get(dir)
+        if directory:
+            set_dir = os.environ.get(directory)
             if set_dir:
                 return set_dir
         return None

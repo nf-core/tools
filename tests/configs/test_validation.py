@@ -1,8 +1,8 @@
-from nf_core.configs.create.utils import ConfigsCreateConfig, init_context, SUPPORTED_SCHEDULERS, SUPPORTED_CONTAINERS
+from enum import Enum
 
 from pydantic_core._pydantic_core import ValidationError
 
-from enum import Enum
+from nf_core.configs.create.utils import SUPPORTED_CONTAINERS, SUPPORTED_SCHEDULERS, ConfigsCreateConfig, init_context
 
 
 class Context(Enum):
@@ -48,7 +48,7 @@ class Context(Enum):
     }
 
 
-def check_config(cfg: dict, fail: bool, ctx: dict = {}) -> None:
+def check_config(cfg: dict, fail: bool, ctx: dict) -> None:
     assert isinstance(cfg, dict)
     assert isinstance(fail, bool)
     assert isinstance(ctx, dict)
@@ -414,6 +414,32 @@ def test_proc_label():
     cfg_valid_nfcore = {"custom_process_label_id": "some_label"}
     cfg_valid_custom = {"custom_process_label_id": "ANOTHER_LABEL"}
     cfg_empty = {"custom_process_label_id": ""}
+
+    # Test nf-core pipeline context
+    # Should succeed
+    check_config(cfg_valid_nfcore, fail=False, ctx=Context.NF_PIPE_LOCAL.value)
+    # Should fail
+    check_config(cfg_valid_custom, fail=True, ctx=Context.NF_PIPE_LOCAL.value)
+    check_config(cfg_empty, fail=True, ctx=Context.NF_PIPE_LOCAL.value)
+
+    # Test custom pipeline context
+    # Should succeed
+    check_config(cfg_valid_nfcore, fail=False, ctx=Context.CUSTOM_PIPE_LOCAL.value)
+    check_config(cfg_valid_custom, fail=False, ctx=Context.CUSTOM_PIPE_LOCAL.value)
+    # Should fail
+    check_config(cfg_empty, fail=True, ctx=Context.CUSTOM_PIPE_LOCAL.value)
+
+    # Test nf-core infra context
+    # Should succeed
+    check_config(cfg_valid_nfcore, fail=False, ctx=Context.NF_INFRA_LOCAL.value)
+    check_config(cfg_valid_custom, fail=False, ctx=Context.NF_INFRA_LOCAL.value)
+    check_config(cfg_empty, fail=False, ctx=Context.NF_INFRA_LOCAL.value)
+
+    # Test custom infra context
+    # Should succeed
+    check_config(cfg_valid_nfcore, fail=False, ctx=Context.CUSTOM_INFRA_LOCAL.value)
+    check_config(cfg_valid_custom, fail=False, ctx=Context.CUSTOM_INFRA_LOCAL.value)
+    check_config(cfg_empty, fail=False, ctx=Context.CUSTOM_INFRA_LOCAL.value)
 
 
 def test_proc_queue():
