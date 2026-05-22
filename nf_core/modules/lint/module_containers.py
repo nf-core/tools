@@ -349,6 +349,5 @@ def lint_main_nf_container(
 
 
 def lint_conda_lock_files(module: NFCoreComponent):
-    env_path = Path(module.component_dir, "environment.yml")
-    print(env_path)
     # TODO
+    pass

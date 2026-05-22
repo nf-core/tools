@@ -385,7 +385,7 @@ class NFCoreComponent:
 
     def get_container_from_main_nf(self) -> None:
         if self.component_type == "modules":
-            if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
+            if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
                 self.container_from_main_nf = self._get_container_with_inspect()
             else:
                 from nf_core.modules.modules_utils import get_container_with_regex
