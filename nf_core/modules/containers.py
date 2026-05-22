@@ -222,7 +222,7 @@ class ModuleContainers:
 
         # Check if container name is already correct
         if docker_image in content and not force:
-            log.info(
+            log.debug(
                 f"Container name in `{self.nfcore_component.component_name}/main.nf` is already correct: `{docker_image}`"
             )
             return
