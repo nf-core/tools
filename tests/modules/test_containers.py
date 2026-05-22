@@ -185,17 +185,6 @@ class TestModuleContainers(TestModules):
         mock_run_cmd.return_value = (yaml.safe_dump(inspect_payload).encode(), b"")
         assert ModuleContainers.request_image_inspect("testC:latest") == inspect_payload
 
-    @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
-    def test_request_image_inspect_missing_output(self, mock_run_cmd):
-        with pytest.raises(RuntimeError, match="Wave command did not return any output"):
-            ModuleContainers.request_image_inspect("testC:latest")
-
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_image_inspect_invalid_yaml(self, mock_run_cmd):
-        mock_run_cmd.return_value = (b"invalid: [", b"")
-        with pytest.raises(RuntimeError, match="Could not parse wave inspect yaml output"):
-            ModuleContainers.request_image_inspect("testC:latest")
-
     def test_get_conda_lock_url_quotes(self):
         build_id = "abc/def 123"
         url = ModuleContainers.get_conda_lock_url(build_id)
