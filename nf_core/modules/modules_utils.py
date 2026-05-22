@@ -1,13 +1,11 @@
 import logging
 import time
 from pathlib import Path
+from typing import Generic, TypeVar
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, model_validator
-from pydantic_core import PydanticCustomError
-
-from nf_core.utils import CONTAINER_PLATFORMS
+from pydantic import BaseModel, Field
 
 from nf_core.utils import NFCORE_CACHE_DIR
 
@@ -25,7 +23,14 @@ class ModuleExceptionError(Exception):
     pass
 
 
+T = TypeVar("T")
+
+
 class MetaYmlContainers(BaseModel):
+    class Platforms(BaseModel, Generic[T]):
+        linux_amd64: T = Field(alias="linux/amd64")
+        linux_arm64: T | None = Field(None, alias="linux/arm64")
+
     class DockerContainer(BaseModel):
         name: str
         build_id: str
@@ -39,22 +44,9 @@ class MetaYmlContainers(BaseModel):
     class CondaEnvironment(BaseModel):
         lock_file: str
 
-    docker: dict[str, "MetaYmlContainers.DockerContainer"] = {}
-    singularity: dict[str, "MetaYmlContainers.SingularityContainer"] = {}
-    conda: dict[str, "MetaYmlContainers.CondaEnvironment"] = {}
-
-    @model_validator(mode="after")
-    def check_invalid_platform(self) -> "MetaYmlContainers":
-        invalid_pls = []
-        for pl in {**self.docker, **self.singularity, **self.conda}:
-            if pl not in CONTAINER_PLATFORMS:
-                invalid_pls.append(pl)
-        if invalid_pls:
-            raise PydanticCustomError(
-                "invalid_platform", "Invalid container platform(s) specified: {errors}", {"errors": invalid_pls}
-            )
-
-        return self
+    docker: Platforms["MetaYmlContainers.DockerContainer"] | None = None
+    singularity: Platforms["MetaYmlContainers.SingularityContainer"] | None = None
+    conda: Platforms["MetaYmlContainers.CondaEnvironment"] | None = None
 
 
 def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
