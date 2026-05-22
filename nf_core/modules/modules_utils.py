@@ -39,31 +39,19 @@ class MetaYmlContainers(BaseModel):
     class CondaEnvironment(BaseModel):
         lock_file: str
 
-    docker: dict[str, "MetaYmlContainers.DockerContainer"] | None = None
-    singularity: dict[str, "MetaYmlContainers.SingularityContainer"] | None = None
-    conda: dict[str, "MetaYmlContainers.CondaEnvironment"] | None = None
+    docker: dict[str, "MetaYmlContainers.DockerContainer"] = {}
+    singularity: dict[str, "MetaYmlContainers.SingularityContainer"] = {}
+    conda: dict[str, "MetaYmlContainers.CondaEnvironment"] = {}
 
     @model_validator(mode="after")
     def check_invalid_platform(self) -> "MetaYmlContainers":
-        errors = []
-        docker = self.docker or {}
-        unknown = docker.keys() - CONTAINER_PLATFORMS
-        if unknown:
-            errors.append(f"docker: {unknown}")
-
-        singularity = self.singularity or {}
-        unknown = singularity.keys() - CONTAINER_PLATFORMS
-        if unknown:
-            errors.append(f"singularity: {unknown}")
-
-        conda = self.conda or {}
-        unknown = conda.keys() - CONTAINER_PLATFORMS
-        if unknown:
-            errors.append(f"conda: {unknown}")
-
-        if errors:
+        invalid_pls = []
+        for pl in {**self.docker, **self.singularity, **self.conda}:
+            if pl not in CONTAINER_PLATFORMS:
+                invalid_pls.append(pl)
+        if invalid_pls:
             raise PydanticCustomError(
-                "invalid_platform", "Invalid container platform specified: {errors}", {"errors": errors}
+                "invalid_platform", "Invalid container platform(s) specified: {errors}", {"errors": invalid_pls}
             )
 
         return self
