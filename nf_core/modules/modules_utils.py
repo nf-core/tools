@@ -4,6 +4,10 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
+from pydantic import BaseModel, model_validator
+from pydantic_core import PydanticCustomError
+
+from nf_core.utils import CONTAINER_PLATFORMS
 
 from nf_core.utils import NFCORE_CACHE_DIR
 
@@ -19,6 +23,50 @@ class ModuleExceptionError(Exception):
     """Exception raised when there was an error with module commands"""
 
     pass
+
+
+class MetaYmlContainers(BaseModel):
+    class DockerContainer(BaseModel):
+        name: str
+        build_id: str
+        scan_id: str
+
+    class SingularityContainer(BaseModel):
+        name: str
+        build_id: str
+        https: str
+
+    class CondaEnvironment(BaseModel):
+        lock_file: str
+
+    docker: dict[str, "MetaYmlContainers.DockerContainer"] | None = None
+    singularity: dict[str, "MetaYmlContainers.SingularityContainer"] | None = None
+    conda: dict[str, "MetaYmlContainers.CondaEnvironment"] | None = None
+
+    @model_validator(mode="after")
+    def check_invalid_platform(self) -> "MetaYmlContainers":
+        errors = []
+        docker = self.docker or {}
+        unknown = docker.keys() - CONTAINER_PLATFORMS
+        if unknown:
+            errors.append(f"docker: {unknown}")
+
+        singularity = self.singularity or {}
+        unknown = singularity.keys() - CONTAINER_PLATFORMS
+        if unknown:
+            errors.append(f"singularity: {unknown}")
+
+        conda = self.conda or {}
+        unknown = conda.keys() - CONTAINER_PLATFORMS
+        if unknown:
+            errors.append(f"conda: {unknown}")
+
+        if errors:
+            raise PydanticCustomError(
+                "invalid_platform", "Invalid container platform specified: {errors}", {"errors": errors}
+            )
+
+        return self
 
 
 def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
