@@ -211,7 +211,7 @@ def test_submitting_infra_nfcore_hpc_details(snap_compare):
         await pilot.press(*list("singularity"))
         await pilot.press("enter")
 
-    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 def enter_infra_final_details(container):
@@ -497,7 +497,7 @@ def test_submitting_infra_custom_hpc_details(snap_compare):
         await pilot.press(*list("singularity"))
         await pilot.press("enter")
 
-    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 100), run_before=run_before)
 
 
 def enter_infra_custom_final_details(container):
