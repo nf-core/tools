@@ -63,7 +63,9 @@ class BasicDetails(Screen):
         yield Markdown(
             "Pipeline name.",
             id="config_pipeline_name_text",
-            classes="hide" if self.parent.CONFIG_TYPE == "infrastructure" or not self.parent.NFCORE_CONFIG else "field_help",
+            classes="hide"
+            if self.parent.CONFIG_TYPE == "infrastructure" or not self.parent.NFCORE_CONFIG
+            else "field_help",
         )
         yield Select(
             [(c, c) for c in self.nf_core_pipelines],

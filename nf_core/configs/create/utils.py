@@ -182,7 +182,9 @@ class ConfigsCreateConfig(BaseModel):
             },
             self.container_system: {
                 "enabled": True,
-                "cacheDir": self.cachedir if self.container_system in ["singularity", "apptainer", "charliecloud", "conda"] else None,
+                "cacheDir": self.cachedir
+                if self.container_system in ["singularity", "apptainer", "charliecloud", "conda"]
+                else None,
                 "autoMounts": True if self.container_system in ["singularity", "apptainer"] else None,
             },
             "cleanup": self.delete_work_dir,

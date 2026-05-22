@@ -6,7 +6,6 @@ from enum import Enum
 
 
 class Context(Enum):
-
     NF_INFRA_HPC = {
         "is_nfcore": True,
         "is_infrastructure": True,
@@ -504,10 +503,7 @@ def test_scheduler():
 
 
 def test_container():
-    valid_cfgs = [
-        {"container_system": ct}
-        for ct in SUPPORTED_CONTAINERS
-    ]
+    valid_cfgs = [{"container_system": ct} for ct in SUPPORTED_CONTAINERS]
     invalid_cfg = {"container_system": "imaginary_container_system"}
     empty_cfg = {"container_system": ""}
 

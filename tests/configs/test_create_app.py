@@ -6,7 +6,12 @@ from tempfile import TemporaryDirectory
 from nf_core.configs.create import ConfigsCreateApp
 from nf_core.configs.create.utils import SUPPORTED_CONTAINERS
 
-from ..test_configs import INFRA_SINGULARITY_CONFIG, INFRA_CUSTOM_SINGULARITY_CONFIG, PIPE_NFCORE_CONFIG, PIPE_CUSTOM_CONFIG
+from ..test_configs import (
+    INFRA_SINGULARITY_CONFIG,
+    INFRA_CUSTOM_SINGULARITY_CONFIG,
+    PIPE_NFCORE_CONFIG,
+    PIPE_CUSTOM_CONFIG,
+)
 
 INIT_FILE = "../../nf_core/configs/create/__init__.py"
 
@@ -201,6 +206,10 @@ def test_submitting_infra_nfcore_hpc_details(snap_compare):
 
     async def run_before(pilot) -> None:
         await submit_infra_nfcore_hpc_details(pilot)
+        # Select singularity from the drop down to ensure consistency
+        await pilot.click("#container_system")
+        await pilot.press(*list("singularity"))
+        await pilot.press("enter")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -483,6 +492,10 @@ def test_submitting_infra_custom_hpc_details(snap_compare):
 
     async def run_before(pilot) -> None:
         await submit_infra_custom_hpc_details(pilot)
+        # Select singularity from the drop down to ensure consistency
+        await pilot.click("#container_system")
+        await pilot.press(*list("singularity"))
+        await pilot.press("enter")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 

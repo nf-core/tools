@@ -162,7 +162,9 @@ class FinalInfraDetails(Screen):
             # If not available natively, check if module exists
             if module_system_used:
                 try:
-                    output = subprocess.check_output(["module", "avail", "|", "grep", system], stderr=subprocess.STDOUT).decode("utf-8")
+                    output = subprocess.check_output(
+                        ["module", "avail", "|", "grep", system], stderr=subprocess.STDOUT
+                    ).decode("utf-8")
                     if output:
                         return system
                 except subprocess.CalledProcessError:

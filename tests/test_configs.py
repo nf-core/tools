@@ -132,3 +132,44 @@ process {
     }
 }
 """
+
+INFRA_NFCORE_SINGULARITY_LOCAL_CONFIG = """\
+params {
+    config_profile_contact = 'my name (@myhandle)'
+    config_profile_description = 'A cool description'
+    config_profile_url = 'https://example.com'
+    igenomes_base = '/data/igenomes/cache'
+}
+executor {
+}
+process {
+    resourceLimits = [cpus: 8, memory: '32.0GB', time: '19.5h']
+    scratch = '/tmp/scratch'
+    maxRetries = 2
+}
+singularity {
+    enabled = true
+    cacheDir = '/singularity/cachedir'
+    autoMounts = true
+}
+cleanup = true
+"""
+
+INFRA_CUSTOM_SINGULARITY_LOCAL_CONFIG = """\
+params {
+    config_profile_description = 'A cool description'
+}
+executor {
+}
+process {
+    resourceLimits = [cpus: 8, memory: '32.0GB', time: '19.5h']
+    scratch = '/tmp/scratch'
+    maxRetries = 2
+}
+singularity {
+    enabled = true
+    cacheDir = '/singularity/cachedir'
+    autoMounts = true
+}
+cleanup = true
+"""

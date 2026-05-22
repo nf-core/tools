@@ -45,6 +45,7 @@ request the queue status from the scheduler. This is optional, and will
 default to 1 minute if not provided.
 """
 
+
 class HpcCustomisation(Screen):
     """Customise the options to create a config for an HPC."""
 
@@ -68,7 +69,7 @@ class HpcCustomisation(Screen):
             prompt="Select your HPC's scheduler.",
             value=scheduler if scheduler is not None else "local",
             classes="column",
-            id="scheduler"
+            id="scheduler",
         )
         yield Markdown(markdown_queue)
         yield TextInput(
