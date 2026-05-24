@@ -14,128 +14,95 @@ log = logging.getLogger(__name__)
 
 def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_conda=False, skip_singularity=False):
     meta_path = Path(module.component_dir, "meta.yml")
-    containers = module.container
-    lock_keys = ("lock file", "lock_file", "lockFile", "lockfile")
+    meta_yml = read_meta_yml(meta_path)
+    assert "containers" in meta_yml
+
+    containers_raw = meta_yml["containers"]
+
     # Protocol and hash checks for docker/singularity
-    skip_system = {"docker": skip_docker, "singularity": skip_singularity}
-    for system in CONTAINER_SYSTEMS:
-        if skip_system.get(system, False):
+    skip_system = {"docker": skip_docker, "singularity": skip_singularity, "conda": skip_conda}
+
+    # Maps system name to per-platform container model.
+    # Instantiate individual models separately for per-system
+    # error handling and skipping
+    container_models = {
+        "docker": MetaYmlContainers.DockerContainer,
+        "singularity": MetaYmlContainers.SingularityContainer,
+        "conda": MetaYmlContainers.CondaEnvironment,
+    }
+
+    # Collect the instantiated pydantic submodels of MetaYmlContainers manually
+    containers = MetaYmlContainers()
+    assert all(hasattr(containers, system_key) for system_key in (*skip_system.keys(), *container_models.keys()))
+
+    for system_key in CONTAINER_SYSTEMS:
+        if skip_system[system_key]:
             continue
-        # Check that the containers section contains entries for expected platforms
-        sys_containers = containers.get(system, {})
-        if not isinstance(sys_containers, dict):
-            module.warned.append(
-                ("meta_yml", "containers_section", f"Containers section missing '{system}' entries", meta_path)
-            )
+
+        try:
+            model = container_models[system_key]
+            assert hasattr(model, "model_validate")
+            system = model.model_validate(containers_raw.get(system_key, {}))
+            setattr(containers, system_key, system)
+        except ValidationError as e:
+            # TODO / NOTE: These warnings are already be caught by schema validation
+            # TODO / NOTE: This also replaces individual checks for existance of container definitions
+            #  for all platform in CONTAINER_SYSTEMS
+            error_msg = ", ".join([f"{str(err['loc'])}: {err['msg']}" for err in e.errors()])
+            module.warned.append(("meta_yml", f"containers_section_{system_key}", error_msg, meta_path))
             continue
-        platforms = [k for k in sys_containers if isinstance(sys_containers[k], dict) and k in CONTAINER_PLATFORMS]
-        if not platforms:
-            module.warned.append(
-                (
-                    "meta_yml",
-                    "containers_section",
-                    f"No {system} container entries found for expected platforms",
-                    meta_path,
-                )
-            )
+
+        if system_key == "conda":
             continue
-        for platform in platforms:
-            # Check that each entry has specific fields and that it is not empty
-            entry = sys_containers.get(platform, {})
-            if not isinstance(entry, dict):
-                entry = {}
-            name = entry.get("name") or entry.get("image") or entry.get("container") or ""
-            if not name:
+
+        for platform in system:
+            # check build_id hash matches hash in container tag
+            build_id_clean = system[platform].build_id.lstrip("bd-")
+
+            if not build_id_clean:
                 module.warned.append(
-                    ("meta_yml", "containers_name", f"Missing {system} container name for {platform}", meta_path)
+                    (
+                        "meta_yml",
+                        "containers_build_id_hash",
+                        f"No build_id found for {system_key} {platform}",
+                        meta_path,
+                    )
                 )
                 continue
-            scheme = name.split("://", 1)[0].lower() if "://" in name else ""
-            if system == "singularity":
-                if scheme != "oras":
-                    module.warned.append(
-                        (
-                            "meta_yml",
-                            "containers_protocol",
-                            f"Singularity container for {platform} should use 'oras://' protocol",
-                            meta_path,
-                        )
-                    )
-                else:
-                    module.passed.append(
-                        (
-                            "meta_yml",
-                            "containers_protocol",
-                            f"Singularity container uses `oras` for {platform}",
-                            meta_path,
-                        )
-                    )
-            else:
-                if scheme and scheme not in ("http", "https"):
-                    module.warned.append(
-                        (
-                            "meta_yml",
-                            "containers_protocol",
-                            f"Docker container for {platform} should use http(s) or no protocol",
-                            meta_path,
-                        )
-                    )
-                else:
-                    module.passed.append(
-                        (
-                            "meta_yml",
-                            "containers_protocol",
-                            f"Docker container uses `http/https` for {platform}",
-                            meta_path,
-                        )
-                    )
-            # check buildId hash matches hash in container tag
-            build_id = entry.get("buildId") or entry.get("buildid") or entry.get("build_id") or ""
-            if build_id:
-                build_id_clean = build_id[3:] if build_id.startswith("bd-") else build_id
-                parts = build_id_clean.split("_")
-                build_hash = parts[0] if parts else ""
 
-                name_no_scheme = name.split("://", 1)[1] if "://" in name else name
-                if "@" in name_no_scheme:
-                    name_no_scheme = name_no_scheme.split("@", 1)[0]
-                if ":" not in name_no_scheme:
-                    name_hash = ""
+            parts = build_id_clean.split("_")
+            build_hash = parts[0] if parts else ""
+
+            name_clean = system.name
+            if "://" in name_clean:
+                name_clean = system.name.split("://", 1)[1]
+            if "@" in name_clean:
+                name_clean = name_clean.split("@", 1)[0]
+            if ":" not in name_clean:
+                name_hash = ""
+            else:
+                tag = name_clean.rsplit(":", 1)[1]
+                if "--" in tag:
+                    name_hash = tag.rsplit("--", 1)[1]
                 else:
-                    tag = name_no_scheme.rsplit(":", 1)[1]
-                    if "--" in tag:
-                        name_hash = tag.rsplit("--", 1)[1]
-                    else:
-                        tag_lower = tag.lower()
-                        if len(tag_lower) >= 8 and all(c in "0123456789abcdef" for c in tag_lower):
-                            name_hash = tag
-                        else:
-                            name_hash = ""
-                if build_hash and name_hash:
-                    if build_hash != name_hash:
-                        module.failed.append(
-                            (
-                                "meta_yml",
-                                "containers_build_id_hash",
-                                f"Build ID hash does not match {system} container tag for {platform}",
-                                meta_path,
-                            )
-                        )
-                    else:
-                        module.passed.append(
-                            (
-                                "meta_yml",
-                                "containers_build_id_hash",
-                                f"Build ID hash matches {system} container tag for {platform}",
-                                meta_path,
-                            )
-                        )
-                else:
-                    module.warned.append(
+                    tag_lower = tag.lower()
+                    name_hash = tag if len(tag_lower) >= 8 and all(c in "0123456789abcdef" for c in tag_lower) else ""
+            if build_hash and name_hash:
+                if build_hash != name_hash:
+                    module.failed.append(
                         (
                             "meta_yml",
                             "containers_build_id_hash",
-                            f"Could not compare build ID hash with {system} container tag for {platform}",
+                            f"Build ID hash does not match {system} container tag for {platform}",
+                            meta_path,
+                        )
+                    )
+                else:
+                    module.passed.append(
+                        (
+                            "meta_yml",
+                            "containers_build_id_hash",
+                            f"Build ID hash matches {system} container tag for {platform}",
                             meta_path,
                         )
                     )
@@ -144,26 +111,16 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     (
                         "meta_yml",
                         "containers_build_id_hash",
-                        f"No buildId found for {system} {platform}",
+                        f"Could not compare build ID hash with {system} container tag for {platform}",
                         meta_path,
                     )
                 )
 
     # Check docker container images exist for all platforms (unless skipped)
-    docker_containers = containers.get("docker", {})
-    if not isinstance(docker_containers, dict):
-        docker_containers = {}
     if not skip_docker:
         for platform in CONTAINER_PLATFORMS:
-            docker_entry: dict = next(
-                (
-                    docker_containers[k]
-                    for k in docker_containers
-                    if platform == k and isinstance(docker_containers[k], dict)
-                ),
-                {},
-            )
-            docker_name = docker_entry.get("name") or docker_entry.get("image") or docker_entry.get("container") or ""
+            assert containers.docker is not None
+            docker_name = containers.docker[platform].name
             if not docker_name:
                 module.warned.append(
                     (
@@ -221,31 +178,16 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
 
     # Conda lock files and hash checks
-    conda_containers = containers.get("conda", {})
     if skip_conda:
         pass
-    elif isinstance(conda_containers, dict) and conda_containers:
-        conda_platforms = [
-            k for k in conda_containers if isinstance(conda_containers[k], dict) and k in CONTAINER_PLATFORMS
-        ]
-        if not conda_platforms:
-            module.warned.append(
-                (
-                    "meta_yml",
-                    "containers_conda_lock_exists",
-                    "No conda entries found for expected platforms",
-                    meta_path,
-                )
-            )
-        for platform in conda_platforms:
-            entry = conda_containers.get(platform, {})
-            if not isinstance(entry, dict):
-                entry = {}
-            lock_file: str | None = None
-            for key in lock_keys:
-                if entry.get(key):
-                    lock_file = entry.get(key)
-                    break
+    elif not containers.conda:
+        # TODO / NOTE: This will never happen
+        module.warned.append(
+            ("meta_yml", "containers_conda_lock_exists", "Conda containers section missing or empty", meta_path)
+        )
+    else:
+        for platform in containers.conda:
+            lock_file = containers.conda[platform].lock_file
             if not lock_file:
                 module.warned.append(
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
@@ -272,56 +214,11 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                         meta_path,
                     )
                 )
+
         for plat in CONTAINER_PLATFORMS:
-            docker_plat: dict = (
-                next(
-                    (
-                        docker_containers[k]
-                        for k in docker_containers
-                        if plat == k and isinstance(docker_containers[k], dict)
-                    ),
-                    {},
-                )
-                if isinstance(docker_containers, dict)
-                else {}
-            )
-            docker_build_id = (
-                docker_plat.get("buildId") or docker_plat.get("build_id") or docker_plat.get("buildid") or ""
-            )
-            conda_plat: dict = next(
-                (conda_containers[k] for k in conda_containers if plat == k and isinstance(conda_containers[k], dict)),
-                {},
-            )
-            conda_lock: str | None = None
-            for key in lock_keys:
-                if conda_plat.get(key):
-                    conda_lock = conda_plat.get(key)
-                    break
-            if docker_build_id and conda_lock:
-                docker_build_id_clean = docker_build_id[3:] if docker_build_id.startswith("bd-") else docker_build_id
-                parts = docker_build_id_clean.split("_")
-                if len(parts) >= 3 and parts[-1].isdigit() and parts[-2].isdigit():
-                    parts = parts[:-2]
-                docker_hash = "_".join([p for p in parts if p])
-                if docker_hash and docker_hash in conda_lock:
-                    module.passed.append(
-                        (
-                            "meta_yml",
-                            "containers_conda_lock_hash",
-                            f"Conda lock_file matches docker {plat} buildId hash",
-                            meta_path,
-                        )
-                    )
-                else:
-                    module.failed.append(
-                        (
-                            "meta_yml",
-                            "containers_conda_lock_hash",
-                            f"Conda lock_file does not match docker {plat} buildId hash",
-                            meta_path,
-                        )
-                    )
-            elif docker_build_id:
+            conda_lock = containers.conda[plat].lock_file
+
+            if not (containers.docker and containers.docker[plat].build_id and conda_lock):
                 module.warned.append(
                     (
                         "meta_yml",
@@ -330,11 +227,31 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                         meta_path,
                     )
                 )
-    else:
-        module.warned.append(
-            ("meta_yml", "containers_conda_lock_exists", "Conda containers section missing or empty", meta_path)
-        )
+                break
 
+            docker_build_id_clean = containers.docker[plat].build_id.lstrip("bd-")
+            parts = docker_build_id_clean.split("_")
+            if len(parts) >= 3 and parts[-1].isdigit() and parts[-2].isdigit():
+                parts = parts[:-2]
+            docker_hash = "_".join([p for p in parts if p])
+            if docker_hash and docker_hash in conda_lock:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        "containers_conda_lock_hash",
+                        f"Conda lock_file matches docker {plat} buildId hash",
+                        meta_path,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "meta_yml",
+                        "containers_conda_lock_hash",
+                        f"Conda lock_file does not match docker {plat} buildId hash",
+                        meta_path,
+                    )
+                )
     return
 
 
@@ -359,13 +276,12 @@ def lint_main_nf_container(
     try:
         docker_container_raw = meta_yml.get("containers", {}).get("linux/amd64", {})
         docker_container = MetaYmlContainers.DockerContainer.model_validate(docker_container_raw)
-        meta_yml_docker_img = docker_container.name
-    except (ValidationError, AttributeError) as e:
+    except ValidationError as e:
         log.debug(f"Docker linux/amd64 image could not be read from {meta_path.absolute()}")
         log.debug(e)
         return
 
-    if meta_yml_docker_img != module.container_from_main_nf:
+    if docker_container.name != module.container_from_main_nf:
         module.warned.append(
             (
                 "main_nf",
