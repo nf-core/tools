@@ -61,7 +61,7 @@ class NFCoreComponent:
         self.is_patched: bool = False
         self.branch: str | None = None
         self.workflow_name: str | None = None
-        self.container: dict = {}
+        self.container: dict = {}  # TODO: Why is this never set?
         self.container_from_main_nf: str | None = None
 
         if remote_component:
