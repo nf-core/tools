@@ -1,11 +1,12 @@
 import logging
 import time
 from pathlib import Path
-from typing import Generic, TypeVar
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, field_validator
+
+from nf_core.utils import CONTAINER_PLATFORMS
 
 from nf_core.utils import NFCORE_CACHE_DIR
 
@@ -23,14 +24,7 @@ class ModuleExceptionError(Exception):
     pass
 
 
-T = TypeVar("T")
-
-
 class MetaYmlContainers(BaseModel):
-    class Platforms(BaseModel, Generic[T]):
-        linux_amd64: T = Field(alias="linux/amd64")
-        linux_arm64: T = Field(alias="linux/arm64")
-
     class DockerContainer(BaseModel):
         name: str
         build_id: str
@@ -44,9 +38,25 @@ class MetaYmlContainers(BaseModel):
     class CondaEnvironment(BaseModel):
         lock_file: str
 
-    docker: Platforms["MetaYmlContainers.DockerContainer"]
-    singularity: Platforms["MetaYmlContainers.SingularityContainer"]
-    conda: Platforms["MetaYmlContainers.CondaEnvironment"]
+    docker: dict[str, "MetaYmlContainers.DockerContainer"] | None = None
+    singularity: dict[str, "MetaYmlContainers.SingularityContainer"] | None = None
+    conda: dict[str, "MetaYmlContainers.CondaEnvironment"] | None = None
+
+    @classmethod
+    @field_validator("docker", "singularity", "conda", mode="after")
+    def check_keys_against_container_platforms(cls, value: dict | None):
+        if value is None:
+            return value
+
+        # Check if all used keys are valid platforms
+        for plf_key in value:
+            if plf_key not in CONTAINER_PLATFORMS:
+                raise ValueError(f"Invalid platform key: {value}")
+
+        # Check if all platforms are specified
+        for plf in CONTAINER_PLATFORMS:
+            if plf not in value:
+                raise ValueError(f"Missing platform: {plf}")
 
 
 def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
