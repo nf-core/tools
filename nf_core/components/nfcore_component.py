@@ -395,7 +395,7 @@ class NFCoreComponent:
             if not self.container_from_main_nf:
                 log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
 
-    def _get_container_with_inspect(self):
+    def _get_container_with_inspect(self) -> str:
         from nf_core.modules.modules_utils import get_container_with_regex
 
         with set_wd_tempdir():
@@ -410,13 +410,14 @@ class NFCoreComponent:
                 return get_container_with_regex(self.main_nf, self.component_name)
 
             out, _ = cmd_out
+            out_str = out.decode()
             out_json = json.loads(out)
             container = out_json.get("processes", [{}])[0].get("container", None)
             if container is None:
                 log.debug(
                     f"Container for {self.component_name} could not be extracted from the output of nextflow inspect"
                 )
-                log.debug(f"Output of nextflow inspect: {out}")
+                log.debug(f"Output of nextflow inspect: {out_str}")
                 log.debug("Falling back to regex method.")
                 return get_container_with_regex(self.main_nf, self.component_name)
 
