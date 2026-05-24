@@ -1454,14 +1454,6 @@ def modules_containers(ctx):
 # nf-core modules containers create
 @modules_containers.command("create", aliases=["c"])
 @click.pass_context
-@click.option(
-    "-await",
-    "--await",
-    "await_build",
-    is_flag=True,
-    default=True,
-    help="Wait for the container build to finish.",
-)
 @click.argument(
     "module",
     type=str,
@@ -1486,11 +1478,11 @@ def modules_containers(ctx):
     default=False,
     help="Force container creation even if the container already exists.",
 )
-def command_modules_containers_create(ctx, await_build: bool, module: str, directory: Path, force: bool) -> None:
+def command_modules_containers_create(ctx, module: str, directory: Path, force: bool) -> None:
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
-    modules_containers_create(ctx, module, directory, await_build, force)
+    modules_containers_create(ctx, module, directory, force)
 
 
 @modules_containers.command("conda-lock")

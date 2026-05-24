@@ -152,7 +152,7 @@ class TestModuleContainers:
         mock_request_image_inspect.side_effect = fake_request_image_inspect
 
         manager = ModuleContainers("testC", directory=repo_root)
-        containers, success = manager.create(await_build=True)
+        containers, success = manager.create()
         assert manager.containers == containers
         assert success
 
@@ -188,7 +188,7 @@ class TestModuleContainers:
         meta = {"targetImage": "testC:latest", "buildId": "build-1", "scanId": "scan-1", "succeeded": True}
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
 
-        container = ModuleContainers.request_container("docker", platform, conda_file, await_build=True)
+        container = ModuleContainers.request_container("docker", platform, conda_file)
         assert container[ModuleContainers.IMAGE_KEY] == "testC:latest"
         assert container[ModuleContainers.BUILD_ID_KEY] == "build-1"
         assert container[ModuleContainers.SCAN_ID_KEY] == "scan-1"
@@ -220,26 +220,11 @@ class TestModuleContainers:
             }
         }
 
-        container = ModuleContainers.request_container("singularity", platform, conda_file, await_build=True)
+        container = ModuleContainers.request_container("singularity", platform, conda_file)
         assert container[ModuleContainers.IMAGE_KEY] == "testC:sif"
         expected_url = "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ab/abcde12345/data"
         assert container[ModuleContainers.HTTPS_URL_KEY] == expected_url
         mock_request_image_inspect.assert_called_once_with("testC:sif")
-
-    @mock.patch.object(ModuleContainers, "request_image_inspect")
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_container_singularity_no_await_does_not_inspect(
-        self, mock_run_cmd, mock_request_image_inspect, tmp_path: Path
-    ):
-        module_dir = self._make_module(tmp_path)
-        conda_file = module_dir / "environment.yml"
-        platform = CONTAINER_PLATFORMS[0]
-        meta = {"containerImage": "testC:sif", "buildId": "build-3", "succeeded": True}
-        mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
-
-        container = ModuleContainers.request_container("singularity", platform, conda_file, await_build=False)
-        assert "https" not in container
-        mock_request_image_inspect.assert_not_called()
 
     @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
     def test_request_container_missing_output_raises(self, mock_run_cmd, tmp_path: Path):

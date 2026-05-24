@@ -237,7 +237,6 @@ class ModuleContainers:
 
     def create(
         self,
-        await_build: bool = False,
         progress_bar: rich.progress.Progress | None = None,
         task_id: rich.progress.TaskID | None = None,
         force: bool = False,
@@ -246,7 +245,6 @@ class ModuleContainers:
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
 
         Args:
-            await_build: Whether to wait for container builds to complete
             progress_bar: Optional progress bar to use for tracking progress
             task_id: Optional task ID for this module in the progress bar
 
@@ -292,7 +290,6 @@ class ModuleContainers:
                         cs,
                         platform,
                         self.environment_yml,
-                        await_build,
                         self.verbose,
                         make_on_build_id(cs, platform) if progress_bar else None,
                     )
@@ -414,7 +411,6 @@ class ModuleContainers:
         container_system: str,
         platform: str,
         conda_file: Path,
-        await_build=False,
         verbose=False,
         on_build_id: Callable[[str], None] | None = None,
     ) -> dict:
@@ -440,8 +436,7 @@ class ModuleContainers:
         ]
         if container_system == "singularity":
             args.append("--singularity")
-        if await_build:
-            args.append("--await")
+        args.append("--await")
 
         if on_build_id is not None:
             # Stream stdout line-by-line so we can fire on_build_id as soon as
@@ -519,14 +514,7 @@ class ModuleContainers:
             if scan_id:
                 container[cls.SCAN_ID_KEY] = scan_id
 
-        build_is_done = await_build or meta_data.get("cached", False) or meta_data.get("status") == "DONE"
-
-        if container_system == "singularity" and not build_is_done:
-            log.warning(
-                "Cannot retrieve https-url by inspecting the image, when the image build is not awaited. Rerun the command with `--await`"
-            )
-
-        elif container_system == "singularity":
+        if container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
             container_layers = inspect_out.get("container", {}).get("manifest", {}).get("layers", {})
 
