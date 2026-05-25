@@ -7,7 +7,7 @@ from pydantic_core import ValidationError
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_utils import MetaYmlContainers
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
+from nf_core.utils import CONTAINER_PLATFORMS
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
     containers = MetaYmlContainers()
     assert all(hasattr(containers, system_key) for system_key in (*skip_system.keys(), *container_models.keys()))
 
-    for system_key in CONTAINER_SYSTEMS:
+    for system_key in container_models:
         if skip_system[system_key]:
             continue
 
