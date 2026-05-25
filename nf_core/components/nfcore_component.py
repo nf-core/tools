@@ -383,17 +383,24 @@ class NFCoreComponent:
             log.debug(f"Topics: {topics}")
             self.topics = topics
 
-    def get_container_from_main_nf(self) -> None:
-        if self.component_type == "modules":
-            if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
-                self.container_from_main_nf = self._get_container_with_inspect()
-            else:
-                from nf_core.modules.modules_utils import get_container_with_regex
+    def get_container_from_main_nf(self) -> str | None:
+        if self.component_type != "modules":
+            return None
 
-                self.container_from_main_nf = get_container_with_regex(self.main_nf, self.component_name)
+        if self.container_from_main_nf is not None:
+            return self.container_from_main_nf
 
-            if not self.container_from_main_nf:
-                log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
+        if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
+            self.container_from_main_nf = self._get_container_with_inspect()
+        else:
+            from nf_core.modules.modules_utils import get_container_with_regex
+
+            self.container_from_main_nf = get_container_with_regex(self.main_nf, self.component_name)
+
+        if not self.container_from_main_nf:
+            log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
+
+        return self.container_from_main_nf
 
     def _get_container_with_inspect(self) -> str:
         from nf_core.modules.modules_utils import get_container_with_regex
