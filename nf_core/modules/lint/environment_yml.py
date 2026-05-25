@@ -7,8 +7,9 @@ from jsonschema import exceptions, validators
 from rich.progress import Progress
 
 import nf_core.utils
-from nf_core.components.lint import ComponentLint, LintExceptionError
+from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.modules_utils import module_uses_dockerfile
 
 log = logging.getLogger(__name__)
 
@@ -33,8 +34,12 @@ def environment_yml(
 
     The following checks are performed:
 
-    * ``environment_yml_exists``: The ``environment.yml`` file must exist if it is
-      referenced in ``main.nf``.
+    * ``environment_yml_exists``: The ``environment.yml`` file must exist, unless the
+      module has a Dockerfile. If neither ``environment.yml`` nor a Dockerfile is
+      present, the test fails.
+
+    * ``environment_yml_dockerfile_conflict``: A module must not have both an
+      ``environment.yml`` and a Dockerfile; Remove the Dockerfile if present.
 
     * ``environment_yml_valid``: The ``environment.yml`` must be valid according to
       the JSON schema defined at https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json.
@@ -62,6 +67,16 @@ def environment_yml(
 
     #  load the environment.yml file
     if module.environment_yml is None:
+        if module_uses_dockerfile(module):
+            module.passed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_exists",
+                    "Module's `environment.yml` does not exist, but module has a Dockerfile",
+                    Path(module.component_dir, "environment.yml"),
+                )
+            )
+            return
         if allow_missing:
             module.warned.append(
                 (
@@ -72,7 +87,15 @@ def environment_yml(
                 ),
             )
             return
-        raise LintExceptionError("Module does not have an `environment.yml` file")
+        module.failed.append(
+            (
+                "environment_yml",
+                "environment_yml_exists",
+                "Module's `environment.yml` does not exist and module has no Dockerfile",
+                Path(module.component_dir, "environment.yml"),
+            )
+        )
+        return
     try:
         # Read the entire file content to handle headers properly
         with open(module.environment_yml) as fh:
@@ -100,6 +123,26 @@ def environment_yml(
                 module.environment_yml,
             )
         )
+
+        component_dir = Path(module.component_dir)
+        if (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists():
+            module.failed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_dockerfile_conflict",
+                    "Module has both an `environment.yml` and a Dockerfile; only one should be present",
+                    module.environment_yml,
+                )
+            )
+        else:
+            module.passed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_dockerfile_conflict",
+                    "Module does not have conflicting `environment.yml` and Dockerfile",
+                    module.environment_yml,
+                )
+            )
 
     except FileNotFoundError:
         # check if the module's main.nf requires a conda environment
