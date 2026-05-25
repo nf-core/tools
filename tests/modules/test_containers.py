@@ -17,6 +17,7 @@ class TestModuleContainers(TestModules):
     def setUp(self):
         super().setUp()
         self.environment_yml = self.bpipe_test_module_path / "environment.yml"
+        self.module_containers = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
 
     def _write_meta(self, meta: dict) -> None:
         (self.bpipe_test_module_path / "meta.yml").write_text(yaml.safe_dump(meta), encoding="utf-8")
@@ -39,11 +40,10 @@ class TestModuleContainers(TestModules):
 
     def test_init_sets_paths(self):
         """Test that ModuleContainers initializes paths correctly"""
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
-        assert manager.directory == Path(self.nfcore_modules)
-        assert manager.module_directory == self.bpipe_test_module_path
-        assert manager.environment_yml == self.bpipe_test_module_path / "environment.yml"
-        assert manager.meta_yml == self.bpipe_test_module_path / "meta.yml"
+        assert self.module_containers.directory == Path(self.nfcore_modules)
+        assert self.module_containers.module_directory == self.bpipe_test_module_path
+        assert self.module_containers.environment_yml == self.bpipe_test_module_path / "environment.yml"
+        assert self.module_containers.meta_yml == self.bpipe_test_module_path / "meta.yml"
 
     @mock.patch("nf_core.modules.containers.requests.get")
     @mock.patch.object(ModuleContainers, "request_image_inspect")
@@ -90,9 +90,8 @@ class TestModuleContainers(TestModules):
         mock_run_cmd.side_effect = fake_run_cmd
         mock_request_image_inspect.side_effect = fake_request_image_inspect
 
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
-        containers, success = manager.create()
-        assert manager.containers == containers
+        containers, success = self.module_containers.create()
+        assert self.module_containers.containers == containers
         assert success
 
         for system in CONTAINER_SYSTEMS:
@@ -114,9 +113,7 @@ class TestModuleContainers(TestModules):
     @mock.patch.object(ModuleContainers, "request_container")
     def test_create_skips_conda_lock_when_build_id_missing(self, mock_request_container):
         mock_request_container.return_value = {ModuleContainers.IMAGE_KEY: "bpipe_test-img"}
-
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
-        containers = manager.create()
+        containers = self.module_containers.create()
         assert "conda" not in containers
 
     @mock.patch("nf_core.modules.containers.run_cmd")
@@ -199,23 +196,21 @@ class TestModuleContainers(TestModules):
         mock_response.text = "# conda lock file content"
         mock_requests_get.return_value = mock_response
 
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
         platform = CONTAINER_PLATFORMS[0]
-        manager.containers = {
+        self.module_containers.containers = {
             "docker": {platform: {ModuleContainers.BUILD_ID_KEY: "test-build-123"}},
             "conda": {platform: {"lock_file": "/some/path.txt"}},
         }
 
-        result = manager.get_conda_lock_file(platform)
+        result = self.module_containers.get_conda_lock_file(platform)
         assert result == "# conda lock file content"
         expected_url = "https://wave.seqera.io/v1alpha1/builds/test-build-123/condalock"
         mock_requests_get.assert_called_once_with(expected_url)
 
     def test_list_containers(self):
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
         containers = self._containers_by_system("testC")
-        with mock.patch.object(manager, "get_containers_from_meta", return_value=containers):
-            listed = manager.list_containers()
+        with mock.patch.object(self.module_containers, "get_containers_from_meta", return_value=containers):
+            listed = self.module_containers.list_containers()
         expected = []
         for cs in CONTAINER_SYSTEMS:
             for p in CONTAINER_PLATFORMS:
@@ -226,17 +221,15 @@ class TestModuleContainers(TestModules):
 
     def test_get_containers_from_meta_missing_section(self):
         self._write_meta({"name": "bpipe/test"})
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
-        result = manager.get_containers_from_meta()
+        result = self.module_containers.get_containers_from_meta()
         assert result == {}
         assert "Section 'containers' missing from meta.yaml" in self.caplog.text
 
     def test_get_containers_from_meta_missing_system(self):
         self._write_meta({"name": "bpipe/test", "containers": {"singularity": {"ok": True}}})
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
-        result = manager.get_containers_from_meta()
+        result = self.module_containers.get_containers_from_meta()
         assert result == {}
         assert "Container missing for docker" in self.caplog.text
 
@@ -246,10 +239,9 @@ class TestModuleContainers(TestModules):
             "singularity": {CONTAINER_PLATFORMS[0]: {"ok": True}},
         }
         self._write_meta({"name": "bpipe/test", "containers": containers})
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
         missing_platform = CONTAINER_PLATFORMS[1]
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
-        result = manager.get_containers_from_meta()
+        result = self.module_containers.get_containers_from_meta()
         assert result == {}
         assert f"Platform build {missing_platform} missing" in self.caplog.text
 
@@ -259,17 +251,15 @@ class TestModuleContainers(TestModules):
             "singularity": {platform: {"ok": True} for platform in CONTAINER_PLATFORMS},
         }
         self._write_meta({"name": "bpipe/test", "containers": containers})
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
-        assert manager.get_containers_from_meta() == containers
+        assert self.module_containers.get_containers_from_meta() == containers
 
     def test_update_containers_in_meta_merges(self):
         self._write_meta({"name": "bpipe/test", "containers": {"docker": {"linux/amd64": {"name": "old"}}}})
-        manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
         containers = self._containers_by_system("new")
-        manager.containers = containers
+        self.module_containers.containers = containers
 
-        with mock.patch.object(manager, "create") as mock_create:
-            manager.update_containers_in_meta()
+        with mock.patch.object(self.module_containers, "create") as mock_create:
+            self.module_containers.update_containers_in_meta()
             mock_create.assert_not_called()
 
         meta = yaml.safe_load((self.bpipe_test_module_path / "meta.yml").read_text(encoding="utf-8"))
