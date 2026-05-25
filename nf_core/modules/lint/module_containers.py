@@ -35,25 +35,58 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
         if skip_system[system_key]:
             continue
 
-        try:
-            model = container_models[system_key]
-            assert hasattr(model, "model_validate")
-            system = model.model_validate(containers_raw.get(system_key, {}))
-            setattr(containers, system_key, system)
-        except ValidationError as e:
-            # TODO / NOTE: These warnings are already be caught by schema validation
-            # TODO / NOTE: This also replaces individual checks for existance of container definitions
-            #  for all platform in CONTAINER_SYSTEMS
-            error_msg = ", ".join([f"{str(err['loc'])}: {err['msg']}" for err in e.errors()])
-            module.warned.append(("meta_yml", f"containers_section_{system_key}", error_msg, meta_path))
-            continue
+        for platform in CONTAINER_PLATFORMS:
+            if platform not in containers_raw.get(system_key, {}):
+                module.failed.append(
+                    (
+                        "meta_yml",
+                        f"container_section_{system_key}",
+                        f"No entries found for expected platform: {platform}",
+                        meta_path,
+                    )
+                )
+                continue
+            else:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        f"container_section_{system_key}",
+                        f"Subsection for platform {platform} exists",
+                        meta_path,
+                    )
+                )
 
-        if system_key == "conda":
-            continue
+            try:
+                model = container_models[system_key]
+                assert hasattr(model, "model_validate")
+                system = model.model_validate(containers_raw[system_key][platform])
+                _systems = getattr(containers, system_key) or {}
+                _systems[platform] = system
+                setattr(containers, system_key, _systems)
 
-        for platform in system:
+            except ValidationError as e:
+                # TODO / NOTE: These warnings are already be caught by schema validation
+                # TODO / NOTE: This also replaces individual checks for existance of container definitions
+                #  for all platform in CONTAINER_SYSTEMS
+                error_msg = f"{platform} subsection has errors. "
+                error_msg += ", ".join([f"{str(err['loc'])}: {err['msg']}" for err in e.errors()])
+                module.failed.append(("meta_yml", f"containers_section_{system_key}", error_msg, meta_path))
+                continue
+            else:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        f"containers_section_{system_key}",
+                        f"{platform} subsection parsed correctly",
+                        meta_path,
+                    )
+                )
+
+            if system_key == "conda":
+                continue
+
             # check build_id hash matches hash in container tag
-            build_id_clean = system[platform].build_id.lstrip("bd-")
+            build_id_clean = system.build_id.lstrip("bd-")
 
             if not build_id_clean:
                 module.warned.append(
@@ -129,11 +162,15 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 )
 
     # Check docker container images exist for all platforms (unless skipped)
-    if not skip_docker:
-        for platform in CONTAINER_PLATFORMS:
-            _entry = docker_containers.get(platform)
-            docker_entry: dict = _entry if isinstance(_entry, dict) else {}
-            docker_name = docker_entry.get("name") or docker_entry.get("image") or docker_entry.get("container") or ""
+    if skip_docker:
+        pass
+    elif not containers.docker:
+        module.warned.append(
+            ("meta_yml", "containers_docker_exist", "Docker containers section missing or empty", meta_path)
+        )
+    else:
+        for platform in containers.docker:
+            docker_name = containers.docker[platform].name
             if not docker_name:
                 module.warned.append(
                     (
@@ -193,24 +230,13 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
     # Conda lock files and hash checks
     if skip_conda:
         pass
-    elif isinstance(conda_containers, dict) and conda_containers:
-        conda_platforms = [
-            k for k in conda_containers if isinstance(conda_containers[k], dict) and k in CONTAINER_PLATFORMS
-        ]
-        if not conda_platforms:
-            module.warned.append(
-                (
-                    "meta_yml",
-                    "containers_conda_lock_exists",
-                    "No conda entries found for expected platforms",
-                    meta_path,
-                )
-            )
-        for platform in conda_platforms:
-            entry = conda_containers.get(platform, {})
-            if not isinstance(entry, dict):
-                entry = {}
-            lock_file = entry.get("lock_file", "")
+    elif not containers.conda:
+        module.warned.append(
+            ("meta_yml", "containers_conda_lock_exists", "Conda containers section missing or empty", meta_path)
+        )
+    else:
+        for platform in containers.conda:
+            lock_file = containers.conda[platform].lock_file
             if not lock_file:
                 module.warned.append(
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
