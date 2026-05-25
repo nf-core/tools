@@ -309,3 +309,32 @@ class TestModuleContainersPipeline(TestModules):
 
         meta = yaml.safe_load((module_dir / "meta.yml").read_text(encoding="utf-8"))
         assert meta["containers"] == containers
+
+
+class TestModuleContainersDockerfile(TestModuleContainersPipeline):
+    """Tests for ModuleContainers behaviour when a module uses a Dockerfile instead of environment.yml"""
+
+    def setUp(self):
+        super().setUp()
+        module_dir = self.pipeline_dir / "modules" / "local" / "dockermod"
+        module_dir.mkdir(parents=True, exist_ok=True)
+        (module_dir / "Dockerfile").write_text("FROM ubuntu:22.04\n", encoding="utf-8")
+        (module_dir / "meta.yml").write_text("name: dockermod\n", encoding="utf-8")
+        (module_dir / "main.nf").write_text('container "my/image:latest"\n', encoding="utf-8")
+        self.module_dir = module_dir
+        self.module_containers = ModuleContainers("dockermod", directory=self.pipeline_dir)
+
+    def test_create_returns_empty_for_dockerfile_module(self):
+        containers, success = self.module_containers.create()
+        assert containers == {}
+        assert success
+
+    def test_update_main_nf_container_skips_dockerfile_module(self):
+        original = (self.module_dir / "main.nf").read_text()
+        self.module_containers.update_main_nf_container()
+        assert (self.module_dir / "main.nf").read_text() == original
+
+    def test_update_containers_in_meta_skips_dockerfile_module(self):
+        original_meta = (self.module_dir / "meta.yml").read_text()
+        self.module_containers.update_containers_in_meta()
+        assert (self.module_dir / "meta.yml").read_text() == original_meta

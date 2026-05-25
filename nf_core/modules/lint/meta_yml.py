@@ -328,8 +328,10 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
 
-        # Check that meta_yml specifies containers
-        if module.get_container_from_main_nf():
+        # Check that meta_yml specifies containers (skip modules that use a Dockerfile)
+        from nf_core.modules.modules_utils import module_uses_dockerfile
+
+        if module.get_container_from_main_nf() and not module_uses_dockerfile(module):
             if "containers" not in meta_yaml:
                 module.failed.append(
                     (

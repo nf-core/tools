@@ -6,13 +6,17 @@ from pydantic_core import ValidationError
 
 from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.modules_utils import MetaYmlContainers
+from nf_core.modules.modules_utils import MetaYmlContainers, module_uses_dockerfile
 from nf_core.utils import CONTAINER_PLATFORMS
 
 log = logging.getLogger(__name__)
 
 
 def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_conda=False, skip_singularity=False):
+    if module_uses_dockerfile(module):
+        log.info(f"Module '{module.component_name}' uses a Dockerfile - skipping container lint")
+        return
+
     meta_path = Path(module.component_dir, "meta.yml")
     containers = module.container
     # Protocol and hash checks for docker/singularity
@@ -335,6 +339,10 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
 def lint_main_nf_container(
     module: NFCoreComponent, fix=False, skip_docker=False, skip_conda=False, skip_singularity=False
 ):
+    if module_uses_dockerfile(module):
+        log.info(f"Module '{module.component_name}' uses a Dockerfile - skipping main.nf container lint")
+        return
+
     if skip_docker:
         log.debug("Skipping main.nf container linting")
         return

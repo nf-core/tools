@@ -16,7 +16,12 @@ from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
-from nf_core.modules.modules_utils import filter_modules_by_name, prompt_module_selection, scan_modules_dir
+from nf_core.modules.modules_utils import (
+    filter_modules_by_name,
+    module_uses_dockerfile,
+    prompt_module_selection,
+    scan_modules_dir,
+)
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 
@@ -168,6 +173,12 @@ class ModuleContainers:
             component_type="modules",
         )
 
+    def _uses_dockerfile(self) -> bool:
+        """Return True if the module has a Dockerfile (in its dir or parent) but no environment.yml."""
+        if self.nfcore_component is None:
+            return False
+        return module_uses_dockerfile(self.nfcore_component)
+
     def cleanup_stale_conda_lock_files(self, new_lock_files: set[Path]) -> None:
         """
         Remove stale conda-lock files that are no longer in the new set.
@@ -204,6 +215,10 @@ class ModuleContainers:
         Don't update if the container name is already correct.
         """
         import re
+
+        if self._uses_dockerfile():
+            log.info(f"Module '{self.module}' uses a Dockerfile - skipping main.nf container update")
+            return
 
         if not self.containers or not self.nfcore_component:
             log.warning("Cannot update main.nf: containers or nfcore_component not available")
@@ -256,7 +271,11 @@ class ModuleContainers:
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
         has_failures = False
 
-        assert self.environment_yml is not None
+        if not self.environment_yml:
+            if self._uses_dockerfile():
+                log.info(f"Module '{self.module}' uses a Dockerfile - skipping Wave container build")
+                return {}, True
+            raise RuntimeError("No environment.yml found.")
         assert self.module_directory is not None
 
         # One spinner per build target — they run visually in parallel
@@ -312,7 +331,7 @@ class ModuleContainers:
                         log.warning(f"Failed to update meta.yml after {cs} {platform} build: {meta_error}")
                     if progress_bar and build_tid is not None:
                         progress_bar.update(build_tid, completed=1, status="[green]done[/green]")
-                except (ValueError, RuntimeError, OSError) as e:
+                except (ValueError, RuntimeError, OSError, AssertionError) as e:
                     # make it a warning for arm (not required), but fail for other platforms
                     if platform == "linux/arm64":
                         log.warning(
@@ -645,6 +664,10 @@ class ModuleContainers:
             module_lint: Optional ModuleLint instance to use for sorting.
                         If not provided, a new instance will be created.
         """
+        if self._uses_dockerfile():
+            log.info(f"Module '{self.module}' uses a Dockerfile - skipping meta.yml container update")
+            return
+
         if self.containers is None:
             log.debug("Containers not initialized - running `create()` ...")
             self.containers, _ = self.create()

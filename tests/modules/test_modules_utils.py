@@ -1,7 +1,8 @@
+from unittest import mock
 from unittest.mock import patch
 
 import nf_core.modules.modules_utils
-from nf_core.modules.modules_utils import scan_modules_dir
+from nf_core.modules.modules_utils import module_uses_dockerfile, scan_modules_dir
 
 from ..test_modules import TestModules
 
@@ -132,3 +133,48 @@ class TestModulesUtils(TestModules):
             import shutil
 
             shutil.rmtree(modules_dir / "samtools")
+
+
+def test_module_uses_dockerfile_true(tmp_path):
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = None
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    assert module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_false_has_env_yml(tmp_path):
+    env_yml = tmp_path / "environment.yml"
+    env_yml.write_text("name: test\n")
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = env_yml
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    assert not module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_false_no_dockerfile(tmp_path):
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = None
+    assert not module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_nonexistent_env_yml_path(tmp_path):
+    """environment_yml pointing to a non-existent file is treated as missing."""
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = tmp_path / "environment.yml"
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    assert module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_in_parent_dir(tmp_path):
+    """Dockerfile one level up (e.g. spaceranger/Dockerfile) is detected for submodules."""
+    submodule_dir = tmp_path / "count"
+    submodule_dir.mkdir()
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    comp = mock.Mock()
+    comp.component_dir = submodule_dir
+    comp.environment_yml = None
+    assert module_uses_dockerfile(comp)

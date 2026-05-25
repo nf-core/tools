@@ -59,6 +59,15 @@ class MetaYmlContainers(BaseModel):
                 raise ValueError(f"Missing platform: {plf}")
 
 
+def module_uses_dockerfile(module: NFCoreComponent) -> bool:
+    """Return True if the module has a Dockerfile (in its dir or parent) but no environment.yml."""
+    env_yml = module.environment_yml
+    if env_yml is not None and Path(env_yml).exists():
+        return False
+    component_dir = Path(module.component_dir)
+    return (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists()
+
+
 def get_container_with_regex(main_nf_path: Path, component_name: str | None = None) -> str:
     """
     Extract the container directive from a main.nf file using regex.
