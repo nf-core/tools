@@ -405,16 +405,19 @@ class NFCoreComponent:
     def _get_container_with_inspect(self) -> str:
         from nf_core.modules.modules_utils import get_container_with_regex
 
-        with set_wd_tempdir():
-            self.component_dir.absolute()
+        main_nf_abs = self.main_nf.absolute()
 
+        with set_wd_tempdir():
             executable = "nextflow"
-            cmd_params = f"inspect -format json {self.main_nf}"
-            cmd_out = run_cmd(executable, cmd_params)
+            cmd_params = f"inspect -format json {main_nf_abs}"
+            try:
+                cmd_out = run_cmd(executable, cmd_params)
+            except RuntimeError:
+                cmd_out = None
             if cmd_out is None:
                 log.debug("Failed to run `nextflow inspect`")
                 log.debug("Falling back to regex method")
-                return get_container_with_regex(self.main_nf, self.component_name)
+                return get_container_with_regex(main_nf_abs, self.component_name)
 
             out, _ = cmd_out
             out_str = out.decode()
@@ -426,6 +429,6 @@ class NFCoreComponent:
                 )
                 log.debug(f"Output of nextflow inspect: {out_str}")
                 log.debug("Falling back to regex method.")
-                return get_container_with_regex(self.main_nf, self.component_name)
+                return get_container_with_regex(main_nf_abs, self.component_name)
 
             return container
