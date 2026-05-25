@@ -949,23 +949,15 @@ def _is_empty(line):
 
 
 def _fix_module_version(self, current_version, latest_version, response):
-    """Updates the module conda version in main.nf."""
+    """Updates the module conda version in environment.yml."""
 
-    with open(self.main_nf) as source:
-        lines = source.readlines()
+    with open(self.environment_yml) as source:
+        content = source.read()
 
-    new_lines = []
-    for line in lines:
-        line_stripped = line.strip(" '\"")
-        if _container_type(line_stripped) == "conda":
-            new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
-        else:
-            new_lines.append(line)
+    new_content = content.replace(f"={current_version}", f"={latest_version}", 1)
 
-    # Replace outdated versions by the latest one
-    with open(self.main_nf, "w") as source:
-        for line in new_lines:
-            source.write(line)
+    with open(self.environment_yml, "w") as source:
+        source.write(new_content)
 
     return True
 

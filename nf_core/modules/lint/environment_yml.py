@@ -318,6 +318,17 @@ def environment_yml(
                                             module.environment_yml,
                                         )
                                     )
+                                    # If the version was updated, we should also try to rebuild the container to ensure it works with the new version
+                                    try:
+                                        from nf_core.modules.containers import ModuleContainers
+
+                                        mc = ModuleContainers(
+                                            module=module.component_name,
+                                            directory=module.base_dir,
+                                        )
+                                        mc.create(progress_bar=progress_bar)
+                                    except (ImportError, ValueError, RuntimeError, OSError) as e:
+                                        log.warning(f"Container rebuild after version update failed: {e}")
                                 else:
                                     if progress_bar is not None:
                                         progress_bar.print(
