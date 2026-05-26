@@ -205,7 +205,7 @@ class TestLintContainerConfigs(TestLint):
         content, so it works regardless of whether wf_path is absolute or relative.
         """
         import os
-        
+
         old = "process { withName: 'FASTQC' { container = 'old_image' } }\n"
         new = "process { withName: 'FASTQC' { container = 'new_image' } }\n"
         cfg_path = self._write_container_cfg("containers_docker_amd64.config", old)
@@ -220,7 +220,7 @@ class TestLintContainerConfigs(TestLint):
             side_effect=generate,
         ):
             # Save original cwd and change to parent directory
-            original_cwd = os.getcwd()
+            original_cwd = Path.cwd()
             try:
                 os.chdir(Path(self.new_pipeline).parent)
                 # Use relative path (just the basename) instead of absolute path
