@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-import git
-
 from nf_core.pipelines.containers_utils import ContainerConfigs
 
 log = logging.getLogger(__name__)
@@ -13,8 +11,8 @@ def container_configs(self):
 
     Scans all ``meta.yml`` files under ``modules/`` that contain a ``containers``
     key, reads the process name from the sibling ``main.nf``, and regenerates
-    the container configuration files in ``conf/``.  Uses ``git diff`` to detect
-    changes.  If not in ``--fix`` mode the working tree is restored to its
+    the container configuration files in ``conf/``.  Uses direct content comparison
+    to detect changes.  If not in ``--fix`` mode the working tree is restored to its
     original state afterwards.
 
     Can be skipped by adding the following to the ``.nf-core.yml`` file:
@@ -31,7 +29,11 @@ def container_configs(self):
     could_fix = False
 
     conf_dir = Path(self.wf_path) / "conf"
-    repo = git.Repo(self.wf_path)
+
+    # Snapshot the content of existing container config files before generation
+    snapshot: dict[str, str | None] = {}
+    for path in conf_dir.glob("containers_*"):
+        snapshot[path.name] = path.read_text()
 
     try:
         generated = ContainerConfigs(self.wf_path).generate_container_configs()
@@ -41,20 +43,20 @@ def container_configs(self):
 
     log.debug(f"Generated {len(generated)} container config file(s): {', '.join(sorted(generated)) or 'none'}")
 
-    # Files modified in the working tree (tracked and changed by generation)
-    modified = {
-        Path(d.a_path).name
-        for d in repo.index.diff(None)
-        if d.a_path and Path(d.a_path).parent.name == "conf" and Path(d.a_path).name.startswith("containers_")
-    }
-    # Newly created files (generated but not previously tracked)
-    new = {
-        Path(f).name
-        for f in repo.untracked_files
-        if Path(f).parent.name == "conf" and Path(f).name.startswith("containers_")
-    }
-    # Already-correct files: generated, tracked, and unchanged
-    correct = generated - modified - new
+    # Compare generated content to pre-generation snapshot
+    modified: set[str] = set()
+    new: set[str] = set()
+    correct: set[str] = set()
+
+    for name in generated:
+        new_content = (conf_dir / name).read_text() if (conf_dir / name).exists() else ""
+        old_content = snapshot.get(name)
+        if old_content is None:
+            new.add(name)
+        elif new_content != old_content:
+            modified.add(name)
+        else:
+            correct.add(name)
 
     log.debug(f"Container config status — correct: {len(correct)}, modified: {len(modified)}, new: {len(new)}")
 
@@ -76,11 +78,10 @@ def container_configs(self):
             could_fix = True
 
     if not fixing:
-        # Restore working tree: reset modified tracked files and delete new untracked ones
+        # Restore working tree: write back original content for modified files, remove new files
         log.debug(f"Restoring working tree: resetting {len(modified)} modified, removing {len(new)} new file(s)")
-        repo_root = Path(repo.working_tree_dir).resolve()
         for name in modified:
-            repo.git.restore(str((conf_dir / name).resolve().relative_to(repo_root)))
+            (conf_dir / name).write_text(snapshot[name])
         for name in new:
             (conf_dir / name).unlink(missing_ok=True)
 
