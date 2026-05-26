@@ -43,6 +43,20 @@ class TestModulesInstall(TestModules):
         assert update_obj.update("trimgalore") is True
         assert cmp_component(trimgalore_tmpdir, trimgalore_path) is True
 
+    @mock.patch("nf_core.components.update.ComponentUpdate.update_linked_components")
+    @mock.patch(
+        "nf_core.components.update.ComponentUpdate.get_components_to_update",
+        return_value=([], [{"name": "fake_sw", "git_remote": "x"}]),
+    )
+    def test_module_update_skip_deps_does_not_cascade(self, mock_get_linked, mock_cascade):
+        """`module update --skip-deps` skips cascade even when linked subworkflows exist."""
+        assert self.mods_install_old.install("trimgalore")
+        update_obj = ModuleUpdate(
+            self.pipeline_dir, show_diff=False, skip_deps=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+        )
+        assert update_obj.update("trimgalore") is True
+        assert not mock_cascade.called
+
     def test_install_at_hash_and_update(self):
         """Installs an old version of a module in the pipeline and updates it"""
         assert self.mods_install_old.install("trimgalore")

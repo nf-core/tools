@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
+import pytest
 import questionary
 import yaml
 
@@ -31,6 +32,66 @@ class TestSubworkflowsUpdate(TestSubworkflows):
 
         assert update_obj.update("bam_stats_samtools") is True
         assert cmp_component(tmpdir, sw_path) is True
+
+    def test_subworkflow_update_skip_deps_skips_linked_components(self):
+        """`--skip-deps` updates the named subworkflow's SHA but leaves transitive deps untouched."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+        old_dep_sha = old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][
+            "samtools/flagstat"
+        ]["git_sha"]
+
+        update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, skip_deps=True)
+        assert update_obj.update("fastq_align_bowtie2") is True
+
+        mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+        # The named subworkflow's SHA moved.
+        assert (
+            mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME]["fastq_align_bowtie2"][
+                "git_sha"
+            ]
+            != old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME][
+                "fastq_align_bowtie2"
+            ]["git_sha"]
+        )
+        # A transitively-linked module's SHA did not.
+        assert (
+            mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]["samtools/flagstat"]["git_sha"]
+            == old_dep_sha
+        )
+
+    def test_subworkflow_update_skip_deps_save_diff_only_named_component(self):
+        """`--skip-deps --save-diff` writes a diff for only the named subworkflow, no linked components."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        diff_path = Path(tempfile.mkdtemp()) / "skipdeps.diff"
+        update_obj = SubworkflowUpdate(
+            self.pipeline_dir,
+            show_diff=False,
+            save_diff_fn=diff_path,
+            skip_deps=True,
+        )
+        assert update_obj.update("fastq_align_bowtie2") is True
+
+        diff_text = diff_path.read_text()
+        # The named subworkflow's main.nf should be in the diff
+        assert "subworkflows/nf-core/fastq_align_bowtie2/main.nf" in diff_text
+        # Transitively-linked module files (e.g. samtools/*) must not be in the diff
+        for linked in (
+            "modules/nf-core/samtools/flagstat/main.nf",
+            "modules/nf-core/samtools/index/main.nf",
+            "modules/nf-core/samtools/sort/main.nf",
+        ):
+            assert linked not in diff_text, f"unexpected linked component in --skip-deps diff: {linked}"
+
+    def test_subworkflow_update_skip_deps_with_update_deps_errors(self):
+        """`--skip-deps` and `--update-deps` are mutually exclusive."""
+        with pytest.raises(UserWarning, match="mutually exclusive"):
+            SubworkflowUpdate(self.pipeline_dir, skip_deps=True, update_deps=True, show_diff=False)._parameter_checks()
+
+    def test_subworkflow_update_skip_deps_with_all_errors(self):
+        """`--skip-deps` and `--all` are mutually exclusive."""
+        with pytest.raises(UserWarning, match="mutually exclusive"):
+            SubworkflowUpdate(self.pipeline_dir, skip_deps=True, update_all=True, show_diff=False)._parameter_checks()
 
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""

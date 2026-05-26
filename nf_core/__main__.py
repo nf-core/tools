@@ -1065,6 +1065,12 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
+@click.option(
+    "--skip-deps",
+    is_flag=True,
+    default=False,
+    help="Skip the cascade to linked components. Conflicts with --update-deps and --all.",
+)
 def command_modules_update(
     ctx,
     tool,
@@ -1077,11 +1083,14 @@ def command_modules_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 modules within a pipeline.
     """
-    modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output)
+    modules_update(
+        ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output, skip_deps
+    )
 
 
 # nf-core modules patch
@@ -1725,11 +1734,17 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     metavar="<commit sha>",
     help="Install subworkflow at commit SHA",
 )
-def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
+@click.option(
+    "--skip-deps",
+    is_flag=True,
+    default=False,
+    help="With --force, refresh only the named subworkflow; leave transitive deps' files and SHAs pinned.",
+)
+def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps):
     """
     Install DSL2 subworkflow within a pipeline.
     """
-    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha)
+    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps)
 
 
 # nf-core subworkflows patch
@@ -1882,6 +1897,12 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
+@click.option(
+    "--skip-deps",
+    is_flag=True,
+    default=False,
+    help="Skip the cascade to linked components. Conflicts with --update-deps and --all.",
+)
 def command_subworkflows_update(
     ctx,
     subworkflow,
@@ -1894,12 +1915,24 @@ def command_subworkflows_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
     """
     subworkflows_update(
-        ctx, subworkflow, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
+        ctx,
+        subworkflow,
+        directory,
+        force,
+        prompt,
+        sha,
+        install_all,
+        preview,
+        save_diff,
+        update_deps,
+        limit_output,
+        skip_deps,
     )
 
 

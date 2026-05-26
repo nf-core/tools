@@ -621,6 +621,7 @@ def check_process_labels(self, lines):
         "process_medium",
         "process_high",
         "process_long",
+        "process_low_memory",
         "process_high_memory",
     ]
     all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]

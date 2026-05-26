@@ -203,7 +203,7 @@ class Pipeline:
         self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
-        self.wf_path = Path(wf_path)
+        self.wf_path = Path(wf_path).resolve()
         self.pipeline_name: str | None = None
         self.pipeline_prefix: str | None = None
         self.schema_obj: PipelineSchema | None = None
@@ -369,6 +369,18 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
     return nf_version >= minimal_nf_version
 
 
+_NF_PROCESS_NAME_RE = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
+
+
+def read_module_name(main_nf: Path) -> str | None:
+    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    try:
+        match = _NF_PROCESS_NAME_RE.search(main_nf.read_text())
+        return match.group(1) if match else None
+    except OSError:
+        return None
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -479,8 +491,14 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=False)
+        if proc.returncode != 0:
+            if executable == "nf-test":
+                return (proc.stdout, proc.stderr)
+            raise subprocess.CalledProcessError(proc.returncode, proc.args, output=proc.stdout, stderr=proc.stderr)
         return (proc.stdout, proc.stderr)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Command '{full_cmd}' failed: {e}") from e
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
@@ -488,14 +506,6 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
             ) from e
         else:
             return None
-    except subprocess.CalledProcessError as e:
-        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
-        if executable == "nf-test":
-            return (e.stdout, e.stderr)
-        else:
-            raise RuntimeError(
-                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-            ) from e
 
 
 def setup_nfcore_dir() -> bool:
