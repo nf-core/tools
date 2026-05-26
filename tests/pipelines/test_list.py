@@ -166,7 +166,7 @@ class TestList(TestCase):
 
     @mock.patch("git.Repo", side_effect=git.InvalidGitRepositoryError("invalid repo"))
     @mock.patch("nf_core.utils.run_cmd")
-    def test_local_workflow_details_parse_nextflow_info_bytes(self, mock_run_cmd, mock_repo):
+    def test_local_workflow_details_decodes_bytes_to_parse_path(self, mock_run_cmd, mock_repo):
         local_wf = nf_core.pipelines.list.LocalWorkflow("nf-core/rnaseq")
         mock_run_cmd.return_value = (
             b"local path  : /tmp/.nextflow/assets/nf-core/rnaseq\nrepository  : https://github.com/nf-core/rnaseq\n",
@@ -174,10 +174,8 @@ class TestList(TestCase):
         )
 
         local_wf.get_local_nf_workflow_details()
-
         assert local_wf.repository == "https://github.com/nf-core/rnaseq"
         assert local_wf.local_path == Path("/tmp/.nextflow/assets/nf-core/rnaseq")
-        assert isinstance(local_wf.local_path, Path)
 
     @mock.patch.object(nf_core.pipelines.list.LocalWorkflow, "get_local_nf_workflow_details", autospec=True)
     def test_get_local_wf_does_not_scan_unrelated_repos(self, mock_get_local_details):
