@@ -70,15 +70,20 @@ def create_modules_repo_dummy(tmp_dir):
         name="quay.io/biocontainers/bpipe:0.9.13--hdfd78af_0", build_id="", scan_id=""
     )
     sing = MetaYmlContainers.SingularityContainer(
-        name="https://depot.galaxyproject.org/singularity/bpipe:0.9.13--hdfd78af_0",
+        name="oras://community.wave.seqera.io/library/bpipe:0.9.13--hdfd78af_0",
         build_id="",
         https="https://depot.galaxyproject.org/singularity/bpipe:0.9.13--hdfd78af_0",
     )
-    conda = MetaYmlContainers.CondaEnvironment(lock_file="")
+    conda_amd64 = MetaYmlContainers.CondaEnvironment(
+        lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_amd64-bd-dummy_1.txt"
+    )
+    conda_arm64 = MetaYmlContainers.CondaEnvironment(
+        lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_arm64-bd-dummy_1.txt"
+    )
     containers = MetaYmlContainers(
         docker={"linux/amd64": docker, "linux/arm64": docker},
         singularity={"linux/amd64": sing, "linux/arm64": sing},
-        conda={"linux/amd64": conda, "linux/arm64": conda},
+        conda={"linux/amd64": conda_amd64, "linux/arm64": conda_arm64},
     )
     meta_yml["containers"] = containers.model_dump()
     with open(str(meta_yml_path), "w") as fh:

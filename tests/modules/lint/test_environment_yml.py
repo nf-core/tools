@@ -7,7 +7,7 @@ import ruamel.yaml
 import nf_core.modules.lint
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.environment_yml import environment_yml
+from nf_core.modules.lint.environment_yml import lint_environment_yml as environment_yml
 
 from ...test_modules import TestModules
 
@@ -25,6 +25,7 @@ class DummyModule(NFCoreComponent):
     def __init__(self, path):
         self.environment_yml = path
         self.component_dir = path.parent
+        self.base_dir = path.parent
         self.component_name = "dummy"
         self.passed = []
         self.failed = []
@@ -266,7 +267,7 @@ def test_fix_version_fix_fails(tmp_path):
 
     with (
         patch("nf_core.utils.anaconda_package", return_value=fake_response),
-        patch("nf_core.modules.lint.main_nf._fix_module_version", return_value=False),
+        patch("nf_core.modules.lint.environment_yml._fix_module_version", return_value=False),
     ):
         environment_yml(lint, module, fix_version=True)
 

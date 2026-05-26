@@ -948,20 +948,6 @@ def _is_empty(line):
     return empty
 
 
-def _fix_module_version(self, current_version, latest_version, response):
-    """Updates the module conda version in environment.yml."""
-
-    with open(self.environment_yml) as source:
-        content = source.read()
-
-    new_content = content.replace(f"={current_version}", f"={latest_version}", 1)
-
-    with open(self.environment_yml, "w") as source:
-        source.write(new_content)
-
-    return True
-
-
 def _get_build(response):
     """Get the latest build of the container version"""
     build_times = []

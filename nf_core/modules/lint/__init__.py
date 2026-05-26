@@ -28,7 +28,7 @@ from nf_core.utils import unquote
 
 log = logging.getLogger(__name__)
 
-from .environment_yml import environment_yml
+from .environment_yml import lint_environment_yml
 from .main_nf import main_nf
 from .meta_yml import meta_yml, meta_yml_containers, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
 from .module_changes import module_changes
@@ -46,7 +46,7 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
-    environment_yml = environment_yml
+    environment_yml = lint_environment_yml
     main_nf = main_nf
     meta_yml = meta_yml
     obtain_inputs = obtain_inputs

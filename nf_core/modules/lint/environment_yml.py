@@ -18,7 +18,17 @@ yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=2, offset=2)
 
 
-def environment_yml(
+def _fix_module_version(self, current_version, latest_version, response):
+    """Update the conda package version in environment.yml."""
+    with open(self.environment_yml) as source:
+        content = source.read()
+    new_content = content.replace(f"={current_version}", f"={latest_version}", 1)
+    with open(self.environment_yml, "w") as source:
+        source.write(new_content)
+    return True
+
+
+def lint_environment_yml(
     module_lint_object: ComponentLint,
     module: NFCoreComponent,
     allow_missing: bool = False,
@@ -340,8 +350,6 @@ def environment_yml(
                         package, ver = bp.split("=", 1)
                         if fix_version:
                             try:
-                                from nf_core.modules.lint.main_nf import _fix_module_version
-
                                 fixed = _fix_module_version(module, bioconda_version, last_ver, response)
                             except FileNotFoundError as e:
                                 fixed = False
