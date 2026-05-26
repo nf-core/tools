@@ -78,8 +78,10 @@ def container_configs(self):
     if not fixing:
         # Restore working tree: reset modified tracked files and delete new untracked ones
         log.debug(f"Restoring working tree: resetting {len(modified)} modified, removing {len(new)} new file(s)")
+        assert repo.working_tree_dir is not None
+        repo_root = Path(repo.working_tree_dir).resolve()
         for name in modified:
-            repo.git.restore(str(conf_dir / name))
+            repo.git.restore(str((conf_dir / name).resolve().relative_to(repo_root)))
         for name in new:
             (conf_dir / name).unlink(missing_ok=True)
 
