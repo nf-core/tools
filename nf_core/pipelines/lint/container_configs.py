@@ -31,7 +31,7 @@ def container_configs(self):
     conf_dir = Path(self.wf_path) / "conf"
 
     # Snapshot the content of existing container config files before generation
-    snapshot: dict[str, str | None] = {}
+    snapshot: dict[str, str] = {}
     for path in conf_dir.glob("containers_*"):
         snapshot[path.name] = path.read_text()
 
