@@ -421,7 +421,21 @@ class NFCoreComponent:
 
             out, _ = cmd_out
             out_str = out.decode()
-            out_json = json.loads(out)
+            # nextflow inspect mixes status lines ([PIPELINE], [SUCCESS], etc.) with JSON on stdout
+            json_start = out_str.find("{")
+            json_end = out_str.rfind("}") + 1
+            if json_start == -1 or json_end == 0:
+                log.debug("Could not find JSON in nextflow inspect output")
+                log.debug(f"Output of nextflow inspect: {out_str}")
+                log.debug("Falling back to regex method.")
+                return get_container_with_regex(main_nf_abs, self.component_name)
+            try:
+                out_json = json.loads(out_str[json_start:json_end])
+            except json.JSONDecodeError:
+                log.debug("Failed to parse JSON from nextflow inspect output")
+                log.debug(f"Output of nextflow inspect: {out_str}")
+                log.debug("Falling back to regex method.")
+                return get_container_with_regex(main_nf_abs, self.component_name)
             container = out_json.get("processes", [{}])[0].get("container", None)
             if container is None:
                 log.debug(
