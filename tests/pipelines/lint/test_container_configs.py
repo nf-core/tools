@@ -197,13 +197,15 @@ class TestLintContainerConfigs(TestLint):
         assert not new_path.exists(), "Newly created file should be removed after lint"
 
     def test_container_configs_restore_with_relative_wf_path(self):
-        """Verify working tree restore works correctly even with relative workflow paths.
+        """Verify working tree restore works correctly when wf_path is relative.
 
-        This tests the fix for the relative path bug: when git restore was called with
-        a relative path constructed from a potentially non-repo-root wf_path, it would fail.
-        The new content-comparison approach doesn't depend on git operations, so it correctly
-        handles any wf_path regardless of whether it's absolute, relative, or repo-relative.
+        This tests the fix for the relative path bug: the old implementation called
+        git restore with paths relative to wf_path, which would fail when wf_path
+        wasn't the repo root. The new implementation directly writes back snapshotted
+        content, so it works regardless of whether wf_path is absolute or relative.
         """
+        import os
+        
         old = "process { withName: 'FASTQC' { container = 'old_image' } }\n"
         new = "process { withName: 'FASTQC' { container = 'new_image' } }\n"
         cfg_path = self._write_container_cfg("containers_docker_amd64.config", old)
@@ -217,14 +219,20 @@ class TestLintContainerConfigs(TestLint):
             autospec=True,
             side_effect=generate,
         ):
-            # Lint with a relative path to the pipeline
-            # (self.new_pipeline is an absolute path, but PipelineLint should handle both)
-            lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
-            lint_obj._load()
-            result = lint_obj.container_configs()
+            # Save original cwd and change to parent directory
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(Path(self.new_pipeline).parent)
+                # Use relative path (just the basename) instead of absolute path
+                relative_pipeline_path = Path(self.new_pipeline).name
+                lint_obj = nf_core.pipelines.lint.PipelineLint(str(relative_pipeline_path))
+                lint_obj._load()
+                result = lint_obj.container_configs()
+            finally:
+                os.chdir(original_cwd)
 
         # Lint should detect the modification as "out of date"
         assert any("out of date" in f for f in result["failed"])
 
-        # But the working tree must still be restored correctly
-        assert cfg_path.read_text() == old, "Modified file should be restored despite path resolution"
+        # But the working tree must still be restored correctly even with relative path
+        assert cfg_path.read_text() == old, "Modified file should be restored even when using relative wf_path"
