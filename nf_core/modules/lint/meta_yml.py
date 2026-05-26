@@ -16,6 +16,7 @@ from nf_core.modules.lint.module_containers import (
     lint_main_nf_container,
     lint_meta_yml_containers,
 )
+from nf_core.pipelines.download.utils import ContainerRegistryUrls
 from nf_core.utils import unquote
 
 if TYPE_CHECKING:
@@ -331,16 +332,22 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         # Check that meta_yml specifies containers (skip modules that use a Dockerfile)
         from nf_core.modules.modules_utils import module_uses_dockerfile
 
-        if module.get_container_from_main_nf() and not module_uses_dockerfile(module):
+        container = module.get_container_from_main_nf()
+        if container and not module_uses_dockerfile(module):
             if "containers" not in meta_yaml:
-                module.failed.append(
-                    (
-                        "meta_yml",
-                        "has_meta_containers",
-                        f"Module `meta.yml` does not contain any containers, even though they appear in `main.nf`. Use `nf-core modules lint {module.component_name} --fix` to automatically resolve this.",
-                        module.meta_yml,
+                if ContainerRegistryUrls.SEQERA_DOCKER.value in container:
+                    module.failed.append(
+                        (
+                            "meta_yml",
+                            "has_meta_containers",
+                            f"Module `meta.yml` does not contain any containers, even though they appear in `main.nf`. Use `nf-core modules lint {module.component_name} --fix` to automatically resolve this.",
+                            module.meta_yml,
+                        )
                     )
-                )
+                else:
+                    log.debug(
+                        f"Module `{module.component_name}` has no containers section in `meta.yml` but does not use the Wave registry — skipping container lint."
+                    )
                 return
 
             module.passed.append(
