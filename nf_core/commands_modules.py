@@ -87,6 +87,7 @@ def modules_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 modules within a pipeline.
@@ -109,6 +110,7 @@ def modules_update(
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
             limit_output,
+            skip_deps,
         )
         exit_status = module_install.update(tool)
         if not exit_status and install_all:

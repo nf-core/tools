@@ -201,7 +201,8 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
 
         # set verbose flag if self.verbose is True
         verbose = "--verbose --debug" if self.verbose else ""
-        update = "--update-snapshot" if self.update else ""
+        update_snapshot = self.update
+        update = "--update-snapshot" if update_snapshot else ""
         self.update = False  # reset self.update to False to test if the new snapshot is stable
         tag = f"subworkflows/{self.component_name}" if self.component_type == "subworkflows" else self.component_name
         profile = self.profile if self.profile else os.environ["PROFILE"]
@@ -221,8 +222,9 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 self.obsolete_snapshots = True
             # check if nf-test was successful
             if "Assertion failed:" in nftest_out.decode():
-                if "Different Snapshot:" not in nftest_err.decode():
-                    self.errors.append("Assertion failed.")
+                if "Different Snapshot:" in nftest_err.decode():
+                    return update_snapshot  # snapshot was updated return False only if we don't want to update the snapshot
+                self.errors.append("Assertion failed.")
                 return False
             elif "No tests to execute." in nftest_out.decode():
                 log.error("Nothing to execute. Is the file 'main.nf.test' missing?")

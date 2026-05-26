@@ -1,6 +1,41 @@
 # nf-core/tools: Changelog
 
-## v4.0.1
+## v4.1.0dev
+
+### General
+
+- Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
+- container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
+
+### Linting
+
+- accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
+- improve linting for `modules.json` to add support for only installing subworkflows from a repository and provide more explicit error messages ([#4287](https://github.com/nf-core/tools/pull/4287))
+
+### Modules
+
+- `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
+
+### Subworkflows
+
+### Template
+
+- add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
+
+#### Version updates
+
+## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]
+
+### General
+
+- add `pipeline_dir` to search directories for include statements ([#4252](https://github.com/nf-core/tools/pull/4252))
+
+### Template
+
+- fix version capture in downloads_action ([#4251](https://github.com/nf-core/tools/pull/4251))
+- Remove format constraint for igenomes_base ([#4253](https://github.com/nf-core/tools/pull/4253))
+
+## [v4.0.1 - Bold Boa Patch](https://github.com/nf-core/tools/releases/tag/4.0.1) - [2026-04-29]
 
 ### General
 
@@ -17,7 +52,7 @@
 
 - Allow task.ext.prefix2 in modules linting ([#4234](https://github.com/nf-core/tools/pull/4234))
 
-## [v4.0.0 - Bold Boa](https://github.com/nf-core/tools/releases/tag/4.0.0) - [2026-04-27]
+## [v4.0.0 - Bold Boa](https://github.com/nf-core/tools/releases/tag/4.0.0) - [2026-04-28]
 
 ### General
 
