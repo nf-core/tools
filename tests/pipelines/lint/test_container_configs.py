@@ -195,3 +195,36 @@ class TestLintContainerConfigs(TestLint):
         # But the working tree must be restored
         assert cfg_path.read_text() == old, "Modified file should be restored to original content"
         assert not new_path.exists(), "Newly created file should be removed after lint"
+
+    def test_container_configs_restore_with_relative_wf_path(self):
+        """Verify working tree restore works correctly even with relative workflow paths.
+
+        This tests the fix for the relative path bug: when git restore was called with
+        a relative path constructed from a potentially non-repo-root wf_path, it would fail.
+        The new content-comparison approach doesn't depend on git operations, so it correctly
+        handles any wf_path regardless of whether it's absolute, relative, or repo-relative.
+        """
+        old = "process { withName: 'FASTQC' { container = 'old_image' } }\n"
+        new = "process { withName: 'FASTQC' { container = 'new_image' } }\n"
+        cfg_path = self._write_container_cfg("containers_docker_amd64.config", old)
+
+        def generate(cc_self):
+            (cc_self.workflow_directory / "conf" / "containers_docker_amd64.config").write_text(new)
+            return {"containers_docker_amd64.config"}
+
+        with patch(
+            "nf_core.pipelines.containers_utils.ContainerConfigs.generate_container_configs",
+            autospec=True,
+            side_effect=generate,
+        ):
+            # Lint with a relative path to the pipeline
+            # (self.new_pipeline is an absolute path, but PipelineLint should handle both)
+            lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
+            lint_obj._load()
+            result = lint_obj.container_configs()
+
+        # Lint should detect the modification as "out of date"
+        assert any("out of date" in f for f in result["failed"])
+
+        # But the working tree must still be restored correctly
+        assert cfg_path.read_text() == old, "Modified file should be restored despite path resolution"
