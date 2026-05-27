@@ -276,14 +276,10 @@ class TestROCrate(TestPipelines):
     def test_parse_manifest_contributors_logs_parse_errors(self):
         """Emit a clear error when manifest.contributors cannot be normalised into valid JSON"""
 
-        self._set_manifest_identity(
-            """contributors = [
-                [
-                    name: 'Alice Example',
-                    github: alice
-                ]
-            ]
-            """
+        # Set nf_config directly to avoid running nextflow config -flat on invalid Groovy syntax
+        # (unquoted `alice` is valid Groovy but references an undefined variable, causing nextflow to fail)
+        self.rocrate_obj.pipeline_obj.nf_config["manifest.contributors"] = (
+            "[[\n    name: 'Alice Example',\n    github: alice\n]]"
         )
 
         with self.assertLogs("nf_core.pipelines.rocrate", level="ERROR") as logs:
@@ -383,14 +379,14 @@ class TestROCrate(TestPipelines):
         with self.assertRaises(SystemExit):
             self.rocrate_obj.parse_manifest_contributors()
 
-    def test_rocrate_creation_for_fetchngs(self):
-        """Run the nf-core rocrate command with nf-core/fetchngs"""
+    def test_rocrate_creation_for_demo(self):
+        """Run the nf-core rocrate command with nf-core/demo"""
         tmp_dir = Path(tempfile.mkdtemp())
-        # git clone  nf-core/fetchngs
-        git.Repo.clone_from("https://github.com/nf-core/fetchngs", tmp_dir / "fetchngs")
+        # git clone  nf-core/demo
+        git.Repo.clone_from("https://github.com/nf-core/demo", tmp_dir / "demo")
         # Run the command
-        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(tmp_dir / "fetchngs", version="1.12.0")
-        assert self.rocrate_obj.create_rocrate(tmp_dir / "fetchngs", self.pipeline_dir)
+        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(tmp_dir / "demo", version="1.1.0")
+        assert self.rocrate_obj.create_rocrate(tmp_dir / "demo", self.pipeline_dir)
 
         # Check that Sateesh Peri is mentioned in creator field
 

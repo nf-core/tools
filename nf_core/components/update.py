@@ -38,6 +38,7 @@ class ComponentUpdate(ComponentCommand):
         branch=None,
         no_pull=False,
         limit_output=False,
+        skip_deps=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -50,6 +51,7 @@ class ComponentUpdate(ComponentCommand):
         self.save_diff_fn = save_diff_fn
         self.limit_output = limit_output
         self.update_deps = update_deps
+        self.skip_deps = skip_deps
         self.component = None
         self.update_config = None
         self.modules_json = ModulesJson(self.directory)
@@ -67,6 +69,12 @@ class ComponentUpdate(ComponentCommand):
 
         if self.update_all and self.component:
             raise UserWarning(f"Either a {self.component_type[:-1]} or the '--all' flag can be specified, not both.")
+
+        if self.skip_deps and self.update_deps:
+            raise UserWarning("`--skip-deps` and `--update-deps` are mutually exclusive.")
+
+        if self.skip_deps and self.update_all:
+            raise UserWarning("`--skip-deps` and `--all` are mutually exclusive.")
 
         if self.repo_type == "modules":
             raise UserWarning(
@@ -258,7 +266,9 @@ class ComponentUpdate(ComponentCommand):
                             updated.append(component)
                     recursive_update = True
                     modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
-                    if not silent and len(modules_to_update + subworkflows_to_update) > 0:
+                    if self.skip_deps:
+                        recursive_update = False
+                    elif not silent and len(modules_to_update + subworkflows_to_update) > 0:
                         log.warning(
                             f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be added to the same diff file.\n"
                             "It is advised to keep all your modules and subworkflows up to date.\n"
@@ -308,13 +318,15 @@ class ComponentUpdate(ComponentCommand):
                 # Update modules.json with newly installed component
                 self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
-
-                # Regenerate container configuration files for the pipeline when modules are updated
                 if self.component_type == "modules":
-                    try_generate_container_configs(self.directory)
+                    try_generate_container_configs(self.directory, component_dir)
+
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
-                if not silent and len(modules_to_update + subworkflows_to_update) > 0 and not self.update_all:
+                if self.skip_deps:
+                    # Caller asked for single-target update; skip linked components entirely.
+                    recursive_update = False
+                elif not silent and len(modules_to_update + subworkflows_to_update) > 0 and not self.update_all:
                     log.warning(
                         f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
                         "It is advised to keep all your modules and subworkflows up to date.\n"

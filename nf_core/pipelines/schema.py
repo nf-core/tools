@@ -67,8 +67,10 @@ class PipelineSchema:
         plugin = "nf-schema"
         if self.schema_filename:
             conf = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
-        else:
+        elif self.pipeline_dir is not None:
             conf = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
+        else:
+            return
 
         plugins = str(conf.get("plugins", "")).strip("'\"").strip(" ").split(",")
         plugin_found = False
@@ -137,7 +139,7 @@ class PipelineSchema:
             self.pipeline_dir = nf_core.pipelines.list.get_local_wf(path, revision=revision)
             self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
             # check if the schema file exists
-            if not self.schema_filename.exists():
+            if self.schema_filename is not None and not self.schema_filename.exists():
                 self.schema_filename = None
         # Only looking for local paths, overwrite with None to be safe
         else:
