@@ -5,7 +5,7 @@ from unittest import mock
 import pytest
 import yaml
 
-from nf_core.modules.containers import ModuleContainers
+from nf_core.modules.containers import CondaEntry, ContainerEntry, ContainersBySystem, ModuleContainers
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
 from ..test_modules import TestModules
@@ -22,21 +22,12 @@ class TestModuleContainers(TestModules):
     def _write_meta(self, meta: dict) -> None:
         (self.bpipe_test_module_path / "meta.yml").write_text(yaml.safe_dump(meta), encoding="utf-8")
 
-    def _containers_by_system(self, prefix: str = "testC") -> dict:
-        return {
-            "docker": {
-                platform: {ModuleContainers.IMAGE_KEY: f"{prefix}-docker-{platform}"}
-                for platform in CONTAINER_PLATFORMS
-            },
-            "singularity": {
-                platform: {ModuleContainers.IMAGE_KEY: f"{prefix}-singularity-{platform}"}
-                for platform in CONTAINER_PLATFORMS
-            },
-            "conda": {
-                platform: {ModuleContainers.LOCK_FILE_KEY: f"/path/to/{prefix}-{platform}.txt"}
-                for platform in CONTAINER_PLATFORMS
-            },
-        }
+    def _containers_by_system(self, prefix: str = "testC") -> ContainersBySystem:
+        return ContainersBySystem(
+            docker={p: ContainerEntry(name=f"{prefix}-docker-{p}") for p in CONTAINER_PLATFORMS},
+            singularity={p: ContainerEntry(name=f"{prefix}-singularity-{p}") for p in CONTAINER_PLATFORMS},
+            conda={p: CondaEntry(lock_file=f"/path/to/{prefix}-{p}.txt") for p in CONTAINER_PLATFORMS},
+        )
 
     def test_init_sets_paths(self):
         """Test that ModuleContainers initializes paths correctly"""
@@ -96,25 +87,25 @@ class TestModuleContainers(TestModules):
 
         for system in CONTAINER_SYSTEMS:
             for platform in CONTAINER_PLATFORMS:
-                entry = containers[system][platform]
-                assert entry[ModuleContainers.IMAGE_KEY] == "community.wave.seqera.io/library/bpipe_test:0.1.0--abc123"
-                assert entry[ModuleContainers.BUILD_ID_KEY] == f"bd-abc123-{system}"
+                entry = getattr(containers, system)[platform]
+                assert entry.name == "community.wave.seqera.io/library/bpipe_test:0.1.0--abc123"
+                assert entry.build_id == f"bd-abc123-{system}"
                 if system == "docker":
-                    assert entry[ModuleContainers.SCAN_ID_KEY] == f"sc-abc123-{system}"
+                    assert entry.scan_id == f"sc-abc123-{system}"
                     platform_safe = platform.replace("/", "_")
                     build_id = f"bd-abc123-{system}"
                     expected_lock_path = str(
                         self.bpipe_test_module_path / ".conda-lock" / f"{platform_safe}-{build_id}.txt"
                     )
-                    assert containers["conda"][platform][ModuleContainers.LOCK_FILE_KEY] == expected_lock_path
+                    assert containers.conda[platform].lock_file == expected_lock_path
                 else:
-                    assert ModuleContainers.SCAN_ID_KEY not in entry
+                    assert not entry.scan_id
 
     @mock.patch.object(ModuleContainers, "request_container")
     def test_create_skips_conda_lock_when_build_id_missing(self, mock_request_container):
-        mock_request_container.return_value = {ModuleContainers.IMAGE_KEY: "bpipe_test-img"}
-        containers = self.module_containers.create()
-        assert "conda" not in containers
+        mock_request_container.return_value = ContainerEntry(name="bpipe_test-img")
+        containers, success = self.module_containers.create()
+        assert not containers.conda
 
     @mock.patch("nf_core.modules.containers.run_cmd")
     def test_request_container_docker_success(self, mock_run_cmd):
@@ -123,9 +114,9 @@ class TestModuleContainers(TestModules):
         mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
 
         container = ModuleContainers.request_container("docker", platform, self.environment_yml)
-        assert container[ModuleContainers.IMAGE_KEY] == "testC:latest"
-        assert container[ModuleContainers.BUILD_ID_KEY] == "build-1"
-        assert container[ModuleContainers.SCAN_ID_KEY] == "scan-1"
+        assert container.name == "testC:latest"
+        assert container.build_id == "build-1"
+        assert container.scan_id == "scan-1"
 
         args_str = mock_run_cmd.call_args[0][1]
         assert "--await" in args_str
@@ -153,9 +144,9 @@ class TestModuleContainers(TestModules):
         }
 
         container = ModuleContainers.request_container("singularity", platform, self.environment_yml)
-        assert container[ModuleContainers.IMAGE_KEY] == "testC:sif"
+        assert container.name == "testC:sif"
         expected_url = "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ab/abcde12345/data"
-        assert container[ModuleContainers.HTTPS_URL_KEY] == expected_url
+        assert container.https == expected_url
         mock_request_image_inspect.assert_called_once_with("testC:sif")
 
     @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
@@ -197,10 +188,10 @@ class TestModuleContainers(TestModules):
         mock_requests_get.return_value = mock_response
 
         platform = CONTAINER_PLATFORMS[0]
-        self.module_containers.containers = {
-            "docker": {platform: {ModuleContainers.BUILD_ID_KEY: "test-build-123"}},
-            "conda": {platform: {"lock_file": "/some/path.txt"}},
-        }
+        self.module_containers.containers = ContainersBySystem(
+            docker={platform: ContainerEntry(name="placeholder", build_id="test-build-123")},
+            conda={platform: CondaEntry(lock_file="/some/path.txt")},
+        )
 
         result = self.module_containers.get_conda_lock_file(platform)
         assert result == "# conda lock file content"
@@ -214,23 +205,23 @@ class TestModuleContainers(TestModules):
         expected = []
         for cs in CONTAINER_SYSTEMS:
             for p in CONTAINER_PLATFORMS:
-                expected.append((cs, p, containers[cs][p][ModuleContainers.IMAGE_KEY]))
+                expected.append((cs, p, getattr(containers, cs)[p].name))
         for p in CONTAINER_PLATFORMS:
-            expected.append(("conda", p, containers["conda"][p][ModuleContainers.LOCK_FILE_KEY]))
+            expected.append(("conda", p, containers.conda[p].lock_file))
         assert listed == expected
 
     def test_get_containers_from_meta_missing_section(self):
         self._write_meta({"name": "bpipe/test"})
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
         result = self.module_containers.get_containers_from_meta()
-        assert result == {}
+        assert result is None
         assert "Section 'containers' missing from meta.yaml" in self.caplog.text
 
     def test_get_containers_from_meta_missing_system(self):
         self._write_meta({"name": "bpipe/test", "containers": {"singularity": {"ok": True}}})
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
         result = self.module_containers.get_containers_from_meta()
-        assert result == {}
+        assert result is None
         assert "Container missing for docker" in self.caplog.text
 
     def test_get_containers_from_meta_missing_platform_key(self):
@@ -242,16 +233,24 @@ class TestModuleContainers(TestModules):
         missing_platform = CONTAINER_PLATFORMS[1]
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
         result = self.module_containers.get_containers_from_meta()
-        assert result == {}
+        assert result is None
         assert f"Platform build {missing_platform} missing" in self.caplog.text
 
     def test_get_containers_from_meta_success(self):
         containers = {
-            "docker": {platform: {"ok": True} for platform in CONTAINER_PLATFORMS},
-            "singularity": {platform: {"ok": True} for platform in CONTAINER_PLATFORMS},
+            "docker": {
+                platform: {"name": f"docker-image-{platform.replace('/', '-')}:latest"}
+                for platform in CONTAINER_PLATFORMS
+            },
+            "singularity": {
+                platform: {"name": f"singularity-image-{platform.replace('/', '-')}:latest"}
+                for platform in CONTAINER_PLATFORMS
+            },
         }
         self._write_meta({"name": "bpipe/test", "containers": containers})
-        assert self.module_containers.get_containers_from_meta() == containers
+        result = self.module_containers.get_containers_from_meta()
+        assert result is not None
+        assert result == ContainersBySystem.model_validate(containers)
 
     def test_update_containers_in_meta_merges(self):
         self._write_meta({"name": "bpipe/test", "containers": {"docker": {"linux/amd64": {"name": "old"}}}})
@@ -263,7 +262,7 @@ class TestModuleContainers(TestModules):
             mock_create.assert_not_called()
 
         meta = yaml.safe_load((self.bpipe_test_module_path / "meta.yml").read_text(encoding="utf-8"))
-        assert meta["containers"] == containers
+        assert meta["containers"] == containers.model_dump(exclude_defaults=True)
 
 
 class TestModuleContainersPipeline(TestModules):
@@ -296,11 +295,11 @@ class TestModuleContainersPipeline(TestModules):
         module_dir = self._create_local_module("testmodule")
 
         manager = ModuleContainers("testmodule", directory=self.pipeline_dir)
-        containers = {
-            "docker": {p: {ModuleContainers.IMAGE_KEY: f"docker-{p}"} for p in CONTAINER_PLATFORMS},
-            "singularity": {p: {ModuleContainers.IMAGE_KEY: f"sif-{p}"} for p in CONTAINER_PLATFORMS},
-            "conda": {p: {ModuleContainers.LOCK_FILE_KEY: f"/lock/{p}.txt"} for p in CONTAINER_PLATFORMS},
-        }
+        containers = ContainersBySystem(
+            docker={p: ContainerEntry(name=f"docker-{p}") for p in CONTAINER_PLATFORMS},
+            singularity={p: ContainerEntry(name=f"sif-{p}") for p in CONTAINER_PLATFORMS},
+            conda={p: CondaEntry(lock_file=f"/lock/{p}.txt") for p in CONTAINER_PLATFORMS},
+        )
         manager.containers = containers
 
         with mock.patch.object(manager, "create") as mock_create:
@@ -308,7 +307,7 @@ class TestModuleContainersPipeline(TestModules):
             mock_create.assert_not_called()
 
         meta = yaml.safe_load((module_dir / "meta.yml").read_text(encoding="utf-8"))
-        assert meta["containers"] == containers
+        assert meta["containers"] == containers.model_dump(exclude_defaults=True)
 
 
 class TestModuleContainersDockerfile(TestModuleContainersPipeline):
@@ -326,7 +325,7 @@ class TestModuleContainersDockerfile(TestModuleContainersPipeline):
 
     def test_create_returns_empty_for_dockerfile_module(self):
         containers, success = self.module_containers.create()
-        assert containers == {}
+        assert containers == ContainersBySystem()
         assert success
 
     def test_update_main_nf_container_skips_dockerfile_module(self):

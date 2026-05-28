@@ -10,6 +10,7 @@ from urllib.parse import quote
 import requests
 import rich.progress
 import yaml
+from pydantic import BaseModel, ValidationError
 from rich.pretty import pretty_repr
 
 from nf_core.components.components_utils import read_meta_yml
@@ -28,16 +29,27 @@ from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
 log = logging.getLogger(__name__)
 
 
+class ContainerEntry(BaseModel):
+    name: str
+    build_id: str = ""
+    scan_id: str = ""
+    https: str = ""
+
+
+class CondaEntry(BaseModel):
+    lock_file: str
+
+
+class ContainersBySystem(BaseModel):
+    docker: dict[str, ContainerEntry] = {}
+    singularity: dict[str, ContainerEntry] = {}
+    conda: dict[str, CondaEntry] = {}
+
+
 class ModuleContainers:
     """
     Helpers for building, linting and listing module containers.
     """
-
-    IMAGE_KEY = "name"
-    BUILD_ID_KEY = "build_id"
-    SCAN_ID_KEY = "scan_id"
-    LOCK_FILE_KEY = "lock_file"
-    HTTPS_URL_KEY = "https"
 
     def __init__(
         self, module: str | None, directory: str | Path = ".", all_modules: bool = False, verbose: bool = False
@@ -111,7 +123,7 @@ class ModuleContainers:
             self.environment_yml = None
             self.meta_yml = None
 
-        self.containers: dict | None = None
+        self.containers: ContainersBySystem | None = None
 
     @staticmethod
     def check_tower_token() -> None:
@@ -226,7 +238,8 @@ class ModuleContainers:
 
         # Get docker image and strip all path components (registry/path/...)
         linux_amd64 = CONTAINER_PLATFORMS[0]
-        docker_image = self.containers.get("docker", {}).get(linux_amd64, {}).get(self.IMAGE_KEY, "")
+        _docker_entry = self.containers.docker.get(linux_amd64)
+        docker_image = _docker_entry.name if _docker_entry else ""
         if not docker_image:
             log.error(f"No docker image found for {linux_amd64}")
             return
@@ -255,7 +268,7 @@ class ModuleContainers:
         progress_bar: rich.progress.Progress | None = None,
         task_id: rich.progress.TaskID | None = None,
         force: bool = False,
-    ) -> tuple[dict[str, dict[str, dict[str, str]]], bool]:
+    ) -> tuple[ContainersBySystem, bool]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
 
@@ -264,9 +277,9 @@ class ModuleContainers:
             task_id: Optional task ID for this module in the progress bar
 
         Returns:
-            Tuple of (containers dict, success boolean). Success is False if any build failed.
+            Tuple of (ContainersBySystem, success boolean). Success is False if any build failed.
         """
-        containers: dict = {cs: {p: {} for p in CONTAINER_PLATFORMS} for cs in CONTAINER_SYSTEMS + ["conda"]}
+        containers = ContainersBySystem()
         build_tasks = {}
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
         has_failures = False
@@ -274,7 +287,7 @@ class ModuleContainers:
         if not self.environment_yml:
             if self._uses_dockerfile():
                 log.info(f"Module '{self.module}' uses a Dockerfile - skipping Wave container build")
-                return {}, True
+                return ContainersBySystem(), True
             raise RuntimeError("No environment.yml found.")
         assert self.module_directory is not None
 
@@ -321,7 +334,7 @@ class ModuleContainers:
                 build_tid = build_task_ids.get((cs, platform))
 
                 try:
-                    containers[cs][platform] = fut.result()
+                    getattr(containers, cs)[platform] = fut.result()
                     # Update self.containers and meta.yml after each successful build
                     self.containers = containers
                     try:
@@ -356,7 +369,8 @@ class ModuleContainers:
         new_lock_files = set()
         for platform in CONTAINER_PLATFORMS:
             # Get docker build ID for this platform
-            build_id = containers.get("docker", {}).get(platform, {}).get(self.BUILD_ID_KEY, "")
+            _docker_entry = containers.docker.get(platform)
+            build_id = _docker_entry.build_id if _docker_entry else ""
             short_platform = platform.split("/")[-1]
             if not build_id:
                 log.debug(f"Docker image for {platform} missing - Conda-lock skipped")
@@ -367,10 +381,7 @@ class ModuleContainers:
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Store the local file path in containers
-            conda_data = containers.get("conda", {})
-            conda_data.update({platform: {self.LOCK_FILE_KEY: str(conda_lock_path)}})
-            containers["conda"] = conda_data
+            containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
 
             try:
                 # Download conda lock file (it will look up build_id from docker container)
@@ -432,12 +443,11 @@ class ModuleContainers:
         conda_file: Path,
         verbose=False,
         on_build_id: Callable[[str], None] | None = None,
-    ) -> dict:
+    ) -> ContainerEntry:
         assert conda_file.exists()
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
 
-        container: dict[str, str] = {}
         executable = "wave"
         log_level = "DEBUG" if verbose else "INFO"
         args = [
@@ -522,16 +532,12 @@ class ModuleContainers:
         if not image:
             raise RuntimeError(f"Wave build ({container_system} {platform}) did not return an image name")
 
-        container[cls.IMAGE_KEY] = image
-
-        build_id = meta_data.get("buildId", "")
-        if build_id:
-            container[cls.BUILD_ID_KEY] = build_id
+        build_id = meta_data.get("buildId", "") or ""
+        scan_id = ""
+        https_url = ""
 
         if container_system == "docker":
-            scan_id = meta_data.get("scanId", "")
-            if scan_id:
-                container[cls.SCAN_ID_KEY] = scan_id
+            scan_id = meta_data.get("scanId", "") or ""
 
         if container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
@@ -547,11 +553,11 @@ class ModuleContainers:
             else:
                 log.debug(f"Extracting https-uri for {image} from image inspect:\n{pretty_repr(container_layers[0])}")
                 digest = container_layers[0]["digest"].replace("sha256:", "")
-                container[cls.HTTPS_URL_KEY] = (
+                https_url = (
                     f"https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/{digest[:2]}/{digest}/data"
                 )
 
-        return container
+        return ContainerEntry(name=image, build_id=build_id, scan_id=scan_id, https=https_url)
 
     @classmethod
     def request_image_inspect(cls, image: str) -> dict:
@@ -591,10 +597,11 @@ class ModuleContainers:
         """
         assert platform in CONTAINER_PLATFORMS
 
-        containers = self.containers or self.get_containers_from_meta() or self.create()[0] or {}
+        containers = self.containers or self.get_containers_from_meta() or self.create()[0]
 
         # Get build_id from docker container for this platform
-        build_id = containers.get("docker", {}).get(platform, {}).get(self.BUILD_ID_KEY)
+        _docker_entry = containers.docker.get(platform) if containers else None
+        build_id = _docker_entry.build_id if _docker_entry else None
         if not build_id:
             raise ValueError(f"No build_id found for docker container on platform {platform}")
 
@@ -618,21 +625,22 @@ class ModuleContainers:
         containers_flat = []
         for cs in CONTAINER_SYSTEMS + ["conda"]:
             for p in CONTAINER_PLATFORMS:
-                container_entry = containers_valid[cs][p]
-                # Add the name entry
                 if cs == "conda":
-                    containers_flat.append((cs, p, container_entry["lock_file"]))
+                    conda_entry = containers_valid.conda.get(p)
+                    if conda_entry:
+                        containers_flat.append((cs, p, conda_entry.lock_file))
                 else:
-                    containers_flat.append((cs, p, container_entry["name"]))
-                # For singularity, also add the https entry if available
-                if cs == "singularity" and self.HTTPS_URL_KEY in container_entry:
-                    containers_flat.append((cs, p, container_entry[self.HTTPS_URL_KEY]))
+                    entry = getattr(containers_valid, cs).get(p)
+                    if entry:
+                        containers_flat.append((cs, p, entry.name))
+                        if cs == "singularity" and entry.https:
+                            containers_flat.append((cs, p, entry.https))
         return containers_flat
 
-    def get_containers_from_meta(self) -> dict:
+    def get_containers_from_meta(self) -> ContainersBySystem | None:
         """
         Return containers defined in the module meta.yml.
-        Returns empty dict if containers section is missing or incomplete.
+        Returns None if containers section is missing, incomplete, or invalid.
         """
         assert self.meta_yml and self.meta_yml.exists()
 
@@ -640,21 +648,25 @@ class ModuleContainers:
         containers = meta.get("containers", {})
         if not containers:
             log.debug(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
-            return {}
+            return None
 
         for system in CONTAINER_SYSTEMS:
             cs = containers.get(system)
             if not cs:
                 log.debug(f"Container missing for {system}")
-                return {}
+                return None
 
             for pf in CONTAINER_PLATFORMS:
                 spec = cs.get(pf)
                 if not spec:
                     log.debug(f"Platform build {pf} missing for {system} container for module {self.module}")
-                    return {}
+                    return None
 
-        return containers
+        try:
+            return ContainersBySystem.model_validate(containers)
+        except ValidationError as e:
+            log.debug(f"Could not parse containers from meta.yml: {e}")
+            return None
 
     def update_containers_in_meta(self, module_lint: ModuleLint | None = None) -> None:
         """
@@ -676,12 +688,13 @@ class ModuleContainers:
 
         meta = read_meta_yml(self.meta_yml)
         meta_containers = meta.get("containers", {})
-        # Remove stale entries for platforms that were attempted (even if they failed),
-        # so old containers don't mix with new ones when a build partially fails.
-        for cs, platforms in self.containers.items():
-            for platform in platforms:
+        # Remove stale entries for all known systems/platforms so old containers don't
+        # mix with new ones when a build partially fails.
+        for cs in CONTAINER_SYSTEMS + ["conda"]:
+            for platform in CONTAINER_PLATFORMS:
                 meta_containers.get(cs, {}).pop(platform, None)
-        for cs, platforms in self.containers.items():
+        new_containers = self.containers.model_dump(exclude_defaults=True)
+        for cs, platforms in new_containers.items():
             for platform, data in platforms.items():
                 if data:
                     meta_containers.setdefault(cs, {})[platform] = data
