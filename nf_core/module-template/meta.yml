@@ -73,4 +73,3 @@ authors:
   - "{{ author }}"
 maintainers:
   - "{{ author }}"
-
