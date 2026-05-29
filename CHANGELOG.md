@@ -4,7 +4,7 @@
 
 ### General
 
-- Add a global `--help-json` flag to every CLI command, printing machine-readable help/usage as JSON with a recursive index of subcommands (for LLMs and tooling) ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- Add a global `--help-json` flag to every CLI command, printing machine-readable help/usage as JSON with a recursive index of subcommands (for LLMs and tooling) ([#4310](https://github.com/nf-core/tools/pull/4310))
 - Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
 - container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
 
