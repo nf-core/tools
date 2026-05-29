@@ -76,8 +76,8 @@ rc.USE_RICH_MARKUP = True
 rc.COMMANDS_BEFORE_OPTIONS = True
 # Tip shown on every --help screen, pointing tools/agents at the machine-readable schema
 rc.FOOTER_TEXT = (
-    "[dim]Tip:[/] add [bold]--help-json[/] to any command for machine-readable help "
-    "(usage, options and a recursive index of subcommands) as JSON."
+    "[dim]Tip: add --help-json to any command for machine-readable help "
+    "(usage, options and a recursive index of subcommands) as JSON.[/]"
 )
 
 
