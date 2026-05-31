@@ -49,7 +49,7 @@ def print_results_plain_text(results_list, directory=None, component_type=None):
                     # Pipeline results: (eid, msg)
                     eid, msg = r
                     console.print(
-                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
+                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}"
                     )
                     print_lines(msg, strip_ansi=True)
                 else:
