@@ -4,6 +4,7 @@ Most tests check the cli arguments are passed along and that some action is
 taken.
 """
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -67,6 +68,29 @@ class TestCli(unittest.TestCase):
         result = self.invoke_cli(["--help"])
         assert result.exit_code == 0
         assert "Show the version and exit." in result.output
+
+    def test_cli_help_json(self):
+        """Test the main launch function with --help-json returns the CLI schema as JSON"""
+        result = self.invoke_cli(["--help-json"])
+        assert result.exit_code == 0
+
+        schema = json.loads(result.output)
+
+        # Top-level command metadata
+        assert schema["name"] == "nf-core-cli"
+        assert schema["path"] == "nf-core-cli"
+        assert schema["usage"].startswith("nf-core-cli")
+
+        # The --verbose option should be reported, but the meta-options should be hidden
+        param_opts = [opt for param in schema["params"] for opt in param["opts"]]
+        assert "--verbose" in param_opts
+        assert "--help" not in param_opts
+        assert "--help-json" not in param_opts
+
+        # Subcommands are indexed recursively by name, with groups nesting their children
+        assert "subcommands" in schema
+        assert "pipelines" in schema["subcommands"]
+        assert "lint" in schema["subcommands"]["pipelines"]
 
     def test_cli_bad_subcommand(self):
         """Test the main launch function with an unrecognised argument"""
