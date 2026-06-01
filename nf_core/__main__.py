@@ -633,7 +633,7 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
+@click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
     ctx,
