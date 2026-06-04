@@ -7,6 +7,7 @@ from nf_core.modules.lint.main_nf import (
     check_container_link_line,
     check_process_labels,
     check_script_section,
+    check_when_section,
 )
 
 from ...test_modules import TestModules
@@ -99,6 +100,26 @@ def test_container_links(content, passed, warned, failed):
     assert len(mock_lint.passed) == passed
     assert len(mock_lint.warned) == warned
     assert len(mock_lint.failed) == failed
+
+
+def test_when_section_rejects_task_ext_when():
+    """Test that task.ext.when in a when: block fails linting"""
+    mock_lint = MockModuleLint()
+
+    check_when_section(mock_lint, ["task.ext.when == null || task.ext.when"])
+
+    assert len(mock_lint.failed) == 1
+    assert "task.ext.when" in mock_lint.failed[0][2]
+
+
+def test_when_section_allows_missing_when_block():
+    """Test that modules without a when: block pass this lint"""
+    mock_lint = MockModuleLint()
+
+    check_when_section(mock_lint, [])
+
+    assert len(mock_lint.failed) == 0
+    assert any("No when: condition found" in message for _, _, message, _ in mock_lint.passed)
 
 
 class TestMainNfLinting(TestModules):
