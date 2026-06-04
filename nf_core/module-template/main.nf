@@ -72,9 +72,6 @@ process {{ component_name_underscore|upper }} {
     {%- endif %}
     tuple val("${task.process}"), val('{{ component }}'), eval("{{ component }} --version"), topic: versions, emit: versions_{{ component }}
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     {% if has_meta -%}
