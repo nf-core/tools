@@ -485,7 +485,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 @click.option(
     "-o",
     "--params-out",
-    type=click.Path(),
+    type=click.Path(path_type=Path),
     default=str(Path.cwd() / "nf-params.json"),
     help="Path to save run parameters file",
 )
