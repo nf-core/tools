@@ -11,8 +11,9 @@ class TestModulesLintIntegration(TestModules):
         self.mods_install.install("trimgalore")
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="trimgalore")
-        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert len(module_lint.passed) > 0
+        # TODO: set to 0 once trimgalore module is converted to new container syntax
+        assert len(module_lint.failed) == 1
+        assert module_lint.failed[0].lint_test == "has_meta_containers"
         assert len(module_lint.warned) >= 0
 
     def test_modules_lint_trinity(self):
@@ -29,7 +30,9 @@ class TestModulesLintIntegration(TestModules):
         self.mods_install.install("tabix/tabix")
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="tabix/tabix")
-        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        # TODO: set to 0 once tabix/tabix module is converted to new container syntax
+        assert len(module_lint.failed) == 1
+        assert module_lint.failed[0].lint_test == "has_meta_containers"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 

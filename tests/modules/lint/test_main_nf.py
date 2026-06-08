@@ -228,7 +228,7 @@ class TestMainNfLinting(TestModules):
         if not self.mods_install.install("samtools/sort"):
             self.skipTest("Could not install samtools/sort module")
         if not self.mods_install.install("bamstats/generalstats"):
-            self.skipTest("Could not install samtools/sort module")
+            self.skipTest("Could not install bamstats/generalstats module")
 
     def test_main_nf_lint_with_alternative_registry(self):
         """Test main.nf linting with alternative container registry"""
@@ -246,7 +246,10 @@ class TestMainNfLinting(TestModules):
         # Test with default registry - should pass cleanly
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort")
-        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+
+        # TODO: set to 0 once samtools/sort module is converted to new container syntax
+        assert len(module_lint.failed) == 1
+        assert module_lint.failed[0].lint_test == "has_meta_containers"
         assert len(module_lint.passed) > 0
 
     def test_additional_registry_from_nf_core_yml_passes_container_link(self):
