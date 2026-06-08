@@ -69,7 +69,7 @@ class ModuleLint(ComponentLint):
         remote_url: str | None = None,
         branch: str | None = None,
         no_pull: bool = False,
-        registry: str = "quay.io,community.wave.seqera.io/library",
+        registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress: bool = False,
     ):
         super().__init__(
