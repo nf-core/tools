@@ -256,7 +256,7 @@ def modules_lint(
             directory,
             fail_warned=fail_warned,
             fix=fix,
-            registry=ctx.params["registry"],
+            registry=registry,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             no_pull=ctx.obj["modules_repo_no_pull"],
@@ -264,7 +264,6 @@ def modules_lint(
         )
         module_lint.lint(
             module=tool,
-            registry=registry,
             key=key,
             all_modules=all_modules,
             print_results=True,

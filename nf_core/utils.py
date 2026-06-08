@@ -33,7 +33,7 @@ import rich
 import rich.markup
 import yaml
 from packaging.version import Version
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -1400,6 +1400,8 @@ class NFCoreYamlLintConfig(BaseModel):
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     repository_type: Literal["pipeline", "modules"] | None = None
     """ Type of repository """
     nf_core_version: str | None = None
@@ -1414,6 +1416,8 @@ class NFCoreYamlConfig(BaseModel):
     """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
     update: dict[str, str | bool | dict[str, str | dict[str, str | bool]]] | None = None
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
+    container_registry: list[str] | None = Field(default=None, alias="container-registry")
+    """ Additional container registry prefixes allowed when linting container directives. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
