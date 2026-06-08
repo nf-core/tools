@@ -10,7 +10,7 @@ Pipeline repository:
 
 ```yaml
 repository_type: pipeline
-nf_core_version:  "4.0.2"
+nf_core_version: "4.0.2"
 ```
 
 Modules repository:
