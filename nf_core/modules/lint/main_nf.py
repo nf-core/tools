@@ -341,22 +341,33 @@ def check_script_section(self, lines):
 
 def check_when_section(self, lines):
     """
-    Lint the when: section
-    Checks whether the line is modified from 'task.ext.when == null || task.ext.when'
+    Lint the when: section.
+
+    The module template no longer allows `task.ext.when` in `when:` blocks.
     """
     if len(lines) == 0:
-        self.failed.append(("main_nf", "when_exist", "when: condition has been removed", self.main_nf))
-        return
-    if len(lines) > 1:
-        self.failed.append(("main_nf", "when_exist", "when: condition has too many lines", self.main_nf))
+        self.passed.append(("main_nf", "when_exist", "No when: condition found", self.main_nf))
         return
     self.passed.append(("main_nf", "when_exist", "when: condition is present", self.main_nf))
 
-    # Check the condition hasn't been changed.
-    if lines[0].strip() != "task.ext.when == null || task.ext.when":
-        self.failed.append(("main_nf", "when_condition", "when: condition has been altered", self.main_nf))
+    if any("task.ext.when" in line for line in lines):
+        self.failed.append(
+            (
+                "main_nf",
+                "when_condition",
+                "task.ext.when is no longer allowed in when: condition",
+                self.main_nf,
+            )
+        )
         return
-    self.passed.append(("main_nf", "when_condition", "when: condition is unchanged", self.main_nf))
+    self.passed.append(
+        (
+            "main_nf",
+            "when_condition",
+            "when: condition does not use task.ext.when",
+            self.main_nf,
+        )
+    )
 
 
 def check_process_section(self, lines, registry, fix_version, progress_bar):
