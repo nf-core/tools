@@ -10,14 +10,14 @@ Pipeline repository:
 
 ```yaml
 repository_type: pipeline
-nf_core_version: "3.2.0"
+nf_core_version:  "4.0.2"
 ```
 
 Modules repository:
 
 ```yaml
 repository_type: modules
-nf_core_version: "3.2.0"
+nf_core_version: "4.0.2"
 container-registry:
   - community.wave.seqera.io/library/
 ```
