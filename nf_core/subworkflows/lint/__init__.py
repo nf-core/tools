@@ -51,7 +51,7 @@ class SubworkflowLint(ComponentLint):
         remote_url=None,
         branch=None,
         no_pull=False,
-        registry: str = "quay.io,community.wave.seqera.io/library/",
+        registry: str = "quay.io,community.wave.seqera.io/library",
         hide_progress=False,
     ):
         super().__init__(
