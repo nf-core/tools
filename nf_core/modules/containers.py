@@ -301,7 +301,7 @@ class ModuleContainers:
                         f"  {cs}/{short_platform}",
                         total=1,
                         completed=0,
-                        status="submitting...",
+                        status="submitting wave build request...",
                     )
 
         def make_on_build_id(cs: str, platform: str) -> Callable[[str], None]:
