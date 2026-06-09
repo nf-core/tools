@@ -580,7 +580,10 @@ class PipelineSchema:
 
         if not output_fn:
             console = rich.console.Console()
-            console.print("\n", Syntax(prettified_docs, output_format, word_wrap=True), "\n")
+            if console.is_terminal:
+                console.print("\n", Syntax(prettified_docs, output_format, word_wrap=True), "\n")
+            else:
+                print(prettified_docs, end="")
         else:
             if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
