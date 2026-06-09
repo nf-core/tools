@@ -454,6 +454,19 @@ code_quality:
 documentation_metadata:
   name: "Documentation & metadata"
   features:
+    add_agents_md:
+      skippable_paths:
+        - "AGENTS.md"
+      short_description: "Add AGENTS.md"
+      description: "Include an AGENTS.md file with general and repository-specific agent instructions"
+      help_text: |
+        This will add an `AGENTS.md` file to the pipeline root directory.
+
+        The file can be used to define repository-specific instructions for coding agents working in the pipeline.
+      nfcore_pipelines: True
+      custom_pipelines: True
+      default: true
+
     citations:
       skippable_paths:
         - "assets/methods_description_template.yml"
