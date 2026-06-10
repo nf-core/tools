@@ -131,7 +131,8 @@ class TestSchema(unittest.TestCase):
             assert definition["title"] in docs
             assert definition["description"] in docs
 
-    def test_schema_docs_markdown_linebreak(self):
+    @with_temporary_file
+    def test_schema_docs_markdown_linebreak(self, tmp_file):
         """Check that Markdown docs linebreak only happens in a terminal"""
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
@@ -150,7 +151,11 @@ class TestSchema(unittest.TestCase):
             self.schema_obj.print_documentation()
             docs_tty = mock_stdout.getvalue()
 
+        self.schema_obj.print_documentation(output_fn=tmp_file.name, force=True)
+        tmp_file.seek(0)
+
         assert docs_tty.count("\n") > docs.count("\n")
+        assert tmp_file.read().decode() == docs
 
     @with_temporary_file
     def test_save_schema(self, tmp_file):
