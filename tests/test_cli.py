@@ -106,7 +106,7 @@ class TestCli(unittest.TestCase):
                 "revision": "abcdef",
                 "id": "idgui",
                 "command-only": None,
-                "params-out": "/path/params/out",
+                "params-out": Path("/path/params/out"),
                 "params-in": temp_params_in.name,
                 "save-all": None,
                 "show-hidden": None,
