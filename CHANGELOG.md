@@ -6,6 +6,7 @@
 
 - Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
 - container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
+- generate valid Markdown when piping schema docs to file ([#4319](https://github.com/nf-core/tools/pull/4319))
 
 ### Linting
 
