@@ -408,7 +408,9 @@ class ROCrate:
             # All dictionary keys need to be quoted
             contributors_str = contributors_str.replace(f"{key}:", f'"{key}":')
         # Use curly brackets for dictionaries
-        contributors_str = contributors_str.replace("], [", "}, {").replace("[[", "[{").replace("]]", "}]")
+        contributors_str = (
+            contributors_str.replace("], [", "}, {").replace("]]]", "]}]").replace("[[", "[{").replace("]]", "}]")
+        )
         log.debug(f"manifest.contributors (normalised): {contributors_str}")
         try:
             contributors = json.loads(contributors_str)

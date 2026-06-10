@@ -331,8 +331,8 @@ class TestROCrate(TestPipelines):
                     affiliation: '',
                     email: '',
                     github: '',
-                    contribution: ['contributor'],
-                    orcid: ''
+                    orcid: '',
+                    contribution: ['contributor']
                 ]
             ]
             """
