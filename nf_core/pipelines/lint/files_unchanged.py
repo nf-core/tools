@@ -45,6 +45,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
 
         .gitignore
         .prettierignore
+        AGENTS.md
 
 
     .. tip:: You can configure the ``nf-core pipelines lint`` tests to ignore any of these checks by setting
@@ -107,7 +108,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path("docs", "README.md")],
     ]
     files_partial = [
-        [Path(".gitignore"), Path(".prettierignore")],
+        [Path(".gitignore"), Path(".prettierignore"), Path("AGENTS.md")],
     ]
 
     # Only show error messages from pipeline creation
