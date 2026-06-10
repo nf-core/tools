@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def main_nf(
-    module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
+    module_lint_object, module: NFCoreComponent, fix_version: bool, registry: tuple[str, ...], progress_bar: Progress
 ) -> tuple[list[str], list[str]]:
     """Lint a ``main.nf`` module file
 
@@ -359,15 +359,17 @@ def check_when_section(self, lines):
     self.passed.append(("main_nf", "when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines, registry, fix_version, progress_bar):
+def check_process_section(
+    self, lines: list[str], registry: tuple[str, ...], fix_version: bool, progress_bar: Progress | None
+):
     """Lint the section of a module between the process definition
     and the 'input:' definition
     Specifically checks for correct software versions
     and containers
 
     Args:
-        lines (List[str]): Content of process.
-        registry (str): Base Docker registry for containers. Typically quay.io.
+        lines (list[str]): Content of process.
+        registry (tuple[str, ...]): Allowed container registry prefixes.
         fix_version (bool): Fix software version
         progress_bar (ProgressBar): Progress bar to update.
 
@@ -384,6 +386,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     singularity_tag = None
     docker_tag = None
     bioconda_packages = []
+    allowed_registries = registry
 
     # Process name should be all capital letters
     if all(x.upper() for x in self.process_name):
@@ -450,7 +453,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             else:
                 self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if line.startswith((registry, "community.wave.seqera.io/library/")):
+            if line.startswith(allowed_registries):
                 l_stripped = re.sub(r"\W+$", "", line)
                 self.passed.append(
                     (
@@ -465,15 +468,11 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                     (
                         "main_nf",
                         "container_links",
-                        "Container prefix is not correct. Please add the registry prefix (e.g. 'quay.io/')",
+                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(f'{r}' for r in allowed_registries)}",
                         self.main_nf,
                     )
                 )
 
-            # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
-            # If so, add quay.io as default container prefix
-            if line.count("/") == 1 and line.count(":") == 1:
-                line = "/".join([registry, line]).replace("//", "/")
             url = urlparse(line.split("'")[0])
 
         if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
@@ -564,7 +563,10 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                         log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
                         if fixed:
-                            progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                            if progress_bar is not None:
+                                progress_bar.print(
+                                    f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}"
+                                )
                             log.debug(f"Updating package {package} {ver} -> {last_ver}")
                             self.passed.append(
                                 (
@@ -575,9 +577,10 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                                 )
                             )
                         else:
-                            progress_bar.print(
-                                f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                            )
+                            if progress_bar is not None:
+                                progress_bar.print(
+                                    f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                                )
                             log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
                             self.warned.append(
                                 (

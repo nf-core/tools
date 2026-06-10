@@ -6,6 +6,7 @@
 
 - Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
 - container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
+- Coerce launch params_out to Path to fix AttributeError (#4299) ([#4317](https://github.com/nf-core/tools/pull/4317))
 
 ### Linting
 
@@ -21,6 +22,7 @@
 ### Template
 
 - add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
+- fix dead link ([#4307](https://github.com/nf-core/tools/pull/4307))
 
 #### Version updates
 

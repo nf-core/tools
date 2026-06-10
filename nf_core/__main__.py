@@ -485,7 +485,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 @click.option(
     "-o",
     "--params-out",
-    type=click.Path(),
+    type=click.Path(path_type=Path),
     default=str(Path.cwd() / "nf-params.json"),
     help="Path to save run parameters file",
 )
@@ -630,7 +630,7 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
+@click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
     ctx,
@@ -1325,8 +1325,8 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1369,7 +1369,7 @@ def command_modules_lint(
         ctx,
         tool,
         directory,
-        registry,
+        tuple(registry.split(",")),
         key,
         all_modules,
         fail_warned,
@@ -1617,8 +1617,8 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1656,7 +1656,7 @@ def command_subworkflows_lint(
         ctx,
         subworkflow,
         directory,
-        registry,
+        tuple(registry.split(",")),
         key,
         all_subworkflows,
         fail_warned,

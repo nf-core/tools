@@ -51,7 +51,7 @@ class SubworkflowLint(ComponentLint):
         remote_url=None,
         branch=None,
         no_pull=False,
-        registry=None,
+        registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress=False,
     ):
         super().__init__(
@@ -69,7 +69,6 @@ class SubworkflowLint(ComponentLint):
     def lint(
         self,
         subworkflow=None,
-        registry="quay.io",
         key=(),
         all_subworkflows=False,
         print_results=True,
@@ -152,23 +151,22 @@ class SubworkflowLint(ComponentLint):
 
         # Lint local subworkflows
         if local and len(local_subworkflows) > 0:
-            self.lint_subworkflows(local_subworkflows, registry=registry, local=True)
+            self.lint_subworkflows(local_subworkflows, local=True)
 
         # Lint nf-core subworkflows
         if not local and len(remote_subworkflows) > 0:
-            self.lint_subworkflows(remote_subworkflows, registry=registry, local=False)
+            self.lint_subworkflows(remote_subworkflows, local=False)
 
         if print_results:
             self._print_results(show_passed=show_passed, sort_by=sort_by, plain_text=plain_text)
             self.print_summary(plain_text=plain_text)
 
-    def lint_subworkflows(self, subworkflows, registry="quay.io", local=False):
+    def lint_subworkflows(self, subworkflows, local=False):
         """
         Lint a list of subworkflows
 
         Args:
             subworkflows ([NFCoreComponent]): A list of subworkflow objects
-            registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core subworkflows
         """
         # TODO: consider unifying modules and subworkflows lint_subworkflows() function and add it to the ComponentLint class
@@ -189,9 +187,9 @@ class SubworkflowLint(ComponentLint):
 
             for swf in subworkflows:
                 progress_bar.update(lint_progress, advance=1, test_name=swf.component_name)
-                self.lint_subworkflow(swf, progress_bar, registry=registry, local=local)
+                self.lint_subworkflow(swf, progress_bar, local=local)
 
-    def lint_subworkflow(self, swf, progress_bar, registry, local=False):
+    def lint_subworkflow(self, swf, progress_bar, local=False):
         """
         Perform linting on one subworkflow
 

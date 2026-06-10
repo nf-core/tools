@@ -122,7 +122,7 @@ def subworkflows_lint(
             directory,
             fail_warned=fail_warned,
             fix=fix,
-            registry=ctx.params["registry"],
+            registry=registry,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             no_pull=ctx.obj["modules_repo_no_pull"],
@@ -130,7 +130,6 @@ def subworkflows_lint(
         )
         subworkflow_lint.lint(
             subworkflow=subworkflow,
-            registry=registry,
             key=key,
             all_subworkflows=all_subworkflows,
             print_results=True,

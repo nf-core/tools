@@ -1,3 +1,6 @@
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 import nf_core.modules.lint
@@ -6,6 +9,7 @@ from nf_core.modules.lint.main_nf import (
     _parse_output_topics,
     check_container_link_line,
     check_process_labels,
+    check_process_section,
     check_script_section,
 )
 
@@ -101,6 +105,64 @@ def test_container_links(content, passed, warned, failed):
     assert len(mock_lint.failed) == failed
 
 
+@pytest.mark.parametrize(
+    "container_line,additional_registries,should_pass",
+    [
+        # Known additional registry passes when listed
+        (
+            "container 'community.wave.seqera.io/library/samtools:1.17--h87f3376_0'",
+            ["community.wave.seqera.io/library/"],
+            True,
+        ),
+        # Same registry fails when not in additional_registries
+        (
+            "container 'community.wave.seqera.io/library/samtools:1.17--h87f3376_0'",
+            [],
+            False,
+        ),
+        # Default registry still passes when additional_registries is populated
+        (
+            "container 'quay.io/biocontainers/samtools:1.17--h87f3376_0'",
+            ["community.wave.seqera.io/library/"],
+            True,
+        ),
+        # Multiple additional registries: second one matches
+        (
+            "container 'ghcr.io/org/tool:1.0--abc123'",
+            ["community.wave.seqera.io/library/", "ghcr.io/"],
+            True,
+        ),
+    ],
+)
+def test_check_process_section_additional_registries(container_line, additional_registries, should_pass, tmp_path):
+    """Test that container_links passes/fails based on additional_registries from .nf-core.yml."""
+    mock_lint = MockModuleLint()
+    mock_lint.process_name = "TOOL_SUBTOOL"
+    mock_lint.component_dir = tmp_path
+
+    with patch("requests.head") as mock_head:
+        mock_head.return_value = MagicMock(status_code=200)
+        check_process_section(
+            mock_lint,
+            [container_line],
+            ("quay.io", *additional_registries),
+            False,
+            None,
+        )
+
+    prefix_passed = any(r[1] == "container_links" and "Container prefix is correct" in r[2] for r in mock_lint.passed)
+    prefix_failed = any(
+        r[1] == "container_links" and "Container prefix is not correct" in r[2] for r in mock_lint.failed
+    )
+
+    if should_pass:
+        assert prefix_passed, f"Expected container prefix to pass; passed={mock_lint.passed}, failed={mock_lint.failed}"
+        assert not prefix_failed, f"Container prefix should not fail; failed={mock_lint.failed}"
+    else:
+        assert prefix_failed, f"Expected container prefix to fail; passed={mock_lint.passed}, failed={mock_lint.failed}"
+        assert not prefix_passed, f"Container prefix should not pass; passed={mock_lint.passed}"
+
+
 class TestMainNfLinting(TestModules):
     """
     Test main.nf linting functionality.
@@ -139,6 +201,68 @@ class TestMainNfLinting(TestModules):
         module_lint.lint(print_results=False, module="samtools/sort")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
+
+    def test_additional_registry_from_nf_core_yml_passes_container_link(self):
+        """Test that a container using a registry listed in .nf-core.yml container-registry passes linting.
+
+        Creates a local module whose container URL uses a custom registry (myreg.io/library/).
+        When that registry is listed under ``container-registry`` in ``.nf-core.yml``, the
+        ``container_links`` check must pass.  Without it, the same container must produce a
+        ``container_links`` warning (local-module failures are demoted to warnings).
+        """
+        local_mod_dir = Path(self.pipeline_dir) / "modules" / "local" / "mock_tool"
+        local_mod_dir.mkdir(parents=True, exist_ok=True)
+        (local_mod_dir / "main.nf").write_text(
+            "process MOCK_TOOL {\n"
+            "    container 'myreg.io/library/tool:1.0--abc123'\n"
+            "    input:\n"
+            "    val(x)\n"
+            "    output:\n"
+            "    path('out.txt'), emit: out\n"
+            "    script:\n"
+            "    'echo hello > out.txt'\n"
+            "}\n"
+        )
+
+        nf_core_yml_path = Path(self.pipeline_dir) / ".nf-core.yml"
+        from ruamel.yaml import YAML
+
+        yaml_parser = YAML()
+        nf_core_yml = yaml_parser.load(nf_core_yml_path)
+
+        # --- positive: registry listed in .nf-core.yml ---
+        nf_core_yml["container-registry"] = ["myreg.io/library/"]
+        yaml_parser.dump(nf_core_yml, nf_core_yml_path)
+
+        with patch("requests.head") as mock_head:
+            mock_head.return_value = MagicMock(status_code=200)
+            module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+            module_lint.lint(local=True, print_results=False)
+
+        container_link_warns = [
+            r for r in module_lint.warned if r.lint_test == "container_links" and "mock_tool" in r.component_name
+        ]
+        assert not any("Container prefix is not correct" in r.message for r in container_link_warns), (
+            f"Expected no container prefix failure for myreg.io when listed in .nf-core.yml; "
+            f"warned={[r.message for r in container_link_warns]}"
+        )
+
+        # --- negative: same container fails when registry is absent ---
+        del nf_core_yml["container-registry"]
+        yaml_parser.dump(nf_core_yml, nf_core_yml_path)
+
+        with patch("requests.head") as mock_head:
+            mock_head.return_value = MagicMock(status_code=200)
+            module_lint2 = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+            module_lint2.lint(local=True, print_results=False)
+
+        container_link_warns2 = [
+            r for r in module_lint2.warned if r.lint_test == "container_links" and "mock_tool" in r.component_name
+        ]
+        assert any("Container prefix is not correct" in r.message for r in container_link_warns2), (
+            f"Expected container prefix failure for myreg.io when not in .nf-core.yml; "
+            f"warned={[r.message for r in container_link_warns2]}"
+        )
 
     def test_topics_and_emits_version_check(self):
         """Test that main_nf version emit and topics check works correctly"""
