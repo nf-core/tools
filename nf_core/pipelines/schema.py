@@ -566,7 +566,7 @@ class PipelineSchema:
         Prints documentation for the schema.
         """
         if columns is None:
-            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+            columns = ["parameter", "description", "type", "default", "required", "hidden"]
 
         output = self.schema_to_markdown(columns)
         if output_format == "html":
