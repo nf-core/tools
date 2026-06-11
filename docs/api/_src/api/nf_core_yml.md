@@ -64,4 +64,5 @@ container-registry:
     :model-show-validator-members: false
     :model-show-field-summary: true
     :field-show-alias: true
+    :no-index:
 ```
