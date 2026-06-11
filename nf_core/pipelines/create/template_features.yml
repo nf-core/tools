@@ -465,7 +465,7 @@ documentation_metadata:
         The file can be used to define repository-specific instructions for coding agents working in the pipeline.
       nfcore_pipelines: True
       custom_pipelines: True
-      default: true
+      default: false
 
     citations:
       skippable_paths:
