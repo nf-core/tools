@@ -32,10 +32,10 @@ def version_consistency(self):
     # Get the version definitions
     # Get version from nextflow.config
     versions = {}
-    versions["manifest.version"] = self.nf_config.get("manifest", {}).get("version", "") or ""
+    versions["manifest.version"] = self.nf_config.get("manifest", {}).get("version") or ""
 
     # Get version from the docker tag
-    process_container = self.nf_config.get("process", {}).get("container", "") or ""
+    process_container = self.nf_config.get("process", {}).get("container") or ""
     if process_container and ":" not in process_container:
         failed.append(f"Docker slug seems not to have a version tag: {process_container}")
 
