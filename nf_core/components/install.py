@@ -181,9 +181,10 @@ class ComponentInstall(ComponentCommand):
             else:
                 self.install_included_components(component_dir)
 
-        # Regenerate container configuration files for the pipeline when modules are installed
+        # Update container configs for the installed module. Subworkflows have no container entries of their
+        # own; their included modules each trigger this when installed above.
         if self.component_type == "modules":
-            try_generate_container_configs(self.directory, component_dir, component)
+            try_generate_container_configs(self.directory, component_dir)
 
         if not silent:
             modules_json.load()

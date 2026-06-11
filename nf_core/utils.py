@@ -33,7 +33,7 @@ import rich
 import rich.markup
 import yaml
 from packaging.version import Version
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -203,7 +203,7 @@ class Pipeline:
         self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
-        self.wf_path = Path(wf_path)
+        self.wf_path = Path(wf_path).resolve()
         self.pipeline_name: str | None = None
         self.pipeline_prefix: str | None = None
         self.schema_obj: PipelineSchema | None = None
@@ -367,6 +367,18 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
         log.info(f"Detected Nextflow version {parsed_version_str}")
 
     return nf_version >= minimal_nf_version
+
+
+_NF_PROCESS_NAME_RE = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
+
+
+def read_module_name(main_nf: Path) -> str | None:
+    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    try:
+        match = _NF_PROCESS_NAME_RE.search(main_nf.read_text())
+        return match.group(1) if match else None
+    except OSError:
+        return None
 
 
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
@@ -1388,6 +1400,8 @@ class NFCoreYamlLintConfig(BaseModel):
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     repository_type: Literal["pipeline", "modules"] | None = None
     """ Type of repository """
     nf_core_version: str | None = None
@@ -1402,6 +1416,8 @@ class NFCoreYamlConfig(BaseModel):
     """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
     update: dict[str, str | bool | dict[str, str | dict[str, str | bool]]] | None = None
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
+    container_registry: list[str] | None = Field(default=None, alias="container-registry")
+    """ Additional container registry prefixes allowed when linting container directives. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)

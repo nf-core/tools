@@ -12,7 +12,7 @@ See the [Lint Tests](/docs/nf-core-tools/api_reference/dev/pipeline_lint_tests) 
 ```
 
 ```{eval-rst}
-.. autoclass:: nf_core.lint.PipelineLint
+.. autoclass:: nf_core.pipelines.lint.PipelineLint
     :members: _lint_pipeline
     :private-members: _print_results, _get_results_md, _save_json_results, _wrap_quotes
     :show-inheritance:
