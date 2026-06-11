@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
+from pydantic import ValidationError, ValidationInfo, field_validator
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Grid, HorizontalScroll
@@ -17,6 +17,10 @@ from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 
 import nf_core
 from nf_core.utils import NFCoreTemplateConfig
+
+# Sphinx/autodoc triggers Pydantic model rebuilds which require `Dict` in this module's namespace.
+# Using the builtin dict (not typing.Dict) because Pydantic v2 only accepts the lowercase form.
+Dict = dict
 
 # Use ContextVar to define a context on the model initialization
 _init_context_var: ContextVar = ContextVar("_init_context_var", default=None)
@@ -40,8 +44,6 @@ features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "te
 
 class CreateConfig(NFCoreTemplateConfig):
     """Pydantic model for the nf-core create config."""
-
-    model_config = ConfigDict(extra="allow")
 
     def __init__(self, /, **data: Any) -> None:
         """Custom init method to allow using a context on the model initialization."""
