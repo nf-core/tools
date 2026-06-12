@@ -383,51 +383,6 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
     return nf_version >= minimal_nf_version
 
 
-_NF_PROCESS_NAME_RE = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
-
-
-def read_module_name(main_nf: Path) -> str | None:
-    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
-    try:
-        match = _NF_PROCESS_NAME_RE.search(main_nf.read_text())
-        return match.group(1) if match else None
-    except OSError:
-        return None
-
-def nextflow_inspect(main_nf: Path, output_format: str = "json", profile: str = "docker") -> dict:
-    if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
-        raise ValueError(
-            f"Nextflow inspect cannot be run with this version of nextflow. nextflow >={NF_INSPECT_MIN_NF_VERSION} required"
-        )
-
-    if not main_nf.exists():
-        raise ValueError(f"Specified main.nf file {main_nf.absolute()} does not exist!")
-
-    valid_formats = ("json",)
-    if output_format and output_format.lower() not in valid_formats:
-        raise ValueError(f"Invalid format: {output_format} Must be one of ({','.join(valid_formats)})")
-
-    main_nf = Path(main_nf).absolute()
-    with set_wd_tempdir():
-        executable = "nextflow"
-        cmd_params = " inspect "
-        cmd_params += f" -format {output_format} " if output_format else ""
-        cmd_params += f" -profile {profile} " if profile else ""
-        cmd_params += str(main_nf)
-
-        log.debug("Running nextflow inspect to extract docker container")
-        cmd_out = run_cmd(executable, cmd_params)
-
-        if cmd_out is None:
-            log.debug(f"Failed to run `{executable} {cmd_params}`")
-            return {}
-
-        out, _ = cmd_out
-        out_str = str(out, encoding="utf-8")
-
-        return json.loads(out_str)
-
-
 def read_module_name(main_nf: Path) -> str | None:
     """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
     nf_process_name_regex = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
