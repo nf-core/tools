@@ -23,6 +23,7 @@ import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
 from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -134,7 +135,9 @@ def unquote(s: str) -> str:
     """
     import ruamel.yaml.scalarstring
 
-    if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+    if isinstance(
+        s, (ruamel.yaml.scalarstring.DoubleQuotedScalarString, ruamel.yaml.scalarstring.SingleQuotedScalarString)
+    ):
         return s
 
     try:
@@ -327,8 +330,9 @@ def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
     return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
 
 
+@lru_cache(maxsize=1)
 def get_nf_version() -> tuple[int, int, int, bool] | None:
-    """Get the version of Nextflow installed on the system."""
+    """Get the version of Nextflow installed on the system. Cached for the lifetime of the process."""
     try:
         cmd_out = run_cmd("nextflow", "-v")
         if cmd_out is None:
@@ -386,11 +390,11 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
 def read_module_name(main_nf: Path) -> str | None:
     """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
     nf_process_name_regex = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
-    match = nf_process_name_regex.search(main_nf.read_text())
     try:
-        return match.group(1) if match else None
+        match = nf_process_name_regex.search(main_nf.read_text())
     except OSError:
         return None
+    return match.group(1) if match else None
 
 
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
