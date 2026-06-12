@@ -380,29 +380,6 @@ class ModuleLint(ComponentLint):
 
             return {}
 
-        def _sort_meta_yml(meta_yml: dict) -> dict:
-            """Sort meta.yml keys according to the schema's property order"""
-            # Get the schema to determine the correct key order
-            try:
-                schema = self.load_meta_schema()
-                schema_keys = list(schema["properties"].keys())
-            except (LintExceptionError, KeyError) as e:
-                raise UserWarning("Failed to load meta schema", e) from e
-
-            result: dict = {}
-
-            # First, add keys in the order they appear in the schema
-            for key in schema_keys:
-                if key in meta_yml:
-                    result[key] = meta_yml[key]
-
-            # Then add any keys that aren't in the schema (to preserve custom keys)
-            for key in meta_yml:
-                if key not in result:
-                    result[key] = meta_yml[key]
-
-            return result
-
         # Obtain inputs, outputs and topics from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
         # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
