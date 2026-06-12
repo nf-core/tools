@@ -8,6 +8,7 @@ from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.main_nf import (
     _parse_output_topics,
     check_container_link_line,
+    check_nf_module_name_modularity,
     check_process_labels,
     check_process_section,
     check_script_section,
@@ -16,6 +17,27 @@ from nf_core.modules.lint.main_nf import (
 from ...test_modules import TestModules
 from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 from .test_lint_utils import MockModuleLint
+
+
+@pytest.mark.parametrize(
+    "content,passed,warned,failed",
+    [
+        # Valid module <tool> name
+        ("tar", 1, 0, 0),
+        # Valid module <tool/subtool> name
+        ("tabix/tabix", 1, 0, 0),
+        # Invalid module <tool/subtool/subtool> name
+        ("aws/s3/ls", 0, 0, 1),
+    ],
+)
+def test_module_name_granularity(content, passed, warned, failed):
+    """Test module name granularity"""
+    mock_lint = MockModuleLint()
+    check_nf_module_name_modularity(mock_lint, content)
+
+    assert len(mock_lint.passed) == passed
+    assert len(mock_lint.warned) == warned
+    assert len(mock_lint.failed) == failed
 
 
 @pytest.mark.parametrize(

@@ -29,6 +29,10 @@ def main_nf(
 
     The following checks are performed:
 
+    * ``main_nf_module_granularity``: The module must represent a single command
+      as ``<tool>`` or single subcommand with distinct functionality as
+      ``<tool/subtool>``.
+
     * ``main_nf_exists``: The ``main.nf`` file must exist.
 
     * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
@@ -63,6 +67,9 @@ def main_nf(
     inputs: list[str] = []
     emits: list[str] = []
     topics: list[str] = []
+
+    # Check the module name granularity
+    check_nf_module_name_modularity(module, module.component_name)
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
@@ -270,6 +277,23 @@ def main_nf(
             )
 
     return inputs, emits
+
+
+def check_nf_module_name_modularity(self, component_name):
+    """
+    Lint the module granularity
+    Checks whether the module name has at most two levels of granularity.
+    """
+    if component_name.count("/") > 1:
+        self.failed.append(
+            ("main_nf", "main_nf_module_granularity", "Module not named as `<tool>` or `<tool/subtool>`", self.main_nf)
+        )
+    elif component_name.count("/") == 1:
+        self.passed.append(
+            ("main_nf", "main_nf_module_granularity", "Module properly named as `<tool/subtool>`", self.main_nf)
+        )
+    else:
+        self.passed.append(("main_nf", "main_nf_module_granularity", "Module properly named as `<tool>`", self.main_nf))
 
 
 def check_script_section(self, lines):
