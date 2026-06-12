@@ -31,6 +31,7 @@
 - add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
 - fix dead link ([#4307](https://github.com/nf-core/tools/pull/4307))
 - remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
+- correct always-true `nf-core pipelines lint` condition in the linting workflow and fix doc typos (broken `#lint-tests` anchor, duplicate word, stray code-span space) ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
 
 #### Version updates
 

@@ -46,7 +46,7 @@ jobs:
         run: uv tool install nf-core==${{ steps.read_yml.outputs['nf_core_version'] }}
 
       - name: Run nf-core pipelines lint
-        if: ${{ github.base_ref != 'master' || github.base_ref != 'main' }}
+        if: ${{ github.base_ref != 'master' && github.base_ref != 'main' }}
         env:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
