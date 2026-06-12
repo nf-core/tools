@@ -22,6 +22,7 @@ import tempfile
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -107,6 +108,12 @@ NFCORE_DIR = Path(
 
 CONTAINER_SYSTEMS = ["docker", "singularity"]
 CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
+
+
+class ContainerRegistryUrls(Enum):
+    SEQERA_DOCKER = "community.wave.seqera.io/library"
+    SEQERA_SINGULARITY = "community-cr-prod.seqera.io/docker/registry/v2"
+    GALAXY_SINGULARITY = "depot.galaxyproject.org/singularity"
 
 
 def unquote(s: str) -> str:

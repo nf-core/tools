@@ -18,8 +18,7 @@ from nf_core.modules.lint.module_containers import (
     lint_main_nf_container,
     lint_meta_yml_containers,
 )
-from nf_core.pipelines.download.utils import ContainerRegistryUrls
-from nf_core.utils import unquote
+from nf_core.utils import ContainerRegistryUrls, unquote
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint

@@ -5,7 +5,7 @@ import requests
 from pydantic_core import ValidationError
 
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.modules_utils import MetaYmlContainers, module_uses_dockerfile
+from nf_core.modules.modules_utils import ContainerEntry, MetaYmlContainers, module_uses_dockerfile
 from nf_core.utils import CONTAINER_PLATFORMS
 
 log = logging.getLogger(__name__)
