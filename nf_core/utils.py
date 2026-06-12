@@ -276,9 +276,9 @@ class Pipeline:
 
         self.pipeline_prefix, self.pipeline_name = manifest.get("name", "/").split("/")
 
-        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", manifest.get("nextflowVersion", "") or "")
+        nextflow_version_match = re.search(r"(?P<version>[0-9\.]+(-edge)?)", manifest.get("nextflowVersion", "") or "")
         if nextflow_version_match:
-            self.minNextflowVersion = nextflow_version_match.group(0)
+            self.minNextflowVersion = nextflow_version_match.group("version")
             return True
         return False
 
