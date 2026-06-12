@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Code to deal with pipeline RO (Research Object) Crates"""
 
-import json
 import logging
 import os
 import re
@@ -103,7 +102,7 @@ class ROCrate:
         """
 
         # Check that the checkout pipeline version is the same as the requested version
-        if self.version != "" and self.version != self.pipeline_obj.nf_config.get("manifest.version"):
+        if self.version and self.version != self.pipeline_obj.nf_config.get("manifest", {}).get("version"):
             # using git checkout to get the requested version
             log.info(f"Checking out pipeline version {self.version}")
             if self.pipeline_obj.repo is None:
@@ -119,7 +118,7 @@ class ROCrate:
             except GitCommandError:
                 log.error(f"Could not checkout version {self.version}")
                 sys.exit(1)
-        self.version = self.pipeline_obj.nf_config.get("manifest.version", "")
+        self.version = self.pipeline_obj.nf_config.get("manifest", {}).get("version", "")
         self.make_workflow_rocrate()
 
         # Save just the JSON metadata file
@@ -161,13 +160,14 @@ class ROCrate:
 
         # Create the RO Crate object
 
+        manifest = self.pipeline_obj.nf_config.get("manifest", {})
         self.crate = custom_make_crate(
             self.pipeline_dir,
             self.pipeline_dir / "main.nf",
-            self.pipeline_obj.nf_config.get("manifest.homePage", ""),
-            self.pipeline_obj.nf_config.get("manifest.name", ""),
-            self.pipeline_obj.nf_config.get("manifest.version", ""),
-            self.pipeline_obj.nf_config.get("manifest.nextflowVersion", ""),
+            manifest.get("homePage", ""),
+            manifest.get("name", ""),
+            manifest.get("version", ""),
+            manifest.get("nextflowVersion", ""),
             diagram=diagram,
         )
 
@@ -268,10 +268,11 @@ class ROCrate:
         """
         Add workflow authors to the crate
         """
+        manifest = self.pipeline_obj.nf_config.get("manifest", {})
         contributors = []
-        if "manifest.contributors" in self.pipeline_obj.nf_config:
+        if manifest.get("contributors"):
             contributors = self.parse_manifest_contributors()
-        if not contributors and "manifest.author" in self.pipeline_obj.nf_config:
+        if not contributors and manifest.get("author"):
             if self.pipeline_obj.repo:
                 contributors = self.parse_manifest_authors()
             else:
@@ -346,7 +347,7 @@ class ROCrate:
 
     def parse_manifest_authors(self) -> list:
         # parse manifest.author"
-        authors = [a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")]
+        authors = [a.strip() for a in self.pipeline_obj.nf_config.get("manifest", {}).get("author", "").split(",")]
         # remove duplicates
         authors = list(set(authors))
         log.debug(f"Authors: {authors}")
@@ -398,26 +399,14 @@ class ROCrate:
     # and return as a list of dictionaries
     def parse_manifest_contributors(self) -> list:
         field_names = ["name", "affiliation", "github", "contribution", "orcid", "email"]
-        # Grab the contributor list and convert to JSON
-        # TODO: can be removed once we switch to `nextflow config -o json`
-        contributors_str = self.pipeline_obj.nf_config["manifest.contributors"]
-        log.debug(f"manifest.contributors: {contributors_str}")
-        # JSON uses double quotes, not single quotes
-        contributors_str = contributors_str.replace("'", '"')
-        for key in field_names:
-            # All dictionary keys need to be quoted
-            contributors_str = contributors_str.replace(f"{key}:", f'"{key}":')
-        # Use curly brackets for dictionaries
-        contributors_str = contributors_str.replace("], [", "}, {").replace("[[", "[{").replace("]]", "}]")
-        log.debug(f"manifest.contributors (normalised): {contributors_str}")
-        try:
-            contributors = json.loads(contributors_str)
-        except json.JSONDecodeError as exc:
+        # Grab the contributor list directly from the nested config (already a list[dict])
+        contributors = self.pipeline_obj.nf_config.get("manifest", {}).get("contributors", [])
+        log.debug(f"manifest.contributors: {contributors}")
+        if not isinstance(contributors, list):
             log.error(
                 "Could not parse `manifest.contributors` from nextflow.config. "
                 "Expected a list of maps, for example: [[name: 'First Last', github: 'user']]. "
-                f"Normalised string passed to JSON parser was: {contributors_str!r}. "
-                f"JSON decoding error: {exc}"
+                f"Got: {contributors!r}"
             )
             return []
 

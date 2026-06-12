@@ -104,7 +104,7 @@ class TestLintMultiqcConfig(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj._load()
         # bump version
-        lint_obj.nf_config["manifest.version"] = "1.0"
+        lint_obj.nf_config["manifest"]["version"] = "1.0"
         result = lint_obj.multiqc_config()
         # Reset the file
         with open(self.multiqc_config_yml, "w") as fh:
