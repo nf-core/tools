@@ -4,7 +4,6 @@ from pathlib import Path
 import requests
 from pydantic_core import ValidationError
 
-from nf_core.components.components_utils import read_meta_yml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_utils import MetaYmlContainers, module_uses_dockerfile
 from nf_core.utils import CONTAINER_PLATFORMS
@@ -18,7 +17,11 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
         return
 
     meta_path = Path(module.component_dir, "meta.yml")
-    containers = module.container
+    meta_yml = module.load_meta_yml()
+    assert meta_yml and "containers" in meta_yml
+
+    containers_raw = meta_yml["containers"]
+
     # Protocol and hash checks for docker/singularity
     skip_system = {"docker": skip_docker, "singularity": skip_singularity, "conda": skip_conda}
 
@@ -357,7 +360,9 @@ def lint_main_nf_container(
     main_path = Path(module.component_dir, "main.nf")
     meta_path = Path(module.component_dir, "meta.yml")
 
-    meta_yml = read_meta_yml(meta_path)
+    meta_yml = module.load_meta_yml()
+    if meta_yml is None:
+        return
     try:
         docker_container_raw = meta_yml.get("containers", {}).get("docker", {}).get("linux/amd64", {})
         docker_container = MetaYmlContainers.DockerContainer.model_validate(docker_container_raw)

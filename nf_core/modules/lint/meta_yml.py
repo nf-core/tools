@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 import logging
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import ruamel.yaml
 from jsonschema import exceptions, validators
 
 from nf_core.components.components_differ import ComponentsDiffer
+from nf_core.components.components_utils import read_meta_yml as read_component_meta_yml
+from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.module_containers import (
@@ -126,20 +128,8 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
             )
             return
         raise LintExceptionError("Module does not have a `meta.yml` file")
-    # Check if we have a patch file, get original file in that case
+    # read_meta_yml returns the reverse-patched content for patched modules
     meta_yaml = read_meta_yml(module_lint_object, module)
-    if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
-        lines = ComponentsDiffer.try_apply_patch(
-            module.component_type,
-            module.component_name,
-            module_lint_object.modules_repo.repo_path,
-            module.patch_path,
-            Path(module.component_dir).relative_to(module.base_dir),
-            reverse=True,
-        ).get("meta.yml")
-        if lines is not None:
-            yaml = ruamel.yaml.YAML()
-            meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
         module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist.", module.meta_yml))
         return
@@ -373,9 +363,6 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     Returns:
         dict: The `meta.yml` file as a dictionary
     """
-    meta_yaml = None
-    yaml = ruamel.yaml.YAML()
-    yaml.preserve_quotes = True
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ComponentsDiffer.try_apply_patch(
@@ -387,13 +374,10 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
             reverse=True,
         ).get("meta.yml")
         if lines is not None:
-            meta_yaml = yaml.load("".join(lines))
-    if meta_yaml is None:
-        if module.meta_yml is None:
-            return None
-        with open(module.meta_yml) as fh:
-            meta_yaml = yaml.load(fh)
-    return meta_yaml
+            return ruamel_yaml.load("".join(lines))
+    if module.meta_yml is None:
+        return None
+    return read_component_meta_yml(module.meta_yml)
 
 
 def obtain_inputs(_, inputs: list) -> list:

@@ -63,6 +63,7 @@ class NFCoreComponent:
         self.workflow_name: str | None = None
         self.container: dict = {}
         self.container_from_main_nf: str | None = None
+        self._meta_yml_content: dict | None = None
 
         if remote_component:
             # Initialize the important files
@@ -113,6 +114,21 @@ class NFCoreComponent:
 
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
+
+    def load_meta_yml(self, reload: bool = False) -> dict | None:
+        """
+        Return the parsed content of the component's ``meta.yml``, cached after the first read.
+
+        Pass ``reload=True`` after writing to ``meta.yml`` to refresh the cache.
+        Returns ``None`` if the component has no ``meta.yml``.
+        """
+        if reload or self._meta_yml_content is None:
+            if self.meta_yml is None or not Path(self.meta_yml).exists():
+                return None
+            from nf_core.components.components_utils import read_meta_yml
+
+            self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
+        return self._meta_yml_content
 
     def _get_main_nf_tags(self, test_main_nf: Path | str):
         """Collect all tags from the main.nf.test file."""
@@ -436,7 +452,7 @@ class NFCoreComponent:
                 log.debug(f"Output of nextflow inspect: {out_str}")
                 log.debug("Falling back to regex method.")
                 return get_container_with_regex(main_nf_abs, self.component_name)
-            container = out_json.get("processes", [{}])[0].get("container", None)
+            container = (out_json.get("processes") or [{}])[0].get("container", None)
             if container is None:
                 log.debug(
                     f"Container for {self.component_name} could not be extracted from the output of nextflow inspect"
