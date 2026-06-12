@@ -27,29 +27,39 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@cache
+def _load_skip_nf_test_sets(base_dir: str) -> dict[str, frozenset[str]]:
+    """
+    Load the per-system skip sets from ``.github/skip_nf_test.json``, cached per base directory.
+
+    Skip entries may be recorded as absolute or repo-relative paths,
+    so everything is resolved to absolute paths for comparison.
+    """
+    skip_file = Path(base_dir, ".github", "skip_nf_test.json")
+    if not skip_file.is_file():
+        return {}
+    with open(skip_file) as fh:
+        data = json.load(fh)
+    return {
+        k: frozenset(str((Path(base_dir) / p).resolve()) for p in v) for k, v in data.items() if isinstance(v, list)
+    }
+
+
 def meta_yml_containers(module: NFCoreComponent) -> None:
     """
     Lints the container information in the meta.yml file and the module's main.nf file.
     Respects per-system skips from `skip_nf_test.json`.
     """
-    # Determine per-system skips from skip_nf_test.json
-    skip_file = Path(module.base_dir, ".github", "skip_nf_test.json")
-    skip_docker = False
-    skip_singularity = False
-    skip_conda = False
-    module_path = str(module.component_dir)
-    if skip_file.is_file():
-        with open(skip_file) as fh:
-            data = json.load(fh)
-        skip_sets = {k: set(v) for k, v in data.items() if isinstance(v, list)}
-        skip_docker = module_path in skip_sets.get("docker", set())
-        skip_singularity = module_path in skip_sets.get("singularity", set())
-        skip_conda = module_path in skip_sets.get("conda", set())
-        if skip_docker or skip_singularity or skip_conda:
-            log.debug(
-                f"Skip entries found for {module.component_name}: "
-                f"docker={skip_docker}, singularity={skip_singularity}, conda={skip_conda}"
-            )
+    skip_sets = _load_skip_nf_test_sets(str(module.base_dir))
+    module_path = str(Path(module.component_dir).resolve())
+    skip_docker = module_path in skip_sets.get("docker", frozenset())
+    skip_singularity = module_path in skip_sets.get("singularity", frozenset())
+    skip_conda = module_path in skip_sets.get("conda", frozenset())
+    if skip_docker or skip_singularity or skip_conda:
+        log.debug(
+            f"Skip entries found for {module.component_name}: "
+            f"docker={skip_docker}, singularity={skip_singularity}, conda={skip_conda}"
+        )
 
     lint_meta_yml_containers(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
     lint_main_nf_container(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
