@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 from .environment_yml import lint_environment_yml
 from .main_nf import main_nf
-from .meta_yml import meta_yml, meta_yml_containers, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
+from .meta_yml import meta_yml, meta_yml_containers, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml_patched
 from .module_changes import module_changes
 from .module_deprecations import module_deprecations
 from .module_patch import module_patch
@@ -52,7 +52,7 @@ class ModuleLint(ComponentLint):
     obtain_inputs = obtain_inputs
     obtain_outputs = obtain_outputs
     obtain_topics = obtain_topics
-    read_meta_yml = read_meta_yml
+    read_meta_yml_patched = read_meta_yml_patched
     module_changes = module_changes
     module_deprecations = module_deprecations
     module_patch = module_patch

@@ -6,10 +6,13 @@ import logging
 import re
 from pathlib import Path
 
+import yaml
 from rich.progress import Progress
 
+import nf_core.utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.lint.environment_yml import _fix_module_version
 
 log = logging.getLogger(__name__)
 
@@ -417,7 +420,6 @@ def check_process_section(
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
     bioconda_packages = []
-    allowed_registries = registry
 
     # Check that the process name is correctly formated from the component name
     check_process_name_format(self, self.process_name, self.component_name)
@@ -516,7 +518,7 @@ def check_process_section(
                 # If a new version is available and fix is True, update the version
                 if fix_version:
                     try:
-                        fixed = _fix_module_version(self, bioconda_version, last_ver, response)
+                        fixed = _fix_module_version(self, bioconda_version, last_ver)
                     except FileNotFoundError as e:
                         fixed = False
                         log.debug(f"Unable to update package {package} due to error: {e}")

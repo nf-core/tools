@@ -138,7 +138,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
             return
         raise LintExceptionError("Module does not have a `meta.yml` file")
     # read_meta_yml returns the reverse-patched content for patched modules
-    meta_yaml = read_meta_yml(module_lint_object, module)
+    meta_yaml = read_meta_yml_patched(module_lint_object, module)
     if meta_yaml is None:
         module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist.", module.meta_yml))
         return
@@ -361,7 +361,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
             meta_yml_containers(module)
 
 
-def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
+def read_meta_yml_patched(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
     """
     Read a `meta.yml` file and return it as a dictionary
 
@@ -372,6 +372,9 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     Returns:
         dict: The `meta.yml` file as a dictionary
     """
+    if module_lint_object.modules_repo.repo_path is None:
+        raise ValueError("modules_repo.repo_path is None")
+
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ComponentsDiffer.try_apply_patch(
