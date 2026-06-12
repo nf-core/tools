@@ -352,90 +352,82 @@ def modules_containers_create(ctx, module: str, directory: Path, force: bool) ->
         manager = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
         ModuleContainers.check_tower_token()
 
-        # Handle batch processing for all modules
+        # Normalize to a list of components: batch mode processes all available
+        # modules, single-module mode is just a list of one.
         if manager.all_modules:
             if not manager.available_modules:
                 log.error("No modules found to build containers for")
                 sys.exit(1)
-
             log.info(f"Building containers for {len(manager.available_modules)} module(s)")
-            failed_modules = []
+            components = manager.available_modules
+        else:
+            assert manager.nfcore_component is not None
+            components = [manager.nfcore_component]
 
-            overall_progress = Progress(
-                "[bold blue]{task.description}",
-                BarColumn(),
-                MofNCompleteColumn(),
-                console=console,
-                disable=ctx.obj["hide_progress"],
-            )
-            module_progress = Progress(
-                SpinnerColumn(finished_text="[green]✓[/green]"),
-                "[bold blue]{task.description}",
-                TextColumn("{task.fields[status]}"),
-                console=console,
-                disable=ctx.obj["hide_progress"],
-            )
+        failed_modules = []
 
-            with Live(Group(overall_progress, module_progress), console=console, transient=True):
-                overall_task_id = overall_progress.add_task("modules", total=len(manager.available_modules))
-                for component in manager.available_modules:
-                    module_name = component.component_name
-                    module_task_id = module_progress.add_task(
-                        f"[cyan]{module_name}[/cyan]",
-                        total=None,
-                        status="building containers...",
-                    )
-                    try:
+        overall_progress = Progress(
+            "[bold blue]{task.description}",
+            BarColumn(),
+            MofNCompleteColumn(),
+            console=console,
+            disable=ctx.obj["hide_progress"],
+        )
+        module_progress = Progress(
+            SpinnerColumn(finished_text="[green]✓[/green]"),
+            "[bold blue]{task.description}",
+            TextColumn("{task.fields[status]}"),
+            console=console,
+            disable=ctx.obj["hide_progress"],
+        )
+
+        with Live(Group(overall_progress, module_progress), console=console, transient=True):
+            # The overall bar is only useful when processing more than one module
+            overall_task_id = overall_progress.add_task("modules", total=len(components), visible=len(components) > 1)
+            for component in components:
+                module_name = component.component_name
+                module_task_id = module_progress.add_task(
+                    f"[cyan]{module_name}[/cyan]",
+                    total=None,
+                    status="building containers...",
+                )
+                try:
+                    if manager.all_modules:
+                        # Per-module instance, reusing the already-scanned component list
                         module_manager = ModuleContainers(
-                            module=module_name, directory=directory, verbose=ctx.obj["verbose"]
+                            module=module_name,
+                            directory=directory,
+                            verbose=ctx.obj["verbose"],
+                            components=manager.available_modules,
                         )
-                        _, success = module_manager.create(
-                            progress_bar=module_progress, task_id=module_task_id, force=force
-                        )
-                        if success:
-                            module_manager.update_containers_in_meta()
-                            if module_manager.repo_type == "pipeline":
-                                try_generate_container_configs(directory, module_manager.module_directory)
-                        else:
-                            failed_modules.append(module_name)
-                    except (ValueError, RuntimeError, OSError) as e:
-                        log.error(f"✗ Failed to build containers for {module_name}: {e}")
+                    else:
+                        module_manager = manager
+                    _, success = module_manager.create(
+                        progress_bar=module_progress, task_id=module_task_id, force=force
+                    )
+                    if success:
+                        module_manager.update_containers_in_meta()
+                        if module_manager.repo_type == "pipeline":
+                            try_generate_container_configs(directory, module_manager.module_directory)
+                    else:
                         failed_modules.append(module_name)
-                    finally:
-                        overall_progress.advance(overall_task_id)
-                        module_progress.remove_task(module_task_id)
+                except (ValueError, RuntimeError, OSError) as e:
+                    log.error(f"✗ Failed to build containers for {module_name}: {e}")
+                    failed_modules.append(module_name)
+                finally:
+                    overall_progress.advance(overall_task_id)
+                    module_progress.remove_task(module_task_id)
 
-            if failed_modules:
+        if failed_modules:
+            if manager.all_modules:
                 log.warning(
                     f"Failed to build containers for {len(failed_modules)} module(s): {', '.join(failed_modules)}"
                 )
             else:
-                log.info("Successfully built containers for all modules")
-        else:
-            # Single module mode - create progress bar for single module
-            progress_bar = rich.progress.Progress(
-                rich.progress.SpinnerColumn(finished_text="[green]✓[/green]"),
-                "[bold blue]{task.description}",
-                rich.progress.TextColumn("{task.fields[status]}"),
-                transient=True,
-                console=console,
-                disable=ctx.obj["hide_progress"],
-            )
-
-            with progress_bar:
-                module_task_id = progress_bar.add_task(
-                    f"[cyan]{manager.module}[/cyan]",
-                    total=None,
-                    status="building containers...",
-                )
-                _, success = manager.create(progress_bar=progress_bar, task_id=module_task_id, force=force)
-                if success:
-                    manager.update_containers_in_meta()
-                    if manager.repo_type == "pipeline":
-                        try_generate_container_configs(directory, manager.module_directory)
-                else:
-                    log.error(f"✗ Some container builds failed for {manager.module}")
-                    sys.exit(1)
+                log.error(f"✗ Some container builds failed for {manager.module}")
+                sys.exit(1)
+        elif manager.all_modules:
+            log.info("Successfully built containers for all modules")
 
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
         log.error(e)
