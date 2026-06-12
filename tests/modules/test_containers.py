@@ -5,7 +5,8 @@ from unittest import mock
 import pytest
 import yaml
 
-from nf_core.modules.containers import CondaEntry, ContainerEntry, ContainersBySystem, ModuleContainers
+from nf_core.modules.containers import ModuleContainers
+from nf_core.modules.modules_utils import CondaEntry, ContainerEntry, MetaYmlContainers
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
 from ..test_modules import TestModules
@@ -22,8 +23,8 @@ class TestModuleContainers(TestModules):
     def _write_meta(self, meta: dict) -> None:
         (self.bpipe_test_module_path / "meta.yml").write_text(yaml.safe_dump(meta), encoding="utf-8")
 
-    def _containers_by_system(self, prefix: str = "testC") -> ContainersBySystem:
-        return ContainersBySystem(
+    def _containers_by_system(self, prefix: str = "testC") -> MetaYmlContainers:
+        return MetaYmlContainers(
             docker={p: ContainerEntry(name=f"{prefix}-docker-{p}") for p in CONTAINER_PLATFORMS},
             singularity={p: ContainerEntry(name=f"{prefix}-singularity-{p}") for p in CONTAINER_PLATFORMS},
             conda={p: CondaEntry(lock_file=f"/path/to/{prefix}-{p}.txt") for p in CONTAINER_PLATFORMS},
@@ -188,10 +189,11 @@ class TestModuleContainers(TestModules):
         mock_requests_get.return_value = mock_response
 
         platform = CONTAINER_PLATFORMS[0]
-        self.module_containers.containers = ContainersBySystem(
-            docker={platform: ContainerEntry(name="placeholder", build_id="test-build-123")},
-            conda={platform: CondaEntry(lock_file="/some/path.txt")},
-        )
+        # Partial build state: fill the dicts directly, as create() does
+        containers = MetaYmlContainers()
+        containers.docker[platform] = ContainerEntry(name="placeholder", build_id="test-build-123")
+        containers.conda[platform] = CondaEntry(lock_file="/some/path.txt")
+        self.module_containers.containers = containers
 
         result = self.module_containers.get_conda_lock_file(platform)
         assert result == "# conda lock file content"
@@ -218,23 +220,37 @@ class TestModuleContainers(TestModules):
         assert "Section 'containers' missing from meta.yaml" in self.caplog.text
 
     def test_get_containers_from_meta_missing_system(self):
-        self._write_meta({"name": "bpipe/test", "containers": {"singularity": {"ok": True}}})
+        singularity = {p: {"name": f"sif-{p}"} for p in CONTAINER_PLATFORMS}
+        self._write_meta({"name": "bpipe/test", "containers": {"singularity": singularity}})
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
         result = self.module_containers.get_containers_from_meta()
         assert result is None
-        assert "Container missing for docker" in self.caplog.text
+        assert "No containers specified for docker" in self.caplog.text
 
     def test_get_containers_from_meta_missing_platform_key(self):
         containers = {
-            "docker": {CONTAINER_PLATFORMS[0]: {"ok": True}},
-            "singularity": {CONTAINER_PLATFORMS[0]: {"ok": True}},
+            "docker": {CONTAINER_PLATFORMS[0]: {"name": "img:1.0"}},
+            "singularity": {CONTAINER_PLATFORMS[0]: {"name": "sif:1.0"}},
         }
         self._write_meta({"name": "bpipe/test", "containers": containers})
         missing_platform = CONTAINER_PLATFORMS[1]
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
         result = self.module_containers.get_containers_from_meta()
         assert result is None
-        assert f"Platform build {missing_platform} missing" in self.caplog.text
+        assert f"No docker entries found for expected platform: {missing_platform}" in self.caplog.text
+
+    def test_get_containers_from_meta_partial_conda_ok(self):
+        """A conda section missing some platforms (e.g. skipped lock files) must not invalidate the model."""
+        containers = {
+            "docker": {p: {"name": f"img-{p.replace('/', '-')}"} for p in CONTAINER_PLATFORMS},
+            "singularity": {p: {"name": f"sif-{p.replace('/', '-')}"} for p in CONTAINER_PLATFORMS},
+            "conda": {CONTAINER_PLATFORMS[0]: {"lock_file": "/lock/amd64.txt"}},
+        }
+        self._write_meta({"name": "bpipe/test", "containers": containers})
+        result = self.module_containers.get_containers_from_meta()
+        assert result is not None
+        assert CONTAINER_PLATFORMS[0] in result.conda
+        assert CONTAINER_PLATFORMS[1] not in result.conda
 
     def test_get_containers_from_meta_success(self):
         containers = {
@@ -250,7 +266,7 @@ class TestModuleContainers(TestModules):
         self._write_meta({"name": "bpipe/test", "containers": containers})
         result = self.module_containers.get_containers_from_meta()
         assert result is not None
-        assert result == ContainersBySystem.model_validate(containers)
+        assert result == MetaYmlContainers.model_validate(containers)
 
     def test_update_containers_in_meta_merges(self):
         self._write_meta({"name": "bpipe/test", "containers": {"docker": {"linux/amd64": {"name": "old"}}}})
@@ -262,7 +278,7 @@ class TestModuleContainers(TestModules):
             mock_create.assert_not_called()
 
         meta = yaml.safe_load((self.bpipe_test_module_path / "meta.yml").read_text(encoding="utf-8"))
-        assert meta["containers"] == containers.model_dump(exclude_defaults=True)
+        assert meta["containers"] == containers.dump_for_meta_yml()
 
 
 class TestModuleContainersPipeline(TestModules):
@@ -295,7 +311,7 @@ class TestModuleContainersPipeline(TestModules):
         module_dir = self._create_local_module("testmodule")
 
         manager = ModuleContainers("testmodule", directory=self.pipeline_dir)
-        containers = ContainersBySystem(
+        containers = MetaYmlContainers(
             docker={p: ContainerEntry(name=f"docker-{p}") for p in CONTAINER_PLATFORMS},
             singularity={p: ContainerEntry(name=f"sif-{p}") for p in CONTAINER_PLATFORMS},
             conda={p: CondaEntry(lock_file=f"/lock/{p}.txt") for p in CONTAINER_PLATFORMS},
@@ -307,7 +323,7 @@ class TestModuleContainersPipeline(TestModules):
             mock_create.assert_not_called()
 
         meta = yaml.safe_load((module_dir / "meta.yml").read_text(encoding="utf-8"))
-        assert meta["containers"] == containers.model_dump(exclude_defaults=True)
+        assert meta["containers"] == containers.dump_for_meta_yml()
 
 
 class TestModuleContainersDockerfile(TestModuleContainersPipeline):
@@ -325,7 +341,7 @@ class TestModuleContainersDockerfile(TestModuleContainersPipeline):
 
     def test_create_returns_empty_for_dockerfile_module(self):
         containers, success = self.module_containers.create()
-        assert containers == ContainersBySystem()
+        assert containers == MetaYmlContainers()
         assert success
 
     def test_update_main_nf_container_skips_dockerfile_module(self):

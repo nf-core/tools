@@ -10,7 +10,7 @@ from urllib.parse import quote
 import requests
 import rich.progress
 import yaml
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from rich.pretty import pretty_repr
 
 from nf_core.components.components_utils import read_meta_yml
@@ -18,32 +18,20 @@ from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint import ModuleLint
 from nf_core.modules.modules_utils import (
+    CondaEntry,
+    ContainerEntry,
+    MetaYmlContainers,
     filter_modules_by_name,
     module_uses_dockerfile,
     prompt_module_selection,
     scan_modules_dir,
 )
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, run_cmd
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, ContainerRegistryUrls, run_cmd
 
 log = logging.getLogger(__name__)
 
-
-class ContainerEntry(BaseModel):
-    name: str
-    build_id: str = ""
-    scan_id: str = ""
-    https: str = ""
-
-
-class CondaEntry(BaseModel):
-    lock_file: str
-
-
-class ContainersBySystem(BaseModel):
-    docker: dict[str, ContainerEntry] = {}
-    singularity: dict[str, ContainerEntry] = {}
-    conda: dict[str, CondaEntry] = {}
+WAVE_URL = "https://wave.seqera.io"
 
 
 class ModuleContainers:
@@ -52,7 +40,12 @@ class ModuleContainers:
     """
 
     def __init__(
-        self, module: str | None, directory: str | Path = ".", all_modules: bool = False, verbose: bool = False
+        self,
+        module: str | None,
+        directory: str | Path = ".",
+        all_modules: bool = False,
+        verbose: bool = False,
+        components: list[NFCoreComponent] | None = None,
     ):
         from nf_core.components.components_utils import get_repo_info
 
@@ -66,8 +59,9 @@ class ModuleContainers:
             self.repo_type = None
             self.org = "nf-core"  # Default to nf-core if repo info not available
 
-        # Get available modules (local modules for pipelines, repo modules for modules repos)
-        self.available_modules = self._get_available_modules()
+        # Get available modules (local modules for pipelines, repo modules for modules repos).
+        # A pre-scanned list can be passed in to avoid re-scanning the modules directory.
+        self.available_modules = components if components is not None else self._get_available_modules()
 
         # Create a lookup dictionary for quick access by module name
         self.components_by_name = {comp.component_name: comp for comp in self.available_modules}
@@ -123,7 +117,8 @@ class ModuleContainers:
             self.environment_yml = None
             self.meta_yml = None
 
-        self.containers: ContainersBySystem | None = None
+        self.containers: MetaYmlContainers | None = None
+        self._module_lint: ModuleLint | None = None
 
     @staticmethod
     def check_tower_token() -> None:
@@ -268,7 +263,7 @@ class ModuleContainers:
         progress_bar: rich.progress.Progress | None = None,
         task_id: rich.progress.TaskID | None = None,
         force: bool = False,
-    ) -> tuple[ContainersBySystem, bool]:
+    ) -> tuple[MetaYmlContainers, bool]:
         """
         Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
 
@@ -277,9 +272,9 @@ class ModuleContainers:
             task_id: Optional task ID for this module in the progress bar
 
         Returns:
-            Tuple of (ContainersBySystem, success boolean). Success is False if any build failed.
+            Tuple of (MetaYmlContainers, success boolean). Success is False if any build failed.
         """
-        containers = ContainersBySystem()
+        containers = MetaYmlContainers()
         build_tasks = {}
         threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
         has_failures = False
@@ -287,7 +282,7 @@ class ModuleContainers:
         if not self.environment_yml:
             if self._uses_dockerfile():
                 log.info(f"Module '{self.module}' uses a Dockerfile - skipping Wave container build")
-                return ContainersBySystem(), True
+                return MetaYmlContainers(), True
             raise RuntimeError("No environment.yml found.")
         assert self.module_directory is not None
 
@@ -308,7 +303,7 @@ class ModuleContainers:
             def callback(build_id: str) -> None:
                 build_tid = build_task_ids.get((cs, platform))
                 if progress_bar and build_tid is not None:
-                    url = f"https://wave.seqera.io/view/builds/{build_id}"
+                    url = f"{WAVE_URL}/view/builds/{build_id}"
                     progress_bar.update(build_tid, status=f"building… {url}")
 
             return callback
@@ -335,13 +330,6 @@ class ModuleContainers:
 
                 try:
                     getattr(containers, cs)[platform] = fut.result()
-                    # Update self.containers and meta.yml after each successful build
-                    self.containers = containers
-                    try:
-                        self.update_containers_in_meta()
-                        log.debug(f"Updated meta.yml with {cs} container for {platform}")
-                    except (ValueError, RuntimeError, OSError) as meta_error:
-                        log.warning(f"Failed to update meta.yml after {cs} {platform} build: {meta_error}")
                     if progress_bar and build_tid is not None:
                         progress_bar.update(build_tid, completed=1, status="[green]done[/green]")
                 except (ValueError, RuntimeError, OSError, AssertionError) as e:
@@ -364,6 +352,15 @@ class ModuleContainers:
 
         # Set containers early so get_conda_lock_file can access it
         self.containers = containers
+
+        # Persist all successful builds to meta.yml in one write
+        # (partial results are kept even if some builds failed)
+        if any(getattr(containers, cs) for cs in CONTAINER_SYSTEMS):
+            try:
+                self.update_containers_in_meta()
+                log.debug("Updated meta.yml with built containers")
+            except (ValueError, RuntimeError, OSError) as meta_error:
+                log.warning(f"Failed to update meta.yml after container builds: {meta_error}")
 
         # Download conda lock files as separate tasks
         new_lock_files = set()
@@ -524,9 +521,11 @@ class ModuleContainers:
         if not meta_data.get("succeeded"):
             raise RuntimeError(
                 f"Wave build ({container_system} {platform}) failed. Reason: {meta_data.get('reason', 'Unknown')}"
-                f"\nBuild log: https://wave.seqera.io/view/builds/{meta_data.get('buildId')}"
-                if meta_data.get("buildId")
-                else ""
+                + (
+                    f"\nBuild log: {WAVE_URL}/view/builds/{meta_data.get('buildId')}"
+                    if meta_data.get("buildId")
+                    else ""
+                )
             )
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
         if not image:
@@ -554,7 +553,7 @@ class ModuleContainers:
                 log.debug(f"Extracting https-uri for {image} from image inspect:\n{pretty_repr(container_layers[0])}")
                 digest = container_layers[0]["digest"].replace("sha256:", "")
                 https_url = (
-                    f"https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/{digest[:2]}/{digest}/data"
+                    f"https://{ContainerRegistryUrls.SEQERA_SINGULARITY.value}/blobs/sha256/{digest[:2]}/{digest}/data"
                 )
 
         return ContainerEntry(name=image, build_id=build_id, scan_id=scan_id, https=https_url)
@@ -584,7 +583,7 @@ class ModuleContainers:
     @staticmethod
     def get_conda_lock_url(build_id) -> str:
         build_id_safe = quote(build_id, safe="")
-        url = f"https://wave.seqera.io/v1alpha1/builds/{build_id_safe}/condalock"
+        url = f"{WAVE_URL}/v1alpha1/builds/{build_id_safe}/condalock"
         return url
 
     def get_conda_lock_file(self, platform: str) -> str:
@@ -637,12 +636,13 @@ class ModuleContainers:
                             containers_flat.append((cs, p, entry.https))
         return containers_flat
 
-    def get_containers_from_meta(self) -> ContainersBySystem | None:
+    def get_containers_from_meta(self) -> MetaYmlContainers | None:
         """
         Return containers defined in the module meta.yml.
         Returns None if containers section is missing, incomplete, or invalid.
         """
-        assert self.meta_yml and self.meta_yml.exists()
+        if self.meta_yml is None or not self.meta_yml.exists():
+            raise FileNotFoundError(f"No meta.yml found for module '{self.module}'")
 
         meta = read_meta_yml(self.meta_yml)
         containers = meta.get("containers", {})
@@ -650,20 +650,8 @@ class ModuleContainers:
             log.debug(f"Section 'containers' missing from meta.yaml for module '{self.module}'")
             return None
 
-        for system in CONTAINER_SYSTEMS:
-            cs = containers.get(system)
-            if not cs:
-                log.debug(f"Container missing for {system}")
-                return None
-
-            for pf in CONTAINER_PLATFORMS:
-                spec = cs.get(pf)
-                if not spec:
-                    log.debug(f"Platform build {pf} missing for {system} container for module {self.module}")
-                    return None
-
         try:
-            return ContainersBySystem.model_validate(containers)
+            return MetaYmlContainers.model_validate(containers, context={"require_complete": True})
         except ValidationError as e:
             log.debug(f"Could not parse containers from meta.yml: {e}")
             return None
@@ -684,7 +672,8 @@ class ModuleContainers:
             log.debug("Containers not initialized - running `create()` ...")
             self.containers, _ = self.create()
 
-        assert self.meta_yml
+        if self.meta_yml is None or not self.meta_yml.exists():
+            raise FileNotFoundError(f"No meta.yml found for module '{self.module}'")
 
         meta = read_meta_yml(self.meta_yml)
         meta_containers = meta.get("containers", {})
@@ -693,7 +682,7 @@ class ModuleContainers:
         for cs in CONTAINER_SYSTEMS + ["conda"]:
             for platform in CONTAINER_PLATFORMS:
                 meta_containers.get(cs, {}).pop(platform, None)
-        new_containers = self.containers.model_dump(exclude_defaults=True)
+        new_containers = self.containers.dump_for_meta_yml()
         for cs, platforms in new_containers.items():
             for platform, data in platforms.items():
                 if data:
@@ -703,19 +692,20 @@ class ModuleContainers:
         meta["containers"] = meta_containers
 
         # Sort the YAML according to the schema's property order using ModuleLint
+        # (constructed once per instance - it re-scans the modules repo)
         if module_lint is None:
-            try:
-                module_lint = ModuleLint(self.directory)
-            except (UserWarning, ValueError, OSError) as e:
-                log.warning(f"Failed to initialize ModuleLint for sorting: {e}")
+            if self._module_lint is None:
+                try:
+                    self._module_lint = ModuleLint(self.directory)
+                except (UserWarning, ValueError, OSError) as e:
+                    log.warning(f"Failed to initialize ModuleLint for sorting: {e}")
+            module_lint = self._module_lint
 
         if module_lint is not None:
             try:
                 meta = module_lint.sort_meta_yml(meta)
             except UserWarning as e:
                 log.warning(f"Failed to sort meta.yml: {e}")
-
-        assert self.meta_yml and self.meta_yml.exists()
 
         with open(self.meta_yml, "w") as f:
             ruamel_yaml.dump(meta, f)

@@ -14,7 +14,7 @@ import nf_core.modules.install
 import nf_core.modules.modules_repo
 import nf_core.modules.remove
 from nf_core import __version__
-from nf_core.modules.modules_utils import MetaYmlContainers
+from nf_core.modules.modules_utils import CondaEntry, ContainerEntry, MetaYmlContainers
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import NFCoreYamlConfig
 
@@ -66,26 +66,20 @@ def create_modules_repo_dummy(tmp_dir):
         meta_yml = yaml.load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
     meta_yml["keywords"] = ["pipelines", "bioinformatics", "run"]
-    docker = MetaYmlContainers.DockerContainer(
-        name="quay.io/biocontainers/bpipe:0.9.13--hdfd78af_0", build_id="", scan_id=""
-    )
-    sing = MetaYmlContainers.SingularityContainer(
+    docker = ContainerEntry(name="quay.io/biocontainers/bpipe:0.9.13--hdfd78af_0", build_id="", scan_id="")
+    sing = ContainerEntry(
         name="oras://community.wave.seqera.io/library/bpipe:0.9.13--hdfd78af_0",
         build_id="",
         https="https://depot.galaxyproject.org/singularity/bpipe:0.9.13--hdfd78af_0",
     )
-    conda_amd64 = MetaYmlContainers.CondaEnvironment(
-        lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_amd64-bd-dummy_1.txt"
-    )
-    conda_arm64 = MetaYmlContainers.CondaEnvironment(
-        lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_arm64-bd-dummy_1.txt"
-    )
+    conda_amd64 = CondaEntry(lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_amd64-bd-dummy_1.txt")
+    conda_arm64 = CondaEntry(lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_arm64-bd-dummy_1.txt")
     containers = MetaYmlContainers(
         docker={"linux/amd64": docker, "linux/arm64": docker},
         singularity={"linux/amd64": sing, "linux/arm64": sing},
         conda={"linux/amd64": conda_amd64, "linux/arm64": conda_arm64},
     )
-    meta_yml["containers"] = containers.model_dump()
+    meta_yml["containers"] = containers.dump_for_meta_yml()
     with open(str(meta_yml_path), "w") as fh:
         yaml.dump(meta_yml, fh)
         run_prettier_on_file(fh.name)

@@ -4,9 +4,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
-from nf_core.utils import CONTAINER_PLATFORMS
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
 from nf_core.utils import NFCORE_CACHE_DIR
 
@@ -24,39 +24,88 @@ class ModuleExceptionError(Exception):
     pass
 
 
+class ContainerEntry(BaseModel):
+    name: str
+    build_id: str = ""
+    scan_id: str = ""
+    https: str = ""
+
+    @property
+    def build_hash(self) -> str:
+        """Hash part of the Wave build ID (``bd-<hash>_<build>``)."""
+        parts = self.build_id.removeprefix("bd-").split("_")
+        return parts[0] if parts else ""
+
+    @property
+    def tag_hash(self) -> str:
+        """Hash encoded in the image tag (``name:<version>--<hash>``, or a bare hex tag)."""
+        name = self.name
+        if "://" in name:
+            name = name.split("://", 1)[1]
+        if "@" in name:
+            name = name.split("@", 1)[0]
+        if ":" not in name:
+            return ""
+        tag = name.rsplit(":", 1)[1]
+        if "--" in tag:
+            return tag.rsplit("--", 1)[1]
+        tag_lower = tag.lower()
+        return tag if len(tag_lower) >= 8 and all(c in "0123456789abcdef" for c in tag_lower) else ""
+
+
+class CondaEntry(BaseModel):
+    lock_file: str = ""
+
+
 class MetaYmlContainers(BaseModel):
-    class DockerContainer(BaseModel):
-        name: str
-        build_id: str
-        scan_id: str
+    docker: dict[str, ContainerEntry] = {}
+    singularity: dict[str, ContainerEntry] = {}
+    conda: dict[str, CondaEntry] = {}
 
-    class SingularityContainer(BaseModel):
-        name: str
-        build_id: str
-        https: str
-
-    class CondaEnvironment(BaseModel):
-        lock_file: str
-
-    docker: dict[str, "MetaYmlContainers.DockerContainer"] | None = None
-    singularity: dict[str, "MetaYmlContainers.SingularityContainer"] | None = None
-    conda: dict[str, "MetaYmlContainers.CondaEnvironment"] | None = None
-
-    @classmethod
     @field_validator("docker", "singularity", "conda", mode="after")
-    def check_keys_against_container_platforms(cls, value: dict | None):
-        if value is None:
-            return value
-
+    @classmethod
+    def check_keys_against_container_platforms(cls, value: dict) -> dict:
         # Check if all used keys are valid platforms
         for plf_key in value:
             if plf_key not in CONTAINER_PLATFORMS:
-                raise ValueError(f"Invalid platform key: {value}")
+                raise ValueError(f"Invalid platform key: {plf_key}")
 
-        # Check if all platforms are specified
-        for plf in CONTAINER_PLATFORMS:
-            if plf not in value:
-                raise ValueError(f"Missing platform: {plf}")
+        return value
+
+    def dump_for_meta_yml(self) -> dict:
+        """
+        ``model_dump`` shaped for the meta.yml JSON schema: ``name``/``build_id`` are
+        always emitted (the schema requires them, empty or not), while the optional
+        fields (``https``, ``scan_id``) are omitted when empty — an empty ``https``
+        would violate the schema's ``^https://`` pattern.
+        """
+        dump = self.model_dump()
+        for platforms in dump.values():
+            for entry in platforms.values():
+                for key in ("https", "scan_id"):
+                    if not entry.get(key, True):
+                        del entry[key]
+        return dump
+
+    @model_validator(mode="after")
+    def check_container_systems_complete(self, info: ValidationInfo) -> "MetaYmlContainers":
+        """
+        Require a non-empty section with an entry for every platform, for each container
+        system named in ``context={"require_complete": [...]}`` (``True`` means all of
+        ``CONTAINER_SYSTEMS``, i.e. conda is exempt). Plain construction (e.g. the partial
+        states built up during container builds) is not affected.
+        """
+        require = (info.context or {}).get("require_complete")
+        if not require:
+            return self
+        for system in CONTAINER_SYSTEMS if require is True else require:
+            entries = getattr(self, system)
+            if not entries:
+                raise ValueError(f"No containers specified for {system}")
+            for plf in CONTAINER_PLATFORMS:
+                if plf not in entries:
+                    raise ValueError(f"No {system} entries found for expected platform: {plf}")
+        return self
 
 
 def module_uses_dockerfile(module: NFCoreComponent) -> bool:
