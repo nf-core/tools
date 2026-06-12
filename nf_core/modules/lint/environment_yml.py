@@ -18,7 +18,7 @@ yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=2, offset=2)
 
 
-def _fix_module_version(self, current_version, latest_version, response):
+def _fix_module_version(self, current_version, latest_version):
     """Update the conda package version in environment.yml."""
     with open(self.environment_yml) as source:
         content = source.read()
@@ -350,7 +350,7 @@ def lint_environment_yml(
                         package, ver = bp.split("=", 1)
                         if fix_version:
                             try:
-                                fixed = _fix_module_version(module, bioconda_version, last_ver, response)
+                                fixed = _fix_module_version(module, bioconda_version, last_ver)
                             except FileNotFoundError as e:
                                 fixed = False
                                 log.debug(f"Unable to update package {package} due to error: {e}")

@@ -948,17 +948,6 @@ def _is_empty(line):
     return empty
 
 
-def _get_build(response):
-    """Get the latest build of the container version"""
-    build_times = []
-    latest_v = response.get("latest_version")
-    files = response.get("files")
-    for f in files:
-        if f.get("version") == latest_v:
-            build_times.append((f.get("upload_time"), f.get("attrs").get("build")))
-    return sorted(build_times, key=lambda tup: tup[0], reverse=True)[0][1]
-
-
 def _container_type(line):
     """Returns the container type of a build."""
     if line.startswith("conda"):
