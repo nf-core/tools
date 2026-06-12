@@ -82,6 +82,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                             f"Build ID `{build_hash}` hash does not match {system_key} container tag `{name_hash}` for {platform}",
                             meta_path,
                         )
+                    )
                 else:
                     module.warned.append(
                         (
