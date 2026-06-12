@@ -126,7 +126,10 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
             elif "://" in docker_name:
                 docker_url = ""
             else:
-                docker_url = f"https://{docker_name}"
+                # OCI distribution spec: /v2/<name>/manifests/<tag>
+                host, _, image_ref = docker_name.partition("/")
+                image_name, _, tag = image_ref.partition(":")
+                docker_url = f"https://{host}/v2/{image_name}/manifests/{tag or 'latest'}"
             if not docker_url:
                 module.warned.append(
                     (
@@ -138,8 +141,12 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                 )
             else:
                 try:
-                    response = requests.head(docker_url, stream=True, allow_redirects=True)
-                    if response.ok:
+                    response = requests.head(
+                        docker_url,
+                        allow_redirects=True,
+                        headers={"Accept": "application/vnd.oci.image.manifest.v1+json"},
+                    )
+                    if response.ok or response.status_code == 401:
                         module.passed.append(
                             (
                                 "meta_yml",
@@ -153,7 +160,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                             (
                                 "meta_yml",
                                 f"containers_docker_{platform}_exists",
-                                f"Docker {platform} image not reachable (status {response.status_code})",
+                                f"Docker {platform} image not reachable at {docker_url} (status {response.status_code})",
                                 meta_path,
                             )
                         )
