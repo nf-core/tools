@@ -714,6 +714,26 @@ def check_container_link_line(self, raw_line, registry):
                 )
             )
 
+        # Check container registry prefix
+        if container_link.startswith(registry):
+            self.passed.append(
+                (
+                    "main_nf",
+                    "container_links",
+                    f"Container prefix is correct: {container_link}",
+                    self.main_nf,
+                )
+            )
+        else:
+            self.failed.append(
+                (
+                    "main_nf",
+                    "container_links",
+                    f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry)}",
+                    self.main_nf,
+                )
+            )
+
         # lint more than one container in the same line
         if ("https://containers" in line or "https://depot" in line) and (
             "biocontainers/" in line or line.startswith(registry)
