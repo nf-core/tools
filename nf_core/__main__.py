@@ -9,6 +9,7 @@ from pathlib import Path
 import requests
 import rich.console
 import rich.logging
+import rich.panel
 import rich.traceback
 import rich_click as click
 import rich_click.rich_click as rc
@@ -1447,8 +1448,17 @@ def command_modules_bump_versions(ctx, tool, directory, all_modules, show_all, d
 @modules.group("containers", aliases=["container", "con"])
 @click.pass_context
 def modules_containers(ctx):
-    """Manage module container builds and metadata."""
-    pass
+    """Manage module container builds and metadata [yellow](beta)[/]."""
+    stderr.print(
+        rich.panel.Panel(
+            "The [bold]nf-core modules containers[/] commands are still in beta.\n"
+            "Their behaviour and output may change in future releases.\n"
+            "Best to always use the latest dev version.",
+            title="[bold][!] Beta feature",
+            title_align="left",
+            style="yellow",
+        )
+    )
 
 
 # nf-core modules containers create
