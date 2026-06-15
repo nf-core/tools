@@ -48,7 +48,7 @@
 
 ### Linting
 
-- Store `EDAM.tsv` in `NFCORE_CACHE_DIR` and fix yaml comment loss ([#4242](https://github.com/nf-core/tools/pull/4242))
+- Store `EDAM.tsv` in `NFCORE_CACHE_DIR` and fix yaml comment loss when running `lint --fix` ([#4242](https://github.com/nf-core/tools/pull/4242))
 
 ### Modules
 
