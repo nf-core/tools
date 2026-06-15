@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import nf_core.modules.modules_utils
 
 from ..test_modules import TestModules
@@ -86,18 +88,20 @@ class TestModulesUtils(TestModules):
     def test_load_edam(self):
         """Test EDAM ontology loading"""
 
-        cache_path = self.tmp_path / "EDAM.tsv"
+        with patch(
+            "nf_core.modules.modules_utils.NFCORE_CACHE_DIR",
+            str(self.tmp_path),
+        ):
+            cache_path = self.tmp_path / "EDAM.tsv"
 
-        # Cache should not exist before loading
-        assert not cache_path.exists()
+            assert not cache_path.exists()
 
-        edam_formats = nf_core.modules.modules_utils.load_edam()
+            edam_formats = nf_core.modules.modules_utils.load_edam()
 
-        # Cache file should now exist
-        assert cache_path.exists()
+            assert cache_path.exists()
 
-        first_key, first_value = next(iter(edam_formats.items()))
+            first_key, first_value = next(iter(edam_formats.items()))
 
-        assert isinstance(first_key, str)
-        assert isinstance(first_value, tuple)
-        assert len(first_value) == 2
+            assert isinstance(first_key, str)
+            assert isinstance(first_value, tuple)
+            assert len(first_value) == 2
