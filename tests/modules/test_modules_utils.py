@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import patch
 
 import nf_core.modules.modules_utils
@@ -87,16 +86,10 @@ class TestModulesUtils(TestModules):
         assert len(filtered) == 0
 
     @patch("nf_core.modules.modules_utils.NFCORE_CACHE_DIR", new="test_cache")
-    def test_load_edam(self):
+    def test_load_edam(self, tmp_path):
         """Test EDAM ontology loading"""
 
-        cache_dir = Path("test_cache")
-        cache_path = cache_dir / "EDAM.tsv"
-
-        # Ensure clean state
-        shutil.rmtree(cache_dir, ignore_errors=True)
-
-        cache_dir.mkdir()
+        cache_path = tmp_path / "EDAM.tsv"
 
         # Cache should not exist before loading
         assert not cache_path.exists()
@@ -111,8 +104,3 @@ class TestModulesUtils(TestModules):
         assert isinstance(first_key, str)
         assert isinstance(first_value, tuple)
         assert len(first_value) == 2
-
-        # Cleanup (important since we're not using tmp_path)
-        for f in cache_dir.iterdir():
-            f.unlink()
-        cache_dir.rmdir()
