@@ -94,10 +94,7 @@ class TestModulesUtils(TestModules):
         cache_path = cache_dir / "EDAM.tsv"
 
         # Ensure clean state
-        if cache_dir.exists():
-            for f in cache_dir.iterdir():
-                f.unlink()
-            cache_dir.rmdir()
+        shutil.rmtree(cache_dir, ignore_errors=True)
 
         cache_dir.mkdir()
 
