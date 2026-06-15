@@ -7,6 +7,8 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
 - container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
 - Coerce launch params_out to Path to fix AttributeError (#4299) ([#4317](https://github.com/nf-core/tools/pull/4317))
+- generate valid Markdown when piping schema docs to file ([#4319](https://github.com/nf-core/tools/pull/4319))
+- fix API docs bug in pydantic autodoc ([#4320](https://github.com/nf-core/tools/pull/4320))
 
 ### Linting
 

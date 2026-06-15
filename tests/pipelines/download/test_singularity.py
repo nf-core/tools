@@ -456,11 +456,11 @@ class SingularityTest(unittest.TestCase):
             container_cache_index=None,
         )
         mock_fetch_wf_config.return_value = {
-            "apptainer.registry": "apptainer-registry.io",
-            "docker.registry": "docker.io",
-            "podman.registry": "podman-registry.io",
-            "singularity.registry": "singularity-registry.io",
-            "someother.registry": "fake-registry.io",
+            "apptainer": {"registry": "apptainer-registry.io"},
+            "docker": {"registry": "docker.io"},
+            "podman": {"registry": "podman-registry.io"},
+            "singularity": {"registry": "singularity-registry.io"},
+            "someother": {"registry": "fake-registry.io"},
         }
         singularity_fetcher.registry_set = singularity_fetcher.gather_registries(tmp_path)
         assert singularity_fetcher.registry_set
