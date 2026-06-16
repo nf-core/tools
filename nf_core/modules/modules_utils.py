@@ -1,12 +1,18 @@
 import logging
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
 
+from nf_core.utils import NFCORE_CACHE_DIR
+
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
+
+EDAM_TSV_URL = "https://edamontology.org/EDAM.tsv"
+EDAM_CACHE_TTL = 7 * 24 * 60 * 60  # one week
 
 
 class ModuleExceptionError(Exception):
@@ -96,15 +102,41 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
     return local_modules, nfcore_modules
 
 
+def cache_is_expired(path: Path) -> bool:
+    """Return True if the cache file is older than the configured TTL."""
+    age = time.time() - path.stat().st_mtime
+    return age > EDAM_CACHE_TTL
+
+
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    try:
-        response = requests.get("https://edamontology.org/EDAM.tsv")
-    except requests.exceptions.RequestException as e:
-        log.warning(f"Failed to load EDAM ontology: {e}")
-        return edam_formats
-    for line in response.content.splitlines():
+    cache_path = Path(NFCORE_CACHE_DIR) / "EDAM.tsv"
+
+    # Remove stale cache file
+    if cache_path.exists() and cache_is_expired(cache_path):
+        log.debug("Cached EDAM ontology expired; removing old cache file")
+        cache_path.unlink(missing_ok=True)
+
+    if not cache_path.exists():
+        log.debug("EDAM.tsv file not found in NFCORE_CACHE_DIR; downloading")
+        try:
+            response = requests.get(EDAM_TSV_URL, timeout=15)
+            response.raise_for_status()
+            data_bytes = response.content
+            cache_path.write_bytes(data_bytes)
+        except requests.exceptions.RequestException as e:
+            log.warning(f"Failed to download EDAM ontology: {e}")
+            return edam_formats
+    else:
+        log.debug("Using EDAM.tsv file found in NFCORE_CACHE_DIR")
+        try:
+            data_bytes = cache_path.read_bytes()
+        except OSError as e:
+            log.warning(f"Failed to load EDAM ontology: {e}")
+            return edam_formats
+
+    for line in data_bytes.splitlines():
         fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format") and fields[14]:  # We choose an already provided extension
             extensions = fields[14].split("|")

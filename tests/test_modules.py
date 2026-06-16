@@ -179,3 +179,7 @@ class TestModules(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):
         self.caplog = caplog
+
+    @pytest.fixture(autouse=True)
+    def _tmp_path(self, tmp_path):
+        self.tmp_path = tmp_path

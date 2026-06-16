@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import nf_core.modules.modules_utils
 
 from ..test_modules import TestModules
@@ -82,3 +84,24 @@ class TestModulesUtils(TestModules):
 
         filtered = nf_core.modules.modules_utils.filter_modules_by_name(modules, "fastqc")
         assert len(filtered) == 0
+
+    def test_load_edam(self):
+        """Test EDAM ontology loading"""
+
+        with patch(
+            "nf_core.modules.modules_utils.NFCORE_CACHE_DIR",
+            str(self.tmp_path),
+        ):
+            cache_path = self.tmp_path / "EDAM.tsv"
+
+            assert not cache_path.exists()
+
+            edam_formats = nf_core.modules.modules_utils.load_edam()
+
+            assert cache_path.exists()
+
+            first_key, first_value = next(iter(edam_formats.items()))
+
+            assert isinstance(first_key, str)
+            assert isinstance(first_value, tuple)
+            assert len(first_value) == 2
