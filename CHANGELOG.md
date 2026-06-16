@@ -18,6 +18,7 @@
 ### Modules
 
 - `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
+- feat: module lint for module name granularity ([#4325](https://github.com/nf-core/tools/pull/4325))
 
 ### Subworkflows
 
