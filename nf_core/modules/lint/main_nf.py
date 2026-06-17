@@ -412,11 +412,8 @@ def check_process_section(
     bioconda_packages = []
     allowed_registries = registry
 
-    # Process name should be all capital letters
-    if all(x.upper() for x in self.process_name):
-        self.passed.append(("main_nf", "process_capitals", "Process name is in capital letters", self.main_nf))
-    else:
-        self.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", self.main_nf))
+    # Check that the process name is correctly formated from the component name
+    check_process_name_format(self, self.process_name, self.component_name)
 
     # Check that process labels are correct
     check_process_labels(self, lines)
@@ -639,6 +636,27 @@ def check_process_section(
         return None
     else:
         return docker_tag == singularity_tag
+
+
+def check_process_name_format(self, process_name, component_name):
+    """
+    Lint the process name
+    Checks that the process name in the module file all is uppercase and derived
+    from the software and tool name separated by an underscore.
+    """
+    # Process name should be all capital letters
+    if process_name.isupper():
+        self.passed.append(("main_nf", "process_capitals", "Process name is in capital letters", self.main_nf))
+    else:
+        self.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", self.main_nf))
+
+    # Process name should be made from the module name
+    if component_name.upper().replace("-", "").replace("/", "_") == process_name:
+        self.passed.append(("main_nf", "module_process_name", "Process name is derived from module name", self.main_nf))
+    else:
+        self.failed.append(
+            ("main_nf", "module_process_name", "Process name is not derived from module name", self.main_nf)
+        )
 
 
 def check_process_labels(self, lines):
