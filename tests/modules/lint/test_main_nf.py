@@ -10,6 +10,7 @@ from nf_core.modules.lint.main_nf import (
     check_container_link_line,
     check_nf_module_name_modularity,
     check_process_labels,
+    check_process_name_format,
     check_process_section,
     check_script_section,
 )
@@ -34,6 +35,27 @@ def test_module_name_granularity(content, passed, warned, failed):
     """Test module name granularity"""
     mock_lint = MockModuleLint()
     check_nf_module_name_modularity(mock_lint, content)
+
+    assert len(mock_lint.passed) == passed
+    assert len(mock_lint.warned) == warned
+    assert len(mock_lint.failed) == failed
+
+
+@pytest.mark.parametrize(
+    "process_name,component_name,passed,warned,failed",
+    [
+        # Valid process name
+        ("STAR_ALIGN", "star/align", 2, 0, 0),
+        # Invalid process name, missing tool name
+        ("EIGSCIS", "cooltools/eigscis", 1, 0, 1),
+        # Invalid process name, missing tool name and small caps
+        ("cooltools/eigscis", "cooltools/eigscis", 0, 0, 2),
+    ],
+)
+def test_process_name_format(process_name, component_name, passed, warned, failed):
+    """Test process name format"""
+    mock_lint = MockModuleLint()
+    check_process_name_format(mock_lint, process_name, component_name)
 
     assert len(mock_lint.passed) == passed
     assert len(mock_lint.warned) == warned
@@ -159,6 +181,7 @@ def test_container_links(content, passed, warned, failed):
 def test_check_process_section_additional_registries(container_line, additional_registries, should_pass, tmp_path):
     """Test that container_links passes/fails based on additional_registries from .nf-core.yml."""
     mock_lint = MockModuleLint()
+    mock_lint.component_name = "tool/subtool"
     mock_lint.process_name = "TOOL_SUBTOOL"
     mock_lint.component_dir = tmp_path
 
