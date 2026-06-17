@@ -26,6 +26,7 @@
 
 - add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
 - fix dead link ([#4307](https://github.com/nf-core/tools/pull/4307))
+- remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
 
 #### Version updates
 
