@@ -183,6 +183,7 @@ def test_container_links(content, passed, warned, failed):
 def test_check_process_section_additional_registries(container_line, additional_registries, should_pass, tmp_path):
     """Test that container_links passes/fails based on additional_registries from .nf-core.yml."""
     mock_lint = MockModuleLint()
+    mock_lint.component_name = "tool/subtool"
     mock_lint.process_name = "TOOL_SUBTOOL"
     mock_lint.component_dir = tmp_path
 
