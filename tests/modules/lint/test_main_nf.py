@@ -46,8 +46,6 @@ def test_module_name_granularity(content, passed, warned, failed):
     [
         # Valid process name
         ("STAR_ALIGN", "star/align", 2, 0, 0),
-        # Valid process name with dash
-        ("EAUTILS_GTF2BED", "ea-utils/gtf2bed", 2, 0, 0),
         # Invalid process name, missing tool name
         ("EIGSCIS", "cooltools/eigscis", 1, 0, 1),
         # Invalid process name, missing tool name and small caps

@@ -641,7 +641,7 @@ def check_process_section(
 def check_process_name_format(self, process_name, component_name):
     """
     Lint the process name
-    Checks that the process name in the module file all is uppercase and derived
+    Checks that the process name in the module file is uppercase and derived
     from the software and tool name separated by an underscore.
     """
     # Process name should be all capital letters
@@ -651,7 +651,7 @@ def check_process_name_format(self, process_name, component_name):
         self.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Process name should be made from the module name
-    if component_name.upper().replace("-", "").replace("/", "_") == process_name:
+    if component_name.upper().replace("/", "_") == process_name:
         self.passed.append(("main_nf", "module_process_name", "Process name is derived from module name", self.main_nf))
     else:
         self.failed.append(
