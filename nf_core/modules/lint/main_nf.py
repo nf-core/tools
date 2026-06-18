@@ -6,13 +6,10 @@ import logging
 import re
 from pathlib import Path
 
-import yaml
 from rich.progress import Progress
 
-import nf_core.utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.environment_yml import _fix_module_version
 
 log = logging.getLogger(__name__)
 
@@ -419,7 +416,6 @@ def check_process_section(
         return
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
-    bioconda_packages = []
 
     # Check that the process name is correctly formated from the component name
     check_process_name_format(self, self.process_name, self.component_name)
@@ -467,109 +463,6 @@ def check_process_section(
 
         if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
             check_container_link_line(self, raw_line, registry)
-
-    # Get bioconda packages from environment.yml
-    try:
-        with open(Path(self.component_dir, "environment.yml")) as fh:
-            env_yml = yaml.safe_load(fh)
-        if "dependencies" in env_yml:
-            bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
-    except FileNotFoundError:
-        pass
-    except NotADirectoryError:
-        pass
-
-    # Check that all bioconda packages have build numbers
-    # Also check for newer versions
-    for bp in bioconda_packages:
-        bp = bp.strip("'").strip('"')
-        # Check for correct version and newer versions
-        try:
-            bioconda_version = bp.split("=")[1]
-            # response = _bioconda_package(bp)
-            response = nf_core.utils.anaconda_package(bp)
-            self.passed.append(
-                ("main_nf", "bioconda_version", f"Conda version specified correctly: {bp}", self.main_nf)
-            )
-        except LookupError:
-            self.warned.append(
-                ("main_nf", "bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf)
-            )
-        except ValueError:
-            self.failed.append(
-                ("main_nf", "bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf)
-            )
-        else:
-            # Check that required version is available at all
-            if bioconda_version not in response.get("versions"):
-                self.failed.append(
-                    (
-                        "main_nf",
-                        "bioconda_version",
-                        f"Conda package {bp} had unknown version: `{bioconda_version}`",
-                        self.main_nf,
-                    )
-                )
-                continue  # No need to test for latest version, continue linting
-            # Check version is latest available
-            last_ver = response.get("latest_version")
-            if last_ver is not None and last_ver != bioconda_version:
-                package, ver = bp.split("=", 1)
-                # If a new version is available and fix is True, update the version
-                if fix_version:
-                    try:
-                        fixed = _fix_module_version(self, bioconda_version, last_ver)
-                    except FileNotFoundError as e:
-                        fixed = False
-                        log.debug(f"Unable to update package {package} due to error: {e}")
-                    else:
-                        if fixed:
-                            if progress_bar is not None:
-                                progress_bar.print(
-                                    f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}"
-                                )
-                            log.debug(f"Updating package {package} {ver} -> {last_ver}")
-                            self.passed.append(
-                                (
-                                    "main_nf",
-                                    "bioconda_latest",
-                                    f"Conda package has been updated to the latest available: `{bp}`",
-                                    self.main_nf,
-                                )
-                            )
-                        else:
-                            if progress_bar is not None:
-                                progress_bar.print(
-                                    f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                                )
-                            log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
-                            self.warned.append(
-                                (
-                                    "main_nf",
-                                    "bioconda_latest",
-                                    f"Conda update: {package} `{ver}` -> `{last_ver}`",
-                                    self.main_nf,
-                                )
-                            )
-                # Add available update as a warning
-                else:
-                    self.warned.append(
-                        (
-                            "main_nf",
-                            "bioconda_latest",
-                            f"Conda update: {package} `{ver}` -> `{last_ver}`",
-                            self.main_nf,
-                        )
-                    )
-            else:
-                self.passed.append(
-                    (
-                        "main_nf",
-                        "bioconda_latest",
-                        f"Conda package is the latest available: `{bp}`",
-                        self.main_nf,
-                    )
-                )
 
 
 def check_process_name_format(self, process_name, component_name):
