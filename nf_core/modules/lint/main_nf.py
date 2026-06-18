@@ -416,7 +416,6 @@ def check_process_section(
         return
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
-
     # Check that the process name is correctly formated from the component name
     check_process_name_format(self, self.process_name, self.component_name)
 
