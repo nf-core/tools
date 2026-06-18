@@ -8,7 +8,7 @@ from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.main_nf import (
     _parse_output_topics,
     check_container_link_line,
-    check_nf_module_name_modularity,
+    check_nf_module_name,
     check_process_labels,
     check_process_name_format,
     check_process_section,
@@ -24,17 +24,19 @@ from .test_lint_utils import MockModuleLint
     "content,passed,warned,failed",
     [
         # Valid module <tool> name
-        ("tar", 1, 0, 0),
+        ("tar", 3, 0, 0),
         # Valid module <tool/subtool> name
-        ("tabix/tabix", 1, 0, 0),
+        ("tabix/tabix", 3, 0, 0),
+        # Invalid module name with punctuation and capital letters
+        ("ea-utils/GTF2BED", 1, 0, 2),
         # Invalid module <tool/subtool/subtool> name
-        ("aws/s3/ls", 0, 0, 1),
+        ("aws/s3/ls", 2, 0, 1),
     ],
 )
-def test_module_name_granularity(content, passed, warned, failed):
-    """Test module name granularity"""
+def test_module_name_format(content, passed, warned, failed):
+    """Test module name format"""
     mock_lint = MockModuleLint()
-    check_nf_module_name_modularity(mock_lint, content)
+    check_nf_module_name(mock_lint, content)
 
     assert len(mock_lint.passed) == passed
     assert len(mock_lint.warned) == warned
