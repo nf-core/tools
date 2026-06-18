@@ -414,7 +414,7 @@ class NFCoreComponent:
 
         return self.container_from_main_nf
 
-    def _get_container_with_inspect(self) -> str:
+    def _get_container_with_inspect(self) -> str | None:
 
         main_nf_abs = self.main_nf.absolute()
 
@@ -427,6 +427,7 @@ class NFCoreComponent:
                 cmd_out = None
             if cmd_out is None:
                 log.debug("Failed to run `nextflow inspect`")
+                return None
             out, _ = cmd_out
             out_str = out.decode()
             # nextflow inspect mixes status lines ([PIPELINE], [SUCCESS], etc.) with JSON on stdout
@@ -435,11 +436,13 @@ class NFCoreComponent:
             if json_start == -1 or json_end == 0:
                 log.debug("Could not find JSON in nextflow inspect output")
                 log.debug(f"Output of nextflow inspect: {out_str}")
+                return None
             try:
                 out_json = json.loads(out_str[json_start:json_end])
             except json.JSONDecodeError:
                 log.debug("Failed to parse JSON from nextflow inspect output")
                 log.debug(f"Output of nextflow inspect: {out_str}")
+                return None
             container = (out_json.get("processes") or [{}])[0].get("container", None)
             if container is None:
                 log.debug(
