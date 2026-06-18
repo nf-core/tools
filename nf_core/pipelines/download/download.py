@@ -23,7 +23,7 @@ import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
-from nf_core.pipelines.download.utils import DownloadError, intermediate_dir_with_cd
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
@@ -32,6 +32,7 @@ from nf_core.utils import (
     gh_api,
     pretty_nf_version,
     run_cmd,
+    set_wd_tempdir,
 )
 
 log = logging.getLogger(__name__)
@@ -677,7 +678,7 @@ class DownloadWorkflow:
         working_dir = Path().absolute()
 
         def run_nextflow_inspect(params_file: Path | None = None) -> dict[str, Any]:
-            with intermediate_dir_with_cd(working_dir):
+            with set_wd_tempdir(working_dir):
                 executable = "nextflow"
                 params_file_arg = f' -params-file "{params_file}"' if params_file else ""
                 cmd_params = (

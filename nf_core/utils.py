@@ -1700,13 +1700,16 @@ def set_wd(path: Path) -> Generator[None, None, None]:
 
 
 @contextmanager
-def set_wd_tempdir() -> Generator[None, None, None]:
+def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
     """
-    Context manager to provide and change into a tempdir and ensure its removal and return to the
-    original_dir upon exceptions.
+    Context manager to create a tempdir and change into it, ensuring its removal and a return to
+    the original working directory on exit (including exceptions).
+
+    Args:
+        base_dir: Directory in which to create the tempdir. Defaults to the system temp location.
     """
-    with tempfile.TemporaryDirectory() as tmp, set_wd(Path(tmp)):
-        yield
+    with tempfile.TemporaryDirectory(dir=base_dir) as tmp, set_wd(Path(tmp)):
+        yield Path(tmp)
 
 
 def get_wf_files(wf_path: Path):
