@@ -68,8 +68,8 @@ def main_nf(
     emits: list[str] = []
     topics: list[str] = []
 
-    # Check the module name granularity
-    check_nf_module_name_modularity(module, module.component_name)
+    # Check the module name
+    check_nf_module_name(module, module.component_name)
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
@@ -279,11 +279,29 @@ def main_nf(
     return inputs, emits
 
 
-def check_nf_module_name_modularity(self, component_name):
+def check_nf_module_name(self, component_name):
     """
-    Lint the module granularity
-    Checks whether the module name has at most two levels of granularity.
+    Lint the module name
+    Checks whether the module name has at most two levels of granularity, no
+    punctuation and lowercase.
     """
+    # Module name is lowercase
+    if component_name.islower():
+        self.passed.append(("main_nf", "main_nf_module_lowercase", "Process name is lowercase", self.main_nf))
+    else:
+        self.failed.append(("main_nf", "main_nf_module_lowercase", "Process name should be lowercase", self.main_nf))
+
+    # Module name has no punctuation
+    if component_name.replace("/", "").isalnum():
+        self.passed.append(
+            ("main_nf", "main_nf_module_no_punctuation", "Module properly named without punctuation", self.main_nf)
+        )
+    else:
+        self.failed.append(
+            ("main_nf", "main_nf_module_no_punctuation", "Module name should not have any punctuation", self.main_nf)
+        )
+
+    # Module name granularity
     if component_name.count("/") > 1:
         self.failed.append(
             ("main_nf", "main_nf_module_granularity", "Module not named as `<tool>` or `<tool/subtool>`", self.main_nf)
