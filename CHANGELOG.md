@@ -9,6 +9,7 @@
 - Coerce launch params_out to Path to fix AttributeError (#4299) ([#4317](https://github.com/nf-core/tools/pull/4317))
 - generate valid Markdown when piping schema docs to file ([#4319](https://github.com/nf-core/tools/pull/4319))
 - fix API docs bug in pydantic autodoc ([#4320](https://github.com/nf-core/tools/pull/4320))
+- Update pre-commit npm dependencies to v3.8.4 ([#4335](https://github.com/nf-core/tools/pull/4335))
 
 ### Linting
 
