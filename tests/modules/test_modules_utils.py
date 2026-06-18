@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 import nf_core.modules.modules_utils
 from nf_core.modules.modules_utils import (
-    get_container_with_regex,
     module_uses_dockerfile,
     scan_modules_dir,
 )
@@ -137,42 +136,6 @@ class TestModulesUtils(TestModules):
             import shutil
 
             shutil.rmtree(modules_dir / "samtools")
-
-
-def test_get_container_with_regex_single_line(tmp_path):
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text('container "quay.io/biocontainers/fastqc:0.11.9--0"\n')
-    assert get_container_with_regex(main_nf) == "quay.io/biocontainers/fastqc:0.11.9--0"
-
-
-def test_get_container_with_regex_single_quotes(tmp_path):
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text("container 'quay.io/biocontainers/fastqc:0.11.9--0'\n")
-    assert get_container_with_regex(main_nf) == "quay.io/biocontainers/fastqc:0.11.9--0"
-
-
-def test_get_container_with_regex_multiline(tmp_path):
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text(
-        "container \"${ workflow.containerEngine == 'singularity' ?\n"
-        "    'docker://quay.io/biocontainers/fastqc:0.11.9--0' :\n"
-        "    'quay.io/biocontainers/fastqc:0.11.9--0' }\"\n"
-    )
-    result = get_container_with_regex(main_nf)
-    assert "quay.io/biocontainers/fastqc" in result
-
-
-def test_get_container_with_regex_no_container(tmp_path):
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text('process TEST {\n    script:\n    "echo test"\n}\n')
-    assert get_container_with_regex(main_nf) == ""
-
-
-def test_get_container_with_regex_container_keyword_no_match(tmp_path):
-    """container keyword present but no valid quoted string returns empty."""
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text("// container removed\n")
-    assert get_container_with_regex(main_nf) == ""
 
 
 def test_module_uses_dockerfile_true(tmp_path):

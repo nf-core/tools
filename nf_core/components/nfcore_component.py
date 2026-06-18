@@ -408,10 +408,6 @@ class NFCoreComponent:
 
         if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
             self.container_from_main_nf = self._get_container_with_inspect()
-        else:
-            from nf_core.modules.modules_utils import get_container_with_regex
-
-            self.container_from_main_nf = get_container_with_regex(self.main_nf, self.component_name)
 
         if not self.container_from_main_nf:
             log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
@@ -419,7 +415,6 @@ class NFCoreComponent:
         return self.container_from_main_nf
 
     def _get_container_with_inspect(self) -> str:
-        from nf_core.modules.modules_utils import get_container_with_regex
 
         main_nf_abs = self.main_nf.absolute()
 
@@ -432,9 +427,6 @@ class NFCoreComponent:
                 cmd_out = None
             if cmd_out is None:
                 log.debug("Failed to run `nextflow inspect`")
-                log.debug("Falling back to regex method")
-                return get_container_with_regex(main_nf_abs, self.component_name)
-
             out, _ = cmd_out
             out_str = out.decode()
             # nextflow inspect mixes status lines ([PIPELINE], [SUCCESS], etc.) with JSON on stdout
@@ -443,22 +435,16 @@ class NFCoreComponent:
             if json_start == -1 or json_end == 0:
                 log.debug("Could not find JSON in nextflow inspect output")
                 log.debug(f"Output of nextflow inspect: {out_str}")
-                log.debug("Falling back to regex method.")
-                return get_container_with_regex(main_nf_abs, self.component_name)
             try:
                 out_json = json.loads(out_str[json_start:json_end])
             except json.JSONDecodeError:
                 log.debug("Failed to parse JSON from nextflow inspect output")
                 log.debug(f"Output of nextflow inspect: {out_str}")
-                log.debug("Falling back to regex method.")
-                return get_container_with_regex(main_nf_abs, self.component_name)
             container = (out_json.get("processes") or [{}])[0].get("container", None)
             if container is None:
                 log.debug(
                     f"Container for {self.component_name} could not be extracted from the output of nextflow inspect"
                 )
                 log.debug(f"Output of nextflow inspect: {out_str}")
-                log.debug("Falling back to regex method.")
-                return get_container_with_regex(main_nf_abs, self.component_name)
 
             return container
