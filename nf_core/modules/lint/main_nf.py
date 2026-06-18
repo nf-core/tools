@@ -36,9 +36,10 @@ def main_nf(
 
     * ``main_nf_script_outputs``: The process must have an ``output:`` block.
 
-    * ``main_nf_container``: Container tags across the ``singularity``, ``docker``,
-      and ``conda`` directives must reference the same software version. A warning
-      is issued if they do not match.
+    * ``main_nf_container``: When both a ``singularity`` and a ``docker`` container
+      are specified, their tags must reference the same software version. A warning
+      is issued if they do not match. Modules using the newer docker-only format
+      (no singularity container) skip this check.
 
     * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
       blocks must be present.
@@ -173,7 +174,13 @@ def main_nf(
         module.passed.append(("main_nf", "main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    check_process_section(module, process_lines, registry, fix_version, progress_bar)
+    containers_match = check_process_section(module, process_lines, registry, fix_version, progress_bar)
+    if containers_match is True:
+        module.passed.append(("main_nf", "main_nf_container", "Container versions match", module.main_nf))
+    elif containers_match is False:
+        module.warned.append(("main_nf", "main_nf_container", "Container versions do not match", module.main_nf))
+    # ``None`` means only one (or no) container type was specified (e.g. the newer
+    # docker-only format), so there is nothing to compare and no check is emitted.
 
     # Check the when statement
     check_when_section(module, when_lines)
@@ -408,13 +415,20 @@ def check_process_section(
         progress_bar (ProgressBar): Progress bar to update.
 
     Returns:
-        None
+        bool | None: True if the singularity and docker container versions match,
+        False if they do not. None if only one (or no) container type is specified
+        (e.g. the newer docker-only format) or if the process definition does not exist.
     """
     # Check that we have a process section
     if len(lines) == 0:
         self.failed.append(("main_nf", "process_exist", "Process definition does not exist", self.main_nf))
-        return
+        return None
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
+
+    # Container tags, used to check that singularity and docker versions match.
+    # Either may stay None if the corresponding container is not specified.
+    singularity_tag = None
+    docker_tag = None
 
     # Check that the process name is correctly formated from the component name
     check_process_name_format(self, self.process_name, self.component_name)
@@ -451,17 +465,39 @@ def check_process_section(
                     )
                 )
         if _container_type(line) == "singularity":
-            self.warned.append(
-                (
-                    "main_nf",
-                    "deprecated_container_syntax",
-                    f"Singularity container URL syntax is deprecated. Please migrate to seqera containers using `nf-core modules container create {self.component_name}`.",
-                    self.main_nf,
+            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
+            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
+            # Please god let's find a better way to do this than regex
+            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", line)
+            if match is not None:
+                singularity_tag = match.group(1)
+                self.passed.append(
+                    ("main_nf", "singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf)
                 )
-            )
+            else:
+                self.failed.append(("main_nf", "singularity_tag", "Unable to parse singularity tag", self.main_nf))
+                singularity_tag = None
+
+        if _container_type(line) == "docker":
+            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
+            # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
+            match = re.search(r":([A-Za-z\d\-_.]+)$", line)
+            if match is not None:
+                docker_tag = match.group(1)
+                self.passed.append(("main_nf", "docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
+            else:
+                self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
+                docker_tag = None
 
         if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
             check_container_link_line(self, raw_line, registry)
+
+    # Compare container versions only when both a singularity and a docker container
+    # are specified. The newer docker-only format leaves singularity_tag as None, in
+    # which case there is nothing to compare and we return None.
+    if singularity_tag is None or docker_tag is None:
+        return None
+    return docker_tag == singularity_tag
 
 
 def check_process_name_format(self, process_name, component_name):
@@ -555,6 +591,7 @@ def check_container_link_line(self, raw_line, registry):
     """Look for common problems in the container name / URL, for docker and singularity."""
 
     line = raw_line.strip(" \n'\"}:?")
+    log.debug(f"container line: '{line}'")
 
     # lint double quotes
     if line.count('"') > 2:
@@ -583,8 +620,10 @@ def check_container_link_line(self, raw_line, registry):
     # (if there are multiple links, this will be warned in the next check)
     container_link = None
     if len(single_quoted_items) == 3 or len(single_quoted_items) == 5 and " in [" in raw_line:
+        log.debug(f"Single-quoted container link: '{single_quoted_items[1]}'")
         container_link = single_quoted_items[1]
     elif len(double_quoted_items) == 3:
+        log.debug(f"Double-quoted container link: '{double_quoted_items[1]}'")
         container_link = double_quoted_items[1]
     if container_link:
         if " " in container_link:
@@ -617,6 +656,7 @@ def check_container_link_line(self, raw_line, registry):
                 )
             )
         else:
+            log.debug(f"Container link: '{container_link}' does not start with registry prefix: {registry}")
             self.failed.append(
                 (
                     "main_nf",
