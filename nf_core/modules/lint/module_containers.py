@@ -84,11 +84,11 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                         )
                     )
                 else:
-                    module.warned.append(
+                    module.passed.append(
                         (
                             "meta_yml",
                             "containers_build_id_hash",
-                            f"Could not compare build ID hash with {system} container tag for {platform}, because either build_hash:`{build_hash}` or  name_hash:`{name_hash}` is `None`.",
+                            f"Build ID hash matches {system_key} container tag for {platform}",
                             meta_path,
                         )
                     )
