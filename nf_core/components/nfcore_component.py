@@ -434,6 +434,11 @@ class NFCoreComponent:
         main_nf_abs = self.main_nf.absolute()
 
         with set_wd_tempdir():
+            # Provide a minimal nextflow.config to avoid falling back to docker branch when
+            # resolving singularity containers via `nextflow inspect`.
+            Path("nextflow.config").write_text(
+                "profiles {\n    docker { docker.enabled = true }\n    singularity { singularity.enabled = true }\n}\n"
+            )
             executable = "nextflow"
             profile_param = f"-profile {profile} " if profile else ""
             cmd_params = f"inspect {profile_param}-format json {main_nf_abs}"
