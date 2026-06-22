@@ -400,27 +400,43 @@ class NFCoreComponent:
             self.topics = topics
 
     def get_container_from_main_nf(self) -> str | None:
-        if self.component_type != "modules":
-            return None
-
+        """Cached accessor for the (profile-agnostic) container resolved from ``main.nf``."""
         if self.container_from_main_nf is not None:
             return self.container_from_main_nf
 
-        if check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
-            self.container_from_main_nf = self._get_container_with_inspect()
+        self.container_from_main_nf = self.get_container_with_inspect()
 
         if not self.container_from_main_nf:
             log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
 
         return self.container_from_main_nf
 
-    def _get_container_with_inspect(self) -> str | None:
+    def get_container_with_inspect(self, profile: str | None = None) -> str | None:
+        """Resolve the container declared in the module's ``main.nf`` using ``nextflow inspect``.
+
+        Running inspect lets Nextflow evaluate the container selection logic in the module
+        (and return the fully resolved container in its JSON output) instead of parsing it
+        with brittle regexes. Pass ``profile`` (e.g. ``"docker"`` or ``"singularity"``) to
+        resolve the container for a specific profile.
+
+        Returns:
+            str | None: The resolved container, or ``None`` if it could not be resolved
+            (not a module, Nextflow too old to support ``nextflow inspect``, or inspect
+            failed).
+        """
+        if self.component_type != "modules":
+            return None
+
+        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
+            log.debug("Nextflow version too old to resolve containers with `nextflow inspect`")
+            return None
 
         main_nf_abs = self.main_nf.absolute()
 
         with set_wd_tempdir():
             executable = "nextflow"
-            cmd_params = f"inspect -format json {main_nf_abs}"
+            profile_param = f"-profile {profile} " if profile else ""
+            cmd_params = f"inspect {profile_param}-format json {main_nf_abs}"
             try:
                 cmd_out = run_cmd(executable, cmd_params)
             except RuntimeError:

@@ -416,8 +416,9 @@ def check_process_section(
 
     Returns:
         bool | None: True if the singularity and docker container versions match,
-        False if they do not. None if only one (or no) container type is specified
-        (e.g. the newer docker-only format) or if the process definition does not exist.
+        False if they do not. None if the versions cannot be compared (e.g. modern
+        content-addressed Seqera containers, where the singularity URL carries no
+        version tag) or if the process definition does not exist.
     """
     # Check that we have a process section
     if len(lines) == 0:
@@ -425,10 +426,31 @@ def check_process_section(
         return None
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
-    # Container tags, used to check that singularity and docker versions match.
-    # Either may stay None if the corresponding container is not specified.
-    singularity_tag = None
-    docker_tag = None
+    # Resolve the docker and singularity containers via `nextflow inspect` rather than
+    # parsing the container ternary in main.nf with regexes. Running inspect once per
+    # profile lets Nextflow evaluate the container selection logic for us and return the
+    # fully resolved container in its JSON output. Either may be None if the corresponding
+    # container could not be resolved (e.g. Nextflow too old, or no such container).
+    docker_container = self.get_container_with_inspect(profile="docker")
+    singularity_container = self.get_container_with_inspect(profile="singularity")
+
+    # `nextflow inspect -profile singularity` falls back to the docker container when the
+    # module has no singularity-specific image. A genuine singularity reference is a remote
+    # URL (`https://…`) or an `oras://…` reference, so anything else is the docker fallback
+    # and must not be treated as a singularity container.
+    if singularity_container is not None and not singularity_container.startswith(("https:", "oras:")):
+        singularity_container = None
+
+    if singularity_container is not None:
+        self.passed.append(
+            ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", self.main_nf)
+        )
+    else:
+        self.failed.append(("main_nf", "singularity_tag", "Unable to resolve singularity container", self.main_nf))
+    if docker_container is not None:
+        self.passed.append(("main_nf", "docker_tag", f"Found docker container: {docker_container}", self.main_nf))
+    else:
+        self.failed.append(("main_nf", "docker_tag", "Unable to resolve docker container", self.main_nf))
 
     # Check that the process name is correctly formated from the component name
     check_process_name_format(self, self.process_name, self.component_name)
@@ -464,40 +486,22 @@ def check_process_section(
                         self.main_nf,
                     )
                 )
-        if _container_type(line) == "singularity":
-            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
-            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
-            # Please god let's find a better way to do this than regex
-            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", line)
-            if match is not None:
-                singularity_tag = match.group(1)
-                self.passed.append(
-                    ("main_nf", "singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf)
-                )
-            else:
-                self.failed.append(("main_nf", "singularity_tag", "Unable to parse singularity tag", self.main_nf))
-                singularity_tag = None
-
-        if _container_type(line) == "docker":
-            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
-            # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
-            match = re.search(r":([A-Za-z\d\-_.]+)$", line)
-            if match is not None:
-                docker_tag = match.group(1)
-                self.passed.append(("main_nf", "docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
-            else:
-                self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = None
 
         if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
             check_container_link_line(self, raw_line, registry)
 
-    # Compare container versions only when both a singularity and a docker container
-    # are specified. The newer docker-only format leaves singularity_tag as None, in
-    # which case there is nothing to compare and we return None.
-    if singularity_tag is None or docker_tag is None:
+    # Compare versions only when both resolved containers expose a parseable version tag.
+    # Legacy biocontainers-style URLs carry a shared `:<version>` tag (e.g. `:0.11.9--0`)
+    # on both the docker and singularity side, so a mismatch flags an author error. Modern
+    # Seqera containers are content-addressed (the singularity URL is a sha digest with no
+    # version), so there is nothing to compare and we return None.
+    if docker_container is None or singularity_container is None:
         return None
-    return docker_tag == singularity_tag
+    docker_match = re.search(r":([A-Za-z\d\-_.]+)$", docker_container)
+    singularity_match = re.search(r":([A-Za-z\d\-_.]+)$", singularity_container)
+    if docker_match is None or singularity_match is None:
+        return None
+    return docker_match.group(1) == singularity_match.group(1)
 
 
 def check_process_name_format(self, process_name, component_name):
