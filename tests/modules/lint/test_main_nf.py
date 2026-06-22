@@ -416,6 +416,38 @@ process TEST_PROCESS {
     assert "reads" in component.outputs
     assert '"*{3prime,5prime,trimmed,val}{,_1,_2}.fq.gz"' in list(component.outputs["reads"][0][1].keys())
 
+def test_get_outputs_no_partial_keyword_match_in_emit_name(tmp_path):
+    """Test that output parsing does not match val inside emit names like peak_values"""
+    main_nf_content = """
+process TEST_PROCESS {
+    input:
+    val(meta)
+
+    output:
+    path "*peak_values.nii.gz", emit: peak_values
+
+    script:
+    "echo test"
+}
+"""
+    main_nf_path = tmp_path / "main.nf"
+    main_nf_path.write_text(main_nf_content)
+
+    component = NFCoreComponent(
+        component_name="test",
+        repo_url=None,
+        component_dir=tmp_path,
+        repo_type="modules",
+        base_dir=tmp_path,
+        component_type="modules",
+        remote_component=False,
+    )
+
+    component.get_outputs_from_main_nf()
+
+    assert component.outputs == {
+        "peak_values": [{"\"*peak_values.nii.gz\"": {"_keyword": "path"}}]
+    }
 
 def test_get_outputs_complete_version_command(tmp_path):
     """Test that the version command is complete with both eval() and val()"""
