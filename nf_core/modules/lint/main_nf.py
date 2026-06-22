@@ -666,7 +666,7 @@ def check_container_link_line(self, raw_line, registry):
                     (
                         "main_nf",
                         "container_links",
-                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry)}",
+                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry) if isinstance(registry, tuple) else registry}",
                         self.main_nf,
                     )
                 )

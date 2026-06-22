@@ -99,13 +99,13 @@ def test_process_labels(content, passed, warned, failed):
     "content,passed,warned,failed",
     [
         # Single-line container definition should pass
-        ('container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package', 2, 0, 0),
+        ('container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package', 3, 0, 0),
         # Multi-line container definition should pass
         (
             '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0':
-                'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
-            6,
+                'quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
+            7,
             0,
             0,
         ),
@@ -113,8 +113,8 @@ def test_process_labels(content, passed, warned, failed):
         (
             '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
-                'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
-            5,
+                'quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"''',
+            6,
             0,
             1,
         ),
@@ -122,17 +122,17 @@ def test_process_labels(content, passed, warned, failed):
         (
             '''container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
-                "biocontainers/gatk4:4.4.0.0--py36hdfd78af_0" }"''',
+                "quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0" }"''',
             4,
             0,
             1,
         ),
         # Ternary with ? on next line (new Nextflow format) should pass
         (
-            '''container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+            '''container "${workflow.containerEngine in ['singularity', 'apptainer']  && !task.ext.singularity_pull_docker_container
         ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
         : 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264'}"''',
-            6,
+            7,
             0,
             0,
         ),
@@ -144,7 +144,7 @@ def test_container_links(content, passed, warned, failed):
 
     for line in content.splitlines():
         if line.strip():
-            check_container_link_line(mock_lint, line, registry="quay.io")
+            check_container_link_line(mock_lint, line, registry=("quay.io", "community.wave.seqera.io/library/"))
 
     assert len(mock_lint.passed) == passed
     assert len(mock_lint.warned) == warned
