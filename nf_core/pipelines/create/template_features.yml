@@ -29,7 +29,7 @@ repository_setup:
           - ".github/ISSUE_TEMPLATE/feature_request.yml"
           - ".github/PULL_REQUEST_TEMPLATE.md"
           - ".github/workflows/branch.yml"
-          - ".github/workflows/linting_comment.yml"
+          - ".github/workflows/pr-comment.yml"
           - ".github/workflows/linting.yml"
           - ".github/.dockstore.yml"
         readme:
@@ -117,7 +117,7 @@ continuous_integration_testing:
           - ".github/workflows/nf-test.yml"
           - ".github/actions/get-shards/action.yml"
           - ".github/actions/nf-test/action.yml"
-          - ".github/workflows/linting_comment.yml"
+          - ".github/workflows/pr-comment.yml"
           - ".github/workflows/linting.yml"
       nfcore_pipelines: False
       custom_pipelines: True
