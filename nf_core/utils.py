@@ -504,20 +504,26 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     log.debug(f"Running command: {full_cmd}")
     try:
         proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=False)
-        if proc.returncode != 0:
-            if executable == "nf-test":
-                return (proc.stdout, proc.stderr)
-            raise subprocess.CalledProcessError(proc.returncode, proc.args, output=proc.stdout, stderr=proc.stderr)
-        return (proc.stdout, proc.stderr)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Command '{full_cmd}' failed: {e}") from e
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
             ) from e
-        else:
-            return None
+        return None
+
+    if proc.returncode != 0:
+        if executable == "nf-test":
+            return (proc.stdout, proc.stderr)
+        output = (
+            proc.stderr.decode("utf-8", errors="replace").strip()
+            if proc.stderr
+            else proc.stdout.decode("utf-8", errors="replace").strip()
+            if proc.stdout
+            else ""
+        )
+        raise RuntimeError(f"Command '{full_cmd}' failed with exit code {proc.returncode}\n{output}")
+
+    return (proc.stdout, proc.stderr)
 
 
 def setup_nfcore_dir() -> bool:
