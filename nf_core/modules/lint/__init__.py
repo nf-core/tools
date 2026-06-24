@@ -306,27 +306,26 @@ class ModuleLint(ComponentLint):
         return self.meta_schema
 
     def sort_meta_yml(self, meta_yml: dict) -> dict:
-        """Sort meta.yml keys according to the schema's property order"""
-        # Get the schema to determine the correct key order
+        """Sort meta.yml keys according to the schema's property order.
+
+        Recurses into nested objects that the schema describes with ``properties``
+        (e.g. ``containers`` -> docker, singularity, conda), so sub-sections are sorted
+        too. Arrays, ``$ref``/``patternProperties`` nodes and scalars are left untouched.
+        """
         try:
             schema = self.load_meta_schema()
-            schema_keys = list(schema["properties"].keys())
-        except (LintExceptionError, KeyError) as e:
+        except LintExceptionError as e:
             raise UserWarning("Failed to load meta schema", e) from e
 
-        result: dict = {}
+        def sort_by_schema(data, node):
+            properties = node.get("properties", {}) if isinstance(node, dict) else {}
+            if not isinstance(data, dict) or not properties:
+                return data
+            # Schema-ordered keys first (recursing into each), then any extras preserved
+            ordered = {key: sort_by_schema(data[key], child) for key, child in properties.items() if key in data}
+            return {**ordered, **{key: value for key, value in data.items() if key not in ordered}}
 
-        # First, add keys in the order they appear in the schema
-        for key in schema_keys:
-            if key in meta_yml:
-                result[key] = meta_yml[key]
-
-        # Then add any keys that aren't in the schema (to preserve custom keys)
-        for key in meta_yml:
-            if key not in result:
-                result[key] = meta_yml[key]
-
-        return result
+        return sort_by_schema(meta_yml, schema)
 
     def update_meta_yml_file(self, mod):
         """

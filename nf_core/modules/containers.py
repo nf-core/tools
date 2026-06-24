@@ -353,15 +353,6 @@ class ModuleContainers:
         # Set containers early so get_conda_lock_file can access it
         self.containers = containers
 
-        # Persist all successful builds to meta.yml in one write
-        # (partial results are kept even if some builds failed)
-        if any(getattr(containers, cs) for cs in CONTAINER_SYSTEMS):
-            try:
-                self.update_containers_in_meta()
-                log.debug("Updated meta.yml with built containers")
-            except (ValueError, RuntimeError, OSError) as meta_error:
-                log.warning(f"Failed to update meta.yml after container builds: {meta_error}")
-
         # Download conda lock files as separate tasks
         new_lock_files = set()
         for platform in CONTAINER_PLATFORMS:
@@ -378,26 +369,38 @@ class ModuleContainers:
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
 
-            containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
-
             try:
                 # Download conda lock file (it will look up build_id from docker container)
                 log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, status=f"conda lock {short_platform}...")
                 conda_lock_path.write_text(self.get_conda_lock_file(platform))
+                # Only register the entry once the lock has actually been written, so
+                # meta.yml never points at a missing lock file.
+                containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
                 new_lock_files.add(conda_lock_path)
                 if progress_bar and task_id is not None:
                     progress_bar.update(task_id, status=f"conda lock {short_platform} done")
 
             except (ValueError, OSError, requests.RequestException) as e:
-                log.error(f"Failed to download conda lock file for {platform}: {e}")
-                has_failures = True
+                # Wave does not always expose a conda lock for every build (e.g. some
+                # freshly built arm64 images). A missing lock is not fatal: keep the
+                # other platforms' containers and locks instead of failing the module.
+                log.warning(f"No conda lock file available for {platform}: {e}")
                 if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} failed")
+                    progress_bar.update(task_id, status=f"conda lock {short_platform} unavailable")
 
         # Clean up stale conda-lock files
         self.cleanup_stale_conda_lock_files(new_lock_files)
+
+        # Persist everything (docker, singularity and conda locks) to meta.yml in a
+        # single write. Partial results are kept even if some builds failed.
+        if any(getattr(containers, cs) for cs in CONTAINER_SYSTEMS + ["conda"]):
+            try:
+                self.update_containers_in_meta()
+                log.debug("Updated meta.yml with built containers")
+            except (ValueError, RuntimeError, OSError) as meta_error:
+                log.warning(f"Failed to update meta.yml after container builds: {meta_error}")
 
         # Update main.nf with new container name (docker amd64 without registry)
         try:
