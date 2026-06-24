@@ -51,7 +51,7 @@ jobs:
           >
           > For more documentation on how to update your pipeline, please see the [Synchronisation documentation](https://nf-co.re/docs/developing/template-syncs/overview).
           EOF
-          fi
+          fi{% endraw %}
 
       - name: Upload PR comment artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

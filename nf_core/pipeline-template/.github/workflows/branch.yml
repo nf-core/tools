@@ -17,18 +17,18 @@ jobs:
       - name: Check PRs
         if: github.repository == '{{ name }}'
         env:
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REPO:  {% raw %}${{ github.event.pull_request.head.repo.full_name }}{% endraw %}
         run: |
           { [[ "$HEAD_REPO" == {{ name }} ]] && [[ $GITHUB_HEAD_REF == "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
 
       # If the above check failed, build a comment to be posted by the shared poster workflow
       - name: Build PR comment
         if: failure()
-        env:
+        env:{% raw %}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          PR_USER: ${{ github.event.pull_request.user.login }}
+          PR_USER: ${{ github.event.pull_request.user.login }}{% endraw %}
         run: |
           mkdir -p pr-comment
           echo "$PR_NUMBER" > pr-comment/pr_number.txt

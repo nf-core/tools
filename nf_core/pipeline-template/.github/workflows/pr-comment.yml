@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Download PR comment artifact
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
-        with:
+        with:{% raw %}
           run_id: ${{ github.event.workflow_run.id }}
           name: pr-comment
           if_no_artifact_found: ignore
@@ -65,4 +65,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           number: ${{ steps.meta.outputs.pr_number }}
           header: ${{ steps.meta.outputs.header }}
-          path: pr-comment/comment.md
+          path: pr-comment/comment.md{%- endraw %}
