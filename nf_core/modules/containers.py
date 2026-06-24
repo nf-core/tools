@@ -231,32 +231,53 @@ class ModuleContainers:
             log.warning("Cannot update main.nf: containers or nfcore_component not available")
             return
 
-        # Get docker image and strip all path components (registry/path/...)
         linux_amd64 = CONTAINER_PLATFORMS[0]
+
+        # Get docker image
         _docker_entry = self.containers.docker.get(linux_amd64)
         docker_image = _docker_entry.name if _docker_entry else ""
         if not docker_image:
             log.error(f"No docker image found for {linux_amd64}")
             return
 
+        # Get singularity image, preferring the https download URL over the image name
+        _singularity_entry = self.containers.singularity.get(linux_amd64)
+        singularity_image = (_singularity_entry.https or _singularity_entry.name) if _singularity_entry else ""
+        if not singularity_image:
+            log.error(f"No singularity image found for {linux_amd64}")
+            return
+
         # Read main.nf
         main_nf_path = self.nfcore_component.main_nf
         content = main_nf_path.read_text()
 
-        # Check if container name is already correct
-        if docker_image in content and not force:
-            log.debug(
-                f"Container name in `{self.nfcore_component.component_name}/main.nf` is already correct: `{docker_image}`"
-            )
+        # Check if the container directive is already correct
+        if docker_image in content and singularity_image in content and not force:
+            log.debug(f"Container directive in `{self.nfcore_component.component_name}/main.nf` is already correct")
             return
 
-        # Replace container directive (may span multiple lines), preserving indentation
+        # Replace container directive (may span multiple lines), preserving indentation.
+        # The directive uses double quotes on the outside and single quotes inside, so a
+        # non-greedy match up to the next double quote captures the whole ternary.
+        def _replace(match: "re.Match[str]") -> str:
+            indent = match.group(1)
+            inner_indent = indent + "    "
+            return (
+                f"{indent}container \"${{ workflow.containerEngine in ['singularity', 'apptainer'] "
+                "&& !task.ext.singularity_pull_docker_container\n"
+                f"? {inner_indent}'{singularity_image}'\n"
+                f": {inner_indent}'{docker_image}' }}\""
+            )
+
         new_content = re.sub(
-            r"(\s*)container\s+\".*?\"", rf'\1container "{docker_image}"', content, count=1, flags=re.DOTALL
+            r"^([ \t]*)container\s+\".*?\"", _replace, content, count=1, flags=re.DOTALL | re.MULTILINE
         )
 
         main_nf_path.write_text(new_content)
-        log.debug(f"Updated container in `{self.nfcore_component.component_name}/main.nf` to: `{docker_image}`")
+        log.debug(
+            f"Updated container in `{self.nfcore_component.component_name}/main.nf` "
+            f"(docker: `{docker_image}`, singularity: `{singularity_image}`)"
+        )
 
     def create(
         self,
