@@ -21,6 +21,8 @@
 - `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
 - feat: module lint for module name granularity ([#4325](https://github.com/nf-core/tools/pull/4325))
 - Clarify execution context of nf-core modules test command ([#4346](https://github.com/nf-core/tools/pull/4346))
+- Add `nf-core modules containers create` to build module containers via Seqera Wave and record them in the `containers:` section of `meta.yml` ([#3954](https://github.com/nf-core/tools/pull/3954))
+- Container linting now validates the `containers:` section of `meta.yml` (Wave modules). The legacy `main.nf` container checks (URL reachability, registry prefix, docker/singularity tag match) have been removed; modules still using the old container syntax get a `deprecated_container_syntax` warning instead ([#3954](https://github.com/nf-core/tools/pull/3954))
 
 ### Subworkflows
 

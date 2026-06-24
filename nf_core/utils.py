@@ -18,9 +18,12 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
+from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -104,6 +107,16 @@ NFCORE_DIR = Path(
 )
 
 
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
+
+
+class ContainerRegistryUrls(Enum):
+    SEQERA_DOCKER = "community.wave.seqera.io/library"
+    SEQERA_SINGULARITY = "community-cr-prod.seqera.io/docker/registry/v2"
+    GALAXY_SINGULARITY = "depot.galaxyproject.org/singularity"
+
+
 def unquote(s: str) -> str:
     """
     Remove paired quotes (single or double) from start and end of string.
@@ -122,7 +135,9 @@ def unquote(s: str) -> str:
     """
     import ruamel.yaml.scalarstring
 
-    if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+    if isinstance(
+        s, (ruamel.yaml.scalarstring.DoubleQuotedScalarString, ruamel.yaml.scalarstring.SingleQuotedScalarString)
+    ):
         return s
 
     try:
@@ -315,8 +330,9 @@ def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
     return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
 
 
+@lru_cache(maxsize=1)
 def get_nf_version() -> tuple[int, int, int, bool] | None:
-    """Get the version of Nextflow installed on the system."""
+    """Get the version of Nextflow installed on the system. Cached for the lifetime of the process."""
     try:
         cmd_out = run_cmd("nextflow", "-v")
         if cmd_out is None:
@@ -371,16 +387,14 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
     return nf_version >= minimal_nf_version
 
 
-_NF_PROCESS_NAME_RE = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
-
-
 def read_module_name(main_nf: Path) -> str | None:
     """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    nf_process_name_regex = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
     try:
-        match = _NF_PROCESS_NAME_RE.search(main_nf.read_text())
-        return match.group(1) if match else None
+        match = nf_process_name_regex.search(main_nf.read_text())
     except OSError:
         return None
+    return match.group(1) if match else None
 
 
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
@@ -490,20 +504,26 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     log.debug(f"Running command: {full_cmd}")
     try:
         proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=False)
-        if proc.returncode != 0:
-            if executable == "nf-test":
-                return (proc.stdout, proc.stderr)
-            raise subprocess.CalledProcessError(proc.returncode, proc.args, output=proc.stdout, stderr=proc.stderr)
-        return (proc.stdout, proc.stderr)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Command '{full_cmd}' failed: {e}") from e
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
             ) from e
-        else:
-            return None
+        return None
+
+    if proc.returncode != 0:
+        if executable == "nf-test":
+            return (proc.stdout, proc.stderr)
+        output = (
+            proc.stderr.decode("utf-8", errors="replace").strip()
+            if proc.stderr
+            else proc.stdout.decode("utf-8", errors="replace").strip()
+            if proc.stdout
+            else ""
+        )
+        raise RuntimeError(f"Command '{full_cmd}' failed with exit code {proc.returncode}\n{output}")
+
+    return (proc.stdout, proc.stderr)
 
 
 def setup_nfcore_dir() -> bool:
@@ -1683,6 +1703,19 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+@contextmanager
+def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
+    """
+    Context manager to create a tempdir and change into it, ensuring its removal and a return to
+    the original working directory on exit (including exceptions).
+
+    Args:
+        base_dir: Directory in which to create the tempdir. Defaults to the system temp location.
+    """
+    with tempfile.TemporaryDirectory(dir=base_dir) as tmp, set_wd(Path(tmp)):
+        yield Path(tmp)
 
 
 def get_wf_files(wf_path: Path):

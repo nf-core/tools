@@ -15,6 +15,14 @@ class MockModuleLint:
         self.main_nf = "main_nf"
         self.has_meta = False
 
+        # Containers that `get_container_with_inspect` should return, keyed by profile
+        # (e.g. {"docker": "...", "singularity": "..."}). Tests can populate this to
+        # drive the `nextflow inspect` based container resolution without a real Nextflow.
+        self.inspect_containers: dict[str | None, str | None] = {}
+
+    def get_container_with_inspect(self, profile=None):
+        return self.inspect_containers.get(profile)
+
 
 class TestModulesLint(TestModules):
     """Core ModuleLint functionality tests"""

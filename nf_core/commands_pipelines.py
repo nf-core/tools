@@ -95,7 +95,7 @@ def pipelines_bump_version(ctx, new_version, directory, nextflow):
             bump_pipeline_version(pipeline_obj, new_version)
         else:
             bump_nextflow_version(pipeline_obj, new_version)
-    except UserWarning as e:
+    except (UserWarning, ValueError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -162,8 +162,10 @@ def pipelines_lint(
     except AssertionError as e:
         log.critical(e)
         sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
+    except (UserWarning, RuntimeError) as e:
+        from rich.text import Text
+
+        log.error(Text.from_ansi(str(e)))
         sys.exit(1)
 
 
@@ -359,7 +361,7 @@ def pipelines_sync(
             no_prompts,
         )
         sync_obj.sync()
-    except (SyncExceptionError, PullRequestExceptionError) as e:
+    except (UserWarning, SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
         sys.exit(1)
 

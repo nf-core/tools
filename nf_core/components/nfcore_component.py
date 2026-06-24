@@ -2,10 +2,13 @@
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
 
+import json
 import logging
 import re
 from pathlib import Path
 from typing import Any
+
+from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, run_cmd, set_wd_tempdir
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +61,9 @@ class NFCoreComponent:
         self.is_patched: bool = False
         self.branch: str | None = None
         self.workflow_name: str | None = None
+        self.container: dict = {}
+        self.container_from_main_nf: str | None = None
+        self._meta_yml_content: dict | None = None
 
         if remote_component:
             # Initialize the important files
@@ -108,6 +114,21 @@ class NFCoreComponent:
 
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
+
+    def load_meta_yml(self, reload: bool = False) -> dict | None:
+        """
+        Return the parsed content of the component's ``meta.yml``, cached after the first read.
+
+        Pass ``reload=True`` after writing to ``meta.yml`` to refresh the cache.
+        Returns ``None`` if the component has no ``meta.yml``.
+        """
+        if reload or self._meta_yml_content is None:
+            if self.meta_yml is None or not Path(self.meta_yml).exists():
+                return None
+            from nf_core.components.components_utils import read_meta_yml
+
+            self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
+        return self._meta_yml_content
 
     def _get_main_nf_tags(self, test_main_nf: Path | str):
         """Collect all tags from the main.nf.test file."""
@@ -377,3 +398,77 @@ class NFCoreComponent:
             log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
             log.debug(f"Topics: {topics}")
             self.topics = topics
+
+    def get_container_from_main_nf(self) -> str | None:
+        """Cached accessor for the (profile-agnostic) container resolved from ``main.nf``."""
+        if self.container_from_main_nf is not None:
+            return self.container_from_main_nf
+
+        self.container_from_main_nf = self.get_container_with_inspect()
+
+        if not self.container_from_main_nf:
+            log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
+
+        return self.container_from_main_nf
+
+    def get_container_with_inspect(self, profile: str | None = None) -> str | None:
+        """Resolve the container declared in the module's ``main.nf`` using ``nextflow inspect``.
+
+        Running inspect lets Nextflow evaluate the container selection logic in the module
+        (and return the fully resolved container in its JSON output) instead of parsing it
+        with brittle regexes. Pass ``profile`` (e.g. ``"docker"`` or ``"singularity"``) to
+        resolve the container for a specific profile.
+
+        Returns:
+            str | None: The resolved container, or ``None`` if it could not be resolved
+            (not a module, Nextflow too old to support ``nextflow inspect``, or inspect
+            failed).
+        """
+        if self.component_type != "modules":
+            return None
+
+        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
+            log.debug("Nextflow version too old to resolve containers with `nextflow inspect`")
+            return None
+
+        main_nf_abs = self.main_nf.absolute()
+
+        with set_wd_tempdir():
+            # Provide a minimal nextflow.config to avoid falling back to docker branch when
+            # resolving singularity containers via `nextflow inspect`.
+            Path("nextflow.config").write_text(
+                "profiles {\n    docker { docker.enabled = true }\n    singularity { singularity.enabled = true }\n}\n"
+            )
+            executable = "nextflow"
+            profile_param = f"-profile {profile} " if profile else ""
+            cmd_params = f"inspect {profile_param}-format json {main_nf_abs}"
+            try:
+                cmd_out = run_cmd(executable, cmd_params)
+            except RuntimeError:
+                cmd_out = None
+            if cmd_out is None:
+                log.debug("Failed to run `nextflow inspect`")
+                return None
+            out, _ = cmd_out
+            out_str = out.decode()
+            # nextflow inspect mixes status lines ([PIPELINE], [SUCCESS], etc.) with JSON on stdout
+            json_start = out_str.find("{")
+            json_end = out_str.rfind("}") + 1
+            if json_start == -1 or json_end == 0:
+                log.debug("Could not find JSON in nextflow inspect output")
+                log.debug(f"Output of nextflow inspect: {out_str}")
+                return None
+            try:
+                out_json = json.loads(out_str[json_start:json_end])
+            except json.JSONDecodeError:
+                log.debug("Failed to parse JSON from nextflow inspect output")
+                log.debug(f"Output of nextflow inspect: {out_str}")
+                return None
+            container = (out_json.get("processes") or [{}])[0].get("container", None)
+            if container is None:
+                log.debug(
+                    f"Container for {self.component_name} could not be extracted from the output of nextflow inspect"
+                )
+                log.debug(f"Output of nextflow inspect: {out_str}")
+
+            return container
