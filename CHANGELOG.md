@@ -20,7 +20,6 @@
 
 - `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
 - feat: module lint for module name granularity ([#4325](https://github.com/nf-core/tools/pull/4325))
-- Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
 
 ### Subworkflows
 
@@ -29,6 +28,7 @@
 - add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
 - fix dead link ([#4307](https://github.com/nf-core/tools/pull/4307))
 - remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
+- Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
 
 #### Version updates
 
