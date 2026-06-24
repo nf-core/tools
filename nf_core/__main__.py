@@ -1294,7 +1294,7 @@ def command_modules_create(
 )
 def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, verbose):
     """
-    Run nf-test for a module.
+    Run nf-test for a module. Only works on module repositories, not pipeline repositories.
     """
     if verbose:
         ctx.obj["verbose"] = verbose
