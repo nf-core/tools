@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -68,7 +69,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existent file is given"""
-        with pytest.raises(RuntimeError):
+        with pytest.raises(AssertionError):
             self.schema_obj.get_schema_path("fake_file")
 
     def test_load_lint_schema_notjson(self):
@@ -104,7 +105,7 @@ class TestSchema(unittest.TestCase):
 
     def test_get_schema_path_name(self):
         """Get schema file from the name of a remote pipeline"""
-        self.schema_obj.get_schema_path("atacseq")
+        self.schema_obj.get_schema_path("proteinfamilies")
 
     def test_get_schema_path_name_notexist(self):
         """
@@ -129,6 +130,32 @@ class TestSchema(unittest.TestCase):
         for definition in self.schema_obj.schema.get("$defs", {}).values():
             assert definition["title"] in docs
             assert definition["description"] in docs
+
+    @with_temporary_file
+    def test_schema_docs_markdown_linebreak(self, tmp_file):
+        """Check that Markdown docs linebreak only happens in a terminal"""
+        self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.load_schema()
+
+        with (
+            mock.patch("rich.console.Console.is_terminal", new_callable=mock.PropertyMock, return_value=False),
+            mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            self.schema_obj.print_documentation()
+            docs = mock_stdout.getvalue()
+
+        with (
+            mock.patch("rich.console.Console.is_terminal", new_callable=mock.PropertyMock, return_value=True),
+            mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+        ):
+            self.schema_obj.print_documentation()
+            docs_tty = mock_stdout.getvalue()
+
+        self.schema_obj.print_documentation(output_fn=tmp_file.name, force=True)
+        tmp_file.seek(0)
+
+        assert docs_tty.count("\n") > docs.count("\n")
+        assert tmp_file.read().decode() == docs
 
     @with_temporary_file
     def test_save_schema(self, tmp_file):

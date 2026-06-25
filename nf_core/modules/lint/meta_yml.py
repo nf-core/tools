@@ -1,21 +1,69 @@
 from __future__ import annotations
 
+import json
 import logging
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import ruamel.yaml
 from jsonschema import exceptions, validators
 
 from nf_core.components.components_differ import ComponentsDiffer
+from nf_core.components.components_utils import read_meta_yml as read_component_meta_yml
+from nf_core.components.components_utils import yaml as ruamel_yaml
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import unquote
+from nf_core.modules.lint.module_containers import (
+    lint_conda_lock_files,
+    lint_main_nf_container,
+    lint_meta_yml_containers,
+)
+from nf_core.utils import ContainerRegistryUrls, unquote
 
 if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
+
+
+@cache
+def _load_skip_nf_test_sets(base_dir: str) -> dict[str, frozenset[str]]:
+    """
+    Load the per-system skip sets from ``.github/skip_nf_test.json``, cached per base directory.
+
+    Skip entries may be recorded as absolute or repo-relative paths,
+    so everything is resolved to absolute paths for comparison.
+    """
+    skip_file = Path(base_dir, ".github", "skip_nf_test.json")
+    if not skip_file.is_file():
+        return {}
+    with open(skip_file) as fh:
+        data = json.load(fh)
+    return {
+        k: frozenset(str((Path(base_dir) / p).resolve()) for p in v) for k, v in data.items() if isinstance(v, list)
+    }
+
+
+def meta_yml_containers(module: NFCoreComponent) -> None:
+    """
+    Lints the container information in the meta.yml file and the module's main.nf file.
+    Respects per-system skips from `skip_nf_test.json`.
+    """
+    skip_sets = _load_skip_nf_test_sets(str(module.base_dir))
+    module_path = str(Path(module.component_dir).resolve())
+    skip_docker = module_path in skip_sets.get("docker", frozenset())
+    skip_singularity = module_path in skip_sets.get("singularity", frozenset())
+    skip_conda = module_path in skip_sets.get("conda", frozenset())
+    if skip_docker or skip_singularity or skip_conda:
+        log.debug(
+            f"Skip entries found for {module.component_name}: "
+            f"docker={skip_docker}, singularity={skip_singularity}, conda={skip_conda}"
+        )
+
+    lint_meta_yml_containers(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
+    lint_main_nf_container(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
+    if not skip_conda:
+        lint_conda_lock_files(module)
 
 
 def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
@@ -58,6 +106,14 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
       match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
       to auto-correct.
 
+    * ``has_meta_containers``: If ``main.nf`` declares containers, ``meta.yml``
+      must also contain a non-empty ``containers:`` block. Run
+      ``nf-core modules lint --fix`` to auto-correct.
+
+    * ``correct_meta_containers``: The containers listed in ``meta.yml`` must
+      exactly match those parsed from ``main.nf``. Run
+      ``nf-core modules lint --fix`` to auto-correct.
+
     If the module has inputs or outputs, they are expected to be formatted as:
 
     .. code-block:: groovy
@@ -81,25 +137,14 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
             )
             return
         raise LintExceptionError("Module does not have a `meta.yml` file")
-    # Check if we have a patch file, get original file in that case
-    meta_yaml = read_meta_yml(module_lint_object, module)
-    if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
-        lines = ComponentsDiffer.try_apply_patch(
-            module.component_type,
-            module.component_name,
-            module_lint_object.modules_repo.repo_path,
-            module.patch_path,
-            Path(module.component_dir).relative_to(module.base_dir),
-            reverse=True,
-        ).get("meta.yml")
-        if lines is not None:
-            yaml = ruamel.yaml.YAML()
-            meta_yaml = yaml.load("".join(lines))
+    # read_meta_yml returns the reverse-patched content for patched modules
+    meta_yaml = read_meta_yml_patched(module_lint_object, module)
     if meta_yaml is None:
         module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist.", module.meta_yml))
         return
     else:
         module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+    module.container = meta_yaml.get("containers", {})
 
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
@@ -283,8 +328,40 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
 
+        # Check that meta_yml specifies containers (skip modules that use a Dockerfile)
+        from nf_core.modules.modules_utils import module_uses_dockerfile
 
-def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
+        container = module.get_container_from_main_nf()
+        if container and not module_uses_dockerfile(module):
+            if "containers" not in meta_yaml:
+                if ContainerRegistryUrls.SEQERA_DOCKER.value in container:
+                    module.warned.append(
+                        (
+                            "meta_yml",
+                            "has_meta_containers",
+                            "Module `meta.yml` does not contain any containers, even though they appear in `main.nf`.",
+                            module.meta_yml,
+                        )
+                    )
+                else:
+                    log.debug(
+                        f"Module `{module.component_name}` has no containers section in `meta.yml` but does not use the Wave registry — skipping container lint."
+                    )
+                return
+
+            module.passed.append(
+                (
+                    "meta_yml",
+                    "has_meta_containers",
+                    "Module `meta.yml` and `main.nf` contain container definition.",
+                    module.meta_yml,
+                )
+            )
+
+            meta_yml_containers(module)
+
+
+def read_meta_yml_patched(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
     """
     Read a `meta.yml` file and return it as a dictionary
 
@@ -295,9 +372,9 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     Returns:
         dict: The `meta.yml` file as a dictionary
     """
-    meta_yaml = None
-    yaml = ruamel.yaml.YAML()
-    yaml.preserve_quotes = True
+    if module_lint_object.modules_repo.repo_path is None:
+        raise ValueError("modules_repo.repo_path is None")
+
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ComponentsDiffer.try_apply_patch(
@@ -309,13 +386,10 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
             reverse=True,
         ).get("meta.yml")
         if lines is not None:
-            meta_yaml = yaml.load("".join(lines))
-    if meta_yaml is None:
-        if module.meta_yml is None:
-            return None
-        with open(module.meta_yml) as fh:
-            meta_yaml = yaml.load(fh)
-    return meta_yaml
+            return ruamel_yaml.load("".join(lines))
+    if module.meta_yml is None:
+        return None
+    return read_component_meta_yml(module.meta_yml)
 
 
 def obtain_inputs(_, inputs: list) -> list:

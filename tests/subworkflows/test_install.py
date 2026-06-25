@@ -18,6 +18,33 @@ from ..utils import (
 
 
 class TestSubworkflowsInstall(TestSubworkflows):
+    def test_subworkflow_install_force_skip_deps_does_not_reinstall_deps(self):
+        """`install --force --skip-deps` leaves transitive deps' SHAs pinned."""
+        assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
+        samtools_index_path = Path(self.pipeline_dir, "modules", "nf-core", "samtools", "index")
+        assert samtools_index_path.exists()
+        before_sha = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
+
+        force_skip = SubworkflowInstall(self.pipeline_dir, prompt=False, force=True, skip_deps=True)
+        assert force_skip.install("bam_sort_stats_samtools") is not False
+        after_sha = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
+        assert before_sha == after_sha
+
+    def test_subworkflow_install_skip_deps_preserves_installed_by_tracking(self):
+        """`install --skip-deps` of a parent records the new dependent in shared subcomponents' installed_by."""
+        # Install the sub-subworkflow first so it's already on disk before we --skip-deps the parent.
+        assert self.subworkflow_install.install("bam_stats_samtools") is not False
+        skip_install = SubworkflowInstall(self.pipeline_dir, prompt=False, force=False, skip_deps=True)
+        assert skip_install.install("bam_sort_stats_samtools") is not False
+        installed_by = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["subworkflows"]["nf-core"]["bam_stats_samtools"]["installed_by"]
+        assert sorted(installed_by) == sorted(["subworkflows", "bam_sort_stats_samtools"])
+
     def test_subworkflows_install_bam_sort_stats_samtools(self):
         """Test installing a subworkflow - bam_sort_stats_samtools"""
         assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False

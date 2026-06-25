@@ -9,6 +9,7 @@ from pathlib import Path
 import requests
 import rich.console
 import rich.logging
+import rich.panel
 import rich.traceback
 import rich_click as click
 import rich_click.rich_click as rc
@@ -17,6 +18,9 @@ from trogon import tui
 from nf_core import __version__
 from nf_core.commands_modules import (
     modules_bump_versions,
+    modules_containers_conda_lock,
+    modules_containers_create,
+    modules_containers_list,
     modules_create,
     modules_info,
     modules_install,
@@ -158,11 +162,14 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 
-    # Set up logs to the console
+    # Set up logs to the console - use the shared console so log output
+    # coordinates with progress spinners (avoids output on the same line)
+    from nf_core.pipelines.lint_utils import console as shared_console
+
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(stderr=True, force_terminal=rich_force_colors()),
+            console=shared_console,
             show_time=False,
             show_path=verbose,  # True if verbose, false otherwise
             markup=True,
@@ -485,7 +492,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 @click.option(
     "-o",
     "--params-out",
-    type=click.Path(),
+    type=click.Path(path_type=Path),
     default=str(Path.cwd() / "nf-params.json"),
     help="Path to save run parameters file",
 )
@@ -630,7 +637,7 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
+@click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
     ctx,
@@ -901,7 +908,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, output_format,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
-@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
+@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions", "containers"])
 @click.pass_context
 def modules(ctx, git_remote, branch, no_pull):
     """
@@ -1065,6 +1072,12 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
+@click.option(
+    "--skip-deps",
+    is_flag=True,
+    default=False,
+    help="Skip the cascade to linked components. Conflicts with --update-deps and --all.",
+)
 def command_modules_update(
     ctx,
     tool,
@@ -1077,11 +1090,14 @@ def command_modules_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 modules within a pipeline.
     """
-    modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output)
+    modules_update(
+        ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output, skip_deps
+    )
 
 
 # nf-core modules patch
@@ -1285,7 +1301,7 @@ def command_modules_create(
 )
 def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, verbose):
     """
-    Run nf-test for a module.
+    Run nf-test for a module. Only works on module repositories, not pipeline repositories.
     """
     if verbose:
         ctx.obj["verbose"] = verbose
@@ -1316,8 +1332,8 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1360,7 +1376,7 @@ def command_modules_lint(
         ctx,
         tool,
         directory,
-        registry,
+        tuple(registry.split(",")),
         key,
         all_modules,
         fail_warned,
@@ -1427,6 +1443,98 @@ def command_modules_bump_versions(ctx, tool, directory, all_modules, show_all, d
     the nf-core/modules repo.
     """
     modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run)
+
+
+@modules.group("containers", aliases=["container", "con"])
+@click.pass_context
+def modules_containers(ctx):
+    """Manage module container builds and metadata [yellow](beta)[/]."""
+    stderr.print(
+        rich.panel.Panel(
+            "The [bold]nf-core modules containers[/] commands are still in beta.\n"
+            "Their behaviour and output may change in future releases.\n"
+            "Best to always use the latest dev version.",
+            title="[bold][!] Beta feature",
+            title_align="left",
+            style="yellow",
+        )
+    )
+
+
+# nf-core modules containers create
+@modules_containers.command("create", aliases=["c"])
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True, path_type=Path),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
+@click.option(
+    "-f",
+    "--force",
+    "force",
+    is_flag=True,
+    default=False,
+    help="Force container creation even if the container already exists.",
+)
+def command_modules_containers_create(ctx, module: str, directory: Path, force: bool) -> None:
+    """
+    Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
+    """
+    modules_containers_create(ctx, module, directory, force)
+
+
+@modules_containers.command("conda-lock")
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_conda_lock(ctx, module: str) -> None:
+    """
+    Build a Docker linux/arm64 container and fetch the conda lock file for a module.
+    """
+    modules_containers_conda_lock(ctx, module)
+
+
+# nf-core modules containers list
+@modules_containers.command("list", aliases=["ls"])
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+@click.option(
+    "-p",
+    "--plain-text",
+    is_flag=True,
+    default=False,
+    help="Output in plain text format",
+)
+def command_modules_containers_list(ctx, module, plain_text):
+    """
+    Print containers defined in a module meta.yml.
+    """
+    modules_containers_list(ctx, module, plain_text)
 
 
 # nf-core subworkflows click command
@@ -1608,8 +1716,8 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1647,7 +1755,7 @@ def command_subworkflows_lint(
         ctx,
         subworkflow,
         directory,
-        registry,
+        tuple(registry.split(",")),
         key,
         all_subworkflows,
         fail_warned,
@@ -1725,11 +1833,17 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     metavar="<commit sha>",
     help="Install subworkflow at commit SHA",
 )
-def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
+@click.option(
+    "--skip-deps",
+    is_flag=True,
+    default=False,
+    help="With --force, refresh only the named subworkflow; leave transitive deps' files and SHAs pinned.",
+)
+def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps):
     """
     Install DSL2 subworkflow within a pipeline.
     """
-    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha)
+    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps)
 
 
 # nf-core subworkflows patch
@@ -1882,6 +1996,12 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
+@click.option(
+    "--skip-deps",
+    is_flag=True,
+    default=False,
+    help="Skip the cascade to linked components. Conflicts with --update-deps and --all.",
+)
 def command_subworkflows_update(
     ctx,
     subworkflow,
@@ -1894,12 +2014,24 @@ def command_subworkflows_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
     """
     subworkflows_update(
-        ctx, subworkflow, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
+        ctx,
+        subworkflow,
+        directory,
+        force,
+        prompt,
+        sha,
+        install_all,
+        preview,
+        save_diff,
+        update_deps,
+        limit_output,
+        skip_deps,
     )
 
 

@@ -15,14 +15,14 @@ jobs:
     steps:
       - name: branch-deploy
         id: branch-deploy
-        uses: github/branch-deploy@fded0351b6b79f854b335c11b3d93063461dd288 # v11.1.2
+        uses: github/branch-deploy@ddf8ca48e9cdb2d2c7c71dee428308b19af9313f # v11.1.4
         with:
           trigger: "@nf-core-bot update template snapshots"
           reaction: "eyes"
           stable_branch: "dev"
 
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Create Matrix
         id: create_matrix
@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
     steps:
       # Use the @nf-core-bot token to check out so we can push later
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
@@ -61,7 +61,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           enable-cache: true
 
@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always() && needs.update-snapshots.result != 'skipped'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 

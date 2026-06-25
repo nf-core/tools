@@ -299,9 +299,12 @@ class ComponentInfo(ComponentCommand):
         # Inputs
         if self.meta.get("input"):
             inputs_table = self.generate_params_table("Inputs")
+            log.debug(f"Input channels: {self.meta['input']}")
             for i, input_channel in enumerate(self.meta["input"]):
                 inputs_table.add_row(f"[italic]input[{i}][/]", "", "")
                 if self.component_type == "modules":
+                    if not isinstance(input_channel, list):
+                        input_channel = [input_channel]
                     for element in input_channel:
                         for key, info in element.items():
                             inputs_table.add_row(

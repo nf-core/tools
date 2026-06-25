@@ -23,7 +23,7 @@ import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
-from nf_core.pipelines.download.utils import DownloadError, intermediate_dir_with_cd
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
@@ -32,6 +32,7 @@ from nf_core.utils import (
     gh_api,
     pretty_nf_version,
     run_cmd,
+    set_wd_tempdir,
 )
 
 log = logging.getLogger(__name__)
@@ -685,7 +686,7 @@ class DownloadWorkflow:
         working_dir = Path().absolute()
 
         def run_nextflow_inspect(params_file: Path | None = None) -> dict[str, Any]:
-            with intermediate_dir_with_cd(working_dir):
+            with set_wd_tempdir(working_dir):
                 executable = "nextflow"
                 params_file_arg = f' -params-file "{params_file}"' if params_file else ""
                 cmd_params = (
@@ -701,10 +702,25 @@ class DownloadWorkflow:
         try:
             out_json = run_nextflow_inspect()
         except RuntimeError as e:
+            # Extract Nextflow stdout from the chained CalledProcessError (errors go to stdout in NF)
+            nf_stdout = getattr(e.__cause__, "output", None) or b""
+
+            # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
+            # if/else container blocks with "Invalid process directive". Users need an older NF.
+            if b"Invalid process directive" in nf_stdout:
+                raise DownloadError(
+                    "nextflow inspect failed because the pipeline uses old-style process syntax "
+                    "that the default strict syntax of Nextflow >= 26.04 no longer accepts.\n"
+                    "Please downgrade to Nextflow 25.10 or lower to download this pipeline, "
+                    "or ask the pipeline maintainers to update their container directives."
+                ) from e
+
             # Some workflow revisions explicitly require an outdir parameter. If this is the
             # only issue, retry inspect with an ephemeral params file that provides one.
             if re.search(
-                r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b", str(e), flags=re.IGNORECASE
+                r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b",
+                nf_stdout.decode("utf-8", errors="replace"),
+                flags=re.IGNORECASE,
             ):
                 try:
                     with tempfile.TemporaryDirectory(prefix="nf-core-inspect-") as tmp_dir:

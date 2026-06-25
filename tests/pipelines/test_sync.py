@@ -143,14 +143,14 @@ class TestModules(TestPipelines):
         """Try getting a workflow config, then make it miss a required config option"""
         # Try to sync, check we halt with the right error
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.required_config_vars = ["fakethisdoesnotexist"]
+        psync.required_config_vars = {"fakesection": ["fakethisdoesnotexist"]}
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
         # Check that we did actually get some config back
-        assert psync.wf_config["params.validate_params"] == "true"
+        assert psync.wf_config["params"]["validate_params"] is True
         # Check that we raised because of the missing fake config var
-        assert exc_info.value.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
+        assert exc_info.value.args[0] == "Workflow config variable `fakesection.fakethisdoesnotexist` not found!"
 
     def test_checkout_template_branch(self):
         """Try checking out the TEMPLATE branch of the pipeline"""

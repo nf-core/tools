@@ -1,5 +1,39 @@
 # nf-core/tools: Changelog
 
+## v4.1.0dev
+
+### General
+
+- Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
+- container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
+- Coerce launch params_out to Path to fix AttributeError (#4299) ([#4317](https://github.com/nf-core/tools/pull/4317))
+- generate valid Markdown when piping schema docs to file ([#4319](https://github.com/nf-core/tools/pull/4319))
+- fix API docs bug in pydantic autodoc ([#4320](https://github.com/nf-core/tools/pull/4320))
+- Update pre-commit npm dependencies to v3.8.4 ([#4335](https://github.com/nf-core/tools/pull/4335))
+
+### Linting
+
+- accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
+- improve linting for `modules.json` to add support for only installing subworkflows from a repository and provide more explicit error messages ([#4287](https://github.com/nf-core/tools/pull/4287))
+
+### Modules
+
+- `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
+- feat: module lint for module name granularity ([#4325](https://github.com/nf-core/tools/pull/4325))
+- Clarify execution context of nf-core modules test command ([#4346](https://github.com/nf-core/tools/pull/4346))
+- Add `nf-core modules containers create` to build module containers via Seqera Wave and record them in the `containers:` section of `meta.yml` ([#3954](https://github.com/nf-core/tools/pull/3954))
+- Container linting now validates the `containers:` section of `meta.yml` (Wave modules). The legacy `main.nf` container checks (URL reachability, registry prefix, docker/singularity tag match) have been removed; modules still using the old container syntax get a `deprecated_container_syntax` warning instead ([#3954](https://github.com/nf-core/tools/pull/3954))
+
+### Subworkflows
+
+### Template
+
+- add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
+- fix dead link ([#4307](https://github.com/nf-core/tools/pull/4307))
+- remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
+
+#### Version updates
+
 ## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]
 
 ### General
@@ -19,6 +53,10 @@
 - fix failing api doc generation script ([#4239](https://github.com/nf-core/tools/pull/4239))
 - switch changelog bot trigger only on comments ([#4241](https://github.com/nf-core/tools/pull/4241))
 - fix indentation in generated api docs ([#4245](https://github.com/nf-core/tools/pull/4245))
+
+### Linting
+
+- Store `EDAM.tsv` in `NFCORE_CACHE_DIR` and fix yaml comment loss when running `lint --fix` ([#4242](https://github.com/nf-core/tools/pull/4242))
 
 ### Modules
 

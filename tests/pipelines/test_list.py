@@ -111,7 +111,7 @@ class TestList(TestCase):
         if not test_path.is_dir():
             test_path.mkdir(parents=True)
         # Create a dummy workflow directory (not just a file)
-        dummy_wf_path = self.tmp_nxf / "nf-core" / "dummy-wf"
+        dummy_wf_path = self.tmp_nxf / ".repos" / "nf-core" / "dummy-wf"
         dummy_wf_path.mkdir(parents=True, exist_ok=True)
         assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
         workflows_obj = nf_core.pipelines.list.Workflows()
@@ -140,6 +140,7 @@ class TestList(TestCase):
         (git_dir / "FETCH_HEAD").touch()
         mock_repo.return_value.head.commit.hexsha = "h00r4y"
         mock_repo.return_value.remotes.origin.url = "https://github.com/nf-core/dummy"
+        mock_repo.return_value.common_dir = str(git_dir)
         local_wf.get_local_nf_workflow_details()
 
     @mock.patch("git.Repo")
