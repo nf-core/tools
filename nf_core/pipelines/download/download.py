@@ -42,6 +42,7 @@ stderr = rich.console.Console(
     force_terminal=nf_core.utils.rich_force_colors(),
 )
 
+SINGULARITY_SYSTEMS = ["singularity", "apptainer"]
 
 class DownloadWorkflow:
     """Downloads a nf-core workflow from GitHub to the local file system.
@@ -248,7 +249,7 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if self.container_system == "singularity" and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
+        if self.container_system in SINGULARITY_SYSTEMS and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
             summary_log.append(
                 f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
             )
@@ -330,7 +331,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required container images
-            if self.container_system in {"singularity", "docker"}:
+            if self.container_system in {"singularity", "docker", "apptainer"}:
                 workflow_directory = self.outdir / revision_dirname
                 self.find_container_images(workflow_directory, revision)
 
@@ -366,7 +367,7 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
-        if self.container_system in {"singularity", "docker"}:
+        if self.container_system in {"singularity", "docker", "apptainer"}:
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -502,7 +503,7 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity", "docker"],
+                choices=["none", "singularity", "docker", "apptainer"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -512,7 +513,7 @@ class DownloadWorkflow:
         """
         assert self.outdir is not None  # mypy
         try:
-            if self.container_system == "singularity":
+            if self.container_system in SINGULARITY_SYSTEMS:
                 self.container_fetcher = SingularityFetcher(
                     outdir=self.outdir,
                     container_library=self.container_library,
@@ -555,9 +556,9 @@ class DownloadWorkflow:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container_system == "singularity":
+            if self.container_system in SINGULARITY_SYSTEMS:
                 stderr.print(
-                    "[bold]This is [italic]not[/] recommended when downloading Singularity images, as it can take a long time and saves very little space."
+                    "[bold]This is [italic]not[/] recommended when downloading Singularity/Apptainer images, as it can take a long time and saves very little space."
                 )
             self.compress_type = questionary.select(
                 "Choose compression type:",
@@ -643,6 +644,12 @@ class DownloadWorkflow:
             nfconfig += (
                 f"\n\n// Added by `nf-core pipelines download` v{nf_core.__version__} //\n"
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
+                + "\n///////////////////////////////////////"
+            )
+        elif self.container_system == "apptainer" and self.container_cache_utilisation == "copy":
+            nfconfig += (
+                f"\n\n// Added by `nf-core pipelines download` v{nf_core.__version__} //\n"
+                + 'apptainer.cacheDir = "${projectDir}/../apptainer-images/"'
                 + "\n///////////////////////////////////////"
             )
 
