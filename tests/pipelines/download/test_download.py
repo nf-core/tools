@@ -281,6 +281,45 @@ class DownloadTest(unittest.TestCase):
             )
 
     #
+    # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Apptainer images
+    #
+    @pytest.mark.skipif(
+        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
+        reason="Can't run test that requires nextflow to run if not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_containers_pipeline_apptainer(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
+
+        # Set up test
+        container_system = "apptainer"
+        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
+        refererence_json_dir = mock_pipeline_dir / "per_profile_output"
+        # First check that `-profile singularity` produces the same output as the reference
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
+        mock_fetch_wf_config.return_value = {}
+
+        # Run get containers with `nextflow inspect`
+        entrypoint = "main_passing_test.nf"
+        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
+
+        # Store the containers found by the new method
+        found_containers = set(download_obj.containers)
+
+        # Load the reference containers
+        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+            ref_containers = json.load(fh)
+            ref_container_strs = set(ref_containers.values())
+
+        # Now check that they contain the same containers
+        assert found_containers == ref_container_strs, (
+            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+            f"Containers that should've been found: {ref_container_strs}"
+        )
+
+    #
     # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Docker images
     #
     @pytest.mark.skipif(

@@ -45,6 +45,7 @@ stderr = rich.console.Console(
 
 SINGULARITY_SYSTEMS = ["singularity", "apptainer"]
 
+
 class DownloadWorkflow:
     """Downloads a nf-core workflow from GitHub to the local file system.
 
