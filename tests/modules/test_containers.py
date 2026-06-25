@@ -37,28 +37,35 @@ class TestModuleContainers(TestModules):
         assert self.module_containers.environment_yml == self.bpipe_test_module_path / "environment.yml"
         assert self.module_containers.meta_yml == self.bpipe_test_module_path / "meta.yml"
 
+    @staticmethod
+    def _fake_response(payload: dict | None = None, status_code: int = 200, text: str = "") -> mock.MagicMock:
+        """Build a fake requests.Response whose .json() returns ``payload``."""
+        resp = mock.MagicMock()
+        resp.status_code = status_code
+        resp.text = text
+        resp.json.return_value = payload or {}
+        return resp
+
     @mock.patch("nf_core.modules.containers.requests.get")
     @mock.patch.object(ModuleContainers, "request_image_inspect")
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_create_builds_containers(self, mock_run_cmd, mock_request_image_inspect, mock_requests_get):
-        def fake_run_cmd(executable: str, args_str: str):
-            assert executable == "wave"
-            system = "singularity" if "--singularity" in args_str else "docker"
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_create_builds_containers(self, mock_post, mock_request_image_inspect, mock_requests_get):
+        def fake_post(url, json=None, headers=None):
+            # `format` is "sif" for singularity, "docker" otherwise
+            system = "singularity" if json.get("format") == "sif" else "docker"
             image = "community.wave.seqera.io/library/bpipe_test:0.1.0--abc123"
-            build_id = f"bd-abc123-{system}"
             meta = {
-                "buildId": build_id,
-                "cached": True,
+                "buildId": f"bd-abc123-{system}",
+                "cached": True,  # cached -> no status polling needed
                 "containerImage": image,
                 "freeze": True,
-                "mirror": False,
                 "requestId": f"req-abc123-{system}",
-                "scanId": f"sc-abc123-{system}" if system == "docker" else None,
                 "succeeded": True,
                 "targetImage": image,
             }
-            meta = {k: v for k, v in meta.items() if v is not None}
-            return (yaml.safe_dump(meta).encode(), b"")
+            if system == "docker":
+                meta["scanId"] = f"sc-abc123-{system}"
+            return self._fake_response(meta)
 
         def fake_request_image_inspect(image: str):
             return {
@@ -74,12 +81,10 @@ class TestModuleContainers(TestModules):
                 }
             }
 
-        mock_response = mock.MagicMock()
-        mock_response.status_code = 200
-        mock_response.text = "# conda lock file content"
-        mock_requests_get.return_value = mock_response
+        # requests.get is used to download the conda lock file
+        mock_requests_get.return_value = self._fake_response(text="# conda lock file content")
 
-        mock_run_cmd.side_effect = fake_run_cmd
+        mock_post.side_effect = fake_post
         mock_request_image_inspect.side_effect = fake_request_image_inspect
 
         containers, success = self.module_containers.create()
@@ -108,29 +113,38 @@ class TestModuleContainers(TestModules):
         containers, success = self.module_containers.create()
         assert not containers.conda
 
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_container_docker_success(self, mock_run_cmd):
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_docker_success(self, mock_post):
         platform = CONTAINER_PLATFORMS[0]
-        meta = {"targetImage": "testC:latest", "buildId": "build-1", "scanId": "scan-1", "succeeded": True}
-        mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
+        meta = {
+            "targetImage": "testC:latest",
+            "buildId": "build-1",
+            "scanId": "scan-1",
+            "cached": True,
+        }
+        mock_post.return_value = self._fake_response(meta)
 
         container = ModuleContainers.request_container("docker", platform, self.environment_yml)
         assert container.name == "testC:latest"
         assert container.build_id == "build-1"
         assert container.scan_id == "scan-1"
 
-        args_str = mock_run_cmd.call_args[0][1]
-        assert "--await" in args_str
-        assert "--platform" in args_str
-        assert platform in args_str
-        assert "--singularity" not in args_str
+        # Inspect the submitted JSON payload instead of CLI args
+        url = mock_post.call_args[0][0]
+        payload = mock_post.call_args[1]["json"]
+        assert url.endswith("/v1alpha2/container")
+        assert payload["containerPlatform"] == platform
+        assert payload["format"] == "docker"
+        assert payload["freeze"] is True
+        assert payload["nameStrategy"] == "imageSuffix"
+        assert payload["packages"]["type"] == "CONDA"
 
     @mock.patch.object(ModuleContainers, "request_image_inspect")
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_container_singularity_adds_https(self, mock_run_cmd, mock_request_image_inspect):
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_singularity_adds_https(self, mock_post, mock_request_image_inspect):
         platform = CONTAINER_PLATFORMS[0]
-        meta = {"containerImage": "testC:sif", "buildId": "build-2", "succeeded": True}
-        mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
+        meta = {"containerImage": "testC:sif", "buildId": "build-2", "cached": True}
+        mock_post.return_value = self._fake_response(meta)
         mock_request_image_inspect.return_value = {
             "container": {
                 "manifest": {
@@ -146,33 +160,38 @@ class TestModuleContainers(TestModules):
 
         container = ModuleContainers.request_container("singularity", platform, self.environment_yml)
         assert container.name == "testC:sif"
+        assert mock_post.call_args[1]["json"]["format"] == "sif"
         expected_url = "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ab/abcde12345/data"
         assert container.https == expected_url
         mock_request_image_inspect.assert_called_once_with("testC:sif")
 
-    @mock.patch("nf_core.modules.containers.run_cmd", return_value=None)
-    def test_request_container_missing_output_raises(self, mock_run_cmd):
-        with pytest.raises(RuntimeError, match="Wave command did not return any output"):
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_submit_error_raises(self, mock_post):
+        mock_post.return_value = self._fake_response(status_code=400, text="Bad Request")
+        with pytest.raises(RuntimeError, match="Wave build submit .* failed: HTTP 400"):
             ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], self.environment_yml)
 
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_container_invalid_yaml_raises(self, mock_run_cmd):
-        mock_run_cmd.return_value = (b"invalid: [", b"")
-        with pytest.raises(RuntimeError, match="Could not parse wave YAML metadata"):
+    @mock.patch("nf_core.modules.containers.requests.get")
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_build_failure_raises(self, mock_post, mock_get):
+        # Fresh (uncached) build -> polls status, which reports failure
+        mock_post.return_value = self._fake_response({"buildId": "bd-fail", "cached": False, "targetImage": "x"})
+        mock_get.return_value = self._fake_response({"status": "COMPLETED", "succeeded": False})
+        with pytest.raises(RuntimeError, match="Wave build bd-fail failed"):
             ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], self.environment_yml)
 
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_container_missing_image_raises(self, mock_run_cmd):
-        meta = {"buildId": "build-4", "succeeded": True}
-        mock_run_cmd.return_value = (yaml.safe_dump(meta).encode(), b"")
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_missing_image_raises(self, mock_post):
+        mock_post.return_value = self._fake_response({"buildId": "build-4", "cached": True})
         with pytest.raises(RuntimeError, match="did not return an image name"):
             ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], self.environment_yml)
 
-    @mock.patch("nf_core.modules.containers.run_cmd")
-    def test_request_image_inspect_success(self, mock_run_cmd):
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_image_inspect_success(self, mock_post):
         inspect_payload = {"container": {"manifest": {"layers": []}}}
-        mock_run_cmd.return_value = (yaml.safe_dump(inspect_payload).encode(), b"")
+        mock_post.return_value = self._fake_response(inspect_payload)
         assert ModuleContainers.request_image_inspect("testC:latest") == inspect_payload
+        assert mock_post.call_args[0][0].endswith("/v1alpha1/inspect")
 
     def test_get_conda_lock_url_quotes(self):
         build_id = "abc/def 123"

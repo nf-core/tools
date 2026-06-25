@@ -1,7 +1,8 @@
+import base64
 import logging
 import os
 import re
-import subprocess
+import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -9,7 +10,6 @@ from urllib.parse import quote
 
 import requests
 import rich.progress
-import yaml
 from pydantic import ValidationError
 from rich.pretty import pretty_repr
 
@@ -27,11 +27,16 @@ from nf_core.modules.modules_utils import (
     scan_modules_dir,
 )
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, ContainerRegistryUrls, run_cmd
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, ContainerRegistryUrls
 
 log = logging.getLogger(__name__)
 
 WAVE_URL = "https://wave.seqera.io"
+WAVE_API = f"{WAVE_URL}/v1alpha2"
+WAVE_API_V1 = f"{WAVE_URL}/v1alpha1"
+
+# Wave container build `format` field, keyed by nf-core container system.
+WAVE_FORMAT = {"docker": "docker", "singularity": "sif"}
 
 
 class ModuleContainers:
@@ -432,29 +437,68 @@ class ModuleContainers:
 
         return containers, not has_failures
 
-    @staticmethod
-    def _extract_yaml_from_wave_output(output: str) -> str:
+    @classmethod
+    def _wave_request(
+        cls, method: str, url: str, json_body: dict | None = None, error_context: str = "Wave request"
+    ) -> dict:
         """
-        Extract YAML content from Wave CLI output in verbose mode.
+        Make a Wave API request and return the parsed JSON response.
 
-        Wave CLI with --log-level DEBUG outputs multi-line DEBUG logs before the YAML response.
-        This method finds the first line that looks like YAML (key: value format) and returns
-        everything from that point onwards.
+        Adds bearer auth (and a ``towerAccessToken`` body field for requests with a body)
+        when TOWER_ACCESS_TOKEN is set, and raises on a non-200 or unparseable response.
 
         Args:
-            output: Raw stdout from Wave CLI
-
-        Returns:
-            YAML content with DEBUG lines removed
+            method: ``"get"`` or ``"post"``.
+            url: Full request URL.
+            json_body: Optional JSON body (POST requests).
+            error_context: Prefix used in raised error messages.
         """
-        lines = output.splitlines()
-        for i, line in enumerate(lines):
-            # Look for lines that start with a simple word followed by colon (YAML key)
-            # Expected keys from Wave: buildId, cached, containerImage, duration, freeze, etc.
-            if "DEBUG" not in line and re.match(r"^[a-zA-Z]\w*:\s", line):
-                return "\n".join(lines[i:])
-        # If no YAML start found, return original output
-        return output
+        headers = {"Content-Type": "application/json"}
+        token = os.environ.get("TOWER_ACCESS_TOKEN")
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+            if json_body is not None:
+                json_body = {**json_body, "towerAccessToken": token}
+
+        resp = getattr(requests, method)(url, json=json_body, headers=headers)
+        if resp.status_code != 200:
+            raise RuntimeError(f"{error_context} failed: HTTP {resp.status_code} {resp.text}")
+        try:
+            return resp.json()
+        except ValueError as e:
+            raise RuntimeError(f"{error_context}: could not parse JSON response") from e
+
+    @classmethod
+    def _await_build(cls, build_id: str, poll_interval: int = 5, timeout: int = 1800) -> None:
+        """
+        Wait for a Wave build to finish by polling its status endpoint.
+
+        Replaces the wave CLI ``--await`` flag. Polls ``GET /v1alpha1/builds/{id}/status``
+        until the build reports ``COMPLETED``, then raises if it did not succeed.
+
+        Args:
+            build_id: The Wave build id returned by the submit request.
+            poll_interval: Seconds to wait between status checks.
+            timeout: Maximum seconds to wait before giving up.
+        """
+        if not build_id:
+            raise RuntimeError("Wave did not return a buildId to await")
+
+        status_url = f"{WAVE_API_V1}/builds/{quote(build_id, safe='')}/status"
+        deadline = time.monotonic() + timeout
+        while True:
+            status = cls._wave_request("get", status_url, error_context=f"Wave status check for build {build_id}")
+            if status.get("status") == "COMPLETED":
+                if not status.get("succeeded"):
+                    raise RuntimeError(f"Wave build {build_id} failed. Build log: {WAVE_URL}/view/builds/{build_id}")
+                log.debug(f"Wave build {build_id} completed in {status.get('duration')}s")
+                return
+            if time.monotonic() > deadline:
+                raise RuntimeError(
+                    f"Wave build {build_id} did not complete within {timeout}s. "
+                    f"Build log: {WAVE_URL}/view/builds/{build_id}"
+                )
+            time.sleep(poll_interval)
 
     @classmethod
     def request_container(
@@ -469,98 +513,46 @@ class ModuleContainers:
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
 
-        executable = "wave"
-        log_level = "DEBUG" if verbose else "INFO"
-        args = [
-            "--conda-file",
-            str(conda_file.absolute()),
-            "--freeze",
-            "--platform",
-            platform,
-            "-o",
-            "yaml",
-            "--build-template",
-            "conda/pixi:v1",
-            "--log-level",
-            log_level,
-        ]
-        if container_system == "singularity":
-            args.append("--singularity")
-        args.append("--await")
+        # Submit the build via the Wave HTTP API (POST /v1alpha2/container).
+        # `freeze` with no buildRepository pushes to the public community registry.
+        payload: dict = {
+            "packages": {
+                "type": "CONDA",
+                "environment": base64.b64encode(conda_file.read_bytes()).decode(),
+            },
+            "containerPlatform": platform,
+            "freeze": True,
+            "buildTemplate": "conda/pixi:v1",
+            "format": WAVE_FORMAT[container_system],
+            "nameStrategy": "imageSuffix",
+        }
+        meta_data = cls._wave_request(
+            "post", f"{WAVE_API}/container", payload, error_context=f"Wave build submit ({container_system} {platform})"
+        )
+        log.log(
+            logging.INFO if verbose else logging.DEBUG,
+            f"Wave response ({container_system} {platform}):\n{pretty_repr(meta_data)}",
+        )
 
-        if on_build_id is not None:
-            # Stream stdout line-by-line so we can fire on_build_id as soon as
-            # "buildId:" appears in the debug output, without waiting for the build to finish.
-            try:
-                proc = subprocess.Popen([executable] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except FileNotFoundError as e:
-                raise RuntimeError(
-                    f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
-                ) from e
-            assert proc.stdout and proc.stderr
-            stdout_chunks: list[bytes] = []
-            build_id_notified = False
-            for raw_line in proc.stdout:
-                stdout_chunks.append(raw_line)
-                if not build_id_notified:
-                    m = re.search(rb"buildId:\s*(\S+)", raw_line)
-                    if m:
-                        on_build_id(m.group(1).decode().strip("\"'"))
-                        build_id_notified = True
-            stderr_bytes = proc.stderr.read()
-            proc.wait()
-            if proc.returncode != 0:
-                raise RuntimeError(
-                    f"wave command returned non-zero error code '{proc.returncode}':\n"
-                    f"{stderr_bytes.decode()}{b''.join(stdout_chunks).decode()}"
-                )
-            out: tuple[bytes, bytes] | None = (b"".join(stdout_chunks), stderr_bytes)
-        else:
-            args_str = " ".join(args)
-            out = run_cmd(executable, args_str)
+        build_id = meta_data.get("buildId") or ""
+        # Notify as soon as we have a build id, before waiting for the build to finish.
+        if build_id and on_build_id is not None:
+            on_build_id(build_id)
 
-        if out is None:
-            raise RuntimeError("Wave command did not return any output")
+        # The submit response does not carry the final result for fresh builds; a cached
+        # build is already resolved, otherwise we must poll the status endpoint.
+        if not meta_data.get("cached"):
+            cls._await_build(build_id)
 
-        # Log stderr when verbose (Wave outputs debug logs there)
-        if verbose and out[1]:
-            stderr_output = out[1].decode().strip()
-            if stderr_output:
-                for line in stderr_output.splitlines():
-                    log.info(line)
-
-        # Parse Wave output
-        stdout_output = out[0].decode()
-
-        # In verbose mode, Wave outputs DEBUG lines before YAML - extract only the YAML part
-        if verbose:
-            stdout_output = cls._extract_yaml_from_wave_output(stdout_output)
-
-        try:
-            meta_data = yaml.safe_load(stdout_output) or {}
-            log.debug(f"Wave YAML metadata: \n{pretty_repr(meta_data)}")
-        except (KeyError, AttributeError, yaml.YAMLError) as e:
-            log.error(f"Failed to parse Wave output. Raw output:\n{stdout_output}")
-            raise RuntimeError(f"Could not parse wave YAML metadata ({container_system} {platform})") from e
-        if not meta_data.get("succeeded"):
-            raise RuntimeError(
-                f"Wave build ({container_system} {platform}) failed. Reason: {meta_data.get('reason', 'Unknown')}"
-                + (
-                    f"\nBuild log: {WAVE_URL}/view/builds/{meta_data.get('buildId')}"
-                    if meta_data.get("buildId")
-                    else ""
-                )
-            )
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
         if not image:
             raise RuntimeError(f"Wave build ({container_system} {platform}) did not return an image name")
 
-        build_id = meta_data.get("buildId", "") or ""
         scan_id = ""
         https_url = ""
 
         if container_system == "docker":
-            scan_id = meta_data.get("scanId", "") or ""
+            scan_id = meta_data.get("scanId") or ""
 
         if container_system == "singularity":
             inspect_out = cls.request_image_inspect(image)
@@ -585,24 +577,12 @@ class ModuleContainers:
     @classmethod
     def request_image_inspect(cls, image: str) -> dict:
         """
-        Request wave container inspect.
+        Inspect a container image via the Wave HTTP API (POST /v1alpha1/inspect).
         """
-        executable = "wave"
-        args = ["--inspect", "-o yaml", "-i", image]
-
-        args_str = " ".join(args)
-        log.debug(f"Wave command to request image inspect for image {image}: `wave {args_str}`")
-        out = run_cmd(executable, args_str)
-
-        if out is None:
-            raise RuntimeError("Wave command did not return any output")
-
-        try:
-            inspect_out = yaml.safe_load(out[0].decode()) or {}
-        except (KeyError, AttributeError, yaml.YAMLError) as e:
-            raise RuntimeError(f"Could not parse wave inspect yaml output for image {image}") from e
-
-        return inspect_out
+        log.debug(f"Requesting Wave image inspect for image {image}")
+        return cls._wave_request(
+            "post", f"{WAVE_API_V1}/inspect", {"containerImage": image}, error_context=f"Wave inspect for image {image}"
+        )
 
     @staticmethod
     def get_conda_lock_url(build_id) -> str:
