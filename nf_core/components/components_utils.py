@@ -19,6 +19,9 @@ ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=2, offset=0)
+# Disable line wrapping: long plain-scalar keys (e.g. version `eval` expressions)
+# become invalid YAML if ruamel folds them onto a second line.
+yaml.width = 4096
 
 
 def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
