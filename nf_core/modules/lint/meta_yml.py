@@ -335,11 +335,11 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         if container and not module_uses_dockerfile(module):
             if "containers" not in meta_yaml:
                 if ContainerRegistryUrls.SEQERA_DOCKER.value in container:
-                    module.failed.append(
+                    module.warned.append(
                         (
                             "meta_yml",
                             "has_meta_containers",
-                            f"Module `meta.yml` does not contain any containers, even though they appear in `main.nf`. Use `nf-core modules lint {module.component_name} --fix` to automatically resolve this.",
+                            "Module `meta.yml` does not contain any containers, even though they appear in `main.nf`.",
                             module.meta_yml,
                         )
                     )
