@@ -10,6 +10,7 @@ from rich.progress import Progress
 
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
 
 log = logging.getLogger(__name__)
 
@@ -441,7 +442,15 @@ def check_process_section(
     if singularity_container is not None and not singularity_container.startswith(("https:", "oras:")):
         singularity_container = None
 
-    if singularity_container is not None:
+    # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
+    # container on purpose, so the singularity_tag check is skipped for them.
+    skip_singularity = str(Path(self.component_dir).resolve()) in _load_skip_nf_test_sets(str(self.base_dir)).get(
+        "singularity", frozenset()
+    )
+
+    if skip_singularity:
+        log.debug(f"Skipping singularity_tag check for {self.component_name} (skipped in skip_nf_test.json)")
+    elif singularity_container is not None:
         self.passed.append(
             ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", self.main_nf)
         )
