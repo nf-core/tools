@@ -32,8 +32,8 @@ from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, ContainerRegis
 log = logging.getLogger(__name__)
 
 WAVE_URL = "https://wave.seqera.io"
-WAVE_API = f"{WAVE_URL}/v1alpha2"
-WAVE_API_V1 = f"{WAVE_URL}/v1alpha1"
+WAVE_API_ALPHA1 = f"{WAVE_URL}/v1alpha1"
+WAVE_API_ALPHA2 = f"{WAVE_URL}/v1alpha2"
 
 # Wave container build `format` field, keyed by nf-core container system.
 WAVE_FORMAT = {"docker": "docker", "singularity": "sif"}
@@ -484,7 +484,7 @@ class ModuleContainers:
         if not build_id:
             raise RuntimeError("Wave did not return a buildId to await")
 
-        status_url = f"{WAVE_API_V1}/builds/{quote(build_id, safe='')}/status"
+        status_url = f"{WAVE_API_ALPHA1}/builds/{quote(build_id, safe='')}/status"
         deadline = time.monotonic() + timeout
         while True:
             status = cls._wave_request("get", status_url, error_context=f"Wave status check for build {build_id}")
@@ -527,7 +527,10 @@ class ModuleContainers:
             "nameStrategy": "imageSuffix",
         }
         meta_data = cls._wave_request(
-            "post", f"{WAVE_API}/container", payload, error_context=f"Wave build submit ({container_system} {platform})"
+            "post",
+            f"{WAVE_API_ALPHA2}/container",
+            payload,
+            error_context=f"Wave build submit ({container_system} {platform})",
         )
         log.log(
             logging.INFO if verbose else logging.DEBUG,
@@ -581,13 +584,16 @@ class ModuleContainers:
         """
         log.debug(f"Requesting Wave image inspect for image {image}")
         return cls._wave_request(
-            "post", f"{WAVE_API_V1}/inspect", {"containerImage": image}, error_context=f"Wave inspect for image {image}"
+            "post",
+            f"{WAVE_API_ALPHA1}/inspect",
+            {"containerImage": image},
+            error_context=f"Wave inspect for image {image}",
         )
 
     @staticmethod
     def get_conda_lock_url(build_id) -> str:
         build_id_safe = quote(build_id, safe="")
-        url = f"{WAVE_URL}/v1alpha1/builds/{build_id_safe}/condalock"
+        url = f"{WAVE_API_ALPHA1}/builds/{build_id_safe}/condalock"
         return url
 
     def get_conda_lock_file(self, platform: str) -> str:
