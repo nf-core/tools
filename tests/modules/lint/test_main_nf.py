@@ -247,9 +247,7 @@ class TestMainNfLinting(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort")
 
-        # TODO: set to 0 once samtools/sort module is converted to new container syntax
-        assert len(module_lint.failed) == 1
-        assert module_lint.failed[0].lint_test == "has_meta_containers"
+        assert len(module_lint.failed) == 0
         assert len(module_lint.passed) > 0
 
     def test_additional_registry_from_nf_core_yml_passes_container_link(self):
