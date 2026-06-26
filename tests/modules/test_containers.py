@@ -174,11 +174,17 @@ class TestModuleContainers(TestModules):
     @mock.patch("nf_core.modules.containers.requests.get")
     @mock.patch("nf_core.modules.containers.requests.post")
     def test_request_container_build_failure_raises(self, mock_post, mock_get):
-        # Fresh (uncached) build -> polls status, which reports failure
-        mock_post.return_value = self._fake_response({"buildId": "bd-fail", "cached": False, "targetImage": "x"})
-        mock_get.return_value = self._fake_response({"status": "COMPLETED", "succeeded": False})
-        with pytest.raises(RuntimeError, match="Wave build bd-fail failed"):
+        # Fresh (uncached) build -> polls the container status endpoint, which reports failure
+        mock_post.return_value = self._fake_response(
+            {"buildId": "bd-fail", "requestId": "req-fail", "cached": False, "targetImage": "x"}
+        )
+        mock_get.return_value = self._fake_response(
+            {"status": "DONE", "succeeded": False, "reason": "boom", "detailsUri": "https://wave/log"}
+        )
+        with pytest.raises(RuntimeError, match="Wave build req-fail failed: boom"):
             ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], self.environment_yml)
+        # Polled the v1alpha2 container status endpoint with the requestId
+        assert mock_get.call_args[0][0].endswith("/v1alpha2/container/req-fail/status")
 
     @mock.patch("nf_core.modules.containers.requests.post")
     def test_request_container_missing_image_raises(self, mock_post):

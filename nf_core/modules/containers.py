@@ -496,48 +496,52 @@ class ModuleContainers:
     @classmethod
     def _await_build(
         cls,
-        build_id: str,
+        request_id: str,
         poll_interval: int = 5,
         timeout: int = 1800,
         cancel_event: threading.Event | None = None,
     ) -> None:
         """
-        Wait for a Wave build to finish by polling its status endpoint.
+        Wait for a Wave container request to finish by polling its status endpoint.
 
-        Replaces the wave CLI ``--await`` flag. Polls ``GET /v1alpha1/builds/{id}/status``
-        until the build reports ``COMPLETED``, then raises if it did not succeed.
+        Replaces the wave CLI ``--await`` flag. Polls ``GET /v1alpha2/container/{id}/status``
+        until the request reports ``DONE``, then raises (with the failure ``reason``) if it
+        did not succeed.
 
         Args:
-            build_id: The Wave build id returned by the submit request.
+            request_id: The Wave request id returned by the container submit request.
             poll_interval: Seconds to wait between status checks.
             timeout: Maximum seconds to wait before giving up.
             cancel_event: When set (by the main thread on Ctrl+C), abort the wait promptly
                 instead of sleeping out the poll interval.
         """
-        if not build_id:
-            raise RuntimeError("Wave did not return a buildId to await")
+        if not request_id:
+            raise RuntimeError("Wave did not return a requestId to await")
 
-        status_url = f"{WAVE_API_ALPHA1}/builds/{quote(build_id, safe='')}/status"
+        status_url = f"{WAVE_API_ALPHA2}/container/{quote(request_id, safe='')}/status"
+        # Updated from each status response; the API returns a ready-made build log URL.
+        details_uri = ""
         deadline = time.monotonic() + timeout
         while True:
             if cancel_event is not None and cancel_event.is_set():
-                raise RuntimeError(f"Wave build {build_id} await cancelled")
-            status = cls._wave_request("get", status_url, error_context=f"Wave status check for build {build_id}")
-            if status.get("status") == "COMPLETED":
+                raise RuntimeError(f"Wave build {request_id} await cancelled")
+            status = cls._wave_request("get", status_url, error_context=f"Wave status check for request {request_id}")
+            details_uri = status.get("detailsUri") or details_uri
+            if status.get("status") == "DONE":
                 if not status.get("succeeded"):
-                    raise RuntimeError(f"Wave build {build_id} failed. Build log: {WAVE_URL}/view/builds/{build_id}")
-                log.debug(f"Wave build {build_id} completed in {status.get('duration')}s")
+                    reason = status.get("reason") or "no reason provided"
+                    raise RuntimeError(f"Wave build {request_id} failed: {reason}. Build log: {details_uri}")
+                log.debug(f"Wave build {request_id} completed in {status.get('duration')}s")
                 return
             if time.monotonic() > deadline:
                 raise RuntimeError(
-                    f"Wave build {build_id} did not complete within {timeout}s. "
-                    f"Build log: {WAVE_URL}/view/builds/{build_id}"
+                    f"Wave build {request_id} did not complete within {timeout}s. Build log: {details_uri}"
                 )
             # Interruptible sleep: Event.wait returns True immediately once cancelled,
             # otherwise blocks for poll_interval like time.sleep.
             if cancel_event is not None:
                 if cancel_event.wait(poll_interval):
-                    raise RuntimeError(f"Wave build {build_id} await cancelled")
+                    raise RuntimeError(f"Wave build {request_id} await cancelled")
             else:
                 time.sleep(poll_interval)
 
@@ -580,14 +584,16 @@ class ModuleContainers:
         )
 
         build_id = meta_data.get("buildId") or ""
+        request_id = meta_data.get("requestId") or ""
         # Notify as soon as we have a build id, before waiting for the build to finish.
         if build_id and on_build_id is not None:
             on_build_id(build_id)
 
-        # The submit response does not carry the final result for fresh builds; a cached
-        # build is already resolved, otherwise we must poll the status endpoint.
-        if not meta_data.get("cached"):
-            cls._await_build(build_id, cancel_event=cancel_event)
+        # A build that is cached (or already reported DONE in the submit response) is
+        # resolved immediately; otherwise poll the container status endpoint until it
+        # finishes.
+        if not meta_data.get("cached") and meta_data.get("status") != "DONE":
+            cls._await_build(request_id, cancel_event=cancel_event)
 
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
         if not image:
