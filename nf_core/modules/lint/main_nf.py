@@ -42,11 +42,12 @@ def main_nf(
       is issued if they do not match. Modules using the newer docker-only format
       (no singularity container) skip this check.
 
-    * ``singularity_tag``: The Singularity container must be resolvable via
-      ``nextflow inspect -profile singularity``. The check fails if no genuine
-      Singularity container (an ``https://`` or ``oras://`` URL) can be resolved.
-      It is skipped for modules listed under ``singularity`` in
-      ``.github/skip_nf_test.json``.
+    * ``singularity_tag``: A Singularity container must be resolvable via
+      ``nextflow inspect -profile singularity``. The check fails if none can be
+      resolved or if it falls back to a docker container that has an automatic
+      singularity equivalent, i.e., ``quay.io/biocontainers/`` or
+      ``community.wave.seqera.io/``.
+      It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
 
     * ``oras_singularity_tag``: The resolved Singularity container must not be
       served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
