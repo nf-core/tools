@@ -32,8 +32,11 @@ def subworkflow_todos(_, subworkflow):
 
     The following checks are performed:
 
-    * ``subworkflow_todo``: Warns if any ``TODO nf-core:`` comment lines are found
-      in the subworkflow files.
+    subworkflow_todo
+    ^^^^^^^^^^^^^^^^
+
+    Warns if any ``TODO nf-core:`` comment lines are found
+    in the subworkflow files.
     """
 
     # Main subworkflow directory

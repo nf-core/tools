@@ -25,50 +25,86 @@ def main_nf(
 
     The following checks are performed:
 
-    * ``main_nf_module_granularity``: The module must represent a single command
-      as ``<tool>`` or single subcommand with distinct functionality as
-      ``<tool/subtool>``.
+    main_nf_module_granularity
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_exists``: The ``main.nf`` file must exist.
+    The module must represent a single command
+    as ``<tool>`` or single subcommand with distinct functionality as
+    ``<tool/subtool>``.
 
-    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
-      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
-      ``publishDir``).
+    main_nf_exists
+    ^^^^^^^^^^^^^^
 
-    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+    The ``main.nf`` file must exist.
 
-    * ``main_nf_container``: When both a ``singularity`` and a ``docker`` container
-      are specified, their tags must reference the same software version. A warning
-      is issued if they do not match. Modules using the newer docker-only format
-      (no singularity container) skip this check.
+    deprecated_dsl2
+    ^^^^^^^^^^^^^^^
 
-    * ``singularity_tag``: A Singularity container must be resolvable via
-      ``nextflow inspect -profile singularity``. The check fails if none can be
-      resolved or if it falls back to a docker container that has an automatic
-      singularity equivalent, i.e., ``quay.io/biocontainers/`` or
-      ``community.wave.seqera.io/``.
-      It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
+    The file must not contain deprecated DSL2 identifiers
+    (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+    ``publishDir``).
 
-    * ``oras_singularity_tag``: The resolved Singularity container must not be
-      served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
-      The check fails if an ``oras://`` container is used.
+    main_nf_script_outputs
+    ^^^^^^^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
-      blocks must be present.
+    The process must have an ``output:`` block.
 
-    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
-      a ``template``.
+    main_nf_container
+    ^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
-      must also appear in at least one output channel.
+    When both a ``singularity`` and a ``docker`` container
+    are specified, their tags must reference the same software version. A warning
+    is issued if they do not match. Modules using the newer docker-only format
+    (no singularity container) skip this check.
 
-    * ``main_nf_version_topic``: The module should emit software versions using
-      a ``topic: versions`` output. A warning is issued if no such topic is found.
+    singularity_tag
+    ^^^^^^^^^^^^^^^
 
-    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
-      equal the number of ``emit:`` outputs whose name starts with ``versions``.
-      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
-      of a topic output.
+    A Singularity container must be resolvable via
+    ``nextflow inspect -profile singularity``. The check fails if none can be
+    resolved or if it falls back to a docker container that has an automatic
+    singularity equivalent, i.e., ``quay.io/biocontainers/`` or
+    ``community.wave.seqera.io/``.
+    It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
+
+    oras_singularity_tag
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The resolved Singularity container must not be
+    served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
+    The check fails if an ``oras://`` container is used.
+
+    main_nf_script_shell
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    Exactly one of ``script:``, ``shell:``, or ``exec:``
+    blocks must be present.
+
+    main_nf_shell_template
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    If a ``shell:`` block is used, it must call
+    a ``template``.
+
+    main_nf_meta_output
+    ^^^^^^^^^^^^^^^^^^^
+
+    If ``meta`` is present in the module inputs, it
+    must also appear in at least one output channel.
+
+    main_nf_version_topic
+    ^^^^^^^^^^^^^^^^^^^^^^
+
+    The module should emit software versions using
+    a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    main_nf_version_emit
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The number of ``topic: versions`` outputs must
+    equal the number of ``emit:`` outputs whose name starts with ``versions``.
+    A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+    of a topic output.
 
     """
 

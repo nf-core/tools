@@ -17,8 +17,11 @@ def subworkflow_if_empty_null(_, subworkflow):
 
     The following checks are performed:
 
-    * ``subworkflow_if_empty_null``: Warns if any ``ifEmpty(null)`` usage is found
-      in the subworkflow files.
+    subworkflow_if_empty_null
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Warns if any ``ifEmpty(null)`` usage is found
+    in the subworkflow files.
     """
 
     # Main subworkflow directory
