@@ -42,6 +42,16 @@ def main_nf(
       is issued if they do not match. Modules using the newer docker-only format
       (no singularity container) skip this check.
 
+    * ``singularity_tag``: The Singularity container must be resolvable via
+      ``nextflow inspect -profile singularity``. The check fails if no genuine
+      Singularity container (an ``https://`` or ``oras://`` URL) can be resolved.
+      It is skipped for modules listed under ``singularity`` in
+      ``.github/skip_nf_test.json``.
+
+    * ``oras_singularity_tag``: The resolved Singularity container must not be
+      served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
+      The check fails if an ``oras://`` container is used.
+
     * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
       blocks must be present.
 
@@ -436,10 +446,12 @@ def check_process_section(
     singularity_container = self.get_container_with_inspect(profile="singularity")
 
     # `nextflow inspect -profile singularity` falls back to the docker container when the
-    # module has no singularity-specific image. It is fine to use a docker container, as
-    # long as it  doens't have a pre-build singularity container, e.g. from seqera containers
-    # or biocontainers.
-    if singularity_container is not None and not singularity_container.startswith("https:") and singularity_container.startswith(("quay.io/biocontainers/", "community.wave.seqera.io/")):
+    # module has no singularity-specific image. A bare biocontainers/Seqera docker image is
+    # such a fallback (a genuine singularity image would be an `https://` or `oras://` URL),
+    # so it must not be treated as a singularity container.
+    if singularity_container is not None and singularity_container.startswith(
+        ("quay.io/biocontainers/", "community.wave.seqera.io/")
+    ):
         singularity_container = None
 
     # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
@@ -454,6 +466,15 @@ def check_process_section(
         self.passed.append(
             ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", self.main_nf)
         )
+        if singularity_container.startswith("oras://"):
+            self.failed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container should not use oras:// scheme", self.main_nf)
+            )
+        else:
+            self.passed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container uses valid scheme", self.main_nf)
+            )
+
     else:
         self.failed.append(("main_nf", "singularity_tag", "Unable to resolve singularity container", self.main_nf))
     if docker_container is not None:

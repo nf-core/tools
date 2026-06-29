@@ -211,22 +211,28 @@ def test_check_process_section_additional_registries(container_line, additional_
 
 
 @pytest.mark.parametrize(
-    "singularity_container,singularity_should_fail",
+    "singularity_container,singularity_tag,oras_singularity_tag",
     [
         # `nextflow inspect -profile singularity` fell back to a bare docker image (a
-        # biocontainers / seqera prefix, no https:/oras: URL) -> nulled -> fail. Both
-        # prefixes in the production startswith() tuple are covered.
-        ("quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0", True),
-        ("community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", True),
-        # Genuine singularity URL survives -> passes
-        ("https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0", False),
+        # biocontainers / seqera prefix, no https:/oras: URL) -> nulled -> singularity_tag
+        # fails and the oras check is not emitted. Both prefixes in the production
+        # startswith() tuple are covered.
+        ("quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0", "fail", "absent"),
+        ("community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", "fail", "absent"),
+        # Genuine https:// singularity URL -> both checks pass
+        ("https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0", "pass", "pass"),
+        # oras:// resolves a container (singularity_tag passes) but the scheme is invalid
+        ("oras://community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", "pass", "fail"),
     ],
 )
-def test_check_process_section_singularity_fallback(singularity_container, singularity_should_fail, tmp_path):
-    """A quay.io/biocontainers or community.wave.seqera.io docker image must have a genuine
-    singularity equivalent. When `nextflow inspect -profile singularity` falls back to the
-    docker container, the singularity_tag check must fail. The outcome depends only on the
-    resolved singularity container, so a fixed docker container is used."""
+def test_check_process_section_singularity_container(
+    singularity_container, singularity_tag, oras_singularity_tag, tmp_path
+):
+    """A biocontainers/seqera docker image must have a genuine https:// singularity equivalent.
+    When `nextflow inspect -profile singularity` falls back to the docker container the
+    singularity_tag check fails, and an oras:// container fails the oras_singularity_tag check.
+    The outcome depends only on the resolved singularity container, so a fixed docker container
+    is used."""
     docker_container = "quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0"
     mock_lint = MockModuleLint()
     mock_lint.component_name = "tool/subtool"
@@ -243,71 +249,18 @@ def test_check_process_section_singularity_fallback(singularity_container, singu
         None,
     )
 
-    singularity_failed = any(r[1] == "singularity_tag" for r in mock_lint.failed)
-    singularity_passed = any(r[1] == "singularity_tag" for r in mock_lint.passed)
+    def assert_outcome(lint_test, expected):
+        passed = any(r[1] == lint_test for r in mock_lint.passed)
+        failed = any(r[1] == lint_test for r in mock_lint.failed)
+        if expected == "pass":
+            assert passed and not failed, f"Expected {lint_test} to pass; passed={passed}, failed={failed}"
+        elif expected == "fail":
+            assert failed and not passed, f"Expected {lint_test} to fail; passed={passed}, failed={failed}"
+        else:  # absent
+            assert not passed and not failed, f"Expected {lint_test} to be absent; passed={passed}, failed={failed}"
 
-    if singularity_should_fail:
-        assert singularity_failed, f"Expected singularity_tag failure; failed={mock_lint.failed}"
-        assert not singularity_passed, f"singularity_tag should not pass; passed={mock_lint.passed}"
-    else:
-        assert singularity_passed, f"Expected singularity_tag to pass; passed={mock_lint.passed}"
-        assert not singularity_failed, f"singularity_tag should not fail; failed={mock_lint.failed}"
-
-
-@pytest.mark.parametrize(
-    "singularity_container,oras_outcome",
-    [
-        # oras:// scheme is not allowed -> oras_singularity_tag fails
-        (
-            "oras://community.wave.seqera.io/library/gatk4:4.4.0.0--abc123",
-            "fail",
-        ),
-        # https:// scheme is the valid form -> oras_singularity_tag passes
-        (
-            "https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0",
-            "pass",
-        ),
-        # docker fallback gets nulled out -> no singularity container, so the
-        # oras_singularity_tag check is not emitted at all
-        (
-            "quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0",
-            "absent",
-        ),
-    ],
-)
-def test_check_process_section_oras_singularity_tag(singularity_container, oras_outcome, tmp_path):
-    """The resolved Singularity container must not use the oras:// scheme (it should be a
-    plain https:// URL). oras_singularity_tag fails for oras:// containers, passes for
-    https:// containers, and is not emitted when no genuine singularity container resolves."""
-    docker_container = "quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0"
-    mock_lint = MockModuleLint()
-    mock_lint.component_name = "tool/subtool"
-    mock_lint.process_name = "TOOL_SUBTOOL"
-    mock_lint.component_dir = tmp_path
-    mock_lint.base_dir = tmp_path
-    mock_lint.inspect_containers = {"docker": docker_container, "singularity": singularity_container}
-
-    check_process_section(
-        mock_lint,
-        [f"container '{docker_container}'"],
-        ("quay.io", "community.wave.seqera.io/library/"),
-        False,
-        None,
-    )
-
-    oras_failed = any(r[1] == "oras_singularity_tag" for r in mock_lint.failed)
-    oras_passed = any(r[1] == "oras_singularity_tag" for r in mock_lint.passed)
-
-    if oras_outcome == "fail":
-        assert oras_failed, f"Expected oras_singularity_tag failure; failed={mock_lint.failed}"
-        assert not oras_passed, f"oras_singularity_tag should not pass; passed={mock_lint.passed}"
-    elif oras_outcome == "pass":
-        assert oras_passed, f"Expected oras_singularity_tag to pass; passed={mock_lint.passed}"
-        assert not oras_failed, f"oras_singularity_tag should not fail; failed={mock_lint.failed}"
-    else:  # absent
-        assert not oras_failed and not oras_passed, (
-            f"oras_singularity_tag should not be emitted; passed={mock_lint.passed}, failed={mock_lint.failed}"
-        )
+    assert_outcome("singularity_tag", singularity_tag)
+    assert_outcome("oras_singularity_tag", oras_singularity_tag)
 
 
 class TestMainNfLinting(TestModules):
