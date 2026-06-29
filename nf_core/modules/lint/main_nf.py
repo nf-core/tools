@@ -10,6 +10,7 @@ from rich.progress import Progress
 
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +41,17 @@ def main_nf(
       are specified, their tags must reference the same software version. A warning
       is issued if they do not match. Modules using the newer docker-only format
       (no singularity container) skip this check.
+
+    * ``singularity_tag``: A Singularity container must be resolvable via
+      ``nextflow inspect -profile singularity``. The check fails if none can be
+      resolved or if it falls back to a docker container that has an automatic
+      singularity equivalent, i.e., ``quay.io/biocontainers/`` or
+      ``community.wave.seqera.io/``.
+      It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
+
+    * ``oras_singularity_tag``: The resolved Singularity container must not be
+      served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
+      The check fails if an ``oras://`` container is used.
 
     * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
       blocks must be present.
@@ -435,16 +447,35 @@ def check_process_section(
     singularity_container = self.get_container_with_inspect(profile="singularity")
 
     # `nextflow inspect -profile singularity` falls back to the docker container when the
-    # module has no singularity-specific image. A genuine singularity reference is a remote
-    # URL (`https://…`) or an `oras://…` reference, so anything else is the docker fallback
-    # and must not be treated as a singularity container.
-    if singularity_container is not None and not singularity_container.startswith(("https:", "oras:")):
+    # module has no singularity-specific image. A bare biocontainers/Seqera docker image is
+    # such a fallback (a genuine singularity image would be an `https://` or `oras://` URL),
+    # so it must not be treated as a singularity container.
+    if singularity_container is not None and singularity_container.startswith(
+        ("quay.io/biocontainers/", "community.wave.seqera.io/")
+    ):
         singularity_container = None
 
-    if singularity_container is not None:
+    # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
+    # container on purpose, so the singularity_tag check is skipped for them.
+    skip_singularity = str(Path(self.component_dir).resolve()) in _load_skip_nf_test_sets(str(self.base_dir)).get(
+        "singularity", frozenset()
+    )
+
+    if skip_singularity:
+        log.debug(f"Skipping singularity_tag check for {self.component_name} (skipped in skip_nf_test.json)")
+    elif singularity_container is not None:
         self.passed.append(
             ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", self.main_nf)
         )
+        if singularity_container.startswith("oras://"):
+            self.failed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container should not use oras:// scheme", self.main_nf)
+            )
+        else:
+            self.passed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container uses valid scheme", self.main_nf)
+            )
+
     else:
         self.failed.append(("main_nf", "singularity_tag", "Unable to resolve singularity container", self.main_nf))
     if docker_container is not None:
@@ -666,7 +697,7 @@ def check_container_link_line(self, raw_line, registry):
                     (
                         "main_nf",
                         "container_links",
-                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry) if isinstance(registry, tuple) else registry}",
+                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry)}",
                         self.main_nf,
                     )
                 )
