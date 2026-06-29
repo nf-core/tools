@@ -34,6 +34,98 @@ log = logging.getLogger(__name__)
 WAVE_URL = "https://wave.seqera.io"
 
 
+def build_containers_with_progress(
+    manager: "ModuleContainers",
+    components: list[NFCoreComponent],
+    directory: Path,
+    force: bool = False,
+    hide_progress: bool = False,
+    verbose: bool = False,
+) -> list[str]:
+    """Build Seqera/Wave containers for ``components`` with a live progress display.
+
+    Shows an overall module bar plus, per module, the per-build spinners
+    (docker/singularity × platform) that :meth:`ModuleContainers.create` renders when a
+    progress bar is passed.
+
+    Args:
+        manager: A :class:`ModuleContainers` covering the modules to build.
+        components: The components to build containers for.
+        directory: Base directory of the pipeline / modules repo.
+        force: Overwrite existing container directives even if already correct.
+        hide_progress: Disable the live progress display.
+        verbose: Verbose logging for per-module managers in batch mode.
+
+    Returns:
+        The names of the modules whose builds failed.
+    """
+    from rich.console import Group
+    from rich.live import Live
+    from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn
+
+    from nf_core.pipelines.containers_utils import try_generate_container_configs
+    from nf_core.pipelines.lint_utils import console
+
+    failed_modules: list[str] = []
+
+    overall_progress = Progress(
+        "[bold blue]{task.description}",
+        BarColumn(),
+        MofNCompleteColumn(),
+        console=console,
+        disable=hide_progress,
+    )
+    module_progress = Progress(
+        SpinnerColumn(finished_text="[green]✓[/green]"),
+        "[bold blue]{task.description}",
+        TextColumn("{task.fields[status]}"),
+        console=console,
+        disable=hide_progress,
+    )
+
+    # Batch builds defer config generation to one full scan after the loop.
+    batch = len(components) > 1
+
+    with Live(Group(overall_progress, module_progress), console=console, transient=True):
+        # The overall bar is only useful when processing more than one module
+        overall_task_id = overall_progress.add_task("modules", total=len(components), visible=len(components) > 1)
+        for component in components:
+            module_name = component.component_name
+            module_task_id = module_progress.add_task(
+                f"[cyan]{module_name}[/cyan]",
+                total=None,
+                status="building containers...",
+            )
+            try:
+                if manager.all_modules:
+                    # Per-module instance, reusing the already-scanned component list
+                    module_manager = ModuleContainers(
+                        module=module_name,
+                        directory=directory,
+                        verbose=verbose,
+                        components=manager.available_modules,
+                    )
+                else:
+                    module_manager = manager
+                _, success = module_manager.create(progress_bar=module_progress, task_id=module_task_id, force=force)
+                if success:
+                    if module_manager.repo_type == "pipeline" and not batch:
+                        try_generate_container_configs(directory, module_manager.module_directory)
+                else:
+                    failed_modules.append(module_name)
+            except (ValueError, RuntimeError, OSError) as e:
+                log.error(f"✗ Failed to build containers for {module_name}: {e}")
+                failed_modules.append(module_name)
+            finally:
+                overall_progress.advance(overall_task_id)
+                module_progress.remove_task(module_task_id)
+
+    if batch and manager.repo_type == "pipeline" and len(failed_modules) < len(components):
+        try_generate_container_configs(directory)
+
+    return failed_modules
+
+
 class ModuleContainers:
     """
     Helpers for building, linting and listing module containers.

@@ -177,7 +177,36 @@ class ComponentCreate(ComponentCommand):
         run_prettier_on_file(new_files)
 
         log.info("Created following files:\n  " + "\n  ".join(new_files))
+
+        if self.component_type == "modules":
+            self._build_seqera_containers()
+
         return True
+
+    def _build_seqera_containers(self) -> None:
+        """
+        Build Seqera/Wave containers for the freshly created module.
+        """
+        from nf_core.modules.containers import ModuleContainers, build_containers_with_progress
+
+        log.info("Building Seqera containers for the module with Wave...")
+        try:
+            manager = ModuleContainers(
+                module=self.component_name,
+                directory=self.directory,
+            )
+            ModuleContainers.check_tower_token()
+            if manager.nfcore_component is None:
+                log.warning("Could not locate the new module to build Seqera containers.")
+                return
+            failed = build_containers_with_progress(manager, [manager.nfcore_component], self.directory)
+            if failed:
+                log.warning(
+                    "Could not build all Seqera containers for the module. "
+                    "Run `nf-core modules containers create` to retry."
+                )
+        except (ValueError, RuntimeError, OSError) as e:
+            log.warning(f"Could not build Seqera containers for the module: {e}")
 
     def _get_bioconda_tool(self):
         """
@@ -225,22 +254,6 @@ class ComponentCreate(ComponentCommand):
                         f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
                     )
                     break
-
-        # Try to get the container tag (only if bioconda package was found)
-        if self.bioconda:
-            try:
-                if self.tool_conda_name:
-                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
-                        self.tool_conda_name, version
-                    )
-                else:
-                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
-                        self.component, version
-                    )
-                log.info(f"Using Docker container: '{self.docker_container}'")
-                log.info(f"Using Singularity container: '{self.singularity_container}'")
-            except (ValueError, LookupError) as e:
-                log.info(f"Could not find a Docker/Singularity container ({e})")
 
     def _get_module_structure_components(self):
         process_label_defaults = [
