@@ -436,10 +436,10 @@ def check_process_section(
     singularity_container = self.get_container_with_inspect(profile="singularity")
 
     # `nextflow inspect -profile singularity` falls back to the docker container when the
-    # module has no singularity-specific image. A genuine singularity reference is a remote
-    # URL (`https://…`) or an `oras://…` reference, so anything else is the docker fallback
-    # and must not be treated as a singularity container.
-    if singularity_container is not None and not singularity_container.startswith(("https:", "oras:")):
+    # module has no singularity-specific image. It is fine to use a docker container, as
+    # long as it  doens't have a pre-build singularity container, e.g. from seqera containers
+    # or biocontainers.
+    if singularity_container is not None and not singularity_container.startswith("https:") and singularity_container.startswith(("quay.io/biocontainers/", "community.wave.seqera.io/")):
         singularity_container = None
 
     # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
@@ -675,7 +675,7 @@ def check_container_link_line(self, raw_line, registry):
                     (
                         "main_nf",
                         "container_links",
-                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry) if isinstance(registry, tuple) else registry}",
+                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry)}",
                         self.main_nf,
                     )
                 )

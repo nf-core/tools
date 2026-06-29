@@ -20,6 +20,12 @@ class MockModuleLint:
         # drive the `nextflow inspect` based container resolution without a real Nextflow.
         self.inspect_containers: dict[str | None, str | None] = {}
 
+
+        self.component_name = ""
+        self.process_name = ""
+        self.component_dir = None
+        self.base_dir = None
+
     def get_container_with_inspect(self, profile=None):
         return self.inspect_containers.get(profile)
 
