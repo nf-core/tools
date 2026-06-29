@@ -221,6 +221,9 @@ def test_check_process_section_additional_registries(container_line, additional_
         ("community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", "fail", "absent"),
         # Genuine https:// singularity URL -> both checks pass
         ("https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0", "pass", "pass"),
+        # Allowed docker container fallback
+        ("quay.io/nf-core/bclconvert:4.5.4", "pass", "pass"),
+        ("nvcr.io/nvidia/clara/clara-parabricks:4.6.0-1", "pass", "pass"),
         # oras:// resolves a container (singularity_tag passes) but the scheme is invalid
         ("oras://community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", "pass", "fail"),
     ],
