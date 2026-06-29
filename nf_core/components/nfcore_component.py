@@ -152,7 +152,8 @@ class NFCoreComponent:
                     #'plugin/nf-validation'
                     component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
                     component = component.replace("'../", "subworkflows/")
-                    component = component.replace("'", "")
+                    # Replace trailing quotes
+                    component = component.replace("'", "").replace('"', "")
                     included_components.append(component)
         return included_components
 
