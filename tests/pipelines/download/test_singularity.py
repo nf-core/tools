@@ -428,7 +428,7 @@ class SingularityTest(unittest.TestCase):
         "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch(
-        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_singularity_cachedir_creation"
+        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation"
     )  # This is to make sure that we do not prompt for a Singularity cachedir
     @mock.patch("pathlib.Path.mkdir")
     @mock.patch("pathlib.Path.symlink_to")
