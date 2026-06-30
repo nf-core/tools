@@ -8,7 +8,6 @@ from pathlib import Path
 
 from rich.progress import Progress
 
-import nf_core.utils
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
