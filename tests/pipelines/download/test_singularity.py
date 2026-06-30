@@ -140,9 +140,7 @@ class SingularityTest(unittest.TestCase):
     # Tests for constructing SingularityFetcher with different container_system values
     #
     @with_temporary_folder
-    @mock.patch(
-        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation"
-    )
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation")
     def test_apptainer_fetcher_constructor(self, tmp_path, mock_cachedir_prompt):
         mock_cachedir_prompt.return_value = False
         tmp_path = Path(tmp_path)
@@ -160,9 +158,7 @@ class SingularityTest(unittest.TestCase):
         assert fetcher._container_output_dir == tmp_path / "apptainer-images"
 
     @with_temporary_folder
-    @mock.patch(
-        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation"
-    )
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation")
     def test_singularity_fetcher_constructor(self, tmp_path, mock_cachedir_prompt):
         mock_cachedir_prompt.return_value = False
         tmp_path = Path(tmp_path)
@@ -181,9 +177,7 @@ class SingularityTest(unittest.TestCase):
     #
     # Tests for 'construct_pull_command' with different implementations
     #
-    @mock.patch(
-        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation"
-    )
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation")
     def test_construct_pull_command_apptainer(self, mock_cachedir_prompt):
         mock_cachedir_prompt.return_value = False
         fetcher = SingularityFetcher(
@@ -198,9 +192,7 @@ class SingularityTest(unittest.TestCase):
         command = fetcher.construct_pull_command(output_path, "docker://hello-world")
         assert command == ["apptainer", "pull", "--name", str(output_path), "docker://hello-world"]
 
-    @mock.patch(
-        "nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation"
-    )
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.prompt_cachedir_creation")
     def test_construct_pull_command_singularity(self, mock_cachedir_prompt):
         mock_cachedir_prompt.return_value = False
         fetcher = SingularityFetcher(
