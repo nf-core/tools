@@ -37,6 +37,7 @@ SINGULARITY_LIBRARY_DIR_ENV_VAR = "NXF_SINGULARITY_LIBRARYDIR"
 APPTAINER_CACHE_DIR_ENV_VAR = "NXF_APPTAINER_CACHEDIR"
 APPTAINER_LIBRARY_DIR_ENV_VAR = "NXF_APPTAINER_LIBRARYDIR"
 
+
 def get_container_cache_dir(container_system: str) -> str:
     """Returns the matching cache directory environment variable."""
     match container_system:
@@ -46,6 +47,7 @@ def get_container_cache_dir(container_system: str) -> str:
             return APPTAINER_CACHE_DIR_ENV_VAR
         case _:
             raise KeyError(f"Container engine: {container_system} is unknown.")
+
 
 def get_container_library_dir(container_system: str) -> str:
     """Returns the matching library directory environment variable."""
@@ -96,7 +98,7 @@ class SingularityFetcher(ContainerFetcher):
         container_cache_index=None,
         parallel: int = 4,
         hide_progress: bool = False,
-        container_system: str = 'singularity'
+        container_system: str = "singularity",
     ):
         self.container_system = container_system
         self.container_system_name = container_system.capitalize()
@@ -110,7 +112,9 @@ class SingularityFetcher(ContainerFetcher):
 
             if has_cache_dir and container_cache_utilisation is None:
                 # No choice regarding singularity cache has been made.
-                container_cache_utilisation = SingularityFetcher.prompt_cachedir_utilization(container_system, self.cache_dir_env_var)
+                container_cache_utilisation = SingularityFetcher.prompt_cachedir_utilization(
+                    container_system, self.cache_dir_env_var
+                )
 
         if container_cache_utilisation == "remote":
             # If we have a remote cache, we need to read it
@@ -136,9 +140,7 @@ class SingularityFetcher(ContainerFetcher):
                     ):
                         container_cache_index = SingularityFetcher.prompt_cachedir_remote(self.cache_dir_env_var)
                     else:
-                        log.info(
-                            f"Proceeding without consideration of the remote ${self.cache_dir_env_var} index."
-                        )
+                        log.info(f"Proceeding without consideration of the remote ${self.cache_dir_env_var} index.")
                         self.container_cache_index = None
                         container_cache_utilisation = "copy" if os.environ.get(self.cache_dir_env_var) else None
             else:
@@ -160,7 +162,9 @@ class SingularityFetcher(ContainerFetcher):
                     log.debug(f"Cache directory not found, creating: {cache_dir}")
                     cache_dir.mkdir()
             else:
-                raise FileNotFoundError(f"{self.container_system_name} cache is required but no '{self.cache_dir_env_var}' set!")
+                raise FileNotFoundError(
+                    f"{self.container_system_name} cache is required but no '{self.cache_dir_env_var}' set!"
+                )
 
         container_output_dir = outdir / f"{container_system}-images"
         super().__init__(
@@ -305,7 +309,9 @@ class SingularityFetcher(ContainerFetcher):
         return cachedir_path
 
     @staticmethod
-    def prompt_cachedir_shellprofile_append(cachedir_path: Path, cache_dir_env_var: str = SINGULARITY_CACHE_DIR_ENV_VAR) -> None:
+    def prompt_cachedir_shellprofile_append(
+        cachedir_path: Path, cache_dir_env_var: str = SINGULARITY_CACHE_DIR_ENV_VAR
+    ) -> None:
         """
         Prompt about appending the Singularity / Apptainer cache directory to the shell profile
 
@@ -351,7 +357,9 @@ class SingularityFetcher(ContainerFetcher):
             log.debug(f"No shell profile found for {shell}.")
 
     @staticmethod
-    def prompt_cachedir_utilization(container_system: str = "singularity", cache_dir_env_var: str = SINGULARITY_CACHE_DIR_ENV_VAR) -> str:
+    def prompt_cachedir_utilization(
+        container_system: str = "singularity", cache_dir_env_var: str = SINGULARITY_CACHE_DIR_ENV_VAR
+    ) -> str:
         """Ask if we should *only* use singularity/apptainer cache directory without copying into target"""
         if not nf_core.utils.is_interactive():
             return "copy"
@@ -610,7 +618,9 @@ class SingularityFetcher(ContainerFetcher):
 
         return address, absolute_URI
 
-    def pull_image(self, container: str, output_path: Path, library: str, container_system: str = "singularity") -> bool:
+    def pull_image(
+        self, container: str, output_path: Path, library: str, container_system: str = "singularity"
+    ) -> bool:
         """
         Pull a singularity/apptainer image using `singularity/apptainer pull`.
 

@@ -524,7 +524,7 @@ class DownloadWorkflow:
                     container_cache_index=self.container_cache_index,
                     parallel=self.parallel,
                     hide_progress=self.hide_progress,
-                    container_system=self.container_system
+                    container_system=self.container_system,
                 )
             elif self.container_system == "docker":
                 self.container_fetcher = DockerFetcher(
