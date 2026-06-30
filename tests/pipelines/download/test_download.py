@@ -297,27 +297,25 @@ class DownloadTest(unittest.TestCase):
         container_system = "apptainer"
         mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
         refererence_json_dir = mock_pipeline_dir / "per_profile_output"
-        # First check that `-profile singularity` produces the same output as the reference
+        # First check that `-profile apptainer` produces the same output as the reference
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
         mock_fetch_wf_config.return_value = {}
 
         # Run get containers with `nextflow inspect`
+        # NF >= 26.04 rejects old-style if/else container directives (mock_dsl2_old uses them)
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
+        with self._strict_syntax_ctx(match="downgrade to Nextflow"):
+            download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
 
-        # Store the containers found by the new method
-        found_containers = set(download_obj.containers)
-
-        # Load the reference containers
-        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
-            ref_containers = json.load(fh)
-            ref_container_strs = set(ref_containers.values())
-
-        # Now check that they contain the same containers
-        assert found_containers == ref_container_strs, (
-            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
-            f"Containers that should've been found: {ref_container_strs}"
-        )
+        if not self.nf_strict_syntax:
+            found_containers = set(download_obj.containers)
+            with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+                ref_containers = json.load(fh)
+                ref_container_strs = set(ref_containers.values())
+            assert found_containers == ref_container_strs, (
+                f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+                f"Containers that should've been found: {ref_container_strs}"
+            )
 
     #
     # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Docker images
