@@ -34,6 +34,10 @@
 - remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
 - Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
 
+### Download
+
+- Included support for Apptainer in `nf-core pipelines download --container-system apptainer` ([#4352](https://github.com/nf-core/tools/pull/4352))
+
 #### Version updates
 
 ## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]

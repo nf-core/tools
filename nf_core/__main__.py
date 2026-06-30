@@ -372,7 +372,7 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity", "docker"]),
+    type=click.Choice(["none", "singularity", "docker", "apptainer"]),
     help="Download container images of required software.",
 )
 @click.option(
