@@ -223,7 +223,7 @@ class TestModuleContainers(TestModules):
         result = self.module_containers.get_conda_lock_file(platform)
         assert result == "# conda lock file content"
         expected_url = "https://wave.seqera.io/v1alpha1/builds/test-build-123/condalock"
-        # The download now goes through _wave_request, which passes json/headers too,
+        # The download now goes through wave_send, which passes json/headers too,
         # so assert on the URL rather than the full call signature.
         mock_requests_get.assert_called_once()
         assert mock_requests_get.call_args[0][0] == expected_url

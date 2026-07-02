@@ -40,6 +40,45 @@ WAVE_API_ALPHA2 = f"{WAVE_URL}/v1alpha2"
 WAVE_FORMAT = {"docker": "docker", "singularity": "sif"}
 
 
+def wave_send(
+    method: str, url: str, json_body: dict | None = None, error_context: str = "Wave request"
+) -> requests.Response:
+    """
+    Send an authenticated Wave API request and return the raw response.
+
+    Adds bearer auth (and a ``towerAccessToken`` body field for requests with a body)
+    when TOWER_ACCESS_TOKEN is set, and raises on a non-200 response. This is the
+    shared transport for all Wave calls; use :func:`wave_request` for JSON endpoints
+    and read ``.text`` directly for plain-text ones (e.g. the conda lock file).
+
+    Args:
+        method: ``"get"`` or ``"post"``.
+        url: Full request URL.
+        json_body: Optional JSON body (POST requests).
+        error_context: Prefix used in raised error messages.
+    """
+    headers = {"Content-Type": "application/json"}
+    token = os.environ.get("TOWER_ACCESS_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        if json_body is not None:
+            json_body = {**json_body, "towerAccessToken": token}
+
+    resp = getattr(requests, method)(url, json=json_body, headers=headers)
+    if resp.status_code != 200:
+        raise RuntimeError(f"{error_context} failed: HTTP {resp.status_code} {resp.text}")
+    return resp
+
+
+def wave_request(method: str, url: str, json_body: dict | None = None, error_context: str = "Wave request") -> dict:
+    """Send a Wave API request and return the parsed JSON response."""
+    resp = wave_send(method, url, json_body, error_context)
+    try:
+        return resp.json()
+    except ValueError as e:
+        raise RuntimeError(f"{error_context}: could not parse JSON response") from e
+
+
 class ModuleContainers:
     """
     Helpers for building, linting and listing module containers.
@@ -453,47 +492,6 @@ class ModuleContainers:
         return containers, not has_failures
 
     @classmethod
-    def _wave_send(
-        cls, method: str, url: str, json_body: dict | None = None, error_context: str = "Wave request"
-    ) -> requests.Response:
-        """
-        Send an authenticated Wave API request and return the raw response.
-
-        Adds bearer auth (and a ``towerAccessToken`` body field for requests with a body)
-        when TOWER_ACCESS_TOKEN is set, and raises on a non-200 response. This is the
-        shared transport for all Wave calls; use :meth:`_wave_request` for JSON endpoints
-        and read ``.text`` directly for plain-text ones (e.g. the conda lock file).
-
-        Args:
-            method: ``"get"`` or ``"post"``.
-            url: Full request URL.
-            json_body: Optional JSON body (POST requests).
-            error_context: Prefix used in raised error messages.
-        """
-        headers = {"Content-Type": "application/json"}
-        token = os.environ.get("TOWER_ACCESS_TOKEN")
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-            if json_body is not None:
-                json_body = {**json_body, "towerAccessToken": token}
-
-        resp = getattr(requests, method)(url, json=json_body, headers=headers)
-        if resp.status_code != 200:
-            raise RuntimeError(f"{error_context} failed: HTTP {resp.status_code} {resp.text}")
-        return resp
-
-    @classmethod
-    def _wave_request(
-        cls, method: str, url: str, json_body: dict | None = None, error_context: str = "Wave request"
-    ) -> dict:
-        """Send a Wave API request and return the parsed JSON response."""
-        resp = cls._wave_send(method, url, json_body, error_context)
-        try:
-            return resp.json()
-        except ValueError as e:
-            raise RuntimeError(f"{error_context}: could not parse JSON response") from e
-
-    @classmethod
     def _await_build(
         cls,
         request_id: str,
@@ -525,7 +523,7 @@ class ModuleContainers:
         while True:
             if cancel_event is not None and cancel_event.is_set():
                 raise RuntimeError(f"Wave build {request_id} await cancelled")
-            status = cls._wave_request("get", status_url, error_context=f"Wave status check for request {request_id}")
+            status = wave_request("get", status_url, error_context=f"Wave status check for request {request_id}")
             details_uri = status.get("detailsUri") or details_uri
             if status.get("status") == "DONE":
                 if not status.get("succeeded"):
@@ -572,7 +570,7 @@ class ModuleContainers:
             "format": WAVE_FORMAT[container_system],
             "nameStrategy": "imageSuffix",
         }
-        meta_data = cls._wave_request(
+        meta_data = wave_request(
             "post",
             f"{WAVE_API_ALPHA2}/container",
             payload,
@@ -631,7 +629,7 @@ class ModuleContainers:
         Inspect a container image via the Wave HTTP API (POST /v1alpha1/inspect).
         """
         log.debug(f"Requesting Wave image inspect for image {image}")
-        return cls._wave_request(
+        return wave_request(
             "post",
             f"{WAVE_API_ALPHA1}/inspect",
             {"containerImage": image},
@@ -665,11 +663,10 @@ class ModuleContainers:
         # Generate the conda lock URL from the build_id
         conda_lock_url = self.get_conda_lock_url(build_id)
 
-        # Route through _wave_request so the download shares Wave auth (and thus the
-        # relaxed rate limits) with the other Wave calls. condalock returns plain text.
+        # condalock returns plain text; route through the shared transport so the download
+        # shares Wave auth (and thus the relaxed rate limits) with the other Wave calls.
         log.debug(f"Downloading conda lock file from {conda_lock_url}")
-        # condalock returns plain text; reuse the shared transport for auth + rate limits.
-        resp = self._wave_send("get", conda_lock_url, error_context=f"Conda lock download for platform {platform}")
+        resp = wave_send("get", conda_lock_url, error_context=f"Conda lock download for platform {platform}")
         log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
         return resp.text
 
