@@ -425,10 +425,10 @@ class ComponentCreate(ComponentCommand):
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
-        # Regex to validate username (GitHub, GitLab, and other git providers)
+        # Regex to validate username (GitHub, GitLab, and other git-based code hosting services)
         username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d\.]|-(?=[a-zA-Z\d\.])){0,38}$")
         while self.author is None or not username_regex.match(self.author):
-            if self.author is not None
+            if self.author is not None:
                 log.warning("Does not look like a valid username (must start with an '@')!")
             self.require_prompts("GitHub username not provided.\nPlease provide the `--author` option")
             self.author = rich.prompt.Prompt.ask(
