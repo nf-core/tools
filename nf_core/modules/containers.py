@@ -57,6 +57,8 @@ def wave_send(
         json_body: Optional JSON body (POST requests).
         error_context: Prefix used in raised error messages.
     """
+    if method not in ("get", "post"):
+        raise ValueError(f"Invalid http method '{method}' passed. Needs to be one of: 'get', 'post'.")
     headers = {"Content-Type": "application/json"}
     token = os.environ.get("TOWER_ACCESS_TOKEN")
     if token:
