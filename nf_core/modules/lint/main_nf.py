@@ -4,17 +4,13 @@ Lint the main.nf file of a module
 
 import logging
 import re
-import sqlite3
 from pathlib import Path
-from urllib.parse import urlparse, urlunparse
 
-import requests
-import yaml
 from rich.progress import Progress
 
-import nf_core
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
 
 log = logging.getLogger(__name__)
 
@@ -29,38 +25,86 @@ def main_nf(
 
     The following checks are performed:
 
-    * ``main_nf_module_granularity``: The module must represent a single command
-      as ``<tool>`` or single subcommand with distinct functionality as
-      ``<tool/subtool>``.
+    main_nf_module_granularity
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_exists``: The ``main.nf`` file must exist.
+    The module must represent a single command
+    as ``<tool>`` or single subcommand with distinct functionality as
+    ``<tool/subtool>``.
 
-    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
-      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
-      ``publishDir``).
+    main_nf_exists
+    ^^^^^^^^^^^^^^
 
-    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+    The ``main.nf`` file must exist.
 
-    * ``main_nf_container``: Container tags across the ``singularity``, ``docker``,
-      and ``conda`` directives must reference the same software version. A warning
-      is issued if they do not match.
+    deprecated_dsl2
+    ^^^^^^^^^^^^^^^
 
-    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
-      blocks must be present.
+    The file must not contain deprecated DSL2 identifiers
+    (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+    ``publishDir``).
 
-    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
-      a ``template``.
+    main_nf_script_outputs
+    ^^^^^^^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
-      must also appear in at least one output channel.
+    The process must have an ``output:`` block.
 
-    * ``main_nf_version_topic``: The module should emit software versions using
-      a ``topic: versions`` output. A warning is issued if no such topic is found.
+    main_nf_container
+    ^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
-      equal the number of ``emit:`` outputs whose name starts with ``versions``.
-      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
-      of a topic output.
+    When both a ``singularity`` and a ``docker`` container
+    are specified, their tags must reference the same software version. A warning
+    is issued if they do not match. Modules using the newer docker-only format
+    (no singularity container) skip this check.
+
+    singularity_tag
+    ^^^^^^^^^^^^^^^
+
+    A Singularity container must be resolvable via
+    ``nextflow inspect -profile singularity``. The check fails if none can be
+    resolved or if it falls back to a docker container that has an automatic
+    singularity equivalent, i.e., ``quay.io/biocontainers/`` or
+    ``community.wave.seqera.io/``.
+    It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
+
+    oras_singularity_tag
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The resolved Singularity container must not be
+    served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
+    The check fails if an ``oras://`` container is used.
+
+    main_nf_script_shell
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    Exactly one of ``script:``, ``shell:``, or ``exec:``
+    blocks must be present.
+
+    main_nf_shell_template
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    If a ``shell:`` block is used, it must call
+    a ``template``.
+
+    main_nf_meta_output
+    ^^^^^^^^^^^^^^^^^^^
+
+    If ``meta`` is present in the module inputs, it
+    must also appear in at least one output channel.
+
+    main_nf_version_topic
+    ^^^^^^^^^^^^^^^^^^^^^^
+
+    The module should emit software versions using
+    a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    main_nf_version_emit
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The number of ``topic: versions`` outputs must
+    equal the number of ``emit:`` outputs whose name starts with ``versions``.
+    A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+    of a topic output.
 
     """
 
@@ -178,10 +222,13 @@ def main_nf(
         module.passed.append(("main_nf", "main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines, registry, fix_version, progress_bar):
+    containers_match = check_process_section(module, process_lines, registry, fix_version, progress_bar)
+    if containers_match is True:
         module.passed.append(("main_nf", "main_nf_container", "Container versions match", module.main_nf))
-    else:
+    elif containers_match is False:
         module.warned.append(("main_nf", "main_nf_container", "Container versions do not match", module.main_nf))
+    # ``None`` means only one (or no) container type was specified (e.g. the newer
+    # docker-only format), so there is nothing to compare and no check is emitted.
 
     # Check the when statement
     check_when_section(module, when_lines)
@@ -416,19 +463,61 @@ def check_process_section(
         progress_bar (ProgressBar): Progress bar to update.
 
     Returns:
-        bool | None: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
+        bool | None: True if the singularity and docker container versions match,
+        False if they do not. None if the versions cannot be compared (e.g. modern
+        content-addressed Seqera containers, where the singularity URL carries no
+        version tag) or if the process definition does not exist.
     """
     # Check that we have a process section
     if len(lines) == 0:
         self.failed.append(("main_nf", "process_exist", "Process definition does not exist", self.main_nf))
-        return
+        return None
     self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
 
-    # Checks that build numbers of bioconda, singularity and docker container are matching
-    singularity_tag = None
-    docker_tag = None
-    bioconda_packages = []
-    allowed_registries = registry
+    # Resolve the docker and singularity containers via `nextflow inspect` rather than
+    # parsing the container ternary in main.nf with regexes. Running inspect once per
+    # profile lets Nextflow evaluate the container selection logic for us and return the
+    # fully resolved container in its JSON output. Either may be None if the corresponding
+    # container could not be resolved (e.g. Nextflow too old, or no such container).
+    docker_container = self.get_container_with_inspect(profile="docker")
+    singularity_container = self.get_container_with_inspect(profile="singularity")
+
+    # `nextflow inspect -profile singularity` falls back to the docker container when the
+    # module has no singularity-specific image. A bare biocontainers/Seqera docker image is
+    # such a fallback (a genuine singularity image would be an `https://` or `oras://` URL),
+    # so it must not be treated as a singularity container.
+    if singularity_container is not None and singularity_container.startswith(
+        ("quay.io/biocontainers/", "community.wave.seqera.io/")
+    ):
+        singularity_container = None
+
+    # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
+    # container on purpose, so the singularity_tag check is skipped for them.
+    skip_singularity = str(Path(self.component_dir).resolve()) in _load_skip_nf_test_sets(str(self.base_dir)).get(
+        "singularity", frozenset()
+    )
+
+    if skip_singularity:
+        log.debug(f"Skipping singularity_tag check for {self.component_name} (skipped in skip_nf_test.json)")
+    elif singularity_container is not None:
+        self.passed.append(
+            ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", self.main_nf)
+        )
+        if singularity_container.startswith("oras://"):
+            self.failed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container should not use oras:// scheme", self.main_nf)
+            )
+        else:
+            self.passed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container uses valid scheme", self.main_nf)
+            )
+
+    else:
+        self.failed.append(("main_nf", "singularity_tag", "Unable to resolve singularity container", self.main_nf))
+    if docker_container is not None:
+        self.passed.append(("main_nf", "docker_tag", f"Found docker container: {docker_container}", self.main_nf))
+    else:
+        self.failed.append(("main_nf", "docker_tag", "Unable to resolve docker container", self.main_nf))
 
     # Check that the process name is correctly formated from the component name
     check_process_name_format(self, self.process_name, self.component_name)
@@ -438,7 +527,6 @@ def check_process_section(
 
     # Deprecated enable_conda
     for _i, raw_line in enumerate(lines):
-        url = None
         line = raw_line.strip(" \n'\"}:?")
 
         # Catch preceding "container "
@@ -446,8 +534,6 @@ def check_process_section(
             line = line.replace("container", "").strip(" \n'\"}:?")
 
         if _container_type(line) == "conda":
-            if "bioconda::" in line:
-                bioconda_packages = [b for b in line.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", line)
             if match is None:
                 self.passed.append(
@@ -467,193 +553,22 @@ def check_process_section(
                         self.main_nf,
                     )
                 )
-        if _container_type(line) == "singularity":
-            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
-            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
-            # Please god let's find a better way to do this than regex
-            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", line)
-            if match is not None:
-                singularity_tag = match.group(1)
-                self.passed.append(
-                    ("main_nf", "singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf)
-                )
-            else:
-                self.failed.append(("main_nf", "singularity_tag", "Unable to parse singularity tag", self.main_nf))
-                singularity_tag = None
-            url = urlparse(line.split("'")[0])
-
-        if _container_type(line) == "docker":
-            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
-            # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
-            match = re.search(r":([A-Za-z\d\-_.]+)$", line)
-            if match is not None:
-                docker_tag = match.group(1)
-                self.passed.append(("main_nf", "docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
-            else:
-                self.failed.append(("main_nf", "docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = None
-            if line.startswith(allowed_registries):
-                l_stripped = re.sub(r"\W+$", "", line)
-                self.passed.append(
-                    (
-                        "main_nf",
-                        "container_links",
-                        f"Container prefix is correct: {l_stripped}",
-                        self.main_nf,
-                    )
-                )
-            else:
-                self.failed.append(
-                    (
-                        "main_nf",
-                        "container_links",
-                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(f'{r}' for r in allowed_registries)}",
-                        self.main_nf,
-                    )
-                )
-
-            url = urlparse(line.split("'")[0])
 
         if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
             check_container_link_line(self, raw_line, registry)
 
-        # Try to connect to container URLs
-        if url is None:
-            continue
-        try:
-            container_url = "https://" + urlunparse(url) if url.scheme != "https" else urlunparse(url)
-            log.debug(f"Trying to connect to URL: {container_url}")
-            response = requests.head(
-                container_url,
-                stream=True,
-                allow_redirects=True,
-            )
-            log.debug(
-                f"Connected to URL: {'https://' + urlunparse(url) if url.scheme != 'https' else urlunparse(url)}, "
-                f"status_code: {response.status_code}"
-            )
-        except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
-            log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
-            self.failed.append(("main_nf", "container_links", "Unable to connect to container URL", self.main_nf))
-            continue
-        if not response.ok:
-            self.warned.append(
-                (
-                    "main_nf",
-                    "container_links",
-                    f"Unable to connect to container registry, code:  {response.status_code}, url: {response.url}",
-                    self.main_nf,
-                )
-            )
-
-    # Get bioconda packages from environment.yml
-    try:
-        with open(Path(self.component_dir, "environment.yml")) as fh:
-            env_yml = yaml.safe_load(fh)
-        if "dependencies" in env_yml:
-            bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
-    except FileNotFoundError:
-        pass
-    except NotADirectoryError:
-        pass
-
-    # Check that all bioconda packages have build numbers
-    # Also check for newer versions
-    for bp in bioconda_packages:
-        bp = bp.strip("'").strip('"')
-        # Check for correct version and newer versions
-        try:
-            bioconda_version = bp.split("=")[1]
-            # response = _bioconda_package(bp)
-            response = nf_core.utils.anaconda_package(bp)
-            self.passed.append(
-                ("main_nf", "bioconda_version", f"Conda version specified correctly: {bp}", self.main_nf)
-            )
-        except LookupError:
-            self.warned.append(
-                ("main_nf", "bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf)
-            )
-        except ValueError:
-            self.failed.append(
-                ("main_nf", "bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf)
-            )
-        else:
-            # Check that required version is available at all
-            if bioconda_version not in response.get("versions"):
-                self.failed.append(
-                    (
-                        "main_nf",
-                        "bioconda_version",
-                        f"Conda package {bp} had unknown version: `{bioconda_version}`",
-                        self.main_nf,
-                    )
-                )
-                continue  # No need to test for latest version, continue linting
-            # Check version is latest available
-            last_ver = response.get("latest_version")
-            if last_ver is not None and last_ver != bioconda_version:
-                package, ver = bp.split("=", 1)
-                # If a new version is available and fix is True, update the version
-                if fix_version:
-                    try:
-                        fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
-                    except FileNotFoundError as e:
-                        fixed = False
-                        log.debug(f"Unable to update package {package} due to error: {e}")
-                    else:
-                        if fixed:
-                            if progress_bar is not None:
-                                progress_bar.print(
-                                    f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}"
-                                )
-                            log.debug(f"Updating package {package} {ver} -> {last_ver}")
-                            self.passed.append(
-                                (
-                                    "main_nf",
-                                    "bioconda_latest",
-                                    f"Conda package has been updated to the latest available: `{bp}`",
-                                    self.main_nf,
-                                )
-                            )
-                        else:
-                            if progress_bar is not None:
-                                progress_bar.print(
-                                    f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                                )
-                            log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
-                            self.warned.append(
-                                (
-                                    "main_nf",
-                                    "bioconda_latest",
-                                    f"Conda update: {package} `{ver}` -> `{last_ver}`",
-                                    self.main_nf,
-                                )
-                            )
-                # Add available update as a warning
-                else:
-                    self.warned.append(
-                        (
-                            "main_nf",
-                            "bioconda_latest",
-                            f"Conda update: {package} `{ver}` -> `{last_ver}`",
-                            self.main_nf,
-                        )
-                    )
-            else:
-                self.passed.append(
-                    (
-                        "main_nf",
-                        "bioconda_latest",
-                        f"Conda package is the latest available: `{bp}`",
-                        self.main_nf,
-                    )
-                )
-
-    # Check if a tag exists at all. If not, return None.
-    if singularity_tag is None or docker_tag is None:
+    # Compare versions only when both resolved containers expose a parseable version tag.
+    # Legacy biocontainers-style URLs carry a shared `:<version>` tag (e.g. `:0.11.9--0`)
+    # on both the docker and singularity side, so a mismatch flags an author error. Modern
+    # Seqera containers are content-addressed (the singularity URL is a sha digest with no
+    # version), so there is nothing to compare and we return None.
+    if docker_container is None or singularity_container is None:
         return None
-    else:
-        return docker_tag == singularity_tag
+    docker_match = re.search(r":([A-Za-z\d\-_.]+)$", docker_container)
+    singularity_match = re.search(r":([A-Za-z\d\-_.]+)$", singularity_container)
+    if docker_match is None or singularity_match is None:
+        return None
+    return docker_match.group(1) == singularity_match.group(1)
 
 
 def check_process_name_format(self, process_name, component_name):
@@ -747,6 +662,7 @@ def check_container_link_line(self, raw_line, registry):
     """Look for common problems in the container name / URL, for docker and singularity."""
 
     line = raw_line.strip(" \n'\"}:?")
+    log.debug(f"container line: '{line}'")
 
     # lint double quotes
     if line.count('"') > 2:
@@ -775,8 +691,10 @@ def check_container_link_line(self, raw_line, registry):
     # (if there are multiple links, this will be warned in the next check)
     container_link = None
     if len(single_quoted_items) == 3 or len(single_quoted_items) == 5 and " in [" in raw_line:
+        log.debug(f"Single-quoted container link: '{single_quoted_items[1]}'")
         container_link = single_quoted_items[1]
     elif len(double_quoted_items) == 3:
+        log.debug(f"Double-quoted container link: '{double_quoted_items[1]}'")
         container_link = double_quoted_items[1]
     if container_link:
         if " " in container_link:
@@ -797,6 +715,28 @@ def check_container_link_line(self, raw_line, registry):
                     self.main_nf,
                 )
             )
+
+        # Check container registry prefix.
+        if _container_type(container_link) == "docker":
+            if container_link.startswith(registry):
+                self.passed.append(
+                    (
+                        "main_nf",
+                        "container_links",
+                        f"Container prefix is correct: {container_link}",
+                        self.main_nf,
+                    )
+                )
+            else:
+                log.debug(f"Container link: '{container_link}' does not start with registry prefix: {registry}")
+                self.failed.append(
+                    (
+                        "main_nf",
+                        "container_links",
+                        f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry)}",
+                        self.main_nf,
+                    )
+                )
 
         # lint more than one container in the same line
         if ("https://containers" in line or "https://depot" in line) and (
@@ -1021,68 +961,6 @@ def _is_empty(line):
     if line.strip().replace(" ", "") == "":
         empty = True
     return empty
-
-
-def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
-    """Updates the module version
-
-    Changes the bioconda current version by the latest version.
-    Obtains the latest build from bioconda response
-    Checks that the new URLs for docker and singularity with the tag [version]--[build] are valid
-    Changes the docker and singularity URLs
-    """
-    # Get latest build
-    build = _get_build(response)
-
-    with open(self.main_nf) as source:
-        lines = source.readlines()
-
-    # Check if the new version + build exist and replace
-    new_lines = []
-    for line in lines:
-        line_stripped = line.strip(" '\"")
-        build_type = _container_type(line_stripped)
-        if build_type == "conda":
-            new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
-        elif build_type in ("singularity", "docker"):
-            # Check that the new url is valid
-            new_url = re.search(
-                "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
-            ).group(1)
-            try:
-                response_new_container = requests.get(
-                    "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
-                )
-                log.debug(
-                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, "
-                    f"status_code: {response_new_container.status_code}"
-                )
-            except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
-                log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")
-                return False
-            if response_new_container.status_code != 200:
-                return False
-            new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
-        else:
-            new_lines.append(line)
-
-    # Replace outdated versions by the latest one
-    with open(self.main_nf, "w") as source:
-        for line in new_lines:
-            source.write(line)
-
-    return True
-
-
-def _get_build(response):
-    """Get the latest build of the container version"""
-    build_times = []
-    latest_v = response.get("latest_version")
-    files = response.get("files")
-    for f in files:
-        if f.get("version") == latest_v:
-            build_times.append((f.get("upload_time"), f.get("attrs").get("build")))
-    return sorted(build_times, key=lambda tup: tup[0], reverse=True)[0][1]
 
 
 def _container_type(line):

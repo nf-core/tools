@@ -28,6 +28,9 @@ class TestModulesLintRemotes(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.failed) == 3
+        # check that the failed tests are environment_yml_valid, main_nf_versio_ topic (twice)
+        for result in module_lint.failed:
+            assert result.lint_test in ["environment_yml_valid", "main_nf_version_topic"]
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 

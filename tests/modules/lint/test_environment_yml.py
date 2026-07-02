@@ -1,4 +1,5 @@
 import io
+from unittest.mock import patch
 
 import pytest
 import ruamel.yaml
@@ -6,7 +7,7 @@ import ruamel.yaml
 import nf_core.modules.lint
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.lint.environment_yml import environment_yml
+from nf_core.modules.lint.environment_yml import lint_environment_yml as environment_yml
 
 from ...test_modules import TestModules
 
@@ -24,6 +25,7 @@ class DummyModule(NFCoreComponent):
     def __init__(self, path):
         self.environment_yml = path
         self.component_dir = path.parent
+        self.base_dir = path.parent
         self.component_name = "dummy"
         self.passed = []
         self.failed = []
@@ -194,6 +196,101 @@ def test_environment_yml_missing_dependencies(tmp_path):
     assert_yaml_result(test_file, expected)
 
 
+def test_bioconda_version_valid(tmp_path):
+    """Test that a valid, already-latest bioconda version passes both bioconda checks."""
+    content = "dependencies:\n  - bioconda::samtools=1.21\n"
+    _test_file, module, lint = setup_test_environment(tmp_path, content)
+    fake_response = {"versions": ["1.21"], "latest_version": "1.21"}
+
+    with patch("nf_core.utils.anaconda_package", return_value=fake_response):
+        environment_yml(lint, module)
+
+    assert any(x[1] == "bioconda_version" for x in module.passed)
+    assert any(x[1] == "bioconda_latest" for x in module.passed)
+    assert not any(x[1] == "bioconda_version" for x in module.failed)
+
+
+def test_bioconda_version_lookup_error(tmp_path):
+    """Test that a LookupError from anaconda_package records a bioconda_version warning."""
+    content = "dependencies:\n  - bioconda::samtools=1.21\n"
+    _test_file, module, lint = setup_test_environment(tmp_path, content)
+
+    with patch("nf_core.utils.anaconda_package", side_effect=LookupError("not found")):
+        environment_yml(lint, module)
+
+    assert any(x[1] == "bioconda_version" for x in module.warned)
+    assert not any(x[1] == "bioconda_version" for x in module.failed)
+
+
+def test_bioconda_version_value_error(tmp_path):
+    """Test that a ValueError from anaconda_package records a bioconda_version failure."""
+    content = "dependencies:\n  - bioconda::samtools=1.21\n"
+    _test_file, module, lint = setup_test_environment(tmp_path, content)
+
+    with patch("nf_core.utils.anaconda_package", side_effect=ValueError("invalid")):
+        environment_yml(lint, module)
+
+    assert any(x[1] == "bioconda_version" for x in module.failed)
+    assert not any(x[1] == "bioconda_version" for x in module.warned)
+
+
+def test_bioconda_version_unknown(tmp_path):
+    """Test that a version absent from the available list records a bioconda_version failure."""
+    content = "dependencies:\n  - bioconda::samtools=1.18\n"
+    _test_file, module, lint = setup_test_environment(tmp_path, content)
+    fake_response = {"versions": ["1.20", "1.21"], "latest_version": "1.21"}
+
+    with patch("nf_core.utils.anaconda_package", return_value=fake_response):
+        environment_yml(lint, module)
+
+    assert any(x[1] == "bioconda_version" for x in module.failed)
+
+
+def test_bioconda_latest_no_fix(tmp_path):
+    """Test that an outdated version warns on bioconda_latest when fix_version=False."""
+    content = "dependencies:\n  - bioconda::samtools=1.18\n"
+    _test_file, module, lint = setup_test_environment(tmp_path, content)
+    fake_response = {"versions": ["1.18", "1.21"], "latest_version": "1.21"}
+
+    with patch("nf_core.utils.anaconda_package", return_value=fake_response):
+        environment_yml(lint, module)  # fix_version defaults to False
+
+    assert any(x[1] == "bioconda_latest" for x in module.warned)
+    assert not any(x[1] == "bioconda_latest" for x in module.passed)
+
+
+def test_fix_version_fix_fails(tmp_path):
+    """Test that a failed _fix_module_version call records a bioconda_latest warning."""
+    content = "dependencies:\n  - bioconda::samtools=1.18\n"
+    _test_file, module, lint = setup_test_environment(tmp_path, content)
+    fake_response = {"versions": ["1.18", "1.21"], "latest_version": "1.21"}
+
+    with (
+        patch("nf_core.utils.anaconda_package", return_value=fake_response),
+        patch("nf_core.modules.lint.environment_yml._fix_module_version", return_value=False),
+    ):
+        environment_yml(lint, module, fix_version=True)
+
+    assert any(x[1] == "bioconda_latest" for x in module.warned)
+    assert not any(x[1] == "bioconda_latest" for x in module.passed)
+
+
+def test_environment_yml_missing_not_referenced(tmp_path):
+    """Test that a missing environment.yml passes when main.nf does not reference it."""
+    (tmp_path / "main.nf").write_text("process TEST {\n    script: 'echo hello'\n}\n")
+    (tmp_path / "modules").mkdir(exist_ok=True)
+    (tmp_path / "modules" / "environment-schema.json").write_text("{}")
+
+    missing_path = tmp_path / "environment.yml"
+    module = DummyModule(missing_path)
+    lint = DummyLint(tmp_path)
+
+    environment_yml(lint, module)
+
+    assert any(x[1] == "environment_yml_exists" for x in module.passed)
+    assert not any(x[1] == "environment_yml_exists" for x in module.failed)
+
+
 # Integration tests using the full ModuleLint class
 @pytest.mark.integration
 class TestModulesEnvironmentYmlIntegration(TestModules):
@@ -326,3 +423,35 @@ class TestModulesEnvironmentYmlIntegration(TestModules):
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
         assert module_lint.failed[0].lint_test == "environment_yml_valid"
+
+
+def test_fix_version_updates_environment_yml(tmp_path):
+    """Test that fix_version rewrites the version in environment.yml, not main.nf."""
+    content = "dependencies:\n  - bioconda::samtools=1.18\n"
+    test_file, module, lint = setup_test_environment(tmp_path, content)
+
+    fake_response = {"versions": ["1.18", "1.21"], "latest_version": "1.21"}
+
+    with patch("nf_core.utils.anaconda_package", return_value=fake_response):
+        environment_yml(lint, module, fix_version=True)
+
+    result = test_file.read_text()
+    assert "=1.21" in result
+    assert "=1.18" not in result
+    assert any(x[1] == "bioconda_latest" for x in module.passed)
+
+
+def test_fix_version_does_not_touch_main_nf(tmp_path):
+    """Test that fix_version leaves main.nf untouched."""
+    content = "dependencies:\n  - bioconda::samtools=1.18\n"
+    test_file, module, lint = setup_test_environment(tmp_path, content)
+
+    main_nf = tmp_path / "main.nf"
+    main_nf.write_text("conda 'bioconda::samtools=1.18'\n")
+
+    fake_response = {"versions": ["1.18", "1.21"], "latest_version": "1.21"}
+
+    with patch("nf_core.utils.anaconda_package", return_value=fake_response):
+        environment_yml(lint, module, fix_version=True)
+
+    assert main_nf.read_text() == "conda 'bioconda::samtools=1.18'\n"

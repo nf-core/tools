@@ -79,8 +79,8 @@ class TestMetaYml(TestModules):
 
         # Add a second versions channel to the output
         main_nf_modified = main_nf_original.replace(
-            "emit: versions",
-            "emit: versions_bpipe, topic: versions\n    tuple val(\"${task.process}\"), val('test2'), eval('echo 1.0'), emit: versions_test, topic: versions",
+            "topic: versions, emit: versions_bpipe",
+            "topic: versions, emit: versions_bpipe\n    tuple val(\"${task.process}\"), val('test2'), eval('echo 1.0'), emit: versions_test, topic: versions",
         )
 
         with open(main_nf_path, "w") as fh:
@@ -167,15 +167,12 @@ class TestMetaYml(TestModules):
         with open(main_nf_path) as fh:
             main_nf_original = fh.read()
 
-        # Read the original meta.yml
-        meta_yml_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")
-
         # Modify main.nf to use val() for version instead of eval()
         # This simulates a module like fastk that has hardcoded version
 
         main_nf_modified = re.sub(
             r'eval\("bpipe --version"\)',
-            "val('1.2')",
+            'val("1.2")',
             main_nf_original,
         )
 
@@ -183,7 +180,7 @@ class TestMetaYml(TestModules):
         assert "eval" not in [line for line in main_nf_modified.split("\n") if "versions_bpipe" in line][0], (
             "Replacement failed: eval still in versions line"
         )
-        assert "val('1.2')" in main_nf_modified, "Replacement failed: val('1.2') not in main.nf"
+        assert 'val("1.2")' in main_nf_modified, 'Replacement failed: val("1.2") not in main.nf'
 
         with open(main_nf_path, "w") as fh:
             fh.write(main_nf_modified)
@@ -192,11 +189,12 @@ class TestMetaYml(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules, fix=True)
         module_lint.lint(print_results=False, module="bpipe/test")
 
-        assert len(module_lint.failed) == 0, f"Expected 0 failed tests, got {len(module_lint.failed)}"
-
         # Read the updated meta.yml
+        meta_yml_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")
         with open(meta_yml_path) as fh:
             meta_yml = yaml.safe_load(fh)
+
+        assert len(module_lint.failed) == 0, f"Expected 0 failed tests, got {len(module_lint.failed)}"
 
         # Check that topics.versions exists
         assert "topics" in meta_yml, "topics should be present in meta.yml"
