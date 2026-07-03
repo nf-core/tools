@@ -54,7 +54,6 @@ If you’re using AI tools, try to stick by these guidelines:
 - If you wish to include context from an interaction with LLMs in your comments, it must be in a quote block (e.g., using `>`) and disclosed as such. Do not share long snippets.
 - If you use LLMs to avoid language barriers, please make sure the output reflects your own ideas. Write in your native language and provide the translated text in a quote block (e.g., using `>`).
 
-
 For more detail, see the [blog post](https://nf-co.re/blog/2026/statement-on-ai) for a statement from the nf-core/core team.
 
 ### Getting help
