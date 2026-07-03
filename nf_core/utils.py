@@ -110,6 +110,13 @@ NFCORE_DIR = Path(
 CONTAINER_SYSTEMS = ["docker", "singularity"]
 CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
 
+# GPU-capable modules provide a second `environment.gpu.yml` and get a parallel set of
+# containers stored under suffixed meta.yml keys (docker_gpu, singularity_gpu, conda_gpu).
+# CUDA conda builds are effectively amd64-only, so the GPU path is not built for arm64.
+GPU_CONTAINER_SUFFIX = "_gpu"
+GPU_CONTAINER_SYSTEMS = [f"{cs}{GPU_CONTAINER_SUFFIX}" for cs in CONTAINER_SYSTEMS]
+GPU_CONTAINER_PLATFORMS = ["linux/amd64"]
+
 
 class ContainerRegistryUrls(Enum):
     SEQERA_DOCKER = "community.wave.seqera.io/library"

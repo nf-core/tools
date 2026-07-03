@@ -7,7 +7,7 @@ import yaml
 
 from nf_core.modules.containers import ModuleContainers
 from nf_core.modules.modules_utils import CondaEntry, ContainerEntry, MetaYmlContainers
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
+from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, GPU_CONTAINER_PLATFORMS
 
 from ..test_modules import TestModules
 
@@ -308,6 +308,36 @@ class TestModuleContainers(TestModules):
         meta = yaml.safe_load((self.bpipe_test_module_path / "meta.yml").read_text(encoding="utf-8"))
         assert meta["containers"] == containers.dump_for_meta_yml()
 
+    def test_build_targets_cpu_only(self):
+        """A module without environment.gpu.yml only builds CPU targets."""
+        assert self.module_containers.environment_gpu_yml is None
+        targets = self.module_containers._build_targets()
+        assert len(targets) == len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS)
+        assert all(not t.field.endswith("_gpu") for t in targets)
+        assert all(t.build_template == "conda/pixi:v1" for t in targets)
+
+    def test_dump_for_meta_yml_includes_gpu_when_present(self):
+        """GPU sections are dumped when populated; empty ones are dropped."""
+        amd64 = CONTAINER_PLATFORMS[0]
+        containers = MetaYmlContainers(
+            docker={p: ContainerEntry(name=f"d-{p}", build_id="b") for p in CONTAINER_PLATFORMS},
+            docker_gpu={amd64: ContainerEntry(name="d-gpu", build_id="bg")},
+        )
+        dump = containers.dump_for_meta_yml()
+        assert dump["docker_gpu"][amd64]["name"] == "d-gpu"
+        # empty GPU sections must not leak into meta.yml
+        assert "singularity_gpu" not in dump
+        assert "conda_gpu" not in dump
+
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_passes_build_template(self, mock_post):
+        """request_container forwards the build template into the Wave payload."""
+        mock_post.return_value = self._fake_response({"targetImage": "x:1", "buildId": "b", "cached": True})
+        ModuleContainers.request_container(
+            "docker", CONTAINER_PLATFORMS[0], self.environment_yml, build_template="conda/micromamba:v2"
+        )
+        assert mock_post.call_args[1]["json"]["buildTemplate"] == "conda/micromamba:v2"
+
 
 class TestModuleContainersPipeline(TestModules):
     """Tests for ModuleContainers against a real pipeline repository"""
@@ -381,3 +411,179 @@ class TestModuleContainersDockerfile(TestModuleContainersPipeline):
         original_meta = (self.module_dir / "meta.yml").read_text()
         self.module_containers.update_containers_in_meta()
         assert (self.module_dir / "meta.yml").read_text() == original_meta
+
+
+class TestModuleContainersGPU(TestModules):
+    """Tests for GPU (dual-container) module handling in ModuleContainers"""
+
+    def setUp(self):
+        super().setUp()
+        self.environment_yml = self.bpipe_test_module_path / "environment.yml"
+        # A GPU module carries a second environment.gpu.yml next to environment.yml.
+        # It must exist before ModuleContainers is constructed (detected in __init__).
+        (self.bpipe_test_module_path / "environment.gpu.yml").write_text(
+            "name: bpipe_test_gpu\nchannels:\n  - conda-forge\ndependencies:\n  - pytorch-gpu=2.1.0\n",
+            encoding="utf-8",
+        )
+        self.module_containers = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
+
+    @staticmethod
+    def _fake_response(payload: dict | None = None, status_code: int = 200, text: str = "") -> mock.MagicMock:
+        resp = mock.MagicMock()
+        resp.status_code = status_code
+        resp.text = text
+        resp.json.return_value = payload or {}
+        return resp
+
+    @staticmethod
+    def _fake_inspect(image: str) -> dict:
+        return {
+            "container": {"manifest": {"layers": [{"mediaType": "application/vnd.sif", "digest": "sha256:abcde12345"}]}}
+        }
+
+    def test_detects_gpu_environment(self):
+        assert self.module_containers.environment_gpu_yml == self.bpipe_test_module_path / "environment.gpu.yml"
+
+    def test_build_targets_includes_gpu(self):
+        targets = self.module_containers._build_targets()
+        cpu = [t for t in targets if not t.field.endswith("_gpu")]
+        gpu = [t for t in targets if t.field.endswith("_gpu")]
+
+        # CPU: every system x every platform, built with pixi
+        assert len(cpu) == len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS)
+        assert all(t.build_template == "conda/pixi:v1" for t in cpu)
+
+        # GPU: every system x GPU platforms (amd64 only), built with micromamba v2
+        assert {t.field for t in gpu} == {"docker_gpu", "singularity_gpu"}
+        assert {t.platform for t in gpu} == set(GPU_CONTAINER_PLATFORMS)
+        assert all(t.build_template == "conda/micromamba:v2" for t in gpu)
+        assert all(t.system in CONTAINER_SYSTEMS for t in gpu)
+        assert all(t.env_file == self.module_containers.environment_gpu_yml for t in gpu)
+
+    @mock.patch("nf_core.modules.containers.requests.get")
+    @mock.patch.object(ModuleContainers, "request_image_inspect")
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_create_builds_gpu_containers(self, mock_post, mock_inspect, mock_get):
+        submitted_templates = []
+
+        def fake_post(url, json=None, headers=None):
+            submitted_templates.append(json["buildTemplate"])
+            system = "singularity" if json.get("format") == "sif" else "docker"
+            gpu = json["buildTemplate"] == "conda/micromamba:v2"
+            tag = "gpu" if gpu else "cpu"
+            image = f"community.wave.seqera.io/library/bpipe_test_{tag}:0.1.0--{tag}{system}"
+            meta = {
+                "buildId": f"bd-{tag}{system}",
+                "cached": True,
+                "containerImage": image,
+                "requestId": f"req-{tag}{system}",
+                "succeeded": True,
+                "targetImage": image,
+            }
+            if system == "docker":
+                meta["scanId"] = f"sc-{tag}{system}"
+            return self._fake_response(meta)
+
+        mock_get.return_value = self._fake_response(text="# conda lock content")
+        mock_post.side_effect = fake_post
+        mock_inspect.side_effect = self._fake_inspect
+
+        containers, success = self.module_containers.create()
+        assert success
+
+        amd64 = GPU_CONTAINER_PLATFORMS[0]
+        # GPU containers built for amd64 only, stored under the *_gpu fields
+        assert set(containers.docker_gpu) == {amd64}
+        assert set(containers.singularity_gpu) == {amd64}
+        assert "gpu" in containers.docker_gpu[amd64].name
+        assert containers.docker_gpu[amd64].build_id == "bd-gpudocker"
+        assert containers.singularity_gpu[amd64].https  # extracted from image inspect
+        # GPU conda lock recorded under conda_gpu (keyed off the docker_gpu build)
+        assert containers.conda_gpu[amd64].lock_file
+
+        # CPU containers still built for all platforms
+        assert set(containers.docker) == set(CONTAINER_PLATFORMS)
+
+        # Both build templates were used (pixi for CPU, micromamba v2 for GPU)
+        assert "conda/pixi:v1" in submitted_templates
+        assert "conda/micromamba:v2" in submitted_templates
+
+    @mock.patch("nf_core.modules.containers.requests.get")
+    def test_get_conda_lock_file_gpu(self, mock_get):
+        """get_conda_lock_file(gpu=True) resolves the lock from the docker_gpu build."""
+        mock_get.return_value = self._fake_response(text="# gpu conda lock")
+        amd64 = GPU_CONTAINER_PLATFORMS[0]
+        containers = MetaYmlContainers()
+        containers.docker_gpu[amd64] = ContainerEntry(name="x", build_id="gpu-build-1")
+        self.module_containers.containers = containers
+
+        result = self.module_containers.get_conda_lock_file(amd64, gpu=True)
+        assert result == "# gpu conda lock"
+        assert mock_get.call_args[0][0] == "https://wave.seqera.io/v1alpha1/builds/gpu-build-1/condalock"
+
+    def test_get_conda_lock_file_gpu_missing_build_id_raises(self):
+        """Without a docker_gpu build, the GPU conda lock cannot be resolved."""
+        amd64 = GPU_CONTAINER_PLATFORMS[0]
+        self.module_containers.containers = MetaYmlContainers()
+        with pytest.raises(ValueError, match="No build_id found for docker_gpu container"):
+            self.module_containers.get_conda_lock_file(amd64, gpu=True)
+
+    def test_update_main_nf_container_gpu_nested_ternary(self):
+        """A GPU module gets the nested task.accelerator ternary with CPU and GPU images."""
+        gpu_amd64 = GPU_CONTAINER_PLATFORMS[0]
+        containers = MetaYmlContainers(
+            docker={p: ContainerEntry(name=f"docker-cpu-{p.split('/')[-1]}") for p in CONTAINER_PLATFORMS},
+            singularity={
+                p: ContainerEntry(
+                    name=f"oras://sif-cpu-{p.split('/')[-1]}", https=f"https://sif-cpu-{p.split('/')[-1]}"
+                )
+                for p in CONTAINER_PLATFORMS
+            },
+            docker_gpu={gpu_amd64: ContainerEntry(name="docker-gpu-amd64")},
+            singularity_gpu={gpu_amd64: ContainerEntry(name="oras://sif-gpu", https="https://sif-gpu-amd64")},
+        )
+        self.module_containers.containers = containers
+        self.module_containers.update_main_nf_container(force=True)
+
+        content = self.module_containers.nfcore_component.main_nf.read_text()
+        # nested ternary: engine choice outer, task.accelerator inner
+        assert "workflow.containerEngine in ['singularity', 'apptainer']" in content
+        assert "(task.accelerator ? 'https://sif-gpu-amd64' : 'https://sif-cpu-amd64')" in content
+        assert "(task.accelerator ? 'docker-gpu-amd64' : 'docker-cpu-amd64')" in content
+
+    def test_update_main_nf_container_cpu_only_when_no_gpu_containers(self):
+        """Without GPU containers the plain (non-accelerator) ternary is written."""
+        containers = MetaYmlContainers(
+            docker={p: ContainerEntry(name=f"docker-cpu-{p.split('/')[-1]}") for p in CONTAINER_PLATFORMS},
+            singularity={
+                p: ContainerEntry(
+                    name=f"oras://sif-cpu-{p.split('/')[-1]}", https=f"https://sif-cpu-{p.split('/')[-1]}"
+                )
+                for p in CONTAINER_PLATFORMS
+            },
+        )
+        self.module_containers.containers = containers
+        self.module_containers.update_main_nf_container(force=True)
+
+        content = self.module_containers.nfcore_component.main_nf.read_text()
+        assert "task.accelerator" not in content
+        assert "docker-cpu-amd64" in content
+
+    def test_list_containers_includes_gpu(self):
+        amd64 = GPU_CONTAINER_PLATFORMS[0]
+        containers = MetaYmlContainers(
+            docker={p: ContainerEntry(name=f"d-{p}") for p in CONTAINER_PLATFORMS},
+            singularity={p: ContainerEntry(name=f"s-{p}") for p in CONTAINER_PLATFORMS},
+            docker_gpu={amd64: ContainerEntry(name="d-gpu")},
+            singularity_gpu={amd64: ContainerEntry(name="s-gpu", https="https://s-gpu")},
+            conda_gpu={amd64: CondaEntry(lock_file="/lock/gpu.txt")},
+        )
+        with mock.patch.object(self.module_containers, "get_containers_from_meta", return_value=containers):
+            listed = self.module_containers.list_containers()
+
+        assert ("docker_gpu", amd64, "d-gpu") in listed
+        assert ("singularity_gpu", amd64, "s-gpu") in listed
+        assert ("singularity_gpu", amd64, "https://s-gpu") in listed
+        assert ("conda_gpu", amd64, "/lock/gpu.txt") in listed
+        # GPU sections are amd64-only: no arm64 GPU entries
+        assert not any(cs.endswith("_gpu") and p != amd64 for cs, p, _ in listed)

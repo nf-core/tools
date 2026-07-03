@@ -7,6 +7,7 @@ import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import NamedTuple
 from urllib.parse import quote
 
 import requests
@@ -28,7 +29,14 @@ from nf_core.modules.modules_utils import (
     scan_modules_dir,
 )
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, ContainerRegistryUrls
+from nf_core.utils import (
+    CONTAINER_PLATFORMS,
+    CONTAINER_SYSTEMS,
+    GPU_CONTAINER_PLATFORMS,
+    GPU_CONTAINER_SUFFIX,
+    GPU_CONTAINER_SYSTEMS,
+    ContainerRegistryUrls,
+)
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +46,28 @@ WAVE_API_ALPHA2 = f"{WAVE_URL}/v1alpha2"
 
 # Wave container build `format` field, keyed by nf-core container system.
 WAVE_FORMAT = {"docker": "docker", "singularity": "sif"}
+
+# Wave build templates. CPU environments build with pixi; GPU environments must use the
+# micromamba v2 template, because the pixi build image has no `__cuda` virtual package and
+# fails to solve the `__cuda`-gated CUDA packages (e.g. pytorch-gpu).
+WAVE_BUILD_TEMPLATE = "conda/pixi:v1"
+WAVE_GPU_BUILD_TEMPLATE = "conda/micromamba:v2"
+
+ENVIRONMENT_GPU_YML = "environment.gpu.yml"
+
+# All meta.yml container/conda fields (CPU + GPU), used when iterating to persist or list.
+ALL_CONTAINER_SYSTEMS = CONTAINER_SYSTEMS + GPU_CONTAINER_SYSTEMS
+ALL_CONDA_FIELDS = ["conda", f"conda{GPU_CONTAINER_SUFFIX}"]
+
+
+class BuildTarget(NamedTuple):
+    """A single Wave build to run: which meta.yml field it fills and how to build it."""
+
+    field: str  # meta.yml container field, e.g. "docker" or "docker_gpu"
+    system: str  # base container system passed to Wave: "docker" or "singularity"
+    platform: str
+    env_file: Path
+    build_template: str  # Wave build template (pixi for CPU, micromamba v2 for GPU)
 
 
 def wave_send(
@@ -157,12 +187,17 @@ class ModuleContainers:
             self.module_directory: Path | None = self.nfcore_component.component_dir
             self.environment_yml: Path | None = self.nfcore_component.environment_yml
             self.meta_yml: Path | None = self.nfcore_component.meta_yml
+            # GPU modules (dual-container pattern) carry a second environment.gpu.yml
+            # alongside the CPU environment.yml. Not tracked by NFCoreComponent.
+            gpu_env = self.nfcore_component.component_dir / ENVIRONMENT_GPU_YML
+            self.environment_gpu_yml: Path | None = gpu_env if gpu_env.exists() else None
         else:
             # For all modules mode, these will be set per module during iteration
             self.nfcore_component = None
             self.module_directory = None
             self.environment_yml = None
             self.meta_yml = None
+            self.environment_gpu_yml = None
 
         self.containers: MetaYmlContainers | None = None
         self._module_lint: ModuleLint | None = None
@@ -265,8 +300,12 @@ class ModuleContainers:
             log.debug(f"Could not remove .conda-lock directory: {e}")
 
     def update_main_nf_container(self, force=False) -> None:
-        """Update the container name in main.nf using the docker amd64 image without registry.
-        Don't update if the container name is already correct.
+        """Update the container directive in main.nf using the amd64 images.
+
+        For a normal module this writes the standard singularity/docker ternary. For a GPU
+        module (dual-container pattern) it writes the nested ternary that also switches on
+        ``task.accelerator`` between the CPU and GPU images.
+        Don't update if the directive is already correct.
         """
         import re
 
@@ -294,12 +333,29 @@ class ModuleContainers:
             log.error(f"No singularity image found for {linux_amd64}")
             return
 
+        # GPU images (dual-container pattern), if this module has an environment.gpu.yml.
+        gpu_platform = GPU_CONTAINER_PLATFORMS[0]
+        _docker_gpu_entry = self.containers.docker_gpu.get(gpu_platform)
+        _singularity_gpu_entry = self.containers.singularity_gpu.get(gpu_platform)
+        docker_gpu_image = _docker_gpu_entry.name if _docker_gpu_entry else ""
+        singularity_gpu_image = (
+            (_singularity_gpu_entry.https or _singularity_gpu_entry.name) if _singularity_gpu_entry else ""
+        )
+        is_gpu = bool(docker_gpu_image and singularity_gpu_image)
+        if (docker_gpu_image or singularity_gpu_image) and not is_gpu:
+            log.warning(
+                f"Incomplete GPU containers for '{self.module}' - writing CPU-only container directive in main.nf"
+            )
+
         # Read main.nf
         main_nf_path = self.nfcore_component.main_nf
         content = main_nf_path.read_text()
 
-        # Check if the container directive is already correct
-        if docker_image in content and singularity_image in content and not force:
+        # Check if the container directive is already correct (all relevant images present)
+        required_images = [docker_image, singularity_image]
+        if is_gpu:
+            required_images += [docker_gpu_image, singularity_gpu_image]
+        if all(img in content for img in required_images) and not force:
             log.debug(f"Container directive in `{self.nfcore_component.component_name}/main.nf` is already correct")
             return
 
@@ -309,6 +365,15 @@ class ModuleContainers:
         def _replace(match: "re.Match[str]") -> str:
             indent = match.group(1)
             inner_indent = indent + "    "
+            if is_gpu:
+                # Nested ternary: first pick engine (singularity/docker), then pick the
+                # CPU/GPU image within each engine based on task.accelerator.
+                return (
+                    f"{indent}container \"${{ workflow.containerEngine in ['singularity', 'apptainer'] "
+                    "&& !task.ext.singularity_pull_docker_container ?\n"
+                    f"{inner_indent}(task.accelerator ? '{singularity_gpu_image}' : '{singularity_image}') :\n"
+                    f"{inner_indent}(task.accelerator ? '{docker_gpu_image}' : '{docker_image}') }}\""
+                )
             return (
                 f"{indent}container \"${{ workflow.containerEngine in ['singularity', 'apptainer'] "
                 "&& !task.ext.singularity_pull_docker_container\n"
@@ -321,10 +386,103 @@ class ModuleContainers:
         )
 
         main_nf_path.write_text(new_content)
-        log.debug(
-            f"Updated container in `{self.nfcore_component.component_name}/main.nf` "
-            f"(docker: `{docker_image}`, singularity: `{singularity_image}`)"
-        )
+        if is_gpu:
+            log.debug(
+                f"Updated GPU container in `{self.nfcore_component.component_name}/main.nf` "
+                f"(docker: `{docker_image}` / `{docker_gpu_image}`, "
+                f"singularity: `{singularity_image}` / `{singularity_gpu_image}`)"
+            )
+        else:
+            log.debug(
+                f"Updated container in `{self.nfcore_component.component_name}/main.nf` "
+                f"(docker: `{docker_image}`, singularity: `{singularity_image}`)"
+            )
+
+    def _build_targets(self) -> list[BuildTarget]:
+        """
+        Enumerate the Wave builds to run for this module.
+
+        Always includes the CPU targets (docker/singularity × all platforms) built from
+        ``environment.yml`` with the pixi template. GPU modules that also carry an
+        ``environment.gpu.yml`` add the GPU targets (docker/singularity × GPU platforms),
+        built with the micromamba v2 template and stored under the ``*_gpu`` fields.
+        """
+        assert self.environment_yml is not None
+        targets = [
+            BuildTarget(cs, cs, platform, self.environment_yml, WAVE_BUILD_TEMPLATE)
+            for cs in CONTAINER_SYSTEMS
+            for platform in CONTAINER_PLATFORMS
+        ]
+        if self.environment_gpu_yml is not None:
+            targets += [
+                BuildTarget(
+                    f"{cs}{GPU_CONTAINER_SUFFIX}",
+                    cs,
+                    platform,
+                    self.environment_gpu_yml,
+                    WAVE_GPU_BUILD_TEMPLATE,
+                )
+                for cs in CONTAINER_SYSTEMS
+                for platform in GPU_CONTAINER_PLATFORMS
+            ]
+        return targets
+
+    def _download_conda_locks(
+        self,
+        containers: MetaYmlContainers,
+        gpu: bool,
+        progress_bar: rich.progress.Progress | None = None,
+        task_id: rich.progress.TaskID | None = None,
+    ) -> set[Path]:
+        """
+        Download the conda lock files for the CPU (``gpu=False``) or GPU (``gpu=True``) set,
+        writing them under ``.conda-lock/`` and registering the paths on ``containers``.
+
+        Returns the set of lock file paths written (for stale-file cleanup). A missing lock
+        is not fatal: the other platforms' locks are kept.
+        """
+        assert self.module_directory is not None
+        suffix = GPU_CONTAINER_SUFFIX if gpu else ""
+        docker_field = f"docker{suffix}"
+        conda_field = f"conda{suffix}"
+        platforms = GPU_CONTAINER_PLATFORMS if gpu else CONTAINER_PLATFORMS
+        label = "conda lock gpu" if gpu else "conda lock"
+
+        written: set[Path] = set()
+        for platform in platforms:
+            # Get docker build ID for this platform (the conda lock is keyed off the docker build)
+            _docker_entry = getattr(containers, docker_field).get(platform)
+            build_id = _docker_entry.build_id if _docker_entry else ""
+            short_platform = platform.split("/")[-1]
+            if not build_id:
+                log.debug(f"Docker image for {docker_field} {platform} missing - Conda-lock skipped")
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, status=f"{label} {short_platform} skipped")
+                continue
+
+            conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
+            conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+            try:
+                log.debug(f"Downloading conda lock file for {docker_field} {platform} to {conda_lock_path}")
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, status=f"{label} {short_platform}...")
+                conda_lock_path.write_text(self.get_conda_lock_file(platform, gpu=gpu))
+                # Only register the entry once the lock has actually been written, so
+                # meta.yml never points at a missing lock file.
+                getattr(containers, conda_field)[platform] = CondaEntry(lock_file=str(conda_lock_path))
+                written.add(conda_lock_path)
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, status=f"{label} {short_platform} done")
+
+            except (ValueError, RuntimeError, OSError, requests.RequestException) as e:
+                # Wave does not always expose a conda lock for every build (e.g. some
+                # freshly built arm64 images). A missing lock is not fatal: keep the
+                # other platforms' containers and locks instead of failing the module.
+                log.warning(f"No conda lock file available for {docker_field} {platform}: {e}")
+                if progress_bar and task_id is not None:
+                    progress_bar.update(task_id, status=f"{label} {short_platform} unavailable")
+        return written
 
     def create(
         self,
@@ -333,7 +491,12 @@ class ModuleContainers:
         force: bool = False,
     ) -> tuple[MetaYmlContainers, bool]:
         """
-        Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
+        Build docker and singularity containers using wave.
+
+        Builds the CPU containers (linux/amd64 and linux/arm64) from ``environment.yml``.
+        For GPU modules (dual-container pattern) that also carry an ``environment.gpu.yml``,
+        builds the parallel GPU containers (linux/amd64 only) with the micromamba v2 build
+        template and stores them under the ``*_gpu`` meta.yml fields.
 
         Args:
             progress_bar: Optional progress bar to use for tracking progress
@@ -344,7 +507,6 @@ class ModuleContainers:
         """
         containers = MetaYmlContainers()
         build_tasks = {}
-        threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
         has_failures = False
 
         if not self.environment_yml:
@@ -354,22 +516,26 @@ class ModuleContainers:
             raise RuntimeError("No environment.yml found.")
         assert self.module_directory is not None
 
-        # One spinner per build target — they run visually in parallel
-        build_task_ids: dict[tuple[str, str], rich.progress.TaskID] = {}
-        if progress_bar:
-            for cs in CONTAINER_SYSTEMS:
-                for platform in CONTAINER_PLATFORMS:
-                    short_platform = platform.split("/")[-1]
-                    build_task_ids[(cs, platform)] = progress_bar.add_task(
-                        f"  {cs}/{short_platform}",
-                        total=1,
-                        completed=0,
-                        status="submitting wave build request...",
-                    )
+        targets = self._build_targets()
+        threads = max(len(targets), 1)
+        if self.environment_gpu_yml is not None:
+            log.debug(f"GPU environment found for '{self.module}' - building GPU containers as well")
 
-        def make_on_build_id(cs: str, platform: str) -> Callable[[str], None]:
+        # One spinner per build target — they run visually in parallel
+        build_task_ids: dict[BuildTarget, rich.progress.TaskID] = {}
+        if progress_bar:
+            for target in targets:
+                short_platform = target.platform.split("/")[-1]
+                build_task_ids[target] = progress_bar.add_task(
+                    f"  {target.field}/{short_platform}",
+                    total=1,
+                    completed=0,
+                    status="submitting wave build request...",
+                )
+
+        def make_on_build_id(target: BuildTarget) -> Callable[[str], None]:
             def callback(build_id: str) -> None:
-                build_tid = build_task_ids.get((cs, platform))
+                build_tid = build_task_ids.get(target)
                 if progress_bar and build_tid is not None:
                     url = f"{WAVE_URL}/view/builds/{build_id}"
                     progress_bar.update(build_tid, status=f"building… {url}")
@@ -382,38 +548,37 @@ class ModuleContainers:
 
         # Submit all container build tasks
         with ThreadPoolExecutor(max_workers=threads) as pool:
-            for cs in CONTAINER_SYSTEMS:
-                for platform in CONTAINER_PLATFORMS:
-                    fut = pool.submit(
-                        self.request_container,
-                        cs,
-                        platform,
-                        self.environment_yml,
-                        self.verbose,
-                        make_on_build_id(cs, platform) if progress_bar else None,
-                        cancel_event,
-                    )
-                    build_tasks[fut] = (cs, platform)
+            for target in targets:
+                fut = pool.submit(
+                    self.request_container,
+                    target.system,
+                    target.platform,
+                    target.env_file,
+                    self.verbose,
+                    make_on_build_id(target) if progress_bar else None,
+                    cancel_event,
+                    target.build_template,
+                )
+                build_tasks[fut] = target
 
             # Process completed container builds
             try:
                 for fut in as_completed(build_tasks):
-                    cs, platform = build_tasks[fut]
-                    short_platform = platform.split("/")[-1]
-                    build_tid = build_task_ids.get((cs, platform))
+                    target = build_tasks[fut]
+                    build_tid = build_task_ids.get(target)
 
                     try:
-                        getattr(containers, cs)[platform] = fut.result()
+                        getattr(containers, target.field)[target.platform] = fut.result()
                         if progress_bar and build_tid is not None:
                             progress_bar.update(build_tid, completed=1, status="[green]done[/green]")
                     except (ValueError, RuntimeError, OSError, AssertionError) as e:
                         # make it a warning for arm (not required), but fail for other platforms
-                        if platform == "linux/arm64":
+                        if target.platform == "linux/arm64":
                             log.warning(
-                                f"Failed to build {cs} container for {platform}: {e}. This is only critical if the tool should support arm64."
+                                f"Failed to build {target.field} container for {target.platform}: {e}. This is only critical if the tool should support arm64."
                             )
                         else:
-                            log.error(f"Failed to build {cs} container for {platform}: {e}")
+                            log.error(f"Failed to build {target.field} container for {target.platform}: {e}")
                             has_failures = True
                         if progress_bar and build_tid is not None:
                             progress_bar.update(build_tid, completed=1, status="[red]failed[/red]")
@@ -435,49 +600,19 @@ class ModuleContainers:
         # Set containers early so get_conda_lock_file can access it
         self.containers = containers
 
-        # Download conda lock files as separate tasks
-        new_lock_files = set()
-        for platform in CONTAINER_PLATFORMS:
-            # Get docker build ID for this platform
-            _docker_entry = containers.docker.get(platform)
-            build_id = _docker_entry.build_id if _docker_entry else ""
-            short_platform = platform.split("/")[-1]
-            if not build_id:
-                log.debug(f"Docker image for {platform} missing - Conda-lock skipped")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} skipped")
-                continue
-
-            conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
-            conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
-
-            try:
-                # Download conda lock file (it will look up build_id from docker container)
-                log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform}...")
-                conda_lock_path.write_text(self.get_conda_lock_file(platform))
-                # Only register the entry once the lock has actually been written, so
-                # meta.yml never points at a missing lock file.
-                containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
-                new_lock_files.add(conda_lock_path)
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} done")
-
-            except (ValueError, RuntimeError, OSError, requests.RequestException) as e:
-                # Wave does not always expose a conda lock for every build (e.g. some
-                # freshly built arm64 images). A missing lock is not fatal: keep the
-                # other platforms' containers and locks instead of failing the module.
-                log.warning(f"No conda lock file available for {platform}: {e}")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} unavailable")
+        # Download conda lock files (CPU, plus GPU for dual-container modules)
+        new_lock_files = self._download_conda_locks(containers, gpu=False, progress_bar=progress_bar, task_id=task_id)
+        if self.environment_gpu_yml is not None:
+            new_lock_files |= self._download_conda_locks(
+                containers, gpu=True, progress_bar=progress_bar, task_id=task_id
+            )
 
         # Clean up stale conda-lock files
         self.cleanup_stale_conda_lock_files(new_lock_files)
 
         # Persist everything (docker, singularity and conda locks) to meta.yml in a
         # single write. Partial results are kept even if some builds failed.
-        if any(getattr(containers, cs) for cs in CONTAINER_SYSTEMS + ["conda"]):
+        if any(getattr(containers, cs) for cs in ALL_CONTAINER_SYSTEMS + ALL_CONDA_FIELDS):
             try:
                 self.update_containers_in_meta()
                 log.debug("Updated meta.yml with built containers")
@@ -554,6 +689,7 @@ class ModuleContainers:
         verbose=False,
         on_build_id: Callable[[str], None] | None = None,
         cancel_event: threading.Event | None = None,
+        build_template: str = WAVE_BUILD_TEMPLATE,
     ) -> ContainerEntry:
         assert conda_file.exists()
         assert container_system in CONTAINER_SYSTEMS
@@ -561,6 +697,8 @@ class ModuleContainers:
 
         # Submit the build via the Wave HTTP API (POST /v1alpha2/container).
         # `freeze` with no buildRepository pushes to the public community registry.
+        # GPU environments must pass WAVE_GPU_BUILD_TEMPLATE (micromamba v2) so Wave can
+        # resolve the `__cuda`-gated CUDA packages that the pixi template cannot solve.
         payload: dict = {
             "packages": {
                 "type": "CONDA",
@@ -568,7 +706,7 @@ class ModuleContainers:
             },
             "containerPlatform": platform,
             "freeze": True,
-            "buildTemplate": "conda/pixi:v1",
+            "buildTemplate": build_template,
             "format": WAVE_FORMAT[container_system],
             "nameStrategy": "imageSuffix",
         }
@@ -644,23 +782,27 @@ class ModuleContainers:
         url = f"{WAVE_API_ALPHA1}/builds/{build_id_safe}/condalock"
         return url
 
-    def get_conda_lock_file(self, platform: str) -> str:
+    def get_conda_lock_file(self, platform: str, gpu: bool = False) -> str:
         """
         Get the conda lock file for an existing environment.
         Try (in that order):
             1. reading from meta.yml
             2. reading from cached containers
             3. recreating with wave commands
+
+        When ``gpu`` is set, the lock is resolved from the GPU docker build (``docker_gpu``)
+        rather than the CPU one.
         """
         assert platform in CONTAINER_PLATFORMS
 
         containers = self.containers or self.get_containers_from_meta() or self.create()[0]
 
-        # Get build_id from docker container for this platform
-        _docker_entry = containers.docker.get(platform) if containers else None
+        # Get build_id from the docker (or docker_gpu) container for this platform
+        docker_field = f"docker{GPU_CONTAINER_SUFFIX}" if gpu else "docker"
+        _docker_entry = getattr(containers, docker_field).get(platform) if containers else None
         build_id = _docker_entry.build_id if _docker_entry else None
         if not build_id:
-            raise ValueError(f"No build_id found for docker container on platform {platform}")
+            raise ValueError(f"No build_id found for {docker_field} container on platform {platform}")
 
         # Generate the conda lock URL from the build_id
         conda_lock_url = self.get_conda_lock_url(build_id)
@@ -680,17 +822,19 @@ class ModuleContainers:
         if not containers_valid:
             return []
         containers_flat = []
-        for cs in CONTAINER_SYSTEMS + ["conda"]:
-            for p in CONTAINER_PLATFORMS:
-                if cs == "conda":
-                    conda_entry = containers_valid.conda.get(p)
+        conda_fields = set(ALL_CONDA_FIELDS)
+        for cs in ALL_CONTAINER_SYSTEMS + ALL_CONDA_FIELDS:
+            platforms = GPU_CONTAINER_PLATFORMS if cs.endswith(GPU_CONTAINER_SUFFIX) else CONTAINER_PLATFORMS
+            for p in platforms:
+                if cs in conda_fields:
+                    conda_entry = getattr(containers_valid, cs).get(p)
                     if conda_entry:
                         containers_flat.append((cs, p, conda_entry.lock_file))
                 else:
                     entry = getattr(containers_valid, cs).get(p)
                     if entry:
                         containers_flat.append((cs, p, entry.name))
-                        if cs == "singularity" and entry.https:
+                        if cs.startswith("singularity") and entry.https:
                             containers_flat.append((cs, p, entry.https))
         return containers_flat
 
@@ -735,9 +879,9 @@ class ModuleContainers:
 
         meta = read_meta_yml(self.meta_yml)
         meta_containers = meta.get("containers", {})
-        # Remove stale entries for all known systems/platforms so old containers don't
-        # mix with new ones when a build partially fails.
-        for cs in CONTAINER_SYSTEMS + ["conda"]:
+        # Remove stale entries for all known systems/platforms (CPU and GPU) so old
+        # containers don't mix with new ones when a build partially fails.
+        for cs in ALL_CONTAINER_SYSTEMS + ALL_CONDA_FIELDS:
             for platform in CONTAINER_PLATFORMS:
                 meta_containers.get(cs, {}).pop(platform, None)
         new_containers = self.containers.dump_for_meta_yml()
