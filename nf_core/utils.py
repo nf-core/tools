@@ -1256,19 +1256,6 @@ def prompt_pipeline_release_branch(
         )
 
 
-class SingularityCacheFilePathValidator(questionary.Validator):
-    """
-    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
-    """
-
-    def validate(self, document) -> None:
-        if len(document.text) and not Path(document.text).is_file():
-            raise questionary.ValidationError(
-                message="Invalid remote cache index file",
-                cursor_position=len(document.text),
-            )
-
-
 def get_repo_releases_branches(pipeline, wfs):
     """Fetches details of a nf-core workflow to download.
 
