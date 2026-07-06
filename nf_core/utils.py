@@ -173,6 +173,83 @@ def fetch_remote_version(source_url):
     return remote_version
 
 
+# The version check never fetches on the hot path (update-notifier pattern):
+# it only reads the cached remote version, and refreshes the cache in a
+# detached background process so that no run ever blocks on the network.
+REMOTE_VERSION_CACHE_EXPIRY = 60 * 60 * 24  # refresh at most once a day
+REMOTE_VERSION_REFRESH_TIMEOUT = 60 * 10  # consider a refresh process dead after this
+
+
+def _remote_version_cache_path() -> Path:
+    return Path(NFCORE_CACHE_DIR, "latest_version.json")
+
+
+def _remote_version_refresh_marker() -> Path:
+    return Path(NFCORE_CACHE_DIR, "latest_version.refreshing")
+
+
+def _load_cached_remote_version() -> str | None:
+    try:
+        with open(_remote_version_cache_path()) as fh:
+            cached = json.load(fh)
+        if time.time() - cached["timestamp"] < REMOTE_VERSION_CACHE_EXPIRY:
+            return cached["version"] or None
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
+def _save_cached_remote_version(remote_version: str) -> None:
+    try:
+        Version(remote_version)  # don't cache anything that isn't a valid version
+    except (InvalidVersion, TypeError):
+        return
+    try:
+        NFCORE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        with open(_remote_version_cache_path(), "w") as fh:
+            json.dump({"version": remote_version, "timestamp": time.time()}, fh)
+    except OSError as e:
+        log.debug(f"Could not save remote version cache: {e}")
+
+
+def _refresh_remote_version_cache(source_url: str) -> None:
+    """Fetch the latest remote version and cache it. Runs detached in the background."""
+    try:
+        _save_cached_remote_version(fetch_remote_version(source_url))
+    finally:
+        with suppress(OSError):
+            _remote_version_refresh_marker().unlink()
+
+
+def _spawn_remote_version_refresh(source_url: str) -> None:
+    """Kick off a detached background process to refresh the remote version cache."""
+    marker = _remote_version_refresh_marker()
+    try:
+        # Skip if another refresh is already running
+        if time.time() - marker.stat().st_mtime < REMOTE_VERSION_REFRESH_TIMEOUT:
+            return
+    except OSError:
+        pass
+    try:
+        NFCORE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        marker.touch()
+        subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                "import sys; from nf_core.utils import _refresh_remote_version_cache; "
+                "_refresh_remote_version_cache(sys.argv[1])",
+                source_url,
+            ],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except (OSError, subprocess.SubprocessError) as e:
+        log.debug(f"Could not start background version check: {e}")
+
+
 def check_if_outdated(
     current_version=None,
     remote_version=None,
@@ -195,15 +272,9 @@ def check_if_outdated(
     is_outdated = False
     if remote_version is None:  # we set it manually for tests
         remote_version = _load_cached_remote_version()
-    if remote_version is None:
-        import requests
-
-        try:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(fetch_remote_version, source_url)
-                remote_version = future.result()
-        except requests.exceptions.RequestException as e:
-            log.debug(f"Could not check for nf-core updates: {e}")
+        if remote_version is None:
+            # No fresh cache - refresh it in the background for the next run
+            _spawn_remote_version_refresh(source_url)
     if remote_version is not None and Version(remote_version) > Version(current_version):
         is_outdated = True
     return (is_outdated, current_version, remote_version)
