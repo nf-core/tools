@@ -12,7 +12,8 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import ContainerRegistryUrls, copy_container_load_scripts
+from nf_core.pipelines.download.utils import copy_container_load_scripts
+from nf_core.utils import ContainerRegistryUrls
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(

@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """
 Pre-commit hook: verify that every lint test name used in a result tuple is
-mentioned in the docstring of its enclosing function.
+documented as a section heading in the docstring of its enclosing function.
 
 Applies to nf-core component lint files where results are accumulated as:
 
     component.passed.append(("category", "test_name", "message", path))
     component.warned.append(("category", "test_name", "message", path))
     component.failed.append(("category", "test_name", "message", path))
+
+The heading requirement (rather than a plain substring match) exists because
+the linter links each result to ``.../<parent_lint_test>#<test_name>``. That
+anchor only resolves on the docs site if ``test_name`` is rendered as a
+heading, i.e. the docstring must contain an RST section of the form::
+
+    test_name
+    ^^^^^^^^^
 
 Usage (called by pre-commit with the changed files as arguments):
 
@@ -17,6 +25,33 @@ Usage (called by pre-commit with the changed files as arguments):
 import ast
 import sys
 from pathlib import Path
+
+# Punctuation characters reStructuredText accepts as section-title adornments.
+_RST_ADORNMENTS = set("=-`:.'\"~^_*+#<>!$%&(),/;?@[\\]{|}")
+
+
+def collect_doc_headings(docstring: str) -> set[str]:
+    """Return the set of RST section-heading titles found in a docstring.
+
+    A heading is a non-empty title line immediately followed by an underline
+    line built from a single, repeated adornment character that is at least as
+    long as the title (matching reStructuredText section syntax). ``docstring``
+    is assumed to be dedented (as returned by ``ast.get_docstring``).
+    """
+    headings: set[str] = set()
+    lines = docstring.splitlines()
+    for title_line, underline_line in zip(lines, lines[1:], strict=False):
+        title = title_line.strip()
+        underline = underline_line.strip()
+        if (
+            title
+            and underline
+            and len(underline) >= len(title)
+            and len(set(underline)) == 1
+            and underline[0] in _RST_ADORNMENTS
+        ):
+            headings.add(title)
+    return headings
 
 
 def collect_test_names(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, list[int]]:
@@ -66,11 +101,14 @@ def check_file(path: Path) -> list[str]:
         if node.name != module_stem:
             continue
         docstring = ast.get_docstring(node) or ""
+        headings = collect_doc_headings(docstring)
         test_names = collect_test_names(node)
         for test_name, lines in sorted(test_names.items()):
-            if test_name not in docstring:
+            if test_name not in headings:
                 errors.append(
-                    f"{path}:{lines[0]}: '{test_name}' used in {node.name}() but not documented in its docstring"
+                    f"{path}:{lines[0]}: '{test_name}' is emitted by {node.name}() but is not "
+                    f"documented as a section heading in its docstring (required for the docs "
+                    f"anchor #{test_name})"
                 )
         break  # only one function per file can match the stem
     return errors
