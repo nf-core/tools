@@ -20,6 +20,7 @@ import rich
 import nf_core
 import nf_core.pipelines.list
 import nf_core.utils
+from nf_core.github_api import gh_api
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
@@ -29,7 +30,6 @@ from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
     check_nextflow_version,
-    gh_api,
     pretty_nf_version,
     run_cmd,
     set_wd_tempdir,

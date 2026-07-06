@@ -16,5 +16,6 @@ _submodules = {
 def __getattr__(name):
     if name in _submodules:
         module = importlib.import_module(_submodules[name], __name__)
-        return getattr(module, name)
+        globals()[name] = getattr(module, name)
+        return globals()[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -24,17 +24,16 @@ from contextlib import contextmanager, suppress
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
-import yaml
 from packaging.version import InvalidVersion, Version
-from pydantic import BaseModel, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
 import nf_core
 
 if TYPE_CHECKING:
+    from nf_core.config_models import NFCoreYamlConfig
     from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
@@ -89,20 +88,22 @@ def _nfcore_question_style():
 
 
 def __getattr__(name):
-    # Lazy imports to keep CLI start-up fast
+    # Lazy imports to keep CLI start-up fast. Resolved names are cached in
+    # globals() so this hook only fires on first access.
     if name == "nfcore_question_style":
-        return _nfcore_question_style()
-    if name in ("GitHubAPISession", "gh_api"):
+        globals()[name] = _nfcore_question_style()
+    elif name in ("GitHubAPISession", "gh_api"):
         from nf_core import github_api
 
         globals()["GitHubAPISession"] = github_api.GitHubAPISession
         globals()["gh_api"] = github_api.gh_api
-        return globals()[name]
-    if name == "SingularityCacheFilePathValidator":
-        from nf_core.pipelines.download.singularity import SingularityCacheFilePathValidator
+    elif name in ("NFCoreTemplateConfig", "NFCoreYamlLintConfig", "NFCoreYamlConfig"):
+        from nf_core import config_models
 
-        return SingularityCacheFilePathValidator
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+        globals()[name] = getattr(config_models, name)
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    return globals()[name]
 
 
 def is_interactive() -> bool:
@@ -162,88 +163,66 @@ def unquote(s: str) -> str:
         return s
 
 
-def fetch_remote_version(source_url):
-    import requests
-
-    response = requests.get(source_url, timeout=3)
-    remote_version = re.sub(r"[^0-9\.]", "", response.text)
-    return remote_version
-
-
 # The version check never fetches on the hot path (update-notifier pattern):
 # it only reads the cached remote version, and refreshes the cache in a
 # detached background process so that no run ever blocks on the network.
+REMOTE_VERSION_CACHE = Path(NFCORE_CACHE_DIR, "latest_version.json")
 REMOTE_VERSION_CACHE_EXPIRY = 60 * 60 * 24  # refresh at most once a day
-REMOTE_VERSION_REFRESH_TIMEOUT = 60 * 10  # consider a refresh process dead after this
+REMOTE_VERSION_REFRESH_BACKOFF = 60 * 10  # wait at least this long between refresh attempts
+
+# Self-contained refresh script, so the background process doesn't have to
+# import nf_core (or requests) just to run one HTTP GET
+REMOTE_VERSION_REFRESH_SCRIPT = """
+import json, os, re, sys, time, urllib.request
+text = urllib.request.urlopen(sys.argv[1], timeout=10).read().decode()
+tmp_path = sys.argv[2] + ".tmp"
+with open(tmp_path, "w") as fh:
+    json.dump({"version": re.sub(r"[^0-9.]", "", text), "timestamp": time.time()}, fh)
+os.replace(tmp_path, sys.argv[2])
+"""
 
 
-def _remote_version_cache_path() -> Path:
-    return Path(NFCORE_CACHE_DIR, "latest_version.json")
-
-
-def _remote_version_refresh_marker() -> Path:
-    return Path(NFCORE_CACHE_DIR, "latest_version.refreshing")
+def _load_version_cache() -> dict:
+    try:
+        with open(REMOTE_VERSION_CACHE) as fh:
+            cached = json.load(fh)
+        if isinstance(cached, dict):
+            return cached
+    except (OSError, ValueError):
+        pass
+    return {}
 
 
 def _load_cached_remote_version() -> str | None:
+    cached = _load_version_cache()
     try:
-        with open(_remote_version_cache_path()) as fh:
-            cached = json.load(fh)
         if time.time() - cached["timestamp"] < REMOTE_VERSION_CACHE_EXPIRY:
-            return cached["version"] or None
-    except (OSError, ValueError, KeyError, TypeError):
+            Version(cached["version"])  # guard against a corrupted cache
+            return cached["version"]
+    except (KeyError, TypeError, InvalidVersion):
         pass
     return None
 
 
-def _save_cached_remote_version(remote_version: str) -> None:
-    try:
-        Version(remote_version)  # don't cache anything that isn't a valid version
-    except (InvalidVersion, TypeError):
-        return
-    try:
-        NFCORE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        with open(_remote_version_cache_path(), "w") as fh:
-            json.dump({"version": remote_version, "timestamp": time.time()}, fh)
-    except OSError as e:
-        log.debug(f"Could not save remote version cache: {e}")
-
-
-def _refresh_remote_version_cache(source_url: str) -> None:
-    """Fetch the latest remote version and cache it. Runs detached in the background."""
-    try:
-        _save_cached_remote_version(fetch_remote_version(source_url))
-    finally:
-        with suppress(OSError):
-            _remote_version_refresh_marker().unlink()
-
-
 def _spawn_remote_version_refresh(source_url: str) -> None:
     """Kick off a detached background process to refresh the remote version cache."""
-    marker = _remote_version_refresh_marker()
     try:
-        # Skip if another refresh is already running
-        if time.time() - marker.stat().st_mtime < REMOTE_VERSION_REFRESH_TIMEOUT:
+        cached = _load_version_cache()
+        if time.time() - float(cached.get("attempted_at") or 0) < REMOTE_VERSION_REFRESH_BACKOFF:
             return
-    except OSError:
-        pass
-    try:
+        # Record the attempt up front, so failed refreshes back off instead of respawning every run
+        cached["attempted_at"] = time.time()
         NFCORE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        marker.touch()
+        with open(REMOTE_VERSION_CACHE, "w") as fh:
+            json.dump(cached, fh)
         subprocess.Popen(
-            [
-                sys.executable,
-                "-c",
-                "import sys; from nf_core.utils import _refresh_remote_version_cache; "
-                "_refresh_remote_version_cache(sys.argv[1])",
-                source_url,
-            ],
+            [sys.executable, "-c", REMOTE_VERSION_REFRESH_SCRIPT, source_url, str(REMOTE_VERSION_CACHE)],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
-    except (OSError, subprocess.SubprocessError) as e:
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError) as e:
         log.debug(f"Could not start background version check: {e}")
 
 
@@ -340,6 +319,8 @@ class Pipeline:
 
     def _load_conda_environment(self) -> bool:
         """Try to load the pipeline environment.yml file, if it exists"""
+        import yaml
+
         try:
             with open(Path(self.wf_path, "environment.yml")) as fh:
                 self.conda_config = yaml.safe_load(fh)
@@ -937,6 +918,7 @@ def get_biocontainer_tag(package, version):
 
 def custom_yaml_dumper():
     """Overwrite default PyYAML output to make Prettier YAML linting happy"""
+    import yaml
 
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
@@ -1195,208 +1177,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-class NFCoreTemplateConfig(BaseModel):
-    """Template configuration schema"""
-
-    org: str | None = None
-    """ Organisation name """
-    name: str | None = None
-    """ Pipeline name """
-    description: str | None = None
-    """ Pipeline description """
-    author: str | None = None
-    """ Pipeline author """
-    version: str | None = None
-    """ Pipeline version """
-    force: bool | None = True
-    """ Force overwrite of existing files """
-    outdir: str | Path | None = None
-    """ Output directory """
-    skip_features: list | None = None
-    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
-    is_nfcore: bool | None = None
-    """ Whether the pipeline is an nf-core pipeline. """
-
-    # convert outdir to str
-    @field_validator("outdir")
-    @classmethod
-    def outdir_to_str(cls, v: str | Path | None) -> str | None:
-        if v is not None:
-            v = str(v)
-        return v
-
-    def __getitem__(self, item: str) -> Any:
-        if self is None:
-            return None
-        return getattr(self, item)
-
-    def get(self, item: str, default: Any = None) -> Any:
-        return getattr(self, item, default)
-
-
-class NFCoreYamlLintConfig(BaseModel):
-    """
-    schema for linting config in `.nf-core.yml` should cover:
-
-    .. code-block:: yaml
-
-        files_unchanged:
-            - .github/workflows/branch.yml
-        modules_config: False
-        modules_config:
-                - fastqc
-        # merge_markers: False
-        merge_markers:
-                - docs/my_pdf.pdf
-        nextflow_config: False
-        nextflow_config:
-            - manifest.name
-            - config_defaults:
-                - params.annotation_db
-                - params.multiqc_comment_headers
-                - params.custom_table_headers
-        # multiqc_config: False
-        multiqc_config:
-            - report_section_order
-            - report_comment
-        files_exist:
-            - CITATIONS.md
-        template_strings: False
-        template_strings:
-                - docs/my_pdf.pdf
-        nfcore_components: False
-        # nf_test_content: False
-        nf_test_content:
-            - tests/<test_name>.nf.test
-            - tests/nextflow.config
-            - nf-test.config
-    """
-
-    files_unchanged: bool | list[str] | None = None
-    """ List of files that should not be changed """
-    modules_config: bool | list[str] | None = None
-    """ List of modules that should not be changed """
-    merge_markers: bool | list[str] | None = None
-    """ List of files that should not contain merge markers """
-    nextflow_config: bool | list[str | dict[str, list[str]]] | None = None
-    """ List of Nextflow config files that should not be changed """
-    nf_test_content: bool | list[str] | None = None
-    """ List of nf-test content that should not be changed """
-    multiqc_config: bool | list[str] | None = None
-    """ List of MultiQC config options that be changed """
-    files_exist: bool | list[str] | None = None
-    """ List of files that can not exist """
-    template_strings: bool | list[str] | None = None
-    """ List of files that can contain template strings """
-    readme: bool | list[str] | None = None
-    """ Lint the README.md file """
-    nfcore_components: bool | None = None
-    """ Lint all required files to use nf-core modules and subworkflows """
-    actions_nf_test: bool | None = None
-    """ Lint all required files to use GitHub Actions CI """
-    actions_awstest: bool | None = None
-    """ Lint all required files to run tests on AWS """
-    actions_awsfulltest: bool | None = None
-    """ Lint all required files to run full tests on AWS """
-    pipeline_todos: bool | None = None
-    """ Lint for TODOs statements"""
-    pipeline_if_empty_null: bool | None = None
-    """ Lint for ifEmpty(null) statements"""
-    plugin_includes: bool | None = None
-    """ Lint for nextflow plugin """
-    pipeline_name_conventions: bool | None = None
-    """ Lint for pipeline name conventions """
-    schema_lint: bool | None = None
-    """ Lint nextflow_schema.json file"""
-    schema_params: bool | None = None
-    """ Lint schema for all params """
-    system_exit: bool | None = None
-    """ Lint for System.exit calls in groovy/nextflow code """
-    schema_description: bool | None = None
-    """ Check that every parameter in the schema has a description. """
-    actions_schema_validation: bool | None = None
-    """ Lint GitHub Action workflow files with schema"""
-    modules_json: bool | None = None
-    """ Lint modules.json file """
-    modules_structure: bool | None = None
-    """ Lint modules structure """
-    base_config: bool | None = None
-    """ Lint base.config file """
-    nfcore_yml: bool | None = None
-    """ Lint nf-core.yml """
-    version_consistency: bool | None = None
-    """ Lint for version consistency """
-    included_configs: bool | None = None
-    """ Lint for included configs """
-    local_component_structure: bool | None = None
-    """ Lint local components use correct structure mirroring remote"""
-    container_configs: bool | None = None
-    """ Lint that container configuration files in conf/ are up to date """
-    rocrate_readme_sync: bool | None = None
-    """ Lint for README.md and rocrate.json sync """
-
-    def __getitem__(self, item: str) -> Any:
-        return getattr(self, item)
-
-    def get(self, item: str, default: Any = None) -> Any:
-        if getattr(self, item, default) is None:
-            return default
-        return getattr(self, item, default)
-
-    def __setitem__(self, item: str, value: Any) -> None:
-        setattr(self, item, value)
-
-
-class NFCoreYamlConfig(BaseModel):
-    """.nf-core.yml configuration file schema"""
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    repository_type: Literal["pipeline", "modules"] | None = None
-    """ Type of repository """
-    nf_core_version: str | None = None
-    """ Version of nf-core/tools used to create/update the pipeline """
-    org_path: str | None = None
-    """ Path to the organisation's modules repository (used for modules repo_type only) """
-    lint: NFCoreYamlLintConfig | None = None
-    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
-    template: NFCoreTemplateConfig | None = None
-    """ Pipeline template configuration """
-    bump_version: dict[str, bool] | None = None
-    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
-    update: dict[str, str | bool | dict[str, str | dict[str, str | bool]]] | None = None
-    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
-    container_registry: list[str] | None = Field(default=None, alias="container-registry")
-    """ Additional container registry prefixes allowed when linting container directives. """
-
-    def __getitem__(self, item: str) -> Any:
-        return getattr(self, item)
-
-    def get(self, item: str, default: Any = None) -> Any:
-        return getattr(self, item, default)
-
-    def __setitem__(self, item: str, value: Any) -> None:
-        setattr(self, item, value)
-
-    def model_dump(self, **kwargs) -> dict[str, Any]:
-        # Get the initial data
-        config = super().model_dump(**kwargs)
-
-        if self.repository_type == "modules":
-            # Fields to exclude for modules
-            fields_to_exclude = ["template", "update"]
-        else:  # pipeline
-            # Fields to exclude for pipeline
-            fields_to_exclude = ["bump_version", "org_path"]
-
-        # Remove the fields based on repository_type
-        for field in fields_to_exclude:
-            config.pop(field, None)
-
-        return config
-
-
-def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreYamlConfig | None]:
+def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCoreYamlConfig | None]":
     """
     Parse the nf-core.yml configuration file
 
@@ -1407,6 +1188,11 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
 
     Returns the loaded config dict or False, if the file couldn't be loaded
     """
+    import yaml
+    from pydantic import ValidationError
+
+    from nf_core.config_models import NFCoreTemplateConfig, NFCoreYamlConfig
+
     tools_config = {}
 
     config_fn = get_first_available_path(directory, CONFIG_PATHS)

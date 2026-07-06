@@ -60,6 +60,7 @@ from nf_core.commands_subworkflows import (
 from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
+from nf_core.pipelines.list import autocomplete_pipelines
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
@@ -107,13 +108,6 @@ def normalize_case(ctx, param, component_name):
         return component_name.casefold()
 
 
-# Wrapper so that nf_core.pipelines.list is only imported when autocompleting
-def autocomplete_pipelines(ctx, param, incomplete: str):
-    from nf_core.pipelines.list import autocomplete_pipelines as _autocomplete_pipelines
-
-    return _autocomplete_pipelines(ctx, param, incomplete)
-
-
 def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
@@ -125,15 +119,12 @@ def run_nf_core():
             f"\n[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
             highlight=False,
         )
-        try:
-            is_outdated, _, remote_vers = check_if_outdated()
-            if is_outdated:
-                stderr.print(
-                    f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
-                    highlight=False,
-                )
-        except (OSError, ValueError) as e:
-            log.debug(f"Could not check latest version: {e}")
+        is_outdated, _, remote_vers = check_if_outdated()
+        if is_outdated:
+            stderr.print(
+                f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
+                highlight=False,
+            )
         stderr.print("\n")
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
