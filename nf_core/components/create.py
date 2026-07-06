@@ -177,6 +177,13 @@ class ComponentCreate(ComponentCommand):
         run_prettier_on_file(new_files)
 
         log.info("Created following files:\n  " + "\n  ".join(new_files))
+
+        if self.component_type == "modules":
+            log.info(
+                f"Build Docker & Singularity images (Seqera/Wave) and update [magenta]main.nf[/] with the container URLs:\n"
+                f"  [blue]nf-core modules containers create {self.component_name}[/]"
+            )
+
         return True
 
     def _get_bioconda_tool(self):
