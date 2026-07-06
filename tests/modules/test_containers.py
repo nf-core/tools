@@ -5,7 +5,7 @@ from unittest import mock
 import pytest
 import yaml
 
-from nf_core.modules.containers import ModuleContainers
+from nf_core.modules.containers import ModuleContainers, build_containers_with_progress
 from nf_core.modules.modules_utils import CondaEntry, ContainerEntry, MetaYmlContainers
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
@@ -402,6 +402,56 @@ class TestModuleContainersPipeline(TestModules):
 
         meta = yaml.safe_load((module_dir / "meta.yml").read_text(encoding="utf-8"))
         assert meta["containers"] == containers.dump_for_meta_yml()
+
+
+class TestBuildContainersWithProgress(TestModules):
+    """Tests for the ``build_containers_with_progress`` helper.
+
+    ``create`` is mocked throughout so the tests cover the batch/aggregation logic
+    regardless of how containers are actually built (Wave API vs CLI).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.manager = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
+        self.component = self.manager.nfcore_component
+        self.module_name = self.component.component_name
+
+    def test_success_returns_no_failures(self):
+        with mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), True)) as mock_create:
+            failed = build_containers_with_progress(
+                self.manager, [self.component], Path(self.nfcore_modules), hide_progress=True
+            )
+        assert failed == []
+        mock_create.assert_called_once()
+
+    def test_build_failure_is_reported(self):
+        """A module whose create() returns success=False is reported as failed."""
+        with mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), False)):
+            failed = build_containers_with_progress(
+                self.manager, [self.component], Path(self.nfcore_modules), hide_progress=True
+            )
+        assert failed == [self.module_name]
+
+    def test_exception_during_build_is_caught(self):
+        """A RuntimeError from create() is caught and the module is reported as failed."""
+        with mock.patch.object(ModuleContainers, "create", side_effect=RuntimeError("boom")):
+            failed = build_containers_with_progress(
+                self.manager, [self.component], Path(self.nfcore_modules), hide_progress=True
+            )
+        assert failed == [self.module_name]
+
+    def test_all_modules_reconstructs_per_module_manager(self):
+        """In batch mode a fresh per-module manager is built, reusing the scanned component list."""
+        batch_manager = ModuleContainers(
+            module=None, directory=self.nfcore_modules, all_modules=True, components=[self.component]
+        )
+        with mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), True)) as mock_create:
+            failed = build_containers_with_progress(
+                batch_manager, [self.component], Path(self.nfcore_modules), hide_progress=True
+            )
+        assert failed == []
+        mock_create.assert_called_once()
 
 
 class TestModuleContainersDockerfile(TestModuleContainersPipeline):
