@@ -6,14 +6,12 @@ import os
 import sys
 from pathlib import Path
 
-import requests
 import rich.console
 import rich.logging
 import rich.panel
 import rich.traceback
 import rich_click as click
 import rich_click.rich_click as rc
-from trogon import tui
 
 from nf_core import __version__
 from nf_core.commands_modules import (
@@ -62,8 +60,6 @@ from nf_core.commands_subworkflows import (
 from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download.download import DownloadError
-from nf_core.pipelines.list import autocomplete_pipelines
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
@@ -91,6 +87,8 @@ rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 # because they are actually preliminary, but intended program terminations.
 # (Custom exceptions are cleaner than `sys.exit(1)`, which we used before)
 def selective_traceback_hook(exctype, value, traceback):
+    from nf_core.pipelines.download.download import DownloadError
+
     if exctype in {DownloadError, UserWarning, ValueError}:  # extend set as needed
         log.error(value)
     else:
@@ -107,6 +105,13 @@ sys.excepthook = selective_traceback_hook
 def normalize_case(ctx, param, component_name):
     if component_name is not None:
         return component_name.casefold()
+
+
+# Wrapper so that nf_core.pipelines.list is only imported when autocompleting
+def autocomplete_pipelines(ctx, param, incomplete: str):
+    from nf_core.pipelines.list import autocomplete_pipelines as _autocomplete_pipelines
+
+    return _autocomplete_pipelines(ctx, param, incomplete)
 
 
 def run_nf_core():
@@ -127,14 +132,13 @@ def run_nf_core():
                     f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
                     highlight=False,
                 )
-        except requests.exceptions.RequestException as e:
+        except (OSError, ValueError) as e:
             log.debug(f"Could not check latest version: {e}")
         stderr.print("\n")
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
-@tui(command="interface", help="Launch the nf-core interface")
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.option(
@@ -195,6 +199,15 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
         "verbose": verbose,
         "hide_progress": hide_progress or verbose,  # Always hide progress bar with verbose logging
     }
+
+
+# nf-core interface (registered by hand so trogon is only imported when run)
+@nf_core_cli.command("interface", help="Launch the nf-core interface")
+@click.pass_context
+def interface(ctx):
+    from trogon import Trogon
+
+    Trogon(nf_core_cli, app_name=None, command_name="interface", click_context=ctx).run()
 
 
 # nf-core pipelines subcommands

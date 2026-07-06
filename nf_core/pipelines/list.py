@@ -8,8 +8,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import git
-import requests
 import rich.table
 from click.shell_completion import CompletionItem
 
@@ -169,6 +167,8 @@ class Workflows:
 
         Remote workflows are stored in :attr:`self.remote_workflows` list.
         """
+        import requests
+
         # List all repositories at nf-core
         log.debug("Fetching list of nf-core workflows")
         nfcore_url = "https://nf-co.re/pipelines.json"
@@ -421,6 +421,8 @@ class LocalWorkflow:
 
         # Pull information from the local git repository
         if self.local_path is not None:
+            import git
+
             log.debug(f"Pulling git info from {self.local_path}")
             try:
                 repo = git.Repo(self.local_path)

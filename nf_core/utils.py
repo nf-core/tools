@@ -91,6 +91,22 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
+def __getattr__(name):
+    # Lazy imports to keep CLI start-up fast
+    if name == "nfcore_question_style":
+        return _nfcore_question_style()
+    if name in ("GitHubAPISession", "gh_api"):
+        from nf_core import github_api
+
+        globals()["GitHubAPISession"] = github_api.GitHubAPISession
+        globals()["gh_api"] = github_api.gh_api
+        return globals()[name]
+    if name == "SingularityCacheFilePathValidator":
+        from nf_core.pipelines.download.singularity import SingularityCacheFilePathValidator
+
+        return SingularityCacheFilePathValidator
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 def is_interactive() -> bool:
     """Check if the current session is interactive (has a TTY on stdin, stdout, and stderr)."""
@@ -150,6 +166,8 @@ def unquote(s: str) -> str:
 
 
 def fetch_remote_version(source_url):
+    import requests
+
     response = requests.get(source_url, timeout=3)
     remote_version = re.sub(r"[^0-9\.]", "", response.text)
     return remote_version
@@ -176,6 +194,10 @@ def check_if_outdated(
     # check if we have a newer version without blocking the rest of the script
     is_outdated = False
     if remote_version is None:  # we set it manually for tests
+        remote_version = _load_cached_remote_version()
+    if remote_version is None:
+        import requests
+
         try:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(fetch_remote_version, source_url)
@@ -216,6 +238,8 @@ class Pipeline:
 
     def __init__(self, wf_path: Path) -> None:
         """Initialise pipeline object"""
+        import git
+
         self.conda_config: dict = {}
         self.conda_package_info: dict = {}
         self.nf_config: dict = {}
@@ -606,6 +630,9 @@ def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
 
     Expects API response to be valid JSON and contain a top-level 'status' key.
     """
+    import requests
+    import requests_cache
+
     # Run without requests_cache so that we get the updated statuses
     with requests_cache.disabled():
         try:
@@ -825,6 +852,7 @@ def anaconda_package(dep, dep_channels=None):
         A LookupError, if the connection fails or times out or gives an unexpected status code
         A ValueError, if the package name can not be found (404)
     """
+    import requests
 
     if dep_channels is None:
         dep_channels = ["conda-forge", "bioconda"]
@@ -910,6 +938,8 @@ def pip_package(dep):
         A LookupError, if the connection fails or times out
         A ValueError, if the package name can not be found
     """
+    import requests
+
     pip_depname, _ = dep.split("=", 1)
     pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
@@ -937,6 +967,8 @@ def get_biocontainer_tag(package, version):
         A LookupError, if the connection fails or times out or gives an unexpected status code
         A ValueError, if the package name can not be found (404)
     """
+
+    import requests
 
     biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{package}/versions/{package}-{version}"
 
@@ -1060,6 +1092,10 @@ def prompt_remote_pipeline_name(wfs):
     Raises:
         AssertionError, if pipeline cannot be found
     """
+    import questionary
+    import requests
+
+    from nf_core.github_api import gh_api
 
     if not is_interactive():
         raise UserWarning("No pipeline name provided and session is not interactive (no TTY detected).")
@@ -1101,6 +1137,8 @@ def prompt_pipeline_release_branch(
     Returns:
         choice (questionary.Choice or bool): Selected release / branch or False if no releases / branches available
     """
+    import questionary
+
     # Prompt user for release tag, tag_set will contain all available.
     choices: list[questionary.Choice] = []
     tag_set: list[str] = []
@@ -1132,13 +1170,17 @@ def prompt_pipeline_release_branch(
 
     if multiple:
         return (
-            questionary.checkbox("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            questionary.checkbox(
+                "Select release / branch:", choices=choices, style=_nfcore_question_style()
+            ).unsafe_ask(),
             tag_set,
         )
 
     else:
         return (
-            questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            questionary.select(
+                "Select release / branch:", choices=choices, style=_nfcore_question_style()
+            ).unsafe_ask(),
             tag_set,
         )
 
@@ -1169,6 +1211,7 @@ def get_repo_releases_branches(pipeline, wfs):
     Raises:
         LockupError, if the pipeline can not be found.
     """
+    from nf_core.github_api import gh_api
 
     wf_releases = []
     wf_branches = {}
@@ -1247,6 +1290,7 @@ def get_repo_commit(pipeline, commit_id):
     Returns:
         commit_id: String or None
     """
+    from nf_core.github_api import gh_api
 
     commit_response = gh_api.get(
         f"https://api.github.com/repos/{pipeline}/commits/{commit_id}", headers={"Accept": "application/vnd.github.sha"}
