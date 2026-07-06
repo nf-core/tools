@@ -183,7 +183,7 @@ def check_if_outdated(
     """
     # Exit immediately if disabled via ENV var
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
-        return (True, "", "")
+        return (False, "", "")
     # Set and clean up the current version string
     if current_version is None:
         current_version = nf_core.__version__
