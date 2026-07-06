@@ -25,8 +25,11 @@ def module_changes(module_lint_object, module):
 
     The following checks are performed:
 
-    * ``check_local_copy``: Each module file must be identical to the corresponding
-      file in the remote repository at the pinned commit SHA.
+    check_local_copy
+    ^^^^^^^^^^^^^^^^
+
+    Each module file must be identical to the corresponding
+    file in the remote repository at the pinned commit SHA.
     """
     if module.is_patched:
         # If the module is patched, we need to apply

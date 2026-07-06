@@ -210,6 +210,62 @@ def test_check_process_section_additional_registries(container_line, additional_
         assert not prefix_passed, f"Container prefix should not pass; passed={mock_lint.passed}"
 
 
+@pytest.mark.parametrize(
+    "singularity_container,singularity_tag,oras_singularity_tag",
+    [
+        # `nextflow inspect -profile singularity` fell back to a bare docker image (a
+        # biocontainers / seqera prefix, no https:/oras: URL) -> nulled -> singularity_tag
+        # fails and the oras check is not emitted. Both prefixes in the production
+        # startswith() tuple are covered.
+        ("quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0", "fail", "absent"),
+        ("community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", "fail", "absent"),
+        # Genuine https:// singularity URL -> both checks pass
+        ("https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0", "pass", "pass"),
+        # Allowed docker container fallback
+        ("quay.io/nf-core/bclconvert:4.5.4", "pass", "pass"),
+        ("nvcr.io/nvidia/clara/clara-parabricks:4.6.0-1", "pass", "pass"),
+        # oras:// resolves a container (singularity_tag passes) but the scheme is invalid
+        ("oras://community.wave.seqera.io/library/gatk4:4.4.0.0--abc123", "pass", "fail"),
+    ],
+)
+def test_check_process_section_singularity_container(
+    singularity_container, singularity_tag, oras_singularity_tag, tmp_path
+):
+    """A biocontainers/seqera docker image must have a genuine https:// singularity equivalent.
+    When `nextflow inspect -profile singularity` falls back to the docker container the
+    singularity_tag check fails, and an oras:// container fails the oras_singularity_tag check.
+    The outcome depends only on the resolved singularity container, so a fixed docker container
+    is used."""
+    docker_container = "quay.io/biocontainers/gatk4:4.4.0.0--py36hdfd78af_0"
+    mock_lint = MockModuleLint()
+    mock_lint.component_name = "tool/subtool"
+    mock_lint.process_name = "TOOL_SUBTOOL"
+    mock_lint.component_dir = tmp_path
+    mock_lint.base_dir = tmp_path
+    mock_lint.inspect_containers = {"docker": docker_container, "singularity": singularity_container}
+
+    check_process_section(
+        mock_lint,
+        [f"container '{docker_container}'"],
+        ("quay.io", "community.wave.seqera.io/library/"),
+        False,
+        None,
+    )
+
+    def assert_outcome(lint_test, expected):
+        passed = any(r[1] == lint_test for r in mock_lint.passed)
+        failed = any(r[1] == lint_test for r in mock_lint.failed)
+        if expected == "pass":
+            assert passed and not failed, f"Expected {lint_test} to pass; passed={passed}, failed={failed}"
+        elif expected == "fail":
+            assert failed and not passed, f"Expected {lint_test} to fail; passed={passed}, failed={failed}"
+        else:  # absent
+            assert not passed and not failed, f"Expected {lint_test} to be absent; passed={passed}, failed={failed}"
+
+    assert_outcome("singularity_tag", singularity_tag)
+    assert_outcome("oras_singularity_tag", oras_singularity_tag)
+
+
 class TestMainNfLinting(TestModules):
     """
     Test main.nf linting functionality.
@@ -247,9 +303,7 @@ class TestMainNfLinting(TestModules):
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="samtools/sort")
 
-        # TODO: set to 0 once samtools/sort module is converted to new container syntax
-        assert len(module_lint.failed) == 1
-        assert module_lint.failed[0].lint_test == "has_meta_containers"
+        assert len(module_lint.failed) == 0
         assert len(module_lint.passed) > 0
 
     def test_additional_registry_from_nf_core_yml_passes_container_link(self):

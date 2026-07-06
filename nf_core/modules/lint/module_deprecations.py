@@ -9,8 +9,11 @@ def module_deprecations(_, module):
 
     The following checks are performed:
 
-    * ``module_deprecations``: Deprecated files (e.g. ``functions.nf``) must not
-      be present in the module directory.
+    module_deprecations
+    ^^^^^^^^^^^^^^^^^^^^
+
+    Deprecated files (e.g. ``functions.nf``) must not
+    be present in the module directory.
     """
     module.wf_path = module.component_dir
     if (module.component_dir / "functions.nf").exists():
