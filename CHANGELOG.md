@@ -10,7 +10,7 @@
 ### Linting
 
 - accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
-- make regex for meta keys more specific to avoid false positives ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- make regex for meta keys more specific to avoid false positives ([#4280](https://github.com/nf-core/tools/pull/4280))
 
 ### Modules
 
