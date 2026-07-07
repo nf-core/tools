@@ -284,7 +284,7 @@ def _spawn_remote_version_refresh(source_url: str) -> None:
             return
         # Record the attempt up front, so failed refreshes back off instead of respawning every run
         cached["attempted_at"] = time.time()
-        NFCORE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        setup_nfcore_cachedir()
         with open(REMOTE_VERSION_CACHE, "w") as fh:
             json.dump(cached, fh)
         subprocess.Popen(
