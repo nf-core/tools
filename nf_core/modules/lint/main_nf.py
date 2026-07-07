@@ -8,11 +8,13 @@ from pathlib import Path
 
 from rich.progress import Progress
 
+from nf_core import astgrep
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
 
 log = logging.getLogger(__name__)
+MAIN_NF_VERSIONS_YML_TOPIC_RULE = Path(__file__).parent / "rules" / "main_nf_versions_yml_topic.yml"
 
 
 def main_nf(
@@ -105,6 +107,12 @@ def main_nf(
     equal the number of ``emit:`` outputs whose name starts with ``versions``.
     A warning is issued if a legacy YAML-based ``versions`` emit is used instead
     of a topic output.
+
+    main_nf_versions_yml_topic
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    A ``versions.yml`` topic output is only valid for template-backed modules.
+    Modules with inline version commands should emit version tuples directly.
 
     """
 
@@ -262,6 +270,17 @@ def main_nf(
             module.failed.append(
                 ("main_nf", "main_nf_shell_template", "No `template` found in `shell` block", module.main_nf)
             )
+
+    if _has_inline_versions_yml_topic_output(lines_j, lines, script_lines + shell_lines + exec_lines):
+        module.warned.append(
+            (
+                "main_nf",
+                "main_nf_versions_yml_topic",
+                "`versions.yml` topic outputs are only for template scripts; inline version commands should "
+                "emit `tuple val(\"${task.process}\"), val('<tool>'), eval(...), topic: versions`.",
+                module.main_nf,
+            )
+        )
 
     # Check whether 'meta' is emitted when given as input
     if inputs and "meta" in inputs:
@@ -951,6 +970,22 @@ def _parse_output_topics(self, line: str) -> list[str]:
                     )
 
     return output
+
+
+def _has_inline_versions_yml_topic_output(source: str, output_lines: list[str], command_lines: list[str]) -> bool:
+    rule = astgrep.load_rule(MAIN_NF_VERSIONS_YML_TOPIC_RULE)
+    if astgrep.nextflow_available():
+        from ast_grep_py import SgRoot
+
+        root = SgRoot(source, "nextflow").root()
+        if root.find(kind="ERROR") is None:
+            config = {key: rule[key] for key in ("rule", "constraints", "utils") if key in rule}
+            return bool(root.find_all(config=config))
+
+    return any(
+        re.search(r"path\s*\(?[\"']versions\.yml[\"']\)?", line) and re.search(r"topic:\s*versions\b", line)
+        for line in output_lines
+    ) and any("> versions.yml" in line or "END_VERSIONS" in line for line in command_lines)
 
 
 def _is_empty(line):

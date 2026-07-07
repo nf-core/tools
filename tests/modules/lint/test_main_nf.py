@@ -4,8 +4,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import nf_core.modules.lint
+from nf_core import astgrep
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.main_nf import (
+    _has_inline_versions_yml_topic_output,
     _parse_output_topics,
     check_container_link_line,
     check_nf_module_name,
@@ -18,6 +20,27 @@ from nf_core.modules.lint.main_nf import (
 from ...test_modules import TestModules
 from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 from .test_lint_utils import MockModuleLint
+
+
+@pytest.mark.skipif(not astgrep.nextflow_available(), reason="tree-sitter-nextflow parser not available")
+def test_inline_versions_yml_topic_output_matches_full_source_with_astgrep():
+    """Full-source structural matching catches inline legacy versions.yml topic output."""
+    source = """
+process MOCK_TOOL {
+    output:
+    path "versions.yml", emit: versions, topic: versions
+
+    script:
+    \"\"\"
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mock_tool: "1.0"
+    END_VERSIONS
+    \"\"\"
+}
+"""
+
+    assert _has_inline_versions_yml_topic_output(source, [], [])
 
 
 @pytest.mark.parametrize(
@@ -366,6 +389,66 @@ class TestMainNfLinting(TestModules):
         assert any("Container prefix is not correct" in r.message for r in container_link_warns2), (
             f"Expected container prefix failure for myreg.io when not in .nf-core.yml; "
             f"warned={[r.message for r in container_link_warns2]}"
+        )
+
+    def test_inline_versions_yml_topic_output_warns(self):
+        """A migrated topic output must not keep writing legacy versions.yml inline."""
+        local_mod_dir = Path(self.pipeline_dir) / "modules" / "local" / "mock_tool"
+        local_mod_dir.mkdir(parents=True, exist_ok=True)
+        (local_mod_dir / "main.nf").write_text(
+            """
+process MOCK_TOOL {
+    input:
+    val(meta)
+
+    output:
+    tuple val(meta), path("out.txt"), emit: results
+    path "versions.yml", emit: versions, topic: versions
+
+    script:
+    \"\"\"
+    touch out.txt
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mock_tool: "1.0"
+    END_VERSIONS
+    \"\"\"
+}
+"""
+        )
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(local=True, print_results=False)
+
+        assert any(r.lint_test == "main_nf_versions_yml_topic" for r in module_lint.warned), (
+            f"Expected warning for inline versions.yml topic output, got {[r.lint_test for r in module_lint.warned]}"
+        )
+
+    def test_template_versions_yml_topic_output_does_not_warn(self):
+        """A template-backed versions.yml topic output is not an inline legacy YAML write."""
+        local_mod_dir = Path(self.pipeline_dir) / "modules" / "local" / "mock_tool"
+        local_mod_dir.mkdir(parents=True, exist_ok=True)
+        (local_mod_dir / "main.nf").write_text(
+            """
+process MOCK_TOOL {
+    input:
+    val(meta)
+
+    output:
+    tuple val(meta), path("out.txt"), emit: results
+    path "versions.yml", emit: versions, topic: versions
+
+    shell:
+    template 'mock_tool.sh'
+}
+"""
+        )
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(local=True, print_results=False)
+
+        assert not any(r.lint_test == "main_nf_versions_yml_topic" for r in module_lint.warned), (
+            f"Expected no inline versions.yml topic warning, got {[r.lint_test for r in module_lint.warned]}"
         )
 
     def test_topics_and_emits_version_check(self):
