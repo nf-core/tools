@@ -50,6 +50,8 @@ def _resolve_wf_path(path: Path) -> Path:
     bare_dir = path / "bare"
     if clones_dir.is_dir():
         if bare_dir.is_dir():
+            import git
+
             try:
                 sha = git.Repo(bare_dir).head.commit.hexsha
                 clone = clones_dir / sha
