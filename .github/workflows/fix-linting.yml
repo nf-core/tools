@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: branch-deploy
         id: branch-deploy
-        uses: github/branch-deploy@ddf8ca48e9cdb2d2c7c71dee428308b19af9313f # v11.1.4
+        uses: github/branch-deploy@de4d10ee17c3117a2076aff489ba03fadf225f35 # v11.1.5
         with:
           trigger: "@nf-core-bot fix linting"
           reaction: "eyes"
