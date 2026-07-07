@@ -15,6 +15,7 @@ from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
 
 log = logging.getLogger(__name__)
 MAIN_NF_VERSIONS_YML_TOPIC_RULE = Path(__file__).parent / "rules" / "main_nf_versions_yml_topic.yml"
+MAIN_NF_LEGACY_VERSIONS_EMIT_RULE = Path(__file__).parent / "rules" / "main_nf_legacy_versions_emit.yml"
 
 
 def main_nf(
@@ -323,7 +324,7 @@ def main_nf(
             module.passed.append(
                 ("main_nf", "main_nf_version_emit", "Module emits each software version", module.main_nf)
             )
-        elif "versions" in emits:
+        elif _has_legacy_versions_emit(lines_j, lines):
             module.warned.append(
                 (
                     "main_nf",
@@ -970,6 +971,21 @@ def _parse_output_topics(self, line: str) -> list[str]:
                     )
 
     return output
+
+
+def _has_legacy_versions_emit(source: str, output_lines: list[str]) -> bool:
+    rule = astgrep.load_rule(MAIN_NF_LEGACY_VERSIONS_EMIT_RULE)
+    if astgrep.nextflow_available():
+        from ast_grep_py import SgRoot
+
+        root = SgRoot(source, "nextflow").root()
+        if root.find(kind="ERROR") is None:
+            config = {key: rule[key] for key in ("rule", "constraints", "utils") if key in rule}
+            return bool(root.find_all(config=config))
+
+    return any(
+        re.search(r"emit:\s*versions\b", line) and not re.search(r"topic:\s*versions\b", line) for line in output_lines
+    )
 
 
 def _has_inline_versions_yml_topic_output(source: str, output_lines: list[str], command_lines: list[str]) -> bool:
