@@ -95,7 +95,7 @@ dev = [
 dev = [
     # pinned to the PR branch SHA until nextflow-io/tree-sitter-nextflow#22
     # (symbol export + grammar fix) merges; then drop the pin
-    "tree-sitter-nextflow @ git+https://github.com/nextflow-io/tree-sitter-nextflow.git@dc5bda3",
+    "tree-sitter-nextflow @ git+https://github.com/nextflow-io/tree-sitter-nextflow.git@1416dd3743fd4ae7e76057f04e1e89432dfe5669",
 ]
 
 [project.urls]

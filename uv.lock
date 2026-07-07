@@ -1774,7 +1774,7 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "tree-sitter-nextflow", git = "https://github.com/nextflow-io/tree-sitter-nextflow.git?rev=dc5bda3" }]
+dev = [{ name = "tree-sitter-nextflow", git = "https://github.com/nextflow-io/tree-sitter-nextflow.git?rev=1416dd3743fd4ae7e76057f04e1e89432dfe5669" }]
 
 [[package]]
 name = "numpy"
@@ -3546,7 +3546,7 @@ wheels = [
 [[package]]
 name = "tree-sitter-nextflow"
 version = "0.1.0"
-source = { git = "https://github.com/nextflow-io/tree-sitter-nextflow.git?rev=dc5bda3#dc5bda3dae6b28b17f6b9797b32318bb1a8c65a0" }
+source = { git = "https://github.com/nextflow-io/tree-sitter-nextflow.git?rev=1416dd3743fd4ae7e76057f04e1e89432dfe5669#1416dd3743fd4ae7e76057f04e1e89432dfe5669" }
 
 [[package]]
 name = "trogon"
