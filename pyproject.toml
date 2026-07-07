@@ -98,6 +98,11 @@ nf-core = "nf_core.__main__:run_nf_core"
 [project.entry-points."refgenie.hooks.post_update"]
 nf-core-refgenie = "nf_core.pipelines.refgenie:update_config"
 
+[dependency-groups]
+dev = [
+    "pytest-codspeed>=5.0.3",
+]
+
 [tool.pytest.ini_options]
 markers = ["datafiles: load datafiles", "integration"]
 testpaths = ["tests"]
