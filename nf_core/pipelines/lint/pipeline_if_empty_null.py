@@ -1,10 +1,12 @@
 import logging
-import re
 from pathlib import Path
 
+from nf_core import astgrep
 from nf_core.utils import get_wf_files
 
 log = logging.getLogger(__name__)
+
+RULE_FILE = Path(__file__).parent / "rules" / "pipeline_if_empty_null.yml"
 
 
 def pipeline_if_empty_null(self, root_dir=None):
@@ -16,29 +18,23 @@ def pipeline_if_empty_null(self, root_dir=None):
 
     There are multiple examples of workflows that inject null objects into channels using `ifEmpty(null)`, which can cause unhandled null pointer exceptions.
     This lint test throws warnings for those instances.
-    """
-    passed = []
-    warned = []
-    file_paths = []
-    pattern = re.compile(r"ifEmpty\s*\(\s*null\s*\)")
 
+    The match logic lives in the ast-grep rule file ``rules/pipeline_if_empty_null.yml``.
+    See ``nf_core.astgrep.find_matches`` for the structural vs regex-fallback behaviour.
+    """
     # Pipelines don't provide a path, so use the workflow path.
     # Modules run this function twice and provide a string path
     if root_dir is None:
         root_dir = self.wf_path
 
-    for file in get_wf_files(root_dir):
-        try:
-            with open(Path(file), encoding="latin1") as fh:
-                for line in fh:
-                    if re.findall(pattern, line):
-                        warned.append(f"`ifEmpty(null)` found in `{file}`: _{line}_")
-                        file_paths.append(Path(file))
-        except FileNotFoundError:
-            log.debug(f"Could not open file {file} in pipeline_if_empty_null lint test")
+    rule = astgrep.load_rule(RULE_FILE)
+    warned = []
+    file_paths = []
+    for file, line_num, text in astgrep.find_matches(rule, get_wf_files(root_dir)):
+        warned.append(f"{rule['message']} in `{file}` [line {line_num}]: _{text}_")
+        file_paths.append(file)
 
-    if len(warned) == 0:
-        passed.append("No `ifEmpty(null)` strings found")
+    passed = [] if warned else ["No `ifEmpty(null)` strings found"]
 
     # return file_paths for use in subworkflow lint
     return {"passed": passed, "warned": warned, "file_paths": file_paths}

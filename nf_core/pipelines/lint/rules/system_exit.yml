@@ -1,0 +1,16 @@
+# ast-grep lint rule (https://ast-grep.github.io/guide/project/lint-rule.html)
+id: system_exit
+language: nextflow
+severity: warning
+message: "`System.exit` call found"
+note: |
+  Calls to `System.exit(1)` should be replaced by throwing errors, e.g.
+  `error "Something went wrong"`. `System.exit(0)` is allowed.
+metadata:
+  fallback-regex: System\.exit\s*\((?!\s*0\s*\))
+rule:
+  pattern: System.exit($CODE)
+constraints:
+  CODE:
+    not:
+      regex: ^0$

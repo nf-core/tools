@@ -1,0 +1,19 @@
+# ast-grep rule test (https://ast-grep.github.io/guide/test-rule.html)
+id: pipeline_todos
+valid:
+  - "// a regular comment"
+  - 'println "TODO nf-core: inside a string is not a template TODO"'
+invalid:
+  - "// TODO nf-core: edit this section"
+  - |
+    /*
+     * TODO nf-core: a block comment TODO
+     */
+  - |
+    process FOO {
+        script:
+        // TODO nf-core: replace the command below
+        """
+        echo hi
+        """
+    }

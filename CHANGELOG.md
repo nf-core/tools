@@ -14,6 +14,7 @@
 ### Linting
 
 - accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
+- `pipeline_if_empty_null`, `system_exit` and `pipeline_todos` (incl. module/subworkflow todos) now match structurally with ast-grep and the tree-sitter-nextflow grammar when available (skips comments/strings), falling back to regex otherwise — per file, whenever a file has parse errors, so recall never drops below regex level. Match logic lives in ast-grep rule files under `nf_core/pipelines/lint/rules/` with snippet tests in `tests/pipelines/lint/rules/`
 - improve linting for `modules.json` to add support for only installing subworkflows from a repository and provide more explicit error messages ([#4287](https://github.com/nf-core/tools/pull/4287))
 - improve singularity_tag linting check (add skip, handle exceptions correctly, check against oras) ([#4358](https://github.com/nf-core/tools/pull/4358))
 

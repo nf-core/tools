@@ -1,0 +1,21 @@
+# ast-grep rule test (https://ast-grep.github.io/guide/test-rule.html)
+# Run by tests/pipelines/lint/test_astgrep_rules.py: every `valid` snippet
+# must produce no matches, every `invalid` snippet at least one.
+id: pipeline_if_empty_null
+valid:
+  - ch.ifEmpty([])
+  - ch.ifEmpty { error "empty samplesheet" }
+  - |
+    workflow {
+        // ifEmpty(null) in a comment is fine
+        ch_ok = ch.toList()
+    }
+invalid:
+  - ch.ifEmpty(null)
+  - ch.ifEmpty( null )
+  - Channel.fromPath(params.input).ifEmpty(null)
+  - |
+    ch.ifEmpty(
+        null
+    )
+  - ch | ifEmpty(null)
