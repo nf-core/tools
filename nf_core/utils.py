@@ -8,6 +8,7 @@ import errno
 import fnmatch
 import functools
 import hashlib
+import importlib
 import io
 import json
 import logging
@@ -46,6 +47,32 @@ nfcore_logo = [
     r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
     r"[green]                                          `._,._,'",
 ]
+
+
+def lazy_attrs(module_globals: dict, mapping: dict[str, "str | Callable"]):
+    """Build module-level ``__getattr__`` and ``__dir__`` for lazy attributes (PEP 562).
+
+    Each attribute maps either to the dotted path of the module to import it
+    from, or to a zero-argument callable that builds it. Resolved attributes
+    are cached in the module's globals, so the hook only fires once per name.
+
+    Usage::
+
+        __getattr__, __dir__ = lazy_attrs(globals(), {"PipelineCreateApp": "nf_core.pipelines.create"})
+    """
+
+    def module_getattr(name):
+        target = mapping.get(name)
+        if target is None:
+            raise AttributeError(f"module {module_globals['__name__']!r} has no attribute {name!r}")
+        value = target() if callable(target) else getattr(importlib.import_module(target), name)
+        module_globals[name] = value
+        return value
+
+    def module_dir():
+        return sorted(set(module_globals) | set(mapping))
+
+    return module_getattr, module_dir
 
 
 # Custom style for questionary (built lazily to keep CLI start-up fast)
@@ -87,23 +114,18 @@ def _nfcore_question_style():
     )
 
 
-def __getattr__(name):
-    # Lazy imports to keep CLI start-up fast. Resolved names are cached in
-    # globals() so this hook only fires on first access.
-    if name == "nfcore_question_style":
-        globals()[name] = _nfcore_question_style()
-    elif name in ("GitHubAPISession", "gh_api"):
-        from nf_core import github_api
-
-        globals()["GitHubAPISession"] = github_api.GitHubAPISession
-        globals()["gh_api"] = github_api.gh_api
-    elif name in ("NFCoreTemplateConfig", "NFCoreYamlLintConfig", "NFCoreYamlConfig"):
-        from nf_core import config_models
-
-        globals()[name] = getattr(config_models, name)
-    else:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    return globals()[name]
+# Lazy imports to keep CLI start-up fast
+__getattr__, __dir__ = lazy_attrs(
+    globals(),
+    {
+        "nfcore_question_style": _nfcore_question_style,
+        "GitHubAPISession": "nf_core.github_api",
+        "gh_api": "nf_core.github_api",
+        "NFCoreTemplateConfig": "nf_core.config_models",
+        "NFCoreYamlLintConfig": "nf_core.config_models",
+        "NFCoreYamlConfig": "nf_core.config_models",
+    },
+)
 
 
 def is_interactive() -> bool:
@@ -112,7 +134,7 @@ def is_interactive() -> bool:
 
 
 NFCORE_CACHE_DIR = Path(
-    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
+    os.environ.get("XDG_CACHE_HOME") or Path(os.getenv("HOME") or "") / ".cache",
     "nfcore",
 )
 NFCORE_DIR = Path(
@@ -212,7 +234,7 @@ def _spawn_remote_version_refresh(source_url: str) -> None:
             return
         # Record the attempt up front, so failed refreshes back off instead of respawning every run
         cached["attempted_at"] = time.time()
-        NFCORE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        setup_nfcore_cachedir()
         with open(REMOTE_VERSION_CACHE, "w") as fh:
             json.dump(cached, fh)
         subprocess.Popen(
@@ -602,16 +624,6 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     return (proc.stdout, proc.stderr)
 
 
-def setup_nfcore_dir() -> bool:
-    """Creates a directory for files that need to be kept between sessions
-
-    Currently only used for keeping local copies of modules repos
-    """
-    if not NFCORE_DIR.exists():
-        NFCORE_DIR.mkdir(parents=True)
-    return True
-
-
 def setup_requests_cachedir() -> dict[str, Path | datetime.timedelta | str]:
     """Sets up local caching for faster remote HTTP requests.
 
@@ -633,14 +645,16 @@ def setup_requests_cachedir() -> dict[str, Path | datetime.timedelta | str]:
     return config
 
 
-def setup_nfcore_cachedir(cache_fn: str | Path) -> Path:
-    """Sets up local caching for caching files between sessions."""
+def setup_nfcore_cachedir(cache_fn: str | Path | None = None) -> Path:
+    """Sets up local caching for caching files between sessions.
 
-    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+    Creates and returns a subdirectory of the nf-core cache directory,
+    or the cache directory itself if no subdirectory is given.
+    """
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn) if cache_fn else NFCORE_CACHE_DIR
 
     try:
-        if not Path(cachedir).exists():
-            Path(cachedir).mkdir(parents=True)
+        cachedir.mkdir(parents=True, exist_ok=True)
     except PermissionError:
         log.warning(f"Could not create cache directory: {cachedir}")
 

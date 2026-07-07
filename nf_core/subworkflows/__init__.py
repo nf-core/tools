@@ -1,21 +1,16 @@
-import importlib
+from nf_core.utils import lazy_attrs
 
 # Lazy imports to keep CLI start-up fast
-_submodules = {
-    "SubworkflowCreate": ".create",
-    "SubworkflowInfo": ".info",
-    "SubworkflowInstall": ".install",
-    "SubworkflowLint": ".lint",
-    "SubworkflowList": ".list",
-    "SubworkflowPatch": ".patch",
-    "SubworkflowRemove": ".remove",
-    "SubworkflowUpdate": ".update",
-}
-
-
-def __getattr__(name):
-    if name in _submodules:
-        module = importlib.import_module(_submodules[name], __name__)
-        globals()[name] = getattr(module, name)
-        return globals()[name]
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+__getattr__, __dir__ = lazy_attrs(
+    globals(),
+    {
+        "SubworkflowCreate": "nf_core.subworkflows.create",
+        "SubworkflowInfo": "nf_core.subworkflows.info",
+        "SubworkflowInstall": "nf_core.subworkflows.install",
+        "SubworkflowLint": "nf_core.subworkflows.lint",
+        "SubworkflowList": "nf_core.subworkflows.list",
+        "SubworkflowPatch": "nf_core.subworkflows.patch",
+        "SubworkflowRemove": "nf_core.subworkflows.remove",
+        "SubworkflowUpdate": "nf_core.subworkflows.update",
+    },
+)
