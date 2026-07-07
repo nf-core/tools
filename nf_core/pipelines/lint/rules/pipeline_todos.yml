@@ -1,0 +1,16 @@
+# ast-grep lint rule (https://ast-grep.github.io/guide/project/lint-rule.html)
+id: pipeline_todos
+language: nextflow
+severity: warning
+message: "TODO string"
+note: |
+  The nf-core templates contain `TODO nf-core:` comments marking places that
+  developers need to edit. They should be removed once addressed.
+metadata:
+  fallback-regex: TODO nf-core
+# a comment node containing "TODO nf-core" (strings/code are not flagged)
+rule:
+  regex: TODO nf-core
+  any:
+    - kind: line_comment
+    - kind: block_comment

@@ -1,0 +1,16 @@
+# ast-grep rule test (https://ast-grep.github.io/guide/test-rule.html)
+id: system_exit
+valid:
+  - System.exit(0)
+  - "// System.exit(1) in a comment is fine"
+  - error "Something went wrong"
+invalid:
+  - System.exit(1)
+  - System.exit(status)
+  - |
+    class Utils {
+        public static void fail(msg) {
+            log.error(msg)
+            System.exit(1)
+        }
+    }
