@@ -8,6 +8,7 @@ from nf_core import astgrep
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.main_nf import (
     _has_inline_versions_yml_topic_output,
+    _has_legacy_versions_emit,
     _parse_output_topics,
     check_container_link_line,
     check_nf_module_name,
@@ -41,6 +42,25 @@ process MOCK_TOOL {
 """
 
     assert _has_inline_versions_yml_topic_output(source, [], [])
+
+
+@pytest.mark.skipif(not astgrep.nextflow_available(), reason="tree-sitter-nextflow parser not available")
+@pytest.mark.parametrize(
+    "output_line, expected",
+    [
+        ('path "versions.yml", emit: versions', True),
+        ('path "versions.yml", emit: versions, topic: versions', False),
+    ],
+)
+def test_legacy_versions_emit_astgrep_detection(output_line, expected):
+    source = f"""
+process TEST {{
+    output:
+    {output_line}
+}}
+"""
+
+    assert _has_legacy_versions_emit(source, []) is expected
 
 
 @pytest.mark.parametrize(

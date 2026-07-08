@@ -1,0 +1,17 @@
+# ast-grep lint rule (https://ast-grep.github.io/guide/project/lint-rule.html)
+id: main_nf_legacy_versions_emit
+language: nextflow
+severity: warning
+message: "legacy `versions` output emit"
+note: |
+  Legacy `emit: versions` outputs should migrate to version tuple outputs with
+  `topic: versions`. Template-backed modules that also set `topic: versions`
+  are intentionally allowed.
+metadata:
+  fallback-regex: a^
+rule:
+  kind: output_declaration
+  all:
+    - regex: 'emit:\s*versions\b'
+    - not:
+        regex: 'topic:\s*versions\b'
