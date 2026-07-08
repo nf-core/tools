@@ -255,13 +255,26 @@ class TestModuleContainers(TestModules):
         assert result is None
         assert "No containers specified for docker" in self.caplog.text
 
-    def test_get_containers_from_meta_missing_platform_key(self):
+    def test_get_containers_from_meta_optional_platform_missing_ok(self):
+        """An optional platform (e.g. linux/arm64) may be absent - amd64 alone is valid."""
         containers = {
             "docker": {CONTAINER_PLATFORMS[0]: {"name": "img:1.0"}},
             "singularity": {CONTAINER_PLATFORMS[0]: {"name": "sif:1.0"}},
         }
         self._write_meta({"name": "bpipe/test", "containers": containers})
-        missing_platform = CONTAINER_PLATFORMS[1]
+        result = self.module_containers.get_containers_from_meta()
+        assert result is not None
+        assert CONTAINER_PLATFORMS[0] in result.docker
+        assert CONTAINER_PLATFORMS[1] not in result.docker
+
+    def test_get_containers_from_meta_missing_required_platform(self):
+        """A required platform (linux/amd64) must be present, or the section is invalid."""
+        containers = {
+            "docker": {CONTAINER_PLATFORMS[1]: {"name": "img:1.0"}},
+            "singularity": {CONTAINER_PLATFORMS[1]: {"name": "sif:1.0"}},
+        }
+        self._write_meta({"name": "bpipe/test", "containers": containers})
+        missing_platform = CONTAINER_PLATFORMS[0]
         self.caplog.set_level(logging.DEBUG, logger="nf_core.modules.containers")
         result = self.module_containers.get_containers_from_meta()
         assert result is None
