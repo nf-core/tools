@@ -109,6 +109,9 @@ NFCORE_DIR = Path(
 
 CONTAINER_SYSTEMS = ["docker", "singularity"]
 CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
+# Platforms a module must provide containers for. Others (e.g. linux/arm64) are
+# supported and validated when present, but not required.
+REQUIRED_CONTAINER_PLATFORMS = ["linux/amd64"]
 
 
 class ContainerRegistryUrls(Enum):

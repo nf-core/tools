@@ -493,6 +493,22 @@ class ModuleContainers:
 
         return containers, not has_failures
 
+    @staticmethod
+    def _raise_if_build_failed(result: dict, build_ref: str, details_uri: str = "") -> None:
+        """
+        Raise a uniform error if a finished Wave build did not succeed.
+
+        Accepts either the container submit response or a ``/status`` response — both
+        expose ``succeeded``/``reason``/``detailsUri`` — so the failure contract lives
+        in one place. ``details_uri`` overrides the value on ``result`` (the status
+        poller keeps the last non-empty build-log URL it saw).
+        """
+        if result.get("succeeded"):
+            return
+        reason = result.get("reason") or "no reason provided"
+        details = details_uri or result.get("detailsUri") or ""
+        raise RuntimeError(f"Wave build {build_ref} failed: {reason}. Build log: {details}")
+
     @classmethod
     def _await_build(
         cls,
@@ -528,9 +544,7 @@ class ModuleContainers:
             status = wave_request("get", status_url, error_context=f"Wave status check for request {request_id}")
             details_uri = status.get("detailsUri") or details_uri
             if status.get("status") == "DONE":
-                if not status.get("succeeded"):
-                    reason = status.get("reason") or "no reason provided"
-                    raise RuntimeError(f"Wave build {request_id} failed: {reason}. Build log: {details_uri}")
+                cls._raise_if_build_failed(status, request_id, details_uri)
                 log.debug(f"Wave build {request_id} completed in {status.get('duration')}s")
                 return
             if time.monotonic() > deadline:
@@ -589,10 +603,15 @@ class ModuleContainers:
         if build_id and on_build_id is not None:
             on_build_id(build_id)
 
-        # A build that is cached (or already reported DONE in the submit response) is
-        # resolved immediately; otherwise poll the container status endpoint until it
-        # finishes.
-        if not meta_data.get("cached") and meta_data.get("status") != "DONE":
+        # Wave returns a targetImage/buildId even for failed builds, so a cached/DONE
+        # submit response must still be checked for success — not only the polling path.
+        succeeded = meta_data.get("succeeded")
+        is_final = bool(meta_data.get("cached")) or meta_data.get("status") == "DONE"
+        if is_final and succeeded is not None:
+            # Submit response already carries an authoritative result.
+            cls._raise_if_build_failed(meta_data, build_id or request_id)
+        elif not is_final or request_id:
+            # Not final, or final but ambiguous: the status endpoint is authoritative.
             cls._await_build(request_id, cancel_event=cancel_event)
 
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
