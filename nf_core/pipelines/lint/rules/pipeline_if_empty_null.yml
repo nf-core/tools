@@ -1,0 +1,28 @@
+# ast-grep lint rule (https://ast-grep.github.io/guide/project/lint-rule.html)
+# Also usable directly with `ast-grep scan` via a sgconfig.yml ruleDirs entry.
+id: pipeline_if_empty_null
+language: nextflow
+severity: warning
+message: "`ifEmpty(null)` found"
+note: |
+  Instead of `ifEmpty(null)`, use `ifEmpty([])` to keep a process executing on
+  optional input, or `ifEmpty { error ... }` when the channel must not be empty.
+  Injecting null objects into channels causes unhandled null pointer exceptions.
+metadata:
+  fallback-regex: ifEmpty\s*\(\s*null\s*\)
+rule:
+  any:
+    # method call form: ch.ifEmpty(null)
+    - pattern: $CH.ifEmpty(null)
+    # bare / piped form: ch | ifEmpty(null)
+    - pattern: ifEmpty(null)
+    # method calls whose receiver the grammar could not fully parse; only
+    # requires direct children `ifEmpty` and `null`
+    - all:
+        - kind: method_call
+        - has:
+            kind: identifier
+            regex: ^ifEmpty$
+        - has:
+            kind: simple_expression
+            regex: ^null$

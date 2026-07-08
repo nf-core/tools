@@ -1,7 +1,11 @@
 import logging
 from pathlib import Path
 
+from nf_core import astgrep
+
 log = logging.getLogger(__name__)
+
+RULE_FILE = Path(__file__).parent / "rules" / "system_exit.yml"
 
 
 def system_exit(self):
@@ -11,27 +15,18 @@ def system_exit(self):
 
     This lint test looks for all calls to `System.exit`
     in any file with the `.nf` or `.groovy` extension
+
+    The match logic lives in the ast-grep rule file ``rules/system_exit.yml``.
+    See ``nf_core.astgrep.find_matches`` for the structural vs regex-fallback behaviour.
     """
-    passed = []
-    warned = []
-
     root_dir = Path(self.wf_path)
+    files = list(root_dir.rglob("*.nf")) + list(root_dir.rglob("*.groovy"))
 
-    # Get all groovy and nf files
-    groovy_files = list(root_dir.rglob("*.groovy"))
-    nf_files = list(root_dir.rglob("*.nf"))
-    to_check = nf_files + groovy_files
-
-    for file in to_check:
-        try:
-            with file.open() as fh:
-                for i, line in enumerate(fh.readlines(), start=1):
-                    if "System.exit" in line and "System.exit(0)" not in line:
-                        warned.append(f"`System.exit` in {file.name}: _{line.strip()}_  [line {i}]")
-        except FileNotFoundError:
-            log.debug(f"Could not open file {file.name} in system_exit lint test")
-
-    if len(warned) == 0:
-        passed.append("No `System.exit` calls found")
+    rule = astgrep.load_rule(RULE_FILE)
+    warned = [
+        f"{rule['message']} in {file.name}: _{text}_  [line {line_num}]"
+        for file, line_num, text in astgrep.find_matches(rule, files)
+    ]
+    passed = [] if warned else ["No `System.exit` calls found"]
 
     return {"passed": passed, "warned": warned}
