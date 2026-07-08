@@ -6,7 +6,11 @@ from urllib.parse import urlparse
 import requests
 from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, NFCORE_CACHE_DIR
+from nf_core.utils import (
+    CONTAINER_PLATFORMS,
+    CONTAINER_SYSTEMS,
+    NFCORE_CACHE_DIR,
+)
 
 from ..components.nfcore_component import NFCoreComponent
 
@@ -59,8 +63,14 @@ class MetaYmlContainers(BaseModel):
     docker: dict[str, ContainerEntry] = {}
     singularity: dict[str, ContainerEntry] = {}
     conda: dict[str, CondaEntry] = {}
+    # GPU-capable modules (dual-container pattern) add a parallel set of containers built
+    # from environment.gpu.yml. These are only populated for GPU modules and stay empty
+    # (and are omitted from meta.yml) otherwise.
+    docker_gpu: dict[str, ContainerEntry] = {}
+    singularity_gpu: dict[str, ContainerEntry] = {}
+    conda_gpu: dict[str, CondaEntry] = {}
 
-    @field_validator("docker", "singularity", "conda", mode="after")
+    @field_validator("docker", "singularity", "conda", "docker_gpu", "singularity_gpu", "conda_gpu", mode="after")
     @classmethod
     def check_keys_against_container_platforms(cls, value: dict) -> dict:
         # Check if all used keys are valid platforms
@@ -75,7 +85,8 @@ class MetaYmlContainers(BaseModel):
         ``model_dump`` shaped for the meta.yml JSON schema: ``name``/``build_id`` are
         always emitted (the schema requires them, empty or not), while the optional
         fields (``https``, ``scan_id``) are omitted when empty — an empty ``https``
-        would violate the schema's ``^https://`` pattern.
+        would violate the schema's ``^https://`` pattern. Empty container systems (e.g. the
+        GPU sections for non-GPU modules) are dropped entirely so they don't appear in meta.yml.
         """
         dump = self.model_dump()
         for platforms in dump.values():
@@ -83,7 +94,7 @@ class MetaYmlContainers(BaseModel):
                 for key in ("https", "scan_id"):
                     if not entry.get(key, True):
                         del entry[key]
-        return dump
+        return {system: platforms for system, platforms in dump.items() if platforms}
 
     @model_validator(mode="after")
     def check_container_systems_complete(self, info: ValidationInfo) -> "MetaYmlContainers":
