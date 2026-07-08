@@ -1653,7 +1653,7 @@ dependencies = [
     { name = "trogon" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "mypy" },
     { name = "myst-parser", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -1661,6 +1661,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-clarity" },
+    { name = "pytest-codspeed" },
     { name = "pytest-cov" },
     { name = "pytest-datafiles" },
     { name = "pytest-sugar" },
@@ -1682,11 +1683,6 @@ dev = [
     { name = "typing-extensions" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "pytest-codspeed" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "click" },
@@ -1695,8 +1691,6 @@ requires-dist = [
     { name = "jinja2" },
     { name = "jsonschema", specifier = ">=4.0" },
     { name = "markdown", specifier = ">=3.3" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=2.0.0" },
-    { name = "myst-parser", marker = "extra == 'dev'" },
     { name = "packaging" },
     { name = "pdiff" },
     { name = "pillow" },
@@ -1704,45 +1698,48 @@ requires-dist = [
     { name = "prompt-toolkit", specifier = "<=3.0.52" },
     { name = "pydantic", specifier = ">=2.2.1" },
     { name = "pygithub" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'" },
-    { name = "pytest-clarity", marker = "extra == 'dev'", specifier = ">=1.0.1" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-datafiles", marker = "extra == 'dev'" },
-    { name = "pytest-sugar", marker = "extra == 'dev'", specifier = ">=1.1.1" },
-    { name = "pytest-textual-snapshot", marker = "extra == 'dev'", specifier = "==1.1.0" },
-    { name = "pytest-workflow", marker = "extra == 'dev'", specifier = ">=2.0.0" },
-    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.7.0" },
     { name = "pyyaml" },
     { name = "questionary", specifier = ">=2.0.1" },
     { name = "refgenie" },
     { name = "repo2rocrate" },
     { name = "requests" },
     { name = "requests-cache" },
-    { name = "responses", marker = "extra == 'dev'" },
     { name = "rich", specifier = ">=13.3.1" },
     { name = "rich-click", specifier = "==1.9.*" },
     { name = "rocrate" },
     { name = "ruamel-yaml" },
-    { name = "ruff", marker = "extra == 'dev'" },
     { name = "setuptools", specifier = "<81" },
-    { name = "sphinx", marker = "extra == 'dev'" },
-    { name = "sphinx-rtd-theme", marker = "extra == 'dev'" },
     { name = "tabulate" },
     { name = "textual", specifier = "==8.2.4" },
-    { name = "textual-dev", marker = "extra == 'dev'", specifier = "==1.8.0" },
     { name = "trogon" },
-    { name = "types-jsonschema", marker = "extra == 'dev'" },
-    { name = "types-markdown", marker = "extra == 'dev'" },
-    { name = "types-pyyaml", marker = "extra == 'dev'" },
-    { name = "types-requests", marker = "extra == 'dev'" },
-    { name = "types-setuptools", marker = "extra == 'dev'" },
-    { name = "typing-extensions", marker = "extra == 'dev'", specifier = ">=4.0.0" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest-codspeed", specifier = ">=5.0.3" }]
+dev = [
+    { name = "mypy", specifier = ">=2.0.0" },
+    { name = "myst-parser" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-clarity", specifier = ">=1.0.1" },
+    { name = "pytest-codspeed", specifier = ">=5.0.3" },
+    { name = "pytest-cov" },
+    { name = "pytest-datafiles" },
+    { name = "pytest-sugar", specifier = ">=1.1.1" },
+    { name = "pytest-textual-snapshot", specifier = "==1.1.0" },
+    { name = "pytest-workflow", specifier = ">=2.0.0" },
+    { name = "pytest-xdist", specifier = ">=3.7.0" },
+    { name = "responses" },
+    { name = "ruff" },
+    { name = "sphinx" },
+    { name = "sphinx-rtd-theme" },
+    { name = "textual-dev", specifier = "==1.8.0" },
+    { name = "types-jsonschema" },
+    { name = "types-markdown" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "typing-extensions", specifier = ">=4.0.0" },
+]
 
 [[package]]
 name = "numpy"
