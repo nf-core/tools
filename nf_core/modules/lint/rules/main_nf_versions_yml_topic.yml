@@ -1,0 +1,24 @@
+# ast-grep lint rule (https://ast-grep.github.io/guide/project/lint-rule.html)
+id: main_nf_versions_yml_topic
+language: nextflow
+severity: warning
+message: "`versions.yml` topic output uses inline legacy YAML"
+note: |
+  `path "versions.yml", emit: versions, topic: versions` is only valid for
+  template-backed modules. Inline version commands should emit version tuples
+  directly with `topic: versions`.
+metadata:
+  fallback-regex: a^
+rule:
+  kind: process_definition
+  all:
+    - has:
+        kind: output_declaration
+        regex: 'path\s*\(?["'']versions\.yml["'']\)?.*topic:\s*versions|topic:\s*versions.*path\s*\(?["'']versions\.yml["'']\)?'
+        stopBy: end
+    - has:
+        any:
+          - kind: triple_quoted_string
+          - kind: interpolated_triple_quoted_string
+        regex: '(>\s*versions\.yml|END_VERSIONS)'
+        stopBy: end
