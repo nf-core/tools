@@ -186,6 +186,43 @@ class TestModuleContainers(TestModules):
         # Polled the v1alpha2 container status endpoint with the requestId
         assert mock_get.call_args[0][0].endswith("/v1alpha2/container/req-fail/status")
 
+    @mock.patch("nf_core.modules.containers.requests.get")
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_cached_failed_build_raises(self, mock_post, mock_get):
+        # Wave reports a previously-failed build as cached/DONE but still returns a
+        # targetImage. The submit-response success flag must be honoured so the failed
+        # build is not silently recorded as a valid container.
+        mock_post.return_value = self._fake_response(
+            {
+                "buildId": "bd-aa7e45b61425a0b2_7",
+                "requestId": "req-cached",
+                "cached": True,
+                "status": "DONE",
+                "succeeded": False,
+                "reason": "arm64 build failed",
+                "detailsUri": "https://wave/log",
+                "targetImage": "community.wave.seqera.io/library/busco:6.1.0--aa7e45b61425a0b2",
+            }
+        )
+        with pytest.raises(RuntimeError, match="Wave build bd-aa7e45b61425a0b2_7 failed: arm64 build failed"):
+            ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], self.environment_yml)
+        # A cached failure is resolved from the submit response alone - no status poll.
+        mock_get.assert_not_called()
+
+    @mock.patch("nf_core.modules.containers.requests.get")
+    @mock.patch("nf_core.modules.containers.requests.post")
+    def test_request_container_cached_without_result_polls_status(self, mock_post, mock_get):
+        # Cached/DONE submit response with no explicit success flag -> fall back to the
+        # authoritative status endpoint before accepting the image.
+        mock_post.return_value = self._fake_response(
+            {"buildId": "bd-cached", "requestId": "req-cached", "cached": True, "targetImage": "testC:latest"}
+        )
+        mock_get.return_value = self._fake_response({"status": "DONE", "succeeded": True})
+
+        container = ModuleContainers.request_container("docker", CONTAINER_PLATFORMS[0], self.environment_yml)
+        assert container.name == "testC:latest"
+        assert mock_get.call_args[0][0].endswith("/v1alpha2/container/req-cached/status")
+
     @mock.patch("nf_core.modules.containers.requests.post")
     def test_request_container_missing_image_raises(self, mock_post):
         mock_post.return_value = self._fake_response({"buildId": "build-4", "cached": True})
