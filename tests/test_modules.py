@@ -3,12 +3,14 @@
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import pytest
 import requests_cache
 import responses
 import ruamel.yaml
 
+import nf_core.components.create
 import nf_core.modules.create
 import nf_core.modules.install
 import nf_core.modules.modules_repo
@@ -28,7 +30,6 @@ from .utils import (
     OLD_TRIMGALORE_SHA,
     create_tmp_pipeline,
     mock_anaconda_api_calls,
-    mock_biocontainers_api_calls,
     mock_biotools_api_calls,
 )
 
@@ -47,16 +48,20 @@ def create_modules_repo_dummy(tmp_dir):
     nf_core_yml = NFCoreYamlConfig(nf_core_version=__version__, repository_type="modules", org_path="nf-core")
     with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
         yaml.dump(nf_core_yml.model_dump(), fh)
-    # mock biocontainers and anaconda response and biotools response
+    # mock anaconda and biotools responses
     with responses.RequestsMock() as rsps:
         mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
-        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
         mock_biotools_api_calls(rsps, "bpipe")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.create.ModuleCreate(
             root_dir, "bpipe/test", "@author", "process_single", True, False
         )
-        with requests_cache.disabled():
+        # `modules create` builds Seqera/Wave containers for the new module; the dummy
+        # repo's containers are written explicitly below, so stub the network call out here.
+        with (
+            requests_cache.disabled(),
+            mock.patch.object(nf_core.components.create.ComponentCreate, "_build_seqera_containers"),
+        ):
             assert module_create.create()
 
     # Remove doi from meta.yml which makes lint fail
