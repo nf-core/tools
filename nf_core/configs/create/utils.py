@@ -4,6 +4,7 @@ import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
+from math import ceil
 from pathlib import Path
 from typing import Any
 
@@ -130,6 +131,47 @@ class ConfigsCreateConfig(BaseModel):
             context=_init_context_var.get(),
         )
 
+    def _remove_empty_sections(self, config_dict: dict):
+        # Takes a config dict produced by serial_hpc() or serial_pipeline()
+        # and removes keys with null or empty values
+        ret = {}
+        for k, v in config_dict.items():
+            if isinstance(v, dict):
+                v2 = self._remove_empty_sections(v)
+            else:
+                v2 = v
+            if v2:
+                ret[k] = v2
+        return ret
+
+    def _format_resource_request(self, value_str: str, unit_str: str) -> str:
+        # Format a resource request to an integer
+        # and update the units if required
+        # E.g. 1.0h -> 1h; 1.0GB -> 1GB
+        # and 0.5h -> 30min; 0.5GB -> 512MB
+
+        # Make sure unit_str is valid
+        assert unit_str in ['h', 'min', 'GB'], f'Invalid unit: "{unit_str}"'
+
+        # Turn the value string into a float
+        v = float(value_str)
+        u = unit_str
+        if v.is_integer():
+            v = int(v)
+            if v == 0:
+                v = 1
+        elif v < 1:
+            if unit_str == 'min':
+                v = ceil(v * 60)
+                u = 's'
+            elif unit_str == 'h':
+                v = ceil(v * 60)
+                u = 'min'
+            elif unit_str == 'GB':
+                v = ceil(v * 1024)
+                u = 'MB'
+        return f'{v} {u}'
+
     def serial_params(self):
         # Determine contact info
         contact = ""
@@ -149,7 +191,7 @@ class ConfigsCreateConfig(BaseModel):
                 "igenomes_base": self.igenomes_cachedir or None,
             },
         }
-        return ret
+        return self._remove_empty_sections(ret)
 
     def serial_hpc(self):
         """Returns a dictionary of the config"""
@@ -164,18 +206,18 @@ class ConfigsCreateConfig(BaseModel):
         ret = {
             **params,
             "executor": {
-                "queueStatInterval": str(float(self.queue_stat_interval)) + "m" if self.queue_stat_interval else None,
+                "queueStatInterval": self._format_resource_request(self.queue_stat_interval, 'min') if self.queue_stat_interval else None,
                 "queueSize": int(self.queue_size) if self.queue_size else None,
-                "pollInterval": str(float(self.poll_interval)) + "m" if self.poll_interval else None,
-                "submitRateLimit": str(int(self.submit_rate)) + "min" if self.submit_rate else None,
+                "pollInterval": self._format_resource_request(self.poll_interval, 'min') if self.poll_interval else None,
+                "submitRateLimit": self._format_resource_request(self.submit_rate, "min") if self.submit_rate else None,
             },
             "process": {
                 "executor": self.scheduler or None,
                 "queue": self.queue or None,
                 "resourceLimits": [
                     {"cpus": int(self.cpus) if self.cpus else None},
-                    {"memory": str(float(self.memory)) + "GB" if self.memory else None},
-                    {"time": str(float(self.time)) + "h" if self.time else None},
+                    {"memory": self._format_resource_request(self.memory, 'GB') if self.memory else None},
+                    {"time": self._format_resource_request(self.time, 'h') if self.time else None},
                 ],
                 "scratch": self.scratch_dir or None,
                 "maxRetries": int(self.retries) if self.retries else None,
@@ -191,7 +233,7 @@ class ConfigsCreateConfig(BaseModel):
             "cleanup": self.delete_work_dir,
         }
 
-        return ret
+        return self._remove_empty_sections(ret)
 
     def serial_pipeline(self):
         """Returns a dictionary of the pipeline config"""
@@ -201,8 +243,8 @@ class ConfigsCreateConfig(BaseModel):
             **params,
             "process": {
                 "cpus": int(self.default_process_ncpus) if self.default_process_ncpus else None,
-                "memory": str(float(self.default_process_memgb)) + "GB" if self.default_process_memgb else None,
-                "time": str(float(self.default_process_hours)) + "h" if self.default_process_hours else None,
+                "memory": self._format_resource_request(self.default_process_memgb, 'GB') if self.default_process_memgb else None,
+                "time": self._format_resource_request(self.default_process_hours, 'h') if self.default_process_hours else None,
             },
         }
         # Get custom process resources
@@ -220,12 +262,12 @@ class ConfigsCreateConfig(BaseModel):
                         else None
                     ),
                     "memory": (
-                        str(float(process_resources["custom_process_memgb"])) + "GB"
+                        self._format_resource_request(process_resources["custom_process_memgb"], 'GB')
                         if process_resources["custom_process_memgb"]
                         else None
                     ),
                     "time": (
-                        str(float(process_resources["custom_process_hours"])) + "h"
+                        self._format_resource_request(process_resources["custom_process_hours"], 'h')
                         if process_resources["custom_process_hours"]
                         else None
                     ),
@@ -238,7 +280,7 @@ class ConfigsCreateConfig(BaseModel):
                     ret["process"][f"{selector}: '{process_id}'"]["executor"] = (
                         process_resources["executor"] if process_resources["executor"] else None
                     )
-        return ret
+        return self._remove_empty_sections(ret)
 
     def serial(self):
         if self.is_infrastructure:
