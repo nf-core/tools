@@ -29,6 +29,11 @@ Choosing _"HPC"_ will add the following configurations:
 * Select if you need to load other modules
 """
 
+cloud_note = """
+**Note:** Currently, only local and HPC executor configurations are supported.
+Support for cloud executor configuration will be supported in a future release.
+"""
+
 
 class ChooseHpc(Screen):
     """Choose whether this will be a config for an HPC or not."""
@@ -49,4 +54,5 @@ class ChooseHpc(Screen):
             classes="col-2 pipeline-type-grid",
         )
         yield Markdown(markdown_details)
+        yield Markdown(cloud_note)
         yield Center(Button("Back", id="back", variant="default"), classes="cta")

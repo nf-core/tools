@@ -10,8 +10,8 @@ from nf_core.utils import nfcore_logo
 markdown = """
 # Welcome to the nf-core config creation wizard
 
-This app will help you create **Nextflow configuration files**
-for both:
+This app will help you create **nf-core compatible** Nextflow configuration
+files for both:
 
 - **Infrastructure** configs for defining computing environment for all
   pipelines, and

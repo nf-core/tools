@@ -4,7 +4,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown
 
 markdown_intro = """
-# Is this configuration file part of the nf-core organisation?
+# Will this configuration file be part of the nf-core organisation?
 """
 
 markdown_type_nfcore = """

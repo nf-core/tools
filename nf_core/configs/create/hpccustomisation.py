@@ -74,16 +74,16 @@ class HpcCustomisation(Screen):
         yield Markdown(markdown_queue)
         yield TextInput(
             "queue",
-            "Queue",
-            "The default queue in your HPC (if required).",
+            "Queue name",
+            "The default queue in your HPC (leave blank if not required).",
             default=default_queue if default_queue else "",
             classes="column",
             suggestions=queues,
         )
         yield TextInput(
             "queue_stat_interval",
-            "Queue stat interval",
-            "How often to get the queue status from the scheduler (minutes).",
+            "Queue stat interval (minutes)",
+            "How often (in minutes) to get the queue status from the scheduler (optional).",
             classes="column",
         )
         yield TextInput(

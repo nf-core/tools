@@ -27,6 +27,7 @@ markdown_details = """
 
 _Infrastructure_ configs:
 
+- Are pipeline agnostic.
 - Describe the basic necessary information for any nf-core pipeline to
 execute.
 - Define things such as which container engine to use, if there is a scheduler and
@@ -35,11 +36,12 @@ which queues to use etc.
 - Can be uploaded to [nf-core
 configs](https://github.com/nf-core/tools/configs) to be directly accessible
 in a nf-core pipeline with `-profile <infrastructure_name>`.
-- Are not used to tweak specific parts of a given pipeline (such as a process or
+- Are not used to adjust scientific parameters of a given pipeline (such as a process or
 module).
 
 _Pipeline_ configs
 
+- Are pipeline specific.
 - Are config files that target specific component of a particular pipeline or pipeline run.
     - Example: you have a particular step of the pipeline that often runs out.
 of memory using the pipeline's default settings. You would use this config to

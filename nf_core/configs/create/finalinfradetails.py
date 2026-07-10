@@ -21,13 +21,25 @@ markdown_intro = """
 markdown_max_resources = """
 ## Set maximum available resources
 
+### REQUIRED
+
 The following fields let you set the maximum available resrouces
-on your infrastructure.
+**across all compute nodes** on your infrastructure.
 
 Memory, CPUs, and time must be filled out and all processes run with this
 configuration will be capped at these values.
+"""
 
-The queue size, poll interval, and submit rate fields are optional, since
+markdown_queue_info = """
+## Set job queue information
+
+### OPTIONAL
+
+The queue size, poll interval, and submit rate fields specify how many jobs
+can be run at once, how frequently Nextflow checks for job termination, and
+how quickly new jobs can be submitted.
+
+These fields are optional, since
 Nextflow has built-in defaults for these values. Consult the Nextflow
 documentation for further details on these default values.
 """
@@ -74,38 +86,39 @@ class FinalInfraDetails(Screen):
             yield TextInput(
                 "memory",
                 "Memory",
-                "Maximum memory (GB) available on your infrastructure (across all nodes).",
+                "Max. memory (GB) available on your infrastructure.",
                 classes="column",
             )
             yield TextInput(
                 "cpus",
                 "CPUs",
-                "Maximum number of CPUs available on your infrastructure (across all nodes).",
+                "Max. number of CPUs available on your infrastructure.",
                 classes="column",
             )
             yield TextInput(
                 "time",
                 "Time",
-                "Maximum time (hours) available to jobs on your infrastructure (across all nodes).",
+                "Max. time (hours) available to jobs on your infrastructure.",
                 classes="column",
             )
+        yield Markdown(markdown_queue_info)
         with Horizontal():
             yield TextInput(
                 "queue_size",
                 "Queue size",
-                "Maximum number of jobs that can be submitted simultaneously on your infrastructure (optional).",
+                "Max. number of jobs that can be submitted simultaneously on your infrastructure.",
                 classes="column",
             )
             yield TextInput(
                 "poll_interval",
                 "Poll interval",
-                "How often (in minutes) to check for successful process completion (optional).",
+                "How often (in minutes) to check for job completion.",
                 classes="column",
             )
             yield TextInput(
                 "submit_rate",
                 "Jobs per minutes",
-                "Maximum number of jobs that can be submitted per minute (optional).",
+                "Max. number of jobs that can be submitted per minute.",
                 classes="column",
             )
         yield Markdown(markdown_global_dirs)
