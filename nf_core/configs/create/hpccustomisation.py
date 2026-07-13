@@ -74,7 +74,7 @@ class HpcCustomisation(Screen):
         yield Markdown(markdown_queue)
         yield TextInput(
             "queue",
-            "Queue name",
+            "Queue name (OPTIONAL)",
             "The default queue in your HPC (leave blank if not required).",
             default=default_queue if default_queue else "",
             classes="column",
@@ -82,13 +82,13 @@ class HpcCustomisation(Screen):
         )
         yield TextInput(
             "queue_stat_interval",
-            "Queue stat interval (minutes)",
+            "Queue stat interval (minutes) (OPTIONAL)",
             "How often (in minutes) to get the queue status from the scheduler (optional).",
             classes="column",
         )
         yield TextInput(
             "module_system",
-            "Other modules to load",
+            "Other modules to load (OPTIONAL)",
             "Do you need to load other software using the module system for your compute nodes? Separate multiple modules by spaces.",
             classes="hide" if not module_system_used else "",
         )

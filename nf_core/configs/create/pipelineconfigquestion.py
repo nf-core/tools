@@ -8,6 +8,24 @@ from textual.containers import Center, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Label, Markdown, Switch
 
+markdown_explain = """
+The following pages will let you configure the CPU, memory, and walltime
+resources for your pipeline. Use the toggles below to specify whether
+you want to configure these values for specific processes or lables,
+and if you want to set the defaults for these values.
+
+- If you want to set the **default** CPU, memory, and walltime resources for **every process**,
+toggle `Configure default resources for processes?`.
+- If you want to configure the resources for individual processes by name,
+toggle `Configure specific processes by name?`.
+- If you want to configure groups of processes that share a particular **[label](https://docs.seqera.io/nextflow/reference/process#label)**,
+toggle `Configure processes by label?`.
+
+Remember, process-specific resource configurations take precedence over
+label configurations. If neither is set for a given process and resource type, the
+default resource configuration will be used.
+"""
+
 
 class PipelineConfigQuestion(Screen):
     """Determine whether the user wants to configure the default resources and/or specific process names/labels."""
@@ -29,22 +47,23 @@ class PipelineConfigQuestion(Screen):
                 """
             )
         )
+        yield Markdown(markdown_explain)
         with Horizontal():
-            yield Label("Configure default process resources?", id="toggle_configure_defaults_label")
+            yield Label("Configure default resources for processes?", id="toggle_configure_defaults_label")
             yield Switch(
                 id="toggle_configure_defaults",
                 value=self.config_defaults,
             )
             yield Label("Yes" if self.config_defaults else "No", id="toggle_configure_defaults_state_label")
         with Horizontal():
-            yield Label("Configure specific named processes?", id="toggle_configure_names_label")
+            yield Label("Configure specific processes by name?", id="toggle_configure_names_label")
             yield Switch(
                 id="toggle_configure_names",
                 value=self.config_named_processes,
             )
             yield Label("Yes" if self.config_named_processes else "No", id="toggle_configure_names_state_label")
         with Horizontal():
-            yield Label("Configure labels?", id="toggle_configure_labels_label")
+            yield Label("Configure processes by label?", id="toggle_configure_labels_label")
             yield Switch(
                 id="toggle_configure_labels",
                 value=self.config_labels,

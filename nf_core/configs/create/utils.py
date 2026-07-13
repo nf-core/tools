@@ -38,6 +38,7 @@ INFRA_ISHPC_GLOBAL: bool = False
 _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 # Used by finalinfradetails as it already imports create.utils
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter", "conda"]
+CACHED_CONTAINERS = ["singularity", "apptainer", "charliecloud", "conda"]
 SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
 
 
@@ -230,7 +231,7 @@ class ConfigsCreateConfig(BaseModel):
             self.container_system: {
                 "enabled": True,
                 "cacheDir": self.cachedir
-                if self.container_system in ["singularity", "apptainer", "charliecloud", "conda"]
+                if self.container_system in CACHED_CONTAINERS
                 else None,
                 "autoMounts": True if self.container_system in ["singularity", "apptainer"] else None,
             },

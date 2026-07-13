@@ -9,6 +9,42 @@ from textual.widgets import Button, Footer, Header, Input, Label, Markdown, Stat
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
+markdown_process_name = """
+Use the following fields to configure the basic resource requirements
+for your pipeline's processes. The only required field is the process name;
+all other fields can be left blank to use the pipeline or infrastructure defaults.
+"""
+
+markdown_process_label = """
+Use the following fields to configure the basic resource requirements
+for your pipeline's labels. The only required field is the process label;
+all other fields can be left blank to use the pipeline or infrastructure defaults.
+"""
+
+markdown_process_common = """
+Use the `Add another process` button to configure additional processes.
+
+Use the read `—` buttons to remove a process configuration from the list.
+"""
+
+markdown_skip_name = """
+Use the `Skip` button to skip setting process-specific resource configurations.
+"""
+
+markdown_skip_label = """
+Use the `Skip` button to skip setting label-specific resource configurations.
+"""
+
+markdown_warn_name = """
+**NOTE:** Process names are **not** checked for validity.
+Please verify that the name is correct before continuing.
+"""
+
+markdown_warn_label = """
+**NOTE:** Process labels are **not** checked for validity.
+Please verify that the label is correct before continuing.
+"""
+
 
 class ProcessConfig(HorizontalGroup):
     """Get resource requirements for a single process."""
@@ -22,42 +58,42 @@ class ProcessConfig(HorizontalGroup):
     def compose(self) -> ComposeResult:
         yield TextInput(
             f"custom_process_{self.selector}_id",
-            "",
+            f"Process {self.selector} (REQUIRED)",
             f"Process {self.selector}:",
             "",
             classes="custom-process-id",
         )
         yield TextInput(
             "custom_process_ncpus",
-            "1",
+            "CPUs",
             "# CPUs:",
-            "1",
+            "",
             classes="custom-process-number",
         )
         yield TextInput(
             "custom_process_memgb",
-            "6",
+            "Mem",
             "Memory (GB):",
-            "6",
+            "",
             classes="custom-process-number",
         )
         yield TextInput(
             "custom_process_hours",
-            "4",
+            "Time",
             "Walltime (hours):",
-            "4",
+            "",
             classes="custom-process-number",
         )
         yield TextInput(
             "custom_process_queue",
-            "queue name",
+            "queue name (OPTIONAL)",
             "HPC queue (optional):",
             "",
             classes=("custom-process-queue" + (" hide" if not self.hpc else "")),
         )
         with Vertical(classes="remove-process-group"):
             yield Label("Remove", id="remove-process-config", classes="field_help")
-            yield Button("-", id="remove", variant="error", classes="remove-process-button")
+            yield Button("—", id="remove", variant="error", classes="remove-process-button")
             yield Static(classes="remove-process-group-filler")  # Filler
 
     @on(Button.Pressed, "#remove")
@@ -85,6 +121,9 @@ class MultiProcessConfig(Screen):
         self.selector_type = selector_type
         assert isinstance(config_key, str) and config_key
         self.config_key = config_key
+        self.intro = markdown_process_name if self.selector_type == "name" else markdown_process_label
+        self.skip = markdown_skip_name if self.selector_type == "name" else markdown_skip_label
+        self.warning = markdown_warn_name if self.selector_type == "name" else markdown_warn_label
 
     def _set_next_screen(self, next_screen: str) -> None:
         assert isinstance(next_screen, str)
@@ -94,9 +133,11 @@ class MultiProcessConfig(Screen):
         yield Header()
         yield Footer()
         yield Markdown(f"# {self.title}")
+        yield Markdown(self.intro)
+        yield Markdown(markdown_process_common)
+        yield Markdown(self.skip)
+        yield Markdown(self.warning)
         yield VerticalScroll(
-            ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC),
-            ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC),
             ProcessConfig(selector=self.selector_type, hpc=self.parent.PIPE_CONF_HPC),
             id="configs",
         )

@@ -8,10 +8,13 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select, Static, Switch
 
 from nf_core.configs.create.utils import (
+    CACHED_CONTAINERS,
     SUPPORTED_CONTAINERS,
     ConfigsCreateConfig,
     TextInput,
+    add_hide_class,
     init_context,
+    remove_hide_class,
 )
 
 markdown_intro = """
@@ -68,6 +71,7 @@ class FinalInfraDetails(Screen):
         self.cache_dirs = {
             self.container_system: self._get_container_cache_directory(),
         }
+        self.cache_environment = self.container_system in CACHED_CONTAINERS
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -85,19 +89,19 @@ class FinalInfraDetails(Screen):
         with Horizontal():
             yield TextInput(
                 "memory",
-                "Memory",
+                "Memory (REQUIRED)",
                 "Max. memory (GB) available on your infrastructure.",
                 classes="column",
             )
             yield TextInput(
                 "cpus",
-                "CPUs",
+                "CPUs (REQUIRED)",
                 "Max. number of CPUs available on your infrastructure.",
                 classes="column",
             )
             yield TextInput(
                 "time",
-                "Time",
+                "Time (REQUIRED)",
                 "Max. time (hours) available to jobs on your infrastructure.",
                 classes="column",
             )
@@ -105,39 +109,39 @@ class FinalInfraDetails(Screen):
         with Horizontal():
             yield TextInput(
                 "queue_size",
-                "Queue size",
+                "Queue size (OPTIONAL)",
                 "Max. number of jobs that can be submitted simultaneously on your infrastructure.",
                 classes="column",
             )
             yield TextInput(
                 "poll_interval",
-                "Poll interval",
+                "Poll interval (OPTIONAL)",
                 "How often (in minutes) to check for job completion.",
                 classes="column",
             )
             yield TextInput(
                 "submit_rate",
-                "Jobs per minutes",
+                "Jobs per minutes (OPTIONAL)",
                 "Max. number of jobs that can be submitted per minute.",
                 classes="column",
             )
         yield Markdown(markdown_global_dirs)
         yield TextInput(
             "cachedir",
-            "/path/to/cache/dir",
+            "/path/to/cache/dir (OPTIONAL)",
             "If you have a global container/conda cache directory, specify the **full path** here.",
-            classes="",
+            classes="hide" if not self.cache_environment else "",
             default=self._get_container_cache_directory(),
         )
         yield TextInput(
             "igenomes_cachedir",
-            "iGenomes cache directory",
+            "iGenomes cache directory (OPTIONAL)",
             "If you have an iGenomes cache directory, specify the **full path** here.",
             classes="hide" if not self.parent.NFCORE_CONFIG else "",
         )
         yield TextInput(
             "scratch_dir",
-            "Scratch directory",
+            "Scratch directory (OPTIONAL)",
             "If you want your jobs to run within a scratch directory, specify the full path here.",
             classes="",
         )
@@ -152,7 +156,7 @@ class FinalInfraDetails(Screen):
         yield TextInput(
             "retries",
             "Number of retries",
-            "Specify the number of retries for a failed job.",
+            "Specify how many times Nextflow will retry a failed task before the pipeline fails.",
             default="1",
             classes="",
         )
@@ -242,6 +246,11 @@ class FinalInfraDetails(Screen):
         cachedir_input = cachedir_text_input.query_one(Input)
         if self.container_system:
             cachedir_input.value = self.get_container_cache_directory()
+        self.cache_environment = self.container_system in CACHED_CONTAINERS
+        if self.cache_environment:
+            remove_hide_class(self.parent, "cachedir")
+        else:
+            add_hide_class(self.parent, "cachedir")
 
     @on(Button.Pressed, "#finish")
     def on_finish_button(self, event: Button.Pressed) -> None:

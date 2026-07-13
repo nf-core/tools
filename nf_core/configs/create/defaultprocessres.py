@@ -10,6 +10,20 @@ from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
 
+markdown_explain = """
+Use the following fields to specify the **default** number of
+CPUs, memory (in GB) and walltime (in hours) for your pipeline.
+
+These values will be used by any process that haven't been specifically configured
+to request a particular resource. For example, if a process is configured to
+request 2 CPUs and 8GB of memory, but no walltime is specified,
+the walltime value below will be used.
+
+All values are optional, but recommended.
+
+Use the `Skip` button to skip setting default resource values.
+"""
+
 
 class DefaultProcess(Screen):
     """Get default process resource requirements."""
@@ -24,25 +38,26 @@ class DefaultProcess(Screen):
                 """
             )
         )
+        yield Markdown(markdown_explain)
         yield TextInput(
             "default_process_ncpus",
-            "1",
+            "CPUs (OPTIONAL)",
             "Number of CPUs to use by default for all processes.",
             "1",
             classes="column",
         )
         yield TextInput(
             "default_process_memgb",
-            "6",
+            "Memory (GB) (OPTIONAL)",
             "Amount of memory in GB to use by default for all processes.",
-            "6",
+            "2",
             classes="column",
         )
         yield TextInput(
             "default_process_hours",
-            "4",
+            "Time (hours) (OPTIONAL)",
             "The default number of hours of walltime required for processes:",
-            "4",
+            "1",
             classes="column",
         )
         yield Center(

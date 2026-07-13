@@ -43,7 +43,7 @@ _Pipeline_ configs
 
 - Are pipeline specific.
 - Are config files that target specific component of a particular pipeline or pipeline run.
-    - Example: you have a particular step of the pipeline that often runs out.
+    - Example: you have a particular step of the pipeline that often runs out
 of memory using the pipeline's default settings. You would use this config to
 increase the amount of memory Nextflow supplies that given task.
 - Are normally only used by a _single or small group_ of users.
