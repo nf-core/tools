@@ -234,69 +234,6 @@ def _spawn_remote_version_refresh(source_url: str) -> None:
         log.debug(f"Could not start background version check: {e}")
 
 
-# The version check never fetches on the hot path (update-notifier pattern):
-# it only reads the cached remote version, and refreshes the cache in a
-# detached background process so that no run ever blocks on the network.
-REMOTE_VERSION_CACHE = Path(NFCORE_CACHE_DIR, "latest_version.json")
-REMOTE_VERSION_CACHE_EXPIRY = 60 * 60 * 24  # refresh at most once a day
-REMOTE_VERSION_REFRESH_BACKOFF = 60 * 10  # wait at least this long between refresh attempts
-
-# Self-contained refresh script, so the background process doesn't have to
-# import nf_core (or requests) just to run one HTTP GET
-REMOTE_VERSION_REFRESH_SCRIPT = """
-import json, os, re, sys, time, urllib.request
-text = urllib.request.urlopen(sys.argv[1], timeout=10).read().decode()
-tmp_path = sys.argv[2] + ".tmp"
-with open(tmp_path, "w") as fh:
-    json.dump({"version": re.sub(r"[^0-9.]", "", text), "timestamp": time.time()}, fh)
-os.replace(tmp_path, sys.argv[2])
-"""
-
-
-def _load_version_cache() -> dict:
-    try:
-        with open(REMOTE_VERSION_CACHE) as fh:
-            cached = json.load(fh)
-        if isinstance(cached, dict):
-            return cached
-    except (OSError, ValueError):
-        pass
-    return {}
-
-
-def _load_cached_remote_version() -> str | None:
-    cached = _load_version_cache()
-    try:
-        if time.time() - cached["timestamp"] < REMOTE_VERSION_CACHE_EXPIRY:
-            Version(cached["version"])  # guard against a corrupted cache
-            return cached["version"]
-    except (KeyError, TypeError, InvalidVersion):
-        pass
-    return None
-
-
-def _spawn_remote_version_refresh(source_url: str) -> None:
-    """Kick off a detached background process to refresh the remote version cache."""
-    try:
-        cached = _load_version_cache()
-        if time.time() - float(cached.get("attempted_at") or 0) < REMOTE_VERSION_REFRESH_BACKOFF:
-            return
-        # Record the attempt up front, so failed refreshes back off instead of respawning every run
-        cached["attempted_at"] = time.time()
-        setup_nfcore_cachedir()
-        with open(REMOTE_VERSION_CACHE, "w") as fh:
-            json.dump(cached, fh)
-        subprocess.Popen(
-            [sys.executable, "-m", "nf_core.version_updater", source_url, str(REMOTE_VERSION_CACHE)],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-    except (OSError, ValueError, TypeError, subprocess.SubprocessError) as e:
-        log.debug(f"Could not start background version check: {e}")
-
-
 def check_if_outdated(
     current_version=None,
     remote_version=None,
