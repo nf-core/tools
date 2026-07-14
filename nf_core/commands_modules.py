@@ -340,42 +340,31 @@ def modules_containers_create(ctx, module: str, directory: Path, force: bool) ->
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
-    from nf_core.modules.containers import ModuleContainers, build_containers_with_progress
+    from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
+        module_containers = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
         ModuleContainers.check_tower_token()
 
-        # Normalize to a list of components: batch mode processes all available
-        # modules, single-module mode is just a list of one.
-        if manager.all_modules:
-            if not manager.available_modules:
+        if module_containers.all_modules:
+            if not module_containers.available_modules:
                 log.error("No modules found to build containers for")
                 sys.exit(1)
-            log.info(f"Building containers for {len(manager.available_modules)} module(s)")
-            components = manager.available_modules
-        else:
-            assert manager.nfcore_component is not None
-            components = [manager.nfcore_component]
+            log.info(f"Building containers for {len(module_containers.available_modules)} module(s)")
 
-        failed_modules = build_containers_with_progress(
-            manager,
-            components,
-            directory,
-            force=force,
-            hide_progress=ctx.obj["hide_progress"],
-            verbose=ctx.obj["verbose"],
+        failed_modules = module_containers.build_containers_with_progress(
+            force=force, hide_progress=ctx.obj["hide_progress"]
         )
 
         if failed_modules:
-            if manager.all_modules:
+            if module_containers.all_modules:
                 log.warning(
                     f"Failed to build containers for {len(failed_modules)} module(s): {', '.join(failed_modules)}"
                 )
             else:
-                log.error(f"✗ Some container builds failed for {manager.module}")
+                log.error(f"✗ Some container builds failed for {module_containers.module}")
                 sys.exit(1)
-        elif manager.all_modules:
+        elif module_containers.all_modules:
             log.info("Successfully built containers for all modules")
 
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
@@ -390,8 +379,8 @@ def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
-        lock_file = manager.get_conda_lock_file(platform)
+        module_containers = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
+        lock_file = module_containers.get_conda_lock_file(platform)
         stdout.print(lock_file)
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
         log.error(e)
@@ -405,8 +394,8 @@ def modules_containers_list(ctx, module, plain_text=False):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
-        containers = manager.list_containers()
+        module_containers = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
+        containers = module_containers.list_containers()
 
         if plain_text:
             for cs, p, img in containers:

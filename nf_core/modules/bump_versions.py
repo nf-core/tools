@@ -149,17 +149,17 @@ class ModuleVersionBumper(ComponentCommand):
         meta.yml and the conda lock files. Modules whose build fails are added to
         ``self.failed``.
         """
-        from nf_core.modules.containers import ModuleContainers, build_containers_with_progress
+        from nf_core.modules.containers import ModuleContainers
 
         log.info(f"Building Seqera containers for {len(modules)} bumped module{_s(modules)} with Wave...")
-        manager = ModuleContainers(
+        module_containers = ModuleContainers(
             module=None,
             directory=self.directory,
             all_modules=True,
             components=modules,
         )
         ModuleContainers.check_tower_token()
-        failed_modules = build_containers_with_progress(manager, modules, self.directory)
+        failed_modules = module_containers.build_containers_with_progress()
         for module_name in failed_modules:
             self.failed.append(("Container build with Wave failed", module_name))
 
