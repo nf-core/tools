@@ -27,7 +27,6 @@ from rich.console import Console
 import nf_core
 
 if TYPE_CHECKING:
-    from nf_core.config_models import NFCoreYamlConfig
     from nf_core.pipelines.schema import PipelineSchema
     from nf_core.pydantic_models import NFCoreYamlConfig
 
@@ -288,7 +287,7 @@ def _spawn_remote_version_refresh(source_url: str) -> None:
         with open(REMOTE_VERSION_CACHE, "w") as fh:
             json.dump(cached, fh)
         subprocess.Popen(
-            [sys.executable, "-c", REMOTE_VERSION_REFRESH_SCRIPT, source_url, str(REMOTE_VERSION_CACHE)],
+            [sys.executable, "-m", "nf_core.version_updater", source_url, str(REMOTE_VERSION_CACHE)],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
