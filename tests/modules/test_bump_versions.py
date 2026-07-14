@@ -9,7 +9,8 @@ import ruamel.yaml
 
 import nf_core.modules.bump_versions
 from nf_core import __version__
-from nf_core.modules.modules_utils import ModuleExceptionError
+from nf_core.modules.containers import ModuleContainers
+from nf_core.modules.modules_utils import MetaYmlContainers, ModuleExceptionError
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_modules import TestModules
@@ -39,6 +40,22 @@ class TestModulesBumpVersions(TestModules):
         modules = version_bumper.bump_versions(all_modules=True)
         assert len(version_bumper.failed) == 0
         assert [m.component_name for m in modules] == ["bpipe/test"]
+
+    @mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), False))
+    def test_build_wave_containers(self, mock_create):
+        """Test building Wave containers and recording failed modules."""
+        module_containers = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
+        module = module_containers.nfcore_component
+        assert module is not None
+        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
+
+        with mock.patch.dict("os.environ", {"TOWER_ACCESS_TOKEN": ""}):
+            version_bumper._build_wave_containers([module])
+
+        # ModuleContainers and its batch progress logic are real; only the external build is mocked.
+        mock_create.assert_called_once()
+        assert "TOWER_ACCESS_TOKEN is not set" in self.caplog.text
+        assert version_bumper.failed == [("Container build with Wave failed", "bpipe/test")]
 
     @staticmethod
     def _mock_nf_core_yml(root_dir: Path) -> None:

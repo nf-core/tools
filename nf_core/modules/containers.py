@@ -1,7 +1,9 @@
 import base64
+import hashlib
 import logging
 import os
 import re
+import shutil
 import threading
 import time
 from collections.abc import Callable
@@ -85,6 +87,16 @@ class ModuleContainers:
     """
     Helpers for building, linting and listing module containers.
     """
+
+    # Wave build results, keyed by (environment.yml content hash, container_system, platform).
+    # Modules with an identical environment.yml (e.g. samtools/sort and samtools/view) resolve
+    # to the same container, so this avoids submitting duplicate builds within one process.
+    _build_cache: dict[tuple[str, str, str], ContainerEntry] = {}
+    # Path to an already-written conda lock file, keyed by Wave build_id. Modules that share
+    # a cached build (above) also share a build_id, so a later module can copy the file that
+    # an earlier one already downloaded instead of re-fetching identical lock contents.
+    _conda_lock_paths: dict[str, Path] = {}
+    _build_cache_lock = threading.Lock()
 
     def __init__(
         self,
@@ -452,11 +464,21 @@ class ModuleContainers:
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
 
             try:
-                # Download conda lock file (it will look up build_id from docker container)
-                log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform}...")
-                conda_lock_path.write_text(self.get_conda_lock_file(platform))
+                with self._build_cache_lock:
+                    cached_lock_path = self._conda_lock_paths.get(build_id)
+                if cached_lock_path is not None and cached_lock_path.exists():
+                    log.debug(f"Reusing conda lock file for build {build_id} (from {cached_lock_path})")
+                    if progress_bar and task_id is not None:
+                        progress_bar.update(task_id, status=f"conda lock {short_platform} (cached)...")
+                    shutil.copyfile(cached_lock_path, conda_lock_path)
+                else:
+                    # Download conda lock file (it will look up build_id from docker container)
+                    log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
+                    if progress_bar and task_id is not None:
+                        progress_bar.update(task_id, status=f"conda lock {short_platform}...")
+                    conda_lock_path.write_text(self.get_conda_lock_file(platform))
+                    with self._build_cache_lock:
+                        self._conda_lock_paths[build_id] = conda_lock_path
                 # Only register the entry once the lock has actually been written, so
                 # meta.yml never points at a missing lock file.
                 containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
@@ -662,12 +684,20 @@ class ModuleContainers:
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
 
+        conda_bytes = conda_file.read_bytes()
+        cache_key = (hashlib.sha256(conda_bytes).hexdigest(), container_system, platform)
+        with cls._build_cache_lock:
+            cached_entry = cls._build_cache.get(cache_key)
+        if cached_entry is not None:
+            log.debug(f"Reusing cached {container_system}/{platform} build for identical environment.yml")
+            return cached_entry
+
         # Submit the build via the Wave HTTP API (POST /v1alpha2/container).
         # `freeze` with no buildRepository pushes to the public community registry.
         payload: dict = {
             "packages": {
                 "type": "CONDA",
-                "environment": base64.b64encode(conda_file.read_bytes()).decode(),
+                "environment": base64.b64encode(conda_bytes).decode(),
             },
             "containerPlatform": platform,
             "freeze": True,
@@ -731,7 +761,10 @@ class ModuleContainers:
                     f"https://{ContainerRegistryUrls.SEQERA_SINGULARITY.value}/blobs/sha256/{digest[:2]}/{digest}/data"
                 )
 
-        return ContainerEntry(name=image, build_id=build_id, scan_id=scan_id, https=https_url)
+        entry = ContainerEntry(name=image, build_id=build_id, scan_id=scan_id, https=https_url)
+        with cls._build_cache_lock:
+            cls._build_cache[cache_key] = entry
+        return entry
 
     @classmethod
     def request_image_inspect(cls, image: str) -> dict:

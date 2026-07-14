@@ -19,6 +19,10 @@ class TestModuleContainers(TestModules):
         super().setUp()
         self.environment_yml = self.bpipe_test_module_path / "environment.yml"
         self.module_containers = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
+        # Avoid a build/lock cached by one test being reused by another (all fixtures share
+        # the same environment.yml content / build_id).
+        ModuleContainers._build_cache.clear()
+        ModuleContainers._conda_lock_paths.clear()
 
     def _write_meta(self, meta: dict) -> None:
         (self.bpipe_test_module_path / "meta.yml").write_text(yaml.safe_dump(meta), encoding="utf-8")
