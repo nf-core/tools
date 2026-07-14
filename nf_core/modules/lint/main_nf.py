@@ -393,7 +393,7 @@ def check_script_section(self, lines):
     permitted_meta_keys = {"id", "single_end"}
     invalid_meta_keys = [
         f"{prefix}{key}"
-        for prefix, key in re.findall(r"\b({(meta\d*\??\.)(\w+)\b(?!\()})", script)
+        for prefix, key in re.findall(r"(?<!\.)\b(meta\d*\??\.)(\w+)\b(?!\()", script)
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
@@ -772,6 +772,7 @@ def check_meta_input_names(self, inputs):
 
     for var in meta_vars:
         if not valid_pattern.match(var):
+            log.debug(f"Invalid meta variable name: {var}, {valid_pattern.match(var)}")
             invalid_meta_vars.append(var)
         else:
             # Extract number if present
@@ -782,6 +783,7 @@ def check_meta_input_names(self, inputs):
 
                 if number_str != str(number_int) or number_int < 2:
                     # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                    log.debug(f"Invalid meta variable number: {var}")
                     invalid_meta_vars.append(var)
                 else:
                     valid_numbers.append(number_int)
