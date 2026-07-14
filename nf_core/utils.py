@@ -34,8 +34,8 @@ from rich.spinner import Spinner
 import nf_core
 
 if TYPE_CHECKING:
-    from nf_core.config_models import NFCoreYamlConfig
     from nf_core.pipelines.schema import PipelineSchema
+    from nf_core.pydantic_models import NFCoreYamlConfig
 
 log = logging.getLogger(__name__)
 
@@ -121,9 +121,9 @@ __getattr__, __dir__ = lazy_attrs(
         "nfcore_question_style": _nfcore_question_style,
         "GitHubAPISession": "nf_core.github_api",
         "gh_api": "nf_core.github_api",
-        "NFCoreTemplateConfig": "nf_core.config_models",
-        "NFCoreYamlLintConfig": "nf_core.config_models",
-        "NFCoreYamlConfig": "nf_core.config_models",
+        "NFCoreTemplateConfig": "nf_core.pydantic_models",
+        "NFCoreYamlLintConfig": "nf_core.pydantic_models",
+        "NFCoreYamlConfig": "nf_core.pydantic_models",
     },
 )
 
@@ -192,17 +192,6 @@ REMOTE_VERSION_CACHE = Path(NFCORE_CACHE_DIR, "latest_version.json")
 REMOTE_VERSION_CACHE_EXPIRY = 60 * 60 * 24  # refresh at most once a day
 REMOTE_VERSION_REFRESH_BACKOFF = 60 * 10  # wait at least this long between refresh attempts
 
-# Self-contained refresh script, so the background process doesn't have to
-# import nf_core (or requests) just to run one HTTP GET
-REMOTE_VERSION_REFRESH_SCRIPT = """
-import json, os, re, sys, time, urllib.request
-text = urllib.request.urlopen(sys.argv[1], timeout=10).read().decode()
-tmp_path = sys.argv[2] + ".tmp"
-with open(tmp_path, "w") as fh:
-    json.dump({"version": re.sub(r"[^0-9.]", "", text), "timestamp": time.time()}, fh)
-os.replace(tmp_path, sys.argv[2])
-"""
-
 
 def _load_version_cache() -> dict:
     try:
@@ -238,7 +227,7 @@ def _spawn_remote_version_refresh(source_url: str) -> None:
         with open(REMOTE_VERSION_CACHE, "w") as fh:
             json.dump(cached, fh)
         subprocess.Popen(
-            [sys.executable, "-c", REMOTE_VERSION_REFRESH_SCRIPT, source_url, str(REMOTE_VERSION_CACHE)],
+            [sys.executable, "-m", "nf_core.version_updater", source_url, str(REMOTE_VERSION_CACHE)],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -1205,7 +1194,7 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
     import yaml
     from pydantic import ValidationError
 
-    from nf_core.config_models import NFCoreTemplateConfig, NFCoreYamlConfig
+    from nf_core.pydantic_models import NFCoreTemplateConfig, NFCoreYamlConfig
 
     tools_config = {}
 
