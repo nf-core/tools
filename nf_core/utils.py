@@ -18,13 +18,17 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
+from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import git
+import git.exc
 import prompt_toolkit.styles
 import questionary
 import requests.auth
@@ -33,7 +37,7 @@ import rich
 import rich.markup
 import yaml
 from packaging.version import Version
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -103,6 +107,19 @@ NFCORE_DIR = Path(
 )
 
 
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
+# Platforms a module must provide containers for. Others (e.g. linux/arm64) are
+# supported and validated when present, but not required.
+REQUIRED_CONTAINER_PLATFORMS = ["linux/amd64"]
+
+
+class ContainerRegistryUrls(Enum):
+    SEQERA_DOCKER = "community.wave.seqera.io/library"
+    SEQERA_SINGULARITY = "community-cr-prod.seqera.io/docker/registry/v2"
+    GALAXY_SINGULARITY = "depot.galaxyproject.org/singularity"
+
+
 def unquote(s: str) -> str:
     """
     Remove paired quotes (single or double) from start and end of string.
@@ -119,9 +136,11 @@ def unquote(s: str) -> str:
     Returns:
         String with outer quotes removed if present, otherwise original string
     """
-    import ruamel.yaml
+    import ruamel.yaml.scalarstring
 
-    if isinstance(s, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+    if isinstance(
+        s, (ruamel.yaml.scalarstring.DoubleQuotedScalarString, ruamel.yaml.scalarstring.SingleQuotedScalarString)
+    ):
         return s
 
     try:
@@ -203,7 +222,7 @@ class Pipeline:
         self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
-        self.wf_path = Path(wf_path)
+        self.wf_path = Path(wf_path).resolve()
         self.pipeline_name: str | None = None
         self.pipeline_prefix: str | None = None
         self.schema_obj: PipelineSchema | None = None
@@ -271,12 +290,13 @@ class Pipeline:
         Once loaded, set a few convenience reference class attributes
         """
         self.nf_config = fetch_wf_config(self.wf_path)
+        manifest = self.nf_config.get("manifest", {})
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = manifest.get("name", "/").split("/")
 
-        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        nextflow_version_match = re.search(r"(?P<version>[0-9\.]+(-edge)?)", manifest.get("nextflowVersion", "") or "")
         if nextflow_version_match:
-            self.minNextflowVersion = nextflow_version_match.group(0)
+            self.minNextflowVersion = nextflow_version_match.group("version")
             return True
         return False
 
@@ -313,8 +333,9 @@ def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
     return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
 
 
+@lru_cache(maxsize=1)
 def get_nf_version() -> tuple[int, int, int, bool] | None:
-    """Get the version of Nextflow installed on the system."""
+    """Get the version of Nextflow installed on the system. Cached for the lifetime of the process."""
     try:
         cmd_out = run_cmd("nextflow", "-v")
         if cmd_out is None:
@@ -369,6 +390,16 @@ def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silen
     return nf_version >= minimal_nf_version
 
 
+def read_module_name(main_nf: Path) -> str | None:
+    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    nf_process_name_regex = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
+    try:
+        match = nf_process_name_regex.search(main_nf.read_text())
+    except OSError:
+        return None
+    return match.group(1) if match else None
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -383,7 +414,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
 
     log.debug(f"Got '{wf_path}' as path")
     wf_path = Path(wf_path)
-    config = {}
+    config: dict[str, Any] = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
@@ -428,35 +459,31 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    result = run_cmd("nextflow", f"config -o json {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        nfconfig = nfconfig_raw.decode("utf-8")
-        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=\s]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
-
-        for config_match in multiline_key_value_pattern.finditer(nfconfig):
-            k = config_match.group(2).strip()
-            v = config_match.group(3).strip().strip("'\"")
-            if k and v == "":
-                config[k] = "null"
-                log.debug(f"Config key: {k}, value: empty string")
-            elif k and v:
-                config[k] = v
-                log.debug(f"Config key: {k}, value: {v}")
-            else:
-                log.debug(f"Couldn't find key=value config pair:\n  {config_match.group(0)}")
-            del config_match
+        try:
+            raw_str = nfconfig_raw.decode("utf-8")
+            json_start = raw_str.find("{")
+            parsed = json.loads(raw_str[json_start:] if json_start >= 0 else raw_str)
+            config.update(parsed)
+            for k in parsed:
+                log.debug(f"Config section: {k}")
+        except json.JSONDecodeError as e:
+            log.warning(f"Unable to parse nextflow config output as JSON: {e}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
+
+    main_nf = Path(wf_path, "main.nf")
     try:
-        main_nf = Path(wf_path, "main.nf")
         with open(main_nf, "rb") as fh:
+            params_section = config.setdefault("params", {})
             for line in fh:
                 line_str = line.decode("utf-8")
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
-                if match and match.group(1):
-                    config[match.group(1)] = "null"
+                match = re.match(r"^\s*params\.([a-zA-Z0-9_]+)\s*=(?!=)", line_str)
+                if match:
+                    params_section[match.group(1)] = None
 
     except FileNotFoundError as e:
         log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
@@ -480,20 +507,26 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     log.debug(f"Running command: {full_cmd}")
     try:
         proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=False)
-        if proc.returncode != 0:
-            if executable == "nf-test":
-                return (proc.stdout, proc.stderr)
-            raise subprocess.CalledProcessError(proc.returncode, proc.args, output=proc.stdout, stderr=proc.stderr)
-        return (proc.stdout, proc.stderr)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Command '{full_cmd}' failed: {e}") from e
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
             ) from e
-        else:
-            return None
+        return None
+
+    if proc.returncode != 0:
+        if executable == "nf-test":
+            return (proc.stdout, proc.stderr)
+        output = (
+            proc.stderr.decode("utf-8", errors="replace").strip()
+            if proc.stderr
+            else proc.stdout.decode("utf-8", errors="replace").strip()
+            if proc.stdout
+            else ""
+        )
+        raise RuntimeError(f"Command '{full_cmd}' failed with exit code {proc.returncode}\n{output}")
+
+    return (proc.stdout, proc.stderr)
 
 
 def setup_nfcore_dir() -> bool:
@@ -636,7 +669,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         log.debug("Initialising GitHub API requests session")
         cache_config = setup_requests_cachedir()
-        super().__init__(**cache_config)
+        super().__init__(**cache_config)  # type: ignore[arg-type]
         self.setup_github_auth()
         self.has_init = True
 
@@ -725,13 +758,13 @@ class GitHubAPISession(requests_cache.CachedSession):
 
         return request
 
-    def get(self, url, **kwargs):
+    def get(self, url, params=None, **kwargs):
         """
         Initialise the session if we haven't already, then call the superclass get method.
         """
         if not self.has_init:
             self.lazy_init()
-        return super().get(url, **kwargs)
+        return super().get(url, params=params, **kwargs)
 
     def request_retry(self, url, post_data=None):
         """
@@ -1115,17 +1148,12 @@ class SingularityCacheFilePathValidator(questionary.Validator):
     Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
-    def validate(self, value):
-        if len(value.text):
-            if Path(value.text).is_file():
-                return True
-            else:
-                raise questionary.ValidationError(
-                    message="Invalid remote cache index file",
-                    cursor_position=len(value.text),
-                )
-        else:
-            return True
+    def validate(self, document) -> None:
+        if len(document.text) and not Path(document.text).is_file():
+            raise questionary.ValidationError(
+                message="Invalid remote cache index file",
+                cursor_position=len(document.text),
+            )
 
 
 def get_repo_releases_branches(pipeline, wfs):
@@ -1388,6 +1416,8 @@ class NFCoreYamlLintConfig(BaseModel):
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     repository_type: Literal["pipeline", "modules"] | None = None
     """ Type of repository """
     nf_core_version: str | None = None
@@ -1402,6 +1432,8 @@ class NFCoreYamlConfig(BaseModel):
     """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
     update: dict[str, str | bool | dict[str, str | dict[str, str | bool]]] | None = None
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
+    container_registry: list[str] | None = Field(default=None, alias="container-registry")
+    """ Additional container registry prefixes allowed when linting container directives. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
@@ -1478,22 +1510,23 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
         template = tools_config.get("template")
         config_template_keys = template.keys() if template is not None else []
         # Get author names from contributors first, then fallback to author
-        if "manifest.contributors" in wf_config:
-            contributors = wf_config["manifest.contributors"]
-            names = re.findall(r"name:'([^']+)'", contributors)
+        manifest = wf_config.get("manifest", {})
+        contributors = manifest.get("contributors", [])
+        if contributors:
+            names = [c.get("name", "") for c in contributors if c.get("name")]
             author_names = ", ".join(names)
-        elif "manifest.author" in wf_config:
-            author_names = wf_config["manifest.author"].strip("'\"")
+        elif manifest.get("author"):
+            author_names = manifest.get("author", "")
         else:
             author_names = None
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org="nf-core",
-                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
-                description=wf_config["manifest.description"].strip("'\""),
+                name=manifest.get("name", "/").split("/")[-1],
+                description=manifest.get("description", ""),
                 author=author_names,
-                version=wf_config["manifest.version"].strip("'\""),
+                version=manifest.get("version", ""),
                 outdir=str(directory),
                 is_nfcore=True,
             )
@@ -1501,10 +1534,10 @@ def load_tools_config(directory: str | Path = ".") -> tuple[Path | None, NFCoreY
             # The .nf-core.yml file contained the old prefix or skip keys
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
-                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
-                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                name=tools_config["template"].get("name", manifest.get("name", "/").split("/")[-1]),
+                description=tools_config["template"].get("description", manifest.get("description", "")),
                 author=tools_config["template"].get("author", author_names),
-                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                version=tools_config["template"].get("version", manifest.get("version", "")),
                 outdir=tools_config["template"].get("outdir", str(directory)),
                 skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
                 is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
@@ -1673,6 +1706,19 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+@contextmanager
+def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
+    """
+    Context manager to create a tempdir and change into it, ensuring its removal and a return to
+    the original working directory on exit (including exceptions).
+
+    Args:
+        base_dir: Directory in which to create the tempdir. Defaults to the system temp location.
+    """
+    with tempfile.TemporaryDirectory(dir=base_dir) as tmp, set_wd(Path(tmp)):
+        yield Path(tmp)
 
 
 def get_wf_files(wf_path: Path):

@@ -19,6 +19,9 @@ ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=2, offset=0)
+# Disable line wrapping: long plain-scalar keys (e.g. version `eval` expressions)
+# become invalid YAML if ruamel folds them onto a second line.
+yaml.width = 4096
 
 
 def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
@@ -202,6 +205,27 @@ def get_components_to_install(
                         current_comp_dict[component_name].update(component_dict)
 
     return list(modules.values()), list(subworkflows.values())
+
+
+def read_meta_yml(meta_yml_path: Path) -> dict:
+    """
+    Read and parse a meta.yml file.
+
+    Args:
+        meta_yml_path: Path to the meta.yml file
+
+    Returns:
+        dict: Parsed YAML content
+
+    Raises:
+        FileNotFoundError: If meta.yml doesn't exist
+    """
+    if not meta_yml_path.exists():
+        raise FileNotFoundError(f"meta.yml not found at {meta_yml_path}")
+
+    with open(meta_yml_path) as f:
+        meta = yaml.load(f)
+    return meta
 
 
 def get_biotools_response(tool_name: str) -> dict | None:

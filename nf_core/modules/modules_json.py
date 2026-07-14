@@ -81,8 +81,9 @@ class ModulesJson:
             UserWarning: If the creation fails
         """
         pipeline_config = nf_core.utils.fetch_wf_config(self.directory)
-        pipeline_name = pipeline_config.get("manifest.name", "")
-        pipeline_url = pipeline_config.get("manifest.homePage", "")
+        manifest = pipeline_config.get("manifest", {})
+        pipeline_name = manifest.get("name", "")
+        pipeline_url = manifest.get("homePage", "")
         new_modules_json = ModulesJsonType(name=pipeline_name, homePage=pipeline_url, repos={})
 
         if not self.modules_dir.exists():

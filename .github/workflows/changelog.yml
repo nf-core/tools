@@ -12,13 +12,13 @@ jobs:
       - name: branch-deploy
         id: branch-deploy
         if: github.event_name == 'issue_comment'
-        uses: github/branch-deploy@ddf8ca48e9cdb2d2c7c71dee428308b19af9313f # v11.1.4
+        uses: github/branch-deploy@de4d10ee17c3117a2076aff489ba03fadf225f35 # v11.1.5
         with:
           trigger: "@nf-core-bot changelog"
           reaction: "eyes"
           stable_branch: "dev"
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           token: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
 
@@ -31,7 +31,7 @@ jobs:
           PR_NUMBER="${{ github.event.issue.number }}"
           gh pr checkout $PR_NUMBER
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.14"
 
@@ -60,12 +60,12 @@ jobs:
           echo "changed=$file_changed" >> $GITHUB_OUTPUT
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.14"
 
       - name: Run pre-commit rules with prek
-        uses: j178/prek-action@6ad80277337ad479fe43bd70701c3f7f8aa74db3 # v2
+        uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2
         continue-on-error: true
         with:
           extra-args: --config .pre-commit-config.yaml --all-files

@@ -14,7 +14,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-import questionary
 import rich
 import rich.progress
 import ruamel.yaml
@@ -29,9 +28,9 @@ from nf_core.utils import unquote
 
 log = logging.getLogger(__name__)
 
-from .environment_yml import environment_yml
+from .environment_yml import lint_environment_yml
 from .main_nf import main_nf
-from .meta_yml import meta_yml, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml
+from .meta_yml import meta_yml, meta_yml_containers, obtain_inputs, obtain_outputs, obtain_topics, read_meta_yml_patched
 from .module_changes import module_changes
 from .module_deprecations import module_deprecations
 from .module_patch import module_patch
@@ -47,13 +46,13 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
-    environment_yml = environment_yml
+    environment_yml = lint_environment_yml
     main_nf = main_nf
     meta_yml = meta_yml
     obtain_inputs = obtain_inputs
     obtain_outputs = obtain_outputs
     obtain_topics = obtain_topics
-    read_meta_yml = read_meta_yml
+    read_meta_yml_patched = read_meta_yml_patched
     module_changes = module_changes
     module_deprecations = module_deprecations
     module_patch = module_patch
@@ -69,7 +68,7 @@ class ModuleLint(ComponentLint):
         remote_url: str | None = None,
         branch: str | None = None,
         no_pull: bool = False,
-        registry: str | None = None,
+        registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress: bool = False,
     ):
         super().__init__(
@@ -88,7 +87,6 @@ class ModuleLint(ComponentLint):
     def lint(
         self,
         module=None,
-        registry="quay.io",
         key=(),
         all_modules=False,
         print_results=True,
@@ -124,24 +122,9 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
         if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
-            questions = [
-                {
-                    "type": "list",
-                    "name": "all_modules",
-                    "message": "Lint all modules or a single named module?",
-                    "choices": ["All modules", "Named module"],
-                },
-                {
-                    "type": "autocomplete",
-                    "name": "tool_name",
-                    "message": "Tool name:",
-                    "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.component_name for m in self.all_remote_components],
-                },
-            ]
-            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
-            all_modules = answers["all_modules"] == "All modules"
-            module = answers.get("tool_name")
+            module = nf_core.modules.modules_utils.prompt_module_selection(
+                self.all_remote_components, component_type="modules", action="Lint"
+            )
 
         # Only lint the given module
         if module:
@@ -173,25 +156,22 @@ class ModuleLint(ComponentLint):
 
         # Lint local modules
         if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
+            self.lint_modules(local_modules, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
         if not local and len(remote_modules) > 0:
-            self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
+            self.lint_modules(remote_modules, local=False, fix_version=fix_version)
 
         if print_results:
             self._print_results(show_passed=show_passed, sort_by=sort_by, plain_text=plain_text)
             self.print_summary(plain_text=plain_text)
 
-    def lint_modules(
-        self, modules: list[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
-    ) -> None:
+    def lint_modules(self, modules: list[NFCoreComponent], local: bool = False, fix_version: bool = False) -> None:
         """
         Lint a list of modules
 
         Args:
             modules ([NFCoreComponent]): A list of module objects
-            registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core modules
             fix_version (boolean): Fix the module version if a newer version is available
         """
@@ -243,6 +223,7 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
+            # TODO container-conversion:  get_containers from main_nf
             # Update meta.yml file if requested
             if self.fix and mod.meta_yml is not None:
                 self.update_meta_yml_file(mod)
@@ -252,7 +233,11 @@ class ModuleLint(ComponentLint):
                     continue
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
-                elif test_name in ["meta_yml", "environment_yml"]:
+                elif test_name == "environment_yml":
+                    getattr(self, test_name)(
+                        mod, allow_missing=True, fix_version=fix_version, progress_bar=progress_bar
+                    )
+                elif test_name == "meta_yml":
                     # Allow files to be missing for local
                     getattr(self, test_name)(mod, allow_missing=True)
                 else:
@@ -270,6 +255,8 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
+            # TODO container-conversion:  get_containers from main_nf
+
             # Update meta.yml file if requested
             if self.fix:
                 self.update_meta_yml_file(mod)
@@ -282,6 +269,8 @@ class ModuleLint(ComponentLint):
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                elif test_name == "environment_yml":
+                    getattr(self, test_name)(mod, fix_version=fix_version, progress_bar=progress_bar)
                 else:
                     getattr(self, test_name)(mod)
 
@@ -316,11 +305,33 @@ class ModuleLint(ComponentLint):
             self.meta_schema = json.load(fh)
         return self.meta_schema
 
+    def sort_meta_yml(self, meta_yml: dict) -> dict:
+        """Sort meta.yml keys according to the schema's property order.
+
+        Recurses into nested objects that the schema describes with ``properties``
+        (e.g. ``containers`` -> docker, singularity, conda), so sub-sections are sorted
+        too. Arrays, ``$ref``/``patternProperties`` nodes and scalars are left untouched.
+        """
+        try:
+            schema = self.load_meta_schema()
+        except LintExceptionError as e:
+            raise UserWarning("Failed to load meta schema", e) from e
+
+        def sort_by_schema(data, node):
+            properties = node.get("properties", {}) if isinstance(node, dict) else {}
+            if not isinstance(data, dict) or not properties:
+                return data
+            # Schema-ordered keys first (recursing into each), then any extras preserved
+            ordered = {key: sort_by_schema(data[key], child) for key, child in properties.items() if key in data}
+            return {**ordered, **{key: value for key, value in data.items() if key not in ordered}}
+
+        return sort_by_schema(meta_yml, schema)
+
     def update_meta_yml_file(self, mod):
         """
-        Update the meta.yml file with the correct inputs and outputs
+        Update the meta.yml file with the correct inputs, outputs, topics and containers
         """
-        meta_yml = self.read_meta_yml(mod)
+        meta_yml = self.read_meta_yml_patched(mod)
         if meta_yml is None:
             log.warning(f"Could not read meta.yml for {mod.component_name}, skipping update")
             return
@@ -367,29 +378,6 @@ class ModuleLint(ComponentLint):
                             return result
 
             return {}
-
-        def _sort_meta_yml(meta_yml: dict) -> dict:
-            """Sort meta.yml keys according to the schema's property order"""
-            # Get the schema to determine the correct key order
-            try:
-                schema = self.load_meta_schema()
-                schema_keys = list(schema["properties"].keys())
-            except (LintExceptionError, KeyError) as e:
-                raise UserWarning("Failed to load meta schema", e) from e
-
-            result: dict = {}
-
-            # First, add keys in the order they appear in the schema
-            for key in schema_keys:
-                if key in meta_yml:
-                    result[key] = meta_yml[key]
-
-            # Then add any keys that aren't in the schema (to preserve custom keys)
-            for key in meta_yml:
-                if key not in result:
-                    result[key] = meta_yml[key]
-
-            return result
 
         # Obtain inputs, outputs and topics from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
@@ -611,13 +599,21 @@ class ModuleLint(ComponentLint):
                 section["ontologies"] = []
             log.debug(f"expected ontologies for {desc}: {expected_ontologies}")
             log.debug(f"current ontologies for {desc}: {current_ontologies}")
-            for ontology, ext in expected_ontologies:
-                if ontology not in current_ontologies:
+            for ontology_url, ext in expected_ontologies:
+                comment_text = edam_formats[ext][1]
+                if ontology_url not in current_ontologies:
                     try:
-                        section["ontologies"].append(ruamel.yaml.comments.CommentedMap({"edam": ontology}))
-                        section["ontologies"][-1].yaml_add_eol_comment(f"{edam_formats[ext][1]}", "edam")
+                        cm = ruamel.yaml.comments.CommentedMap()
+                        cm["edam"] = ontology_url
+                        cm.yaml_add_eol_comment(comment_text, key="edam")
+                        section["ontologies"].append(cm)
                     except KeyError:
                         log.warning(f"Could not add ontologies in {desc}")
+                else:
+                    for item in section["ontologies"]:
+                        if isinstance(item, ruamel.yaml.comments.CommentedMap) and item.get("edam") == ontology_url:
+                            item.yaml_add_eol_comment(comment_text, key="edam")
+                            break
 
         # EDAM ontologies
         edam_formats = nf_core.modules.modules_utils.load_edam()
@@ -681,14 +677,21 @@ class ModuleLint(ComponentLint):
 
         def _ensure_string_keys(obj):
             """Recursively ensure all dict keys are strings (e.g., convert 1.2 -> "1.2")"""
-            if isinstance(obj, dict):
+            # This first block is needed to keep the comments in the yml
+            if isinstance(obj, ruamel.yaml.comments.CommentedMap):
+                for key in list(obj.keys()):
+                    value = obj.pop(key)
+                    new_key = str(key) if not isinstance(key, str) else key
+                    obj[new_key] = _ensure_string_keys(value)
+                return obj
+            elif isinstance(obj, dict):
                 return {str(k) if not isinstance(k, str) else k: _ensure_string_keys(v) for k, v in obj.items()}
             elif isinstance(obj, list):
                 return [_ensure_string_keys(item) for item in obj]
             else:
                 return obj
 
-        corrected_meta_yml = _sort_meta_yml(corrected_meta_yml)
+        corrected_meta_yml = self.sort_meta_yml(corrected_meta_yml)
         corrected_meta_yml = _ensure_string_keys(corrected_meta_yml)
 
         with open(mod.meta_yml, "w") as fh:
