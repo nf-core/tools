@@ -759,34 +759,27 @@ def check_meta_input_names(self, inputs):
         inputs (list): List of input variable names
     """
 
-    meta_vars = [var for var in inputs if var.startswith("meta")]
+    # 'meta' optionally followed by a number (meta2, meta3, etc.); the group captures the number.
+    meta_pattern = re.compile(r"^meta(\d+)?$")
+
+    meta_vars = [var for var in inputs if meta_pattern.match(var)]
 
     if not meta_vars:
         return  # No meta variables to check
-
-    # Expected pattern: 'meta' or 'meta' followed by a number (meta2, meta3, etc.)
-    valid_pattern = re.compile(r"^meta(\d+)?$")
 
     invalid_meta_vars = []
     valid_numbers = []
 
     for var in meta_vars:
-        if not valid_pattern.match(var):
-            log.debug(f"Invalid meta variable name: {var}, {valid_pattern.match(var)}")
-            invalid_meta_vars.append(var)
-        else:
-            # Extract number if present
-            match = re.match(r"^meta(\d+)?$", var)
-            if match.group(1):  # Has a number
-                number_str = match.group(1)
-                number_int = int(number_str)
-
-                if number_str != str(number_int) or number_int < 2:
-                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
-                    log.debug(f"Invalid meta variable number: {var}")
-                    invalid_meta_vars.append(var)
-                else:
-                    valid_numbers.append(number_int)
+        number_str = meta_pattern.match(var).group(1)
+        if number_str:  # Has a number
+            number_int = int(number_str)
+            if number_str != str(number_int) or number_int < 2:
+                # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                log.debug(f"Invalid meta variable number: {var}")
+                invalid_meta_vars.append(var)
+            else:
+                valid_numbers.append(number_int)
 
     # Check for invalid names
     if invalid_meta_vars:
