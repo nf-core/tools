@@ -7,18 +7,13 @@ import datetime
 import errno
 import fnmatch
 import functools
-import hashlib
 import importlib
 import io
 import json
 import logging
-import mimetypes
 import os
 import re
-import shlex
-import subprocess
 import sys
-import tempfile
 import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
@@ -27,9 +22,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from packaging.version import InvalidVersion, Version
-from rich.live import Live
-from rich.spinner import Spinner
+from rich.console import Console
 
 import nf_core
 
@@ -205,6 +198,8 @@ def _load_version_cache() -> dict:
 
 
 def _load_cached_remote_version() -> str | None:
+    from packaging.version import InvalidVersion, Version
+
     cached = _load_version_cache()
     try:
         if time.time() - cached["timestamp"] < REMOTE_VERSION_CACHE_EXPIRY:
@@ -217,6 +212,8 @@ def _load_cached_remote_version() -> str | None:
 
 def _spawn_remote_version_refresh(source_url: str) -> None:
     """Kick off a detached background process to refresh the remote version cache."""
+    import subprocess
+
     try:
         cached = _load_version_cache()
         if time.time() - float(cached.get("attempted_at") or 0) < REMOTE_VERSION_REFRESH_BACKOFF:
@@ -248,6 +245,9 @@ def check_if_outdated(
     # Exit immediately if disabled via ENV var
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
         return (False, "", "")
+
+    from packaging.version import Version
+
     # Set and clean up the current version string
     if current_version is None:
         current_version = nf_core.__version__
@@ -274,6 +274,10 @@ def rich_force_colors():
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
     return None
+
+
+stdout = Console(force_terminal=rich_force_colors())
+stderr = Console(stderr=True, force_terminal=rich_force_colors())
 
 
 class Pipeline:
@@ -346,6 +350,8 @@ class Pipeline:
 
     def list_files(self) -> list[Path]:
         """Get a list of all files in the pipeline"""
+        import subprocess
+
         files = []
         try:
             # First, try to get the list of files using git
@@ -420,6 +426,8 @@ def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
 @lru_cache(maxsize=1)
 def get_nf_version() -> tuple[int, int, int, bool] | None:
     """Get the version of Nextflow installed on the system. Cached for the lifetime of the process."""
+    import subprocess
+
     try:
         cmd_out = run_cmd("nextflow", "-v")
         if cmd_out is None:
@@ -495,6 +503,8 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     Returns:
         dict: Workflow configuration settings.
     """
+
+    import hashlib
 
     log.debug(f"Got '{wf_path}' as path")
     wf_path = Path(wf_path)
@@ -587,6 +597,9 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
 
 def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     """Run a specified command and capture the output. Handle errors nicely."""
+    import shlex
+    import subprocess
+
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
@@ -663,6 +676,9 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
     Returns:
        None. Just sits in an infinite loop until the function returns True.
     """
+    from rich.live import Live
+    from rich.spinner import Spinner
+
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
         with Live(spinner, refresh_per_second=refresh_per_second):
@@ -954,6 +970,8 @@ def custom_yaml_dumper():
 
 def is_file_binary(path):
     """Check file path to see if it is a binary file"""
+    import mimetypes
+
     binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
@@ -1349,6 +1367,8 @@ def file_md5(fname):
         fname (str): Path to a local file.
     """
 
+    import hashlib
+
     # Calculate the md5 for the file on disk
     hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
@@ -1440,6 +1460,8 @@ def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
     Args:
         base_dir: Directory in which to create the tempdir. Defaults to the system temp location.
     """
+    import tempfile
+
     with tempfile.TemporaryDirectory(dir=base_dir) as tmp, set_wd(Path(tmp)):
         yield Path(tmp)
 
