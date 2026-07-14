@@ -759,9 +759,8 @@ def check_meta_input_names(self, inputs):
         inputs (list): List of input variable names
     """
 
-    # 'meta' optionally followed by a number (meta2, meta3, etc.); the group captures the number.
-    meta_pattern = re.compile(r"^meta(\d+)?$")
-
+    # A meta map is named 'meta' optionally followed by a number (meta2, meta3, etc.).
+    meta_pattern = re.compile(r"^meta\d*$")
     meta_vars = [var for var in inputs if meta_pattern.match(var)]
 
     if not meta_vars:
@@ -771,11 +770,11 @@ def check_meta_input_names(self, inputs):
     valid_numbers = []
 
     for var in meta_vars:
-        number_str = meta_pattern.match(var).group(1)
+        number_str = var.removeprefix("meta")  # digits after 'meta' (empty for a plain 'meta')
         if number_str:  # Has a number
             number_int = int(number_str)
+            # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
             if number_str != str(number_int) or number_int < 2:
-                # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
                 log.debug(f"Invalid meta variable number: {var}")
                 invalid_meta_vars.append(var)
             else:
@@ -792,20 +791,20 @@ def check_meta_input_names(self, inputs):
             )
         )
 
-    # Check for proper sequencing (2, 3, 4... not 2, 5, 3)
-    if valid_numbers:
-        expected = list(range(2, len(valid_numbers) + 2))
-        if valid_numbers != expected:
-            self.warned.append(
-                (
-                    "main_nf",
-                    "meta_input_names",
-                    f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
-                    self.main_nf,
-                )
+    # Check for proper sequencing (2, 3, 4... not 2, 5, 3). An empty list compares
+    # equal to the empty range, i.e. it counts as trivially sequential.
+    is_sequential = valid_numbers == list(range(2, len(valid_numbers) + 2))
+    if valid_numbers and not is_sequential:
+        self.warned.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
+                self.main_nf,
             )
+        )
 
-    if not invalid_meta_vars and (not valid_numbers or valid_numbers == list(range(2, len(valid_numbers) + 2))):
+    if not invalid_meta_vars and is_sequential:
         self.passed.append(
             (
                 "main_nf",
