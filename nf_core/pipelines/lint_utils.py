@@ -1,8 +1,10 @@
 import json
 import logging
 import subprocess
+import sys
 from pathlib import Path
 
+import git
 import rich
 import yaml
 from rich.console import Console
@@ -47,7 +49,7 @@ def print_results_plain_text(results_list, directory=None, component_type=None):
                     # Pipeline results: (eid, msg)
                     eid, msg = r
                     console.print(
-                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
+                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}"
                     )
                     print_lines(msg, strip_ansi=True)
                 else:
@@ -132,9 +134,9 @@ def print_fixes(lint_obj, plain_text=False):
 def check_git_repo() -> bool:
     """Check if the current directory is a git repository."""
     try:
-        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
+        git.Repo(search_parent_directories=True)
         return True
-    except subprocess.CalledProcessError:
+    except git.InvalidGitRepositoryError:
         return False
 
 
@@ -151,7 +153,13 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
     is_git = check_git_repo()
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
-    args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+    # Resolve prek relative to the current interpreter so it works in isolated
+    # environments (uv tool, pipx, conda) where only the main entry point is on
+    # PATH. Fall back to the bare name for system-wide pip installs where the
+    # scripts directory differs from the interpreter location.
+    prek_bin = Path(sys.executable).parent / "prek"
+    prek = str(prek_bin) if prek_bin.exists() else "prek"
+    args = [prek, "run", "--config", str(nf_core_pre_commit_config), "prettier"]
     if isinstance(file, list):
         args.extend(["--files", *file])
     else:
@@ -165,7 +173,7 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
             if ": SyntaxError: " in e.stdout.decode():
                 log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
             elif "files were modified by this hook" in e.stdout.decode():
-                all_lines = [line for line in e.stdout.decode().split("\n")]
+                all_lines = list(e.stdout.decode().split("\n"))
                 files = "\n".join(all_lines[3:])
                 log.debug(f"The following files were modified by prettier:\n {files}")
             else:

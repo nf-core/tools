@@ -120,11 +120,12 @@ def files_exist(self) -> dict[str, list[str]]:
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     #: test autodoc
-    try:
-        _, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
-    except ValueError:
+    pipeline_name = self.nf_config.get("manifest", {}).get("name", "")
+    if "/" in pipeline_name:
+        _, short_name = pipeline_name.split("/")
+    else:
         log.warning("Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is '<pipeline>'.")
-        short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+        short_name = pipeline_name
 
     files_fail = [
         [Path(".gitattributes")],
@@ -224,18 +225,18 @@ def files_exist(self) -> dict[str, list[str]]:
 
     # Files that cause an error if they don't exist
     for files in files_fail:
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             continue
-        if any([pf(f).is_file() for f in files]):
+        if any(pf(f).is_file() for f in files):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
             failed.append(f"File not found: {self._wrap_quotes(files)}")
 
     # Files that cause a warning if they don't exist
     for files in files_warn:
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             continue
-        if any([pf(f).is_file() for f in files]):
+        if any(pf(f).is_file() for f in files):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
             hint = ""

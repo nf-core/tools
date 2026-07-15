@@ -1,10 +1,12 @@
 """Tests for the download subcommand of nf-core tools"""
 
+import contextlib
 import json
 import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,17 +19,25 @@ import nf_core.pipelines.download
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import (
-    NF_INSPECT_MIN_NF_VERSION,
-    check_nextflow_version,
-)
+from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, get_nf_version
 
 from ...utils import TEST_DATA_DIR, with_temporary_folder
 
+NF_STRICT_SYNTAX_VERSION = (26, 4, 0, False)
+
 
 class DownloadTest(unittest.TestCase):
+    def setUp(self):
+        nf_ver = get_nf_version()
+        self.nf_strict_syntax = nf_ver is not None and nf_ver >= NF_STRICT_SYNTAX_VERSION
+
+    def _strict_syntax_ctx(self, match: str = "nextflow inspect"):
+        """Return a context manager that expects a DownloadError on NF >= 26.04, or a no-op otherwise."""
+        return pytest.raises(DownloadError, match=match) if self.nf_strict_syntax else contextlib.nullcontext()
+
     @pytest.fixture(autouse=True)
     def use_caplog(self, caplog):
         self._caplog = caplog
@@ -231,7 +241,7 @@ class DownloadTest(unittest.TestCase):
             # Test the function
             download_obj.wf_use_local_configs("workflow")
             wf_config = nf_core.utils.fetch_wf_config(Path(test_outdir, "workflow"), cache_config=False)
-            assert wf_config["params.custom_config_base"] == f"{test_outdir}/workflow/../configs/"
+            assert wf_config["params"]["custom_config_base"] == f"{test_outdir}/workflow/../configs/"
 
     #
     # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Docker images
@@ -255,22 +265,57 @@ class DownloadTest(unittest.TestCase):
         mock_fetch_wf_config.return_value = {}
 
         # Run get containers with `nextflow inspect`
+        # NF >= 26.04 rejects old-style if/else container directives (mock_dsl2_old uses them)
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
+        with self._strict_syntax_ctx(match="downgrade to Nextflow"):
+            download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
 
-        # Store the containers found by the new method
-        found_containers = set(download_obj.containers)
+        if not self.nf_strict_syntax:
+            found_containers = set(download_obj.containers)
+            with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+                ref_containers = json.load(fh)
+                ref_container_strs = set(ref_containers.values())
+            assert found_containers == ref_container_strs, (
+                f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+                f"Containers that should've been found: {ref_container_strs}"
+            )
 
-        # Load the reference containers
-        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
-            ref_containers = json.load(fh)
-            ref_container_strs = set(ref_containers.values())
+    #
+    # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Apptainer images
+    #
+    @pytest.mark.skipif(
+        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
+        reason="Can't run test that requires nextflow to run if not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_containers_pipeline_apptainer(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
 
-        # Now check that they contain the same containers
-        assert found_containers == ref_container_strs, (
-            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
-            f"Containers that should've been found: {ref_container_strs}"
-        )
+        # Set up test
+        container_system = "apptainer"
+        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
+        refererence_json_dir = mock_pipeline_dir / "per_profile_output"
+        # First check that `-profile apptainer` produces the same output as the reference
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
+        mock_fetch_wf_config.return_value = {}
+
+        # Run get containers with `nextflow inspect`
+        # NF >= 26.04 rejects old-style if/else container directives (mock_dsl2_old uses them)
+        entrypoint = "main_passing_test.nf"
+        with self._strict_syntax_ctx(match="downgrade to Nextflow"):
+            download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
+
+        if not self.nf_strict_syntax:
+            found_containers = set(download_obj.containers)
+            with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+                ref_containers = json.load(fh)
+                ref_container_strs = set(ref_containers.values())
+            assert found_containers == ref_container_strs, (
+                f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+                f"Containers that should've been found: {ref_container_strs}"
+            )
 
     #
     # Test that `find_container_images` (uses `nextflow inspect`) fetches the correct Docker images
@@ -289,27 +334,91 @@ class DownloadTest(unittest.TestCase):
         container_system = "docker"
         mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
         refererence_json_dir = mock_pipeline_dir / "per_profile_output"
-        # First check that `-profile singularity` produces the same output as the reference
+        # First check that `-profile docker` produces the same output as the reference
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
         mock_fetch_wf_config.return_value = {}
 
-        # Run get containers with `nextflow inspect`
+        # NF >= 26.04 rejects old-style if/else container directives (mock_dsl2_old uses them)
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
+        with self._strict_syntax_ctx(match="downgrade to Nextflow"):
+            download_obj.find_container_images(mock_pipeline_dir, "dummy-revision", entrypoint=entrypoint)
 
-        # Store the containers found by the new method
-        found_containers = set(download_obj.containers)
+        if not self.nf_strict_syntax:
+            found_containers = set(download_obj.containers)
+            with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+                ref_containers = json.load(fh)
+                ref_container_strs = set(ref_containers.values())
+            assert found_containers == ref_container_strs, (
+                f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+                f"Containers that should've been found: {ref_container_strs}"
+            )
 
-        # Load the reference containers
-        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
-            ref_containers = json.load(fh)
-            ref_container_strs = set(ref_containers.values())
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_retries_with_outdir_on_missing_param_error(
+        self, mock_get_remote_workflows, mock_run_cmd
+    ):
+        download_obj = DownloadWorkflow(container_system="docker")
+        workflow_directory = Path("workflow")
+        inspect_payload = json.dumps(
+            {"processes": [{"name": "NFCORE_TEST:STEP", "container": "quay.io/nf-core/test:1.0"}]}
+        ).encode()
+        has_retried = False
 
-        # Now check that they contain the same containers
-        assert found_containers == ref_container_strs, (
-            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
-            f"Containers that should've been found: {ref_container_strs}"
-        )
+        def _run_cmd_side_effect(_executable, cmd_params):
+            nonlocal has_retried
+            if not has_retried:
+                has_retried = True
+                nf_output = (
+                    b"The following invalid input values have been detected:\n * Missing required parameter: --outdir\n"
+                )
+                cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=nf_output)
+                exc = RuntimeError("Command failed")
+                exc.__cause__ = cause
+                raise exc
+
+            assert "-params-file" in cmd_params
+            params_file_match = re.search(r'-params-file\s+"([^"]+)"', cmd_params)
+            assert params_file_match is not None
+            assert Path(params_file_match.group(1)).read_text() == 'outdir: "nf-core-tools-inspect"\n'
+            assert "--outdir" not in cmd_params
+            return (inspect_payload, b"")
+
+        mock_run_cmd.side_effect = _run_cmd_side_effect
+
+        download_obj.find_container_images(workflow_directory, "dummy-revision")
+
+        assert len(mock_run_cmd.call_args_list) == 2
+        assert set(download_obj.containers) == {"quay.io/nf-core/test:1.0"}
+        mock_get_remote_workflows.assert_called_once()
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_raises_on_unexpected_runtime_error(self, mock_get_remote_workflows, mock_run_cmd):
+        download_obj = DownloadWorkflow(container_system="docker")
+        mock_run_cmd.side_effect = RuntimeError("unexpected inspect failure")
+
+        with pytest.raises(DownloadError, match="unexpected inspect failure"):
+            download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+        assert mock_run_cmd.call_count == 1
+        mock_get_remote_workflows.assert_called_once()
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
+        """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
+        download_obj = DownloadWorkflow(container_system="docker")
+        cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=b"Error: Invalid process directive\n")
+        exc = RuntimeError("Command failed")
+        exc.__cause__ = cause
+        mock_run_cmd.side_effect = exc
+
+        with pytest.raises(DownloadError, match="downgrade to Nextflow"):
+            download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+        assert mock_run_cmd.call_count == 1
+        mock_get_remote_workflows.assert_called_once()
 
     #
     # Tests for the main entry method 'download_workflow'
@@ -339,7 +448,9 @@ class DownloadTest(unittest.TestCase):
         )
 
         download_obj.include_configs = True  # suppress prompt, because stderr.is_interactive doesn't.
-        download_obj.download_workflow()
+        # NF >= 26.04 fails on old-style container directives used in bamtofastq 2.2.0
+        with self._strict_syntax_ctx():
+            download_obj.download_workflow()
 
     #
     # Test Download for Seqera Platform
@@ -388,9 +499,12 @@ class DownloadTest(unittest.TestCase):
         assert isinstance(download_obj.outdir, Path)
         assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", str(download_obj.outdir), re.S))
 
-        download_obj.output_filename = download_obj.outdir.with_suffix(".git")
-        download_obj.download_workflow_platform(location=tmp_dir)
+        download_obj.output_filename = download_obj.outdir / "rnaseq.git"
+        # NF >= 26.04 fails on old-style container directives used in rnaseq 3.17.0 / 3.19.0
+        with self._strict_syntax_ctx():
+            download_obj.download_workflow_platform(location=tmp_dir)
 
+        # workflow_repo is populated before find_container_images is called, so it's accessible in both paths
         assert download_obj.workflow_repo
         assert isinstance(download_obj.workflow_repo, WorkflowRepo)
         assert issubclass(type(download_obj.workflow_repo), SyncedRepo)
@@ -403,12 +517,13 @@ class DownloadTest(unittest.TestCase):
         # assert that the download has a "latest" branch.
         assert "latest" in all_heads
 
-        # download_obj.download_workflow_platform(location=tmp_dir) will run `nextflow inspect` for each revision
-        # This means that the containers in download_obj.containers are the containers the last specified revision i.e. 3.17
-        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 39
-        assert (
-            "https://depot.galaxyproject.org/singularity/bbmap:39.10--h92535d8_0" in download_obj.containers
-        )  # direct definition
+        if not self.nf_strict_syntax:
+            # download_obj.download_workflow_platform(location=tmp_dir) will run `nextflow inspect` for each revision
+            # This means that the containers in download_obj.containers are the containers the last specified revision i.e. 3.17
+            assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 39
+            assert (
+                "https://depot.galaxyproject.org/singularity/bbmap:39.10--h92535d8_0" in download_obj.containers
+            )  # direct definition
 
         # clean-up
         # remove "nf-core-rnaseq*" directories
@@ -478,7 +593,7 @@ class DownloadTest(unittest.TestCase):
             ) = nf_core.utils.get_repo_releases_branches(download_obj.pipeline, wfs)
 
             download_obj.get_revision_hash()
-            download_obj.output_filename = f"{download_obj.outdir}.git"
+            download_obj.output_filename = download_obj.outdir / "rnaseq.git"
             download_obj.download_workflow_platform(location=tmp_dir)
 
             assert download_obj.workflow_repo

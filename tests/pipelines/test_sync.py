@@ -9,7 +9,6 @@ import git
 import pytest
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.sync
 from nf_core.utils import NFCoreYamlConfig
 
@@ -118,7 +117,7 @@ class TestModules(TestPipelines):
                 psync.inspect_sync_dir()
             assert exc_info.value.args[0].startswith("Uncommitted changes found in pipeline directory!")
         finally:
-            os.remove(test_fn)
+            test_fn.unlink()
 
     def test_inspect_sync_ignored_files(self):
         """
@@ -144,14 +143,14 @@ class TestModules(TestPipelines):
         """Try getting a workflow config, then make it miss a required config option"""
         # Try to sync, check we halt with the right error
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.required_config_vars = ["fakethisdoesnotexist"]
+        psync.required_config_vars = {"fakesection": ["fakethisdoesnotexist"]}
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
         # Check that we did actually get some config back
-        assert psync.wf_config["params.validate_params"] == "true"
+        assert psync.wf_config["params"]["validate_params"] is True
         # Check that we raised because of the missing fake config var
-        assert exc_info.value.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
+        assert exc_info.value.args[0] == "Workflow config variable `fakesection.fakethisdoesnotexist` not found!"
 
     def test_checkout_template_branch(self):
         """Try checking out the TEMPLATE branch of the pipeline"""
@@ -180,7 +179,8 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
-        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
 
     def test_delete_tracked_template_branch_files_unlink_throws_error(self):
         """Test that SyncExceptionError is raised when Path.unlink throws an exception"""
@@ -299,11 +299,13 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
-        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
         # Now create the new template
         psync.make_template_pipeline()
-        assert "main.nf" in os.listdir(self.pipeline_dir)
-        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+        pipeline_path = Path(self.pipeline_dir)
+        assert (pipeline_path / "main.nf").exists()
+        assert (pipeline_path / "nextflow.config").exists()
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""

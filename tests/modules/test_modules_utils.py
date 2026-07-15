@@ -1,4 +1,11 @@
+from unittest import mock
+from unittest.mock import patch
+
 import nf_core.modules.modules_utils
+from nf_core.modules.modules_utils import (
+    module_uses_dockerfile,
+    scan_modules_dir,
+)
 
 from ..test_modules import TestModules
 
@@ -45,7 +52,7 @@ class TestModulesUtils(TestModules):
         # Test filtering by tool family (super-tool)
         filtered = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "samtools")
 
-        assert set(m.component_name for m in filtered) == {"samtools/view", "samtools/sort", "samtools/index"}
+        assert {m.component_name for m in filtered} == {"samtools/view", "samtools/sort", "samtools/index"}
 
     def test_filter_modules_by_name_exact_match_preferred(self):
         """Test that exact matches are preferred over prefix matches"""
@@ -82,3 +89,95 @@ class TestModulesUtils(TestModules):
 
         filtered = nf_core.modules.modules_utils.filter_modules_by_name(modules, "fastqc")
         assert len(filtered) == 0
+
+    def test_load_edam(self):
+        """Test EDAM ontology loading"""
+
+        with patch(
+            "nf_core.modules.modules_utils.NFCORE_CACHE_DIR",
+            str(self.tmp_path),
+        ):
+            cache_path = self.tmp_path / "EDAM.tsv"
+
+            assert not cache_path.exists()
+
+            edam_formats = nf_core.modules.modules_utils.load_edam()
+
+            assert cache_path.exists()
+
+            first_key, first_value = next(iter(edam_formats.items()))
+
+            assert isinstance(first_key, str)
+            assert isinstance(first_value, tuple)
+            assert len(first_value) == 2
+
+    def test_scan_modules_dir_returns_module_names(self):
+        """Test that scan_modules_dir returns module names relative to the scanned directory"""
+        modules_dir = self.nfcore_modules / "modules" / "nf-core"
+        result = scan_modules_dir(modules_dir)
+        assert "bpipe/test" in result
+
+    def test_scan_modules_dir_nonexistent(self):
+        """Test that scan_modules_dir returns an empty list for a nonexistent directory"""
+        result = scan_modules_dir(self.nfcore_modules / "does" / "not" / "exist")
+        assert result == []
+
+    def test_scan_modules_dir_multiple_modules(self):
+        """Test that scan_modules_dir returns all modules when multiple are present"""
+        modules_dir = self.nfcore_modules / "modules" / "nf-core"
+        extra = modules_dir / "samtools" / "sort"
+        extra.mkdir(parents=True)
+        (extra / "main.nf").touch()
+        try:
+            result = scan_modules_dir(modules_dir)
+            assert "bpipe/test" in result
+            assert "samtools/sort" in result
+        finally:
+            import shutil
+
+            shutil.rmtree(modules_dir / "samtools")
+
+
+def test_module_uses_dockerfile_true(tmp_path):
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = None
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    assert module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_false_has_env_yml(tmp_path):
+    env_yml = tmp_path / "environment.yml"
+    env_yml.write_text("name: test\n")
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = env_yml
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    assert not module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_false_no_dockerfile(tmp_path):
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = None
+    assert not module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_nonexistent_env_yml_path(tmp_path):
+    """environment_yml pointing to a non-existent file is treated as missing."""
+    comp = mock.Mock()
+    comp.component_dir = tmp_path
+    comp.environment_yml = tmp_path / "environment.yml"
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    assert module_uses_dockerfile(comp)
+
+
+def test_module_uses_dockerfile_in_parent_dir(tmp_path):
+    """Dockerfile one level up (e.g. spaceranger/Dockerfile) is detected for submodules."""
+    submodule_dir = tmp_path / "count"
+    submodule_dir.mkdir()
+    (tmp_path / "Dockerfile").write_text("FROM ubuntu:22.04\n")
+    comp = mock.Mock()
+    comp.component_dir = submodule_dir
+    comp.environment_yml = None
+    assert module_uses_dockerfile(comp)

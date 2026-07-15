@@ -62,7 +62,7 @@ class ComponentLint(ComponentCommand):
         remote_url: str | None = None,
         branch: str | None = None,
         no_pull: bool = False,
-        registry: str | None = None,
+        registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress: bool = False,
     ):
         super().__init__(
@@ -156,12 +156,11 @@ class ComponentLint(ComponentCommand):
     def __repr__(self) -> str:
         return f"ComponentLint({self.component_type}, {self.directory})"
 
-    def _set_registry(self, registry) -> None:
-        if registry is None:
-            self.registry = self.config.get("docker.registry", "quay.io")
-        else:
-            self.registry = registry
-        log.debug(f"Registry set to {self.registry}")
+    def _set_registry(self, registry: tuple[str, ...]) -> None:
+        _, tools_config = nf_core.utils.load_tools_config(self.directory)
+        user_registries: list[str] = (tools_config.container_registry or []) if tools_config else []
+        self.registry: tuple[str, ...] = (*registry, *user_registries)
+        log.debug(f"Registries set to {self.registry}")
 
     @property
     def local_module_exclude_tests(self):
@@ -259,7 +258,7 @@ class ComponentLint(ComponentCommand):
             try:
                 for lint_result in tests:
                     max_name_len = max(len(lint_result.component_name), max_name_len)
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
 
         # Helper function to format test links nicely
@@ -285,14 +284,15 @@ class ComponentLint(ComponentCommand):
                     module_name = lint_result.component_name
 
                 # Make the filename clickable to open in VSCode
-                file_path = os.path.relpath(lint_result.file_path, self.directory)
-                file_path_link = f"[link=vscode://file/{os.path.abspath(file_path)}]{file_path}[/link]"
+                file_path_obj = Path(lint_result.file_path)
+                file_path_rel = file_path_obj.relative_to(self.directory)
+                file_path_link = f"[link=vscode://file/{file_path_obj.resolve()}]{file_path_rel}[/link]"
 
                 # Add link to the test documentation
                 tools_version = __version__
                 if "dev" in __version__:
                     tools_version = "dev"
-                test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}): {lint_result.message}"
+                test_link_message = f"[{lint_result.lint_test}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/{self.component_type[:-1]}_lint_tests/{lint_result.parent_lint_test}#{lint_result.lint_test}): {lint_result.message}"
 
                 table.add_row(
                     module_name,

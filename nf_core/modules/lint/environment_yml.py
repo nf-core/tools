@@ -4,9 +4,12 @@ from pathlib import Path
 
 import ruamel.yaml
 from jsonschema import exceptions, validators
+from rich.progress import Progress
 
-from nf_core.components.lint import ComponentLint, LintExceptionError
+import nf_core.utils
+from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.modules_utils import module_uses_dockerfile
 
 log = logging.getLogger(__name__)
 
@@ -15,13 +18,70 @@ yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=2, offset=2)
 
 
-def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+def _fix_module_version(self, current_version, latest_version):
+    """Update the conda package version in environment.yml."""
+    with open(self.environment_yml) as source:
+        content = source.read()
+    new_content = content.replace(f"={current_version}", f"={latest_version}", 1)
+    with open(self.environment_yml, "w") as source:
+        source.write(new_content)
+    return True
+
+
+def lint_environment_yml(
+    module_lint_object: ComponentLint,
+    module: NFCoreComponent,
+    allow_missing: bool = False,
+    fix_version: bool = False,
+    progress_bar: Progress | None = None,
+) -> None:
     """
     Lint an ``environment.yml`` file.
 
     The lint test checks that the ``dependencies`` section
     in the environment.yml file is valid YAML and that it
     is sorted alphabetically.
+
+    The following checks are performed:
+
+    environment_yml_exists
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    The ``environment.yml`` file must exist, unless the
+    module has a Dockerfile. If neither ``environment.yml`` nor a Dockerfile is
+    present, the test fails.
+
+    environment_yml_dockerfile_conflict
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    A module must not have both an
+    ``environment.yml`` and a Dockerfile; Remove the Dockerfile if present.
+
+    environment_yml_valid
+    ^^^^^^^^^^^^^^^^^^^^^^
+
+    The ``environment.yml`` must be valid according to
+    the JSON schema defined at https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json.
+
+    environment_yml_sorted
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    The dependencies listed in ``environment.yml``
+    must be sorted alphabetically. If they are not, they will be sorted
+    automatically.
+
+    bioconda_version
+    ^^^^^^^^^^^^^^^^
+
+    The version specified for each bioconda package must
+    be a valid, known version available in the bioconda channel.
+
+    bioconda_latest
+    ^^^^^^^^^^^^^^^
+
+    Each bioconda package should be pinned to the latest
+    available version. A warning is raised (or the version updated if
+    ``fix_version`` is set) when a newer version exists.
     """
     env_yml = None
     has_schema_header = False
@@ -35,6 +95,16 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
 
     #  load the environment.yml file
     if module.environment_yml is None:
+        if module_uses_dockerfile(module):
+            module.passed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_exists",
+                    "Module's `environment.yml` does not exist, but module has a Dockerfile",
+                    Path(module.component_dir, "environment.yml"),
+                )
+            )
+            return
         if allow_missing:
             module.warned.append(
                 (
@@ -45,7 +115,15 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 ),
             )
             return
-        raise LintExceptionError("Module does not have an `environment.yml` file")
+        module.failed.append(
+            (
+                "environment_yml",
+                "environment_yml_exists",
+                "Module's `environment.yml` does not exist and module has no Dockerfile",
+                Path(module.component_dir, "environment.yml"),
+            )
+        )
+        return
     try:
         # Read the entire file content to handle headers properly
         with open(module.environment_yml) as fh:
@@ -73,6 +151,26 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 module.environment_yml,
             )
         )
+
+        component_dir = Path(module.component_dir)
+        if (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists():
+            module.failed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_dockerfile_conflict",
+                    "Module has both an `environment.yml` and a Dockerfile; only one should be present",
+                    module.environment_yml,
+                )
+            )
+        else:
+            module.passed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_dockerfile_conflict",
+                    "Module does not have conflicting `environment.yml` and Dockerfile",
+                    module.environment_yml,
+                )
+            )
 
     except FileNotFoundError:
         # check if the module's main.nf requires a conda environment
@@ -217,3 +315,118 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                         module.environment_yml,
                     )
                 )
+
+        # Check bioconda package versions
+        if "dependencies" in env_yml:
+            bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
+            for bp in bioconda_packages:
+                bp = bp.strip("'").strip('"')
+                try:
+                    bioconda_version = bp.split("=")[1]
+                    response = nf_core.utils.anaconda_package(bp)
+                    module.passed.append(
+                        (
+                            "environment_yml",
+                            "bioconda_version",
+                            f"Conda version specified correctly: {bp}",
+                            module.environment_yml,
+                        )
+                    )
+                except LookupError:
+                    module.warned.append(
+                        (
+                            "environment_yml",
+                            "bioconda_version",
+                            f"Conda version not specified correctly: {bp}",
+                            module.environment_yml,
+                        )
+                    )
+                except ValueError:
+                    module.failed.append(
+                        (
+                            "environment_yml",
+                            "bioconda_version",
+                            f"Conda version not specified correctly: {bp}",
+                            module.environment_yml,
+                        )
+                    )
+                else:
+                    # Check that required version is available at all
+                    if bioconda_version not in response.get("versions"):
+                        module.failed.append(
+                            (
+                                "environment_yml",
+                                "bioconda_version",
+                                f"Conda package {bp} had unknown version: `{bioconda_version}`",
+                                module.environment_yml,
+                            )
+                        )
+                        continue  # No need to test for latest version, continue linting
+                    # Check version is latest available
+                    last_ver = response.get("latest_version")
+                    if last_ver is not None and last_ver != bioconda_version:
+                        package, ver = bp.split("=", 1)
+                        if fix_version:
+                            try:
+                                fixed = _fix_module_version(module, bioconda_version, last_ver)
+                            except FileNotFoundError as e:
+                                fixed = False
+                                log.debug(f"Unable to update package {package} due to error: {e}")
+                            else:
+                                if fixed:
+                                    if progress_bar is not None:
+                                        progress_bar.print(
+                                            f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}"
+                                        )
+                                    log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                                    module.passed.append(
+                                        (
+                                            "environment_yml",
+                                            "bioconda_latest",
+                                            f"Conda package has been updated to the latest available: `{bp}`",
+                                            module.environment_yml,
+                                        )
+                                    )
+                                    # If the version was updated, we should also try to rebuild the container to ensure it works with the new version
+                                    try:
+                                        from nf_core.modules.containers import ModuleContainers
+
+                                        mc = ModuleContainers(
+                                            module=module.component_name,
+                                            directory=module.base_dir,
+                                        )
+                                        mc.create(progress_bar=progress_bar)
+                                    except (ImportError, ValueError, RuntimeError, OSError) as e:
+                                        log.warning(f"Container rebuild after version update failed: {e}")
+                                else:
+                                    if progress_bar is not None:
+                                        progress_bar.print(
+                                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                                        )
+                                    log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                                    module.warned.append(
+                                        (
+                                            "environment_yml",
+                                            "bioconda_latest",
+                                            f"Conda update: {package} `{ver}` -> `{last_ver}`",
+                                            module.environment_yml,
+                                        )
+                                    )
+                        else:
+                            module.warned.append(
+                                (
+                                    "environment_yml",
+                                    "bioconda_latest",
+                                    f"Conda update: {package} `{ver}` -> `{last_ver}`",
+                                    module.environment_yml,
+                                )
+                            )
+                    else:
+                        module.passed.append(
+                            (
+                                "environment_yml",
+                                "bioconda_latest",
+                                f"Conda package is the latest available: `{bp}`",
+                                module.environment_yml,
+                            )
+                        )

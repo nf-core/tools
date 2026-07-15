@@ -1,7 +1,7 @@
 # nf_core.pipelines.utils
 
 ```{eval-rst}
-.. automodule:: nf_core.pipelines.utils
+.. automodule:: nf_core.pipelines.lint_utils
     :members:
     :undoc-members:
     :show-inheritance:

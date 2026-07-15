@@ -28,10 +28,12 @@ workflow {{ short_name|upper }} {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
-    {% if multiqc %}
+    {%- if multiqc %}
     multiqc_config
     multiqc_logo
+    {%- if citations %}
     multiqc_methods_description
+    {%- endif %}
     {%- endif %}
     outdir
 
@@ -47,7 +49,9 @@ workflow {{ short_name|upper }} {
     // MODULE: Run FastQC
     //
     FASTQC(ch_samplesheet)
-    {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
+    {%- if multiqc %}
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.map{ _meta, file -> file })
+    {%- endif %}
     {%- endif %}
 
     //
@@ -79,7 +83,8 @@ workflow {{ short_name|upper }} {
             newLine: true
         )
 
-{% if multiqc %}
+{%- if multiqc %}
+
     //
     // MODULE: MultiQC
     //
@@ -113,7 +118,7 @@ workflow {{ short_name|upper }} {
             ]
         }
     )
-{% endif %}
+{%- endif %}
     emit:
     {%- if multiqc %}multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList() // channel: /path/to/multiqc_report.html{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]

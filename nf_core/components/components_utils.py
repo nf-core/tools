@@ -19,6 +19,9 @@ ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=2, offset=0)
+# Disable line wrapping: long plain-scalar keys (e.g. version `eval` expressions)
+# become invalid YAML if ruamel folds them onto a second line.
+yaml.width = 4096
 
 
 def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
@@ -70,7 +73,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
     # Check for org if modules repo
     if repo_type == "modules":
         org = getattr(tools_config, "org_path", "") or ""
-        if org == "":
+        if org == "" and use_prompt:
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -107,6 +110,8 @@ def prompt_component_version_sha(
     Returns:
         git_sha (str): The selected version of the module/subworkflow
     """
+    if not nf_core.utils.is_interactive():
+        raise UserWarning("Cannot interactively select a version and session is not interactive (no TTY detected).")
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )
@@ -202,6 +207,27 @@ def get_components_to_install(
     return list(modules.values()), list(subworkflows.values())
 
 
+def read_meta_yml(meta_yml_path: Path) -> dict:
+    """
+    Read and parse a meta.yml file.
+
+    Args:
+        meta_yml_path: Path to the meta.yml file
+
+    Returns:
+        dict: Parsed YAML content
+
+    Raises:
+        FileNotFoundError: If meta.yml doesn't exist
+    """
+    if not meta_yml_path.exists():
+        raise FileNotFoundError(f"meta.yml not found at {meta_yml_path}")
+
+    with open(meta_yml_path) as f:
+        meta = yaml.load(f)
+    return meta
+
+
 def get_biotools_response(tool_name: str) -> dict | None:
     """
     Try to get bio.tools information for 'tool'
@@ -252,22 +278,22 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> DictWithStrAndTuple:
+    def _iterate_input_output(funct_data, io_type) -> DictWithStrAndTuple:
         type_info = {}
-        if type in funct:
-            for element in funct[type]:
+        if io_type in funct_data:
+            for element in funct_data[io_type]:
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
                     uris = [element["data"]["uri"]]
                     terms = [element["data"]["term"]]
                     patterns = []
                 if "format" in element:
-                    for format in element["format"]:
+                    for fmt in element["format"]:
                         # Append the EDAM URI
-                        uris.append(format["uri"])
+                        uris.append(fmt["uri"])
                         # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
-                        patterns.append(format["term"].lower().split(" ")[0])
-                        terms.append(format["term"])
+                        patterns.append(fmt["term"].lower().split(" ")[0])
+                        terms.append(fmt["term"])
                     type_info[element_name] = (uris, terms, patterns)
         return type_info
 
@@ -277,8 +303,8 @@ def get_channel_info_from_biotools(
             if "function" in tool:
                 # Parse all tool functions
                 for funct in tool["function"]:
-                    inputs.update(_iterate_input_output("input"))
-                    outputs.update(_iterate_input_output("output"))
+                    inputs.update(_iterate_input_output(funct, "input"))
+                    outputs.update(_iterate_input_output(funct, "output"))
             return inputs, outputs
 
     # If the tool name was not found in the response

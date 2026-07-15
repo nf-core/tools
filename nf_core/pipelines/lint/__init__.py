@@ -34,6 +34,7 @@ from .actions_awstest import actions_awstest
 from .actions_nf_test import actions_nf_test
 from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
+from .container_configs import container_configs
 from .files_exist import files_exist
 from .files_unchanged import files_unchanged
 from .included_configs import included_configs
@@ -87,6 +88,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     actions_schema_validation = actions_schema_validation
     base_config = base_config
     modules_config = modules_config
+    container_configs = container_configs
     files_exist = files_exist
     files_unchanged = files_unchanged
     merge_markers = merge_markers
@@ -166,6 +168,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "modules_config",
             "nfcore_yml",
             "rocrate_readme_sync",
+            "container_configs",
         ] + (["version_consistency", "included_configs"] if release_mode else [])
 
     def _load(self) -> bool:
@@ -209,7 +212,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Including --release mode tests")
 
         # Check that we recognise all --fix arguments
-        unrecognised_fixes = list(test for test in self.fix if test not in self.lint_tests)
+        unrecognised_fixes = [test for test in self.fix if test not in self.lint_tests]
         if len(unrecognised_fixes):
             raise AssertionError(
                 "Unrecognised lint test{} for '--fix': '{}'".format(
@@ -239,11 +242,11 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Attempting to automatically fix failing tests")
             try:
                 repo = git.Repo(self.wf_path)
-            except InvalidGitRepositoryError:
+            except InvalidGitRepositoryError as e:
                 raise AssertionError(
                     f"'{self.wf_path}' does not appear to be a git repository, "
                     "this is required when running with '--fix'"
-                )
+                ) from e
             # Check that we have no uncommitted changes
             if repo.is_dirty(untracked_files=True):
                 raise AssertionError(
@@ -255,6 +258,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
+            console=console,
             disable=self.hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
         )
         with self.progress_bar:
@@ -325,7 +329,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             if "dev" in __version__:
                 tools_version = "dev"
             for eid, msg in test_results:
-                yield Markdown(f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}): {msg}")
+                yield Markdown(
+                    f"[{eid}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}): {msg}"
+                )
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
@@ -426,7 +432,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
+                        f"* [{eid}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.failed
                     ]
@@ -440,7 +446,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
+                        f"* [{eid}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.ignored
                     ]
@@ -454,7 +460,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
+                        f"* [{eid}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.fixed
                     ]
@@ -468,7 +474,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
+                        f"* [{eid}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.warned
                     ]
@@ -483,7 +489,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         (
-                            f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid})"
+                            f"* [{eid}](https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid})"
                             f" - {strip_ansi_codes(msg, '`')}"
                         )
                         for eid, msg in self.passed
@@ -606,12 +612,8 @@ def run_linting(
             )
         log.info("Only running tests: '{}'".format("', '".join(key)))
 
-    # Check if we were given any keys, and if they match any pipeline tests
-    if key:
-        pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode))))
-    else:
-        # If no key is supplied, run all tests
-        pipeline_keys = None
+    # Check if we were given any keys, and if they match any pipeline tests. If no key is supplied, run all tests
+    pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode)))) if key else None
 
     # Create the lint object
     lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned, hide_progress)
@@ -649,8 +651,8 @@ def run_linting(
             )
         else:
             # If no key is supplied, run the default modules tests
-            module_lint_tests = list(("module_changes", "module_version"))
-            subworkflow_lint_tests = list(("subworkflow_changes", "subworkflow_version"))
+            module_lint_tests = ["module_changes", "module_version"]
+            subworkflow_lint_tests = ["subworkflow_changes", "subworkflow_version"]
         module_lint_obj.filter_tests_by_key(module_lint_tests)
         if subworkflow_lint_obj is not None:
             subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
@@ -704,7 +706,6 @@ def run_linting(
         lint_obj._save_json_results(json_fn)
 
     # Reminder about --release mode flag if we had failures
-    if len(lint_obj.failed) > 0:
-        if release_mode:
-            log.info("Reminder: Lint tests were run in --release mode.")
+    if len(lint_obj.failed) > 0 and release_mode:
+        log.info("Reminder: Lint tests were run in --release mode.")
     return lint_obj, module_lint_obj, subworkflow_lint_obj

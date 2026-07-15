@@ -57,7 +57,7 @@ def multiqc_config(self) -> dict[str, list[str]]:
         try:
             with open(fn) as fh:
                 mqc_yml = yaml.safe_load(fh)
-        except Exception as e:
+        except (OSError, yaml.YAMLError) as e:
             return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
         # check if required sections are present
@@ -98,7 +98,7 @@ def multiqc_config(self) -> dict[str, list[str]]:
 
         if "report_comment" not in ignore_configs:
             # Check that the minimum plugins exist and are coming first in the summary
-            version = self.nf_config.get("manifest.version", "").strip(" '\"")
+            version = self.nf_config.get("manifest", {}).get("version", "") or ""
 
             # Get the org from .nf-core.yml config, defaulting to "nf-core"
             _, nf_core_yaml_config = load_tools_config(self.wf_path)
@@ -137,7 +137,7 @@ def multiqc_config(self) -> dict[str, list[str]]:
         # Check that export_plots is activated
         try:
             if not mqc_yml["export_plots"]:
-                raise AssertionError()
+                raise AssertionError
         except (AssertionError, KeyError, TypeError):
             failed.append("`assets/multiqc_config.yml` does not contain 'export_plots: true'.")
         else:

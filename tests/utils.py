@@ -12,7 +12,6 @@ from typing import Any
 import responses
 import yaml
 
-import nf_core.modules
 import nf_core.pipelines.create.create
 from nf_core import __version__
 from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig, custom_yaml_dumper

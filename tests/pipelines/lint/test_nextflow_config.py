@@ -1,10 +1,8 @@
-import os
 import re
 from pathlib import Path
 
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
@@ -36,7 +34,7 @@ class TestLintNextflowConfig(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
 
-        lint_obj.nf_config["manifest.name"] = "bad_name"
+        lint_obj.nf_config["manifest"]["name"] = "bad_name"
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
         assert len(result["warned"]) == 0
@@ -47,7 +45,7 @@ class TestLintNextflowConfig(TestLint):
         lint_obj.load_pipeline_config()
 
         lint_obj.release_mode = True
-        lint_obj.nf_config["manifest.version"] = "dev_is_bad_name"
+        lint_obj.nf_config["manifest"]["version"] = "dev_is_bad_name"
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
         assert len(result["warned"]) == 0
@@ -55,12 +53,13 @@ class TestLintNextflowConfig(TestLint):
     def test_nextflow_config_missing_test_profile_failed(self):
         """Test failure if config file does not contain `test` profile."""
         # Change the name of the test profile so there is no such profile
-        nf_conf_file = os.path.join(self.new_pipeline, "nextflow.config")
+        nf_conf_file = Path(self.new_pipeline, "nextflow.config")
         with open(nf_conf_file) as f:
             content = f.read()
             fail_content = re.sub(r"\btest\b", "testfail", content)
         with open(nf_conf_file, "w") as f:
             f.write(fail_content)
+        Path(self.new_pipeline, "conf", "testfail.config").touch()
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
@@ -107,8 +106,12 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 2
         assert (
+            result["failed"][0]
+            == "Config `params.custom_config_base` is not set to `https://raw.githubusercontent.com/nf-core/configs/master`"
+        )
+        assert (
             result["failed"][1]
-            == "Config default value incorrect: `params.custom_config_base` is set as `https://raw.githubusercontent.com/nf-core/configs/master` in `nextflow_schema.json` but is `null` in `nextflow.config`."
+            == "Default value from the Nextflow schema `params.custom_config_base = `https://raw.githubusercontent.com/nf-core/configs/master`` not found in `nextflow.config`."
         )
 
     def test_allow_params_reference_in_main_nf(self):
@@ -157,7 +160,7 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             fail_content = re.sub(
                 r"validate_params\s*=\s*true",
-                "params.validate_params = true\ndummy = 0.000000001",
+                "validate_params = true\ndummy = 0.000000001",
                 content,
             )
         with open(nf_conf_file, "w") as f:
@@ -189,7 +192,7 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             fail_content = re.sub(
                 r"validate_params\s*=\s*true",
-                "params.validate_params = true\ndummy = 0.000000001",
+                "validate_params = true\ndummy = 0.000000001",
                 content,
             )
         with open(nf_conf_file, "w") as f:

@@ -5,6 +5,7 @@ import shutil
 from collections.abc import Iterable
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
+from typing import cast
 
 import git
 from git.exc import GitCommandError
@@ -92,8 +93,8 @@ class SyncedRepo:
         """
         try:
             unparsed_branches = git.Git().ls_remote(remote_url)
-        except git.GitCommandError:
-            raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
+        except git.GitCommandError as e:
+            raise LookupError(f"Was unable to fetch branches from '{remote_url}'") from e
         else:
             branches = {}
             for branch_info in unparsed_branches.split("\n"):
@@ -133,8 +134,8 @@ class SyncedRepo:
             if config_fn is not None and repo_config is not None:
                 try:
                     self.repo_path = repo_config.org_path
-                except KeyError:
-                    raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+                except KeyError as e:
+                    raise UserWarning(f"'org_path' key not present in {config_fn.name}") from e
 
             # Verify that the repo seems to be correctly configured
             if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
@@ -165,10 +166,9 @@ class SyncedRepo:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
             return False
 
-        if sha:
-            if not self.sha_exists_on_branch(sha):
-                log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
-                return False
+        if sha and not self.sha_exists_on_branch(sha):
+            log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
+            return False
 
         return True
 
@@ -206,17 +206,18 @@ class SyncedRepo:
         """
         try:
             self.checkout_branch()
-        except GitCommandError:
-            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
+        except GitCommandError as e:
+            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'") from e
 
     def verify_branch(self):
         """
         Verifies the active branch conforms to the correct directory structure
         """
-        dir_names = os.listdir(self.local_repo_dir)
-        if "modules" not in dir_names:
+        local_repo_path = Path(cast(str, self.local_repo_dir))
+
+        if not Path(local_repo_path, "modules").exists():
             err_str = f"Repository '{self.remote_url}' ({self.branch}) does not contain the 'modules/' directory"
-            if "software" in dir_names:
+            if Path(local_repo_path, "software").exists():
                 err_str += (
                     ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
                 )
@@ -336,7 +337,7 @@ class SyncedRepo:
         else:
             self.checkout(commit)
         component_files = ["main.nf", "meta.yml"]
-        files_identical = {file: True for file in component_files}
+        files_identical = dict.fromkeys(component_files, True)
         component_dir = self.get_component_dir(component_name, component_type)
         for file in component_files:
             try:
@@ -399,7 +400,7 @@ class SyncedRepo:
                 "To solve this, you can try to remove the cloned rempository and run the command again.\n"
                 f"This repository is typically found at `{self.local_repo_dir}`"
             )
-            raise UserWarning
+            raise UserWarning from None
         commits = iter(commits_new + commits_old)
 
         return commits
@@ -413,7 +414,7 @@ class SyncedRepo:
             if not git_logs:
                 return None
             return git_logs[0]["git_sha"]
-        except Exception as e:
+        except (git.exc.GitError, KeyError) as e:
             log.debug(f"Could not get latest version of {component_name}: {e}")
             return None
 

@@ -19,7 +19,7 @@ class TestLintROcrateReadmeSync(TestLint):
             try:
                 rocrate = json.load(f)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{json_path}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{json_path}' due to error {e}") from e
         rocrate["@graph"][0]["description"] = "This is a test script"
         with open(json_path, "w") as f:
             json.dump(rocrate, f, indent=4)

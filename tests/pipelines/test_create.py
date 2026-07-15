@@ -72,13 +72,13 @@ class NfcoreCreateTest(unittest.TestCase):
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()
-        assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+        assert Path(pipeline.outdir, ".git").is_dir()
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
 
         # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
+        assert Path(pipeline.outdir, ".nf-core.yml").exists()
+        with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
@@ -89,13 +89,13 @@ class NfcoreCreateTest(unittest.TestCase):
             outdir=tmp_path, template_config=PIPELINE_TEMPLATE_YML, default_branch=self.default_branch
         )
         pipeline.init_pipeline()
-        assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+        assert Path(pipeline.outdir, ".git").is_dir()
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
 
         # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
+        assert Path(pipeline.outdir, ".nf-core.yml").exists()
+        with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
@@ -151,7 +151,7 @@ class NfcoreCreateTest(unittest.TestCase):
         ]
         all_skipped_files = []
         for section in template_features_yml.values():
-            for feature in section["features"].keys():
+            for feature in section["features"]:
                 if section["features"][feature]["skippable_paths"]:
                     all_skipped_files.extend(section["features"][feature]["skippable_paths"])
 

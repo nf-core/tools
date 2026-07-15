@@ -274,7 +274,7 @@ class ContainerFetcher(ABC):
         """
         pass
 
-    def gather_config_registries(self, workflow_directory: Path, registry_keys: list[str] = []) -> set[str]:
+    def gather_config_registries(self, workflow_directory: Path, registry_keys: list[str] | None = None) -> set[str]:
         """
         Gather the registries from the pipeline config and store them in a set.
 
@@ -286,12 +286,17 @@ class ContainerFetcher(ABC):
             set[str]: The set of registries defined in the pipeline config
         """
         # Fetch the pipeline config
+        if registry_keys is None:
+            registry_keys = []
         nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
 
         config_registries = set()
         for registry_key in registry_keys:
-            if registry_key in nf_config:
-                config_registries.add(nf_config[registry_key])
+            parts = registry_key.split(".", 1)
+            if len(parts) == 2 and parts[0] in nf_config and isinstance(nf_config[parts[0]], dict):
+                val = nf_config[parts[0]].get(parts[1])
+                if val:
+                    config_registries.add(val)
 
         return config_registries
 
@@ -492,5 +497,6 @@ class ContainerFetcher(ABC):
     def cleanup(self) -> None:
         """
         Cleanup any temporary files or resources.
+        Default implementation logs completion; subclasses can override to add specific cleanup.
         """
-        pass
+        log.debug(f"Container fetching complete. Images saved to {self.get_container_output_dir()}")

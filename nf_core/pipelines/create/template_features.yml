@@ -207,7 +207,7 @@ components_modules:
         the pipeline will automatically download the required reference files.
 
         For more information about reference genomes in nf-core pipelines,
-        see the [nf-core docs](https://nf-co.re/docs/usage/reference_genomes).
+        see the [nf-core docs](https://nf-co.re/docs/running/reference-genomes).
       linting:
         files_exist:
           - "conf/igenomes.config"

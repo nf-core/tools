@@ -9,7 +9,6 @@ nf-core subworkflows lint
 import logging
 import os
 
-import questionary
 import rich
 import ruamel.yaml
 
@@ -51,7 +50,7 @@ class SubworkflowLint(ComponentLint):
         remote_url=None,
         branch=None,
         no_pull=False,
-        registry=None,
+        registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress=False,
     ):
         super().__init__(
@@ -69,7 +68,6 @@ class SubworkflowLint(ComponentLint):
     def lint(
         self,
         subworkflow=None,
-        registry="quay.io",
         key=(),
         all_subworkflows=False,
         print_results=True,
@@ -103,24 +101,11 @@ class SubworkflowLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for subworkflow or all
         if subworkflow is None and not (local or all_subworkflows):
-            questions = [
-                {
-                    "type": "list",
-                    "name": "all_subworkflows",
-                    "message": "Lint all subworkflows or a single named subworkflow?",
-                    "choices": ["All subworkflows", "Named subworkflow"],
-                },
-                {
-                    "type": "autocomplete",
-                    "name": "subworkflow_name",
-                    "message": "Subworkflow name:",
-                    "when": lambda x: x["all_subworkflows"] == "Named subworkflow",
-                    "choices": [m.component_name for m in self.all_remote_components],
-                },
-            ]
-            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
-            all_subworkflows = answers["all_subworkflows"] == "All subworkflows"
-            subworkflow = answers.get("subworkflow_name")
+            from nf_core.modules.modules_utils import prompt_module_selection
+
+            subworkflow = prompt_module_selection(
+                self.all_remote_components, component_type="subworkflows", action="Lint"
+            )
 
         # Only lint the given module
         if subworkflow:
@@ -152,23 +137,22 @@ class SubworkflowLint(ComponentLint):
 
         # Lint local subworkflows
         if local and len(local_subworkflows) > 0:
-            self.lint_subworkflows(local_subworkflows, registry=registry, local=True)
+            self.lint_subworkflows(local_subworkflows, local=True)
 
         # Lint nf-core subworkflows
         if not local and len(remote_subworkflows) > 0:
-            self.lint_subworkflows(remote_subworkflows, registry=registry, local=False)
+            self.lint_subworkflows(remote_subworkflows, local=False)
 
         if print_results:
             self._print_results(show_passed=show_passed, sort_by=sort_by, plain_text=plain_text)
             self.print_summary(plain_text=plain_text)
 
-    def lint_subworkflows(self, subworkflows, registry="quay.io", local=False):
+    def lint_subworkflows(self, subworkflows, local=False):
         """
         Lint a list of subworkflows
 
         Args:
             subworkflows ([NFCoreComponent]): A list of subworkflow objects
-            registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core subworkflows
         """
         # TODO: consider unifying modules and subworkflows lint_subworkflows() function and add it to the ComponentLint class
@@ -189,9 +173,9 @@ class SubworkflowLint(ComponentLint):
 
             for swf in subworkflows:
                 progress_bar.update(lint_progress, advance=1, test_name=swf.component_name)
-                self.lint_subworkflow(swf, progress_bar, registry=registry, local=local)
+                self.lint_subworkflow(swf, progress_bar, local=local)
 
-    def lint_subworkflow(self, swf, progress_bar, registry, local=False):
+    def lint_subworkflow(self, swf, progress_bar, local=False):
         """
         Perform linting on one subworkflow
 
@@ -247,13 +231,14 @@ class SubworkflowLint(ComponentLint):
         """
         Update the meta.yml file with the correct inputs and outputs
         """
+        from nf_core.components.components_utils import read_meta_yml
+
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = True
         yaml.indent(mapping=2, sequence=2, offset=0)
 
         # Read meta.yml
-        with open(swf.meta_yml) as fh:
-            meta_yaml = yaml.load(fh)
+        meta_yaml = read_meta_yml(swf.meta_yml)
         meta_yaml_corrected = meta_yaml.copy()
         # Obtain inputs and outputs from main.nf
         swf.get_inputs_from_main_nf()
@@ -262,14 +247,12 @@ class SubworkflowLint(ComponentLint):
         # Compare inputs and add them if missing
         if "input" in meta_yaml:
             # Delete inputs from meta.yml which are not present in main.nf
-            meta_yaml_corrected["input"] = [
-                input for input in meta_yaml["input"] if list(input.keys())[0] in swf.inputs
-            ]
+            meta_yaml_corrected["input"] = [inp for inp in meta_yaml["input"] if list(inp.keys())[0] in swf.inputs]
             # Obtain inputs from main.nf missing in meta.yml
             inputs_correct = [
-                list(input.keys())[0] for input in meta_yaml_corrected["input"] if list(input.keys())[0] in swf.inputs
+                list(inp.keys())[0] for inp in meta_yaml_corrected["input"] if list(inp.keys())[0] in swf.inputs
             ]
-            inputs_missing = [input for input in swf.inputs if input not in inputs_correct]
+            inputs_missing = [inp for inp in swf.inputs if inp not in inputs_correct]
             # Add missing inputs to meta.yml
             for missing_input in inputs_missing:
                 meta_yaml_corrected["input"].append({missing_input: {"description": ""}})

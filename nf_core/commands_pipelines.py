@@ -1,10 +1,10 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
 import rich
 
+import nf_core.utils
 from nf_core.pipelines.params_file import ParamsFileBuilder
 from nf_core.utils import rich_force_colors
 
@@ -53,6 +53,12 @@ def pipelines_create(ctx, name, description, author, version, force, outdir, tem
         )
         sys.exit(1)
     else:
+        if not nf_core.utils.is_interactive():
+            log.error(
+                "No pipeline arguments provided and session is not interactive (no TTY detected). "
+                "Please provide at least --name, --description, and --author to run non-interactively."
+            )
+            sys.exit(1)
         log.info("Launching interactive nf-core pipeline creation tool.")
         app = PipelineCreateApp()
         app.run()
@@ -89,7 +95,7 @@ def pipelines_bump_version(ctx, new_version, directory, nextflow):
             bump_pipeline_version(pipeline_obj, new_version)
         else:
             bump_nextflow_version(pipeline_obj, new_version)
-    except UserWarning as e:
+    except (UserWarning, ValueError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -114,7 +120,7 @@ def pipelines_lint(
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: [link=https://nf-co.re/tools/docs/]https://nf-co.re/tools/docs/[/]
+    on the nf-core website: [link=https://nf-co.re/docs/nf-core-tools/api_reference/latest/]https://nf-co.re/docs/nf-core-tools/api_reference/latest/[/]
 
     You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
@@ -156,8 +162,10 @@ def pipelines_lint(
     except AssertionError as e:
         log.critical(e)
         sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
+    except (UserWarning, RuntimeError) as e:
+        from rich.text import Text
+
+        log.error(Text.from_ansi(str(e)))
         sys.exit(1)
 
 
@@ -206,7 +214,7 @@ def pipelines_download(
 
 
 # nf-core pipelines create-params-file
-def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden):
+def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts=False):
     """
     Build a parameter file for a pipeline.
 
@@ -218,7 +226,7 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory.
     """
-    builder = ParamsFileBuilder(pipeline, revision)
+    builder = ParamsFileBuilder(pipeline, revision, no_prompts)
 
     if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):
         sys.exit(1)
@@ -228,7 +236,7 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
 def pipelines_launch(
     ctx,
     pipeline,
-    id,
+    launch_id,
     revision,
     command_only,
     params_in,
@@ -236,6 +244,7 @@ def pipelines_launch(
     save_all,
     show_hidden,
     url,
+    no_prompts=False,
 ):
     """
     Launch a pipeline using a web GUI or command line prompts.
@@ -261,7 +270,8 @@ def pipelines_launch(
         save_all,
         show_hidden,
         url,
-        id,
+        launch_id,
+        no_prompts,
     )
     if not launcher.launch_pipeline():
         sys.exit(1)
@@ -309,7 +319,16 @@ def pipelines_rocrate(
 
 # nf-core pipelines sync
 def pipelines_sync(
-    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+    ctx,
+    directory,
+    from_branch,
+    pull_request,
+    github_repository,
+    username,
+    template_yaml,
+    force_pr,
+    blog_post,
+    no_prompts=False,
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
@@ -331,16 +350,24 @@ def pipelines_sync(
         is_pipeline_directory(directory)
         # Sync the given pipeline dir
         sync_obj = PipelineSync(
-            directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+            directory,
+            from_branch,
+            pull_request,
+            github_repository,
+            username,
+            template_yaml,
+            force_pr,
+            blog_post,
+            no_prompts,
         )
         sync_obj.sync()
-    except (SyncExceptionError, PullRequestExceptionError) as e:
+    except (UserWarning, SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
         sys.exit(1)
 
 
 # nf-core pipelines create-logo
-def pipelines_create_logo(logo_text, directory, name, theme, width, format, force):
+def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force):
     """
     Generate a logo with the nf-core logo template.
 
@@ -351,7 +378,7 @@ def pipelines_create_logo(logo_text, directory, name, theme, width, format, forc
     try:
         if directory == ".":
             directory = Path.cwd()
-        logo_path = create_logo(logo_text, directory, name, theme, width, format, force)
+        logo_path = create_logo(logo_text, directory, name, theme, width, img_format, force)
         # Print path to logo relative to current working directory
         try:
             logo_path = Path(logo_path).relative_to(Path.cwd())
@@ -444,11 +471,11 @@ def pipelines_schema_lint(schema_path):
 
 
 # nf-core pipelines schema docs
-def pipelines_schema_docs(schema_path, output, format, force, columns):
+def pipelines_schema_docs(schema_path, output, output_format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    if not os.path.exists(schema_path):
+    if not schema_path.exists():
         log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
         sys.exit(1)
 
@@ -458,4 +485,4 @@ def pipelines_schema_docs(schema_path, output, format, force, columns):
     # Assume we're in a pipeline dir root if schema path not set
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
-    schema_obj.print_documentation(output, format, force, columns.split(","))
+    schema_obj.print_documentation(output, output_format, force, columns.split(","))

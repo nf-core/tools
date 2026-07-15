@@ -1,5 +1,6 @@
 import sys
 
+import git
 from click.shell_completion import CompletionItem
 
 from nf_core.modules.list import ModuleList
@@ -24,7 +25,7 @@ def autocomplete_components(ctx, param, incomplete: str, component_type: str, li
         available_components = components_list.modules_repo.get_avail_components(component_type)
 
         return [CompletionItem(comp) for comp in available_components if comp.startswith(incomplete)]
-    except Exception as e:
+    except (git.exc.GitError, LookupError, OSError) as e:
         print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
         return []
 

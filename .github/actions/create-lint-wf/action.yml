@@ -16,7 +16,7 @@ runs:
         export NXF_WORK=$(pwd)
 
     - name: Install Nextflow
-      uses: nf-core/setup-nextflow@v2
+      uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
       with:
         version: ${{ matrix.NXF_VER }}
 
@@ -40,11 +40,12 @@ runs:
         pwd
         ls -l
       working-directory: create-lint-wf/nf-core-testpipeline
+
     # Run code style linting
-    - name: run pre-commit
+    - name: run prek
       shell: bash
-      run: uv run pre-commit run --all-files
-      working-directory: create-lint-wf
+      run: uv run prek run --config .pre-commit-config.yaml --all-files
+      working-directory: create-lint-wf/nf-core-testpipeline
 
     # Update modules to the latest version
     - name: nf-core modules update
@@ -52,22 +53,33 @@ runs:
       run: uv run nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
       working-directory: create-lint-wf
 
+    # Commit regenerated container configs so lint sees them as up to date
+    - name: commit updated container configs
+      shell: bash
+      run: |
+        cd nf-core-testpipeline
+        git config user.email "nf-core-bot@nf-co.re"
+        git config user.name "nf-core-bot"
+        git add conf/containers_*.config
+        git diff --cached --quiet || git commit -m "Update container configs after modules update"
+      working-directory: create-lint-wf
+
     # Remove TODO statements
     - name: remove TODO
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's#TODO nf-core:##g' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's#TODO nf-core:##g' {} \;
       working-directory: create-lint-wf
 
     # Uncomment includeConfig statement
     - name: uncomment include config
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
       working-directory: create-lint-wf
 
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
     # Run nf-core pipelines linting
@@ -88,7 +100,7 @@ runs:
 
     - name: Upload log file artifact
       if: ${{ always() }}
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: nf-core-log-file-${{ matrix.NXF_VER }}
         path: create-lint-wf/log.txt

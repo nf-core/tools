@@ -27,7 +27,7 @@ def schema_description(self):
     ignore_params = self.lint_config.get("schema_description", []) if self.lint_config is not None else []
 
     # Get ungrouped params
-    if "properties" in self.schema_obj.schema.keys():
+    if "properties" in self.schema_obj.schema:
         ungrouped_params = self.schema_obj.schema["properties"].keys()
         for up in ungrouped_params:
             if up in ignore_params:
@@ -37,13 +37,13 @@ def schema_description(self):
 
     # Iterate over groups and add warning for parameters without a description
     defs_notation = self.schema_obj.defs_notation
-    for group_key in self.schema_obj.schema[defs_notation].keys():
+    for group_key in self.schema_obj.schema[defs_notation]:
         group = self.schema_obj.schema[defs_notation][group_key]
         for param_key, param in group["properties"].items():
             if param_key in ignore_params:
                 ignored.append(f"Ignoring description check for param in schema: `{param_key}`")
                 continue
-            if "description" not in param.keys():
+            if "description" not in param:
                 warned.append(f"No description provided in schema for parameter: `{param_key}`")
 
     for ip in ignore_params:

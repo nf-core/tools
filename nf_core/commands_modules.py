@@ -1,9 +1,10 @@
 import logging
 import sys
+from pathlib import Path
 
 import rich
 
-from nf_core.utils import rich_force_colors
+from nf_core.utils import CONTAINER_PLATFORMS, rich_force_colors
 
 log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -87,6 +88,7 @@ def modules_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 modules within a pipeline.
@@ -109,11 +111,12 @@ def modules_update(
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
             limit_output,
+            skip_deps,
         )
         exit_status = module_install.update(tool)
         if not exit_status and install_all:
             sys.exit(1)
-    except (UserWarning, LookupError) as e:
+    except (UserWarning, LookupError, AssertionError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -143,7 +146,7 @@ def modules_patch(ctx, tool, directory, remove):
         sys.exit(1)
 
 
-def modules_remove(ctx, directory, tool):
+def modules_remove(ctx, directory, tool, force):
     """
     Remove a module from a pipeline.
     """
@@ -156,25 +159,14 @@ def modules_remove(ctx, directory, tool):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        module_remove.remove(tool)
+        module_remove.remove(tool, force=force)
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
 
 def modules_create(
-    ctx,
-    tool,
-    directory,
-    author,
-    label,
-    meta,
-    no_meta,
-    force,
-    conda_name,
-    conda_package_version,
-    empty_template,
-    migrate_pytest,
+    ctx, tool, directory, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -208,7 +200,6 @@ def modules_create(
             conda_name,
             conda_package_version,
             empty_template,
-            migrate_pytest,
         )
         module_create.create()
     except UserWarning as e:
@@ -219,7 +210,7 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
+def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a module.
 
@@ -227,21 +218,6 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
     """
     from nf_core.components.components_test import ComponentsTest
 
-    if migrate_pytest:
-        modules_create(
-            ctx,
-            tool,
-            directory,
-            author="",
-            label="",
-            meta=True,
-            no_meta=False,
-            force=False,
-            conda_name=None,
-            conda_package_version=None,
-            empty_template=False,
-            migrate_pytest=migrate_pytest,
-        )
     try:
         module_tester = ComponentsTest(
             component_type="modules",
@@ -262,7 +238,7 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
 
 
 def modules_lint(
-    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
+    ctx, tool, directory, registry, key, all_modules, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
 ):
     """
     Lint one or more modules in a directory.
@@ -281,7 +257,7 @@ def modules_lint(
             directory,
             fail_warned=fail_warned,
             fix=fix,
-            registry=ctx.params["registry"],
+            registry=registry,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             no_pull=ctx.obj["modules_repo_no_pull"],
@@ -289,9 +265,8 @@ def modules_lint(
         )
         module_lint.lint(
             module=tool,
-            registry=registry,
             key=key,
-            all_modules=all,
+            all_modules=all_modules,
             print_results=True,
             local=local,
             show_passed=passed,
@@ -337,7 +312,7 @@ def modules_info(ctx, tool, directory):
         sys.exit(1)
 
 
-def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
+def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
@@ -352,10 +327,91 @@ def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        version_bumper.bump_versions(module=tool, all_modules=all, show_up_to_date=show_all, dry_run=dry_run)
+        version_bumper.bump_versions(
+            module=tool,
+            all_modules=all_modules,
+            show_up_to_date=show_all,
+            dry_run=dry_run,
+            hide_progress=ctx.obj["hide_progress"],
+        )
     except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.critical(e)
+        sys.exit(1)
+
+
+def modules_containers_create(ctx, module: str, directory: Path, force: bool) -> None:
+    """
+    Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
+    """
+    from nf_core.modules.containers import ModuleContainers
+
+    try:
+        module_containers = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
+        ModuleContainers.check_tower_token()
+
+        if module_containers.all_modules:
+            if not module_containers.available_modules:
+                log.error("No modules found to build containers for")
+                sys.exit(1)
+            log.info(f"Building containers for {len(module_containers.available_modules)} module(s)")
+
+        failed_modules = module_containers.build_containers_with_progress(
+            force=force, hide_progress=ctx.obj["hide_progress"]
+        )
+
+        if failed_modules:
+            if module_containers.all_modules:
+                log.warning(
+                    f"Failed to build containers for {len(failed_modules)} module(s): {', '.join(failed_modules)}"
+                )
+            else:
+                log.error(f"✗ Some container builds failed for {module_containers.module}")
+                sys.exit(1)
+        elif module_containers.all_modules:
+            log.info("Successfully built containers for all modules")
+
+    except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
+    """
+    Build a Docker linux/arm64 container and fetch the conda lock file using wave.
+    """
+    from nf_core.modules.containers import ModuleContainers
+
+    try:
+        module_containers = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
+        lock_file = module_containers.get_conda_lock_file(platform)
+        stdout.print(lock_file)
+    except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+def modules_containers_list(ctx, module, plain_text=False):
+    """
+    Print containers defined in a module meta.yml.
+    """
+    from nf_core.modules.containers import ModuleContainers
+
+    try:
+        module_containers = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
+        containers = module_containers.list_containers()
+
+        if plain_text:
+            for cs, p, img in containers:
+                stdout.print(f"{cs} {p} {img}")
+        else:
+            t = rich.table.Table("Container System", "Platform")
+            t.add_column("Image", overflow="fold")
+            for cs, p, img in containers:
+                t.add_row(cs, p, img)
+            stdout.print(t)
+    except (UserWarning, LookupError, FileNotFoundError, ValueError) as e:
+        log.error(e)
         sys.exit(1)

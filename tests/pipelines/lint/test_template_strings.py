@@ -3,7 +3,6 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.pipelines.create
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint

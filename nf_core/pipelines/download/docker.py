@@ -1,4 +1,3 @@
-import concurrent
 import concurrent.futures
 import itertools
 import logging
@@ -13,7 +12,8 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import ContainerRegistryUrls, copy_container_load_scripts
+from nf_core.pipelines.download.utils import copy_container_load_scripts
+from nf_core.utils import ContainerRegistryUrls
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -82,10 +82,10 @@ class DockerFetcher(ContainerFetcher):
 
         try:
             nf_core.utils.run_cmd(docker_binary, "info")
-        except RuntimeError:
+        except RuntimeError as e:
             raise OSError(
                 "Docker daemon is required to pull images, but it is not running or unavailable to the docker client"
-            )
+            ) from e
 
         self.implementation = "docker"
 
@@ -154,7 +154,7 @@ class DockerFetcher(ContainerFetcher):
                         future.result()  # This will raise an exception if the pull or save failed
                     except DockerError as e:
                         log.error(f"Error while processing container {e.container}: {e.message}")
-                    except Exception as e:
+                    except OSError as e:
                         log.error(f"Unexpected error: {e}")
 
             except KeyboardInterrupt:

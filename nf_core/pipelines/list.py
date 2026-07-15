@@ -10,7 +10,6 @@ from pathlib import Path
 
 import git
 import requests
-import rich.console
 import rich.table
 from click.shell_completion import CompletionItem
 
@@ -20,6 +19,50 @@ log = logging.getLogger(__name__)
 
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
+
+
+def _get_nextflow_assets_dir() -> Path:
+    """Return the Nextflow assets directory used for local workflow caches."""
+    nxf_assets = os.environ.get("NXF_ASSETS")
+    if nxf_assets:
+        base = Path(nxf_assets)
+    elif nxf_home := os.environ.get("NXF_HOME"):
+        base = Path(nxf_home, "assets")
+    else:
+        base = Path(os.environ.get("HOME", ""), ".nextflow", "assets")
+
+    # Newer Nextflow versions store clones under assets/.repos/
+    repos_dir = base / ".repos"
+    if repos_dir.is_dir():
+        return repos_dir
+    return base
+
+
+def _resolve_wf_path(path: Path) -> Path:
+    """Resolve the actual pipeline working tree for a given assets dir / workflow path.
+
+    Nextflow 26.04+ uses a worktree layout under .repos:
+        <org>/<pipeline>/clones/<sha>/   ← working tree
+        <org>/<pipeline>/bare/           ← bare git repo
+    Prefers the clone matching the bare repo's HEAD; falls back to the most
+    recently modified clone if HEAD's clone is missing or the bare repo is unreadable.
+    Returns path unchanged for the old (pre-26.04) flat layout.
+    """
+    clones_dir = path / "clones"
+    bare_dir = path / "bare"
+    if clones_dir.is_dir():
+        if bare_dir.is_dir():
+            try:
+                sha = git.Repo(bare_dir).head.commit.hexsha
+                clone = clones_dir / sha
+                if clone.is_dir():
+                    return clone
+            except git.GitCommandError:
+                pass
+        sha_dirs = sorted(clones_dir.iterdir(), key=lambda p: p.stat().st_mtime)
+        if sha_dirs:
+            return sha_dirs[-1]
+    return path
 
 
 def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
@@ -53,40 +96,50 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         matches = [CompletionItem(wor) for wor in available_workflows if wor.startswith(incomplete)]
 
         return matches
-    except Exception as e:
+    except (OSError, AttributeError) as e:
         print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
         return []
 
 
-def get_local_wf(workflow: str | Path, revision=None) -> str | None:
+def get_local_wf(workflow: str | Path, revision=None) -> Path | None:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
     # Assume nf-core if no org given
     if str(workflow).count("/") == 0:
-        workflow = f"nf-core/{workflow}"
+        workflow = Path("nf-core", workflow)
 
-    wfs = Workflows()
-    wfs.get_local_nf_workflows()
-    for wf in wfs.local_workflows:
-        if workflow == wf.full_name:
-            if revision is None or revision == wf.commit_sha or revision == wf.branch or revision == wf.active_tag:
-                if wf.active_tag:
-                    print_revision = f"v{wf.active_tag}"
-                elif wf.branch:
-                    print_revision = f"{wf.branch} - {wf.commit_sha[:7]}"
-                else:
-                    print_revision = wf.commit_sha
-                log.info(f"Using local workflow: {workflow} ({print_revision})")
-                return wf.local_path
+    local_wf = LocalWorkflow(str(workflow))
+    local_wf_path = _resolve_wf_path(_get_nextflow_assets_dir() / workflow)
+    if local_wf_path.is_dir():
+        local_wf.local_path = local_wf_path
+        local_wf.get_local_nf_workflow_details()
+        if local_wf.commit_sha is not None and (
+            revision is None
+            or revision == local_wf.commit_sha
+            or revision == local_wf.branch
+            or revision == local_wf.active_tag
+        ):
+            if local_wf.active_tag:
+                print_revision = f"v{local_wf.active_tag}"
+            elif local_wf.branch:
+                print_revision = f"{local_wf.branch} - {local_wf.commit_sha[:7]}"
+            else:
+                print_revision = local_wf.commit_sha
+            log.info(f"Using local workflow: {workflow} ({print_revision})")
+            return local_wf.local_path
 
     # Wasn't local, fetch it
     log.info(f"Downloading workflow: {workflow} ({revision})")
     pull_cmd = f"pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
-    nf_core.utils.run_cmd("nextflow", pull_cmd)
-    local_wf = LocalWorkflow(workflow)
+    try:
+        nf_core.utils.run_cmd("nextflow", pull_cmd)
+    except RuntimeError as e:
+        log.warning(f"Could not pull workflow '{workflow}': {e}")
+        return None
+    local_wf = LocalWorkflow(str(workflow))
     local_wf.get_local_nf_workflow_details()
     return local_wf.local_path
 
@@ -131,17 +184,16 @@ class Workflows:
         Local workflows are stored in :attr:`self.local_workflows` list.
         """
         # Try to guess the local cache directory (much faster than calling nextflow)
-        if len(os.environ.get("NXF_ASSETS", "")) > 0:
-            nextflow_wfdir = os.environ.get("NXF_ASSETS")
-        elif len(os.environ.get("NXF_HOME", "")) > 0:
-            nextflow_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
-        else:
-            nextflow_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets")
-        if os.path.isdir(nextflow_wfdir):
+        nextflow_wfdir = _get_nextflow_assets_dir()
+        if nextflow_wfdir.is_dir():
             log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
-            for org_name in os.listdir(nextflow_wfdir):
-                for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
-                    self.local_workflows.append(LocalWorkflow(f"{org_name}/{wf_name}"))
+            self.local_workflows.extend(
+                LocalWorkflow(f"{org_dir.name}/{wf_dir.name}")
+                for org_dir in nextflow_wfdir.iterdir()
+                if org_dir.is_dir()
+                for wf_dir in org_dir.iterdir()
+                if wf_dir.is_dir()
+            )
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
@@ -174,7 +226,7 @@ class Workflows:
                 if rwf.full_name == lwf.full_name:
                     rwf.local_wf = lwf
                     if rwf.releases:
-                        if rwf.releases[-1]["tag_sha"] == lwf.commit_sha:
+                        if rwf.releases[0]["tag_sha"] == lwf.commit_sha:
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
@@ -212,7 +264,7 @@ class Workflows:
         if not self.sort_workflows_by or self.sort_workflows_by == "release":
             filtered_workflows.sort(
                 key=lambda wf: (
-                    (wf.releases[-1].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
+                    (wf.releases[0].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
                     wf.archived,
                     wf.full_name.lower(),
                 )
@@ -223,7 +275,8 @@ class Workflows:
             def sort_pulled_date(wf):
                 try:
                     return wf.local_wf.last_pull * -1
-                except Exception:
+                except AttributeError:
+                    # local_wf is None or doesn't have last_pull attribute
                     return 0
 
             filtered_workflows.sort(key=sort_pulled_date)
@@ -258,10 +311,7 @@ class Workflows:
                     revision = f"{wf.local_wf.branch} - {wf.local_wf.commit_sha[:7]}"
                 else:
                     revision = wf.local_wf.commit_sha
-                if wf.local_is_latest:
-                    is_latest = f"[green]Yes ({revision})"
-                else:
-                    is_latest = f"[red]No ({revision})"
+                is_latest = f"[green]Yes ({revision})" if wf.local_is_latest else f"[red]No ({revision})"
             else:
                 is_latest = "[dim]-"
 
@@ -332,11 +382,11 @@ class RemoteWorkflow:
 class LocalWorkflow:
     """Class to handle local workflows pulled by nextflow"""
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         """Initialise the LocalWorkflow object"""
         self.full_name = name
         self.repository = None
-        self.local_path = None
+        self.local_path: Path | None = None
         self.commit_sha = None
         self.remote_url = None
         self.branch = None
@@ -350,13 +400,8 @@ class LocalWorkflow:
 
         if self.local_path is None:
             # Try to guess the local cache directory
-            if len(os.environ.get("NXF_ASSETS", "")) > 0:
-                nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
-            elif len(os.environ.get("NXF_HOME", "")) > 0:
-                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets", self.full_name)
-            else:
-                nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
-            if os.path.isdir(nf_wfdir):
+            nf_wfdir = _resolve_wf_path(_get_nextflow_assets_dir() / self.full_name)
+            if nf_wfdir.is_dir():
                 log.debug(f"Guessed nextflow assets workflow directory: {nf_wfdir}")
                 self.local_path = nf_wfdir
 
@@ -369,7 +414,10 @@ class LocalWorkflow:
                     for key, pattern in re_patterns.items():
                         m = re.search(pattern, str(nfinfo_raw))
                         if m:
-                            setattr(self, key, m.group(1))
+                            value = Path(m.group(1)) if key == "local_path" else m.group(1)
+                            if key == "local_path":
+                                value = _resolve_wf_path(value)
+                            setattr(self, key, value)
 
         # Pull information from the local git repository
         if self.local_path is not None:
@@ -378,7 +426,8 @@ class LocalWorkflow:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
                 self.remote_url = str(repo.remotes.origin.url)
-                self.last_pull = os.stat(os.path.join(self.local_path, ".git", "FETCH_HEAD")).st_mtime
+                self.last_pull = Path(repo.common_dir) / "FETCH_HEAD"
+                self.last_pull = self.last_pull.stat().st_mtime
                 self.last_pull_date = datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
                 self.last_pull_pretty = pretty_date(self.last_pull)
 
@@ -395,12 +444,12 @@ class LocalWorkflow:
                         self.active_tag = str(tag)
 
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
-            except (TypeError, git.InvalidGitRepositoryError) as e:
+            except (OSError, TypeError, ValueError, git.InvalidGitRepositoryError) as e:
                 log.error(
                     f"Could not fetch status of local Nextflow copy of '{self.full_name}':"
                     f"\n   [red]{type(e).__name__}:[/] {str(e)}"
                     "\n\nThis git repository looks broken. It's probably a good idea to delete this local copy and pull again:"
-                    f"\n   [magenta]rm -rf {self.local_path}"
+                    f"\n   [magenta]rm -rf {_get_nextflow_assets_dir() / self.full_name}"
                     f"\n   [magenta]nextflow pull {self.full_name}",
                 )
 
@@ -415,10 +464,7 @@ def pretty_date(time):
     """
 
     now = datetime.now()
-    if isinstance(time, datetime):
-        diff = now - time
-    else:
-        diff = now - datetime.fromtimestamp(time)
+    diff = now - time if isinstance(time, datetime) else now - datetime.fromtimestamp(time)
     second_diff = diff.seconds
     day_diff = diff.days
 

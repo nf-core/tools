@@ -67,8 +67,10 @@ class PipelineSchema:
         plugin = "nf-schema"
         if self.schema_filename:
             conf = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
-        else:
+        elif self.pipeline_dir is not None:
             conf = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
+        else:
+            return
 
         plugins = str(conf.get("plugins", "")).strip("'\"").strip(" ").split(",")
         plugin_found = False
@@ -91,16 +93,17 @@ class PipelineSchema:
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
             self.defs_notation = "$defs"
+            validation = conf.get("validation", {})
+            help_config = validation.get("help", {})
             ignored_params = [
-                conf.get("validation.help.shortParameter", "help"),
-                conf.get("validation.help.fullParameter", "helpFull"),
-                conf.get("validation.help.showHiddenParameter", "showHidden"),
+                help_config.get("shortParameter", "help"),
+                help_config.get("fullParameter", "helpFull"),
+                help_config.get("showHiddenParameter", "showHidden"),
                 "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
-            ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
-            ignored_params_config = [
-                item.strip().strip("'") for item in ignored_params_config_str[1:-1].split(",")
-            ]  # Extract list elements and remove whitespace
+            ignored_params_config = validation.get("defaultIgnoreParams", [])
+            if not isinstance(ignored_params_config, list):
+                ignored_params_config = []
 
             if len(ignored_params_config) > 0:
                 log.debug(f"Ignoring parameters from config: {ignored_params_config}")
@@ -137,7 +140,7 @@ class PipelineSchema:
             self.pipeline_dir = nf_core.pipelines.list.get_local_wf(path, revision=revision)
             self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
             # check if the schema file exists
-            if not self.schema_filename.exists():
+            if self.schema_filename is not None and not self.schema_filename.exists():
                 self.schema_filename = None
         # Only looking for local paths, overwrite with None to be safe
         else:
@@ -169,11 +172,11 @@ class PipelineSchema:
         except json.decoder.JSONDecodeError as e:
             error_msg = f"[bold red]Could not parse schema JSON:[/] {e}"
             log.error(error_msg)
-            raise AssertionError(error_msg)
+            raise AssertionError(error_msg) from e
         except AssertionError as e:
             error_msg = f"[red][✗] Pipeline schema does not follow nf-core specs:\n {e}"
             log.error(error_msg)
-            raise AssertionError(error_msg)
+            raise AssertionError(error_msg) from e
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
@@ -279,10 +282,10 @@ class PipelineSchema:
                 try:
                     params = json.load(fh)
                 except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}")
+                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}") from e
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
-        except Exception as json_e:
+        except (OSError, UserWarning) as json_e:
             log.debug(f"Could not load input params as JSON: {json_e}")
             # This failed, try to load as YAML
             try:
@@ -293,7 +296,7 @@ class PipelineSchema:
             except Exception as yaml_e:
                 error_msg = f"Could not load params file as either JSON or YAML:\n JSON: {json_e}\n YAML: {yaml_e}"
                 log.error(error_msg)
-                raise AssertionError(error_msg)
+                raise AssertionError(error_msg) from yaml_e
 
     def validate_params(self):
         """Check given parameters against a schema and validate"""
@@ -322,7 +325,7 @@ class PipelineSchema:
             jsonschema.validate(self.schema_defaults, strip_required(self.schema))
         except jsonschema.exceptions.ValidationError as e:
             log.debug(f"Complete error message:\n{e}")
-            raise AssertionError(f"Default parameters are invalid: {e.message}")
+            raise AssertionError(f"Default parameters are invalid: {e.message}") from e
         for param, default in self.schema_defaults.items():
             if default in ("null", "", None, "None") or default is False:
                 log.warning(
@@ -335,7 +338,7 @@ class PipelineSchema:
             self.get_wf_params()
 
         # Go over group keys
-        for group_key, group in self.schema.get(self.defs_notation, {}).items():
+        for _group_key, group in self.schema.get(self.defs_notation, {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
                 if param in self.ignored_params:
@@ -369,7 +372,7 @@ class PipelineSchema:
         """
 
         # If we have a default in the schema, check it matches the config
-        if "default" in schema_param and (
+        if "default" in schema_param and (  # noqa SIM102
             (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
             and (str(schema_param["default"]) != str(config_default).strip("'\""))
         ):
@@ -381,20 +384,16 @@ class PipelineSchema:
                 return
 
         # if default is null, we're good
-        if config_default == "null":
+        if config_default is None or config_default == "null":
             return
 
         # Check variable types in nextflow.config
-        if schema_param["type"] == "string":
-            if str(config_default) in ["false", "true", "''"]:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"String should not be set to `{config_default}`"
-                )
-        if schema_param["type"] == "boolean":
-            if str(config_default) not in ["false", "true"]:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Booleans should only be true or false, not `{config_default}`"
-                )
+        if schema_param["type"] == "string" and str(config_default).lower() in ["false", "true", "''"]:
+            self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
+        if schema_param["type"] == "boolean" and str(config_default).lower() not in ["false", "true"]:
+            self.invalid_nextflow_config_default_parameters[param] = (
+                f"Booleans should only be true or false, not `{config_default}`"
+            )
         if schema_param["type"] == "integer":
             try:
                 int(config_default)
@@ -429,13 +428,13 @@ class PipelineSchema:
                 jsonschema.Draft7Validator.check_schema(schema)
                 log.debug("JSON Schema Draft7 validated")
             except jsonschema.exceptions.SchemaError as e:
-                raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}")
+                raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}") from e
         elif self.schema_draft == "https://json-schema.org/draft/2020-12/schema":
             try:
                 jsonschema.Draft202012Validator.check_schema(schema)
                 log.debug("JSON Schema Draft2020-12 validated")
             except jsonschema.exceptions.SchemaError as e:
-                raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}")
+                raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}") from e
         else:
             raise AssertionError(
                 f"Schema `$schema` should be `https://json-schema.org/draft/2020-12/schema` or `https://json-schema.org/draft-07/schema` \n Found `{schema_draft}`"
@@ -560,7 +559,7 @@ class PipelineSchema:
     def print_documentation(
         self,
         output_fn=None,
-        format="markdown",
+        output_format="markdown",
         force=False,
         columns=None,
     ):
@@ -568,10 +567,10 @@ class PipelineSchema:
         Prints documentation for the schema.
         """
         if columns is None:
-            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+            columns = ["parameter", "description", "type", "default", "required", "hidden"]
 
         output = self.schema_to_markdown(columns)
-        if format == "html":
+        if output_format == "html":
             output = self.markdown_to_html(output)
 
         with tempfile.NamedTemporaryFile(mode="w+") as fh:
@@ -582,7 +581,10 @@ class PipelineSchema:
 
         if not output_fn:
             console = rich.console.Console()
-            console.print("\n", Syntax(prettified_docs, format, word_wrap=True), "\n")
+            if console.is_terminal:
+                console.print("\n", Syntax(prettified_docs, output_format, word_wrap=True), "\n")
+            else:
+                print(prettified_docs, end="")
         else:
             if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
@@ -727,24 +729,23 @@ class PipelineSchema:
             self.save_schema()
 
         # If running interactively, send to the web for customisation
-        if not self.no_prompts:
-            if Confirm.ask(":rocket:  Launch web builder for customisation and editing?"):
-                try:
-                    self.launch_web_builder()
-                except AssertionError as e:
-                    log.error(e.args[0])
-                    # Extra help for people running offline
-                    if "Could not connect" in e.args[0]:
-                        log.info(
-                            f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
-                        )
-                        log.info("When you're finished, you can paste the edited schema back into the same file")
-                    if self.web_schema_build_web_url:
-                        log.info(
-                            "To save your work, open {}\n"
-                            f"Click the blue 'Finished' button, copy the schema and paste into this file: {self.web_schema_build_web_url, self.schema_filename}"
-                        )
-                    return False
+        if not self.no_prompts and Confirm.ask(":rocket:  Launch web builder for customisation and editing?"):
+            try:
+                self.launch_web_builder()
+            except AssertionError as e:
+                log.error(e.args[0])
+                # Extra help for people running offline
+                if "Could not connect" in e.args[0]:
+                    log.info(
+                        f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
+                    )
+                    log.info("When you're finished, you can paste the edited schema back into the same file")
+                if self.web_schema_build_web_url:
+                    log.info(
+                        "To save your work, open {}\n"
+                        f"Click the blue 'Finished' button, copy the schema and paste into this file: {self.web_schema_build_web_url, self.schema_filename}"
+                    )
+                return False
 
     def get_wf_params(self):
         """
@@ -761,16 +762,15 @@ class PipelineSchema:
         log.debug("Collecting pipeline parameter defaults\n")
         config = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
         skipped_params = []
-        # Pull out just the params. values
-        for ckey, cval in config.items():
-            if ckey.startswith("params."):
-                # skip anything that's not a flat variable
-                if "." in ckey[7:]:
-                    skipped_params.append(ckey)
-                    continue
-                self.pipeline_params[ckey[7:]] = cval
-            if ckey.startswith("manifest."):
-                self.pipeline_manifest[ckey[9:]] = cval
+        # Pull out just the params values (top-level flat keys only)
+        for pkey, pval in config.get("params", {}).items():
+            if isinstance(pval, dict):
+                skipped_params.append(f"params.{pkey}")
+                continue
+            self.pipeline_params[pkey] = pval
+        # Pull out manifest values
+        for mkey, mval in config.get("manifest", {}).items():
+            self.pipeline_manifest[mkey] = mval
         # Log skipped params
         if len(skipped_params) > 0:
             log.debug(
@@ -833,7 +833,7 @@ class PipelineSchema:
         schema = copy.deepcopy(schema)
         params_removed = []
         # Use iterator so that we can delete the key whilst iterating
-        for p_key in [k for k in schema.get("properties", {}).keys()]:
+        for p_key in list(schema.get("properties", {})):
             if self.prompt_remove_schema_notfound_config(p_key):
                 del schema["properties"][p_key]
                 # Remove required flag if set
@@ -908,46 +908,46 @@ class PipelineSchema:
                 and (p_key not in self.schema_defaults)
                 and (p_key not in self.ignored_params)
                 and (p_def := self.build_schema_param(p_val).get("default"))
-            ):
-                if self.no_prompts or Confirm.ask(
+            ) and (
+                self.no_prompts
+                or Confirm.ask(
                     f":sparkles: Default for [bold]'params.{p_key}'[/] is not in schema (def='{p_def}'). "
                     "[blue]Update pipeline schema?"
-                ):
-                    s_key_def = s_key + ("default",)
-                    nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
-                    log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
+                )
+            ):
+                s_key_def = s_key + ("default",)
+                nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
+                log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
         return params_added
 
     def build_schema_param(self, p_val):
         """
         Build a pipeline schema dictionary for an param interactively
         """
+        if p_val is None:
+            return {"type": "string"}
+        if isinstance(p_val, bool):
+            return {"type": "boolean", "default": p_val} if p_val else {"type": "boolean"}  # no default for False
+        if isinstance(p_val, int):
+            return {"type": "integer", "default": p_val}
+        if isinstance(p_val, float):
+            return {"type": "number", "default": p_val}
+
+        # TODO: remove string branch once old text-format config caches are no longer supported
         p_val = p_val.strip("\"'")
-        # p_val is always a string as it is parsed from nextflow config this way
+        if not p_val or p_val == "null":
+            return {"type": "string"}
+        if p_val in ("true", "True"):
+            return {"type": "boolean", "default": True}
+        if p_val in ("false", "False"):
+            return {"type": "boolean"}
         try:
-            p_val = float(p_val)
-            if p_val == int(p_val):
-                p_val = int(p_val)
-                p_type = "integer"
-            else:
-                p_type = "number"
+            num = float(p_val)
+            if num == int(num):
+                return {"type": "integer", "default": int(num)}
+            return {"type": "number", "default": num}
         except ValueError:
-            p_type = "string"
-
-        # Anything can be "null", means that it is not set
-        if p_val == "null":
-            p_val = None
-
-        # Booleans
-        if p_val in ["true", "false", "True", "False"]:
-            p_val = p_val in ["true", "True"]  # Convert to bool
-            p_type = "boolean"
-
-        # Don't return a default for anything false-y except 0
-        if not p_val and not (p_val == 0 and p_val is not False):
-            return {"type": p_type}
-
-        return {"type": p_type, "default": p_val}
+            return {"type": "string", "default": p_val}
 
     def launch_web_builder(self):
         """
@@ -973,12 +973,12 @@ class PipelineSchema:
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
                 )
-        except AssertionError:
+        except AssertionError as e:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
                 f"Pipeline schema builder response not recognised: {self.web_schema_build_url}\n"
                 " See verbose log for full response (nf-core -v schema)"
-            )
+            ) from e
         else:
             self.web_schema_build_web_url = web_response["web_url"]
             self.web_schema_build_api_url = web_response["api_url"]
@@ -1004,7 +1004,7 @@ class PipelineSchema:
                 self.remove_schema_empty_definitions()
                 self.validate_schema()
             except AssertionError as e:
-                raise AssertionError(f"Response from schema builder did not pass validation:\n {e}")
+                raise AssertionError(f"Response from schema builder did not pass validation:\n {e}") from e
             else:
                 self.save_schema()
                 return True

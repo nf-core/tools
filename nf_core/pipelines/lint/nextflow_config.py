@@ -1,4 +1,3 @@
-import ast
 import logging
 import re
 from pathlib import Path
@@ -170,7 +169,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
     ]
 
     # Lint for plugins
-    config_plugins = ast.literal_eval(self.nf_config.get("plugins", "[]"))
+    config_plugins = self.nf_config.get("plugins", [])
     found_plugins = []
     for plugin in config_plugins:
         if "@" not in plugin:
@@ -203,45 +202,34 @@ def nextflow_config(self) -> dict[str, list[str]]:
     # Remove field that should be ignored according to the linting config
     ignore_configs = self.lint_config.get("nextflow_config", []) if self.lint_config is not None else []
 
-    for cfs in config_fail:
-        for cf in cfs:
-            if cf in ignore_configs:
-                ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
-                break
-            if cf in self.nf_config.keys():
-                passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
-                break
-        else:
-            failed.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
-    for cfs in config_warn:
-        for cf in cfs:
-            if cf in ignore_configs:
-                ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
-                break
-            if cf in self.nf_config.keys():
-                passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
-                break
-        else:
-            warned.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
+    def _config_has_key(key: str) -> bool:
+        section, name = key.split(".", 1)
+        return name in self.nf_config.get(section, {})
+
+    for configs, not_found in [(config_fail, failed), (config_warn, warned)]:
+        for cfs in configs:
+            for cf in cfs:
+                if cf in ignore_configs:
+                    ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
+                    break
+                if _config_has_key(cf):
+                    passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
+                    break
+            else:
+                not_found.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
     for cf in config_fail_ifdefined:
         if cf in ignore_configs:
             ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
-            break
-        if cf not in self.nf_config.keys():
+            continue
+        if not _config_has_key(cf):
             passed.append(f"Config variable (correctly) not found: {self._wrap_quotes(cf)}")
         else:
             failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
 
     # Check and warn if the process configuration is done with deprecated syntax
-
+    process_config = self.nf_config.get("process", {})
     process_with_deprecated_syntax = list(
-        set(
-            [
-                match.group(1)
-                for ck in self.nf_config.keys()
-                if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None
-            ]
-        )
+        {f"process.{ck}" for ck in (process_config if isinstance(process_config, dict) else {}) if re.match(r"^\$", ck)}
     )
     for pd in process_with_deprecated_syntax:
         warned.append(f"Process configuration is done with deprecated_syntax: {pd}")
@@ -250,90 +238,76 @@ def nextflow_config(self) -> dict[str, list[str]]:
     for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
         if k in ignore_configs:
             continue
-        if self.nf_config.get(k) == "true":
-            passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
+        section, name = k.split(".")
+        val = self.nf_config.get(section, {}).get(name)
+        if val is True:
+            passed.append(f"Config ``{k}`` had correct value: ``{val}``")
         else:
-            failed.append(f"Config ``{k}`` did not have correct value: ``{self.nf_config.get(k)}``")
+            failed.append(f"Config ``{k}`` did not have correct value: ``{val}``")
 
     _, nf_core_yaml_config = load_tools_config(self.wf_path)
     org_name = "nf-core"
     if nf_core_yaml_config and getattr(nf_core_yaml_config, "template", None):
         org_name = getattr(nf_core_yaml_config.template, "org", org_name) or org_name
 
-    if "manifest.name" not in ignore_configs:
-        # Check that the pipeline name starts with nf-core
-        try:
-            manifest_name = self.nf_config.get("manifest.name", "").strip("'\"")
-            if not manifest_name.startswith(f"{org_name}/"):
-                raise AssertionError()
-        except (AssertionError, IndexError):
-            failed.append(f"Config ``manifest.name`` did not begin with ``{org_name}/``:\n    {manifest_name}")
+    manifest = self.nf_config.get("manifest", {})
+    for key, expected_prefix in [
+        ("name", f"{org_name}/"),
+        ("homePage", f"https://github.com/{org_name}/"),
+    ]:
+        config_key = f"manifest.{key}"
+        if config_key in ignore_configs:
+            continue
+        value = manifest.get(key, "")
+        if value.startswith(expected_prefix):
+            passed.append(f"Config ``{config_key}`` began with ``{expected_prefix}``")
         else:
-            passed.append(f"Config ``manifest.name`` began with ``{org_name}/``")
+            failed.append(f"Config ``{config_key}`` did not begin with ``{expected_prefix}``")
 
-    if "manifest.homePage" not in ignore_configs:
-        # Check that the homePage is set to the GitHub URL
-        try:
-            manifest_homepage = self.nf_config.get("manifest.homePage", "").strip("'\"")
-            if not manifest_homepage.startswith(f"https://github.com/{org_name}/"):
-                raise AssertionError()
-        except (AssertionError, IndexError):
-            failed.append(
-                f"Config variable ``manifest.homePage`` did not begin with https://github.com/{org_name}/:\n    {manifest_homepage}"
-            )
-
-        else:
-            passed.append(f"Config variable ``manifest.homePage`` began with https://github.com/{org_name}/")
-
-    # Check that the DAG filename ends in ``.svg``
-    if "dag.file" in self.nf_config:
+    dag_file = self.nf_config.get("dag", {}).get("file", "")
+    if dag_file:
         default_dag_format = ".html"
-        if self.nf_config["dag.file"].strip("'\"").endswith(default_dag_format):
+        if dag_file.endswith(default_dag_format):
             passed.append(f"Config ``dag.file`` ended with ``{default_dag_format}``")
         else:
             failed.append(f"Config ``dag.file`` did not end with ``{default_dag_format}``")
 
     # Check that the minimum nextflowVersion is set properly
-    if "manifest.nextflowVersion" in self.nf_config:
-        if self.nf_config.get("manifest.nextflowVersion", "").strip("\"'").lstrip("!").startswith(">="):
+    nextflow_version = manifest.get("nextflowVersion", "")
+    if nextflow_version:
+        if nextflow_version.lstrip("!").startswith(">="):
             passed.append("Config variable ``manifest.nextflowVersion`` started with >= or !>=")
         else:
             failed.append(
-                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : "
-                f"``{self.nf_config.get('manifest.nextflowVersion', '')}``".strip("\"'")
+                f"Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : ``{nextflow_version}``"
             )
 
     # Check that the pipeline version contains ``dev``
-    if not self.release_mode and "manifest.version" in self.nf_config:
-        if self.nf_config["manifest.version"].strip(" '\"").endswith("dev"):
-            passed.append(f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``")
+    manifest_version = self.nf_config.get("manifest", {}).get("version", "")
+    if not self.release_mode and manifest_version:
+        if manifest_version.endswith("dev"):
+            passed.append(f"Config ``manifest.version`` ends in ``dev``: ``{manifest_version}``")
         else:
-            warned.append(
-                f"Config ``manifest.version`` should end in ``dev``: ``{self.nf_config['manifest.version']}``"
-            )
-    elif "manifest.version" in self.nf_config:
-        if "dev" in self.nf_config["manifest.version"]:
+            warned.append(f"Config ``manifest.version`` should end in ``dev``: ``{manifest_version}``")
+    elif manifest_version:
+        if "dev" in manifest_version:
             failed.append(
-                "Config ``manifest.version`` should not contain ``dev`` for a release: "
-                f"``{self.nf_config['manifest.version']}``"
+                f"Config ``manifest.version`` should not contain ``dev`` for a release: ``{manifest_version}``"
             )
         else:
-            passed.append(
-                "Config ``manifest.version`` does not contain ``dev`` for release: "
-                f"``{self.nf_config['manifest.version']}``"
-            )
+            passed.append(f"Config ``manifest.version`` does not contain ``dev`` for release: ``{manifest_version}``")
 
     if "custom_config" not in ignore_configs:
         # Check if custom profile params are set correctly
-        if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
+        if self.nf_config.get("params", {}).get("custom_config_version", "") == "master":
             passed.append("Config `params.custom_config_version` is set to `master`")
         else:
             failed.append("Config `params.custom_config_version` is not set to `master`")
 
         custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(
-            self.nf_config.get("params.custom_config_version", "").strip("'")
+            self.nf_config.get("params", {}).get("custom_config_version", "")
         )
-        if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
+        if self.nf_config.get("params", {}).get("custom_config_base", "") == custom_config_base:
             passed.append(f"Config `params.custom_config_base` is set to `{custom_config_base}`")
         else:
             failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
@@ -415,20 +389,21 @@ def nextflow_config(self) -> dict[str, list[str]]:
     schema.load_schema()
     schema.get_schema_defaults()  # Get default values from schema
     schema.get_schema_types()  # Get types from schema
-    for param_name in schema.schema_defaults.keys():
+    for param_name in schema.schema_defaults:
         param = "params." + param_name
+        param_value = self.nf_config.get("params", {}).get(param_name)
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
-        elif param in self.nf_config.keys():
+        elif param_value is not None:
             config_default: str | float | int | None = None
             schema_default: str | float | int | None = None
             if schema.schema_types[param_name] == "boolean":
                 schema_default = str(schema.schema_defaults[param_name]).lower()
-                config_default = str(self.nf_config[param]).lower()
+                config_default = str(param_value).lower()
             elif schema.schema_types[param_name] == "number":
                 try:
                     schema_default = float(schema.schema_defaults[param_name])
-                    config_default = float(self.nf_config[param])
+                    config_default = float(param_value)
                 except ValueError:
                     failed.append(
                         f"Config default value incorrect: `{param}` is set as type `number` in nextflow_schema.json, but is not a number in `nextflow.config`."
@@ -436,19 +411,19 @@ def nextflow_config(self) -> dict[str, list[str]]:
             elif schema.schema_types[param_name] == "integer":
                 try:
                     schema_default = int(schema.schema_defaults[param_name])
-                    config_default = int(self.nf_config[param])
+                    config_default = int(param_value)
                 except ValueError:
                     failed.append(
                         f"Config default value incorrect: `{param}` is set as type `integer` in nextflow_schema.json, but is not an integer in `nextflow.config`."
                     )
             else:
                 schema_default = str(schema.schema_defaults[param_name])
-                config_default = str(self.nf_config[param])
+                config_default = str(param_value)
             if config_default is not None and config_default == schema_default:
                 passed.append(f"Config default value correct: {param}= {schema_default}")
             else:
                 failed.append(
-                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(param_value)} in `nextflow.config`."
                 )
         else:
             schema_default = str(schema.schema_defaults[param_name])
