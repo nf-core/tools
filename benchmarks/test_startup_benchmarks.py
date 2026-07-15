@@ -10,6 +10,7 @@ Rounds are kept low because each one pays for a full interpreter boot.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 
@@ -32,6 +33,36 @@ def _benchmark_command(benchmark, command):
 
 def _cli_script(setup, args):
     return f"{setup}\nimport sys\nsys.argv = {args!r}\nfrom nf_core.__main__ import run_nf_core\nrun_nf_core()"
+
+
+@pytest.fixture(scope="session")
+def generated_pipeline(tmp_path_factory):
+    """Render a real pipeline scaffold once, reused by the realistic benchmarks.
+
+    Generation is expensive and identical for every consumer, so it happens a
+    single time per session and outside any measured rounds. Consumers that
+    mutate the pipeline (e.g. installing a module) must work on a copy so the
+    shared scaffold stays pristine and the suite is order-independent.
+    """
+    from nf_core.pipelines.create.create import PipelineCreate
+
+    pipeline_dir = tmp_path_factory.mktemp("pipeline_fixture") / "pipeline"
+    PipelineCreate("benchmark", "benchmark pipeline", "nf-core", outdir=pipeline_dir, no_git=True).init_pipeline()
+    return pipeline_dir
+
+
+@pytest.fixture(scope="session")
+def modules_cache():
+    """Warm the local nf-core/modules clone once, before any measured rounds.
+
+    Constructing ``ModulesRepo`` clones the remote into ``NFCORE_DIR`` if it is
+    not already present. Doing it here keeps the one-off network cost out of the
+    benchmark, so the measured rounds only pay for the offline work (git
+    checkout + file copy + modules.json write) when combined with ``no_pull``.
+    """
+    from nf_core.modules.modules_repo import ModulesRepo
+
+    ModulesRepo()
 
 
 def test_import_main_startup(benchmark):
@@ -71,16 +102,32 @@ def test_pipelines_create_startup(benchmark, tmp_path):
     _benchmark_command(benchmark, [sys.executable, "-c", _cli_script(setup, args)])
 
 
-def test_modules_install_startup(benchmark, tmp_path):
-    """Start module installation, stubbing only the remote clone and resulting writes."""
-    args = ["nf-core", "modules", "install", "fastp", "-d", str(tmp_path)]
-    setup = """import nf_core.modules.install as install_module
-install_module.ModuleInstall = type(
-    "ModuleInstall",
-    (),
-    {
-        "__init__": lambda self, *args, **kwargs: None,
-        "install": lambda self, *args, **kwargs: True,
-    },
-)"""
+def test_modules_install_startup(benchmark, generated_pipeline, modules_cache, tmp_path):
+    """Install a real module into a real pipeline, offline.
+
+    The pipeline scaffold (``generated_pipeline``) and the nf-core/modules clone
+    (``modules_cache``) are both prepared once, outside the measured rounds. The
+    rounds then run the real install (git checkout + file copy + modules.json
+    write) against a private copy of the scaffold. ``no_pull_global`` suppresses
+    the per-round ``git fetch`` and ``--force`` avoids the re-install prompt, so
+    every round is deterministic and network-free.
+    """
+    target = tmp_path / "pipeline"
+    shutil.copytree(generated_pipeline, target)
+    args = ["nf-core", "modules", "install", "fastp", "-d", str(target), "--force"]
+    setup = "from nf_core.modules.modules_repo import ModulesRepo\nModulesRepo.no_pull_global = True"
+    _benchmark_command(benchmark, [sys.executable, "-c", _cli_script(setup, args)])
+
+
+def test_pipelines_schema_lint_startup(benchmark, generated_pipeline):
+    """Lint a real, freshly generated pipeline schema.
+
+    The schema fixture is rendered once by ``generated_pipeline`` (outside the
+    measured rounds); the benchmark then runs the real lint (JSON parse +
+    JSON-Schema validation + default-param checks). Only ``fetch_wf_config`` is
+    stubbed to skip the ``nextflow config`` JVM subprocess, which would
+    otherwise dominate wall time and require Nextflow on the runner.
+    """
+    args = ["nf-core", "pipelines", "schema", "lint", str(generated_pipeline)]
+    setup = "import nf_core.utils\nnf_core.utils.fetch_wf_config = lambda *args, **kwargs: {}"
     _benchmark_command(benchmark, [sys.executable, "-c", _cli_script(setup, args)])
