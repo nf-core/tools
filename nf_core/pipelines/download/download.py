@@ -703,12 +703,18 @@ class DownloadWorkflow:
         try:
             out_json = run_nextflow_inspect()
         except RuntimeError as e:
-            # Extract Nextflow stdout from the chained CalledProcessError (errors go to stdout in NF)
-            nf_stdout = getattr(e.__cause__, "output", None) or b""
+            # Nextflow's error text is embedded in the RuntimeError message by run_cmd;
+            # a chained CalledProcessError (if any) may carry it in stdout/stderr instead.
+            nf_error_parts = [str(e), getattr(e.__cause__, "output", None), getattr(e.__cause__, "stderr", None)]
+            nf_error = "\n".join(
+                part.decode("utf-8", errors="replace") if isinstance(part, bytes) else part
+                for part in nf_error_parts
+                if part
+            )
 
             # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
             # if/else container blocks with "Invalid process directive". Users need an older NF.
-            if b"Invalid process directive" in nf_stdout:
+            if "Invalid process directive" in nf_error:
                 raise DownloadError(
                     "nextflow inspect failed because the pipeline uses old-style process syntax "
                     "that the default strict syntax of Nextflow >= 26.04 no longer accepts.\n"
@@ -720,7 +726,7 @@ class DownloadWorkflow:
             # only issue, retry inspect with an ephemeral params file that provides one.
             if re.search(
                 r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b",
-                nf_stdout.decode("utf-8", errors="replace"),
+                nf_error,
                 flags=re.IGNORECASE,
             ):
                 try:

@@ -34,7 +34,7 @@ jobs:
           architecture: "x64"
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
 
       - name: read .nf-core.yml
         uses: pietrobolcato/action-read-yaml@9f13718d61111b69f30ab4ac683e67a56d254e1d # 1.1.0
@@ -46,7 +46,7 @@ jobs:
         run: uv tool install nf-core==${{ steps.read_yml.outputs['nf_core_version'] }}
 
       - name: Run nf-core pipelines lint
-        if: ${{ github.base_ref != 'master' || github.base_ref != 'main' }}
+        if: ${{ github.base_ref != 'master' && github.base_ref != 'main' }}
         env:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
