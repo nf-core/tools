@@ -19,6 +19,10 @@ class TestModuleContainers(TestModules):
         super().setUp()
         self.environment_yml = self.bpipe_test_module_path / "environment.yml"
         self.module_containers = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
+        # Avoid a build/lock cached by one test being reused by another (all fixtures share
+        # the same environment.yml content / build_id).
+        ModuleContainers._build_cache.clear()
+        ModuleContainers._conda_lock_paths.clear()
 
     def _write_meta(self, meta: dict) -> None:
         (self.bpipe_test_module_path / "meta.yml").write_text(yaml.safe_dump(meta), encoding="utf-8")
@@ -377,31 +381,73 @@ class TestModuleContainersPipeline(TestModules):
     def test_init_pipeline_sets_local_module_paths(self):
         """ModuleContainers should resolve paths into modules/local/ for a pipeline repo"""
         module_dir = self._create_local_module("testmodule")
-        manager = ModuleContainers("testmodule", directory=self.pipeline_dir)
+        module_containers = ModuleContainers("testmodule", directory=self.pipeline_dir)
 
-        assert manager.repo_type == "pipeline"
-        assert manager.module_directory == module_dir
-        assert manager.environment_yml == module_dir / "environment.yml"
-        assert manager.meta_yml == module_dir / "meta.yml"
+        assert module_containers.repo_type == "pipeline"
+        assert module_containers.module_directory == module_dir
+        assert module_containers.environment_yml == module_dir / "environment.yml"
+        assert module_containers.meta_yml == module_dir / "meta.yml"
 
     def test_update_containers_in_meta_pipeline(self):
         """update_containers_in_meta writes containers to the local module's meta.yml"""
         module_dir = self._create_local_module("testmodule")
 
-        manager = ModuleContainers("testmodule", directory=self.pipeline_dir)
+        module_containers = ModuleContainers("testmodule", directory=self.pipeline_dir)
         containers = MetaYmlContainers(
             docker={p: ContainerEntry(name=f"docker-{p}") for p in CONTAINER_PLATFORMS},
             singularity={p: ContainerEntry(name=f"sif-{p}") for p in CONTAINER_PLATFORMS},
             conda={p: CondaEntry(lock_file=f"/lock/{p}.txt") for p in CONTAINER_PLATFORMS},
         )
-        manager.containers = containers
+        module_containers.containers = containers
 
-        with mock.patch.object(manager, "create") as mock_create:
-            manager.update_containers_in_meta()
+        with mock.patch.object(module_containers, "create") as mock_create:
+            module_containers.update_containers_in_meta()
             mock_create.assert_not_called()
 
         meta = yaml.safe_load((module_dir / "meta.yml").read_text(encoding="utf-8"))
         assert meta["containers"] == containers.dump_for_meta_yml()
+
+
+class TestBuildContainersWithProgress(TestModules):
+    """Tests for the ``ModuleContainers.build_containers_with_progress`` method.
+
+    ``create`` is mocked throughout so the tests cover the batch/aggregation logic
+    regardless of how containers are actually built (Wave API vs CLI).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.module_containers = ModuleContainers("bpipe/test", directory=self.nfcore_modules)
+        self.component = self.module_containers.nfcore_component
+        self.module_name = self.component.component_name
+
+    def test_success_returns_no_failures(self):
+        with mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), True)) as mock_create:
+            failed = self.module_containers.build_containers_with_progress(hide_progress=True)
+        assert failed == []
+        mock_create.assert_called_once()
+
+    def test_build_failure_is_reported(self):
+        """A module whose create() returns success=False is reported as failed."""
+        with mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), False)):
+            failed = self.module_containers.build_containers_with_progress(hide_progress=True)
+        assert failed == [self.module_name]
+
+    def test_exception_during_build_is_caught(self):
+        """A RuntimeError from create() is caught and the module is reported as failed."""
+        with mock.patch.object(ModuleContainers, "create", side_effect=RuntimeError("boom")):
+            failed = self.module_containers.build_containers_with_progress(hide_progress=True)
+        assert failed == [self.module_name]
+
+    def test_all_modules_reconstructs_per_module_containers(self):
+        """In batch mode a fresh per-module instance is built, reusing the scanned component list."""
+        all_module_containers = ModuleContainers(
+            module=None, directory=self.nfcore_modules, all_modules=True, components=[self.component]
+        )
+        with mock.patch.object(ModuleContainers, "create", return_value=(MetaYmlContainers(), True)) as mock_create:
+            failed = all_module_containers.build_containers_with_progress(hide_progress=True)
+        assert failed == []
+        mock_create.assert_called_once()
 
 
 class TestModuleContainersDockerfile(TestModuleContainersPipeline):
