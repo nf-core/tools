@@ -50,6 +50,7 @@ class ModuleVersionBumper(ComponentCommand):
         all_modules: bool = False,
         show_up_to_date: bool = False,
         dry_run: bool = False,
+        hide_progress: bool = False,
     ) -> list[NFCoreComponent]:
         """
         Bump the container and conda version of single module or all modules.
@@ -66,10 +67,12 @@ class ModuleVersionBumper(ComponentCommand):
             all_modules: whether to bump versions for all modules
             show_up_to_date: whether to show up-to-date modules as well
             dry_run: whether to dry run the command
+            hide_progress: whether to hide the progress bars
 
         Returns:
             list[NFCoreComponent]: the updated modules
         """
+        hide_progress = hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None
         self.up_to_date = []
         self.updated = []
         self.failed = []
@@ -121,7 +124,7 @@ class ModuleVersionBumper(ComponentCommand):
             BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
-            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
+            disable=hide_progress,
         )
         modules_to_rebuild: list[NFCoreComponent] = []
         with progress_bar:
@@ -136,13 +139,13 @@ class ModuleVersionBumper(ComponentCommand):
                     modules_to_rebuild.append(mod)
 
         if modules_to_rebuild:
-            self._build_wave_containers(modules_to_rebuild)
+            self._build_wave_containers(modules_to_rebuild, hide_progress)
 
         self._print_results()
 
         return nfcore_modules
 
-    def _build_wave_containers(self, modules: list[NFCoreComponent]) -> None:
+    def _build_wave_containers(self, modules: list[NFCoreComponent], hide_progress: bool = False) -> None:
         """Rebuild the Docker/Singularity containers for ``modules`` with Seqera Wave.
 
         Builds from each module's (already bumped) environment.yml and updates main.nf,
@@ -159,7 +162,7 @@ class ModuleVersionBumper(ComponentCommand):
             components=modules,
         )
         ModuleContainers.check_tower_token()
-        failed_modules = module_containers.build_containers_with_progress()
+        failed_modules = module_containers.build_containers_with_progress(hide_progress=hide_progress)
         for module_name in failed_modules:
             self.failed.append(("Container build with Wave failed", module_name))
 
@@ -192,6 +195,8 @@ class ModuleVersionBumper(ComponentCommand):
                 continue
             channel, name_version = spec.split("::", 1)
             tool_name, current_version = name_version.split("=", 1)
+            # Drop an optional build string (`name=version=build`)
+            current_version = current_version.split("=", 1)[0]
             conda_packages.append((channel, tool_name, current_version))
 
         if not conda_packages:
@@ -333,11 +338,11 @@ class ModuleVersionBumper(ComponentCommand):
         Extract the bioconda version from a module
         """
         # Check whether file exists and load it
-        bioconda_packages = []
+        bioconda_packages: list[str] = []
         if module.environment_yml is not None and module.environment_yml.exists():
             with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
-            bioconda_packages = env_yml.get("dependencies", [])
+            bioconda_packages = (env_yml or {}).get("dependencies") or []
         else:
             log.error(f"Could not read `environment.yml` of {module.component_name} module.")
 

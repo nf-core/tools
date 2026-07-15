@@ -327,7 +327,13 @@ def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        version_bumper.bump_versions(module=tool, all_modules=all_modules, show_up_to_date=show_all, dry_run=dry_run)
+        version_bumper.bump_versions(
+            module=tool,
+            all_modules=all_modules,
+            show_up_to_date=show_all,
+            dry_run=dry_run,
+            hide_progress=ctx.obj["hide_progress"],
+        )
     except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)
