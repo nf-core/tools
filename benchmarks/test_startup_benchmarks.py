@@ -53,15 +53,18 @@ def generated_pipeline(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def modules_cache():
-    """Warm the local nf-core/modules clone once, before any measured rounds.
+    """Ensure a local nf-core/modules clone exists, without ever fetching.
 
-    Constructing ``ModulesRepo`` clones the remote into ``NFCORE_DIR`` if it is
-    not already present. Doing it here keeps the one-off network cost out of the
-    benchmark, so the measured rounds only pay for the offline work (git
-    checkout + file copy + modules.json write) when combined with ``no_pull``.
+    Constructing ``ModulesRepo`` clones the remote into ``NFCORE_DIR`` only if it
+    is not already present; ``no_pull_global`` suppresses the ``git fetch`` on an
+    existing clone. In CI the clone is warmed by an earlier, network-enabled
+    workflow step, so this fixture (and every measured round) runs offline. When
+    run locally against a cold cache it performs the one-off clone here, outside
+    the measured rounds.
     """
     from nf_core.modules.modules_repo import ModulesRepo
 
+    ModulesRepo.no_pull_global = True
     ModulesRepo()
 
 

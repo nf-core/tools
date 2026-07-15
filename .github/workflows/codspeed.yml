@@ -45,6 +45,13 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
+      # Clone nf-core/modules into the local cache here, while network is
+      # available. The modules-install benchmark then runs entirely offline
+      # (no per-round fetch), so it stays deterministic even if the CodSpeed
+      # step sandboxes network during measurement.
+      - name: Warm nf-core/modules cache
+        run: uv run python -c "from nf_core.modules.modules_repo import ModulesRepo; ModulesRepo()"
+
       # These benchmarks spawn a fresh interpreter per round to measure
       # import/start-up cost, which CodSpeed's instruction-counting
       # "simulation" instrument can't see. Use "walltime" mode instead.
