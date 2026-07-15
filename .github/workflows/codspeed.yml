@@ -30,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
@@ -56,7 +56,7 @@ jobs:
       # import/start-up cost, which CodSpeed's instruction-counting
       # "simulation" instrument can't see. Use "walltime" mode instead.
       - name: Run start-up benchmarks
-        uses: CodSpeedHQ/action@9f3a37ece7abc84992501a7fcd54d1704f3458fa # v4.18.4
+        uses: CodSpeedHQ/action@f99becdce5e5d51fd556489ebef684f4ecfd6286 # v4.18.5
         with:
           mode: walltime
           run: uv run pytest benchmarks/test_startup_benchmarks.py --codspeed
