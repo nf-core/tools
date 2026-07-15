@@ -45,7 +45,7 @@ def test_spawn_remote_version_refresh_uses_updater_module(tmp_path, monkeypatch)
     monkeypatch.setattr(nf_core.utils, "NFCORE_CACHE_DIR", tmp_path)
     monkeypatch.setattr(nf_core.utils, "REMOTE_VERSION_CACHE", cache_path)
 
-    with mock.patch("nf_core.utils.subprocess.Popen") as popen:
+    with mock.patch("subprocess.Popen") as popen:
         nf_core.utils._spawn_remote_version_refresh("https://example.com/tools_version?v=4.0.0")
 
     popen.assert_called_once_with(
