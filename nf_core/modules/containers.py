@@ -470,7 +470,8 @@ class ModuleContainers:
                     log.debug(f"Reusing conda lock file for build {build_id} (from {cached_lock_path})")
                     if progress_bar and task_id is not None:
                         progress_bar.update(task_id, status=f"conda lock {short_platform} (cached)...")
-                    shutil.copyfile(cached_lock_path, conda_lock_path)
+                    if cached_lock_path != conda_lock_path:
+                        shutil.copyfile(cached_lock_path, conda_lock_path)
                 else:
                     # Download conda lock file (it will look up build_id from docker container)
                     log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
