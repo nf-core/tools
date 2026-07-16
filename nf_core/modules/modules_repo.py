@@ -10,10 +10,23 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import nf_core.modules.modules_utils
 from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.modules.registry_client import RegistryClient
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 
 log = logging.getLogger(__name__)
+
+
+def get_modules_repo(
+    remote_url: str | None = None,
+    branch: str | None = None,
+    no_pull: bool = False,
+    hide_progress: bool = False,
+) -> "ModulesRepoType":
+    """Return a RegistryClient for the default nf-core/modules remote, or a ModulesRepo for custom remotes."""
+    if (remote_url is None or remote_url == NF_CORE_MODULES_REMOTE) and branch is None:
+        return RegistryClient()
+    return ModulesRepo(remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=hide_progress)
 
 
 class ModulesRepo(SyncedRepo):
@@ -150,3 +163,7 @@ class ModulesRepo(SyncedRepo):
                 self.setup_local_repo(remote, branch, hide_progress)
             else:
                 raise LookupError("Exiting due to error with local modules git repo") from e
+
+
+# Canonical type alias for the two possible backends — import this instead of defining locally.
+ModulesRepoType = RegistryClient | ModulesRepo

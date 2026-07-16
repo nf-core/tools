@@ -8,7 +8,7 @@ import rich.prompt
 import ruamel.yaml
 
 import nf_core.utils
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepoType, get_modules_repo
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 
     # Try to find the root directory
     base_dir: Path = nf_core.utils.determine_base_dir(directory)
+    print(f"base_dir: {base_dir}")
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
@@ -96,7 +97,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 def prompt_component_version_sha(
     component_name: str,
     component_type: str,
-    modules_repo: "ModulesRepo",
+    modules_repo: "ModulesRepoType",
     installed_sha: str | None = None,
 ) -> str:
     """
@@ -193,7 +194,7 @@ def get_components_to_install(
                         component_name = list(component.keys())[0].lower()
                         branch = component[component_name].get("branch")
                         git_remote = component[component_name]["git_remote"]
-                        modules_repo = ModulesRepo(git_remote, branch=branch)
+                        modules_repo = get_modules_repo(git_remote, branch=branch)
                         current_comp_dict = subworkflows if component_name in subworkflows else modules
 
                         component_dict = {

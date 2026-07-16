@@ -6,7 +6,7 @@ from pathlib import Path
 
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepoType, get_modules_repo
 from nf_core.modules.modules_utils import scan_modules_dir
 
 from .components_utils import get_repo_info
@@ -34,7 +34,7 @@ class ComponentCommand:
         """
         self.component_type: str = component_type
         self.directory: Path = Path(directory)
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
+        self.modules_repo = get_modules_repo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress: bool = hide_progress
         self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
         self.repo_type: str | None = None
@@ -156,7 +156,7 @@ class ComponentCommand:
         return scan_modules_dir(repo_dir)
 
     def install_component_files(
-        self, component_name: str, component_version: str, modules_repo: ModulesRepo, install_dir: str | Path
+        self, component_name: str, component_version: str, modules_repo: ModulesRepoType, install_dir: str | Path
     ) -> bool:
         """
         Installs a module/subworkflow into the given directory
@@ -206,11 +206,12 @@ class ComponentCommand:
             # If there are modules installed in the wrong location
             if len(wrong_location_modules) > 0:
                 log.info("The modules folder structure is outdated. Reinstalling modules.")
-                # Remove the local copy of the modules repository
-                log.info(f"Updating '{self.modules_repo.local_repo_dir}'")
-                self.modules_repo.setup_local_repo(
-                    self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
-                )
+                # Remove the local copy of the modules repository (git backend only)
+                if self.modules_repo.local_repo_dir is not None:
+                    log.info(f"Updating '{self.modules_repo.local_repo_dir}'")
+                    self.modules_repo.setup_local_repo(  # type: ignore[union-attr]
+                        self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
+                    )
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
                     modules_dir = Path("modules").resolve()

@@ -78,7 +78,9 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
     subworkflow.branch = subworkflow_lint_object.modules_json.get_component_branch(
         "subworkflows", subworkflow.component_name, subworkflow.repo_url, subworkflow.org
     )
-    modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=subworkflow.repo_url, branch=subworkflow.branch)
+    modules_repo = nf_core.modules.modules_repo.get_modules_repo(
+        remote_url=subworkflow.repo_url, branch=subworkflow.branch
+    )
 
     for f, same in modules_repo.component_files_identical(
         subworkflow.component_name, tempdir, subworkflow.git_sha, "subworkflows"

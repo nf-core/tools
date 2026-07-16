@@ -15,7 +15,7 @@ from nf_core.components.components_utils import (
 from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import get_modules_repo
 from nf_core.pipelines.containers_utils import try_generate_container_configs
 from nf_core.utils import plural_es, plural_s, plural_y
 
@@ -41,7 +41,7 @@ class ComponentUpdate(ComponentCommand):
         skip_deps=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.current_remote = ModulesRepo(remote_url, branch)
+        self.current_remote = get_modules_repo(remote_url, branch)
         self.branch = branch
         self.force = force
         self.prompt = prompt
@@ -105,7 +105,7 @@ class ComponentUpdate(ComponentCommand):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
             branch = component.get("branch", self.branch)
-            self.modules_repo = ModulesRepo(remote_url, branch)
+            self.modules_repo = get_modules_repo(remote_url, branch)
             component = component["name"]
 
         self.component = component
@@ -708,7 +708,7 @@ class ComponentUpdate(ComponentCommand):
         repo_objs_comps = []
         for (repo_url, branch), comps_shas in repos_and_branches.items():
             try:
-                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch)
+                modules_repo = get_modules_repo(remote_url=repo_url, branch=branch)
             except LookupError as e:
                 log.warning(e)
                 log.info(f"Skipping {self.component_type} in '{repo_url}'")

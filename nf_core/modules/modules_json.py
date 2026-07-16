@@ -16,7 +16,8 @@ from typing_extensions import NotRequired, TypedDict  # for py<3.11
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
 from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepo, get_modules_repo
+from nf_core.modules.registry_client import RegistryClient
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
 from ..components.components_differ import ComponentsDiffer
@@ -138,7 +139,7 @@ class ModulesJson:
         """
         names = []
         for repo_url in repos:
-            modules_repo = ModulesRepo(repo_url)
+            modules_repo = get_modules_repo(repo_url)
             if modules_repo is None:
                 raise UserWarning(f"Could not find module repository for '{repo_url}' in '{directory}'")
             if modules_repo.repo_path is None:
@@ -180,7 +181,7 @@ class ModulesJson:
         renamed_dirs = {}
         # Check if there are any untracked repositories
 
-        dirs_not_covered = self.dir_tree_uncovered(directory, [Path(ModulesRepo(url).repo_path) for url in repos])
+        dirs_not_covered = self.dir_tree_uncovered(directory, [Path(get_modules_repo(url).repo_path) for url in repos])
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
@@ -212,7 +213,7 @@ class ModulesJson:
                         ).unsafe_ask()
 
                 # Verify that there is a directory corresponding the remote
-                nrepo_name = ModulesRepo(nrepo_remote).repo_path
+                nrepo_name = get_modules_repo(nrepo_remote).repo_path
                 if nrepo_name is None:
                     raise UserWarning(f"Could not find the repository name for '{nrepo_remote}'")
                 if not (directory / nrepo_name).exists():
@@ -300,7 +301,7 @@ class ModulesJson:
             (dict[str, dict[str, str]]): The module.json entries for the modules/subworkflows
                                          from the repository
         """
-        default_modules_repo = ModulesRepo(remote_url=remote_url)
+        default_modules_repo = get_modules_repo(remote_url=remote_url)
         if component_type == "modules":
             repo_path = self.modules_dir / install_dir
         elif component_type == "subworkflows":
@@ -370,7 +371,9 @@ class ModulesJson:
                             dead_components.append(component)
                         break
                     # Create a new modules repo with the selected branch, and retry find the sha
-                    modules_repo = ModulesRepo(remote_url=remote_url, branch=branch, no_pull=True, hide_progress=True)
+                    modules_repo = get_modules_repo(
+                        remote_url=remote_url, branch=branch, no_pull=True, hide_progress=True
+                    )
                 else:
                     found_sha = True
                     break
@@ -397,7 +400,7 @@ class ModulesJson:
         component_type: str,
         component_name: str | Path,
         component_path: str | Path,
-        modules_repo: ModulesRepo,
+        modules_repo: "ModulesRepo | RegistryClient",
     ) -> str | None:
         """
         Returns the SHA for the latest commit where the local files are identical to the remote files
@@ -598,7 +601,7 @@ class ModulesJson:
 
         for branch, modules in branches_and_mods.items():
             try:
-                modules_repo = ModulesRepo(remote_url=remote_url, branch=branch)
+                modules_repo = get_modules_repo(remote_url=remote_url, branch=branch)
             except LookupError as e:
                 log.error(e)
                 failed_to_install.extend(modules)
@@ -722,7 +725,7 @@ class ModulesJson:
     def update(
         self,
         component_type: str,
-        modules_repo: ModulesRepo,
+        modules_repo: "ModulesRepo | RegistryClient",
         component_name: str,
         component_version: str,
         installed_by: list[str] | None,
@@ -1079,7 +1082,7 @@ class ModulesJson:
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for comp_type in component_types:
             for repo_url in self.modules_json["repos"]:
-                modules_repo = ModulesRepo(repo_url)
+                modules_repo = get_modules_repo(repo_url)
                 install_dir = modules_repo.repo_path
                 try:
                     for comp in self.modules_json["repos"][repo_url][comp_type][install_dir]:
@@ -1216,7 +1219,7 @@ class ModulesJson:
         def components_with_repos():
             for directory in missing_from_modules_json:
                 for repo_url in repos:
-                    modules_repo = ModulesRepo(repo_url)
+                    modules_repo = get_modules_repo(repo_url)
                     paths_in_directory = []
                     repo_url_path = Path(
                         self.modules_dir,

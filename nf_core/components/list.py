@@ -7,7 +7,7 @@ import rich.table
 
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson, ModulesJsonModuleEntry
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import get_modules_repo
 
 log = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ class ComponentList(ComponentCommand):
                             version_sha = component_entry["git_sha"]
                             try:
                                 # pass repo_name to get info on modules even outside nf-core/modules
-                                module = ModulesRepo(
+                                module = get_modules_repo(
                                     remote_url=repo_url,
                                     branch=component_entry["branch"],
                                 )

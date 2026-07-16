@@ -53,7 +53,7 @@ def subworkflow_version(subworkflow_lint_object, subworkflow):
         subworkflow.branch = subworkflow_lint_object.modules_json.get_component_branch(
             "subworkflows", subworkflow.component_name, subworkflow.repo_url, subworkflow.org
         )
-        modules_repo = nf_core.modules.modules_repo.ModulesRepo(
+        modules_repo = nf_core.modules.modules_repo.get_modules_repo(
             remote_url=subworkflow.repo_url, branch=subworkflow.branch
         )
 
