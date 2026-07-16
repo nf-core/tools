@@ -6,25 +6,39 @@
 
 set -e
 
-# list staged files
-staged_files="$(git diff --cached --name-only)"
-
 status=0
+seen_dirs=""
 
-for file in $staged_files; do
-    file_dir=$(dirname "$file")
+while IFS= read -r file; do
+    # The offending output bundle's root is the ancestor directory that has
+    # `pipeline_info` as an immediate child, so callers can restore it in one go.
+    if [[ "$file" == pipeline_info/* ]]; then
+        top_dir="pipeline_info"
+    elif [[ "$file" == */pipeline_info/* ]]; then
+        top_dir="${file%%/pipeline_info/*}"
+    else
+        top_dir=""
+        dir=$(dirname "$file")
+        while [[ "$dir" != "." && "$dir" != "/" ]]; do
+            if [[ -d "$dir/pipeline_info" ]]; then
+                top_dir="$dir"
+                break
+            fi
+            dir=$(dirname "$dir")
+        done
+    fi
 
-    # Walk up the directory tree and check if the current directory contains a subdirectory called `pipeline_info`
-    # or the staged file is itself inside a directory called `pipeline_info`.
-    while [ "$file_dir" != "." ] && [ "$file_dir" != "/" ]; do
-        if [ $(basename "$file_dir") == "pipeline_info" ] || [ -d "$file_dir/pipeline_info" ]; then
-        echo "❌ Commit blocked: Please do not commit output from pipeline test runs to the pipeline code itself."
-        echo "Use 'git restore --staged <file>...' to remove the output files from the staging area before proceeding."
+    if [[ -n "$top_dir" ]]; then
+        echo "❌ Commit blocked: Please do not commit output from pipeline test runs to the pipeline code itself: $file"
         status=1
-        break
-        fi
-        file_dir=$(dirname "$file_dir")
-    done
-done
+        case "$seen_dirs" in
+            *"|$top_dir|"*) ;;
+            *)
+                echo "Run 'git restore --staged $top_dir' to remove the whole output folder from the staging area."
+                seen_dirs="$seen_dirs|$top_dir|"
+                ;;
+        esac
+    fi
+done < <(git diff --cached --name-only)
 
 exit "$status"
