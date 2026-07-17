@@ -34,7 +34,7 @@ def files_exist(self) -> dict[str, list[str]]:
         .github/workflows/nf-test.yml
         .github/actions/get-shards/action.yml
         .github/actions/nf-test/action.yml
-        .github/workflows/linting_comment.yml
+        .github/workflows/pr-comment.yml
         .github/workflows/linting.yml
         [LICENSE, LICENSE.md, LICENCE, LICENCE.md]  # NB: British / American spelling
         assets/email_template.html
@@ -148,7 +148,7 @@ def files_exist(self) -> dict[str, list[str]]:
         [Path(".github", "workflows", "nf-test.yml")],
         [Path(".github", "actions", "get-shards", "action.yml")],
         [Path(".github", "actions", "nf-test", "action.yml")],
-        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "pr-comment.yml")],
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
         [Path("assets", "email_template.txt")],
