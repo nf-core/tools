@@ -23,8 +23,9 @@ def get_modules_repo(
     no_pull: bool = False,
     hide_progress: bool = False,
 ) -> "ModulesRepoType":
-    """Return a RegistryClient for the default nf-core/modules remote, or a ModulesRepo for custom remotes."""
-    if (remote_url is None or remote_url == NF_CORE_MODULES_REMOTE) and branch is None:
+    """Return a RegistryClient for the default nf-core/modules remote on its default branch,
+    or a git-backed ModulesRepo for custom remotes/branches."""
+    if (remote_url is None or remote_url == NF_CORE_MODULES_REMOTE) and branch in (None, "master"):
         return RegistryClient()
     return ModulesRepo(remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=hide_progress)
 

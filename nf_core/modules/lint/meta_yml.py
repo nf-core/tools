@@ -182,8 +182,6 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        if module_lint_object.modules_repo.local_repo_dir is None:
-            raise FileNotFoundError("No local repo clone available (HTTP registry mode)")
         schema = module_lint_object.load_meta_schema()
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))

@@ -20,7 +20,7 @@ import ruamel.yaml
 
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml
+from nf_core.components.components_utils import get_biotools_id, get_biotools_response, load_schema_from_repo, yaml
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
@@ -285,24 +285,20 @@ class ModuleLint(ComponentLint):
 
     def load_meta_schema(self) -> Mapping[str, Any]:
         """
-        Load the meta.yml JSON schema from the local modules repository cache.
+        Load the meta.yml JSON schema from the modules repository (local clone or HTTP registry).
         The schema is cached in self.meta_schema to avoid reloading.
 
         Returns:
             dict: The meta.yml JSON schema
 
         Raises:
-            LookupError: If the local module cache is not found
+            LookupError: If the schema cannot be read or fetched
         """
         # Return cached schema if already loaded
         if self.meta_schema is not None:
             return self.meta_schema
 
-        if self.modules_repo.local_repo_dir is None:
-            raise LookupError("Local module cache not found")
-
-        with open(Path(self.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
-            self.meta_schema = json.load(fh)
+        self.meta_schema = load_schema_from_repo(self.modules_repo, "modules/meta-schema.json")
         return self.meta_schema
 
     def sort_meta_yml(self, meta_yml: dict) -> dict:

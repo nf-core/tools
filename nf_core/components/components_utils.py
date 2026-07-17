@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from pathlib import Path
@@ -9,6 +10,7 @@ import ruamel.yaml
 
 import nf_core.utils
 from nf_core.modules.modules_repo import ModulesRepoType, get_modules_repo
+from nf_core.modules.registry_client import RegistryClient
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +26,30 @@ yaml.indent(mapping=2, sequence=2, offset=0)
 yaml.width = 4096
 
 
+def load_schema_from_repo(modules_repo: "ModulesRepoType", relative_path: str) -> dict:
+    """
+    Load a JSON schema shipped in the modules repository.
+
+    Reads from the local git clone when available, otherwise fetches the file
+    over HTTP (registry mode).
+
+    Raises:
+        LookupError: If the schema cannot be read or fetched.
+    """
+    if isinstance(modules_repo, RegistryClient):
+        try:
+            return json.loads(modules_repo.get_file_content(relative_path))
+        except requests.RequestException as e:
+            raise LookupError(f"Could not fetch '{relative_path}' from '{modules_repo.remote_url}': {e}") from e
+    if modules_repo.local_repo_dir is None:
+        raise LookupError(f"Local clone of the modules repo not found, cannot load '{relative_path}'")
+    try:
+        with open(Path(modules_repo.local_repo_dir, relative_path)) as fh:
+            return json.load(fh)
+    except FileNotFoundError as e:
+        raise LookupError(f"Could not find '{relative_path}' in '{modules_repo.local_repo_dir}'") from e
+
+
 def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
     """
     Determine whether this is a pipeline repository or a clone of
@@ -36,7 +62,6 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 
     # Try to find the root directory
     base_dir: Path = nf_core.utils.determine_base_dir(directory)
-    print(f"base_dir: {base_dir}")
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
