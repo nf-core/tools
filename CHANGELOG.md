@@ -37,6 +37,7 @@
 - remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
 - correct always-true `nf-core pipelines lint` condition in the linting workflow and fix doc typos (broken `#lint-tests` anchor, duplicate word, stray code-span space) ([#4324](https://github.com/nf-core/tools/pull/4324))
 - Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
+- Switch to a more secure approach for PR comments by splitting the GitHub Actions workflow ([#4342](https://github.com/nf-core/tools/pull/4342))
 
 ### Download
 
