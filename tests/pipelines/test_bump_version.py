@@ -69,8 +69,8 @@ class TestBumpVersion(TestPipelines):
         with open(new_pipeline_obj._fp("README.md")) as fh:
             readme = fh.read().splitlines()
         assert (
-            f"[![Nextflow](https://img.shields.io/badge/version-%E2%89%A5{version}-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)]"
-            "(https://www.nextflow.io/)" in readme
+            f"{{% if github_badges -%}}[![Nextflow](https://img.shields.io/badge/version-%E2%89%A5{version}-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/){{% endif -%}}"
+            in readme
         )
 
     def test_bump_pipeline_version_in_snapshot(self):
