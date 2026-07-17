@@ -5,9 +5,13 @@ on:
     branches:
       - main
       - dev
+    paths:
+      - codspeed.yml
+      - nf_core/**/*.py
   pull_request:
-  # `workflow_dispatch` allows CodSpeed to trigger backtest
-  # performance analysis in order to generate initial data.
+    paths:
+      - codspeed.yml
+      - nf_core/**/*.py
   workflow_dispatch:
 
 # Cancel if a newer run with the same workflow name is queued
