@@ -806,8 +806,8 @@ process TEST_PROCESS {
     assert len(mock_lint.warned) == 0, f"Expected no warnings, got: {mock_lint.warned}"
 
 
-def test_meta_input_names_invalid_underscore(tmp_path):
-    """Test that invalid meta input names with underscores (meta_vcf, meta_gex) fail validation"""
+def test_meta_input_names_valid_underscore(tmp_path):
+    """Test that descriptive meta input names with underscores (meta_vcf, meta_gex, meta_ab) are allowed"""
     main_nf_content = """
 process TEST_PROCESS {
     input:
@@ -850,14 +850,10 @@ process TEST_PROCESS {
 
     check_meta_input_names(mock_lint, flattened_inputs)
 
-    assert any("meta_input_names" in str(f) for f in mock_lint.failed), (
-        f"Expected meta_input_names in failed, got: {mock_lint.failed}"
+    # Descriptive 'meta_*' names are not meta maps, so they must not be flagged as invalid.
+    assert not any("meta_input_names" in str(f) for f in mock_lint.failed), (
+        f"Expected no meta_input_names failures, got: {mock_lint.failed}"
     )
-    # Check that the error message mentions the invalid names
-    failed_msg = str(mock_lint.failed[0])
-    assert "meta_vcf" in failed_msg, f"Expected 'meta_vcf' in error message, got: {failed_msg}"
-    assert "meta_gex" in failed_msg, f"Expected 'meta_gex' in error message, got: {failed_msg}"
-    assert "meta_ab" in failed_msg, f"Expected 'meta_ab' in error message, got: {failed_msg}"
 
 
 def test_meta_input_names_invalid_meta1(tmp_path):
