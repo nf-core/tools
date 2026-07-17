@@ -16,6 +16,7 @@ import rich_click.rich_click as rc
 from trogon import tui
 
 from nf_core import __version__
+from nf_core.cli_schema import JSONGroup
 from nf_core.commands_modules import (
     modules_bump_versions,
     modules_containers_conda_lock,
@@ -77,6 +78,8 @@ setup_nfcore_dir()
 rc.MAX_WIDTH = 100
 rc.USE_RICH_MARKUP = True
 rc.COMMANDS_BEFORE_OPTIONS = True
+# Tip shown on every --help screen, pointing tools/agents at the machine-readable schema
+rc.FOOTER_TEXT = "[dim]Tip: add --help-json to any command for machine-readable help as JSON.[/]"
 
 
 # Set up rich stderr console
@@ -135,7 +138,7 @@ def run_nf_core():
 
 
 @tui(command="interface", help="Launch the nf-core interface")
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(cls=JSONGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.option(
     "-v",
