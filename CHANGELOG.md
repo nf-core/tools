@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v4.1.0dev
+## [v4.1.0 - marshalled mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-21]
 
 ### General
 
