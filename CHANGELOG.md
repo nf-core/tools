@@ -4,12 +4,11 @@
 
 ### General
 
-- Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
 - container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
 - Coerce launch params_out to Path to fix AttributeError (#4299) ([#4317](https://github.com/nf-core/tools/pull/4317))
 - generate valid Markdown when piping schema docs to file ([#4319](https://github.com/nf-core/tools/pull/4319))
 - fix API docs bug in pydantic autodoc ([#4320](https://github.com/nf-core/tools/pull/4320))
-- Update pre-commit npm dependencies to v3.8.4 ([#4335](https://github.com/nf-core/tools/pull/4335))
+- Improve CLI startup speed ([#4383](https://github.com/nf-core/tools/pull/4383))
 
 ### Linting
 
@@ -21,12 +20,10 @@
 ### Modules
 
 - `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
-- feat: module lint for module name granularity ([#4325](https://github.com/nf-core/tools/pull/4325))
+- `module` lint for module name matching against nf-core module naming specifications ([#4325](https://github.com/nf-core/tools/pull/4325))
 - Clarify execution context of nf-core modules test command ([#4346](https://github.com/nf-core/tools/pull/4346))
 - Add `nf-core modules containers create` to build module containers via Seqera Wave and record them in the `containers:` section of `meta.yml` ([#3954](https://github.com/nf-core/tools/pull/3954))
-- Container linting now validates the `containers:` section of `meta.yml` (Wave modules). The legacy `main.nf` container checks (URL reachability, registry prefix, docker/singularity tag match) have been removed; modules still using the old container syntax get a `deprecated_container_syntax` warning instead ([#3954](https://github.com/nf-core/tools/pull/3954))
-
-### Subworkflows
+- Add a log hint in `modules create` for `create containers` and switch `modules bump-versions` to use Seqera containers ([#4374](https://github.com/nf-core/tools/pull/4374))
 
 ### Template
 
@@ -44,6 +41,9 @@
 - Included support for Apptainer in `nf-core pipelines download --container-system apptainer` ([#4352](https://github.com/nf-core/tools/pull/4352))
 
 #### Version updates
+
+- Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
+- Update pre-commit npm dependencies to v3.8.4 ([#4335](https://github.com/nf-core/tools/pull/4335))
 
 ## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]
 

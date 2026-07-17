@@ -60,6 +60,24 @@ def get_container_library_dir(container_system: str) -> str:
             raise KeyError(f"Container engine: {container_system} is unknown.")
 
 
+class SingularityCacheFilePathValidator(questionary.Validator):
+    """
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
+    """
+
+    def validate(self, value):
+        if len(value.text):
+            if Path(value.text).is_file():
+                return True
+            else:
+                raise questionary.ValidationError(
+                    message="Invalid remote cache index file",
+                    cursor_position=len(value.text),
+                )
+        else:
+            return True
+
+
 class SingularityProgress(ContainerProgress):
     def get_task_types_and_columns(self):
         task_types_and_columns = super().get_task_types_and_columns()
@@ -385,7 +403,7 @@ class SingularityFetcher(ContainerFetcher):
         while cachedir_index is None:
             prompt_cachedir_index = questionary.path(
                 "Specify a list of the container images that are already present on the remote system:",
-                validate=nf_core.utils.SingularityCacheFilePathValidator,
+                validate=SingularityCacheFilePathValidator,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if prompt_cachedir_index == "":
