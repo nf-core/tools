@@ -37,7 +37,7 @@ jobs:
       # Install and run prek
       - name: Run prek
         id: prek
-        uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2
+        uses: j178/prek-action@5337cb91e0fa35a7ff31b9ca345126d8bbbcdf16 # v2
         continue-on-error: true
 
       # indication that the linting has finished
