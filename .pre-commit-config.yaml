@@ -12,7 +12,7 @@ repos:
       - id: prettier
         entry: prettier --experimental-cli --write --ignore-unknown --no-cache
         additional_dependencies:
-          - prettier@3.9.4
+          - prettier@3.9.5
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
