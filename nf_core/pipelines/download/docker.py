@@ -287,15 +287,17 @@ class DockerFetcher(ContainerFetcher):
             # - read lines if there are any,
             # - check if we should kill it,
             # - update the progress bar
+            assert proc.stdout is not None
+            stdout = proc.stdout
             lines = []
             while True:
                 if self.kill_with_fire:
                     proc.kill()
                     raise KeyboardInterrupt("Docker command was cancelled by user")
 
-                rlist, _, _ = select.select([proc.stdout], [], [], 0.1)
-                if rlist and proc.stdout is not None:
-                    line = proc.stdout.readline()
+                rlist, _, _ = select.select([stdout], [], [], 0.1)
+                if rlist:
+                    line = stdout.readline()
                     if line:
                         lines.append(line)
                         self.progress.update(progress_task, current_log=line.strip())
