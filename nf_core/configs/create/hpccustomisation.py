@@ -19,6 +19,9 @@ Use the following fields to provide important details about your HPC.
 markdown_scheduler = """
 First, select your HPC's scheduler.
 The program will attempt to automatically determine your HPC's scheduler.
+
+**Please double-check that the correct scheduler was detected.**
+
 If it was unsuccessful, you can select one of the supported schedulers from
 the drop-down list.
 You can also select "Local execution" which will result in jobs defaulting
@@ -60,7 +63,11 @@ class HpcCustomisation(Screen):
             "Local execution": "local",
             "PBS/Torque": "pbs",
             "PBS Pro": "pbspro",
+            "SGE": "sge",
             "SLURM": "slurm",
+            "NQSII": "nqsii",
+            "LSF": "lsf",
+            "Moab": "moab",
         }
         yield Markdown(markdown_intro)
         yield Markdown(markdown_scheduler)
@@ -116,7 +123,22 @@ class HpcCustomisation(Screen):
             pass
         try:
             subprocess.run(["qstat", "-help"])
+            subprocess.run(["qhost", "-q"])
             return "sge"
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            subprocess.run(["bsub", "-V"])
+            return "lsf"
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            subprocess.run(["moab", "--version"])
+            return "moab"
         except FileNotFoundError:
             pass
         except subprocess.CalledProcessError:
@@ -144,6 +166,7 @@ class HpcCustomisation(Screen):
                 return queues.split("\n")
             except subprocess.CalledProcessError:
                 pass
+        # TODO: Implement LSF, Moab, NQSII here
         return []
 
     def _get_default_queue(self, scheduler: str | None) -> str:
@@ -158,7 +181,7 @@ class HpcCustomisation(Screen):
                 return self._pbs_get_default_queue()
             except subprocess.CalledProcessError:
                 pass
-        # TODO: Implement SGE here
+        # TODO: Implement SGE, LSF, Moab, NQSII here
         return ""
 
     def _slurm_get_default_queue(self) -> str:

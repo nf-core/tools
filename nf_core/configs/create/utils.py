@@ -39,7 +39,7 @@ _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 # Used by finalinfradetails as it already imports create.utils
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter", "conda"]
 CACHED_CONTAINERS = ["singularity", "apptainer", "charliecloud", "conda"]
-SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge"]
+SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge", "nqsii", "lsf", "moab"]
 
 
 class ConfigsCreateConfig(BaseModel):
