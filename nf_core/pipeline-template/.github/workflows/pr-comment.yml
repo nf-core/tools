@@ -35,6 +35,7 @@ jobs:
         with:{% raw %}
           run_id: ${{ github.event.workflow_run.id }}
           name: pr-comment
+          path: pr-comment
           if_no_artifact_found: ignore
 
       - name: Read comment metadata
