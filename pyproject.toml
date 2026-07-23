@@ -31,6 +31,7 @@ authors = [
 ]
 requires-python = ">=3.10, <4"
 dependencies = [
+    "ast-grep-py>=0.44.0",
     "click",
     "filetype",
     "GitPython",
@@ -85,6 +86,15 @@ dev = [
     "pytest-workflow>=2.0.0",
     "pytest-xdist>=3.7.0",
     "pytest>=8.0.0",
+]
+
+# PEP 735 dependency group (installed by `uv sync` / `pip install --group dev`).
+# Direct git URLs are not allowed in [project] dependencies on PyPI, so the
+# Nextflow tree-sitter parser lives here until it is published as a wheel.
+# Without it, nf_core.astgrep falls back to regex-based linting.
+[dependency-groups]
+dev = [
+    "tree-sitter-nextflow @ git+https://github.com/nextflow-io/tree-sitter-nextflow.git@172d3fef409aa1220fa9c10bc674e7dc675710e3",
 ]
 
 [project.urls]
