@@ -1,49 +1,13 @@
 # nf-core/tools: Changelog
 
-## v4.1.0dev
+## [v4.0.3 - Bold Boa Patch 3](https://github.com/nf-core/tools/releases/tag/4.0.3) - [2026-07-23]
 
-### General
-
-- Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
-- container configs: use correct key for conda configs ([#4269](https://github.com/nf-core/tools/pull/4269))
-- Coerce launch params_out to Path to fix AttributeError (#4299) ([#4317](https://github.com/nf-core/tools/pull/4317))
-- generate valid Markdown when piping schema docs to file ([#4319](https://github.com/nf-core/tools/pull/4319))
-- fix API docs bug in pydantic autodoc ([#4320](https://github.com/nf-core/tools/pull/4320))
-- Update pre-commit npm dependencies to v3.8.4 ([#4335](https://github.com/nf-core/tools/pull/4335))
-
-### Linting
-
-- accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
-- improve linting for `modules.json` to add support for only installing subworkflows from a repository and provide more explicit error messages ([#4287](https://github.com/nf-core/tools/pull/4287))
-- improve singularity_tag linting check (add skip, handle exceptions correctly, check against oras) ([#4358](https://github.com/nf-core/tools/pull/4358))
-- make regex for meta keys more specific to avoid false positives ([#4280](https://github.com/nf-core/tools/pull/4280))
-
-### Modules
-
-- `modules info`: handle one element channels correctly ([#4268](https://github.com/nf-core/tools/pull/4268))
-- feat: module lint for module name granularity ([#4325](https://github.com/nf-core/tools/pull/4325))
-- Clarify execution context of nf-core modules test command ([#4346](https://github.com/nf-core/tools/pull/4346))
-- Add `nf-core modules containers create` to build module containers via Seqera Wave and record them in the `containers:` section of `meta.yml` ([#3954](https://github.com/nf-core/tools/pull/3954))
-- Container linting now validates the `containers:` section of `meta.yml` (Wave modules). The legacy `main.nf` container checks (URL reachability, registry prefix, docker/singularity tag match) have been removed; modules still using the old container syntax get a `deprecated_container_syntax` warning instead ([#3954](https://github.com/nf-core/tools/pull/3954))
-
-### Subworkflows
+This is a security patch to prohibit write access to the repository through certain GitHub Action workflows.
 
 ### Template
 
-- New pre-commit hooks blocking large files and merge markers in pipeline template ([#3935](https://github.com/nf-core/tools/pull/3935))
-- add `process_low_memory` resource label to `base.config` ([#4264](https://github.com/nf-core/tools/pull/4264))
-- Simpler test data path in `tests/nextflow.config` ([#4285](https://github.com/nf-core/tools/pull/4285))
-- fix dead link ([#4307](https://github.com/nf-core/tools/pull/4307))
-- remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
-- correct always-true `nf-core pipelines lint` condition in the linting workflow and fix doc typos (broken `#lint-tests` anchor, duplicate word, stray code-span space) ([#4324](https://github.com/nf-core/tools/pull/4324))
-- Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
 - Switch to a more secure approach for PR comments by splitting the GitHub Actions workflow ([#4342](https://github.com/nf-core/tools/pull/4342))
-
-### Download
-
-- Included support for Apptainer in `nf-core pipelines download --container-system apptainer` ([#4352](https://github.com/nf-core/tools/pull/4352))
-
-#### Version updates
+- Add pr-comment for nf-test silent failures with latest-everything ([#4414](https://github.com/nf-core/tools/pull/4414))
 
 ## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]
 
