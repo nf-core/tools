@@ -83,7 +83,7 @@ class TestContainerConfigs(TestPipelines):
             patch("nf_core.pipelines.containers_utils.check_nextflow_version", return_value=True),
             patch(
                 "nf_core.pipelines.containers_utils.run_cmd",
-                return_value=('{"processes": []}', ""),
+                return_value=(b'{"processes": []}', b""),
             ),
         ):
             self.container_configs.generate_container_configs(
@@ -109,7 +109,7 @@ class TestContainerConfigs(TestPipelines):
             patch("nf_core.pipelines.containers_utils.check_nextflow_version", return_value=True),
             patch(
                 "nf_core.pipelines.containers_utils.run_cmd",
-                return_value=('{"processes": []}', ""),
+                return_value=(b'{"processes": []}', b""),
             ),
         ):
             self.container_configs.generate_container_configs()
