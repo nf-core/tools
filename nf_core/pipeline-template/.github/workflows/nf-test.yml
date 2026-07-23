@@ -184,10 +184,11 @@ jobs:
           echo "nf-test" > pr-comment/header.txt
           if [ -d pr-comment-fragments ] && [ -n "$(ls -A pr-comment-fragments)" ]; then
             {
-              echo "## ❌ nf-test failed"
+              echo "## ❌ nf-test failed with latest Nextflow version"
               echo ""
-              echo "> [!NOTE]:"
-              echo "> Tests with `latest-everything` failed but will not cause a CI workflow failure. Please check if the error is expected with newer (edge-)releases of Nextflow or if it needs fixing."
+              echo "> [!NOTE]"
+              echo "> Tests with Nextflow's latest version failed but it will not cause a CI workflow failure."
+              echo "> Please check if the failure is expected with newer (edge-)releases of Nextflow or if it needs fixing."
               echo ""
               cat pr-comment-fragments/*.md
               echo ""
