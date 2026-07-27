@@ -8,7 +8,14 @@ from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select
 
-from nf_core.configs.create.utils import ConfigsCreateConfig, TextInput, init_context
+from nf_core.configs.create.utils import (
+    SUPPORTED_DIRECTIVES,
+    ConfigsCreateConfig,
+    TextInput,
+    add_hide_class,
+    init_context,
+    remove_hide_class,
+)
 
 markdown_intro = """
 # Configure the options for your HPC
@@ -52,13 +59,26 @@ default to 1 minute if not provided.
 class HpcCustomisation(Screen):
     """Customise the options to create a config for an HPC."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.scheduler = self._get_scheduler()
+        self.queues = self._get_queues(self.scheduler)
+        self.default_queue = self._get_default_queue(self.scheduler)
+        self.supported_schedulers = {
+            "Local execution": "local",
+            "PBS/Torque": "pbs",
+            "PBS Pro": "pbspro",
+            "SGE": "sge",
+            "SLURM": "slurm",
+            "NQSII": "nqsii",
+            "LSF": "lsf",
+            "Moab": "moab",
+        }
+        self.supported_directives = SUPPORTED_DIRECTIVES.get(self.scheduler, ["cpus", "memory", "time", "queue"])
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        scheduler = self._get_scheduler()
-        queues = self._get_queues(scheduler)
-        default_queue = self._get_default_queue(scheduler)
-        module_system_used = self._detect_module_system()
         supported_schedulers = {
             "Local execution": "local",
             "PBS/Torque": "pbs",
@@ -74,7 +94,7 @@ class HpcCustomisation(Screen):
         yield Select(
             list(supported_schedulers.items()),
             prompt="Select your HPC's scheduler.",
-            value=scheduler if scheduler is not None else "local",
+            value=self.scheduler if self.scheduler is not None else "local",
             classes="column",
             id="scheduler",
         )
@@ -83,27 +103,42 @@ class HpcCustomisation(Screen):
             "queue",
             "Queue name (OPTIONAL)",
             "The default queue in your HPC (leave blank if not required).",
-            default=default_queue if default_queue else "",
-            classes="column",
-            suggestions=queues,
+            default=self.default_queue if self.default_queue else "",
+            classes="column" if "queue" in self.supported_directives else "hide",
+            suggestions=self.queues,
         )
         yield TextInput(
             "queue_stat_interval",
             "Queue stat interval (minutes) (OPTIONAL)",
             "How often (in minutes) to get the queue status from the scheduler (optional).",
-            classes="column",
+            classes="column" if self.scheduler != "local" else "hide",
         )
         yield TextInput(
             "module_system",
             "Other modules to load (OPTIONAL)",
             "Do you need to load other software using the module system for your compute nodes? Separate multiple modules by spaces.",
-            classes="hide" if not module_system_used else "",
+            classes="",
         )
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Continue", id="toconfiguration", variant="success"),
             classes="cta",
         )
+
+    @on(Select.Changed, "#scheduler")
+    def get_supported_directives(self, event: Select.Changed) -> None:
+        """Get the supported directives for the selected scheduler."""
+        self.scheduler = str(event.value)
+        self.supported_directives = SUPPORTED_DIRECTIVES.get(self.scheduler, ["cpus", "memory", "time", "queue"])
+        # Hide queue fields if not supported
+        if "queue" in self.supported_directives:
+            remove_hide_class(self.parent, "queue")
+        else:
+            add_hide_class(self.parent, "queue")
+        if self.scheduler == "local":
+            add_hide_class(self.parent, "queue_stat_interval")
+        else:
+            remove_hide_class(self.parent, "queue_stat_interval")
 
     def _get_scheduler(self) -> str | None:
         """Get the used scheduler"""
@@ -221,16 +256,6 @@ class HpcCustomisation(Screen):
             k, v = [token.strip() for token in line.split("=", 1)]
             config[k] = v
         return config
-
-    def _detect_module_system(self) -> bool:
-        """Detect if a module system is used"""
-        try:
-            subprocess.check_output(["module", "--version"])
-        except FileNotFoundError:
-            return False
-        except subprocess.CalledProcessError:
-            return False
-        return True
 
     @on(Button.Pressed, "#toconfiguration")
     def on_button_pressed(self, event: Button.Pressed) -> None:

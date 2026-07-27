@@ -40,6 +40,20 @@ _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter", "conda"]
 CACHED_CONTAINERS = ["singularity", "apptainer", "charliecloud", "conda"]
 SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge", "nqsii", "lsf", "moab"]
+SUPPORTED_DIRECTIVES = {
+    "local": ["cpus", "memory", "time"],
+    "lsf": ["cpus", "memory", "time", "queue"],
+    "moab": ["cpus", "memory", "time", "queue"],
+    "nqsii": ["cpus", "memory", "time", "queue"],
+    "pbs": ["cpus", "memory", "time", "queue"],
+    "pbspro": ["cpus", "memory", "time", "queue"],
+    "sge": ["cpus", "memory", "time", "queue"],
+    "slurm": ["cpus", "memory", "time", "queue"],
+    "condor": ["cpus", "memory", "time"],
+    "hyperqueue": ["cpus", "memory", "time"],
+    "flux": ["cpus", "time", "queue"],
+    "tcs": ["time"],
+}
 
 
 class ConfigsCreateConfig(BaseModel):
