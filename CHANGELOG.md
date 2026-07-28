@@ -45,6 +45,20 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v2 ([#4270](https://github.com/nf-core/tools/pull/4270))
 - Update pre-commit npm dependencies to v3.8.4 ([#4335](https://github.com/nf-core/tools/pull/4335))
 
+## [v4.0.3 - Bold Boa Patch 3](https://github.com/nf-core/tools/releases/tag/4.0.3) - [2026-07-23]
+
+This is a security patch to prohibit write access to the repository through certain GitHub Action workflows.
+
+### Template
+
+- Switch to a more secure approach for PR comments by splitting the GitHub Actions workflow ([#4342](https://github.com/nf-core/tools/pull/4342))
+- Add pr-comment for nf-test silent failures with latest-everything ([#4414](https://github.com/nf-core/tools/pull/4414))
+
+### General
+
+- Fix pytest for strict nextflow syntax ([#4261](https://github.com/nf-core/tools/pull/4261))
+- Fix CI: commit updated configs after modules update step ([#4292](https://github.com/nf-core/tools/pull/4292))
+
 ## [v4.0.2 - Bold Boa Patch 2](https://github.com/nf-core/tools/releases/tag/4.0.2) - [2026-04-30]
 
 ### General
