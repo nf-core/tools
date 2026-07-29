@@ -50,7 +50,7 @@ def module_version(module_lint_object: "nf_core.modules.lint.ModuleLint", module
         module.branch = module_lint_object.modules_json.get_component_branch(
             "modules", module.component_name, module.repo_url, module.org
         )
-        modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
+        modules_repo = nf_core.modules.modules_repo.get_modules_repo(remote_url=module.repo_url, branch=module.branch)
 
         module_git_log = list(modules_repo.get_component_git_log(module.component_name, "modules"))
         if version == module_git_log[0]["git_sha"]:

@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 
@@ -7,6 +6,7 @@ from jsonschema import exceptions, validators
 from rich.progress import Progress
 
 import nf_core.utils
+from nf_core.components.components_utils import load_schema_from_repo
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_utils import module_uses_dockerfile
@@ -199,8 +199,7 @@ def lint_environment_yml(
     if env_yml:
         valid_env_yml = False
         try:
-            with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/environment-schema.json")) as fh:
-                schema = json.load(fh)
+            schema = load_schema_from_repo(module_lint_object.modules_repo, "modules/environment-schema.json")
             validators.validate(instance=env_yml, schema=schema)
             module.passed.append(
                 (

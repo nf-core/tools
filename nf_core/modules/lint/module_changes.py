@@ -57,7 +57,7 @@ def module_changes(module_lint_object, module):
     module.branch = module_lint_object.modules_json.get_component_branch(
         "modules", module.component_name, module.repo_url, module.org
     )
-    modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
+    modules_repo = nf_core.modules.modules_repo.get_modules_repo(remote_url=module.repo_url, branch=module.branch)
 
     for f, same in modules_repo.component_files_identical(
         module.component_name, tempdir, module.git_sha, "modules"

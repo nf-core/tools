@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from pathlib import Path
@@ -8,7 +9,8 @@ import rich.prompt
 import ruamel.yaml
 
 import nf_core.utils
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepoType, get_modules_repo
+from nf_core.modules.registry_client import RegistryClient
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +24,30 @@ yaml.indent(mapping=2, sequence=2, offset=0)
 # Disable line wrapping: long plain-scalar keys (e.g. version `eval` expressions)
 # become invalid YAML if ruamel folds them onto a second line.
 yaml.width = 4096
+
+
+def load_schema_from_repo(modules_repo: "ModulesRepoType", relative_path: str) -> dict:
+    """
+    Load a JSON schema shipped in the modules repository.
+
+    Reads from the local git clone when available, otherwise fetches the file
+    over HTTP (registry mode).
+
+    Raises:
+        LookupError: If the schema cannot be read or fetched.
+    """
+    if isinstance(modules_repo, RegistryClient):
+        try:
+            return json.loads(modules_repo.get_file_content(relative_path))
+        except requests.RequestException as e:
+            raise LookupError(f"Could not fetch '{relative_path}' from '{modules_repo.remote_url}': {e}") from e
+    if modules_repo.local_repo_dir is None:
+        raise LookupError(f"Local clone of the modules repo not found, cannot load '{relative_path}'")
+    try:
+        with open(Path(modules_repo.local_repo_dir, relative_path)) as fh:
+            return json.load(fh)
+    except FileNotFoundError as e:
+        raise LookupError(f"Could not find '{relative_path}' in '{modules_repo.local_repo_dir}'") from e
 
 
 def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
@@ -96,7 +122,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 def prompt_component_version_sha(
     component_name: str,
     component_type: str,
-    modules_repo: "ModulesRepo",
+    modules_repo: "ModulesRepoType",
     installed_sha: str | None = None,
 ) -> str:
     """
@@ -193,7 +219,7 @@ def get_components_to_install(
                         component_name = list(component.keys())[0].lower()
                         branch = component[component_name].get("branch")
                         git_remote = component[component_name]["git_remote"]
-                        modules_repo = ModulesRepo(git_remote, branch=branch)
+                        modules_repo = get_modules_repo(git_remote, branch=branch)
                         current_comp_dict = subworkflows if component_name in subworkflows else modules
 
                         component_dict = {

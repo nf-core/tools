@@ -19,7 +19,7 @@ from nf_core.components.constants import (
     NF_CORE_MODULES_NAME,
 )
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import get_modules_repo
 from nf_core.pipelines.containers_utils import try_generate_container_configs
 
 log = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class ComponentInstall(ComponentCommand):
         skip_deps: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.current_remote = ModulesRepo(remote_url, branch)
+        self.current_remote = get_modules_repo(remote_url, branch)
         self.branch = branch
         self.force = force
         self.prompt = prompt
@@ -57,7 +57,7 @@ class ComponentInstall(ComponentCommand):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
             branch = component.get("branch", self.branch)
-            self.modules_repo = ModulesRepo(remote_url, branch)
+            self.modules_repo = get_modules_repo(remote_url, branch)
             component = component["name"]
 
         if self.current_remote is None:
@@ -232,7 +232,9 @@ class ComponentInstall(ComponentCommand):
         self.modules_repo = ini_modules_repo
 
     def collect_and_verify_name(
-        self, component: str | None, modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
+        self,
+        component: str | None,
+        modules_repo: "nf_core.modules.modules_repo.ModulesRepo | nf_core.modules.registry_client.RegistryClient",
     ) -> str:
         """
         Collect component name.
