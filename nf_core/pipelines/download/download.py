@@ -20,18 +20,19 @@ import rich
 import nf_core
 import nf_core.pipelines.list
 import nf_core.utils
+from nf_core.github_api import gh_api
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
-from nf_core.pipelines.download.utils import DownloadError, intermediate_dir_with_cd
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
     check_nextflow_version,
-    gh_api,
     pretty_nf_version,
     run_cmd,
+    set_wd_tempdir,
 )
 
 log = logging.getLogger(__name__)
@@ -41,6 +42,8 @@ stderr = rich.console.Console(
     highlight=False,
     force_terminal=nf_core.utils.rich_force_colors(),
 )
+
+SINGULARITY_SYSTEMS = ["singularity", "apptainer"]
 
 
 class DownloadWorkflow:
@@ -248,7 +251,7 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if self.container_system == "singularity" and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
+        if self.container_system in SINGULARITY_SYSTEMS and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
             summary_log.append(
                 f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
             )
@@ -330,7 +333,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required container images
-            if self.container_system in {"singularity", "docker"}:
+            if self.container_system in {"singularity", "docker", "apptainer"}:
                 workflow_directory = self.outdir / revision_dirname
                 self.find_container_images(workflow_directory, revision)
 
@@ -366,7 +369,7 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
-        if self.container_system in {"singularity", "docker"}:
+        if self.container_system in {"singularity", "docker", "apptainer"}:
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -502,7 +505,7 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity", "docker"],
+                choices=["none", "singularity", "docker", "apptainer"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -512,7 +515,7 @@ class DownloadWorkflow:
         """
         assert self.outdir is not None  # mypy
         try:
-            if self.container_system == "singularity":
+            if self.container_system in SINGULARITY_SYSTEMS:
                 self.container_fetcher = SingularityFetcher(
                     outdir=self.outdir,
                     container_library=self.container_library,
@@ -521,6 +524,7 @@ class DownloadWorkflow:
                     container_cache_index=self.container_cache_index,
                     parallel=self.parallel,
                     hide_progress=self.hide_progress,
+                    container_system=self.container_system,
                 )
             elif self.container_system == "docker":
                 self.container_fetcher = DockerFetcher(
@@ -555,9 +559,9 @@ class DownloadWorkflow:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container_system == "singularity":
+            if self.container_system in SINGULARITY_SYSTEMS:
                 stderr.print(
-                    "[bold]This is [italic]not[/] recommended when downloading Singularity images, as it can take a long time and saves very little space."
+                    "[bold]This is [italic]not[/] recommended when downloading Singularity/Apptainer images, as it can take a long time and saves very little space."
                 )
             self.compress_type = questionary.select(
                 "Choose compression type:",
@@ -645,6 +649,12 @@ class DownloadWorkflow:
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
                 + "\n///////////////////////////////////////"
             )
+        elif self.container_system == "apptainer" and self.container_cache_utilisation == "copy":
+            nfconfig += (
+                f"\n\n// Added by `nf-core pipelines download` v{nf_core.__version__} //\n"
+                + 'apptainer.cacheDir = "${projectDir}/../apptainer-images/"'
+                + "\n///////////////////////////////////////"
+            )
 
         # Write the file out again
         log.debug(f"Updating '{nfconfig_fn}'")
@@ -677,7 +687,7 @@ class DownloadWorkflow:
         working_dir = Path().absolute()
 
         def run_nextflow_inspect(params_file: Path | None = None) -> dict[str, Any]:
-            with intermediate_dir_with_cd(working_dir):
+            with set_wd_tempdir(working_dir):
                 executable = "nextflow"
                 params_file_arg = f' -params-file "{params_file}"' if params_file else ""
                 cmd_params = (
@@ -693,12 +703,18 @@ class DownloadWorkflow:
         try:
             out_json = run_nextflow_inspect()
         except RuntimeError as e:
-            # Extract Nextflow stdout from the chained CalledProcessError (errors go to stdout in NF)
-            nf_stdout = getattr(e.__cause__, "output", None) or b""
+            # Nextflow's error text is embedded in the RuntimeError message by run_cmd;
+            # a chained CalledProcessError (if any) may carry it in stdout/stderr instead.
+            nf_error_parts = [str(e), getattr(e.__cause__, "output", None), getattr(e.__cause__, "stderr", None)]
+            nf_error = "\n".join(
+                part.decode("utf-8", errors="replace") if isinstance(part, bytes) else part
+                for part in nf_error_parts
+                if part
+            )
 
             # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
             # if/else container blocks with "Invalid process directive". Users need an older NF.
-            if b"Invalid process directive" in nf_stdout:
+            if "Invalid process directive" in nf_error:
                 raise DownloadError(
                     "nextflow inspect failed because the pipeline uses old-style process syntax "
                     "that the default strict syntax of Nextflow >= 26.04 no longer accepts.\n"
@@ -710,7 +726,7 @@ class DownloadWorkflow:
             # only issue, retry inspect with an ephemeral params file that provides one.
             if re.search(
                 r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b",
-                nf_stdout.decode("utf-8", errors="replace"),
+                nf_error,
                 flags=re.IGNORECASE,
             ):
                 try:

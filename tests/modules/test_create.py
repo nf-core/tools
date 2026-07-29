@@ -6,6 +6,7 @@ import requests_cache
 import responses
 import yaml
 
+import nf_core.components.create
 import nf_core.modules.create
 from tests.utils import (
     mock_anaconda_api_calls,
@@ -14,6 +15,23 @@ from tests.utils import (
 )
 
 from ..test_modules import TestModules
+
+
+def test_modules_create_accepts_dotted_git_provider_username():
+    """Accept dotted usernames used by non-GitHub git providers."""
+    component_create = nf_core.components.create.ComponentCreate.__new__(nf_core.components.create.ComponentCreate)
+    component_create.author = "@first.last"
+    component_create.require_prompts = mock.Mock()
+
+    with (
+        mock.patch("nf_core.components.create.subprocess.check_output", side_effect=FileNotFoundError),
+        mock.patch("nf_core.components.create.rich.prompt.Prompt.ask") as prompt_ask,
+    ):
+        component_create._get_username()
+
+    assert component_create.author == "@first.last"
+    component_create.require_prompts.assert_not_called()
+    prompt_ask.assert_not_called()
 
 
 class TestModulesCreate(TestModules):

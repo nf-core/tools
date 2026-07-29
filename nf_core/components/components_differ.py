@@ -235,16 +235,16 @@ class ComponentsDiffer:
 
     @staticmethod
     def print_diff(
-        component,
-        repo_path,
-        from_dir,
-        to_dir,
-        current_version=None,
-        new_version=None,
-        dsp_from_dir=None,
-        dsp_to_dir=None,
-        limit_output=False,
-    ):
+        component: str,
+        repo_path: str,
+        from_dir: str | Path,
+        to_dir: str | Path,
+        current_version: str | None = None,
+        new_version: str | None = None,
+        dsp_from_dir: str | Path | None = None,
+        dsp_to_dir: str | Path | None = None,
+        limit_output: bool = False,
+    ) -> None:
         """
         Prints the diffs between two component versions to the terminal
 

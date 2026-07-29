@@ -122,7 +122,7 @@ def subworkflows_lint(
             directory,
             fail_warned=fail_warned,
             fix=fix,
-            registry=ctx.params["registry"],
+            registry=registry,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             no_pull=ctx.obj["modules_repo_no_pull"],
@@ -130,7 +130,6 @@ def subworkflows_lint(
         )
         subworkflow_lint.lint(
             subworkflow=subworkflow,
-            registry=registry,
             key=key,
             all_subworkflows=all_subworkflows,
             print_results=True,
@@ -177,7 +176,7 @@ def subworkflows_info(ctx, subworkflow, directory):
         sys.exit(1)
 
 
-def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
+def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps=False):
     """
     Install DSL2 subworkflow within a pipeline.
 
@@ -194,6 +193,7 @@ def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            skip_deps=skip_deps,
         )
         exit_status = subworkflow_install.install(subworkflow)
         if not exit_status:
@@ -234,6 +234,7 @@ def subworkflows_update(
     save_diff,
     update_deps,
     limit_output,
+    skip_deps,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
@@ -256,6 +257,7 @@ def subworkflows_update(
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
             limit_output,
+            skip_deps,
         )
         exit_status = subworkflow_install.update(subworkflow)
         if not exit_status and install_all:

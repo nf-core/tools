@@ -120,11 +120,12 @@ def files_exist(self) -> dict[str, list[str]]:
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     #: test autodoc
-    try:
-        _, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
-    except ValueError:
+    pipeline_name = self.nf_config.get("manifest", {}).get("name", "")
+    if "/" in pipeline_name:
+        _, short_name = pipeline_name.split("/")
+    else:
         log.warning("Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is '<pipeline>'.")
-        short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+        short_name = pipeline_name
 
     files_fail = [
         [Path(".gitattributes")],

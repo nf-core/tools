@@ -177,6 +177,13 @@ class ComponentCreate(ComponentCommand):
         run_prettier_on_file(new_files)
 
         log.info("Created following files:\n  " + "\n  ".join(new_files))
+
+        if self.component_type == "modules":
+            log.info(
+                f"Build Docker & Singularity images (Seqera/Wave) and update [magenta]main.nf[/] with the container URLs:\n"
+                f"  [blue]nf-core modules containers create {self.component_name}[/]"
+            )
+
         return True
 
     def _get_bioconda_tool(self):
@@ -249,6 +256,7 @@ class ComponentCreate(ComponentCommand):
             "process_medium",
             "process_high",
             "process_long",
+            "process_low_memory",
             "process_high_memory",
         ]
         if self.process_label is None:
@@ -424,11 +432,11 @@ class ComponentCreate(ComponentCommand):
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
-        # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex
-        github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
-        while self.author is None or not github_username_regex.match(self.author):
-            if self.author is not None and not github_username_regex.match(self.author):
-                log.warning("Does not look like a valid GitHub username (must start with an '@')!")
+        # Regex to validate username (GitHub, GitLab, and other git-based code hosting services)
+        username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d\.]|-(?=[a-zA-Z\d\.])){0,38}$")
+        while self.author is None or not username_regex.match(self.author):
+            if self.author is not None:
+                log.warning("Does not look like a valid username (must start with an '@')!")
             self.require_prompts("GitHub username not provided.\nPlease provide the `--author` option")
             self.author = rich.prompt.Prompt.ask(
                 f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
@@ -440,8 +448,9 @@ class ComponentCreate(ComponentCommand):
         Generate the meta.yml file.
         """
         # TODO: The meta.yml could be handled with a Pydantic model. The reason it is not implemented is because we want to maintain comments in the meta.yml file.
-        with open(self.file_paths["meta.yml"]) as fh:
-            meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
+        from nf_core.components.components_utils import read_meta_yml
+
+        meta_yml: ruamel.yaml.comments.CommentedMap = read_meta_yml(self.file_paths["meta.yml"])
 
         versions: dict[str, list | dict] = {
             f"versions_{self.component}": [

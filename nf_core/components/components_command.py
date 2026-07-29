@@ -7,6 +7,7 @@ from pathlib import Path
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_utils import scan_modules_dir
 
 from .components_utils import get_repo_info
 
@@ -74,12 +75,7 @@ class ComponentCommand:
         Get the local modules/subworkflows in a pipeline
         """
         local_component_dir = Path(self.directory, self.component_type, "local")
-        # TODO: Return list of Path objects instead of strings to avoid unnecessary conversion
-        return [
-            str(Path(directory).relative_to(local_component_dir))
-            for directory, _, files in os.walk(local_component_dir)
-            if "main.nf" in files
-        ] + [
+        return scan_modules_dir(local_component_dir) + [
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
 
@@ -91,12 +87,7 @@ class ComponentCommand:
             component_base_path = Path(self.directory, self.default_modules_path)
         elif self.component_type == "subworkflows":
             component_base_path = Path(self.directory, self.default_subworkflows_path)
-        # TODO: Return list of Path objects instead of strings to avoid unnecessary conversion
-        return [
-            str(Path(directory).relative_to(component_base_path))
-            for directory, _, files in os.walk(component_base_path)
-            if "main.nf" in files
-        ]
+        return scan_modules_dir(component_base_path)
 
     def has_valid_directory(self) -> bool:
         """Check that we were given a pipeline or clone of nf-core/modules"""
@@ -162,10 +153,7 @@ class ComponentCommand:
         if not repo_dir.exists():
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
-        # TODO: Return list of Path objects instead of strings to avoid unnecessary conversion
-        return [
-            str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
-        ]
+        return scan_modules_dir(repo_dir)
 
     def install_component_files(
         self, component_name: str, component_version: str, modules_repo: ModulesRepo, install_dir: str | Path
