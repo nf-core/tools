@@ -553,7 +553,12 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    result = run_cmd("nextflow", f"config -o json {wf_path}")
+    try:
+        result = run_cmd("nextflow", f"config -o json {wf_path}")
+    except RuntimeError as e:
+        raise UserWarning(
+            f"Could not parse Nextflow config for '{wf_path}'. Possibly because of a Nextflow version mismatch?\n{e}"
+        ) from e
     if result is not None:
         nfconfig_raw, _ = result
         try:
