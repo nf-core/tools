@@ -18,6 +18,7 @@ on:
       - "nf-core linting"
       - "nf-core template version comment"
       - "nf-core branch protection"
+      - "Run nf-test"
 
 permissions:
   actions: read
@@ -27,7 +28,6 @@ permissions:
 jobs:
   post-comment:
     runs-on: ubuntu-latest
-    # Only act on runs that were triggered by a pull request.
     if: github.event.workflow_run.event == 'pull_request'
     steps:
       - name: Download PR comment artifact
@@ -35,16 +35,29 @@ jobs:
         with:{% raw %}
           run_id: ${{ github.event.workflow_run.id }}
           name: pr-comment
+          path: pr-comment
           if_no_artifact_found: ignore
 
       - name: Read comment metadata
         id: meta
         run: |
-          # No comment body means there is nothing to post.
-          [ -f pr-comment/comment.md ] || exit 0
+          echo "::group::Downloaded pr-comment contents"
+          ls -la pr-comment 2>/dev/null || echo "No pr-comment/ directory was downloaded."
+          echo "::endgroup::"
+
+          if [ ! -d pr-comment ]; then
+            echo "No pr-comment artifact found; nothing to post."
+            exit 0
+          fi
+
+          if [ ! -f pr-comment/comment.md ]; then
+            echo "Artifact present but no comment.md; nothing to post."
+            exit 0
+          fi
 
           pr_number=$(cat pr-comment/pr_number.txt)
           header=$(cat pr-comment/header.txt)
+          echo "Found comment.md (header='$header', pr_number='$pr_number')."
 
           # Guard against anything unexpected ending up in the PR number.
           case "$pr_number" in
@@ -57,6 +70,7 @@ jobs:
           echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
           echo "header=$header" >> "$GITHUB_OUTPUT"
           echo "post=true" >> "$GITHUB_OUTPUT"
+          echo "Will post comment to PR #${pr_number}."
 
       - name: Post PR comment
         if: steps.meta.outputs.post == 'true'
