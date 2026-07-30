@@ -39,7 +39,7 @@ _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 # Used by finalinfradetails as it already imports create.utils
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter", "conda"]
 CACHED_CONTAINERS = ["singularity", "apptainer", "charliecloud", "conda"]
-SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge", "nqsii", "lsf", "moab"]
+SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge", "nqsii", "lsf", "moab", "condor", "hyperqueue", "flux", "tcs"]
 SUPPORTED_DIRECTIVES = {
     "local": ["cpus", "memory", "time"],
     "lsf": ["cpus", "memory", "time", "queue"],
@@ -218,6 +218,13 @@ class ConfigsCreateConfig(BaseModel):
             if modules_to_load:
                 modules_to_load += " "
             modules_to_load += re.sub(r"\s+", ":", self.module_system)
+        # Create resourceLimits list
+        resource_limits = [
+            {"cpus": int(self.cpus)} if self.cpus else None,
+            {"memory": self._format_resource_request(self.memory, "GB")} if self.memory else None,
+            {"time": self._format_resource_request(self.time, "h")} if self.time else None,
+        ]
+        resource_limits = [d for d in resource_limits if d]
         ret = {
             **params,
             "executor": {
@@ -233,11 +240,7 @@ class ConfigsCreateConfig(BaseModel):
             "process": {
                 "executor": self.scheduler or None,
                 "queue": self.queue or None,
-                "resourceLimits": [
-                    {"cpus": int(self.cpus) if self.cpus else None},
-                    {"memory": self._format_resource_request(self.memory, "GB") if self.memory else None},
-                    {"time": self._format_resource_request(self.time, "h") if self.time else None},
-                ],
+                "resourceLimits": resource_limits,
                 "scratch": self.scratch_dir or None,
                 "maxRetries": int(self.retries) if self.retries else None,
                 "module": modules_to_load or None,

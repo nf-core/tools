@@ -4,12 +4,14 @@ import subprocess
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
+from textual.events import Mount, ScreenResume
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Select, Static, Switch
 
 from nf_core.configs.create.utils import (
     CACHED_CONTAINERS,
     SUPPORTED_CONTAINERS,
+    SUPPORTED_DIRECTIVES,
     ConfigsCreateConfig,
     TextInput,
     add_hide_class,
@@ -72,6 +74,8 @@ class FinalInfraDetails(Screen):
             self.container_system: self._get_container_cache_directory(),
         }
         self.cache_environment = self.container_system in CACHED_CONTAINERS
+        self.scheduler = None
+        self.supported_directives = SUPPORTED_DIRECTIVES.get(self.scheduler, ["cpus", "memory", "time", "queue"])
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -165,6 +169,19 @@ class FinalInfraDetails(Screen):
             Button("Finish", id="finish", variant="success"),
             classes="cta",
         )
+
+    @on(Mount)
+    @on(ScreenResume)
+    def show_hide_scheduler_fields(self) -> None:
+        self.scheduler = self.parent.HPC_EXEC
+        self.supported_directives = SUPPORTED_DIRECTIVES.get(self.scheduler, ["cpus", "memory", "time", "queue"])
+        for text_input in self.query("TextInput"):
+            if text_input.field_id not in ["memory", "cpus", "time"]:
+                continue
+            if text_input.field_id in self.supported_directives:
+                remove_hide_class(self.parent, text_input.field_id)
+            else:
+                add_hide_class(self.parent, text_input.field_id)
 
     def _get_container_system(self) -> str:
         """Get the default container system to use for software handling."""

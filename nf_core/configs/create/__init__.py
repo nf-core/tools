@@ -76,6 +76,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     CONFIG_TYPE = None
     NFCORE_CONFIG = True
     INFRA_ISHPC = False
+    HPC_EXEC = None
     PIPE_CONF_NAMED = False
     PIPE_CONF_LABELLED = False
     PIPE_CONF_HPC = False
@@ -115,6 +116,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             self.push_screen("hpc_customisation")
         elif event.button.id == "type_local":
             self.INFRA_ISHPC = False
+            self.HPC_EXEC = None
             utils.INFRA_ISHPC_GLOBAL = False
             self.push_screen("final_infra_details")
         ## General options
@@ -134,4 +136,5 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             "is_nfcore": self.NFCORE_CONFIG,
             "is_infrastructure": self.CONFIG_TYPE == "infrastructure",
             "is_hpc": self.INFRA_ISHPC,
+            "hpc_exec": self.HPC_EXEC,
         }

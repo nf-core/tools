@@ -73,26 +73,20 @@ class HpcCustomisation(Screen):
             "NQSII": "nqsii",
             "LSF": "lsf",
             "Moab": "moab",
+            "HTCondor": "condor",
+            "HyperQueue": "hyperqueue",
+            "Flux": "flux",
+            "TCS": "tcs",
         }
         self.supported_directives = SUPPORTED_DIRECTIVES.get(self.scheduler, ["cpus", "memory", "time", "queue"])
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        supported_schedulers = {
-            "Local execution": "local",
-            "PBS/Torque": "pbs",
-            "PBS Pro": "pbspro",
-            "SGE": "sge",
-            "SLURM": "slurm",
-            "NQSII": "nqsii",
-            "LSF": "lsf",
-            "Moab": "moab",
-        }
         yield Markdown(markdown_intro)
         yield Markdown(markdown_scheduler)
         yield Select(
-            list(supported_schedulers.items()),
+            list(self.supported_schedulers.items()),
             prompt="Select your HPC's scheduler.",
             value=self.scheduler if self.scheduler is not None else "local",
             classes="column",
@@ -262,11 +256,16 @@ class HpcCustomisation(Screen):
         """Save fields to the config."""
         new_config = {}
 
+        # Set HPC executor in parent
+        self.parent.HPC_EXEC = self.scheduler
+
         # Get scheduler value
         select = self.query_one("#scheduler", Select)
         new_config["scheduler"] = select.value
 
         for text_input in self.query("TextInput"):
+            if "hide" in text_input.classes:
+                continue
             this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)
             new_config[text_input.field_id] = this_input.value
