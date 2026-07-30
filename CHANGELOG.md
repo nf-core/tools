@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+## v4.1.1dev
+
+### General
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### Template
+
+### Version updates
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General
