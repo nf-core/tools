@@ -265,6 +265,7 @@ This is a security patch to prohibit write access to the repository through cert
 - add pre-commit hook to keep uv.lock in sync ([#3933](https://github.com/nf-core/tools/pull/3933))
 - Fix quote handling in meta.yml ([#3948](https://github.com/nf-core/tools/pull/3948))
 - Add support for SVG files in bump-version command ([#3978](https://github.com/nf-core/tools/pull/3978))
+- Escape original merge branch to compile regex ([#3984](https://github.com/nf-core/tools/pull/3984))
 - handle type for val in topics correctly ([#3991](https://github.com/nf-core/tools/pull/3991))
 - Update docker/login-action digest to c94ce9f ([#3998](https://github.com/nf-core/tools/pull/3998))
 - fix wrong parsing when output values contain spaces ([#3999](https://github.com/nf-core/tools/pull/3999))
