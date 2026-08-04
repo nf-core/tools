@@ -12,7 +12,8 @@ import rich.progress
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
-from nf_core.pipelines.download.utils import ContainerRegistryUrls, copy_container_load_scripts
+from nf_core.pipelines.download.utils import copy_container_load_scripts
+from nf_core.utils import ContainerRegistryUrls
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -286,15 +287,17 @@ class DockerFetcher(ContainerFetcher):
             # - read lines if there are any,
             # - check if we should kill it,
             # - update the progress bar
+            assert proc.stdout is not None
+            stdout = proc.stdout
             lines = []
             while True:
                 if self.kill_with_fire:
                     proc.kill()
                     raise KeyboardInterrupt("Docker command was cancelled by user")
 
-                rlist, _, _ = select.select([proc.stdout], [], [], 0.1)
-                if rlist and proc.stdout is not None:
-                    line = proc.stdout.readline()
+                rlist, _, _ = select.select([stdout], [], [], 0.1)
+                if rlist:
+                    line = stdout.readline()
                     if line:
                         lines.append(line)
                         self.progress.update(progress_task, current_log=line.strip())

@@ -17,7 +17,7 @@ class TestLaunch(TestPipelines):
     def setUp(self) -> None:
         super().setUp()
         self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")
-        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(str(self.pipeline_dir), params_out=self.nf_params_fn)
 
     @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
@@ -336,3 +336,15 @@ class TestLaunch(TestPipelines):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} --input "custom_input"'
+
+
+def test_launch_params_out_option_is_path():
+    """The --params-out CLI option converts its value to a Path, so params_out never
+    reaches Launch as a str that would crash params_out.exists() (#4299)."""
+    import click
+
+    from nf_core.__main__ import command_pipelines_launch
+
+    param = next(p for p in command_pipelines_launch.params if p.name == "params_out")
+    ctx = click.Context(command_pipelines_launch)
+    assert isinstance(param.type.convert("nf-params.json", param, ctx), Path)

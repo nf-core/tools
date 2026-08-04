@@ -6,68 +6,35 @@ import os
 import sys
 from pathlib import Path
 
-import requests
-import rich.console
-import rich.logging
-import rich.traceback
 import rich_click as click
 import rich_click.rich_click as rc
-from trogon import tui
 
 from nf_core import __version__
-from nf_core.commands_modules import (
-    modules_bump_versions,
-    modules_create,
-    modules_info,
-    modules_install,
-    modules_lint,
-    modules_list_local,
-    modules_list_remote,
-    modules_patch,
-    modules_remove,
-    modules_test,
-    modules_update,
-)
-from nf_core.commands_pipelines import (
-    pipelines_bump_version,
-    pipelines_create,
-    pipelines_create_logo,
-    pipelines_create_params_file,
-    pipelines_download,
-    pipelines_launch,
-    pipelines_lint,
-    pipelines_list,
-    pipelines_rocrate,
-    pipelines_schema_build,
-    pipelines_schema_docs,
-    pipelines_schema_lint,
-    pipelines_schema_validate,
-    pipelines_sync,
-)
-from nf_core.commands_subworkflows import (
-    subworkflows_create,
-    subworkflows_info,
-    subworkflows_install,
-    subworkflows_lint,
-    subworkflows_list_local,
-    subworkflows_list_remote,
-    subworkflows_remove,
-    subworkflows_test,
-    subworkflows_update,
-)
-from nf_core.commands_test_datasets import test_datasets_list_branches, test_datasets_list_remote, test_datasets_search
-from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download.download import DownloadError
-from nf_core.pipelines.list import autocomplete_pipelines
-from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
+from nf_core.utils import check_if_outdated, nfcore_logo, stderr
+
+
+def autocomplete_pipelines(ctx, param, incomplete):
+    from nf_core.pipelines.list import autocomplete_pipelines as complete
+
+    return complete(ctx, param, incomplete)
+
+
+def autocomplete_modules(ctx, param, incomplete):
+    from nf_core.components.components_completion import autocomplete_modules as complete
+
+    return complete(ctx, param, incomplete)
+
+
+def autocomplete_subworkflows(ctx, param, incomplete):
+    from nf_core.components.components_completion import autocomplete_subworkflows as complete
+
+    return complete(ctx, param, incomplete)
+
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
 log = logging.getLogger()
-
-# Set up .nfcore directory for storing files between sessions
-setup_nfcore_dir()
 
 # Set up nicer formatting of click cli help messages
 rc.MAX_WIDTH = 100
@@ -75,23 +42,19 @@ rc.USE_RICH_MARKUP = True
 rc.COMMANDS_BEFORE_OPTIONS = True
 
 
-# Set up rich stderr console
-stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
-stdout = rich.console.Console(force_terminal=rich_force_colors())
-
-# Set up the rich traceback
-rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
-
-
 # Define exceptions for which no traceback should be printed,
 # because they are actually preliminary, but intended program terminations.
 # (Custom exceptions are cleaner than `sys.exit(1)`, which we used before)
 def selective_traceback_hook(exctype, value, traceback):
+    from nf_core.pipelines.download.download import DownloadError
+
     if exctype in {DownloadError, UserWarning, ValueError}:  # extend set as needed
         log.error(value)
     else:
+        from rich.traceback import Traceback
+
         # print the colored traceback for all other exceptions with rich as usual
-        stderr.print(rich.traceback.Traceback.from_exception(exctype, value, traceback))
+        stderr.print(Traceback.from_exception(exctype, value, traceback, width=200, extra_lines=1))
 
 
 sys.excepthook = selective_traceback_hook
@@ -116,21 +79,17 @@ def run_nf_core():
             f"\n[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
             highlight=False,
         )
-        try:
-            is_outdated, _, remote_vers = check_if_outdated()
-            if is_outdated:
-                stderr.print(
-                    f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
-                    highlight=False,
-                )
-        except requests.exceptions.RequestException as e:
-            log.debug(f"Could not check latest version: {e}")
+        is_outdated, _, remote_vers = check_if_outdated()
+        if is_outdated:
+            stderr.print(
+                f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
+                highlight=False,
+            )
         stderr.print("\n")
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
-@tui(command="interface", help="Launch the nf-core interface")
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.option(
@@ -158,11 +117,16 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 
-    # Set up logs to the console
+    # Set up logs to the console - use the shared console so log output
+    # coordinates with progress spinners (avoids output on the same line)
+    from rich.logging import RichHandler
+
+    from nf_core.utils import stdout as shared_console
+
     log.addHandler(
-        rich.logging.RichHandler(
+        RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(stderr=True, force_terminal=rich_force_colors()),
+            console=shared_console,
             show_time=False,
             show_path=verbose,  # True if verbose, false otherwise
             markup=True,
@@ -188,6 +152,15 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
         "verbose": verbose,
         "hide_progress": hide_progress or verbose,  # Always hide progress bar with verbose logging
     }
+
+
+# nf-core interface (registered by hand so trogon is only imported when run)
+@nf_core_cli.command("interface", help="Launch the nf-core interface")
+@click.pass_context
+def interface(ctx):
+    from trogon import Trogon
+
+    Trogon(nf_core_cli, app_name=None, command_name="interface", click_context=ctx).run()
 
 
 # nf-core pipelines subcommands
@@ -231,6 +204,8 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
     """
     Create a new pipeline using the nf-core template.
     """
+    from nf_core.commands_pipelines import pipelines_create
+
     pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
 
 
@@ -314,6 +289,8 @@ def command_pipelines_lint(
     """
     Check pipeline code against nf-core guidelines.
     """
+    from nf_core.commands_pipelines import pipelines_lint
+
     pipelines_lint(
         ctx, directory, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by, plain_text
     )
@@ -365,7 +342,7 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity", "docker"]),
+    type=click.Choice(["none", "singularity", "docker", "apptainer"]),
     help="Download container images of required software.",
 )
 @click.option(
@@ -413,6 +390,8 @@ def command_pipelines_download(
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
     """
+    from nf_core.commands_pipelines import pipelines_download
+
     pipelines_download(
         ctx,
         pipeline,
@@ -462,6 +441,8 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
     """
     Build a parameter file for a pipeline.
     """
+    from nf_core.commands_pipelines import pipelines_create_params_file
+
     pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts)
 
 
@@ -485,7 +466,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 @click.option(
     "-o",
     "--params-out",
-    type=click.Path(),
+    type=click.Path(path_type=Path),
     default=str(Path.cwd() / "nf-params.json"),
     help="Path to save run parameters file",
 )
@@ -534,6 +515,8 @@ def command_pipelines_launch(
     """
     Launch a pipeline using a web GUI or command line prompts.
     """
+    from nf_core.commands_pipelines import pipelines_launch
+
     pipelines_launch(
         ctx, pipeline, launch_id, revision, command_only, params_in, params_out, save_all, show_hidden, url, no_prompts
     )
@@ -556,6 +539,8 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     """
     List available nf-core pipelines with local info.
     """
+    from nf_core.commands_pipelines import pipelines_list
+
     pipelines_list(ctx, keywords, sort, json, show_archived)
 
 
@@ -594,6 +579,8 @@ def rocrate(
     """
     Make an Research Object Crate
     """
+    from nf_core.commands_pipelines import pipelines_rocrate
+
     pipelines_rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
 
 
@@ -630,7 +617,7 @@ def rocrate(
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("-b", "--blog-post", type=str, help="Link to the blog post")
+@click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
     ctx,
@@ -647,6 +634,8 @@ def command_pipelines_sync(
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
     """
+    from nf_core.commands_pipelines import pipelines_sync
+
     pipelines_sync(
         ctx,
         directory,
@@ -684,6 +673,8 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
     """
     Update nf-core pipeline version number with `nf-core pipelines bump-version`.
     """
+    from nf_core.commands_pipelines import pipelines_bump_version
+
     pipelines_bump_version(ctx, new_version, directory, nextflow)
 
 
@@ -730,6 +721,8 @@ def command_pipelines_create_logo(logo_text, directory, name, theme, width, img_
     """
     Generate a logo with the nf-core logo template.
     """
+    from nf_core.commands_pipelines import pipelines_create_logo
+
     pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force)
 
 
@@ -770,6 +763,8 @@ def command_pipelines_schema_validate(directory, pipeline, params):
         # this is a local pipeline
         pipeline = Path(directory, pipeline)
 
+    from nf_core.commands_pipelines import pipelines_schema_validate
+
     pipelines_schema_validate(pipeline, params)
 
 
@@ -803,6 +798,8 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
     """
     Interactively build a pipeline schema from Nextflow params.
     """
+    from nf_core.commands_pipelines import pipelines_schema_build
+
     pipelines_schema_build(directory, no_prompts, web_only, url)
 
 
@@ -826,6 +823,8 @@ def command_pipelines_schema_lint(directory, schema_file):
     """
     Check that a given pipeline schema is valid.
     """
+    from nf_core.commands_pipelines import pipelines_schema_lint
+
     pipelines_schema_lint(Path(directory, schema_file))
 
 
@@ -874,6 +873,8 @@ def command_pipelines_schema_docs(directory, schema_file, output, output_format,
     """
     Outputs parameter documentation for a pipeline schema.
     """
+    from nf_core.commands_pipelines import pipelines_schema_docs
+
     pipelines_schema_docs(Path(directory, schema_file), output, output_format, force, columns)
 
 
@@ -901,7 +902,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, output_format,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
-@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
+@click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions", "containers"])
 @click.pass_context
 def modules(ctx, git_remote, branch, no_pull):
     """
@@ -936,6 +937,8 @@ def command_modules_list_remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
+    from nf_core.commands_modules import modules_list_remote
+
     modules_list_remote(ctx, keywords, json)
 
 
@@ -956,6 +959,8 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
     """
     List modules installed locally in a pipeline
     """
+    from nf_core.commands_modules import modules_list_local
+
     modules_list_local(ctx, keywords, json, directory)
 
 
@@ -997,6 +1002,8 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     """
     Install DSL2 modules within a pipeline.
     """
+    from nf_core.commands_modules import modules_install
+
     modules_install(ctx, tool, directory, prompt, force, sha)
 
 
@@ -1088,6 +1095,8 @@ def command_modules_update(
     """
     Update DSL2 modules within a pipeline.
     """
+    from nf_core.commands_modules import modules_update
+
     modules_update(
         ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output, skip_deps
     )
@@ -1117,6 +1126,8 @@ def command_modules_patch(ctx, tool, directory, remove):
     """
     Create a patch file for minor changes in a module
     """
+    from nf_core.commands_modules import modules_patch
+
     modules_patch(ctx, tool, directory, remove)
 
 
@@ -1150,6 +1161,8 @@ def command_modules_remove(ctx, directory, tool, force):
     """
     Remove a module from a pipeline.
     """
+    from nf_core.commands_modules import modules_remove
+
     modules_remove(ctx, directory, tool, force)
 
 
@@ -1230,6 +1243,8 @@ def command_modules_create(
     """
     Create a new DSL2 module from the nf-core template.
     """
+    from nf_core.commands_modules import modules_create
+
     modules_create(
         ctx,
         tool,
@@ -1294,10 +1309,12 @@ def command_modules_create(
 )
 def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, verbose):
     """
-    Run nf-test for a module.
+    Run nf-test for a module. Only works on module repositories, not pipeline repositories.
     """
     if verbose:
         ctx.obj["verbose"] = verbose
+    from nf_core.commands_modules import modules_test
+
     modules_test(ctx, tool, directory, no_prompts, update, once, profile)
 
 
@@ -1325,8 +1342,8 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1365,11 +1382,13 @@ def command_modules_lint(
     """
     Lint one or more modules in a directory.
     """
+    from nf_core.commands_modules import modules_lint
+
     modules_lint(
         ctx,
         tool,
         directory,
-        registry,
+        tuple(registry.split(",")),
         key,
         all_modules,
         fail_warned,
@@ -1405,6 +1424,8 @@ def command_modules_info(ctx, tool, directory):
     """
     Show developer usage information about a given module.
     """
+    from nf_core.commands_modules import modules_info
+
     modules_info(ctx, tool, directory)
 
 
@@ -1435,7 +1456,109 @@ def command_modules_bump_versions(ctx, tool, directory, all_modules, show_all, d
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
     """
+    from nf_core.commands_modules import modules_bump_versions
+
     modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run)
+
+
+@modules.group("containers", aliases=["container", "con"])
+@click.pass_context
+def modules_containers(ctx):
+    """Manage module container builds and metadata [yellow](beta)[/]."""
+    from rich.panel import Panel
+
+    stderr.print(
+        Panel(
+            "The [bold]nf-core modules containers[/] commands are still in beta.\n"
+            "Their behaviour and output may change in future releases.\n"
+            "Best to always use the latest dev version.",
+            title="[bold][!] Beta feature",
+            title_align="left",
+            style="yellow",
+        )
+    )
+
+
+# nf-core modules containers create
+@modules_containers.command("create", aliases=["c"])
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True, path_type=Path),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
+@click.option(
+    "-f",
+    "--force",
+    "force",
+    is_flag=True,
+    default=False,
+    help="Force container creation even if the container already exists.",
+)
+def command_modules_containers_create(ctx, module: str, directory: Path, force: bool) -> None:
+    """
+    Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
+    """
+    from nf_core.commands_modules import modules_containers_create
+
+    modules_containers_create(ctx, module, directory, force)
+
+
+@modules_containers.command("conda-lock")
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+def command_modules_containers_conda_lock(ctx, module: str) -> None:
+    """
+    Build a Docker linux/arm64 container and fetch the conda lock file for a module.
+    """
+    from nf_core.commands_modules import modules_containers_conda_lock
+
+    modules_containers_conda_lock(ctx, module)
+
+
+# nf-core modules containers list
+@modules_containers.command("list", aliases=["ls"])
+@click.pass_context
+@click.argument(
+    "module",
+    type=str,
+    required=False,
+    callback=normalize_case,
+    metavar="<module> or <module/submodule>",
+    shell_complete=autocomplete_modules,
+)
+@click.option(
+    "-p",
+    "--plain-text",
+    is_flag=True,
+    default=False,
+    help="Output in plain text format",
+)
+def command_modules_containers_list(ctx, module, plain_text):
+    """
+    Print containers defined in a module meta.yml.
+    """
+    from nf_core.commands_modules import modules_containers_list
+
+    modules_containers_list(ctx, module, plain_text)
 
 
 # nf-core subworkflows click command
@@ -1501,6 +1624,8 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force):
     """
     Create a new subworkflow from the nf-core template.
     """
+    from nf_core.commands_subworkflows import subworkflows_create
+
     subworkflows_create(ctx, subworkflow, directory, author, force)
 
 
@@ -1548,6 +1673,8 @@ def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, o
     """
     Run nf-test for a subworkflow.
     """
+    from nf_core.commands_subworkflows import subworkflows_test
+
     subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile)
 
 
@@ -1570,6 +1697,8 @@ def command_subworkflows_list_remote(ctx, keywords, json):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
+    from nf_core.commands_subworkflows import subworkflows_list_remote
+
     subworkflows_list_remote(ctx, keywords, json)
 
 
@@ -1590,6 +1719,8 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     """
     List subworkflows installed locally in a pipeline
     """
+    from nf_core.commands_subworkflows import subworkflows_list_local
+
     subworkflows_list_local(ctx, keywords, json, directory)
 
 
@@ -1617,8 +1748,8 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     "--registry",
     type=str,
     metavar="<registry>",
-    default=None,
-    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+    default="quay.io,community.wave.seqera.io/library",
+    help="Comma-separated list of allowed container registry prefixes.",
 )
 @click.option(
     "-k",
@@ -1652,11 +1783,13 @@ def command_subworkflows_lint(
     """
     Lint one or more subworkflows in a directory.
     """
+    from nf_core.commands_subworkflows import subworkflows_lint
+
     subworkflows_lint(
         ctx,
         subworkflow,
         directory,
-        registry,
+        tuple(registry.split(",")),
         key,
         all_subworkflows,
         fail_warned,
@@ -1691,6 +1824,8 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     """
     Show developer usage information about a given subworkflow.
     """
+    from nf_core.commands_subworkflows import subworkflows_info
+
     subworkflows_info(ctx, subworkflow, directory)
 
 
@@ -1744,6 +1879,8 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     """
     Install DSL2 subworkflow within a pipeline.
     """
+    from nf_core.commands_subworkflows import subworkflows_install
+
     subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps)
 
 
@@ -1822,6 +1959,8 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     """
     Remove a subworkflow from a pipeline.
     """
+    from nf_core.commands_subworkflows import subworkflows_remove
+
     subworkflows_remove(ctx, directory, subworkflow, force)
 
 
@@ -1920,6 +2059,8 @@ def command_subworkflows_update(
     """
     Update DSL2 subworkflow within a pipeline.
     """
+    from nf_core.commands_subworkflows import subworkflows_update
+
     subworkflows_update(
         ctx,
         subworkflow,
@@ -1972,6 +2113,8 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, 
     Search files filtered by QUERY on a specified branch in the nf-core/test-datasets repository.
     If no QUERY is given or QUERY is ambiguous, an auto-completion form is shown.
     """
+    from nf_core.commands_test_datasets import test_datasets_search
+
     test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url, query)
 
 
@@ -1997,6 +2140,8 @@ def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_
     """
     List files on a specified branch in the nf-core/test-datasets repository.
     """
+    from nf_core.commands_test_datasets import test_datasets_list_remote
+
     test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url)
 
 
@@ -2007,6 +2152,8 @@ def command_test_datasets_list_branches(ctx):
     """
     List remote branches with test data in the nf-core/test-dataset repository.
     """
+    from nf_core.commands_test_datasets import test_datasets_list_branches
+
     test_datasets_list_branches(ctx)
 
 

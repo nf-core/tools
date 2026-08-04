@@ -196,7 +196,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         ) == Path("subworkflows", GITLAB_REPO, "bam_sort_stats_samtools", patch_fn)
 
         # Update the subworkflow
-        update_obj = nf_core.subworkflows.update.SubworkflowUpdate(
+        update_obj = nf_core.subworkflows.SubworkflowUpdate(
             self.pipeline_dir,
             sha=OLD_SHA,
             show_diff=False,
@@ -256,7 +256,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         with open(swf_path / patch_fn) as fh:
             patch_contents = fh.read()
 
-        update_obj = nf_core.subworkflows.update.SubworkflowUpdate(
+        update_obj = nf_core.subworkflows.SubworkflowUpdate(
             self.pipeline_dir,
             sha=FAIL_SHA,
             show_diff=False,

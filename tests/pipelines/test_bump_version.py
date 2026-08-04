@@ -24,7 +24,7 @@ class TestBumpVersion(TestPipelines):
 
         # Check nextflow.config
         new_pipeline_obj.load_pipeline_config()
-        assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.1.0"
+        assert new_pipeline_obj.nf_config["manifest"]["version"].strip("'\"") == "1.1.0"
 
         # Check multiqc_config.yml
         with open(new_pipeline_obj._fp("assets/multiqc_config.yml")) as fh:
@@ -47,7 +47,7 @@ class TestBumpVersion(TestPipelines):
 
         # Check the pipeline config
         new_pipeline_obj.load_pipeline_config()
-        assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.2dev"
+        assert new_pipeline_obj.nf_config["manifest"]["version"].strip("'\"") == "1.2dev"
 
     def test_bump_nextflow_version(self):
         # Bump the version number to a specific version, preferably one
@@ -58,7 +58,7 @@ class TestBumpVersion(TestPipelines):
         new_pipeline_obj._load()
 
         # Check nextflow.config
-        assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == f"!>={version}"
+        assert new_pipeline_obj.nf_config["manifest"]["nextflowVersion"].strip("'\"") == f"!>={version}"
 
         # Check .github/workflows/nf-test.yml
         with open(new_pipeline_obj._fp(".github/workflows/nf-test.yml")) as fh:

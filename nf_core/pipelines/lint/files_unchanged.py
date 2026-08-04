@@ -1,6 +1,5 @@
 import filecmp
 import logging
-import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -29,7 +28,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
-        .github/workflows/linting_comment.yml
+        .github/workflows/pr-comment.yml
         .github/workflows/linting.yml
         assets/email_template.html
         assets/email_template.txt
@@ -66,21 +65,18 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     could_fix: bool = False
 
     # Check that we have the minimum required config
-    required_pipeline_config = {
-        "manifest.name",
-        "manifest.description",
-        "manifest.contributors",
-    }
-    missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
+    manifest_config = self.nf_config.get("manifest", {})
+    missing_pipeline_config = {k for k in ("name", "description", "contributors") if not manifest_config.get(k)}
     if missing_pipeline_config:
-        return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
+        missing_keys = {f"manifest.{k}" for k in missing_pipeline_config}
+        return {"ignored": [f"Required pipeline config not found - {missing_keys}"]}
     try:
-        prefix, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+        prefix, short_name = manifest_config.get("name", "").split("/")
     except ValueError:
         log.warning(
             "Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is <pipeline> and default to repo 'nf-core'"
         )
-        short_name = self.nf_config["manifest.name"].strip("\"'")
+        short_name = manifest_config.get("name", "")
         prefix = "nf-core"
 
     # NB: Should all be files, not directories
@@ -96,7 +92,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
         [Path(".github", "workflows", "branch.yml")],
-        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "pr-comment.yml")],
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
         [Path("assets", "email_template.txt")],
@@ -118,14 +114,14 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     tmp_dir.mkdir(parents=True)
 
     # Create a template.yaml file for the pipeline creation
-    if "manifest.author" in self.nf_config:
-        names = self.nf_config["manifest.author"].strip("\"'")
-    if "manifest.contributors" in self.nf_config:
-        contributors = self.nf_config["manifest.contributors"]
-        names = ", ".join(re.findall(r"name:'([^']+)'", contributors))
+    contributors = manifest_config.get("contributors", [])
+    if contributors:
+        names = ", ".join(c.get("name", "") for c in contributors if c.get("name"))
+    else:
+        names = manifest_config.get("author", "")
     template_yaml = {
         "name": short_name,
-        "description": self.nf_config["manifest.description"].strip("\"'"),
+        "description": manifest_config.get("description", ""),
         "author": names,
         "org": prefix,
     }

@@ -53,11 +53,11 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out nf-core/tools
         with:
           ref: ${{ github.ref_name }}
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -67,28 +67,28 @@ jobs:
           fetch-depth: "0"
       - name: Check the correct default config base of the nf-core configs
         id: check_default_config
-        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        uses: GuillaumeFalourd/assert-command-line-output@63ad23408d758ee7f09b4557cc0901d6ae4f3f76 # v2.4
         with:
           command_line: nextflow config -value params.custom_config_base .
           contains: https://raw.githubusercontent.com/nf-core/configs/master
           expected_result: PASSED
       - name: Check the correct inclusion of an existing institutional profile
         id: check_profile_inclusion
-        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        uses: GuillaumeFalourd/assert-command-line-output@63ad23408d758ee7f09b4557cc0901d6ae4f3f76 # v2.4
         with:
           command_line: nextflow config -profile google -o flat .
           contains: "The nf-core framework" # Part of CITATION.cff, should always be printed if profile is included
           expected_result: PASSED
       - name: Check the failed inclusion of a non-existing institutional profile
         id: check_nonexistent_profile
-        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        uses: GuillaumeFalourd/assert-command-line-output@63ad23408d758ee7f09b4557cc0901d6ae4f3f76 # v2.4
         with:
           command_line: nextflow config -profile GLaDOS -o flat .
           contains: "Unknown configuration profile: 'GLaDOS'"
           expected_result: PASSED
       - name: Check that offline prevents inclusion of nf-core configs
         id: check_offline_mode
-        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        uses: GuillaumeFalourd/assert-command-line-output@63ad23408d758ee7f09b4557cc0901d6ae4f3f76 # v2.4
         env:
           NXF_OFFLINE: true
         with:

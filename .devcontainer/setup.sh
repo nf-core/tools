@@ -10,7 +10,7 @@ export PS1='\[\e[3;36m\]\w ->\[\e[0m\\] '
 nextflow self-update
 
 # Install specifically the version of tools from the workspace
-uv sync --all-extras
+uv sync
 
 # Activate the virtual environment automatically on login
 echo "source $(pwd)/.venv/bin/activate" >> $HOME/.bashrc

@@ -26,8 +26,8 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version (str): The new version tag for the pipeline. Semantic versioning only.
     """
 
-    # Collect the old and new version numbers
-    current_version = pipeline_obj.nf_config.get("manifest.version", "").strip(" '\"")
+    manifest = pipeline_obj.nf_config.get("manifest", {})
+    current_version = manifest.get("version", "") or ""
     if new_version.startswith("v"):
         log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
@@ -99,7 +99,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["report_comment"],
     )
     # nf-test snap files
-    pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
+    pipeline_name = manifest.get("name", "")
     snap_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
@@ -169,8 +169,8 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version (str): The new version tag for the required Nextflow version.
     """
 
-    # Collect the old and new version numbers - strip leading non-numeric characters (>=)
-    current_version = pipeline_obj.nf_config.get("manifest.nextflowVersion", "").strip(" '\"")
+    manifest = pipeline_obj.nf_config.get("manifest", {})
+    current_version = manifest.get("nextflowVersion", "") or ""
     current_version = re.sub(r"^[^0-9\.]*", "", current_version)
     new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:

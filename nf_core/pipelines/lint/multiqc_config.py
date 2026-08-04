@@ -98,7 +98,7 @@ def multiqc_config(self) -> dict[str, list[str]]:
 
         if "report_comment" not in ignore_configs:
             # Check that the minimum plugins exist and are coming first in the summary
-            version = self.nf_config.get("manifest.version", "").strip(" '\"")
+            version = self.nf_config.get("manifest", {}).get("version", "") or ""
 
             # Get the org from .nf-core.yml config, defaulting to "nf-core"
             _, nf_core_yaml_config = load_tools_config(self.wf_path)

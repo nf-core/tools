@@ -6,6 +6,7 @@ import pytest
 
 import nf_core.components.components_command
 import nf_core.components.patch
+import nf_core.modules.install
 import nf_core.modules.modules_json
 import nf_core.modules.patch
 import nf_core.modules.update
@@ -20,10 +21,10 @@ Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
 testing if the update commands works correctly with patch files
 """
 
-ORG_SHA = "3dc7c14d29af40f1a0871a675364e437559d97a8"
-CORRECT_SHA = "63e780200600e340365b669f9c673b670764c569"
-SUCCEED_SHA = "0d0515c3f11266e1314e129bec3e308f804c8dc7"
-FAIL_SHA = "cb64a5c1ef85619b89ab99dec2e9097fe84e1dc8"
+ORG_SHA = "262178fbd015cd9be248630eec267f27e6048b03"
+CORRECT_SHA = "262178fbd015cd9be248630eec267f27e6048b03"
+SUCCEED_SHA = "b300b7e53f080a174a717d8e394cca1a82a5ba54"
+FAIL_SHA = "04d59325d44d309fb195f43d8b672674ee73d309"
 BISMARK_ALIGN = "bismark/align"
 REPO_NAME = "nf-core-test"
 PATCH_BRANCH = "patch-tester"
@@ -50,14 +51,16 @@ def modify_main_nf(path):
         lines = fh.readlines()
     # We want a patch file that looks something like:
     # -    tuple val(meta), path(reads)
-    # -    path index
+    # -    tuple val(meta3), path(index)
     # +    tuple val(meta), path(reads), path(index)
+    to_pop = None
     for line_index in range(len(lines)):
         if lines[line_index] == "    tuple val(meta), path(reads)\n":
             lines[line_index] = "    tuple val(meta), path(reads), path(index)\n"
-        elif lines[line_index] == "    path index\n":
+        elif lines[line_index] == "    tuple val(meta3), path(index)\n":
             to_pop = line_index
-    lines.pop(to_pop)
+    if to_pop:
+        lines.pop(to_pop)
     with open(path, "w") as fh:
         fh.writelines(lines)
 
@@ -108,7 +111,7 @@ class TestModulesCreate(TestModules):
         assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines, module_relpath / "main.nf"
         assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
         assert "-    tuple val(meta), path(reads)\n" in patch_lines
-        assert "-    path index\n" in patch_lines
+        assert "-    tuple val(meta3), path(index)\n" in patch_lines
         assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
     def test_create_patch_try_apply_successful(self):
@@ -167,7 +170,7 @@ class TestModulesCreate(TestModules):
         assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
         assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
         assert "-    tuple val(meta), path(reads)\n" in patch_lines
-        assert "-    path index\n" in patch_lines
+        assert "-    tuple val(meta3), path(index)\n" in patch_lines
         assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
         # Check that 'main.nf' is updated correctly
@@ -175,7 +178,7 @@ class TestModulesCreate(TestModules):
             main_nf_lines = fh.readlines()
         # These lines should have been removed by the patch
         assert "    tuple val(meta), path(reads)\n" not in main_nf_lines
-        assert "    path index\n" not in main_nf_lines
+        assert "    tuple val(meta3), path(index)\n" not in main_nf_lines
         # This line should have been added
         assert "    tuple val(meta), path(reads), path(index)\n" in main_nf_lines
 
@@ -268,7 +271,7 @@ class TestModulesCreate(TestModules):
         assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
         assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
         assert "-    tuple val(meta), path(reads)\n" in patch_lines
-        assert "-    path index\n" in patch_lines
+        assert "-    tuple val(meta3), path(index)\n" in patch_lines
         assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
         # Check that 'main.nf' is updated correctly
@@ -276,7 +279,7 @@ class TestModulesCreate(TestModules):
             main_nf_lines = fh.readlines()
         # These lines should have been removed by the patch
         assert "    tuple val(meta), path(reads)\n" not in main_nf_lines
-        assert "    path index\n" not in main_nf_lines
+        assert "    tuple val(meta3), path(index)\n" not in main_nf_lines
         # This line should have been added
         assert "    tuple val(meta), path(reads), path(index)\n" in main_nf_lines
 
@@ -323,8 +326,8 @@ class TestModulesCreate(TestModules):
         ).install_component_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir)
 
         temp_module_dir = temp_dir / BISMARK_ALIGN
-        temp_files = {f.name for f in temp_module_dir.iterdir()}
-        module_files = {f.name for f in module_path.iterdir()}
+        temp_files = {f.name for f in temp_module_dir.iterdir() if f.is_file()}
+        module_files = {f.name for f in module_path.iterdir() if f.is_file()}
         for file_name in temp_files:
             assert file_name in module_files
             with open(module_path / file_name) as fh:
