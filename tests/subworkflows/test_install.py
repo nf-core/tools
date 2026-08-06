@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import pytest
@@ -64,6 +65,14 @@ class TestSubworkflowsInstall(TestSubworkflows):
         assert samtools_stats_path.exists()
         assert samtools_idxstats_path.exists()
         assert samtools_flagstat_path.exists()
+
+    def test_subworkflows_install_logs_dependencies(self):
+        """Installing a subworkflow should log its module dependencies."""
+        self.caplog.set_level(logging.INFO)
+        assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
+        assert "Installed files for 'bam_sort_stats_samtools' and its dependencies" in self.caplog.text
+        assert "samtools_index" in self.caplog.text
+        assert "bam_stats_samtools" in self.caplog.text
 
     def test_subworkflow_install_nopipeline(self):
         """Test installing a subworkflow - no pipeline given"""

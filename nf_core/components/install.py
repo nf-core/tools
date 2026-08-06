@@ -52,7 +52,11 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: str | dict[str, str], silent: bool = False) -> bool:
+    def install(
+        self,
+        component: str | dict[str, str],
+        silent: bool = False,
+    ) -> bool:
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
@@ -167,6 +171,7 @@ class ComponentInstall(ComponentCommand):
             self.component_type, self.modules_repo, component, version, self.installed_by, install_track
         )
 
+        dependencies: list[str] = []
         if self.component_type == "subworkflows":
             # Under --skip-deps, don't propagate --force to transitive deps so
             # already-installed ones keep their pinned SHAs and just have
@@ -175,11 +180,16 @@ class ComponentInstall(ComponentCommand):
                 original_force = self.force
                 self.force = False
                 try:
-                    self.install_included_components(component_dir)
+                    dependencies = self.install_included_components(component_dir)
                 finally:
                     self.force = original_force
             else:
-                self.install_included_components(component_dir)
+                dependencies = self.install_included_components(component_dir)
+
+        if dependencies:
+            log.info(f"Installed files for '{component}' and its dependencies '{', '.join(sorted(dependencies))}'.")
+        else:
+            log.info(f"Installed files for '{component}'.")
 
         # Update container configs for the installed module. Subworkflows have no container entries of their
         # own; their included modules each trigger this when installed above.
@@ -207,29 +217,42 @@ class ComponentInstall(ComponentCommand):
                     Console().print(
                         Syntax(f"includeConfig '{subworkflow_config}'", "groovy", theme="ansi_dark", padding=1)
                     )
+
         return True
 
-    def install_included_components(self, subworkflow_dir):
+    def install_included_components(self, subworkflow_dir) -> list[str]:
         """
         Install included modules and subworkflows
         """
+        installed_components: list[str] = []
         ini_modules_repo = self.modules_repo
         modules_to_install, subworkflows_to_install = get_components_to_install(subworkflow_dir)
-        for s_install in subworkflows_to_install:
+        for subworkflow_to_install in subworkflows_to_install:
             original_installed = self.installed_by
             self.installed_by = [Path(subworkflow_dir).parts[-1]]
-            self.install(s_install, silent=True)
+            dependency_installed = self.install(subworkflow_to_install, silent=True)
             self.installed_by = original_installed
-        for m_install in modules_to_install:
+            if dependency_installed:
+                component_name = (
+                    subworkflow_to_install["name"]
+                    if isinstance(subworkflow_to_install, dict)
+                    else subworkflow_to_install
+                )
+                installed_components.append(component_name.replace("/", "_"))
+        for module_to_install in modules_to_install:
             original_component_type = self.component_type
             self.component_type = "modules"
             original_installed = self.installed_by
             self.installed_by = [Path(subworkflow_dir).parts[-1]]
-            self.install(m_install, silent=True)
+            dependency_installed = self.install(module_to_install, silent=True)
             self.component_type = original_component_type
             self.installed_by = original_installed
+            if dependency_installed:
+                component_name = module_to_install["name"] if isinstance(module_to_install, dict) else module_to_install
+                installed_components.append(component_name.replace("/", "_"))
         # self.install will have modified self.modules_repo. Restore its original value
         self.modules_repo = ini_modules_repo
+        return installed_components
 
     def collect_and_verify_name(
         self, component: str | None, modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
