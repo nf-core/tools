@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## v4.x.xdev
+
+### Subworkflows
+
+- Log subworkflow dependencies on install ([#4357](https://github.com/nf-core/tools/pull/4357))
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General
