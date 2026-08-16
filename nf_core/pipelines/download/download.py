@@ -43,8 +43,6 @@ stderr = rich.console.Console(
     force_terminal=nf_core.utils.rich_force_colors(),
 )
 
-SINGULARITY_SYSTEMS = ["singularity", "apptainer"]
-
 
 class DownloadWorkflow:
     """Downloads a nf-core workflow from GitHub to the local file system.
@@ -87,12 +85,12 @@ class DownloadWorkflow:
     ):
         # Verify that the flags provided make sense together
         if (
-            container_system == "docker"
+            container_system in ("docker", "appleContainer")
             and container_cache_utilisation != "copy"
             and container_cache_utilisation is not None
         ):
             raise DownloadError(
-                "Only the 'copy' option for --container-cache-utilisation is supported for Docker images. "
+                "Only the 'copy' option for --container-cache-utilisation is supported for Docker/Apple container images. "
             )
 
         self._pipeline = pipeline
@@ -251,7 +249,7 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if self.container_system in SINGULARITY_SYSTEMS and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
+        if self.container_system in ("singularity", "apptainer") and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
             summary_log.append(
                 f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
             )
@@ -333,7 +331,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required container images
-            if self.container_system in {"singularity", "docker", "apptainer"}:
+            if self.container_system in ("singularity", "apptainer", "docker", "appleContainer"):
                 workflow_directory = self.outdir / revision_dirname
                 self.find_container_images(workflow_directory, revision)
 
@@ -369,11 +367,11 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
-        if self.container_system in {"singularity", "docker", "apptainer"}:
+        if self.container_system in ("singularity", "apptainer", "docker", "appleContainer"):
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
-                # Collect all required singularity images
+                # Collect all required container images
                 workflow_directory = self.workflow_repo.access()
                 self.find_container_images(workflow_directory, revision)
 
@@ -505,7 +503,7 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity", "docker", "apptainer"],
+                choices=["none", "singularity", "docker", "apptainer", "appleContainer"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -515,7 +513,7 @@ class DownloadWorkflow:
         """
         assert self.outdir is not None  # mypy
         try:
-            if self.container_system in SINGULARITY_SYSTEMS:
+            if self.container_system in ("singularity", "apptainer"):
                 self.container_fetcher = SingularityFetcher(
                     outdir=self.outdir,
                     container_library=self.container_library,
@@ -526,7 +524,7 @@ class DownloadWorkflow:
                     hide_progress=self.hide_progress,
                     container_system=self.container_system,
                 )
-            elif self.container_system == "docker":
+            elif self.container_system in ("docker", "appleContainer"):
                 self.container_fetcher = DockerFetcher(
                     outdir=self.outdir,
                     registry_set=self.registry_set,
@@ -559,7 +557,7 @@ class DownloadWorkflow:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container_system in SINGULARITY_SYSTEMS:
+            if self.container_system in ("singularity", "apptainer"):
                 stderr.print(
                     "[bold]This is [italic]not[/] recommended when downloading Singularity/Apptainer images, as it can take a long time and saves very little space."
                 )

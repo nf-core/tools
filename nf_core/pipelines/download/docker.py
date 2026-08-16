@@ -100,7 +100,7 @@ class DockerFetcher(ContainerFetcher):
             set[str]: The set of registries to use for the container download
         """
         registry_set = self.base_registry_set.copy()
-        configured_registry_keys = ["docker.registry", "podman.registry"]
+        configured_registry_keys = ["appleContainer.registry", "docker.registry", "podman.registry"]
 
         # Add the registries defined in the workflow config
         registry_set |= self.gather_config_registries(
