@@ -21,8 +21,8 @@ import nf_core
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.github_api import gh_api
-from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.apple_container import AppleContainerFetcher
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
 from nf_core.pipelines.download.utils import DownloadError
@@ -250,7 +250,10 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if self.container_system in ("singularity", "apptainer") and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
+        if (
+            self.container_system in ("singularity", "apptainer")
+            and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None
+        ):
             summary_log.append(
                 f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
             )
