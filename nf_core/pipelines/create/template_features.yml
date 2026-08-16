@@ -391,6 +391,25 @@ configurations:
       custom_pipelines: True
       default: False
 
+    apple_container:
+      skippable_paths: False
+      short_description: "Use Apple Container"
+      description: "Add Apple Container support to the pipeline"
+      help_text: |
+        This will add an `appleContainer` profile to the pipeline configuration, enabling
+        native container execution on macOS with Apple Silicon via the
+        [Apple Container](https://github.com/apple/container) runtime.
+
+        Apple Container uses standard OCI/Docker images and provides its own CLI
+        (`container`) with native `pull` and `save` commands. No Docker Desktop
+        installation is required.
+
+        The `nf-core pipelines download` command will also support downloading
+        images for offline use with `--container-system appleContainer`.
+      nfcore_pipelines: True
+      custom_pipelines: True
+      default: true
+
 development_environments:
   name: "Development Environments"
   features:
