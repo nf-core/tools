@@ -22,6 +22,7 @@ import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.github_api import gh_api
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
+from nf_core.pipelines.download.apple_container import AppleContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
 from nf_core.pipelines.download.utils import DownloadError
@@ -524,7 +525,15 @@ class DownloadWorkflow:
                     hide_progress=self.hide_progress,
                     container_system=self.container_system,
                 )
-            elif self.container_system in ("docker", "appleContainer"):
+            elif self.container_system == "appleContainer":
+                self.container_fetcher = AppleContainerFetcher(
+                    outdir=self.outdir,
+                    registry_set=self.registry_set,
+                    container_library=self.container_library,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
+                )
+            elif self.container_system == "docker":
                 self.container_fetcher = DockerFetcher(
                     outdir=self.outdir,
                     registry_set=self.registry_set,
