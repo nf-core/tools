@@ -1,5 +1,23 @@
 # nf-core/tools: Changelog
 
+## v4.1.1dev
+
+### General
+
+### Linting
+
+- remove `ext.use_gpu` as a permitted ext key, superseded by `task.accelerator` ([#4445](https://github.com/nf-core/tools/pull/4445))
+
+### Modules
+
+### Subworkflows
+
+### Template
+
+- remove redundant `ext.use_gpu` from the `process_gpu` label, use `accelerator` only ([#4445](https://github.com/nf-core/tools/pull/4445))
+
+#### Version updates
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General
