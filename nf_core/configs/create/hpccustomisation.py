@@ -275,11 +275,15 @@ class HpcCustomisation(Screen):
                 text_input.query_one(".validation_msg").update("")
         try:
             with init_context(self.parent.get_context()):
-                # First, validate the new config data
+                # Validate and save the new config data
                 ConfigsCreateConfig(**new_config)
-                # If that passes validation, update the existing config
-                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+                self.parent.TEMPLATE_CONFIG["hpc_customisation"] = new_config
             # Push the next screen
             self.parent.push_screen("final_infra_details")
         except ValueError:
             pass
+
+    @on(Button.Pressed, "#back")
+    def on_back_button(self, event: Button.Pressed) -> None:
+        """Clear the default config info"""
+        self.parent.TEMPLATE_CONFIG.pop("hpc_customisation", None)

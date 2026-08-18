@@ -122,8 +122,7 @@ class BasicDetails(Screen):
             return []
         return pipelines
 
-    ## Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
-    @on(Button.Pressed)
+    @on(Button.Pressed, "#next")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         config = {}
@@ -146,7 +145,10 @@ class BasicDetails(Screen):
                 config["config_pipeline_name"] = ""
         try:
             with init_context(self.parent.get_context()):
-                self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
+                # Validate the config
+                ConfigsCreateConfig(**config)
+                # Save the config dictionary
+                self.parent.TEMPLATE_CONFIG["basic_details"] = config
             if event.button.id == "next":
                 if self.parent.CONFIG_TYPE == "infrastructure":
                     self.parent.push_screen("hpc_question")
@@ -154,6 +156,11 @@ class BasicDetails(Screen):
                     self.parent.push_screen("pipeline_config_question")
         except ValueError:
             pass
+
+    @on(Button.Pressed, "#back")
+    def on_back_button_pressed(self, event: Button.Pressed) -> None:
+        """Delete saved config"""
+        self.parent.TEMPLATE_CONFIG.pop("basic_details", None)
 
     @on(Mount)
     @on(ScreenResume)

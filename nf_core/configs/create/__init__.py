@@ -69,8 +69,8 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "final_infra_details": FinalInfraDetails,
     }
 
-    # Initialise config as empty
-    TEMPLATE_CONFIG = utils.ConfigsCreateConfig()
+    # Initialise config as empty dict
+    TEMPLATE_CONFIG = {}
 
     # Tracking variables
     CONFIG_TYPE = None

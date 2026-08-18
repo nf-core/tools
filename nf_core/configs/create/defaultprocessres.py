@@ -77,7 +77,6 @@ class DefaultProcess(Screen):
         else:
             self.parent.push_screen("final")
 
-    # Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
     @on(Button.Pressed, "#next")
     def on_next_button(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
@@ -92,10 +91,9 @@ class DefaultProcess(Screen):
                 text_input.query_one(".validation_msg").update("")
         try:
             with init_context(self.parent.get_context()):
-                # First, validate the new config data
+                # Validate and save the new config data
                 ConfigsCreateConfig(**new_config)
-                # If that passes validation, update the existing config
-                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+                self.parent.TEMPLATE_CONFIG["default_process"] = new_config
             # Push the next screen
             if self.parent.PIPE_CONF_NAMED:
                 self.parent.push_screen("multi_named_process_config")
@@ -109,13 +107,4 @@ class DefaultProcess(Screen):
     @on(Button.Pressed, "#back")
     def on_back_button(self, event: Button.Pressed) -> None:
         """Clear the default config info"""
-        blank_config = {}
-        for text_input in self.query("TextInput"):
-            if getattr(self.parent.TEMPLATE_CONFIG, text_input.field_id, None):
-                blank_config[text_input.field_id] = ""
-        try:
-            with init_context(self.parent.get_context()):
-                # Update the existing config with the blank values
-                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=blank_config)
-        except ValueError:
-            pass
+        self.parent.TEMPLATE_CONFIG.pop("basic_details", None)

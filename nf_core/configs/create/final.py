@@ -34,8 +34,12 @@ class FinalScreen(Screen):
 
     def _create_config(self, config_dir=".") -> None:
         """Create the config."""
+        # Merge the configs from each screen into one
+        final_config = {}
+        for tmp_config in self.parent.TEMPLATE_CONFIG.values():
+            final_config.update(tmp_config)
         create_obj = ConfigCreate(
-            template_config=self.parent.TEMPLATE_CONFIG,
+            template_config=ConfigsCreateConfig(**final_config),
             config_type=self.parent.CONFIG_TYPE,
             config_dir=config_dir,
         )

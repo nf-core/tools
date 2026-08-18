@@ -297,10 +297,9 @@ class FinalInfraDetails(Screen):
         # Validate and update the config
         try:
             with init_context(self.parent.get_context()):
-                # First, validate the new config data
+                # Validate and save the new config data
                 ConfigsCreateConfig(**new_config)
-                # If that passes validation, update the existing config
-                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=new_config)
+                self.parent.TEMPLATE_CONFIG["final_infra"] = new_config
             # Push the next screen
             self.parent.push_screen("final")
         except ValueError:
@@ -309,13 +308,4 @@ class FinalInfraDetails(Screen):
     @on(Button.Pressed, "#back")
     def on_back_button(self, event: Button.Pressed) -> None:
         """Clear the default config info"""
-        blank_config = {}
-        for text_input in self.query("TextInput"):
-            if getattr(self.parent.TEMPLATE_CONFIG, text_input.field_id, None):
-                blank_config[text_input.field_id] = ""
-        try:
-            with init_context(self.parent.get_context()):
-                # Update the existing config with the blank values
-                self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update=blank_config)
-        except ValueError:
-            pass
+        self.parent.TEMPLATE_CONFIG.pop("final_infra", None)

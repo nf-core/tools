@@ -183,11 +183,18 @@ class MultiProcessConfig(Screen):
                 process_id_field = f"custom_process_{self.selector_type}_id"
                 process_id = tmp_config.get(process_id_field)
                 new_config[process_id] = tmp_config
-            self.parent.TEMPLATE_CONFIG = self.parent.TEMPLATE_CONFIG.model_copy(update={self.config_key: new_config})
+            # Validate and save the new config data
+            ConfigsCreateConfig(**{self.config_key: new_config})
+            self.parent.TEMPLATE_CONFIG["processes"] = {self.config_key: new_config}
             # Push the next screen
             self.parent.push_screen(self.next_screen)
         except ValueError:
             pass
+
+    @on(Button.Pressed, "#back")
+    def on_back_button(self, event: Button.Pressed) -> None:
+            """Clear the default config info"""
+            self.parent.TEMPLATE_CONFIG.pop("processes", None)
 
     @on(Button.Pressed, "#skip")
     def skip_to_next_screen(self) -> None:

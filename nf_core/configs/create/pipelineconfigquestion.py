@@ -123,7 +123,6 @@ class PipelineConfigQuestion(Screen):
             if label.id == f"{event.switch.id}_state_label":
                 label.update("Yes" if event.value else "No")
 
-    # Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
     @on(Button.Pressed, "#next")
     def on_next_button_pressed(self, event: Button.Pressed) -> None:
         """Save configuration options and then move to the next screen."""
