@@ -70,7 +70,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     }
 
     # Initialise config as empty dict
-    TEMPLATE_CONFIG = {}
+    TEMPLATE_CONFIG: dict[str, dict] = {}
 
     # Tracking variables
     CONFIG_TYPE = None

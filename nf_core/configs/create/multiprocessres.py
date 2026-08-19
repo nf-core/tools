@@ -193,8 +193,8 @@ class MultiProcessConfig(Screen):
 
     @on(Button.Pressed, "#back")
     def on_back_button(self, event: Button.Pressed) -> None:
-            """Clear the default config info"""
-            self.parent.TEMPLATE_CONFIG.pop("processes", None)
+        """Clear the default config info"""
+        self.parent.TEMPLATE_CONFIG.pop("processes", None)
 
     @on(Button.Pressed, "#skip")
     def skip_to_next_screen(self) -> None:

@@ -1,6 +1,7 @@
 import io
 import json
 import subprocess
+from os import getenv
 
 from textual import on
 from textual.app import ComposeResult
@@ -172,6 +173,34 @@ class HpcCustomisation(Screen):
             pass
         except subprocess.CalledProcessError:
             pass
+        try:
+            subprocess.run(["condor_version"])
+            return "condor"
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            subprocess.run(["hq", "--version"])
+            return "hyperqueue"
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            subprocess.run(["flux", "--version"])
+            return "flux"
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            subprocess.run(["pjsub", "--help"])
+            return "tcs"
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
         return "local"
 
     def _get_queues(self, scheduler: str | None) -> list[str]:
@@ -195,7 +224,50 @@ class HpcCustomisation(Screen):
                 return queues.split("\n")
             except subprocess.CalledProcessError:
                 pass
-        # TODO: Implement LSF, Moab, NQSII here
+        elif scheduler == "lsf":
+            try:
+                queues = subprocess.check_output(["bqueues", "-o", "queue_name", "-noheader"]).decode("utf-8")
+                return queues.split("\n")
+            except subprocess.CalledProcessError:
+                pass
+        elif scheduler == "moab":
+            try:
+                res = subprocess.run(
+                    ["mdiag", "-c"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    timeout=30,
+                )
+                queue_list = []
+                header_tokens = ["ClassID", "Name"]
+                in_table = False
+                for line in res.stdout.splitlines():
+                    fields = line.split()
+                    if not fields:
+                        continue
+                    if not in_table:
+                        if fields[0] in header_tokens:
+                            in_table = True
+                        continue
+                    queue_list.append(fields[0])
+                return queue_list
+            except subprocess.CalledProcessError:
+                pass
+            except subprocess.TimeoutExpired:
+                pass
+        elif scheduler == "nqsii":
+            try:
+                queues = subprocess.check_output(["qstat", "-Q", "-e", "-n", "-l", "-F", "quenm"]).decode("utf-8")
+                return queues.split("\n")
+            except subprocess.CalledProcessError:
+                pass
+        elif scheduler == "flux":
+            try:
+                queues = subprocess.check_output(["flux", "queue", "list", "-n", "-o", r"'{queue}'"]).decode("utf-8")
+                return queues.split("\n")
+            except subprocess.CalledProcessError:
+                pass
         return []
 
     def _get_default_queue(self, scheduler: str | None) -> str:
@@ -210,7 +282,25 @@ class HpcCustomisation(Screen):
                 return self._pbs_get_default_queue()
             except subprocess.CalledProcessError:
                 pass
-        # TODO: Implement SGE, LSF, Moab, NQSII here
+        elif scheduler == "lsf":
+            try:
+                return self._lsf_get_default_queue()
+            except subprocess.CalledProcessError:
+                pass
+        elif scheduler == "nqsii":
+            try:
+                queue = getenv("PBS_QUEUE") or ""
+                return queue
+            except subprocess.CalledProcessError:
+                pass
+        elif scheduler == "flux":
+            try:
+                queue = subprocess.check_output(
+                    ["flux", "config", "get", "-q", "--type=string", "policy.jobspec.defaults.system.queue"]
+                ).decode("utf-8")
+                return queue
+            except subprocess.CalledProcessError:
+                pass
         return ""
 
     def _slurm_get_default_queue(self) -> str:
@@ -250,6 +340,22 @@ class HpcCustomisation(Screen):
             k, v = [token.strip() for token in line.split("=", 1)]
             config[k] = v
         return config
+
+    def _lsf_get_default_queue(self) -> str:
+        """Get the default queue for LSF"""
+        result = subprocess.run(
+            ["bparams"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        )
+
+        for line in result.stdout.splitlines():
+            label, sep, value = line.partition(":")
+            if sep and label.strip() == "Default Queues":
+                return value.split()[0]
+        return ""
 
     @on(Button.Pressed, "#toconfiguration")
     def on_button_pressed(self, event: Button.Pressed) -> None:

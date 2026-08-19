@@ -39,7 +39,20 @@ _PATH_PATTERN = re.compile(r"(\/|~\/|~$|\$\{?\w+\}?)(.*)")
 # Used by finalinfradetails as it already imports create.utils
 SUPPORTED_CONTAINERS = ["singularity", "docker", "apptainer", "charliecloud", "podman", "sarus", "shifter", "conda"]
 CACHED_CONTAINERS = ["singularity", "apptainer", "charliecloud", "conda"]
-SUPPORTED_SCHEDULERS = ["local", "pbs", "pbspro", "slurm", "sge", "nqsii", "lsf", "moab", "condor", "hyperqueue", "flux", "tcs"]
+SUPPORTED_SCHEDULERS = [
+    "local",
+    "pbs",
+    "pbspro",
+    "slurm",
+    "sge",
+    "nqsii",
+    "lsf",
+    "moab",
+    "condor",
+    "hyperqueue",
+    "flux",
+    "tcs",
+]
 SUPPORTED_DIRECTIVES = {
     "local": ["cpus", "memory", "time"],
     "lsf": ["cpus", "memory", "time", "queue"],
@@ -151,10 +164,7 @@ class ConfigsCreateConfig(BaseModel):
         # and removes keys with null or empty values
         ret = {}
         for k, v in config_dict.items():
-            if isinstance(v, dict):
-                v2 = self._remove_empty_sections(v)
-            else:
-                v2 = v
+            v2 = self._remove_empty_sections(v) if isinstance(v, dict) else v
             if v2:
                 ret[k] = v2
         return ret
@@ -247,9 +257,7 @@ class ConfigsCreateConfig(BaseModel):
             },
             self.container_system: {
                 "enabled": True,
-                "cacheDir": self.cachedir
-                if self.container_system in CACHED_CONTAINERS
-                else None,
+                "cacheDir": self.cachedir if self.container_system in CACHED_CONTAINERS else None,
                 "autoMounts": True if self.container_system in ["singularity", "apptainer"] else None,
             },
             "cleanup": self.delete_work_dir,
