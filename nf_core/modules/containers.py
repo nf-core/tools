@@ -703,6 +703,7 @@ class ModuleContainers:
             "containerPlatform": platform,
             "freeze": True,
             "buildTemplate": "conda/pixi:v1",
+            "basePackages": "littler r-cran-docopt",
             "format": WAVE_FORMAT[container_system],
             "nameStrategy": "imageSuffix",
         }
