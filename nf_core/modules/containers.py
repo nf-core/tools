@@ -703,7 +703,7 @@ class ModuleContainers:
             "containerPlatform": platform,
             "freeze": True,
             "buildTemplate": "conda/pixi:v1",
-            "basePackages": "conda-forge::procps-ng conda-forge::gzip"
+            "basePackages": "conda-forge::procps-ng conda-forge::gzip",
             "format": WAVE_FORMAT[container_system],
             "nameStrategy": "imageSuffix",
         }
