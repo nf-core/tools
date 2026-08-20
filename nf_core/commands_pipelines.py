@@ -5,7 +5,6 @@ from pathlib import Path
 import rich
 
 import nf_core.utils
-from nf_core.pipelines.params_file import ParamsFileBuilder
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
@@ -226,6 +225,8 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory.
     """
+    from nf_core.pipelines.params_file import ParamsFileBuilder
+
     builder = ParamsFileBuilder(pipeline, revision, no_prompts)
 
     if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):

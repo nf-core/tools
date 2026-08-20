@@ -62,12 +62,12 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out nf-core/tools
         with:
           ref: ${{ github.ref_name }}
 
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -77,12 +77,12 @@ jobs:
           fetch-depth: "0"
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
 
@@ -90,7 +90,7 @@ jobs:
         run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@b4ec1bc7c16a94435159de94a05253542fddf6ef # v3
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
         with:
           version: "25.10.4"
 
@@ -108,7 +108,31 @@ jobs:
           git config --global init.defaultBranch $defaultBranch
 
       - name: Run synchronisation
+        id: sync
         if: github.repository == 'nf-core/tools'
+        continue-on-error: true
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+        run: |
+          git config --global user.email "core@nf-co.re"
+          git config --global user.name "nf-core-bot"
+          uv run nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
+            pipelines sync -d nf-core/${{ matrix.pipeline }} \
+            --from-branch dev \
+            --pull-request \
+            --username nf-core-bot \
+            --github-repository nf-core/${{ matrix.pipeline }} \
+            --blog-post ${{inputs.blog_post}}
+
+      - name: Install newer Nextflow (retry fallback)
+        if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: "26.04.6"
+
+      - name: Retry synchronisation with newer Nextflow
+        if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
         run: |

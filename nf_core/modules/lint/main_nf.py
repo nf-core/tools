@@ -25,70 +25,98 @@ def main_nf(
 
     The following checks are performed:
 
-    * ``main_nf_module_granularity``: The module must represent a single command
-      as ``<tool>`` or single subcommand with distinct functionality as
-      ``<tool/subtool>``.
+    main_nf_module_granularity
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_exists``: The ``main.nf`` file must exist.
+    The module must represent a single command
+    as ``<tool>`` or single subcommand with distinct functionality as
+    ``<tool/subtool>``.
 
-    * ``deprecated_dsl2``: The file must not contain deprecated DSL2 identifiers
-      (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
-      ``publishDir``).
+    main_nf_exists
+    ^^^^^^^^^^^^^^
 
-    * ``main_nf_script_outputs``: The process must have an ``output:`` block.
+    The ``main.nf`` file must exist.
 
-    * ``main_nf_container``: When both a ``singularity`` and a ``docker`` container
-      are specified, their tags must reference the same software version. A warning
-      is issued if they do not match. Modules using the newer docker-only format
-      (no singularity container) skip this check.
+    deprecated_dsl2
+    ^^^^^^^^^^^^^^^
 
-    * ``singularity_tag``: A Singularity container must be resolvable via
-      ``nextflow inspect -profile singularity``. The check fails if none can be
-      resolved or if it falls back to a docker container that has an automatic
-      singularity equivalent, i.e., ``quay.io/biocontainers/`` or
-      ``community.wave.seqera.io/``.
-      It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
+    The file must not contain deprecated DSL2 identifiers
+    (``initOptions``, ``saveFiles``, ``getSoftwareName``, ``getProcessName``,
+    ``publishDir``).
 
-    * ``oras_singularity_tag``: The resolved Singularity container must not be
-      served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
-      The check fails if an ``oras://`` container is used.
+    main_nf_script_outputs
+    ^^^^^^^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_script_shell``: Exactly one of ``script:``, ``shell:``, or ``exec:``
-      blocks must be present.
+    The process must have an ``output:`` block.
 
-    * ``main_nf_shell_template``: If a ``shell:`` block is used, it must call
-      a ``template``.
+    main_nf_container
+    ^^^^^^^^^^^^^^^^^
 
-    * ``main_nf_meta_output``: If ``meta`` is present in the module inputs, it
-      must also appear in at least one output channel.
+    When both a ``singularity`` and a ``docker`` container
+    are specified, their tags must reference the same software version. A warning
+    is issued if they do not match. Modules using the newer docker-only format
+    (no singularity container) skip this check.
 
-    * ``main_nf_version_topic``: The module should emit software versions using
-      a ``topic: versions`` output. A warning is issued if no such topic is found.
+    singularity_tag
+    ^^^^^^^^^^^^^^^
 
-    * ``main_nf_version_emit``: The number of ``topic: versions`` outputs must
-      equal the number of ``emit:`` outputs whose name starts with ``versions``.
-      A warning is issued if a legacy YAML-based ``versions`` emit is used instead
-      of a topic output.
-    * ``process_standard_label``: Process labels should follow the standard format.
-      A warning is issued if a legacy label is used. Allowed standard labels are:
-          "process_cpus_single",
-          "process_cpus_low",
-          "process_cpus_medium",
-          "process_cpus_high",
-          "process_mem_low",
-          "process_mem_medium",
-          "process_mem_high",
-          "process_time_short",
-          "process_time_medium",
-          "process_time_long"
-      Legacy labels are:
-          "process_single",
-          "process_low",
-          "process_medium",
-          "process_high",
-          "process_long",
-          "process_low_memory",
-          "process_high_memory"
+    A Singularity container must be resolvable via
+    ``nextflow inspect -profile singularity``. The check fails if none can be
+    resolved or if it falls back to a docker container that has an automatic
+    singularity equivalent, i.e., ``quay.io/biocontainers/`` or
+    ``community.wave.seqera.io/``.
+    It is skipped for modules listed under ``singularity`` in ``.github/skip_nf_test.json``.
+
+    oras_singularity_tag
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The resolved Singularity container must not be
+    served over the ``oras://`` scheme; it should be a plain ``https://`` URL.
+    The check fails if an ``oras://`` container is used.
+
+    main_nf_script_shell
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    Exactly one of ``script:``, ``shell:``, or ``exec:``
+    blocks must be present.
+
+    main_nf_shell_template
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    If a ``shell:`` block is used, it must call
+    a ``template``.
+
+    main_nf_meta_output
+    ^^^^^^^^^^^^^^^^^^^
+
+    If ``meta`` is present in the module inputs, it
+    must also appear in at least one output channel.
+
+    main_nf_version_topic
+    ^^^^^^^^^^^^^^^^^^^^^^
+
+    The module should emit software versions using
+    a ``topic: versions`` output. A warning is issued if no such topic is found.
+
+    main_nf_version_emit
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The number of ``topic: versions`` outputs must
+    equal the number of ``emit:`` outputs whose name starts with ``versions``.
+    A warning is issued if a legacy YAML-based ``versions`` emit is used instead
+    of a topic output.
+
+    process_standard_label
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    Process labels should follow the standard format. A warning is issued if a
+    legacy label is used. Allowed standard labels are ``process_cpus_single``,
+    ``process_cpus_low``, ``process_cpus_medium``, ``process_cpus_high``,
+    ``process_mem_low``, ``process_mem_medium``, ``process_mem_high``,
+    ``process_time_short``, ``process_time_medium``, ``process_time_long``.
+    Legacy labels are ``process_single``, ``process_low``, ``process_medium``,
+    ``process_high``, ``process_long``, ``process_low_memory``,
+    ``process_high_memory``.
     """
 
     inputs: list[str] = []
@@ -376,7 +404,7 @@ def check_script_section(self, lines):
     permitted_meta_keys = {"id", "single_end"}
     invalid_meta_keys = [
         f"{prefix}{key}"
-        for prefix, key in re.findall(r"\b(meta\d*\??\.)(\w+)\b(?!\()", script)
+        for prefix, key in re.findall(r"(?<!\.)\b(meta\d*\??\.)(\w+)\b(?!\()", script)
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
@@ -781,32 +809,26 @@ def check_meta_input_names(self, inputs):
         inputs (list): List of input variable names
     """
 
-    meta_vars = [var for var in inputs if var.startswith("meta")]
+    # A meta map is named 'meta' optionally followed by a number (meta2, meta3, etc.).
+    meta_pattern = re.compile(r"^meta\d*$")
+    meta_vars = [var for var in inputs if meta_pattern.match(var)]
 
     if not meta_vars:
         return  # No meta variables to check
-
-    # Expected pattern: 'meta' or 'meta' followed by a number (meta2, meta3, etc.)
-    valid_pattern = re.compile(r"^meta(\d+)?$")
 
     invalid_meta_vars = []
     valid_numbers = []
 
     for var in meta_vars:
-        if not valid_pattern.match(var):
-            invalid_meta_vars.append(var)
-        else:
-            # Extract number if present
-            match = re.match(r"^meta(\d+)?$", var)
-            if match.group(1):  # Has a number
-                number_str = match.group(1)
-                number_int = int(number_str)
-
-                if number_str != str(number_int) or number_int < 2:
-                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
-                    invalid_meta_vars.append(var)
-                else:
-                    valid_numbers.append(number_int)
+        number_str = var.removeprefix("meta")  # digits after 'meta' (empty for a plain 'meta')
+        if number_str:  # Has a number
+            number_int = int(number_str)
+            # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+            if number_str != str(number_int) or number_int < 2:
+                log.debug(f"Invalid meta variable number: {var}")
+                invalid_meta_vars.append(var)
+            else:
+                valid_numbers.append(number_int)
 
     # Check for invalid names
     if invalid_meta_vars:
@@ -819,20 +841,20 @@ def check_meta_input_names(self, inputs):
             )
         )
 
-    # Check for proper sequencing (2, 3, 4... not 2, 5, 3)
-    if valid_numbers:
-        expected = list(range(2, len(valid_numbers) + 2))
-        if valid_numbers != expected:
-            self.warned.append(
-                (
-                    "main_nf",
-                    "meta_input_names",
-                    f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
-                    self.main_nf,
-                )
+    # Check for proper sequencing (2, 3, 4... not 2, 5, 3). An empty list compares
+    # equal to the empty range, i.e. it counts as trivially sequential.
+    is_sequential = valid_numbers == list(range(2, len(valid_numbers) + 2))
+    if valid_numbers and not is_sequential:
+        self.warned.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
+                self.main_nf,
             )
+        )
 
-    if not invalid_meta_vars and (not valid_numbers or valid_numbers == list(range(2, len(valid_numbers) + 2))):
+    if not invalid_meta_vars and is_sequential:
         self.passed.append(
             (
                 "main_nf",

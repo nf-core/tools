@@ -18,6 +18,7 @@ from git import GitCommandError, InvalidGitRepositoryError
 import nf_core
 import nf_core.pipelines.create.create
 import nf_core.utils
+from nf_core.github_api import gh_api
 from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
 
 log = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ class PipelineSync:
                 )
 
         # Set up the API auth if supplied on the command line
-        self.gh_api = nf_core.utils.gh_api
+        self.gh_api = gh_api
         self.gh_api.lazy_init()
         if self.gh_username and "GITHUB_AUTH_TOKEN" in os.environ:
             log.debug(f"Authenticating sync as {self.gh_username}")

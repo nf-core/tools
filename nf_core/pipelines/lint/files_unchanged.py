@@ -28,7 +28,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
-        .github/workflows/linting_comment.yml
+        .github/workflows/pr-comment.yml
         .github/workflows/linting.yml
         assets/email_template.html
         assets/email_template.txt
@@ -92,7 +92,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
         [Path(".github", "workflows", "branch.yml")],
-        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "pr-comment.yml")],
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
         [Path("assets", "email_template.txt")],
