@@ -888,7 +888,7 @@ def _parse_output_emits(module, line: str) -> list[str]:
     if not emit_regex:
         module.failed.append(("main_nf", "missing_emit", f"Missing emit statement: {line.strip()}", module.main_nf))
     else:
-        module.passed.append("main_nf", "missing_emit", "Emit is present", module.main_nf)
+        module.passed.append(("main_nf", "missing_emit", "Emit is present", module.main_nf))
         output.append(emit_regex.group(1).strip())
     return output
 
