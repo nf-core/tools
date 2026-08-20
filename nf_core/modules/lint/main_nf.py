@@ -868,7 +868,7 @@ def _parse_output_emits(self, line: str) -> list[str]:
         output.append("meta")
     emit_regex = re.search(r"^.*emit:\s*([^,\s]*)", line)
     if not emit_regex:
-        self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
+        self.failed.append(("main_nf", "missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
     else:
         output.append(emit_regex.group(1).strip())
     return output
