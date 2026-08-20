@@ -158,7 +158,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
     or permutations of the above.
 
     """
-    if module.meta_yml is None:
+    if module.meta_yml is None or not module.meta_yml.exists():
         if allow_missing:
             module.warned.append(
                 (
