@@ -870,6 +870,7 @@ def _parse_output_emits(self, line: str) -> list[str]:
     if not emit_regex:
         self.failed.append(("main_nf", "missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
     else:
+        self.passed.append("main_nf", "missing_emit", "Emit is present", self.main_nf)
         output.append(emit_regex.group(1).strip())
     return output
 
