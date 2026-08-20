@@ -22,9 +22,10 @@ VALID_NFCORE_INFRA_HPC_CONFIG = {
     "general_config_name": "myconfig",
     "is_infrastructure": True,
     "is_nfcore": True,
+    "config_profile_description": "A cool description",
+    "savelocation": ".",
     "config_profile_contact": "my name",
     "config_profile_handle": "@myhandle",
-    "config_profile_description": "A cool description",
     "config_profile_url": "https://example.com",
     "scheduler": "pbspro",
     "queue": "myqueue",
@@ -43,7 +44,6 @@ VALID_NFCORE_INFRA_HPC_CONFIG = {
     "poll_interval": "0.25",
     "queue_size": "200",
     "submit_rate": "25",
-    "savelocation": ".",
 }
 
 
@@ -52,6 +52,7 @@ VALID_CUSTOM_INFRA_HPC_CONFIG = {
     "is_infrastructure": True,
     "is_nfcore": False,
     "config_profile_description": "A cool description",
+    "savelocation": ".",
     "scheduler": "pbspro",
     "queue": "myqueue",
     "module": False,
@@ -68,7 +69,6 @@ VALID_CUSTOM_INFRA_HPC_CONFIG = {
     "poll_interval": "0.25",
     "queue_size": "200",
     "submit_rate": "25",
-    "savelocation": ".",
 }
 
 
@@ -76,10 +76,13 @@ VALID_NFCORE_INFRA_LOCAL_CONFIG = {
     "general_config_name": "myconfig",
     "is_infrastructure": True,
     "is_nfcore": True,
+    "config_profile_description": "A cool description",
+    "savelocation": ".",
     "config_profile_contact": "my name",
     "config_profile_handle": "@myhandle",
-    "config_profile_description": "A cool description",
     "config_profile_url": "https://example.com",
+    "module": False,
+    "module_system": "",
     "container_system": "singularity",
     "cpus": "8",
     "memory": "32",
@@ -89,7 +92,9 @@ VALID_NFCORE_INFRA_LOCAL_CONFIG = {
     "igenomes_cachedir": "/data/igenomes/cache",
     "retries": "2",
     "delete_work_dir": True,
-    "savelocation": ".",
+    "poll_interval": "0.25",
+    "queue_size": "200",
+    "submit_rate": "25",
 }
 
 
@@ -98,6 +103,9 @@ VALID_CUSTOM_INFRA_LOCAL_CONFIG = {
     "is_infrastructure": True,
     "is_nfcore": False,
     "config_profile_description": "A cool description",
+    "savelocation": ".",
+    "module": False,
+    "module_system": "",
     "container_system": "singularity",
     "cpus": "8",
     "memory": "32",
@@ -106,7 +114,9 @@ VALID_CUSTOM_INFRA_LOCAL_CONFIG = {
     "scratch_dir": "/tmp/scratch",
     "retries": "2",
     "delete_work_dir": True,
-    "savelocation": ".",
+    "poll_interval": "0.25",
+    "queue_size": "200",
+    "submit_rate": "25",
 }
 
 
@@ -114,11 +124,12 @@ VALID_NFCORE_PIPE_HPC_CONFIG = {
     "general_config_name": "myconfig",
     "is_infrastructure": False,
     "is_nfcore": True,
-    "config_pipeline_name": "rnaseq",
+    "config_profile_description": "A cool description",
+    "savelocation": ".",
     "config_profile_contact": "my name",
     "config_profile_handle": "@myhandle",
-    "config_profile_description": "A cool description",
     "config_profile_url": "https://example.com",
+    "config_pipeline_name": "rnaseq",
     "default_process_ncpus": "2",
     "default_process_memgb": "8",
     "default_process_hours": "9.5",
@@ -168,7 +179,6 @@ VALID_NFCORE_PIPE_HPC_CONFIG = {
             "custom_process_queue": "anotherqueue",
         },
     },
-    "savelocation": ".",
 }
 
 
@@ -177,6 +187,7 @@ VALID_CUSTOM_PIPE_HPC_CONFIG = {
     "is_infrastructure": False,
     "is_nfcore": False,
     "config_profile_description": "A cool description",
+    "savelocation": ".",
     "config_pipeline_path": ".",
     "default_process_ncpus": "2",
     "default_process_memgb": "8",
@@ -227,7 +238,6 @@ VALID_CUSTOM_PIPE_HPC_CONFIG = {
             "custom_process_queue": "anotherqueue",
         },
     },
-    "savelocation": ".",
 }
 
 
@@ -236,9 +246,10 @@ VALID_CUSTOM_PIPE_HPC_CONFIG = {
 INVALID_NFCORE_INFRA_HPC_CONFIG = {
     "is_infrastructure": True,
     "is_nfcore": True,
+    "config_profile_description": "A cool description",
+    "savelocation": ".",
     "config_profile_contact": "my name",
     "config_profile_handle": "bad handle",
-    "config_profile_description": "A cool description",
     "scheduler": "unsupported",
     "queue": "myqueue",
     "module": False,
@@ -256,7 +267,6 @@ INVALID_NFCORE_INFRA_HPC_CONFIG = {
     "poll_interval": "0.25",
     "queue_size": "200",
     "submit_rate": "25",
-    "savelocation": ".",
 }
 
 
@@ -264,6 +274,7 @@ INVALID_CUSTOM_INFRA_HPC_CONFIG = {
     "is_infrastructure": True,
     "is_nfcore": False,
     "config_profile_description": "A cool description",
+    "savelocation": ".",
     "scheduler": "pbsprose",
     "queue": "",
     "module": False,
@@ -277,17 +288,19 @@ INVALID_CUSTOM_INFRA_HPC_CONFIG = {
     "poll_interval": "0.25",
     "queue_size": "200",
     "submit_rate": "25",
-    "savelocation": ".",
 }
 
 
 INVALID_NFCORE_INFRA_LOCAL_CONFIG = {
     "is_infrastructure": True,
     "is_nfcore": True,
+    "config_profile_description": "A cool description",
+    "savelocation": "_path_doesnt_exist_",
     "config_profile_contact": "my name",
     "config_profile_handle": "@myhandle",
-    "config_profile_description": "A cool description",
     "config_profile_url": "bad_url",
+    "module": False,
+    "module_system": "",
     "container_system": "",
     "cpus": "8",
     "memory": "32",
@@ -297,7 +310,9 @@ INVALID_NFCORE_INFRA_LOCAL_CONFIG = {
     "igenomes_cachedir": "/data/igenomes/cache",
     "retries": "2",
     "delete_work_dir": True,
-    "savelocation": "_path_doesnt_exist_",
+    "poll_interval": "0.25",
+    "queue_size": "200",
+    "submit_rate": "25",
 }
 
 
@@ -305,6 +320,9 @@ INVALID_CUSTOM_INFRA_LOCAL_CONFIG = {
     "is_infrastructure": True,
     "is_nfcore": False,
     "config_profile_description": "A cool description",
+    "savelocation": ".",
+    "module": False,
+    "module_system": "",
     "container_system": "apptianer",
     "cpus": "8.0",
     "memory": "32 GB",
@@ -313,18 +331,21 @@ INVALID_CUSTOM_INFRA_LOCAL_CONFIG = {
     "scratch_dir": "tmp/scratch",
     "retries": "2",
     "delete_work_dir": True,
-    "savelocation": ".",
+    "poll_interval": "0.25",
+    "queue_size": "200",
+    "submit_rate": "25",
 }
 
 
 INVALID_NFCORE_PIPE_HPC_CONFIG = {
     "is_infrastructure": False,
     "is_nfcore": True,
-    "config_pipeline_name": "",
+    "config_profile_description": "A cool description",
+    "savelocation": ".",
     "config_profile_contact": "my name",
     "config_profile_handle": "@myhandle",
-    "config_profile_description": "A cool description",
     "config_profile_url": "example.com",
+    "config_pipeline_name": "",
     "default_process_ncpus": "2",
     "default_process_memgb": "8",
     "default_process_hours": "9.5",
@@ -374,7 +395,6 @@ INVALID_NFCORE_PIPE_HPC_CONFIG = {
             "custom_process_queue": "anotherqueue",
         },
     },
-    "savelocation": ".",
 }
 
 
@@ -382,6 +402,7 @@ INVALID_CUSTOM_PIPE_HPC_CONFIG = {
     "is_infrastructure": False,
     "is_nfcore": False,
     "config_profile_description": "A cool description",
+    "savelocation": "_this_path_also_doesnt_exist_",
     "config_pipeline_path": "_this_path_doesnt_exist_",
     "default_process_ncpus": "2",
     "default_process_memgb": "8",
@@ -432,7 +453,6 @@ INVALID_CUSTOM_PIPE_HPC_CONFIG = {
             "custom_process_queue": "anotherqueue",
         },
     },
-    "savelocation": "_this_path_also_doesnt_exist_",
 }
 
 
@@ -442,6 +462,7 @@ def test_serial_valid_nfcore_infra_hpc():
             "is_nfcore": True,
             "is_infrastructure": True,
             "is_hpc": True,
+            "hpc_exec": "pbspro",
         }
     ):
         c = ConfigsCreateConfig(**VALID_NFCORE_INFRA_HPC_CONFIG)
@@ -465,6 +486,7 @@ def test_serial_valid_custom_infra_hpc():
             "is_nfcore": False,
             "is_infrastructure": True,
             "is_hpc": True,
+            "hpc_exec": "pbspro",
         }
     ):
         c = ConfigsCreateConfig(**VALID_CUSTOM_INFRA_HPC_CONFIG)
@@ -488,6 +510,7 @@ def test_serial_valid_nfcore_pipe_hpc():
             "is_nfcore": True,
             "is_infrastructure": False,
             "is_hpc": True,
+            "hpc_exec": None,
         }
     ):
         c = ConfigsCreateConfig(**VALID_NFCORE_PIPE_HPC_CONFIG)
@@ -511,6 +534,7 @@ def test_serial_valid_custom_pipe_hpc():
             "is_nfcore": False,
             "is_infrastructure": False,
             "is_hpc": True,
+            "hpc_exec": None,
         }
     ):
         c = ConfigsCreateConfig(**VALID_CUSTOM_PIPE_HPC_CONFIG)
@@ -534,6 +558,7 @@ def test_serial_valid_nfcore_infra_local():
             "is_nfcore": True,
             "is_infrastructure": True,
             "is_hpc": False,
+            "hpc_exec": None,
         }
     ):
         c = ConfigsCreateConfig(**VALID_NFCORE_INFRA_LOCAL_CONFIG)
@@ -557,6 +582,7 @@ def test_serial_valid_custom_infra_local():
             "is_nfcore": False,
             "is_infrastructure": True,
             "is_hpc": False,
+            "hpc_exec": None,
         }
     ):
         c = ConfigsCreateConfig(**VALID_CUSTOM_INFRA_LOCAL_CONFIG)
@@ -583,6 +609,7 @@ def test_serial_invalid_nfcore_infra_hpc():
             "is_nfcore": True,
             "is_infrastructure": True,
             "is_hpc": True,
+            "hpc_exec": "pbspro",
         }
     ):
         expected_error = None
@@ -599,7 +626,7 @@ def test_serial_invalid_nfcore_infra_hpc():
             "Value error, Must be a number.",
             "Value error, Handle must start with '@'.",
             "Value error, Must be one of: singularity, docker, apptainer, charliecloud, podman, sarus, shifter, conda",
-            "Value error, Must be one of: local, pbs, pbspro, slurm, sge",
+            "Value error, Must be one of: local, pbs, pbspro, slurm, sge, nqsii, lsf, moab, condor, hyperqueue, flux, tcs",
             "Value error, Must be an integer.",
         }
         assert {e["msg"] for e in errors} == expected_error_msgs
@@ -611,6 +638,7 @@ def test_serial_invalid_custom_infra_hpc():
             "is_nfcore": False,
             "is_infrastructure": True,
             "is_hpc": True,
+            "hpc_exec": "pbspro",
         }
     ):
         expected_error = None
@@ -625,7 +653,7 @@ def test_serial_invalid_custom_infra_hpc():
         assert len(errors) == 4
         expected_error_msgs = {
             "Value error, Must be one of: singularity, docker, apptainer, charliecloud, podman, sarus, shifter, conda",
-            "Value error, Must be one of: local, pbs, pbspro, slurm, sge",
+            "Value error, Must be one of: local, pbs, pbspro, slurm, sge, nqsii, lsf, moab, condor, hyperqueue, flux, tcs",
             "Value error, Must be an absolute path (/data/scratch), a path relative to home (~/scratch), or a path with an environmental variable (e.g. ${DIR}/scratch)",
         }
         assert {e["msg"] for e in errors} == expected_error_msgs
@@ -637,6 +665,7 @@ def test_serial_invalid_nfcore_pipe_hpc():
             "is_nfcore": True,
             "is_infrastructure": False,
             "is_hpc": True,
+            "hpc_exec": None,
         }
     ):
         expected_error = None
@@ -662,6 +691,7 @@ def test_serial_invalid_custom_pipe_hpc():
             "is_nfcore": False,
             "is_infrastructure": False,
             "is_hpc": True,
+            "hpc_exec": None,
         }
     ):
         expected_error = None
@@ -688,6 +718,7 @@ def test_serial_invalid_nfcore_infra_local():
             "is_nfcore": True,
             "is_infrastructure": True,
             "is_hpc": False,
+            "hpc_exec": None,
         }
     ):
         expected_error = None
@@ -713,6 +744,7 @@ def test_serial_invalid_custom_infra_local():
             "is_nfcore": False,
             "is_infrastructure": True,
             "is_hpc": False,
+            "hpc_exec": None,
         }
     ):
         expected_error = None
