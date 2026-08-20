@@ -44,6 +44,8 @@ stderr = rich.console.Console(
     force_terminal=nf_core.utils.rich_force_colors(),
 )
 
+SINGULARITY_SYSTEMS = ["singularity", "apptainer"]
+
 
 class DownloadWorkflow:
     """Downloads a nf-core workflow from GitHub to the local file system.
@@ -250,10 +252,7 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if (
-            self.container_system in ("singularity", "apptainer")
-            and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None
-        ):
+        if self.container_system in SINGULARITY_SYSTEMS and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
             summary_log.append(
                 f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
             )
@@ -517,7 +516,7 @@ class DownloadWorkflow:
         """
         assert self.outdir is not None  # mypy
         try:
-            if self.container_system in ("singularity", "apptainer"):
+            if self.container_system in SINGULARITY_SYSTEMS:
                 self.container_fetcher = SingularityFetcher(
                     outdir=self.outdir,
                     container_library=self.container_library,
@@ -569,7 +568,7 @@ class DownloadWorkflow:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container_system in ("singularity", "apptainer"):
+            if self.container_system in SINGULARITY_SYSTEMS:
                 stderr.print(
                     "[bold]This is [italic]not[/] recommended when downloading Singularity/Apptainer images, as it can take a long time and saves very little space."
                 )
