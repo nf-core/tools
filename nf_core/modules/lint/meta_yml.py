@@ -11,7 +11,7 @@ from jsonschema import exceptions, validators
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import read_meta_yml as read_component_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
-from nf_core.components.lint import ComponentLint, LintExceptionError
+from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.module_containers import (
     lint_conda_lock_files,
@@ -168,15 +168,23 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     Path(module.component_dir, "meta.yml"),
                 )
             )
-            return
-        raise LintExceptionError("Module does not have a `meta.yml` file")
+        else:
+            module.failed.append(
+                (
+                    "meta_yml",
+                    "meta_yml_exists",
+                    "Module `meta.yml` does not exist.",
+                    Path(module.component_dir, "meta.yml"),
+                )
+            )
+        return
+
     # read_meta_yml returns the reverse-patched content for patched modules
     meta_yaml = read_meta_yml_patched(module_lint_object, module)
     if meta_yaml is None:
-        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist.", module.meta_yml))
+        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` could not be parsed.", module.meta_yml))
         return
-    else:
-        module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+    module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
     module.container = meta_yaml.get("containers", {})
 
     # Confirm that the meta.yml file is valid according to the JSON schema
