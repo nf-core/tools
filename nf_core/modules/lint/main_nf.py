@@ -134,9 +134,9 @@ def main_nf(
             with open(module.main_nf) as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf", "main_nf_exists", "Module file exists", module.main_nf))
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             module.failed.append(("main_nf", "main_nf_exists", "Module file does not exist", module.main_nf))
-            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}") from e
+            return inputs, emits
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
     lines_j = "\n".join(lines) if len(lines) > 0 else ""
