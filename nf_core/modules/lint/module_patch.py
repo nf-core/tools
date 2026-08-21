@@ -133,8 +133,12 @@ def check_patch_valid(module, patch_path):
                 passed = False
                 continue
             module.warned.append(
-                ("module_patch", "patch", f"Patch file performs file creation of {path}. This is discouraged."),
-                patch_path,
+                (
+                    "module_patch",
+                    "patch",
+                    f"Patch file performs file creation of {path}. This is discouraged.",
+                    patch_path,
+                )
             )
         elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
             if Path(module.base_dir, path).exists():
