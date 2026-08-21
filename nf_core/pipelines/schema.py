@@ -93,16 +93,17 @@ class PipelineSchema:
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
             self.defs_notation = "$defs"
+            validation = conf.get("validation", {})
+            help_config = validation.get("help", {})
             ignored_params = [
-                conf.get("validation.help.shortParameter", "help"),
-                conf.get("validation.help.fullParameter", "helpFull"),
-                conf.get("validation.help.showHiddenParameter", "showHidden"),
+                help_config.get("shortParameter", "help"),
+                help_config.get("fullParameter", "helpFull"),
+                help_config.get("showHiddenParameter", "showHidden"),
                 "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
-            ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
-            ignored_params_config = [
-                item.strip().strip("'") for item in ignored_params_config_str[1:-1].split(",")
-            ]  # Extract list elements and remove whitespace
+            ignored_params_config = validation.get("defaultIgnoreParams", [])
+            if not isinstance(ignored_params_config, list):
+                ignored_params_config = []
 
             if len(ignored_params_config) > 0:
                 log.debug(f"Ignoring parameters from config: {ignored_params_config}")
@@ -383,13 +384,13 @@ class PipelineSchema:
                 return
 
         # if default is null, we're good
-        if config_default == "null":
+        if config_default is None or config_default == "null":
             return
 
         # Check variable types in nextflow.config
-        if schema_param["type"] == "string" and str(config_default) in ["false", "true", "''"]:
+        if schema_param["type"] == "string" and str(config_default).lower() in ["false", "true", "''"]:
             self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
-        if schema_param["type"] == "boolean" and str(config_default) not in ["false", "true"]:
+        if schema_param["type"] == "boolean" and str(config_default).lower() not in ["false", "true"]:
             self.invalid_nextflow_config_default_parameters[param] = (
                 f"Booleans should only be true or false, not `{config_default}`"
             )
@@ -566,7 +567,7 @@ class PipelineSchema:
         Prints documentation for the schema.
         """
         if columns is None:
-            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+            columns = ["parameter", "description", "type", "default", "required", "hidden"]
 
         output = self.schema_to_markdown(columns)
         if output_format == "html":
@@ -580,7 +581,10 @@ class PipelineSchema:
 
         if not output_fn:
             console = rich.console.Console()
-            console.print("\n", Syntax(prettified_docs, output_format, word_wrap=True), "\n")
+            if console.is_terminal:
+                console.print("\n", Syntax(prettified_docs, output_format, word_wrap=True), "\n")
+            else:
+                print(prettified_docs, end="")
         else:
             if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
@@ -758,16 +762,15 @@ class PipelineSchema:
         log.debug("Collecting pipeline parameter defaults\n")
         config = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
         skipped_params = []
-        # Pull out just the params. values
-        for ckey, cval in config.items():
-            if ckey.startswith("params."):
-                # skip anything that's not a flat variable
-                if "." in ckey[7:]:
-                    skipped_params.append(ckey)
-                    continue
-                self.pipeline_params[ckey[7:]] = cval
-            if ckey.startswith("manifest."):
-                self.pipeline_manifest[ckey[9:]] = cval
+        # Pull out just the params values (top-level flat keys only)
+        for pkey, pval in config.get("params", {}).items():
+            if isinstance(pval, dict):
+                skipped_params.append(f"params.{pkey}")
+                continue
+            self.pipeline_params[pkey] = pval
+        # Pull out manifest values
+        for mkey, mval in config.get("manifest", {}).items():
+            self.pipeline_manifest[mkey] = mval
         # Log skipped params
         if len(skipped_params) > 0:
             log.debug(
@@ -921,32 +924,30 @@ class PipelineSchema:
         """
         Build a pipeline schema dictionary for an param interactively
         """
+        if p_val is None:
+            return {"type": "string"}
+        if isinstance(p_val, bool):
+            return {"type": "boolean", "default": p_val} if p_val else {"type": "boolean"}  # no default for False
+        if isinstance(p_val, int):
+            return {"type": "integer", "default": p_val}
+        if isinstance(p_val, float):
+            return {"type": "number", "default": p_val}
+
+        # TODO: remove string branch once old text-format config caches are no longer supported
         p_val = p_val.strip("\"'")
-        # p_val is always a string as it is parsed from nextflow config this way
+        if not p_val or p_val == "null":
+            return {"type": "string"}
+        if p_val in ("true", "True"):
+            return {"type": "boolean", "default": True}
+        if p_val in ("false", "False"):
+            return {"type": "boolean"}
         try:
-            p_val = float(p_val)
-            if p_val == int(p_val):
-                p_val = int(p_val)
-                p_type = "integer"
-            else:
-                p_type = "number"
+            num = float(p_val)
+            if num == int(num):
+                return {"type": "integer", "default": int(num)}
+            return {"type": "number", "default": num}
         except ValueError:
-            p_type = "string"
-
-        # Anything can be "null", means that it is not set
-        if p_val == "null":
-            p_val = None
-
-        # Booleans
-        if p_val in ["true", "false", "True", "False"]:
-            p_val = p_val in ["true", "True"]  # Convert to bool
-            p_type = "boolean"
-
-        # Don't return a default for anything false-y except 0
-        if not p_val and not (p_val == 0 and p_val is not False):
-            return {"type": p_type}
-
-        return {"type": p_type, "default": p_val}
+            return {"type": "string", "default": p_val}
 
     def launch_web_builder(self):
         """

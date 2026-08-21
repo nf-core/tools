@@ -204,7 +204,7 @@ def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
                 branch_prefill = MODULES_BRANCH_NAME
             elif repo_type == "pipeline":
                 wf_config = fetch_wf_config(base_dir)
-                pipeline_name = wf_config.get("manifest.name", "").split("/")[-1]
+                pipeline_name = wf_config.get("manifest", {}).get("name", "").split("/")[-1]
                 if pipeline_name in all_branches:
                     branch_prefill = pipeline_name
 

@@ -292,8 +292,11 @@ class ContainerFetcher(ABC):
 
         config_registries = set()
         for registry_key in registry_keys:
-            if registry_key in nf_config:
-                config_registries.add(nf_config[registry_key])
+            parts = registry_key.split(".", 1)
+            if len(parts) == 2 and parts[0] in nf_config and isinstance(nf_config[parts[0]], dict):
+                val = nf_config[parts[0]].get(parts[1])
+                if val:
+                    config_registries.add(val)
 
         return config_registries
 

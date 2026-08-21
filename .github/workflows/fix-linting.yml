@@ -12,14 +12,14 @@ jobs:
     steps:
       - name: branch-deploy
         id: branch-deploy
-        uses: github/branch-deploy@ddf8ca48e9cdb2d2c7c71dee428308b19af9313f # v11.1.4
+        uses: github/branch-deploy@f0984057ffe1aa340aa017b6eafb894310aed88e # v12.0.0
         with:
           trigger: "@nf-core-bot fix linting"
           reaction: "eyes"
           stable_branch: "dev"
 
       # Use the @nf-core-bot token to check out so we can push later
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
@@ -33,7 +33,7 @@ jobs:
       # Install and run prek
       - name: Run prek
         id: prek
-        uses: j178/prek-action@bdca6f102f98e2b4c7029491a53dfd366469e33d # v2
+        uses: j178/prek-action@5337cb91e0fa35a7ff31b9ca345126d8bbbcdf16 # v2
         with:
           extra-args: --config .pre-commit-config.yaml --all-files
         continue-on-error: true

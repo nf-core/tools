@@ -17,7 +17,7 @@
 A python package with helper tools for the nf-core community.
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
-For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools/docs/).
+For documentation of the internal Python functions, please refer to the [nf-core tools Python API docs](https://nf-co.re/docs/nf-core-tools/api_reference/latest/).
 
 ## Installation
 
@@ -56,7 +56,7 @@ pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 If editing, fork and clone the repo, then install as follows:
 
 ```bash
-uv sync --all-extras
+uv sync
 
 # Activate the virtual environment
 source .venv/bin/activate
