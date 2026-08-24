@@ -167,7 +167,7 @@ class AppleContainerTest(unittest.TestCase):
             registry_set=[],
         )
         cmd = fetcher.construct_pull_command("quay.io/biocontainers/fastqc:0.12.1")
-        assert cmd == ["container", "image", "pull", "--platform", "linux/arm64", "quay.io/biocontainers/fastqc:0.12.1"]
+        assert cmd == ["container", "image", "pull", "--platform", "linux/amd64", "quay.io/biocontainers/fastqc:0.12.1"]
 
     #
     # Test that construct_save_command produces the correct command
@@ -191,7 +191,7 @@ class AppleContainerTest(unittest.TestCase):
             "image",
             "save",
             "--platform",
-            "linux/arm64",
+            "linux/amd64",
             "--output",
             str(output_path),
             "quay.io/biocontainers/fastqc:0.12.1",

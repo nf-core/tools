@@ -404,23 +404,30 @@ configurations:
         (`container`) with native `pull` and `save` commands. No Docker Desktop
         installation is required.
 
-        Since Apple Container does not emulate foreign architectures (no Rosetta/QEMU),
-        the profile automatically enables Wave with `process.arch = 'arm64'` to provision
-        native ARM64 container images from conda packages on demand.
+        Apple Container runs natively on Apple Silicon (arm64), but like Docker it
+        can also run amd64 images via emulation. Because most nf-core modules ship
+        amd64 container images, the `appleContainer` profile emulates amd64 by
+        default (`process.arch = 'linux/amd64'`, `--platform linux/amd64`), so
+        standard pipelines run out of the box with no Wave dependency and no
+        Seqera token.
 
-        This only works for tools that have an ARM64 build available (a conda
-        `linux-aarch64` package or a multi-arch container image). Tools whose
-        upstream only ships amd64 builds (e.g. `prinseq-plus-plus`, `fastqc`)
-        cannot be provisioned this way — Apple Container will not run amd64
-        images. For those tools, use the `docker` profile with amd64 emulation
-        (Docker Desktop / colima with Rosetta or QEMU) instead.
+        For faster emulation, set `--apple_rosetta` to run images through Rosetta
+        (`--rosetta`). This requires Rosetta to be installed in the Apple Container
+        VM.
 
-        The profile works without a Seqera token, but because it sets
-        `wave.freeze = true`, anonymous frozen images are pushed to the
-        community registry and expire over time (triggering occasional
-        rebuilds). Setting `TOWER_ACCESS_TOKEN` is recommended so frozen images
-        are durable and reproducible — after the first build, runs simply pull
-        the cached ARM64 image.
+        If you would rather run native ARM64 images built from conda packages via
+        Wave, compose the opt-in `appleContainerWave` profile alongside it:
+
+        ```bash
+        nextflow run <pipeline> -profile appleContainer,appleContainerWave
+        ```
+
+        This is faster per task when a native arm64 build exists, but only works
+        for tools that have an ARM64 build available (a conda `linux-aarch64`
+        package or a multi-arch container image); tools whose upstream only ships
+        amd64 builds cannot be provisioned this way. It also sets `wave.freeze =
+        true`, so frozen images are pushed to a registry — set `TOWER_ACCESS_TOKEN`
+        for durable, reproducible builds.
 
         The `nf-core pipelines download` command will also support downloading
         images for offline use with `--container-system appleContainer`.

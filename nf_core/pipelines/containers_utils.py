@@ -17,6 +17,7 @@ PLATFORMS: dict[str, list[str]] = {
     "singularity_oras_arm64": ["singularity", "linux/arm64", "name"],
     "singularity_https_amd64": ["singularity", "linux/amd64", "https"],
     "singularity_https_arm64": ["singularity", "linux/arm64", "https"],
+    "appleContainer_amd64": ["docker", "linux/amd64", "name"],
     "appleContainer_arm64": ["docker", "linux/arm64", "name"],
     "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
     "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],

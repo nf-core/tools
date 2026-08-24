@@ -47,6 +47,7 @@ class AppleContainerFetcher(DockerFetcher):
         registry_set: Iterable[str],
         parallel: int = 4,
         hide_progress: bool = False,
+        image_arch: str = "linux/amd64",
     ):
         super().__init__(
             outdir=outdir,
@@ -57,6 +58,11 @@ class AppleContainerFetcher(DockerFetcher):
         )
         # Override the container output directory name
         self._container_output_dir = outdir / "apple-container-images"
+        # Architecture to request when pulling/saving images. Apple Container runs
+        # amd64 images via emulation (matching the appleContainer profile default),
+        # so default to linux/amd64. Set to linux/arm64 for native arm64 images
+        # (parity with the opt-in appleContainerWave profile).
+        self.image_arch = image_arch
 
     def check_and_set_implementation(self) -> None:
         """
@@ -79,7 +85,7 @@ class AppleContainerFetcher(DockerFetcher):
         Args:
             address (str): The address of the container to pull.
         """
-        pull_command = ["container", "image", "pull", "--platform", "linux/arm64", address]
+        pull_command = ["container", "image", "pull", "--platform", self.image_arch, address]
         log.debug(f"Apple Container command: {' '.join(pull_command)}")
         return pull_command
 
@@ -96,7 +102,7 @@ class AppleContainerFetcher(DockerFetcher):
             "image",
             "save",
             "--platform",
-            "linux/arm64",
+            self.image_arch,
             "--output",
             str(output_path),
             address,
