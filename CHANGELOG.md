@@ -4,7 +4,7 @@
 
 ### General
 
-- Round-trip the `ci:` block in `.nf-core.yml` so centralised nf-core/actions CI config is not dropped by `sync`/`bump-version` ([#4432](https://github.com/nf-core/tools/pull/4432))
+- Round-trip the `ci:` block in `.nf-core.yml` so centralised nf-core/actions CI config is not dropped by `sync`/`bump-version` ([#4453](https://github.com/nf-core/tools/pull/4453))
 
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
