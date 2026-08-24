@@ -183,6 +183,13 @@ class NFCoreYamlConfig(BaseModel):
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
     container_registry: list[str] | None = Field(default=None, alias="container-registry")
     """ Additional container registry prefixes allowed when linting container directives. """
+    ci: dict[str, Any] | None = None
+    """ Configuration passed through to the centralised nf-core/actions CI workflows.
+    Deliberately a permissive dict rather than a typed model: nf-core/actions defines and
+    adds these keys independently (see src/actions/read-config/registry.ts in that repo). A
+    strict schema here would mean every new CI setting needs a tools release plus a template
+    sync before any pipeline could use it, reintroducing the coupling that centralising the
+    workflows removed. tools only needs to round-trip this block, not validate it. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
