@@ -1303,7 +1303,7 @@ def command_modules_create(
 )
 @click.option(
     "--profile",
-    type=click.Choice(["docker", "singularity", "conda", "appleContainer"]),
+    type=click.Choice(["docker", "singularity", "conda", "appleContainer", "appleContainerWave"]),
     default=None,
     help="Run tests with a specific profile",
 )
@@ -1665,7 +1665,7 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force):
 )
 @click.option(
     "--profile",
-    type=click.Choice(["docker", "singularity", "conda", "appleContainer"]),
+    type=click.Choice(["docker", "singularity", "conda", "appleContainer", "appleContainerWave"]),
     default=None,
     help="Run tests with a specific profile",
 )
