@@ -167,7 +167,8 @@ def interface(ctx):
 @nf_core_cli.group(aliases=["p", "pipeline"])
 @click.command_panel("For users", commands=["download", "create-params-file", "launch", "list"])
 @click.command_panel(
-    "For developers", commands=["bump-version", "create", "create-logo", "lint", "rocrate", "schema", "sync"]
+    "For developers",
+    commands=["bump-version", "containers", "create", "create-logo", "lint", "rocrate", "schema", "sync"],
 )
 @click.pass_context
 def pipelines(ctx):
@@ -207,6 +208,36 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
     from nf_core.commands_pipelines import pipelines_create
 
     pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
+
+
+# nf-core pipelines containers subcommands
+@pipelines.group("containers", aliases=["container"])
+@click.pass_context
+def pipelines_containers(ctx):
+    """
+    Commands to manage pipeline containers.
+    """
+    ctx.ensure_object(dict)
+
+
+# nf-core pipelines containers create-configs
+@pipelines_containers.command("create-configs")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory [dim]\[default: current working directory][/]",
+)
+@click.pass_context
+def command_pipelines_containers_create_configs(ctx, directory):
+    """
+    Regenerate the pipeline container config files.
+    """
+    from nf_core.commands_pipelines import pipelines_containers_create_configs
+
+    pipelines_containers_create_configs(ctx, directory)
 
 
 # nf-core pipelines lint
