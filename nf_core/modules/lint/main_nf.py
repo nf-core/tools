@@ -32,6 +32,14 @@ def main_nf(
     as ``<tool>`` or single subcommand with distinct functionality as
     ``<tool/subtool>``.
 
+    main_nf_patch_reversible
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+    If the module is patched, the patch must be reverse-applicable to the
+    current ``main.nf`` so the pre-patch content can be linted. A warning is
+    issued, and the remaining ``main_nf`` checks are skipped for this module,
+    if the patch is outdated or has been edited and can no longer be applied.
+
     main_nf_exists
     ^^^^^^^^^^^^^^
 
@@ -119,14 +127,25 @@ def main_nf(
     # otherwise read the lines directly from the module
     lines: list[str] = []
     if module.is_patched:
-        lines = ComponentsDiffer.try_apply_patch(
-            module.component_type,
-            module.component_name,
-            module_lint_object.modules_repo.repo_path,
-            module.patch_path,
-            Path(module.component_dir).relative_to(module.base_dir),
-            reverse=True,
-        ).get("main.nf", [""])
+        try:
+            lines = ComponentsDiffer.try_apply_patch(
+                module.component_type,
+                module.component_name,
+                module_lint_object.modules_repo.repo_path,
+                module.patch_path,
+                Path(module.component_dir).relative_to(module.base_dir),
+                reverse=True,
+            ).get("main.nf", [""])
+        except LookupError:
+            module.warned.append(
+                (
+                    "main_nf",
+                    "main_nf_patch_reversible",
+                    "Could not reverse-apply patch to read module file for linting; skipping main_nf checks",
+                    module.main_nf,
+                )
+            )
+            return inputs, emits
 
     if len(lines) == 0:
         try:

@@ -75,6 +75,14 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
 
     The following checks are performed:
 
+    meta_yml_patch_reversible
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    If the module is patched, the patch must be reverse-applicable to the
+    current ``meta.yml`` so the pre-patch content can be linted. A warning is
+    issued, and the remaining ``meta_yml`` checks are skipped for this module,
+    if the patch is outdated or has been edited and can no longer be applied.
+
     meta_yml_exists
     ^^^^^^^^^^^^^^^
 
@@ -180,7 +188,18 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         return
 
     # read_meta_yml returns the reverse-patched content for patched modules
-    meta_yaml = read_meta_yml_patched(module_lint_object, module)
+    try:
+        meta_yaml = read_meta_yml_patched(module_lint_object, module)
+    except LookupError:
+        module.warned.append(
+            (
+                "meta_yml",
+                "meta_yml_patch_reversible",
+                "Could not reverse-apply patch to read meta.yml for linting; skipping meta_yml checks",
+                module.meta_yml,
+            )
+        )
+        return
     if meta_yaml is None:
         module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` could not be parsed.", module.meta_yml))
         return
