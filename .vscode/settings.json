@@ -12,5 +12,10 @@
             "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
         }
-    }
+    },
+
+    // Render nf-core website admonitions nicely in markdown previews
+    // https://github.com/nf-core/website/pull/2579
+    "markdown.styles": ["https://nf-co.re/vscode_markdown.css"]
+
 }
