@@ -412,8 +412,7 @@ configurations:
         Seqera token.
 
         For faster emulation, set `--apple_rosetta` to run images through Rosetta
-        (`--rosetta`). This requires Rosetta to be installed in the Apple Container
-        VM.
+        (`--rosetta`). This requires Rosetta to be installed on the host.
 
         If you would rather run native ARM64 images built from conda packages via
         Wave, compose the opt-in `appleContainerWave` profile alongside it:
