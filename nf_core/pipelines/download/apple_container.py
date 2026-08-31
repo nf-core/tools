@@ -59,9 +59,9 @@ class AppleContainerFetcher(DockerFetcher):
         # Override the container output directory name
         self._container_output_dir = outdir / "apple-container-images"
         # Architecture to request when pulling/saving images. Apple Container runs
-        # amd64 images via emulation (matching the appleContainer profile default),
+        # amd64 images via emulation (matching the apple_container profile default),
         # so default to linux/amd64. Set to linux/arm64 for native arm64 images
-        # (parity with the opt-in appleContainerWave profile).
+        # (parity with the opt-in apple_container_wave profile).
         self.image_arch = image_arch
 
     def check_and_set_implementation(self) -> None:

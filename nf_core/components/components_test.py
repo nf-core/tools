@@ -151,8 +151,8 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 profile = answer["profile"]
                 # Map display names to Nextflow profile names
                 profile_map = {
-                    "Apple Container": "appleContainer",
-                    "Apple Container (Wave/arm64)": "appleContainerWave",
+                    "Apple Container": "apple_container",
+                    "Apple Container (Wave/arm64)": "apple_container_wave",
                 }
                 profile = profile_map.get(profile, profile.lower())
                 os.environ["PROFILE"] = profile

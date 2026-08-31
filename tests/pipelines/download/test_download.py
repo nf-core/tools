@@ -367,10 +367,10 @@ class DownloadTest(unittest.TestCase):
         assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
 
         # Set up test
-        container_system = "appleContainer"
+        container_system = "apple_container"
         mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
         refererence_json_dir = mock_pipeline_dir / "per_profile_output"
-        # Check that `-profile appleContainer` produces the same output as the reference
+        # Check that `-profile apple_container` produces the same output as the reference
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
         mock_fetch_wf_config.return_value = {}
 

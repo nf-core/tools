@@ -88,7 +88,7 @@ class DownloadWorkflow:
     ):
         # Verify that the flags provided make sense together
         if (
-            container_system in ("docker", "appleContainer")
+            container_system in ("docker", "apple_container")
             and container_cache_utilisation != "copy"
             and container_cache_utilisation is not None
         ):
@@ -334,7 +334,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required container images
-            if self.container_system in ("singularity", "apptainer", "docker", "appleContainer"):
+            if self.container_system in ("singularity", "apptainer", "docker", "apple_container"):
                 workflow_directory = self.outdir / revision_dirname
                 self.find_container_images(workflow_directory, revision)
 
@@ -370,7 +370,7 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
-        if self.container_system in ("singularity", "apptainer", "docker", "appleContainer"):
+        if self.container_system in ("singularity", "apptainer", "docker", "apple_container"):
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -506,7 +506,7 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity", "docker", "apptainer", "appleContainer"],
+                choices=["none", "singularity", "docker", "apptainer", "apple_container"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -527,7 +527,7 @@ class DownloadWorkflow:
                     hide_progress=self.hide_progress,
                     container_system=self.container_system,
                 )
-            elif self.container_system == "appleContainer":
+            elif self.container_system == "apple_container":
                 self.container_fetcher = AppleContainerFetcher(
                     outdir=self.outdir,
                     registry_set=self.registry_set,
