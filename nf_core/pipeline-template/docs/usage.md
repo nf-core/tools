@@ -166,6 +166,10 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
   - A generic configuration profile to be used with [Apptainer](https://apptainer.org/)
 - `appleContainer`
   - A generic configuration profile to be used with [Apple container](https://github.com/apple/container) on macOS (Apple silicon)
+  - Emulates amd64 images by default so standard nf-core modules run without any Wave dependency. Set `--rosetta` to use faster Rosetta emulation (requires Rosetta installed on the host.
+- `appleContainerWave`
+  - An Apple container profile that provisions native arm64 images from conda via [Wave](https://seqera.io/wave/) instead of emulating amd64. Faster per task when an arm64 build exists, but only works for tools that have an arm64 build available (conda `linux-aarch64` or a multi-arch image).
+  - Can be used on its own (`-profile appleContainerWave`) or composed after `appleContainer` (`-profile appleContainer,appleContainerWave`). It freezes and pushes built images to a registry, so set `TOWER_ACCESS_TOKEN` for durable, reproducible builds.
 - `wave`
   - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above (requires Nextflow `24.03.0-edge` or later).
 - `conda`
