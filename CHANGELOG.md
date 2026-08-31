@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## v4.2.0dev
+
+### General
+
+- Add `nf-core pipelines containers create-configs` to regenerate the pipeline `conf/containers_*.config` files ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General
