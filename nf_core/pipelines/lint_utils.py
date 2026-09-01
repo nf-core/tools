@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import click
 import git
 import rich
 import yaml
@@ -146,6 +147,12 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
     Warns:
         If Prettier is not installed, a warning is logged.
     """
+    verbose = False
+    try:
+        ctx = click.get_current_context()
+        verbose = bool(ctx.obj and ctx.obj.get("verbose", False))
+    except RuntimeError:
+        pass
 
     is_git = check_git_repo()
 
@@ -157,6 +164,8 @@ def run_prettier_on_file(file: Path | str | list[str]) -> None:
     prek_bin = Path(sys.executable).parent / "prek"
     prek = str(prek_bin) if prek_bin.exists() else "prek"
     args = [prek, "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+    if verbose:
+        args.append("--verbose")
     if isinstance(file, list):
         args.extend(["--files", *file])
     else:
