@@ -29,6 +29,7 @@
 - accept `process_low_memory` as a standard module label ([#4264](https://github.com/nf-core/tools/pull/4264))
 - improve linting for `modules.json` to add support for only installing subworkflows from a repository and provide more explicit error messages ([#4287](https://github.com/nf-core/tools/pull/4287))
 - improve singularity_tag linting check (add skip, handle exceptions correctly, check against oras) ([#4358](https://github.com/nf-core/tools/pull/4358))
+- accept axis-decomposed `process_cpus_*`, `process_mem_*` and `process_time_*` labels alongside the legacy combined labels ([#4265](https://github.com/nf-core/tools/pull/4265))
 - make regex for meta keys more specific to avoid false positives ([#4280](https://github.com/nf-core/tools/pull/4280))
 
 ### Modules
@@ -48,6 +49,7 @@
 - remove date placeholder from changelog title ([#4333](https://github.com/nf-core/tools/pull/4333))
 - correct always-true `nf-core pipelines lint` condition in the linting workflow and fix doc typos (broken `#lint-tests` anchor, duplicate word, stray code-span space) ([#4324](https://github.com/nf-core/tools/pull/4324))
 - Fix publishDir configuration in modules.config for multiqc ([#4347](https://github.com/nf-core/tools/pull/4347))
+- add axis-decomposed `process_cpus_{single,low,medium,high}`, `process_mem_{low,medium,high}` and `process_time_{short,medium,long}` labels to `base.config`; legacy combined labels remain in place pending deprecation ([#4265](https://github.com/nf-core/tools/pull/4265))
 - Switch to a more secure approach for PR comments by splitting the GitHub Actions workflow ([#4342](https://github.com/nf-core/tools/pull/4342))
 
 ### Download
