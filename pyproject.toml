@@ -11,7 +11,7 @@ nf_core = ["**/*"]
 
 [project]
 name = "nf-core"
-version = "4.1.0"
+version = "4.1.1dev"
 description = "Helper tools for use with nf-core Nextflow pipelines."
 readme = "README.md"
 license = "MIT"
