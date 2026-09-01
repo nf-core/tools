@@ -51,8 +51,9 @@ def actions_nf_test(self):
     # Check that the action is turned on for the correct events
     try:
         # NB: YAML dict key 'on' is evaluated to a Python dict key True
-        pr_subtree = ciwf[True]["pull_request"]
-        if pr_subtree is None:
+        # `pull_request:` with no subtree is valid and parses to None, so test for
+        # the key rather than its value.
+        if "pull_request" not in ciwf[True]:
             raise AssertionError
         if "published" not in ciwf[True]["release"]["types"]:
             raise AssertionError
