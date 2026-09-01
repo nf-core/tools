@@ -11,6 +11,20 @@ from nf_core.utils import set_wd
 from ..test_components import TestComponents
 
 
+@pytest.mark.parametrize(
+    ("nftest_err", "expected_errors"),
+    [(b"", []), (b"error", ["nf-test failed"]), (b"Different Snapshot:", [])],
+)
+def test_display_nftest_output_stderr(nftest_err, expected_errors):
+    """Only report an nf-test failure when stderr is non-empty."""
+    tester = ComponentsTest.__new__(ComponentsTest)
+    tester.no_prompts = False
+    tester.update = False
+    tester.errors = []
+    tester.display_nftest_output(b"", nftest_err)
+    assert tester.errors == expected_errors
+
+
 class TestTestComponentsUtils(TestComponents):
     def test_components_test_check_inputs(self):
         """Test the check_inputs() function - raise UserWarning because module doesn't exist"""
