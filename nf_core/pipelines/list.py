@@ -412,9 +412,10 @@ class LocalWorkflow:
                 result = nf_core.utils.run_cmd("nextflow", f"info -d {self.full_name}")
                 if result is not None:
                     nfinfo_raw, _ = result
+                    nfinfo_str = nfinfo_raw.decode()
                     re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
                     for key, pattern in re_patterns.items():
-                        m = re.search(pattern, str(nfinfo_raw))
+                        m = re.search(pattern, nfinfo_str)
                         if m:
                             value = Path(m.group(1)) if key == "local_path" else m.group(1)
                             if key == "local_path":
