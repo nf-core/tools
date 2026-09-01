@@ -278,8 +278,10 @@ class NFCoreComponent:
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = ""
+        if self.main_nf.is_file():
+            with open(self.main_nf) as f:
+                data = f.read()
         if self.component_type == "modules":
             # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
             # regex matches:
@@ -323,8 +325,10 @@ class NFCoreComponent:
             self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = ""
+        if self.main_nf.is_file():
+            with open(self.main_nf) as f:
+                data = f.read()
         if self.component_type == "modules":
             outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
@@ -366,8 +370,10 @@ class NFCoreComponent:
             self.outputs = outputs
 
     def get_topics_from_main_nf(self) -> None:
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = ""
+        if self.main_nf.is_file():
+            with open(self.main_nf) as f:
+                data = f.read()
         if self.component_type == "modules":
             topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"
