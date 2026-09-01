@@ -272,3 +272,19 @@ class TestUtils(TestPipelines):
         files = nf_core.utils.get_wf_files(tmpdir)
         files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
         assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]
+
+
+@pytest.mark.parametrize("repository_type", ["pipeline", "modules"])
+def test_nfcore_yml_ci_round_trip(repository_type):
+    """The `ci:` block (consumed by nf-core/actions) must survive a model_dump() rewrite."""
+    from nf_core.pydantic_models import NFCoreYamlConfig
+
+    ci = {
+        "nf_test_version": "0.9.0",
+        "nextflow_versions": ["24.04.2", "latest-stable"],
+        "profiles": ["docker", "singularity"],
+        "max_shards": 5,
+        "some_future_key": "value nf-core/actions may add independently",
+    }
+    config = NFCoreYamlConfig(repository_type=repository_type, ci=ci)
+    assert config.model_dump()["ci"] == ci
