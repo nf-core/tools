@@ -15,6 +15,7 @@
 ### Template
 
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
+- git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
 
 ### Version updates
 
