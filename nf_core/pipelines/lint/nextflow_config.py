@@ -7,6 +7,9 @@ from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
+# Image formats that Nextflow accepts for `manifest.diagram`
+DIAGRAM_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
 
 def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
@@ -68,10 +71,26 @@ def nextflow_config(self) -> dict[str, list[str]]:
     **The following variables throw warnings if missing:**
 
     * ``manifest.mainScript``: The filename of the main pipeline script (should be ``main.nf``)
+    * ``manifest.diagram``
+
+      * A relative path to a workflow diagram (metro map) for the pipeline, eg. ``docs/images/metro_map.svg``
+      * Any SVG works, including hand-drawn ones. `nf-metro <https://seqeralabs.github.io/nf-metro/latest/>`_
+        can generate one from a config file, if you'd like a hand.
+      * Requires Nextflow ``26.10.0`` or later, but is safe to set for older versions - they ignore it.
+      * If set, the value must be valid or the test **fails** (see below)
+
     * ``timeline.file``, ``trace.file``, ``report.file``, ``dag.file``
 
       * Default filenames for the timeline, trace and report
       * The DAG file path should end with ``.svg`` (If Graphviz is not installed, Nextflow will generate a ``.dot`` file instead)
+
+    **The following variables fail the test if they are set to an invalid value:**
+
+    * ``manifest.diagram``
+
+      * Must be a relative path, not a URL
+      * Must be one of the image formats that Nextflow accepts: ``.svg``, ``.png``, ``.jpg``, ``.jpeg``, ``.gif``, ``.webp``
+      * Must point at a file that exists in the pipeline
 
     **The following variables are depreciated and fail the test if they are still present:**
 
@@ -150,6 +169,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
     # Throw a warning if these are missing
     config_warn = [
         ["manifest.mainScript"],
+        ["manifest.diagram"],
         ["timeline.file"],
         ["trace.file"],
         ["report.file"],
@@ -271,6 +291,21 @@ def nextflow_config(self) -> dict[str, list[str]]:
             passed.append(f"Config ``dag.file`` ended with ``{default_dag_format}``")
         else:
             failed.append(f"Config ``dag.file`` did not end with ``{default_dag_format}``")
+
+    # Check that manifest.diagram points at a file that exists in the pipeline
+    diagram = manifest.get("diagram", "")
+    if diagram and "manifest.diagram" not in ignore_configs:
+        if re.match(r"^\w+://", diagram):
+            failed.append(f"Config ``manifest.diagram`` should be a relative path, not a URL: ``{diagram}``")
+        elif Path(diagram).suffix.lower() not in DIAGRAM_EXTENSIONS:
+            failed.append(
+                f"Config ``manifest.diagram`` is not a supported image format "
+                f"({', '.join(sorted(DIAGRAM_EXTENSIONS))}): ``{diagram}``"
+            )
+        elif (Path(self.wf_path) / diagram).is_file():
+            passed.append(f"Config ``manifest.diagram`` file found: ``{diagram}``")
+        else:
+            failed.append(f"Config ``manifest.diagram`` file not found: ``{diagram}``")
 
     # Check that the minimum nextflowVersion is set properly
     nextflow_version = manifest.get("nextflowVersion", "")
