@@ -13,6 +13,7 @@
 ### Template
 
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
+- Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
 
 ### Version updates
 
