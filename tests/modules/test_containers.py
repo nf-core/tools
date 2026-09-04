@@ -350,6 +350,30 @@ class TestModuleContainers(TestModules):
         assert result is not None
         assert result == MetaYmlContainers.model_validate(containers)
 
+    def test_update_main_nf_container_matches_nf_core_formatting(self):
+        """The rewritten directive must match the formatting used across nf-core/modules.
+
+        The ternary operators belong at the start of the indented continuation lines,
+        and there is no padding inside `${...}`.
+        """
+        singularity = "https://community-cr-prod.seqera.io/blobs/sha256/e6/e613097/data"
+        docker = "community.wave.seqera.io/library/bpipe_test:0.1.0--abc123"
+        self.module_containers.containers = MetaYmlContainers(
+            docker={p: ContainerEntry(name=docker) for p in CONTAINER_PLATFORMS},
+            singularity={p: ContainerEntry(name=singularity) for p in CONTAINER_PLATFORMS},
+        )
+
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        self.module_containers.update_main_nf_container(force=True)
+
+        expected = (
+            "    container \"${workflow.containerEngine in ['singularity', 'apptainer'] "
+            "&& !task.ext.singularity_pull_docker_container\n"
+            f"        ? '{singularity}'\n"
+            f"        : '{docker}'}}\""
+        )
+        assert expected in main_nf.read_text()
+
     def test_update_containers_in_meta_merges(self):
         self._write_meta({"name": "bpipe/test", "containers": {"docker": {"linux/amd64": {"name": "old"}}}})
         containers = self._containers_by_system("new")
