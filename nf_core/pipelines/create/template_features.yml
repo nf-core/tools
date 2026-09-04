@@ -391,6 +391,49 @@ configurations:
       custom_pipelines: True
       default: False
 
+    apple_container:
+      skippable_paths: False
+      short_description: "Use Apple Container"
+      description: "Add Apple Container support to the pipeline"
+      help_text: |
+        This will add an `apple_container` profile to the pipeline configuration, enabling
+        native container execution on macOS with Apple Silicon via the
+        [Apple Container](https://github.com/apple/container) runtime.
+
+        Apple Container uses standard OCI/Docker images and provides its own CLI
+        (`container`) with native `pull` and `save` commands. No Docker Desktop
+        installation is required.
+
+        Apple Container runs natively on Apple Silicon (arm64), but like Docker it
+        can also run amd64 images via emulation. Because most nf-core modules ship
+        amd64 container images, the `apple_container` profile emulates amd64 by
+        default (`process.arch = 'linux/amd64'`, `--platform linux/amd64`), so
+        standard pipelines run out of the box with no Wave dependency and no
+        Seqera token.
+
+        For faster emulation, set `--apple_rosetta` to run images through Rosetta
+        (`--rosetta`). This requires Rosetta to be installed on the host.
+
+        If you would rather run native ARM64 images built from conda packages via
+        Wave, compose the opt-in `apple_container_wave` profile alongside it:
+
+        ```bash
+        nextflow run <pipeline> -profile apple_container,apple_container_wave
+        ```
+
+        This is faster per task when a native arm64 build exists, but only works
+        for tools that have an ARM64 build available (a conda `linux-aarch64`
+        package or a multi-arch container image); tools whose upstream only ships
+        amd64 builds cannot be provisioned this way. It also sets `wave.freeze =
+        true`, so frozen images are pushed to a registry — set `TOWER_ACCESS_TOKEN`
+        for durable, reproducible builds.
+
+        The `nf-core pipelines download` command will also support downloading
+        images for offline use with `--container-system appleContainer`.
+      nfcore_pipelines: True
+      custom_pipelines: True
+      default: true
+
 development_environments:
   name: "Development Environments"
   features:
