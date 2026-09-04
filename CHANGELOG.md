@@ -6,11 +6,15 @@
 
 ### Linting
 
+- Warn if `manifest.diagram` is not set, and fail if it points at a file that does not exist ([#4460](https://github.com/nf-core/tools/pull/4460))
+
 ### Modules
 
 ### Subworkflows
 
 ### Template
+
+- Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 
 ### Version updates
 
