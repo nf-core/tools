@@ -6,7 +6,7 @@
 
 ### Linting
 
-- Warn if `manifest.diagram` is not set, and fail if it points at a file that does not exist ([#4460](https://github.com/nf-core/tools/pull/4460))
+- Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
 
 ### Modules
 

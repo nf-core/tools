@@ -239,6 +239,19 @@ class TestLintNextflowConfig(TestLint):
         result = self._lint_new_pipeline()
         assert "Config ``manifest.diagram`` file not found: ``docs/images/metro_map.svg``" in result["failed"]
 
+    def test_manifest_diagram_bad_format_fail(self):
+        """Test that a `manifest.diagram` that is not a supported image format fails."""
+        diagram = Path(self.new_pipeline) / "docs" / "images" / "metro_map.pdf"
+        diagram.parent.mkdir(parents=True, exist_ok=True)
+        diagram.write_text("not an image")
+        self._set_manifest_diagram("docs/images/metro_map.pdf")
+
+        result = self._lint_new_pipeline()
+        assert (
+            "Config ``manifest.diagram`` is not a supported image format "
+            "(.gif, .jpeg, .jpg, .png, .svg, .webp): ``docs/images/metro_map.pdf``" in result["failed"]
+        )
+
     def test_manifest_diagram_url_fail(self):
         """Test that a `manifest.diagram` set to a URL fails - it should be a relative path."""
         url = "https://example.com/metro_map.svg"

@@ -7,6 +7,9 @@ from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
+# Image formats that Nextflow accepts for `manifest.diagram`
+DIAGRAM_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
 
 def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
@@ -74,7 +77,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
       * Any SVG works, including hand-drawn ones. `nf-metro <https://seqeralabs.github.io/nf-metro/latest/>`_
         can generate one from a config file, if you'd like a hand.
       * Requires Nextflow ``26.10.0`` or later, but is safe to set for older versions - they ignore it.
-      * If set, the file must exist in the pipeline or the test **fails** (see below)
+      * If set, the value must be valid or the test **fails** (see below)
 
     * ``timeline.file``, ``trace.file``, ``report.file``, ``dag.file``
 
@@ -83,7 +86,11 @@ def nextflow_config(self) -> dict[str, list[str]]:
 
     **The following variables fail the test if they are set to an invalid value:**
 
-    * ``manifest.diagram``: must be a relative path to a file that exists in the pipeline, not a URL
+    * ``manifest.diagram``
+
+      * Must be a relative path, not a URL
+      * Must be one of the image formats that Nextflow accepts: ``.svg``, ``.png``, ``.jpg``, ``.jpeg``, ``.gif``, ``.webp``
+      * Must point at a file that exists in the pipeline
 
     **The following variables are depreciated and fail the test if they are still present:**
 
@@ -290,6 +297,11 @@ def nextflow_config(self) -> dict[str, list[str]]:
     if diagram and "manifest.diagram" not in ignore_configs:
         if re.match(r"^\w+://", diagram):
             failed.append(f"Config ``manifest.diagram`` should be a relative path, not a URL: ``{diagram}``")
+        elif Path(diagram).suffix.lower() not in DIAGRAM_EXTENSIONS:
+            failed.append(
+                f"Config ``manifest.diagram`` is not a supported image format "
+                f"({', '.join(sorted(DIAGRAM_EXTENSIONS))}): ``{diagram}``"
+            )
         elif (Path(self.wf_path) / diagram).is_file():
             passed.append(f"Config ``manifest.diagram`` file found: ``{diagram}``")
         else:
