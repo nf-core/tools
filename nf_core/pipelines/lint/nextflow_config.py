@@ -88,7 +88,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
 
     * ``manifest.diagram``
 
-      * Must be a relative path, not a URL
+      * Must be a relative path inside the pipeline (not a URL, absolute path or ``../``)
       * Must be one of the image formats that Nextflow accepts: ``.svg``, ``.png``, ``.jpg``, ``.jpeg``, ``.gif``, ``.webp``
       * Must point at a file that exists in the pipeline
 
@@ -295,8 +295,8 @@ def nextflow_config(self) -> dict[str, list[str]]:
     # Check that manifest.diagram points at a file that exists in the pipeline
     diagram = manifest.get("diagram", "")
     if diagram and "manifest.diagram" not in ignore_configs:
-        if re.match(r"^\w+://", diagram):
-            failed.append(f"Config ``manifest.diagram`` should be a relative path, not a URL: ``{diagram}``")
+        if re.match(r"^\w+://", diagram) or Path(diagram).is_absolute() or ".." in Path(diagram).parts:
+            failed.append(f"Config ``manifest.diagram`` should be a relative path inside the pipeline: ``{diagram}``")
         elif Path(diagram).suffix.lower() not in DIAGRAM_EXTENSIONS:
             failed.append(
                 f"Config ``manifest.diagram`` is not a supported image format "

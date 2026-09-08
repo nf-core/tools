@@ -270,4 +270,18 @@ class TestLintNextflowConfig(TestLint):
         self._set_manifest_diagram(url)
 
         result = self._lint_new_pipeline()
-        assert f"Config ``manifest.diagram`` should be a relative path, not a URL: ``{url}``" in result["failed"]
+        assert (
+            f"Config ``manifest.diagram`` should be a relative path inside the pipeline: ``{url}``" in result["failed"]
+        )
+
+    def test_manifest_diagram_absolute_path_fail(self):
+        """Test that an absolute `manifest.diagram` fails, instead of resolving outside the pipeline."""
+        outside = Path(self.new_pipeline).parent / "metro_map.svg"
+        outside.write_text("<svg></svg>")
+        self._set_manifest_diagram(str(outside))
+
+        result = self._lint_new_pipeline()
+        assert (
+            f"Config ``manifest.diagram`` should be a relative path inside the pipeline: ``{outside}``"
+            in result["failed"]
+        )
