@@ -222,7 +222,7 @@ class TestLintNextflowConfig(TestLint):
 
     def test_manifest_diagram_pass(self):
         """Test that a `manifest.diagram` pointing at an existing file passes."""
-        diagram = Path(self.new_pipeline) / "docs" / "images" / "metro_map.svg"
+        diagram = self.new_pipeline / "docs" / "images" / "metro_map.svg"
         diagram.parent.mkdir(parents=True, exist_ok=True)
         diagram.write_text("<svg></svg>")
         self._set_manifest_diagram("docs/images/metro_map.svg")
