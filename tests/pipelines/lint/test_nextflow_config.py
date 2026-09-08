@@ -16,6 +16,18 @@ class TestLintNextflowConfig(TestLint):
         super().setUp()
         self.new_pipeline = self._make_pipeline_copy()
 
+    def _set_manifest_diagram(self, value: str) -> None:
+        """Uncomment the templated `manifest.diagram` line and set it to `value`."""
+        nf_conf_file = Path(self.new_pipeline) / "nextflow.config"
+        content = nf_conf_file.read_text()
+        assert "// diagram" in content
+        nf_conf_file.write_text(content.replace("// diagram", f"diagram = '{value}' //"))
+
+    def _lint_new_pipeline(self) -> dict:
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
+        lint_obj.load_pipeline_config()
+        return lint_obj.nextflow_config()
+
     def test_nextflow_config_example_pass(self):
         """Tests that config variable existence test works with good pipeline example"""
         self.lint_obj.load_pipeline_config()
@@ -259,15 +271,3 @@ class TestLintNextflowConfig(TestLint):
 
         result = self._lint_new_pipeline()
         assert f"Config ``manifest.diagram`` should be a relative path, not a URL: ``{url}``" in result["failed"]
-
-    def _set_manifest_diagram(self, value: str) -> None:
-        """Uncomment the templated `manifest.diagram` line and set it to `value`."""
-        nf_conf_file = Path(self.new_pipeline) / "nextflow.config"
-        content = nf_conf_file.read_text()
-        assert "// diagram" in content
-        nf_conf_file.write_text(content.replace("// diagram", f"diagram = '{value}' //"))
-
-    def _lint_new_pipeline(self) -> dict:
-        lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
-        lint_obj.load_pipeline_config()
-        return lint_obj.nextflow_config()
