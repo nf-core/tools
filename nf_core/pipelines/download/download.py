@@ -21,6 +21,7 @@ import nf_core
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.github_api import gh_api
+from nf_core.pipelines.download.apple_container import AppleContainerFetcher
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
@@ -87,12 +88,12 @@ class DownloadWorkflow:
     ):
         # Verify that the flags provided make sense together
         if (
-            container_system == "docker"
+            container_system in ("docker", "apple_container")
             and container_cache_utilisation != "copy"
             and container_cache_utilisation is not None
         ):
             raise DownloadError(
-                "Only the 'copy' option for --container-cache-utilisation is supported for Docker images. "
+                "Only the 'copy' option for --container-cache-utilisation is supported for Docker/Apple container images. "
             )
 
         self._pipeline = pipeline
@@ -333,7 +334,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required container images
-            if self.container_system in {"singularity", "docker", "apptainer"}:
+            if self.container_system in ("singularity", "apptainer", "docker", "apple_container"):
                 workflow_directory = self.outdir / revision_dirname
                 self.find_container_images(workflow_directory, revision)
 
@@ -369,11 +370,11 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
-        if self.container_system in {"singularity", "docker", "apptainer"}:
+        if self.container_system in ("singularity", "apptainer", "docker", "apple_container"):
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
-                # Collect all required singularity images
+                # Collect all required container images
                 workflow_directory = self.workflow_repo.access()
                 self.find_container_images(workflow_directory, revision)
 
@@ -505,7 +506,7 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity", "docker", "apptainer"],
+                choices=["none", "singularity", "docker", "apptainer", "apple_container"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -525,6 +526,14 @@ class DownloadWorkflow:
                     parallel=self.parallel,
                     hide_progress=self.hide_progress,
                     container_system=self.container_system,
+                )
+            elif self.container_system == "apple_container":
+                self.container_fetcher = AppleContainerFetcher(
+                    outdir=self.outdir,
+                    registry_set=self.registry_set,
+                    container_library=self.container_library,
+                    parallel=self.parallel,
+                    hide_progress=self.hide_progress,
                 )
             elif self.container_system == "docker":
                 self.container_fetcher = DockerFetcher(
