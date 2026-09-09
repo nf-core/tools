@@ -164,6 +164,14 @@ jobs:
         run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-test-lint-wf
 
+      # Add a placeholder metro map and enable manifest.diagram
+      - name: add metro map
+        run: |
+          mkdir -p my-prefix-testpipeline/docs/images
+          touch my-prefix-testpipeline/docs/images/metro_map.svg
+          sed -i 's|// diagram|diagram|' my-prefix-testpipeline/nextflow.config
+        working-directory: create-test-lint-wf
+
       # Replace zenodo.XXXXXX to pass readme linting
       - name: replace zenodo.XXXXXX
         run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
