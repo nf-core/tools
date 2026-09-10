@@ -878,6 +878,37 @@ def command_pipelines_schema_docs(directory, schema_file, output, output_format,
     pipelines_schema_docs(Path(directory, schema_file), output, output_format, force, columns)
 
 
+# nf-core configs subcommands
+@nf_core_cli.group(aliases=["c", "config"])
+@click.pass_context
+def configs(ctx):
+    """
+    Commands to manage nf-core configs.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core configs create
+@configs.command("create")
+@click.pass_context
+def create_configs(ctx):
+    """
+    Command to interactively create a nextflow or nf-core config
+    """
+    from nf_core.configs.create import ConfigsCreateApp
+
+    try:
+        log.info("Launching interactive nf-core configs creation tool.")
+        app = ConfigsCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core modules subcommands
 @nf_core_cli.group(aliases=["m", "module"])
 @click.option(
