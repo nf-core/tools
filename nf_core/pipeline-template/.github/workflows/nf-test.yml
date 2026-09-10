@@ -79,6 +79,8 @@ jobs:
             profile: "conda"
           - isMain: false
             profile: "singularity"
+          - isMain: true
+            NXF_VER: "latest-everything"
         NXF_VER:
           - "25.10.4"
           - "latest-everything"
