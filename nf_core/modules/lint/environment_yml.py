@@ -141,7 +141,15 @@ def lint_environment_yml(
         # Parse the YAML content
         env_yml = yaml.load(content)
         if env_yml is None:
-            raise ruamel.yaml.scanner.ScannerError("Empty YAML file")
+            module.failed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_exists",
+                    "Module's `environment.yml` is empty",
+                    module.environment_yml,
+                )
+            )
+            return
 
         module.passed.append(
             (

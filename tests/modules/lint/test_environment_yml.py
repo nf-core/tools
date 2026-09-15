@@ -170,19 +170,23 @@ def test_environment_yml_sorting(tmp_path, input_content, expected):
     assert any("environment_yml_sorted" in x for x in [p[1] for p in module.passed])
 
 
-@pytest.mark.parametrize(
-    "invalid_content,filename",
-    [
-        ("invalid: yaml: here", "bad.yml"),
-        ("", "empty.yml"),
-    ],
-)
-def test_environment_yml_invalid_files(tmp_path, invalid_content, filename):
-    """Test that invalid YAML files raise exceptions"""
-    test_file, module, lint = setup_test_environment(tmp_path, invalid_content, filename)
+def test_environment_yml_malformed_raises(tmp_path):
+    """Test that malformed YAML syntax raises an exception"""
+    test_file, module, lint = setup_test_environment(tmp_path, "invalid: yaml: here", "bad.yml")
 
     with pytest.raises(ruamel.yaml.YAMLError):
         environment_yml(lint, module)
+
+
+def test_environment_yml_empty_fails_gracefully(tmp_path):
+    """Test that an empty environment.yml is reported as a failed lint result, not raised"""
+    test_file, module, lint = setup_test_environment(tmp_path, "", "empty.yml")
+
+    environment_yml(lint, module)
+
+    assert len(module.failed) == 1
+    assert module.failed[0][1] == "environment_yml_exists"
+    assert not module.passed
 
 
 def test_environment_yml_missing_dependencies(tmp_path):

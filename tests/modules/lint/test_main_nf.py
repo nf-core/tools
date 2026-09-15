@@ -390,6 +390,34 @@ class TestMainNfLinting(TestModules):
 
         assert len(module_lint.passed) > 0
 
+    def test_missing_main_nf_fails_gracefully(self):
+        """A module directory with no main.nf must fail gracefully instead of raising.
+
+        Regression test for https://github.com/nf-core/tools/issues/4447: previously an
+        uncaught FileNotFoundError here would abort linting of every other module in the
+        same `--all` run.
+        """
+        main_nf_path = Path(self.pipeline_dir) / "modules" / "nf-core" / "samtools" / "sort" / "main.nf"
+        # Construct ModuleLint (which validates modules.json against the installed files)
+        # before removing main.nf, so only the lint run itself sees the missing file.
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        main_nf_path.rename(main_nf_path.with_suffix(".nf.bak"))
+        try:
+            # Lint every installed module (samtools/sort and bamstats/generalstats) at once,
+            # like `--all` does, to confirm the missing main.nf doesn't abort the whole batch.
+            module_lint.lint(print_results=False, all_modules=True)
+        finally:
+            main_nf_path.with_suffix(".nf.bak").rename(main_nf_path)
+
+        samtools_failed = [f for f in module_lint.failed if f.component_name == "samtools/sort"]
+        assert any(f.lint_test == "main_nf_exists" for f in samtools_failed), (
+            f"Expected a main_nf_exists failure for samtools/sort, got {[f.message for f in samtools_failed]}"
+        )
+        # The other, unaffected module must still have been linted and produced results.
+        assert any(r.component_name == "bamstats/generalstats" for r in module_lint.passed), (
+            "Expected bamstats/generalstats to still be linted despite samtools/sort's missing main.nf"
+        )
+
 
 def test_get_inputs_no_partial_keyword_match(tmp_path):
     """Test that input parsing doesn't match keywords within larger words like 'evaluate' or 'pathogen'"""

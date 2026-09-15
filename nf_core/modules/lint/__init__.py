@@ -331,7 +331,11 @@ class ModuleLint(ComponentLint):
         """
         Update the meta.yml file with the correct inputs, outputs, topics and containers
         """
-        meta_yml = self.read_meta_yml_patched(mod)
+        try:
+            meta_yml = self.read_meta_yml_patched(mod)
+        except LookupError:
+            log.warning(f"Could not reverse-apply patch to read meta.yml for {mod.component_name}, skipping update")
+            return
         if meta_yml is None:
             log.warning(f"Could not read meta.yml for {mod.component_name}, skipping update")
             return
