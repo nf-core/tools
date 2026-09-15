@@ -382,7 +382,15 @@ class Pipeline:
         self.nf_config = fetch_wf_config(self.wf_path)
         manifest = self.nf_config.get("manifest", {})
 
-        self.pipeline_prefix, self.pipeline_name = manifest.get("name", "/").split("/")
+        pipeline_name_raw = manifest.get("name", "")
+        name_parts = pipeline_name_raw.split("/")
+        if len(name_parts) != 2 or not all(name_parts):
+            if pipeline_name_raw:
+                reason = f"manifest.name '{pipeline_name_raw}' is not in the format '<repo>/<pipeline>'"
+            else:
+                reason = "manifest.name is missing from the pipeline configuration"
+            raise UserWarning(f"{reason}. Please set it to the full pipeline name, e.g. 'nf-core/mypipeline'.")
+        self.pipeline_prefix, self.pipeline_name = name_parts
 
         nextflow_version_match = re.search(r"(?P<version>[0-9\.]+(-edge)?)", manifest.get("nextflowVersion", "") or "")
         if nextflow_version_match:

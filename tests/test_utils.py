@@ -1,6 +1,7 @@
 """Tests covering for utility functions."""
 
 import os
+import re
 import sys
 from pathlib import Path
 from unittest import mock
@@ -105,6 +106,26 @@ class TestUtils(TestPipelines):
         """Load the pipeline Nextflow config"""
         self.pipeline_obj.load_pipeline_config()
         assert self.pipeline_obj.nf_config["dag"]["enabled"] is True
+
+    def test_load_pipeline_config_malformed_manifest_name(self):
+        """Loading a config with a manifest.name without '<repo>/<pipeline>' gives a clear error"""
+        new_pipeline = self._make_pipeline_copy()
+        config_fn = Path(new_pipeline, "nextflow.config")
+        config_fn.write_text(config_fn.read_text().replace("'nf-core/testpipeline'", "'My-Pipeline'"))
+
+        pipeline_obj = nf_core.utils.Pipeline(new_pipeline)
+        with pytest.raises(UserWarning, match=r"manifest\.name 'My-Pipeline' is not in the format '<repo>/<pipeline>'"):
+            pipeline_obj.load_pipeline_config()
+
+    def test_load_pipeline_config_missing_manifest_name(self):
+        """Loading a config with no manifest.name at all gives a clear error"""
+        new_pipeline = self._make_pipeline_copy()
+        config_fn = Path(new_pipeline, "nextflow.config")
+        config_fn.write_text(re.sub(r"^\s*name\s*=\s*'[^']*'\s*$\n?", "", config_fn.read_text(), flags=re.MULTILINE))
+
+        pipeline_obj = nf_core.utils.Pipeline(new_pipeline)
+        with pytest.raises(UserWarning, match="manifest.name is missing from the pipeline configuration"):
+            pipeline_obj.load_pipeline_config()
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2
 
