@@ -403,7 +403,7 @@ class TestModules(TestPipelines):
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
-        psync.repo.create_remote("origin", self.remote_path)
+        psync.repo.create_remote("origin", str(self.remote_path))
 
         psync.create_merge_base_branch()
         psync.push_merge_branch()
@@ -415,7 +415,7 @@ class TestModules(TestPipelines):
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
-        psync.repo.create_remote("origin", self.remote_path)
+        psync.repo.create_remote("origin", str(self.remote_path))
 
         with pytest.raises(nf_core.pipelines.sync.PullRequestExceptionError) as exc_info:
             psync.push_merge_branch()

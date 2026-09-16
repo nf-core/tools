@@ -4,7 +4,6 @@ from pathlib import Path
 
 import rich
 
-from nf_core.pipelines.containers_utils import try_generate_container_configs
 from nf_core.utils import CONTAINER_PLATFORMS, rich_force_colors
 
 log = logging.getLogger(__name__)
@@ -328,7 +327,13 @@ def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        version_bumper.bump_versions(module=tool, all_modules=all_modules, show_up_to_date=show_all, dry_run=dry_run)
+        version_bumper.bump_versions(
+            module=tool,
+            all_modules=all_modules,
+            show_up_to_date=show_all,
+            dry_run=dry_run,
+            hide_progress=ctx.obj["hide_progress"],
+        )
     except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)
@@ -341,92 +346,31 @@ def modules_containers_create(ctx, module: str, directory: Path, force: bool) ->
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
-    from rich.console import Group
-    from rich.live import Live
-    from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn
-
     from nf_core.modules.containers import ModuleContainers
-    from nf_core.pipelines.lint_utils import console
 
     try:
-        manager = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
+        module_containers = ModuleContainers(module=module, directory=directory, verbose=ctx.obj["verbose"])
         ModuleContainers.check_tower_token()
 
-        # Normalize to a list of components: batch mode processes all available
-        # modules, single-module mode is just a list of one.
-        if manager.all_modules:
-            if not manager.available_modules:
+        if module_containers.all_modules:
+            if not module_containers.available_modules:
                 log.error("No modules found to build containers for")
                 sys.exit(1)
-            log.info(f"Building containers for {len(manager.available_modules)} module(s)")
-            components = manager.available_modules
-        else:
-            assert manager.nfcore_component is not None
-            components = [manager.nfcore_component]
+            log.info(f"Building containers for {len(module_containers.available_modules)} module(s)")
 
-        failed_modules = []
-
-        overall_progress = Progress(
-            "[bold blue]{task.description}",
-            BarColumn(),
-            MofNCompleteColumn(),
-            console=console,
-            disable=ctx.obj["hide_progress"],
+        failed_modules = module_containers.build_containers_with_progress(
+            force=force, hide_progress=ctx.obj["hide_progress"]
         )
-        module_progress = Progress(
-            SpinnerColumn(finished_text="[green]✓[/green]"),
-            "[bold blue]{task.description}",
-            TextColumn("{task.fields[status]}"),
-            console=console,
-            disable=ctx.obj["hide_progress"],
-        )
-
-        with Live(Group(overall_progress, module_progress), console=console, transient=True):
-            # The overall bar is only useful when processing more than one module
-            overall_task_id = overall_progress.add_task("modules", total=len(components), visible=len(components) > 1)
-            for component in components:
-                module_name = component.component_name
-                module_task_id = module_progress.add_task(
-                    f"[cyan]{module_name}[/cyan]",
-                    total=None,
-                    status="building containers...",
-                )
-                try:
-                    if manager.all_modules:
-                        # Per-module instance, reusing the already-scanned component list
-                        module_manager = ModuleContainers(
-                            module=module_name,
-                            directory=directory,
-                            verbose=ctx.obj["verbose"],
-                            components=manager.available_modules,
-                        )
-                    else:
-                        module_manager = manager
-                    _, success = module_manager.create(
-                        progress_bar=module_progress, task_id=module_task_id, force=force
-                    )
-                    if success:
-                        module_manager.update_containers_in_meta()
-                        if module_manager.repo_type == "pipeline":
-                            try_generate_container_configs(directory, module_manager.module_directory)
-                    else:
-                        failed_modules.append(module_name)
-                except (ValueError, RuntimeError, OSError) as e:
-                    log.error(f"✗ Failed to build containers for {module_name}: {e}")
-                    failed_modules.append(module_name)
-                finally:
-                    overall_progress.advance(overall_task_id)
-                    module_progress.remove_task(module_task_id)
 
         if failed_modules:
-            if manager.all_modules:
+            if module_containers.all_modules:
                 log.warning(
                     f"Failed to build containers for {len(failed_modules)} module(s): {', '.join(failed_modules)}"
                 )
             else:
-                log.error(f"✗ Some container builds failed for {manager.module}")
+                log.error(f"✗ Some container builds failed for {module_containers.module}")
                 sys.exit(1)
-        elif manager.all_modules:
+        elif module_containers.all_modules:
             log.info("Successfully built containers for all modules")
 
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
@@ -441,8 +385,8 @@ def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
-        lock_file = manager.get_conda_lock_file(platform)
+        module_containers = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
+        lock_file = module_containers.get_conda_lock_file(platform)
         stdout.print(lock_file)
     except (UserWarning, LookupError, FileNotFoundError, ValueError, RuntimeError) as e:
         log.error(e)
@@ -456,8 +400,8 @@ def modules_containers_list(ctx, module, plain_text=False):
     from nf_core.modules.containers import ModuleContainers
 
     try:
-        manager = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
-        containers = manager.list_containers()
+        module_containers = ModuleContainers(module, ".", verbose=ctx.obj["verbose"])
+        containers = module_containers.list_containers()
 
         if plain_text:
             for cs, p, img in containers:

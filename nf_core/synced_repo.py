@@ -227,36 +227,22 @@ class SyncedRepo:
         """
         Checks out the specified branch of the repository
         """
-        try:
-            self.repo.git.checkout(self.branch)
-        except GitCommandError as e:
-            if (
-                self.fullname
-                and "modules" in self.fullname
-                and "Your local changes to the following files would be overwritten by checkout" in str(e)
-            ):
-                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
-                self.repo.git.checkout(self.branch, force=True)
-            else:
-                raise e
+        self.checkout(self.branch)
 
     def checkout(self, commit):
         """
-        Checks out the repository at the requested commit
+        Checks out the repository at the requested commit (or branch)
 
         Args:
-            commit (str): Git SHA of the commit
+            commit (str): Git SHA of the commit, or a branch name
         """
         try:
             self.repo.git.checkout(commit)
         except GitCommandError as e:
-            if (
-                self.fullname
-                and "modules" in self.fullname
-                and "Your local changes to the following files would be overwritten by checkout" in str(e)
-            ):
-                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
-                self.repo.git.checkout(self.branch, force=True)
+            if self.fullname and "modules" in self.fullname and "would be overwritten by checkout" in str(e):
+                log.debug(f"Discarding local changes in '{self.local_repo_dir}'")
+                self.repo.git.clean("-df")
+                self.repo.git.checkout(commit, force=True)
             else:
                 raise e
 
@@ -305,7 +291,8 @@ class SyncedRepo:
         # Check out the repository at the requested ref
         try:
             self.checkout(commit)
-        except git.GitCommandError:
+        except git.GitCommandError as e:
+            log.error(f"Could not check out '{commit}' in the modules cache '{self.local_repo_dir}':\n{e}")
             return False
 
         # Check if the module/subworkflow exists in the branch

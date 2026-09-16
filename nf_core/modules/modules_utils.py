@@ -6,7 +6,12 @@ from urllib.parse import urlparse
 import requests
 from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, NFCORE_CACHE_DIR
+from nf_core.utils import (
+    CONTAINER_PLATFORMS,
+    CONTAINER_SYSTEMS,
+    NFCORE_CACHE_DIR,
+    REQUIRED_CONTAINER_PLATFORMS,
+)
 
 from ..components.nfcore_component import NFCoreComponent
 
@@ -88,10 +93,13 @@ class MetaYmlContainers(BaseModel):
     @model_validator(mode="after")
     def check_container_systems_complete(self, info: ValidationInfo) -> "MetaYmlContainers":
         """
-        Require a non-empty section with an entry for every platform, for each container
-        system named in ``context={"require_complete": [...]}`` (``True`` means all of
-        ``CONTAINER_SYSTEMS``, i.e. conda is exempt). Plain construction (e.g. the partial
-        states built up during container builds) is not affected.
+        Require a non-empty section with an entry for every *required* platform
+        (``REQUIRED_CONTAINER_PLATFORMS``), for each container system named in
+        ``context={"require_complete": [...]}`` (``True`` means all of
+        ``CONTAINER_SYSTEMS``, i.e. conda is exempt). Optional platforms such as
+        ``linux/arm64`` are validated when present but never required. Plain
+        construction (e.g. the partial states built up during container builds) is
+        not affected.
         """
         require = (info.context or {}).get("require_complete")
         if not require:
@@ -100,7 +108,7 @@ class MetaYmlContainers(BaseModel):
             entries = getattr(self, system)
             if not entries:
                 raise ValueError(f"No containers specified for {system}")
-            for plf in CONTAINER_PLATFORMS:
+            for plf in REQUIRED_CONTAINER_PLATFORMS:
                 if plf not in entries:
                     raise ValueError(f"No {system} entries found for expected platform: {plf}")
         return self

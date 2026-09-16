@@ -1,13 +1,11 @@
 import sys
 
-import git
 from click.shell_completion import CompletionItem
-
-from nf_core.modules.list import ModuleList
-from nf_core.subworkflows.list import SubworkflowList
 
 
 def autocomplete_components(ctx, param, incomplete: str, component_type: str, list_class):
+    import git
+
     # Defaults
     modules_repo_url = "https://github.com/nf-core/modules"
     modules_repo_branch = "master"
@@ -31,8 +29,12 @@ def autocomplete_components(ctx, param, incomplete: str, component_type: str, li
 
 
 def autocomplete_modules(ctx, param, incomplete: str):
+    from nf_core.modules.list import ModuleList
+
     return autocomplete_components(ctx, param, incomplete, "modules", ModuleList)
 
 
 def autocomplete_subworkflows(ctx, param, incomplete: str):
+    from nf_core.subworkflows.list import SubworkflowList
+
     return autocomplete_components(ctx, param, incomplete, "subworkflows", SubworkflowList)

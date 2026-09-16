@@ -17,7 +17,7 @@ class TestLaunch(TestPipelines):
     def setUp(self) -> None:
         super().setUp()
         self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")
-        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(str(self.pipeline_dir), params_out=self.nf_params_fn)
 
     @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")

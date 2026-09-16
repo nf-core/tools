@@ -7,18 +7,15 @@ from pathlib import Path
 import git
 import rich
 import yaml
-from rich.console import Console
 from rich.table import Table
 
 import nf_core.utils
 from nf_core import __version__
 from nf_core.utils import plural_s as _s
+from nf_core.utils import stdout as console
 from nf_core.utils import strip_ansi_codes
 
 log = logging.getLogger(__name__)
-
-# Create a console used by all lint tests
-console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
 
 def print_results_plain_text(results_list, directory=None, component_type=None):

@@ -1,7 +1,9 @@
 import base64
+import hashlib
 import logging
 import os
 import re
+import shutil
 import threading
 import time
 from collections.abc import Callable
@@ -85,6 +87,16 @@ class ModuleContainers:
     """
     Helpers for building, linting and listing module containers.
     """
+
+    # Wave build results, keyed by (environment.yml content hash, container_system, platform).
+    # Modules with an identical environment.yml (e.g. samtools/sort and samtools/view) resolve
+    # to the same container, so this avoids submitting duplicate builds within one process.
+    _build_cache: dict[tuple[str, str, str], ContainerEntry] = {}
+    # Path to an already-written conda lock file, keyed by Wave build_id. Modules that share
+    # a cached build (above) also share a build_id, so a later module can copy the file that
+    # an earlier one already downloaded instead of re-fetching identical lock contents.
+    _conda_lock_paths: dict[str, Path] = {}
+    _build_cache_lock = threading.Lock()
 
     def __init__(
         self,
@@ -452,11 +464,22 @@ class ModuleContainers:
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
 
             try:
-                # Download conda lock file (it will look up build_id from docker container)
-                log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform}...")
-                conda_lock_path.write_text(self.get_conda_lock_file(platform))
+                with self._build_cache_lock:
+                    cached_lock_path = self._conda_lock_paths.get(build_id)
+                if cached_lock_path is not None and cached_lock_path.exists():
+                    log.debug(f"Reusing conda lock file for build {build_id} (from {cached_lock_path})")
+                    if progress_bar and task_id is not None:
+                        progress_bar.update(task_id, status=f"conda lock {short_platform} (cached)...")
+                    if cached_lock_path != conda_lock_path:
+                        shutil.copyfile(cached_lock_path, conda_lock_path)
+                else:
+                    # Download conda lock file (it will look up build_id from docker container)
+                    log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
+                    if progress_bar and task_id is not None:
+                        progress_bar.update(task_id, status=f"conda lock {short_platform}...")
+                    conda_lock_path.write_text(self.get_conda_lock_file(platform))
+                    with self._build_cache_lock:
+                        self._conda_lock_paths[build_id] = conda_lock_path
                 # Only register the entry once the lock has actually been written, so
                 # meta.yml never points at a missing lock file.
                 containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
@@ -493,6 +516,111 @@ class ModuleContainers:
 
         return containers, not has_failures
 
+    @staticmethod
+    def _raise_if_build_failed(result: dict, build_ref: str, details_uri: str = "") -> None:
+        """
+        Raise a uniform error if a finished Wave build did not succeed.
+
+        Accepts either the container submit response or a ``/status`` response — both
+        expose ``succeeded``/``reason``/``detailsUri`` — so the failure contract lives
+        in one place. ``details_uri`` overrides the value on ``result`` (the status
+        poller keeps the last non-empty build-log URL it saw).
+        """
+        if result.get("succeeded"):
+            return
+        reason = result.get("reason") or "no reason provided"
+        details = details_uri or result.get("detailsUri") or ""
+        raise RuntimeError(f"Wave build {build_ref} failed: {reason}. Build log: {details}")
+
+    def build_containers_with_progress(self, force: bool = False, hide_progress: bool = False) -> list[str]:
+        """Build Seqera/Wave containers for the selected module(s) with a live progress display.
+
+        Builds the single selected module, or every module in ``available_modules`` when
+        the instance was created with ``all_modules=True``. Shows an overall module bar
+        plus, per module, the per-build spinners (docker/singularity × platform) that
+        :meth:`create` renders when a progress bar is passed.
+
+        Args:
+            force: Overwrite existing container directives even if already correct.
+            hide_progress: Disable the live progress display.
+
+        Returns:
+            The names of the modules whose builds failed.
+        """
+        from rich.console import Group
+        from rich.live import Live
+        from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn
+
+        from nf_core.pipelines.containers_utils import try_generate_container_configs
+        from nf_core.pipelines.lint_utils import console
+
+        if self.all_modules:
+            components = self.available_modules
+        else:
+            assert self.nfcore_component is not None
+            components = [self.nfcore_component]
+
+        failed_modules: list[str] = []
+
+        overall_progress = Progress(
+            "[bold blue]{task.description}",
+            BarColumn(),
+            MofNCompleteColumn(),
+            console=console,
+            disable=hide_progress,
+        )
+        module_progress = Progress(
+            SpinnerColumn(finished_text="[green]✓[/green]"),
+            "[bold blue]{task.description}",
+            TextColumn("{task.fields[status]}"),
+            console=console,
+            disable=hide_progress,
+        )
+
+        # Batch builds defer config generation to one full scan after the loop.
+        batch = len(components) > 1
+
+        with Live(Group(overall_progress, module_progress), console=console, transient=True):
+            # The overall bar is only useful when processing more than one module
+            overall_task_id = overall_progress.add_task("modules", total=len(components), visible=len(components) > 1)
+            for component in components:
+                module_name = component.component_name
+                module_task_id = module_progress.add_task(
+                    f"[cyan]{module_name}[/cyan]",
+                    total=None,
+                    status="building containers...",
+                )
+                try:
+                    if self.all_modules:
+                        # Per-module instance, reusing the already-scanned component list
+                        module_containers = ModuleContainers(
+                            module=module_name,
+                            directory=self.directory,
+                            verbose=self.verbose,
+                            components=self.available_modules,
+                        )
+                    else:
+                        module_containers = self
+                    _, success = module_containers.create(
+                        progress_bar=module_progress, task_id=module_task_id, force=force
+                    )
+                    if success:
+                        if module_containers.repo_type == "pipeline" and not batch:
+                            try_generate_container_configs(self.directory, module_containers.module_directory)
+                    else:
+                        failed_modules.append(module_name)
+                except (ValueError, RuntimeError, OSError) as e:
+                    log.error(f"✗ Failed to build containers for {module_name}: {e}")
+                    failed_modules.append(module_name)
+                finally:
+                    overall_progress.advance(overall_task_id)
+                    module_progress.remove_task(module_task_id)
+
+        if batch and self.repo_type == "pipeline" and len(failed_modules) < len(components):
+            try_generate_container_configs(self.directory)
+
+        return failed_modules
+
     @classmethod
     def _await_build(
         cls,
@@ -528,9 +656,7 @@ class ModuleContainers:
             status = wave_request("get", status_url, error_context=f"Wave status check for request {request_id}")
             details_uri = status.get("detailsUri") or details_uri
             if status.get("status") == "DONE":
-                if not status.get("succeeded"):
-                    reason = status.get("reason") or "no reason provided"
-                    raise RuntimeError(f"Wave build {request_id} failed: {reason}. Build log: {details_uri}")
+                cls._raise_if_build_failed(status, request_id, details_uri)
                 log.debug(f"Wave build {request_id} completed in {status.get('duration')}s")
                 return
             if time.monotonic() > deadline:
@@ -559,12 +685,20 @@ class ModuleContainers:
         assert container_system in CONTAINER_SYSTEMS
         assert platform in CONTAINER_PLATFORMS
 
+        conda_bytes = conda_file.read_bytes()
+        cache_key = (hashlib.sha256(conda_bytes).hexdigest(), container_system, platform)
+        with cls._build_cache_lock:
+            cached_entry = cls._build_cache.get(cache_key)
+        if cached_entry is not None:
+            log.debug(f"Reusing cached {container_system}/{platform} build for identical environment.yml")
+            return cached_entry
+
         # Submit the build via the Wave HTTP API (POST /v1alpha2/container).
         # `freeze` with no buildRepository pushes to the public community registry.
         payload: dict = {
             "packages": {
                 "type": "CONDA",
-                "environment": base64.b64encode(conda_file.read_bytes()).decode(),
+                "environment": base64.b64encode(conda_bytes).decode(),
             },
             "containerPlatform": platform,
             "freeze": True,
@@ -589,10 +723,15 @@ class ModuleContainers:
         if build_id and on_build_id is not None:
             on_build_id(build_id)
 
-        # A build that is cached (or already reported DONE in the submit response) is
-        # resolved immediately; otherwise poll the container status endpoint until it
-        # finishes.
-        if not meta_data.get("cached") and meta_data.get("status") != "DONE":
+        # Wave returns a targetImage/buildId even for failed builds, so a cached/DONE
+        # submit response must still be checked for success — not only the polling path.
+        succeeded = meta_data.get("succeeded")
+        is_final = bool(meta_data.get("cached")) or meta_data.get("status") == "DONE"
+        if is_final and succeeded is not None:
+            # Submit response already carries an authoritative result.
+            cls._raise_if_build_failed(meta_data, build_id or request_id)
+        elif not is_final or request_id:
+            # Not final, or final but ambiguous: the status endpoint is authoritative.
             cls._await_build(request_id, cancel_event=cancel_event)
 
         image = meta_data.get("targetImage") or meta_data.get("containerImage") or ""
@@ -623,7 +762,10 @@ class ModuleContainers:
                     f"https://{ContainerRegistryUrls.SEQERA_SINGULARITY.value}/blobs/sha256/{digest[:2]}/{digest}/data"
                 )
 
-        return ContainerEntry(name=image, build_id=build_id, scan_id=scan_id, https=https_url)
+        entry = ContainerEntry(name=image, build_id=build_id, scan_id=scan_id, https=https_url)
+        with cls._build_cache_lock:
+            cls._build_cache[cache_key] = entry
+        return entry
 
     @classmethod
     def request_image_inspect(cls, image: str) -> dict:

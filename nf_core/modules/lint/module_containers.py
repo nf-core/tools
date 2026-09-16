@@ -6,7 +6,6 @@ from pydantic_core import ValidationError
 
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_utils import ContainerEntry, MetaYmlContainers, module_uses_dockerfile
-from nf_core.utils import CONTAINER_PLATFORMS
 
 log = logging.getLogger(__name__)
 
@@ -210,7 +209,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
                 )
 
-        for plat in CONTAINER_PLATFORMS:
+        for plat in containers.conda:
             conda_entry = containers.conda.get(plat)
             docker_entry = containers.docker.get(plat) if containers.docker else None
             conda_lock = conda_entry.lock_file if conda_entry else ""

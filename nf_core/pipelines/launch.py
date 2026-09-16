@@ -26,17 +26,17 @@ class Launch:
 
     def __init__(
         self,
-        pipeline=None,
-        revision=None,
-        command_only=False,
-        params_in=None,
-        params_out=None,
-        save_all=False,
-        show_hidden=False,
-        url=None,
-        web_id=None,
-        no_prompts=False,
-    ):
+        pipeline: str | None = None,
+        revision: str | None = None,
+        command_only: bool = False,
+        params_in: str | Path | None = None,
+        params_out: str | Path | None = None,
+        save_all: bool = False,
+        show_hidden: bool = False,
+        url: str | None = None,
+        web_id: str | None = None,
+        no_prompts: bool = False,
+    ) -> None:
         """Initialise the Launcher class
 
         Args:
@@ -94,8 +94,8 @@ class Launch:
                 },
             }
         }
-        self.nxf_flags = {}
-        self.params_user = {}
+        self.nxf_flags: dict[str, str | bool] = {}
+        self.params_user: dict[str, str] = {}
         self.cli_launch = True
 
     def launch_pipeline(self):
