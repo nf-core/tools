@@ -390,7 +390,7 @@ def check_script_section(self, lines):
             )
 
     # Validate meta keys
-    permitted_meta_keys = {"id", "single_end"}
+    permitted_meta_keys = {"id", "single_end", "strandedness"}
     invalid_meta_keys = [
         f"{prefix}{key}"
         for prefix, key in re.findall(r"(?<!\.)\b(meta\d*\??\.)(\w+)\b(?!\()", script)
