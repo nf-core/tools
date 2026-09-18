@@ -106,6 +106,17 @@ def main_nf(
     A warning is issued if a legacy YAML-based ``versions`` emit is used instead
     of a topic output.
 
+    process_standard_label
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    Process labels should follow the standard format. A warning is issued if a
+    legacy label is used. Allowed standard labels are ``process_cpus_single``,
+    ``process_cpus_low``, ``process_cpus_medium``, ``process_cpus_high``,
+    ``process_mem_low``, ``process_mem_medium``, ``process_mem_high``,
+    ``process_time_short``, ``process_time_medium``, ``process_time_long``.
+    Legacy labels are ``process_single``, ``process_low``, ``process_medium``,
+    ``process_high``, ``process_long``, ``process_low_memory``,
+    ``process_high_memory``.
     """
 
     inputs: list[str] = []
@@ -594,6 +605,19 @@ def check_process_name_format(self, process_name, component_name):
 
 def check_process_labels(self, lines):
     correct_process_labels = [
+        # Axis-decomposed labels (preferred)
+        "process_cpus_single",
+        "process_cpus_low",
+        "process_cpus_medium",
+        "process_cpus_high",
+        "process_mem_low",
+        "process_mem_medium",
+        "process_mem_high",
+        "process_time_short",
+        "process_time_medium",
+        "process_time_long",
+    ]
+    legacy_process_labels = [
         "process_single",
         "process_low",
         "process_medium",
@@ -605,11 +629,11 @@ def check_process_labels(self, lines):
     all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
     bad_labels = []
     good_labels = []
+    legacy_labels = []
     if len(all_labels) > 0:
         for label in all_labels:
-            try:
-                label = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label).group(1)
-            except AttributeError:
+            match = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label)
+            if match is None:
                 self.warned.append(
                     (
                         "main_nf",
@@ -619,21 +643,46 @@ def check_process_labels(self, lines):
                     )
                 )
                 continue
-            if label not in correct_process_labels:
+            label = match.group(1)
+            if label not in correct_process_labels and label not in legacy_process_labels:
                 bad_labels.append(label)
+            if label in legacy_process_labels:
+                legacy_labels.append(label)
             else:
                 good_labels.append(label)
-        if len(good_labels) > 1:
+        if legacy_labels:
             self.warned.append(
                 (
                     "main_nf",
                     "process_standard_label",
-                    f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
+                    f"Deprecated process label found: `{legacy_labels[0]}`. Use the new standard labels instead:  https://nf-co.re/docs/developing/migration-guides/resource-labels",
                     self.main_nf,
                 )
             )
-        elif len(good_labels) == 1:
-            self.passed.append(("main_nf", "process_standard_label", "Correct process label", self.main_nf))
+        axes = [label.split("_")[1] for label in good_labels if len(label.split("_")) > 1]
+        if len(axes) != len(set(axes)):
+            conflicting = [
+                label
+                for label in good_labels
+                if axes.count(label.split("_")[1] if len(label.split("_")) > 1 else "") > 1
+            ]
+            self.warned.append(
+                (
+                    "main_nf",
+                    "process_standard_label",
+                    f"Conflicting process labels found: `{'`,`'.join(conflicting)}`",
+                    self.main_nf,
+                )
+            )
+        elif good_labels:
+            self.passed.append(
+                (
+                    "main_nf",
+                    "process_standard_label",
+                    f"Correct process labels: `{'`,`'.join(good_labels)}`",
+                    self.main_nf,
+                )
+            )
         else:
             self.warned.append(("main_nf", "process_standard_label", "Standard process label not found", self.main_nf))
         if len(bad_labels) > 0:
@@ -654,6 +703,7 @@ def check_process_labels(self, lines):
                     self.main_nf,
                 )
             )
+
     else:
         self.warned.append(("main_nf", "process_standard_label", "Process label not specified", self.main_nf))
 
