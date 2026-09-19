@@ -51,11 +51,7 @@ def docs_pages(self):
 
     ignored_config = self.lint_config.get("docs_pages", []) if self.lint_config is not None else []
 
-    docs_dir = Path(self.wf_path, "docs")
-    if not docs_dir.is_dir():
-        return {"passed": passed, "warned": warned, "ignored": ignored}
-
-    for fname in sorted(docs_dir.glob("**/*.md*")):
+    for fname in sorted(Path(self.wf_path, "docs").glob("**/*.md*")):
         if fname.suffix not in [".md", ".mdx"]:
             continue
         rel_path = fname.relative_to(self.wf_path)

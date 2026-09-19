@@ -84,6 +84,50 @@ class TestLintDocsPages(TestLint):
         assert "CONTRIBUTING.md" not in " ".join(results["passed"] + results["warned"])
         assert "metro_map.md" not in " ".join(results["passed"] + results["warned"])
 
+    def test_mdx_pages_treated_as_markdown(self):
+        """The website strips both .md and .mdx, so both are pages"""
+        new_pipeline = self._make_pipeline_copy()
+        self._add_page(new_pipeline, "docs/usage/tutorial.mdx")
+        self._add_page(new_pipeline, "docs/benchmark.mdx")
+
+        results = self._lint(new_pipeline)
+
+        assert "docs/usage/tutorial.mdx" in " ".join(results["passed"])
+        assert len(results["warned"]) == 1
+        assert "docs/benchmark.mdx" in results["warned"][0]
+
+    def test_non_markdown_file_not_a_page(self):
+        """A file whose name merely starts with .md is not markdown
+
+        Pins the suffix filter from the other side: the glob is deliberately wide, so
+        without the check on the suffix itself a backup or editor file would be reported
+        as a documentation page.
+        """
+        new_pipeline = self._make_pipeline_copy()
+        self._add_page(new_pipeline, "docs/usage.md.bak")
+
+        results = self._lint(new_pipeline)
+
+        assert "usage.md.bak" not in " ".join(results["passed"] + results["warned"])
+
+    def test_no_docs_directory(self):
+        """A pipeline with no docs/ at all reports nothing rather than failing
+
+        Whether the required pages exist is files_exist's job, not this test's.
+        """
+        new_pipeline = self._make_pipeline_copy()
+        for page in Path(new_pipeline, "docs").glob("*.md"):
+            page.unlink()
+        Path(new_pipeline, "docs", "images").mkdir(exist_ok=True)
+        for image in Path(new_pipeline, "docs", "images").iterdir():
+            image.unlink()
+        Path(new_pipeline, "docs", "images").rmdir()
+        Path(new_pipeline, "docs").rmdir()
+
+        results = self._lint(new_pipeline)
+
+        assert results == {"passed": [], "warned": [], "ignored": []}
+
     def test_ignored_in_config(self):
         """A working document kept in docs/ on purpose can be listed in .nf-core.yml"""
         new_pipeline = self._make_pipeline_copy()
