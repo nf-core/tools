@@ -60,6 +60,7 @@ def get_remote_branch_names() -> list[str]:
     List all branch names on the remote github repository for test-datasets for pipelines or modules.
     """
     try:
+        branches = []  # default to return, if exception is raised
         url = GithubApiEndpoints().get_pipelines_list_url()
         response = requests.get(url)
         resp_json = response.json()
@@ -189,6 +190,9 @@ def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
 
     else:
         all_branches = get_remote_branch_names()
+        if not all_branches:
+            log.error("Branch information for test-datasets could not be fetched.")
+            return ("", [])
 
         # Find pipeline / modules root directory
         base_dir: Path = determine_base_dir()
