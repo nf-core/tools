@@ -1,7 +1,8 @@
 import logging
 import os
 
-import rich
+import rich.console
+import rich.table
 
 from nf_core.test_datasets.test_datasets_utils import (
     IGNORED_FILE_PREFIXES,
