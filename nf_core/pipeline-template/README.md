@@ -52,9 +52,11 @@
     <img src="docs/images/{{ name_noslash }}_metro_map_animated.svg" alt="{{ name }} workflow diagram" width="100%">
 </p>
 -->
+
 {% else -%}
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps.
      See https://nf-co.re/docs/community/brand/workflow-schematics -->
+
 {% endif -%}
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
