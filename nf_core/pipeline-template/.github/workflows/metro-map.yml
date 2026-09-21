@@ -1,0 +1,40 @@
+name: Metro map
+# Regenerate the pipeline's metro-map images whenever the .mmd source changes,
+# or on demand. All render options live in assets/metro_map.mmd (%%metro output:),
+# so this workflow keeps the committed images in sync without any CLI flags.
+on:
+  push:
+    paths:
+      - "assets/metro_map.mmd"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  metro-map:
+    # Only run on the main repository, not on forks
+    if: github.repository == '{{ name }}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {% raw %}
+          ref: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}{% endraw %}
+
+      - name: Render metro map
+        id: metro
+        uses: seqeralabs/nf-metro@v2
+        with:
+          input: assets/metro_map.mmd
+          theme: nfcore
+
+      - name: Commit & push regenerated images
+        if: {% raw %}steps.metro.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/images/*_metro_map*
+          git commit -m "[automated] Regenerate metro-map images"
+          git push{% endraw %}

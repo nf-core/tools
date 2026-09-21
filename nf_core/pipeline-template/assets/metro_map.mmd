@@ -1,0 +1,53 @@
+%%metro title: {{ name }}
+%%metro style: nfcore
+{% if is_nfcore -%}
+%%metro logo: ../docs/images/{{ logo_light }} | ../docs/images/{{ logo_dark }}
+{% endif -%}
+%%metro line: main | Analysis | #24af63
+%%metro file: reads_in | FASTQ
+{%- if multiqc %}
+%%metro file: report | HTML
+{%- endif %}
+%%metro legend: bl
+
+%% Output files kept in sync by the metro-map GitHub Action and pre-commit hook.
+%% Each declared path is rendered from this one file; the per-path options after
+%% the pipe pick the animation / colour mode for that output only.
+%%metro output: ../docs/images/{{ name_noslash }}_metro_map.svg
+%%metro output: ../docs/images/{{ name_noslash }}_metro_map_animated.svg | animate
+%%metro output: ../docs/images/{{ name_noslash }}_metro_map_dark.png     | mode=dark
+%%metro output: ../docs/images/{{ name_noslash }}_metro_map_light.png    | mode=light
+
+%% Process mappings for live-progress mode (nf-metro serve / check-mapping).
+%% process_scope is the shared fully-qualified-name prefix, so each value below
+%% is just the process tail beneath it.
+%%metro process_scope: {{ prefix_nodash|upper }}_{{ short_name|upper }}:{{ short_name|upper }}
+{%- if fastqc %}
+%%metro process: fastqc  | FASTQC
+{%- endif %}
+{%- if multiqc %}
+%%metro process: multiqc | MULTIQC
+{%- endif %}
+
+graph LR
+    subgraph analysis [Analysis]
+        reads_in[ ]
+{%- if fastqc %}
+        fastqc[FastQC]
+{%- endif %}
+{%- if multiqc %}
+        multiqc[MultiQC]
+        report[ ]
+{%- endif %}
+{% if fastqc %}
+        reads_in -->|main| fastqc
+{%- if multiqc %}
+        fastqc -->|main| multiqc
+{%- endif %}
+{%- elif multiqc %}
+        reads_in -->|main| multiqc
+{%- endif %}
+{%- if multiqc %}
+        multiqc -->|main| report
+{%- endif %}
+    end

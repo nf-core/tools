@@ -46,8 +46,14 @@
    to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
 -->
 
+{% if metro_map -%}
+<p align="center">
+    <img src="docs/images/{{ name_noslash }}_metro_map_animated.svg" alt="{{ name }} workflow diagram" width="100%">
+</p>
+{% else -%}
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/community/brand/workflow-schematics#examples for examples.   -->
+{% endif -%}
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
 {%- if fastqc %}1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)){% endif %}
