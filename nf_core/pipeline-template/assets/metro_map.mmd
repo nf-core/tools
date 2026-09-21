@@ -9,18 +9,12 @@
 %%metro file: report | HTML
 {%- endif %}
 %%metro legend: bl
-
-%% Output files kept in sync by the nf-metro pre-commit hook.
-%% Each declared path is rendered from this one file; the per-path options after
-%% the pipe pick the animation / colour mode for that output only.
 %%metro output: ../docs/images/{{ name_noslash }}_metro_map.svg
 %%metro output: ../docs/images/{{ name_noslash }}_metro_map_animated.svg | animate
 %%metro output: ../docs/images/{{ name_noslash }}_metro_map_dark.png     | mode=dark
 %%metro output: ../docs/images/{{ name_noslash }}_metro_map_light.png    | mode=light
 
-%% Process mappings for live-progress mode (nf-metro serve / check-mapping).
-%% process_scope is the shared fully-qualified-name prefix, so each value below
-%% is just the process tail beneath it.
+%% Process mappings for live-progress mode
 %%metro process_scope: {{ prefix_nodash|upper }}_{{ short_name|upper }}:{{ short_name|upper }}
 {%- if fastqc %}
 %%metro process: fastqc  | FASTQC

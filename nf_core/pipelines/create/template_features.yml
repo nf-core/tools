@@ -522,7 +522,7 @@ documentation_metadata:
       help_text: |
         This adds a starter metro-map (tube-map) workflow diagram in `assets/metro_map.mmd`, rendered to SVG and PNG images in `docs/images/` with [nf-metro](https://github.com/seqeralabs/nf-metro).
 
-        A pre-commit hook keeps the rendered images in sync whenever the `.mmd` source changes, and the static SVG is registered as the pipeline's `manifest.diagram` for display on the nf-core website.
+        A pre-commit hook and GitHub action keeps the rendered images in sync whenever the `.mmd` source changes.
       nfcore_pipelines: True
       custom_pipelines: True
       default: true

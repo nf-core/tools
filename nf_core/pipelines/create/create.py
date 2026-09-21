@@ -459,15 +459,7 @@ class PipelineCreate:
             )
 
     def make_metro_map(self):
-        """Render the pipeline's metro-map images from ``assets/metro_map.mmd``.
-
-        All render options - output paths, colour modes and animation - are
-        declared in the ``.mmd`` itself, so this runs nf-metro with the same
-        defaults as the metro-map GitHub Action and pre-commit hook, keeping
-        the committed images identical to what they regenerate. Rendering is
-        best-effort: if it fails the GitHub Action regenerates the images on
-        the first push.
-        """
+        """Render the pipeline's metro-map images from ``assets/metro_map.mmd``"""
         mmd = Path(self.outdir) / "assets" / "metro_map.mmd"
         if not mmd.is_file():
             return

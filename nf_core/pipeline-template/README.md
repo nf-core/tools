@@ -47,12 +47,14 @@
 -->
 
 {% if metro_map -%}
+<!-- TODO nf-core: Uncomment this block once assets/metro_map.mmd is updated with your pipeline details.
 <p align="center">
     <img src="docs/images/{{ name_noslash }}_metro_map_animated.svg" alt="{{ name }} workflow diagram" width="100%">
 </p>
+-->
 {% else -%}
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/community/brand/workflow-schematics#examples for examples.   -->
+<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps.
+     See https://nf-co.re/docs/community/brand/workflow-schematics -->
 {% endif -%}
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
