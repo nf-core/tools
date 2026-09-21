@@ -517,6 +517,7 @@ documentation_metadata:
     metro_map:
       skippable_paths:
         - "assets/metro_map.mmd"
+        - ".github/workflows/metro-map.yml"
       short_description: "Add a metro-map workflow diagram"
       description: "Add a starter metro-map diagram and keep its rendered images in sync."
       help_text: |
