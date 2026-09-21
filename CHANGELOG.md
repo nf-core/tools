@@ -14,7 +14,7 @@
 
 ### Template
 
-- Add an opt-in `metro_map` feature: a starter metro-map diagram rendered to SVG/PNG with nf-metro, kept in sync by a GitHub Action and pre-commit hook, and registered as `manifest.diagram` ([#4478](https://github.com/nf-core/tools/pull/4478))
+- Add an opt-in `metro_map` feature: a starter metro-map diagram rendered to SVG/PNG with nf-metro, kept in sync by a pre-commit hook, and registered as `manifest.diagram` ([#4478](https://github.com/nf-core/tools/pull/4478))
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
 - Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
