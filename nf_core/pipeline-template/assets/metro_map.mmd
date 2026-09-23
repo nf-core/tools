@@ -4,7 +4,9 @@
 %%metro logo: ../docs/images/{{ logo_light }} | ../docs/images/{{ logo_dark }}
 {% endif -%}
 %%metro line: main | Analysis | #24af63
+{%- if fastqc %}
 %%metro file: reads_in | FASTQ
+{% endif -%}
 {%- if multiqc %}
 %%metro file: report | HTML
 {%- endif %}
