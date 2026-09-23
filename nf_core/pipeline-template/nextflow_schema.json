@@ -226,7 +226,14 @@
                     "fa_icon": "far calendar",
                     "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
                     "hidden": true
-                }{% if nf_schema %},
+                }{% if apple_container %},
+                "apple_rosetta": {
+                    "type": "boolean",
+                    "fa_icon": "fab fa-apple",
+                    "description": "Use faster Rosetta amd64 emulation in the apple_container profile instead of plain amd64 emulation.",
+                    "help_text": "Only applies to the `apple_container` profile. When `true`, amd64 container images are emulated with Rosetta (faster) instead of the default plain amd64 emulation. Requires Rosetta to be installed on the host.",
+                    "hidden": true
+                }{% endif %}{% if nf_schema %},
                 "help": {
                     "type": ["boolean", "string"],
                     "description": "Display the help message."
