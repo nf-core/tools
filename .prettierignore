@@ -9,6 +9,8 @@ nf_core/pipeline-template/.github/ISSUE_TEMPLATE/bug_report.yml
 nf_core/pipeline-template/.github/workflows/branch.yml
 nf_core/pipeline-template/.github/workflows/nf-test.yml
 nf_core/pipeline-template/.github/workflows/pr-comment.yml
+nf_core/pipeline-template/.github/workflows/metro-map.yml
+nf_core/pipeline-template/.pre-commit-config.yaml
 tests/data/pipeline_create_template_skip.yml
 # don't run on things handled by ruff
 *.py

@@ -38,6 +38,7 @@ dependencies = [
     "jinja2",
     "jsonschema>=4.0",
     "markdown>=3.3",
+    "nf-metro",
     "packaging",
     "pillow",
     "prek",

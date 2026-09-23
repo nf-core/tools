@@ -18,3 +18,6 @@ ro-crate-metadata.json
 modules/nf-core/
 subworkflows/nf-core/
 {%- endif %}
+{%- if metro_map %}
+docs/images/*_metro_map*.svg
+{%- endif %}
