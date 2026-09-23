@@ -411,7 +411,7 @@ class ConfigsCreateConfig(BaseModel):
     def url_prefix(cls, v: str, info: ValidationInfo) -> str:
         """Check that institutional web links start with valid URL prefix."""
         context = info.context
-        if context and context["is_nfcore"]:
+        if context and context["is_nfcore"] and context["is_infrastructure"]:
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
             elif not re.match(

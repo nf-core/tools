@@ -91,7 +91,7 @@ class BasicDetails(Screen):
             "config_profile_url",
             "https://nf-co.re",
             "URL of infrastructure website or owning institution (infrastructure configs only).",
-            classes="hide" if self.parent.CONFIG_TYPE == "pipeline" else "",
+            classes="" if self.parent.CONFIG_TYPE == "infrastructure" and self.parent.NFCORE_CONFIG else "hide",
         )
         yield Center(
             Button("Back", id="back", variant="default"),
@@ -170,7 +170,10 @@ class BasicDetails(Screen):
         if self.parent.NFCORE_CONFIG:
             remove_hide_class(self.parent, "config_profile_contact")
             remove_hide_class(self.parent, "config_profile_handle")
-            remove_hide_class(self.parent, "config_profile_url")
+            if self.parent.CONFIG_TYPE == "infrastructure":
+                remove_hide_class(self.parent, "config_profile_url")
+            else:
+                add_hide_class(self.parent, "config_profile_url")
         else:
             add_hide_class(self.parent, "config_profile_contact")
             add_hide_class(self.parent, "config_profile_handle")
