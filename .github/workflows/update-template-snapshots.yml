@@ -8,8 +8,16 @@ jobs:
     name: Retrieve all template features
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      # Permissions for the branch-deploy action, as documented here:
+      #  https://github.com/github/branch-deploy#how-does-it-work-
+      pull-requests: write # Required for commenting on PRs
+      deployments: write # Required for updating deployment statuses
+      contents: write # Required for reading/writing the lock file
+      checks: read # Required for checking if the CI checks have passed in order to deploy the PR
+      statuses: read # Required for checking if all commit statuses are "success" in order to deploy the PR
     outputs:
+      success: ${{ steps.create_matrix.outputs.prepare_success }}
+      sha: ${{ steps.branch-deploy.outputs.sha }}
       all_features: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
@@ -20,21 +28,28 @@ jobs:
           trigger: "@nf-core-bot update template snapshots"
           reaction: "eyes"
           stable_branch: "dev"
+          update_branch: "disabled" # do not require the branch to be up-to-date
+          checks: "required" # don't proceed if any required checks failed
+          environment: "update_template_snapshots"
 
       - name: checkout
+        if: steps.branch-deploy.outputs.continue == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Create Matrix
         id: create_matrix
+        if: steps.branch-deploy.outputs.continue == 'true'
         run: |
           echo "matrix=$(yq '.[].features | keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config")' nf_core/pipelines/create/template_features.yml | \
           yq 'flatten | tojson(0)' -)" >> $GITHUB_OUTPUT
+          echo "prepare_success=true" >> $GITHUB_OUTPUT
 
   update-snapshots:
     needs: [prepare-matrix]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+    if: ${{ needs.prepare-matrix.outputs.success }}
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
@@ -42,17 +57,14 @@ jobs:
           - TEMPLATE: all
       fail-fast: false
     steps:
-      # Use the @nf-core-bot token to check out so we can push later
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          token: ${{ secrets.nf_core_bot_auth_token }}
-
       # Action runs on the issue comment, so we don't get the PR by default
-      # Use the gh cli to check out the PR
+      # The correct commit ID to use is needs.prepare-matrix.outputs.sha
       - name: Checkout Pull Request
-        run: gh pr checkout ${{ github.event.issue.number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.prepare-matrix.outputs.sha }}
+          token: ${{ secrets.nf_core_bot_auth_token }}
+          persist-credentials: false
 
       # Install dependencies and run pytest
       - name: Set up Python
@@ -150,9 +162,18 @@ jobs:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
       - name: Checkout Pull Request
-        run: gh pr checkout ${{ github.event.issue.number }}
+        run: |
+          gh pr checkout ${{ github.event.issue.number }}
+
+          # Verify that the commit sha matches what we expect, just in
+          # case a new commit was pushed after the workflow was triggered.
+          if [[ $(git log -1 --format=%H) != $EXPECTED_SHA ]]; then
+             echo "::error title=bad-commit-id::Expected the commit ID of the pull request to be $EXPECTED_SHA but found $(git log -1 --format=%H)."
+             exit 1
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+          EXPECTED_SHA: ${{ needs.prepare-matrix.outputs.sha }}
 
       - name: Download all snapshot artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8

@@ -7,7 +7,13 @@ jobs:
   fix-linting:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      # Permissions for the branch-deploy action, as documented here:
+      #  https://github.com/github/branch-deploy#how-does-it-work-
+      pull-requests: write # Required for commenting on PRs
+      deployments: write # Required for updating deployment statuses
+      contents: write # Required for reading/writing the lock file
+      checks: read # Required for checking if the CI checks have passed in order to deploy the PR
+      statuses: read # Required for checking if all commit statuses are "success" in order to deploy the PR
 
     steps:
       - name: branch-deploy
@@ -17,22 +23,37 @@ jobs:
           trigger: "@nf-core-bot fix linting"
           reaction: "eyes"
           stable_branch: "dev"
+          update_branch: "disabled" # do not require the branch to be up-to-date
+          checks: "required" # don't proceed if any required checks failed
+          environment: "fix_linting"
 
       # Use the @nf-core-bot token to check out so we can push later
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.branch-deploy.outputs.continue == 'true'
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
       # Action runs on the issue comment, so we don't get the PR by default
       # Use the gh cli to check out the PR
       - name: Checkout Pull Request
-        run: gh pr checkout ${{ github.event.issue.number }}
+        if: steps.branch-deploy.outputs.continue == 'true'
+        run: |
+          gh pr checkout ${{ github.event.issue.number }}
+
+          # Verify that the commit sha matches what we expect, just in
+          # case a new commit was pushed after the workflow was triggered.
+          if [[ $(git log -1 --format=%H) != $EXPECTED_SHA ]]; then
+             echo "::error title=bad-commit-id::Expected the commit ID of the pull request to be $EXPECTED_SHA but found $(git log -1 --format=%H)."
+             exit 1
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+          EXPECTED_SHA: ${{ steps.branch-deploy.outputs.sha }}
 
       # Install and run prek
       - name: Run prek
         id: prek
+        if: steps.branch-deploy.outputs.continue == 'true'
         uses: j178/prek-action@5337cb91e0fa35a7ff31b9ca345126d8bbbcdf16 # v2
         with:
           extra-args: --config .pre-commit-config.yaml --all-files
@@ -40,7 +61,7 @@ jobs:
 
       # indication that the linting has finished
       - name: react if linting finished succesfully
-        if: steps.prek.outcome == 'success'
+        if: steps.branch-deploy.outputs.continue == 'true' && steps.prek.outcome == 'success'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           comment-id: ${{ github.event.comment.id }}
@@ -48,7 +69,7 @@ jobs:
 
       - name: Commit & push changes
         id: commit-and-push
-        if: steps.prek.outcome == 'failure'
+        if: steps.branch-deploy.outputs.continue == 'true' && steps.prek.outcome == 'failure'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
@@ -60,21 +81,21 @@ jobs:
 
       - name: react if linting errors were fixed
         id: react-if-fixed
-        if: steps.commit-and-push.outcome == 'success'
+        if: steps.branch-deploy.outputs.continue == 'true' && steps.commit-and-push.outcome == 'success'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           comment-id: ${{ github.event.comment.id }}
           reactions: hooray
 
       - name: react if linting errors were not fixed
-        if: steps.commit-and-push.outcome == 'failure'
+        if: steps.branch-deploy.outputs.continue == 'true' && steps.commit-and-push.outcome == 'failure'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           comment-id: ${{ github.event.comment.id }}
           reactions: confused
 
       - name: react if linting errors were not fixed
-        if: steps.commit-and-push.outcome  == 'failure'
+        if: steps.branch-deploy.outputs.continue == 'true' && steps.commit-and-push.outcome  == 'failure'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
           issue-number: ${{ github.event.issue.number }}
