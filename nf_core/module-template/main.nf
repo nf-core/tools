@@ -78,6 +78,9 @@ process {{ component_name_underscore|upper }} {
     script:
     def args = task.ext.args ?: ''
     {% if has_meta -%}
+    // TODO nf-core: The $prefix variable as defined below is ONLY available within the script block.
+    //               If $prefix is required elsewhere (eg in output block), remove the def keyword.
+    //               For further information on variable scope see https://midnighter.github.io/nextflow-gotchas/gotchas/variable-scope/
     def prefix = task.ext.prefix ?: "${meta.id}"
     {%- endif %}
     {% if not_empty_template -%}
