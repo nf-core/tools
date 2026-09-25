@@ -44,7 +44,7 @@ jobs:
                 channel = '{{ short_name }}'
               }
               onStart {
-                enabled = false
+                enabled = true
               }
               onComplete {
                 message = ':white_check_mark: *{{ short_name }}/test_full* completed successfully! :tada:'
