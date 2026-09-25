@@ -60,6 +60,7 @@ class NfcoreCreateTest(unittest.TestCase):
         assert Path(pipeline.outdir, ".git").is_dir()
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
         assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
+        assert Path(pipeline.outdir, "AGENTS.md").exists()
         with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             assert "template" in fh.read()
 
@@ -136,6 +137,7 @@ class NfcoreCreateTest(unittest.TestCase):
         assert not (pipeline.outdir / "CODE_OF_CONDUCT.md").exists()
         assert not (pipeline.outdir / ".github").exists()
         assert not (pipeline.outdir / "conf" / "igenomes.config").exists()
+        assert not (pipeline.outdir / "AGENTS.md").exists()
 
     def test_template_customisation_all_files_grouping(self):
         """Test that all pipeline template files are included in a pipeline customisation group."""
