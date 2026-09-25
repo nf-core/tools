@@ -1,0 +1,13 @@
+{
+    // See https://github.com/nf-core/vscode-extensionpack
+    "recommendations": [
+        "charliermarsh.ruff",
+        "codezombiech.gitignore",
+        "esbenp.prettier-vscode",
+        "jebbs.markdown-extended",
+        "mechatroner.rainbow-csv",
+        "nextflow.nextflow",
+        "onnovalkering.vscode-singularity",
+        "redhat.vscode-yaml"
+    ]
+}
