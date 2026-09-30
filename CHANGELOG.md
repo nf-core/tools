@@ -20,6 +20,7 @@
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
 - Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
+- Don't block `workflow.onComplete` waiting for the MultiQC report, which hung aborted runs forever when `--email` or `--email_on_fail` was set ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
 
 ### Version updates
 
