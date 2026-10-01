@@ -134,13 +134,14 @@ def multiqc_config(self) -> dict[str, list[str]]:
             else:
                 passed.append("`assets/multiqc_config.yml` contains a matching 'report_comment'.")
 
-        # Check that export_plots is activated
-        try:
-            if not mqc_yml["export_plots"]:
-                raise AssertionError
-        except (AssertionError, KeyError, TypeError):
-            failed.append("`assets/multiqc_config.yml` does not contain 'export_plots: true'.")
-        else:
-            passed.append("`assets/multiqc_config.yml` contains 'export_plots: true'.")
+        if "export_plots" not in ignore_configs:
+            # Check that export_plots is activated
+            try:
+                if not mqc_yml["export_plots"]:
+                    raise AssertionError
+            except (AssertionError, KeyError, TypeError):
+                failed.append("`assets/multiqc_config.yml` does not contain 'export_plots: true'.")
+            else:
+                passed.append("`assets/multiqc_config.yml` contains 'export_plots: true'.")
 
     return {"passed": passed, "failed": failed, "ignored": ignored}
