@@ -166,6 +166,10 @@ def get_components_to_install(
             match = regex.search(line)
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
+                # Processes and workflows are named in capitals, so another name (a record type, a function)
+                # is not a component
+                if not re.fullmatch(r"[A-Z0-9_]+", name):
+                    continue
                 if link.startswith("../../../"):
                     if "../subworkflows/" in link:
                         component_name = name.lower()
