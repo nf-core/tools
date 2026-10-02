@@ -40,8 +40,8 @@ def multiqc_config(self) -> dict[str, list[str]]:
                     - report_section_order
                    - report_section_order
                    - report_comment
-                   - export_plots 
-                   
+                   - export_plots
+
 
     """
 
