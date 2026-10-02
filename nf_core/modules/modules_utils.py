@@ -1,5 +1,8 @@
+import csv
 import logging
+import re
 import time
+from collections import defaultdict
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -204,48 +207,107 @@ def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[st
     return local_modules, nfcore_modules
 
 
+COL_URI, COL_LABEL, COL_SYNONYMS, COL_EXTENSION = 0, 1, 2, 14
+_EXTENSION_LIKE = re.compile(r"[a-z0-9._-]{1,12}\Z")
+_OBSOLETE_HINTS = ("obsolete", "deprecated")
+
+
+def _parse_edam(data_bytes):
+    """Build {extension -> (uri, label)} from EDAM.tsv.
+
+    Keys come from three places, in decreasing order of authority:
+      1. the curated "File extension" column,
+      2. the concept's preferred label,
+      3. its exact synonyms, when they look like a file extension.
+    A token claimed by two different format concepts is dropped as ambiguous.
+    """
+    rows = list(csv.reader(data_bytes.decode("utf-8").splitlines(), delimiter="\t"))
+    formats = [
+        r
+        for r in rows[1:]
+        if r
+        and r[COL_URI].split("/")[-1].startswith("format")
+        and not any(h in " ".join(r[:3]).lower() for h in _OBSOLETE_HINTS)
+    ]
+
+    curated = {}
+    for r in formats:
+        if len(r) > COL_EXTENSION and r[COL_EXTENSION]:
+            for ext in r[COL_EXTENSION].split("|"):
+                curated.setdefault(ext, (r[COL_URI], r[COL_LABEL]))
+
+    claims = defaultdict(set)
+    for r in formats:
+        tokens = set()
+        if len(r) > COL_LABEL and r[COL_LABEL].strip():
+            tokens.add(r[COL_LABEL].strip().lower())
+        if len(r) > COL_SYNONYMS and r[COL_SYNONYMS].strip():
+            for syn in r[COL_SYNONYMS].split("|"):
+                syn = syn.strip().lower()
+                if syn and _EXTENSION_LIKE.match(syn):
+                    tokens.add(syn)
+        for t in tokens:
+            claims[t].add((r[COL_URI], r[COL_LABEL]))
+
+    edam_formats = {t: sorted(v)[0] for t, v in claims.items() if len(v) == 1}
+    ambiguous = sorted(t for t, v in claims.items() if len(v) > 1)
+    if ambiguous:
+        log.debug(f"EDAM tokens claimed by multiple format concepts, skipped: {ambiguous}")
+    edam_formats.update(curated)  # the curated column always wins
+    return edam_formats
+
+
 def cache_is_expired(path: Path) -> bool:
-    """Return True if the cache file is older than the configured TTL."""
-    age = time.time() - path.stat().st_mtime
-    return age > EDAM_CACHE_TTL
+
+    return time.time() - path.stat().st_mtime > EDAM_CACHE_TTL
 
 
-def load_edam():
-    """Load the EDAM ontology from the nf-core repository"""
-    edam_formats = {}
-    cache_path = Path(NFCORE_CACHE_DIR) / "EDAM.tsv"
+def load_edam(cache_dir=None):
+    """Load the EDAM ontology from the nf-core repository.
 
-    # Remove stale cache file
+    Returns:
+        dict: mapping of file extension to ``(URL, name)``. Empty when the
+        ontology could not be loaded. Callers that need to tell "failed to
+        load" apart from "loaded, no match" should use
+        :func:`load_edam_with_status`.
+    """
+    edam_formats, _ = load_edam_with_status(cache_dir)
+    return edam_formats
+
+
+def load_edam_with_status(cache_dir=None):
+    """Load the EDAM ontology, reporting whether the load succeeded.
+
+    Returns:
+        (edam_formats, ok): ``ok`` is False when the ontology could not be
+        downloaded or read, so callers can skip ontology annotation rather
+        than writing empty lists.
+    """
+    cache_path = Path(cache_dir if cache_dir is not None else NFCORE_CACHE_DIR) / "EDAM.tsv"
+
     if cache_path.exists() and cache_is_expired(cache_path):
         log.debug("Cached EDAM ontology expired; removing old cache file")
         cache_path.unlink(missing_ok=True)
 
     if not cache_path.exists():
-        log.debug("EDAM.tsv file not found in NFCORE_CACHE_DIR; downloading")
+        log.debug("EDAM.tsv file not found in cache; downloading")
         try:
             response = requests.get(EDAM_TSV_URL, timeout=15)
             response.raise_for_status()
             data_bytes = response.content
             cache_path.write_bytes(data_bytes)
         except requests.exceptions.RequestException as e:
-            log.warning(f"Failed to download EDAM ontology: {e}")
-            return edam_formats
+            log.warning(f"Failed to download EDAM ontology: {e}. Ontology annotations will be left unchanged.")
+            return {}, False
     else:
-        log.debug("Using EDAM.tsv file found in NFCORE_CACHE_DIR")
+        log.debug("Using EDAM.tsv file found in cache")
         try:
             data_bytes = cache_path.read_bytes()
         except OSError as e:
-            log.warning(f"Failed to load EDAM ontology: {e}")
-            return edam_formats
+            log.warning(f"Failed to load EDAM ontology: {e}. Ontology annotations will be left unchanged.")
+            return {}, False
 
-    for line in data_bytes.splitlines():
-        fields = line.decode("utf-8").split("\t")
-        if fields[0].split("/")[-1].startswith("format") and fields[14]:  # We choose an already provided extension
-            extensions = fields[14].split("|")
-            for extension in extensions:
-                if extension not in edam_formats:
-                    edam_formats[extension] = (fields[0], fields[1])  # URL, name
-    return edam_formats
+    return _parse_edam(data_bytes), True
 
 
 def scan_modules_dir(modules_dir: Path) -> list[str]:
