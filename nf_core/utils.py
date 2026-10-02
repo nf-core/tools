@@ -386,7 +386,7 @@ class Pipeline:
         name_parts = pipeline_name_raw.split("/")
         if len(name_parts) != 2 or not all(name_parts):
             if pipeline_name_raw:
-                reason = f"manifest.name '{pipeline_name_raw}' is not in the format '<repo>/<pipeline>'"
+                reason = f"manifest.name '{pipeline_name_raw}' is not in the format '<org>/<pipeline>'"
             else:
                 reason = "manifest.name is missing from the pipeline configuration"
             raise UserWarning(f"{reason}. Please set it to the full pipeline name, e.g. 'nf-core/mypipeline'.")

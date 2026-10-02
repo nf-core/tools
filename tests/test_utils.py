@@ -108,13 +108,13 @@ class TestUtils(TestPipelines):
         assert self.pipeline_obj.nf_config["dag"]["enabled"] is True
 
     def test_load_pipeline_config_malformed_manifest_name(self):
-        """Loading a config with a manifest.name without '<repo>/<pipeline>' gives a clear error"""
+        """Loading a config with a manifest.name without '<org>/<pipeline>' gives a clear error"""
         new_pipeline = self._make_pipeline_copy()
         config_fn = Path(new_pipeline, "nextflow.config")
         config_fn.write_text(config_fn.read_text().replace("'nf-core/testpipeline'", "'My-Pipeline'"))
 
         pipeline_obj = nf_core.utils.Pipeline(new_pipeline)
-        with pytest.raises(UserWarning, match=r"manifest\.name 'My-Pipeline' is not in the format '<repo>/<pipeline>'"):
+        with pytest.raises(UserWarning, match=r"manifest\.name 'My-Pipeline' is not in the format '<org>/<pipeline>'"):
             pipeline_obj.load_pipeline_config()
 
     def test_load_pipeline_config_missing_manifest_name(self):
