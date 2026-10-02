@@ -1,4 +1,7 @@
+import filecmp
 import logging
+import shutil
+import tempfile
 from pathlib import Path
 
 from nf_core.pipelines.containers_utils import ContainerConfigs
@@ -30,30 +33,29 @@ def container_configs(self):
 
     conf_dir = Path(self.wf_path) / "conf"
 
-    # Snapshot the content of existing container config files before generation
-    snapshot: dict[str, str] = {}
+    # Back up existing container config files before generation
+    backup_dir = Path(tempfile.mkdtemp())
     for path in conf_dir.glob("containers_*"):
-        snapshot[path.name] = path.read_text()
+        shutil.copy2(path, backup_dir / path.name)
 
     try:
         generated = ContainerConfigs(self.wf_path).generate_container_configs()
     except UserWarning as e:
         warned.append(f"Could not generate container configuration files: {e}")
+        shutil.rmtree(backup_dir)
         return {"passed": passed, "failed": failed, "warned": warned}
 
     log.debug(f"Generated {len(generated)} container config file(s): {', '.join(sorted(generated)) or 'none'}")
 
-    # Compare generated content to pre-generation snapshot
+    # Compare generated files to their pre-generation backups
     modified: set[str] = set()
     new: set[str] = set()
     correct: set[str] = set()
 
     for name in generated:
-        new_content = (conf_dir / name).read_text() if (conf_dir / name).exists() else ""
-        old_content = snapshot.get(name)
-        if old_content is None:
+        if not (backup_dir / name).exists():
             new.add(name)
-        elif new_content != old_content:
+        elif not (conf_dir / name).exists() or not filecmp.cmp(conf_dir / name, backup_dir / name, shallow=False):
             modified.add(name)
         else:
             correct.add(name)
@@ -81,8 +83,10 @@ def container_configs(self):
         # Restore working tree: write back original content for modified files, remove new files
         log.debug(f"Restoring working tree: resetting {len(modified)} modified, removing {len(new)} new file(s)")
         for name in modified:
-            (conf_dir / name).write_text(snapshot[name])
+            shutil.copy2(backup_dir / name, conf_dir / name)
         for name in new:
             (conf_dir / name).unlink(missing_ok=True)
+
+    shutil.rmtree(backup_dir)
 
     return {"passed": passed, "failed": failed, "warned": warned, "fixed": fixed, "could_fix": could_fix}
