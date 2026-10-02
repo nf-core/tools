@@ -4,6 +4,8 @@
 
 ### General
 
+- Fixes bug in `test-datasets list` related to broken rich import ([#4477](https://github.com/nf-core/tools/pull/4477))
+
 ### Linting
 
 - Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
@@ -18,6 +20,7 @@
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
 - Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
+- Bump nft-utils to 1.2.1, matching nf-core/modules ([#4489](https://github.com/nf-core/tools/pull/4489))
 
 ### Version updates
 
