@@ -1288,7 +1288,13 @@ class ModulesJson:
             current_repo = dep_mod.get("git_remote", repo)
             current_org = dep_mod.get("org_path", org)
             assert current_repo is not None and current_org is not None
-            installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
+            try:
+                installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
+            except KeyError:
+                # Only installed modules are dependencies. An included name that is not one, such as a record type
+                # or a function, is not tracked.
+                log.debug(f"'{name}' included in '{sw_name}' is not an installed module")
+                continue
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][name]["installed_by"] = []
             if sw_name not in installed_by:
@@ -1299,7 +1305,13 @@ class ModulesJson:
             current_repo = dep_subwf.get("git_remote", repo)
             current_org = dep_subwf.get("org_path", org)
             assert current_repo is not None and current_org is not None
-            installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name]["installed_by"]
+            try:
+                installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name][
+                    "installed_by"
+                ]
+            except KeyError:
+                log.debug(f"'{name}' included in '{sw_name}' is not an installed subworkflow")
+                continue
             if installed_by == ["subworkflows"]:
                 self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"] = []
             if sw_name not in installed_by:

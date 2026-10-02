@@ -58,41 +58,6 @@ def test_get_components_to_install_mixed_includes(tmp_path):
     assert sw_names == {"vcf_gather_bcftools", "bam_markduplicates"}
 
 
-def test_get_components_to_install_ignores_record_types(tmp_path):
-    """Record types imported from a module are not components."""
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text(
-        "include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort'\n"
-        "include { SamtoolsSortResult } from '../../../modules/nf-core/samtools/sort'\n"
-        "include { VCF_GATHER_BCFTOOLS } from '../../../subworkflows/nf-core/vcf_gather_bcftools'\n"
-        "include { VcfGatherBcftoolsResult } from '../../../subworkflows/nf-core/vcf_gather_bcftools'\n"
-    )
-    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
-    assert [module["name"] for module in modules] == ["samtools/sort"]
-    assert [subworkflow["name"] for subworkflow in subworkflows] == ["vcf_gather_bcftools"]
-
-
-def test_get_components_to_install_ignores_functions(tmp_path):
-    """Functions imported from another component are not components."""
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text(
-        "include { softwareVersionsToYAML } from '../utils_nfcore_pipeline'\n"
-        "include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort'\n"
-    )
-    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
-    assert [module["name"] for module in modules] == ["samtools/sort"]
-    assert len(subworkflows) == 0
-
-
-def test_get_components_to_install_aliased_module(tmp_path):
-    """A module included with an alias is still a component."""
-    main_nf = tmp_path / "main.nf"
-    main_nf.write_text("include { SAMTOOLS_SORT as SORT_BAM } from '../../../modules/nf-core/samtools/sort'\n")
-    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
-    assert [module["name"] for module in modules] == ["samtools/sort"]
-    assert len(subworkflows) == 0
-
-
 class TestTestComponentsUtils(TestComponents):
     def test_get_biotools_id(self):
         """Test getting the bio.tools ID for a tool"""

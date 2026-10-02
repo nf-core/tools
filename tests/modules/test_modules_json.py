@@ -246,3 +246,39 @@ class TestModulesCreate(TestModules):
         mod_json_obj_new.check_up_to_date()
         mod_json_new = mod_json_obj_new.get_modules_json()
         assert mod_json_orig == mod_json_new
+
+
+def test_recreate_dependencies_skips_names_that_are_not_installed(tmp_path):
+    """An included record type or function is not an installed component, so it is not tracked."""
+    remote = NF_CORE_MODULES_REMOTE
+    sw_dir = tmp_path / "subworkflows" / NF_CORE_MODULES_NAME / "bam_stats"
+    sw_dir.mkdir(parents=True)
+    (sw_dir / "main.nf").write_text(
+        "include { SAMTOOLS_STATS } from '../../../modules/nf-core/samtools/stats/main'\n"
+        "include { SamtoolsStatsResult } from '../../../modules/nf-core/samtools/stats/main'\n"
+        "include { softwareVersionsToYAML } from '../utils_nfcore_pipeline'\n"
+    )
+    modules_json = ModulesJson(tmp_path)
+    modules_json.modules_json = {
+        "name": "demo",
+        "homePage": "",
+        "repos": {
+            remote: {
+                "modules": {
+                    NF_CORE_MODULES_NAME: {
+                        "samtools/stats": {"branch": "master", "git_sha": "abc", "installed_by": ["modules"]}
+                    }
+                },
+                "subworkflows": {
+                    NF_CORE_MODULES_NAME: {
+                        "bam_stats": {"branch": "master", "git_sha": "abc", "installed_by": ["subworkflows"]}
+                    }
+                },
+            }
+        },
+    }
+
+    modules_json.recreate_dependencies(remote, NF_CORE_MODULES_NAME, {"name": "bam_stats"})
+
+    installed = modules_json.modules_json["repos"][remote]["modules"][NF_CORE_MODULES_NAME]
+    assert installed["samtools/stats"]["installed_by"] == ["bam_stats"]
