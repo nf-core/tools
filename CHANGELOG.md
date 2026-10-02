@@ -10,6 +10,7 @@
 
 - Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
 - Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
+- Add `docs_pages` test, warning when a page in `docs/` will not be rendered on the nf-core website ([#4475](https://github.com/nf-core/tools/pull/4475))
 
 ### Modules
 

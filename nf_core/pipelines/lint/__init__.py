@@ -35,6 +35,7 @@ from .actions_nf_test import actions_nf_test
 from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
 from .container_configs import container_configs
+from .docs_pages import docs_pages
 from .files_exist import files_exist
 from .files_unchanged import files_unchanged
 from .included_configs import included_configs
@@ -89,6 +90,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     base_config = base_config
     modules_config = modules_config
     container_configs = container_configs
+    docs_pages = docs_pages
     files_exist = files_exist
     files_unchanged = files_unchanged
     merge_markers = merge_markers
@@ -169,6 +171,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "nfcore_yml",
             "rocrate_readme_sync",
             "container_configs",
+            "docs_pages",
         ] + (["version_consistency", "included_configs"] if release_mode else [])
 
     def _load(self) -> bool:
