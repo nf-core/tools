@@ -10,6 +10,7 @@
 
 - Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
 - Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
+- fix(lint): respect ignore_configs for multiqc_config's export_plots check ([#4492](https://github.com/nf-core/tools/pull/4492))
 
 ### Modules
 
