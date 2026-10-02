@@ -4,8 +4,12 @@
 
 ### General
 
+- Fixes bug in `test-datasets list` related to broken rich import ([#4477](https://github.com/nf-core/tools/pull/4477))
+
 ### Linting
 
+- Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
+- Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
 - remove `ext.use_gpu` as a permitted ext key, superseded by `task.accelerator` ([#4445](https://github.com/nf-core/tools/pull/4445))
 
 ### Modules
@@ -15,8 +19,12 @@
 ### Template
 
 - remove redundant `ext.use_gpu` from the `process_gpu` label, use `accelerator` only ([#4445](https://github.com/nf-core/tools/pull/4445))
+- Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
+- git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
+- Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
+- Bump nft-utils to 1.2.1, matching nf-core/modules ([#4489](https://github.com/nf-core/tools/pull/4489))
 
-#### Version updates
+### Version updates
 
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
