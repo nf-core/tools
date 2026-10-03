@@ -48,3 +48,23 @@ class TestLintFilesUnchanged(TestLint):
         lint_obj._load()
         results = lint_obj.files_unchanged()
         assert len(results.get("failed", [])) == 0
+
+    def test_files_unchanged_contributors_without_names(self):
+        """Contributors without a name and no author should skip the test instead of crashing"""
+        self.lint_obj._load()
+        self.lint_obj.nf_config["manifest"]["contributors"] = [{"affiliation": "somewhere"}, {"name": ""}]
+        self.lint_obj.nf_config["manifest"].pop("author", None)
+        results = self.lint_obj.files_unchanged()
+        assert len(results["ignored"]) == 1
+        assert "no names" in results["ignored"][0]
+        assert "passed" not in results
+        assert "failed" not in results
+
+    def test_files_unchanged_contributors_without_names_uses_author(self):
+        """Contributors without a name should fall back to manifest.author"""
+        self.lint_obj._load()
+        self.lint_obj.nf_config["manifest"]["contributors"] = [{"affiliation": "somewhere"}]
+        self.lint_obj.nf_config["manifest"]["author"] = "Test Author"
+        results = self.lint_obj.files_unchanged()
+        assert not any("no names" in msg for msg in results["ignored"])
+        assert len(results["passed"]) > 0
