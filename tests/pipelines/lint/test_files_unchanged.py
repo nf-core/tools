@@ -29,10 +29,18 @@ class TestLintFilesUnchanged(TestLint):
 
     def test_files_unchanged_contributors_without_names(self):
         """Contributors without a name and no author should skip the test instead of crashing"""
-        self.lint_obj._load()
-        self.lint_obj.nf_config["manifest"]["contributors"] = [{"affiliation": "somewhere"}, {"name": ""}]
-        self.lint_obj.nf_config["manifest"].pop("author", None)
-        results = self.lint_obj.files_unchanged()
+        new_pipeline = self._make_pipeline_copy()
+        config_path = Path(new_pipeline, "nextflow.config")
+        config = config_path.read_text().replace("name: 'me',", "")
+        config_path.write_text(config)
+
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+        lint_obj._load()
+        assert lint_obj.nf_config["manifest"]["contributors"]
+        assert not any(c.get("name") for c in lint_obj.nf_config["manifest"]["contributors"])
+        assert "author" not in lint_obj.nf_config["manifest"]
+
+        results = lint_obj.files_unchanged()
         assert len(results["ignored"]) == 1
         assert "no names" in results["ignored"][0]
         assert "passed" not in results
@@ -40,9 +48,18 @@ class TestLintFilesUnchanged(TestLint):
 
     def test_files_unchanged_contributors_without_names_uses_author(self):
         """Contributors without a name should fall back to manifest.author"""
-        self.lint_obj._load()
-        self.lint_obj.nf_config["manifest"]["contributors"] = [{"affiliation": "somewhere"}]
-        self.lint_obj.nf_config["manifest"]["author"] = "Test Author"
-        results = self.lint_obj.files_unchanged()
+        new_pipeline = self._make_pipeline_copy()
+        config_path = Path(new_pipeline, "nextflow.config")
+        config = config_path.read_text().replace("name: 'me',", "")
+        config = config.replace("manifest {", "manifest {\n    author = 'Test Author'")
+        config_path.write_text(config)
+
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+        lint_obj._load()
+        assert lint_obj.nf_config["manifest"]["contributors"]
+        assert not any(c.get("name") for c in lint_obj.nf_config["manifest"]["contributors"])
+        assert lint_obj.nf_config["manifest"]["author"] == "Test Author"
+
+        results = lint_obj.files_unchanged()
         assert not any("no names" in msg for msg in results["ignored"])
         assert len(results["passed"]) > 0
