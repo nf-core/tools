@@ -48,3 +48,9 @@ repos:
         name: Prevent committing output from pipeline test runs to the pipeline code itself
         entry: ./.hooks/block_pipeline_outdir.sh
         language: script
+      - id: no-nextflow-view
+        name: Disallow Nextflow .view operators
+        entry: bash .hooks/check-nextflow-view.sh
+        language: system
+        types: [file]
+        files: '\.nf$'
