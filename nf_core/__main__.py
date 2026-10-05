@@ -211,7 +211,7 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
 
 
 # nf-core pipelines containers subcommands
-@pipelines.group("containers", aliases=["container"])
+@pipelines.group("containers", aliases=["container", "con"])
 @click.pass_context
 def pipelines_containers(ctx):
     """
