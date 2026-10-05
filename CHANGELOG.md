@@ -5,6 +5,7 @@
 ### General
 
 - Fixes bug in `test-datasets list` related to broken rich import ([#4477](https://github.com/nf-core/tools/pull/4477))
+- Add `nf-core pipelines containers create-configs` to regenerate the pipeline `conf/containers_*.config` files ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
 
 ### Linting
 
