@@ -38,9 +38,9 @@ def multiqc_config(self) -> dict[str, list[str]]:
         lint:
                 multiqc_config:
                     - report_section_order
-                   - report_section_order
-                   - report_comment
-                   - export_plots
+                    - report_section_order
+                    - report_comment
+                    - export_plots
 
 
     """
