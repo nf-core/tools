@@ -1180,6 +1180,7 @@ def test_validate_meta_keys():
             """
     def prefix = "${meta.id}"
     def se = meta.single_end
+    def strand = meta.strandedness
     def id = meta.subMap(['id'])
     def m2id = meta2?.id
     """
@@ -1194,14 +1195,14 @@ def test_validate_meta_keys():
         [
             """
     def sample = meta.sample
-    def strand = meta.strandedness
+    def region = meta.region
     def m2opts = meta2?.options
     """
         ],
     )
     assert len(mock_lint.failed) == 1
     assert "meta.sample" in mock_lint.failed[0][2]
-    assert "meta.strandedness" in mock_lint.failed[0][2]
+    assert "meta.region" in mock_lint.failed[0][2]
     assert "meta2?.options" in mock_lint.failed[0][2]
 
     # meta2/meta3 with valid keys
