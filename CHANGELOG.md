@@ -11,6 +11,7 @@
 
 - Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
 - Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
+- Interpolate "${params.XXX}" in schema default value when comparing to `nextflow.config` params defaults ([#4505](https://github.com/nf-core/tools/pull/4505)).
 
 ### Modules
 

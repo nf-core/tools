@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 import nf_core.pipelines.lint
+from nf_core.pipelines.lint.nextflow_config import resolve_schema_default
 
 from ..test_lint import TestLint
 
@@ -285,3 +286,60 @@ class TestLintNextflowConfig(TestLint):
             f"Config ``manifest.diagram`` should be a relative path inside the pipeline: ``{outside}``"
             in result["failed"]
         )
+
+    def test_resolve_schema_default(self):
+        assert (
+            resolve_schema_default(
+                "--seed ${params.seed} --hmm-ne ${params.effective_population_size}",
+                {"seed": 1, "effective_population_size": 100000},
+            )
+            == "--seed 1 --hmm-ne 100000"
+        )
+
+    def test_resolve_schema_default_circular_reference(self):
+        params = {
+            "seed": "${params.seed2}",
+            "seed2": "${params.seed}",
+        }
+        assert resolve_schema_default("${params.seed2}", params) == "${params.seed}"
+        assert resolve_schema_default("${params.seed}", params) == "${params.seed2}"
+
+    def test_default_values_interpolated_string(self):
+        """Test comparing a schema default containing params interpolation."""
+        # Add an interpolated string to nextflow.config
+        nf_conf_file = Path(self.new_pipeline) / "nextflow.config"
+        with open(nf_conf_file) as f:
+            content = f.read()
+            new_content = re.sub(
+                r"validate_params\s*=\s*true",
+                ('validate_params = true\nseed = 1\noptions_shapeit5 = "--seed ${params.seed}"'),
+                content,
+            )
+        with open(nf_conf_file, "w") as f:
+            f.write(new_content)
+
+        # Add the same interpolated string as a schema default
+        nf_schema_file = Path(self.new_pipeline) / "nextflow_schema.json"
+        with open(nf_schema_file) as f:
+            content = f.read()
+            new_content = re.sub(
+                r'"validate_params": {',
+                (
+                    '    "seed": {"type": "integer", "default": 1},\n'
+                    '    "options_shapeit5": {'
+                    '"type": "string", '
+                    '"default": "--seed ${params.seed}"},\n'
+                    '"validate_params": {'
+                ),
+                content,
+            )
+        with open(nf_schema_file, "w") as f:
+            f.write(new_content)
+
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
+        lint_obj.load_pipeline_config()
+        result = lint_obj.nextflow_config()
+
+        assert not any("params.options_shapeit5" in failure for failure in result["failed"])
+        assert any("Config default value correct: params.options_shapeit5" in passed for passed in result["passed"])
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]

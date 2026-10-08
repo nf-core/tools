@@ -11,6 +11,20 @@ log = logging.getLogger(__name__)
 DIAGRAM_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
 
+def resolve_schema_default(value, params):
+    """
+    Resolve schema default values by substituting parameter references.
+    """
+    if not isinstance(value, str):
+        return value
+
+    return re.sub(
+        r"\$\{params\.([A-Za-z0-9_]+)\}",
+        lambda m: str(params.get(m.group(1), m.group(0))),
+        value,
+    )
+
+
 def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
 
@@ -453,6 +467,7 @@ def nextflow_config(self) -> dict[str, list[str]]:
                     )
             else:
                 schema_default = str(schema.schema_defaults[param_name])
+                schema_default = resolve_schema_default(schema_default, schema.schema_defaults)
                 config_default = str(param_value)
             if config_default is not None and config_default == schema_default:
                 passed.append(f"Config default value correct: {param}= {schema_default}")
