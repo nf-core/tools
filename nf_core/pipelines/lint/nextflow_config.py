@@ -19,7 +19,7 @@ def resolve_schema_default(value, params):
         return value
 
     return re.sub(
-        r"\$\{params\.([A-Za-z0-9_]+)\}",
+        r"\$\{?params\.([A-Za-z0-9_]+)\}?",
         lambda m: str(params.get(m.group(1), m.group(0))),
         value,
     )

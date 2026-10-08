@@ -296,6 +296,15 @@ class TestLintNextflowConfig(TestLint):
             == "--seed 1 --hmm-ne 100000"
         )
 
+    def test_resolve_schema_default_without_bracket(self):
+        assert (
+            resolve_schema_default(
+                "--seed $params.seed --hmm-ne $params.effective_population_size",
+                {"seed": 1, "effective_population_size": 100000},
+            )
+            == "--seed 1 --hmm-ne 100000"
+        )
+
     def test_resolve_schema_default_circular_reference(self):
         params = {
             "seed": "${params.seed2}",
@@ -328,7 +337,7 @@ class TestLintNextflowConfig(TestLint):
                     '    "seed": {"type": "integer", "default": 1},\n'
                     '    "options_shapeit5": {'
                     '"type": "string", '
-                    '"default": "--seed ${params.seed}"},\n'
+                    '"default": "--seed $params.seed"},\n'
                     '"validate_params": {'
                 ),
                 content,
