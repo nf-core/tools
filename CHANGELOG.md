@@ -23,6 +23,7 @@
 - Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
 - Bump nft-utils to 1.2.1, matching nf-core/modules ([#4489](https://github.com/nf-core/tools/pull/4489))
 - VSCode: add recommended extensions, fix link to admonition styling CSS for markdown previews ([#4455](https://github.com/nf-core/tools/pull/4455))
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
 - Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
 
 ### Version updates
