@@ -63,6 +63,7 @@
 - Pin action-tower-launch to v2 ([#4502](https://github.com/nf-core/tools/pull/4502))
 - Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
 - Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
 
 ### Version updates
 
