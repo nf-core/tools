@@ -444,7 +444,7 @@ def pipelines_schema_build(directory, no_prompts, web_only, url):
 
 
 # nf-core pipelines schema lint
-def pipelines_schema_lint(schema_path):
+def pipelines_schema_lint(schema_path, fail_warned=False):
     """
     Check that a given pipeline schema is valid.
 
@@ -455,6 +455,8 @@ def pipelines_schema_lint(schema_path):
     command that does just the schema linting nice and quickly.
 
     If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
+
+    If fail_warned is set, warnings raised while linting cause a non-zero exit code.
     """
     from nf_core.pipelines.schema import PipelineSchema
 
@@ -467,6 +469,8 @@ def pipelines_schema_lint(schema_path):
             schema_obj.validate_schema_title_description()
         except AssertionError as e:
             log.warning(e)
+            if fail_warned:
+                sys.exit(1)
     except AssertionError:
         sys.exit(1)
 

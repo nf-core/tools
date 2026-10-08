@@ -813,19 +813,20 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.argument(
     "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
-def command_pipelines_schema_lint(directory, schema_file):
+def command_pipelines_schema_lint(directory, fail_warned, schema_file):
     """
     Check that a given pipeline schema is valid.
     """
     from nf_core.commands_pipelines import pipelines_schema_lint
 
-    pipelines_schema_lint(Path(directory, schema_file))
+    pipelines_schema_lint(Path(directory, schema_file), fail_warned)
 
 
 # nf-core pipelines schema docs
