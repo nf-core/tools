@@ -12,6 +12,8 @@
 
 ### Template
 
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
+
 #### Version updates
 
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
@@ -63,7 +65,6 @@
 - Pin action-tower-launch to v2 ([#4502](https://github.com/nf-core/tools/pull/4502))
 - Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
 - Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
-- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
 
 ### Version updates
 
