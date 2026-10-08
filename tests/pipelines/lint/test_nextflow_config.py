@@ -296,6 +296,15 @@ class TestLintNextflowConfig(TestLint):
             == "--seed 1 --hmm-ne 100000"
         )
 
+    def test_resolve_schema_default_not_string(self):
+        assert (
+            resolve_schema_default(
+                20,
+                {"seed": 1, "effective_population_size": 100000},
+            )
+            == 20
+        )
+
     def test_resolve_schema_default_without_bracket(self):
         assert (
             resolve_schema_default(
