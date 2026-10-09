@@ -8,7 +8,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-{% if nf_schema %}include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
+{% if nf_schema %}//
+// nf-schema plugin: https://nextflow-io.github.io/nf-schema/latest/
+//
+include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'
 include { paramsHelp                } from 'plugin/nf-schema'{% endif %}
@@ -120,6 +123,9 @@ workflow PIPELINE_INITIALISATION {
 
     //
     // Create channel from input file provided through params.input
+{%- if nf_schema %}
+    // See https://nextflow-io.github.io/nf-schema/latest/ for documentation
+{%- endif %}
     //
 
     channel{% if nf_schema %}
