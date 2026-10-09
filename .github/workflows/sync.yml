@@ -30,28 +30,44 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Pushes and pull requests use the nf-core-bot token; the default token only needs to read this repo.
+permissions:
+  contents: read
+
 jobs:
   get-pipelines:
     runs-on: "ubuntu-latest"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      # Inputs and the fetched pipeline list go through env and jq, never into the script text, so a value can't run
+      # as code in this workflow, which holds the bot token.
       - id: set-matrix
+        env:
+          TESTPIPELINE: ${{ inputs.testpipeline }}
+          PIPELINE: ${{ inputs.pipeline }}
         run: |
-          if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
+          if [ "$TESTPIPELINE" == "true" ]; then
             echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
-          elif [ "${{ github.event.inputs.pipeline }}" != "all" ] && [ "${{ github.event.inputs.pipeline }}" != "" ]; then
-            curl -O https://nf-co.re/pipeline_names.json
-            # check if the pipeline exists
-            if ! grep -q "\"${{ github.event.inputs.pipeline }}\"" pipeline_names.json; then
-              echo "Pipeline ${{ github.event.inputs.pipeline }} does not exist"
-              exit 1
-            fi
-            echo '{"pipeline":["${{ github.event.inputs.pipeline }}"]}' > pipeline_names.json
           else
-            curl -O https://nf-co.re/pipeline_names.json
+            curl -fsSL -o all_pipelines.json https://nf-co.re/pipeline_names.json
+            if [ "$PIPELINE" != "all" ] && [ -n "$PIPELINE" ]; then
+              # check if the pipeline exists
+              if ! jq -e --arg p "$PIPELINE" '.pipeline | index($p)' all_pipelines.json > /dev/null; then
+                echo "::error::Pipeline '$PIPELINE' does not exist"
+                exit 1
+              fi
+              jq -c --arg p "$PIPELINE" '{pipeline: [$p]}' all_pipelines.json > pipeline_names.json
+            else
+              jq -c '{pipeline: .pipeline}' all_pipelines.json > pipeline_names.json
+            fi
           fi
-          echo "matrix=$(cat pipeline_names.json)" >> $GITHUB_OUTPUT
+          # Pipeline names end up in paths and repository names, so only allow plain names.
+          if ! jq -e '.pipeline | length > 0 and all(test("^[a-z0-9_-]+$"))' pipeline_names.json > /dev/null; then
+            echo "::error::Unexpected pipeline name in: $(cat pipeline_names.json)"
+            exit 1
+          fi
+          echo "matrix=$(jq -c . pipeline_names.json)" >> "$GITHUB_OUTPUT"
 
   sync:
     needs: get-pipelines
@@ -61,13 +77,20 @@ jobs:
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
+    env:
+      PIPELINE: ${{ matrix.pipeline }}
+      BLOG_POST: ${{ inputs.blog_post }}
+      VERBOSE: ${{ inputs.debug && '--verbose' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out nf-core/tools
         with:
           ref: ${{ github.ref_name }}
+          persist-credentials: false
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # The bot token stays in this checkout's git config: `nf-core pipelines sync` pushes with plain `git push`. The only
+      # artifact this job uploads is the sync log, never the checkout.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7 # zizmor: ignore[artipacked]
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -97,15 +120,14 @@ jobs:
       - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
 
         run: |
-          pushd nf-core/${{ matrix.pipeline }}
+          pushd "nf-core/${PIPELINE}"
           defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
           if [ -z "$defaultBranch" ]; then
             defaultBranch="master"
           fi
           popd
           echo "Default branch: $defaultBranch"
-          echo "defaultBranch=$defaultBranch" >> GITHUB_OUTPUT
-          git config --global init.defaultBranch $defaultBranch
+          git config --global init.defaultBranch "$defaultBranch"
 
       - name: Run synchronisation
         id: sync
@@ -116,14 +138,16 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          uv run nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
-            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
-            pipelines sync -d nf-core/${{ matrix.pipeline }} \
+          # $VERBOSE is unquoted on purpose: when empty, it must add no argument at all.
+          # shellcheck disable=SC2086
+          uv run nf-core --log-file "sync_log_${PIPELINE}.txt" \
+            $VERBOSE \
+            pipelines sync -d "nf-core/${PIPELINE}" \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
-            --github-repository nf-core/${{ matrix.pipeline }} \
-            --blog-post ${{inputs.blog_post}}
+            --github-repository "nf-core/${PIPELINE}" \
+            --blog-post "$BLOG_POST"
 
       - name: Install newer Nextflow (retry fallback)
         if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
@@ -138,14 +162,16 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          uv run nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
-            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
-            pipelines sync -d nf-core/${{ matrix.pipeline }} \
+          # $VERBOSE is unquoted on purpose: when empty, it must add no argument at all.
+          # shellcheck disable=SC2086
+          uv run nf-core --log-file "sync_log_${PIPELINE}.txt" \
+            $VERBOSE \
+            pipelines sync -d "nf-core/${PIPELINE}" \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
-            --github-repository nf-core/${{ matrix.pipeline }} \
-            --blog-post ${{inputs.blog_post}}
+            --github-repository "nf-core/${PIPELINE}" \
+            --blog-post "$BLOG_POST"
 
       - name: Upload sync log file artifact
         if: ${{ always() }}

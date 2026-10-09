@@ -3,56 +3,122 @@ on:
   issue_comment:
     types: [created] # Add "@nf-core-bot update template snapshots" as a PR comment to trigger this workflow.
 
+# Same trust boundary as the reusable fix-linting workflow in nf-core/actions:
+#   acknowledge       - gates the run on the comment and on who wrote it. Never checks out the pull request.
+#   update-snapshots  - runs the pull request's code. No secrets, read-only token, no persisted credential.
+#   commit-snapshots  - validates the snapshots, commits and pushes them with the bot token. Never runs pull
+#                       request code.
+permissions: {}
+
 jobs:
-  prepare-matrix:
-    name: Retrieve all template features
+  acknowledge:
+    name: Check trigger and permissions
+    # issue_comment fires for issues too; only pull requests carry `issue.pull_request`.
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@nf-core-bot update template snapshots')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
+      contents: read
+      issues: write
       pull-requests: write
     outputs:
+      head-sha: ${{ steps.check.outputs.head_sha }}
       all_features: ${{ steps.create_matrix.outputs.matrix }}
-
     steps:
-      - name: branch-deploy
-        id: branch-deploy
-        uses: github/branch-deploy@f0984057ffe1aa340aa017b6eafb894310aed88e # v12.0.0
-        with:
-          trigger: "@nf-core-bot update template snapshots"
-          reaction: "eyes"
-          stable_branch: "dev"
+      # The bot pushes to the pull request head branch, so its author or a write collaborator gains nothing they
+      # couldn't do themselves. A protected head branch blocks even its author, so only admins are trusted there.
+      - name: Require write access, or admin when the head branch is protected
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          PR_AUTHOR: ${{ github.event.issue.user.login }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if ! pr_json="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" 2>&1)"; then
+            echo "::error::Could not read pull request #${PR_NUMBER}, so the request is denied. gh said: ${pr_json}"
+            exit 1
+          fi
+          head_repo="$(jq -r '.head.repo.full_name // empty' <<<"$pr_json")"
+          head_ref="$(jq -r '.head.ref' <<<"$pr_json")"
+          if [ -z "$head_repo" ]; then
+            echo "::error::The pull request's head repository is gone (for example a deleted fork), so the request is denied."
+            exit 1
+          fi
+          echo "head_sha=$(jq -r '.head.sha' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
 
+          if ! branch_json="$(gh api "repos/${head_repo}/branches/${head_ref}" 2>&1)"; then
+            echo "::error::Could not read branch protection for '${head_repo}:${head_ref}', so the request is denied. gh said: ${branch_json}"
+            exit 1
+          fi
+          protected="$(jq -r '.protected' <<<"$branch_json")"
+
+          if [ "$protected" != "true" ] && [ "$COMMENTER" = "$PR_AUTHOR" ]; then
+            echo "Commenter is the pull request author, and the head branch is not protected."
+            exit 0
+          fi
+
+          if ! permission_json="$(gh api "repos/${REPO}/collaborators/${COMMENTER}/permission" 2>&1)"; then
+            echo "::error::Could not determine ${COMMENTER}'s permission on ${REPO}, so the request is denied. gh said: ${permission_json}"
+            exit 1
+          fi
+          permission="$(jq -r .permission <<<"$permission_json")"
+          echo "Commenter '${COMMENTER}' has repository permission: ${permission}. Head branch protected: ${protected}."
+
+          if [ "$protected" = "true" ]; then
+            [ "$permission" = "admin" ] && exit 0
+            echo "::error::The head branch '${head_ref}' is protected, so updating its snapshots needs admin access to ${REPO}."
+            exit 1
+          fi
+          case "$permission" in
+            admin|write) exit 0 ;;
+            *)
+              echo "::error::${COMMENTER} is not the pull request author and does not have write access to ${REPO}."
+              exit 1
+              ;;
+          esac
+
+      - name: React to the comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='eyes'
+
+      # issue_comment runs check out the default branch, so the feature list never comes from the pull request.
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Create Matrix
         id: create_matrix
         run: |
           echo "matrix=$(yq '.[].features | keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config")' nf_core/pipelines/create/template_features.yml | \
-          yq 'flatten | tojson(0)' -)" >> $GITHUB_OUTPUT
+          yq 'flatten | tojson(0)' -)" >> "$GITHUB_OUTPUT"
 
   update-snapshots:
-    needs: [prepare-matrix]
+    needs: [acknowledge]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Runs the pull request's Python package, template and nf-test files: no secret is referenced in this job.
     permissions:
-      pull-requests: write
+      contents: read
     strategy:
       matrix:
-        TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
+        TEMPLATE: ${{ fromJson(needs.acknowledge.outputs.all_features) }}
         include:
           - TEMPLATE: all
       fail-fast: false
+    env:
+      TEMPLATE: ${{ matrix.TEMPLATE }}
     steps:
-      # Use the @nf-core-bot token to check out so we can push later
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          token: ${{ secrets.nf_core_bot_auth_token }}
-
-      # Action runs on the issue comment, so we don't get the PR by default
-      # Use the gh cli to check out the PR
+      # The exact commit the permission check saw, so the commit job can tell if the pull request moved since.
       - name: Checkout Pull Request
-        run: gh pr checkout ${{ github.event.issue.number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.acknowledge.outputs.head-sha }}
+          persist-credentials: false
 
       # Install dependencies and run pytest
       - name: Set up Python
@@ -60,10 +126,12 @@ jobs:
         with:
           python-version: "3.14"
 
+      # issue_comment runs only get read-only access to the default branch's cache, so restore it but don't try to save.
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
+          save-cache: false
 
       - name: Install dependencies
         run: uv sync
@@ -81,31 +149,34 @@ jobs:
 
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}
+        env:
+          ALL_FEATURES: ${{ needs.acknowledge.outputs.all_features }}
         run: |
           mkdir -p create-test-lint-wf
-          export NXF_WORK=$(pwd)
-          if [ ${{ matrix.TEMPLATE }} == "all" ]
+          NXF_WORK=$(pwd)
+          export NXF_WORK
+          if [ "$TEMPLATE" == "all" ]
           then
-            printf "org: my-prefix\nskip_features: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
+            printf "org: my-prefix\nskip_features: %s" "$ALL_FEATURES" > create-test-lint-wf/template_skip_all.yml
           else
-            printf "org: my-prefix\nskip_features: [${{ matrix.TEMPLATE }}]" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
+            printf "org: my-prefix\nskip_features: [%s]" "$TEMPLATE" > "create-test-lint-wf/template_skip_${TEMPLATE}.yml"
           fi
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           cd create-test-lint-wf
-          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
+          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml "template_skip_${TEMPLATE}.yml"
 
       # Copy snapshot file
       - name: copy snapshot file
         if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
         run: |
-          if [ ! -f ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap ]; then
-              echo "Generate a snapshot when creating a pipeline and skipping the feature ${{ matrix.TEMPLATE }}."
+          if [ ! -f ".github/snapshots/${TEMPLATE}.nf.test.snap" ]; then
+              echo "Generate a snapshot when creating a pipeline and skipping the feature ${TEMPLATE}."
               echo "Then, copy it to the directory .github/snapshots"
           else
-            cp ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+            cp ".github/snapshots/${TEMPLATE}.nf.test.snap" create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
           fi
 
       # Run pipeline with nf-test
@@ -123,7 +194,7 @@ jobs:
       - name: Copy snapshot to .github/snapshots
         if: steps.nf-test.outcome == 'success'
         run: |
-          cp create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap .github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap
+          cp create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap ".github/snapshots/${TEMPLATE}.nf.test.snap"
 
       - name: Upload snapshot artifact
         if: steps.nf-test.outcome == 'success'
@@ -131,65 +202,100 @@ jobs:
         with:
           name: snapshot-${{ matrix.TEMPLATE }}
           path: .github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap
-
-      # indication that the run has finished
-      - name: react if finished succesfully
-        if: steps.nf-test.outcome == 'success'
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ github.event.comment.id }}
-          reactions: "+1"
+          retention-days: 1
 
   commit-snapshots:
-    needs: [prepare-matrix, update-snapshots]
+    needs: [acknowledge, update-snapshots]
     runs-on: ubuntu-latest
-    if: always() && needs.update-snapshots.result != 'skipped'
+    # Also runs when some snapshot jobs failed, to commit the ones that worked and report the rest.
+    if: always() && needs.acknowledge.result == 'success' && needs.update-snapshots.result != 'skipped'
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: update-template-snapshots-${{ github.event.issue.number }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          token: ${{ secrets.nf_core_bot_auth_token }}
+          persist-credentials: false
 
-      - name: Checkout Pull Request
-        run: gh pr checkout ${{ github.event.issue.number }}
+      # `gh pr checkout` sets up the push target, including fork branches; the bot token is only added at push time.
+      - name: Checkout exact pull request head
         env:
-          GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+          EXPECTED_HEAD_SHA: ${{ needs.acknowledge.outputs.head-sha }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh pr checkout "$PR_NUMBER"
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::The pull request head changed after the snapshots were generated. Comment again to regenerate them."
+            exit 1
+          fi
 
+      # Outside the work tree: the artifacts were written by jobs that ran pull request code.
       - name: Download all snapshot artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: snapshot-*
-          path: .github/snapshots/
+          path: ${{ runner.temp }}/snapshots
           merge-multiple: true
+
+      # Only regular, reasonably sized JSON files named after a matrix entry make it into the commit.
+      - name: Validate and copy snapshots
+        env:
+          ALL_FEATURES: ${{ needs.acknowledge.outputs.all_features }}
+          SNAPSHOT_DIR: ${{ runner.temp }}/snapshots
+        run: |
+          [ -d "$SNAPSHOT_DIR" ] || { echo "No snapshots were generated."; exit 0; }
+          find "$SNAPSHOT_DIR" -mindepth 1 -print0 | while IFS= read -r -d '' f; do
+            name="${f#"$SNAPSHOT_DIR"/}"
+            feature="${name%.nf.test.snap}"
+            if [ ! -f "$f" ] || [ -L "$f" ] || [ "$feature.nf.test.snap" != "$name" ] \
+              || ! jq -e --arg f "$feature" 'index($f) != null' <<<"$ALL_FEATURES" >/dev/null; then
+              echo "::error::Unexpected file in snapshot artifacts: $name"
+              exit 1
+            fi
+            if [ "$(stat -c %s "$f")" -gt 1048576 ] || ! jq -e . "$f" >/dev/null; then
+              echo "::error::$name is not a valid snapshot file"
+              exit 1
+            fi
+            cp "$f" ".github/snapshots/$name"
+          done
 
       - name: Commit & push changes
         id: commit-and-push
+        env:
+          GH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
         run: |
-          git config user.email "core@nf-co.re"
-          git config user.name "nf-core-bot"
           git add .github/snapshots/
           git diff --staged --quiet && echo "No snapshot changes to commit" && exit 0
-          git commit -m "[automated] Update Template snapshots"
-          git push
+          gh auth setup-git
+          git config user.email "core@nf-co.re"
+          git config user.name "nf-core-bot"
+          git config push.default upstream
+          # Repository-supplied hooks or signing config must not run in this credentialed job.
+          git -c core.hooksPath=/dev/null -c commit.gpgsign=false commit --no-verify -m "[automated] Update Template snapshots"
+          git -c core.hooksPath=/dev/null push --no-verify
 
       - name: react if snapshots were updated
-        id: react-if-updated
-        if: steps.commit-and-push.outcome == 'success'
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ github.event.comment.id }}
-          reactions: hooray
+        if: steps.commit-and-push.outcome == 'success' && needs.update-snapshots.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='hooray'
 
-      - name: react if snapshots were not updated
-        if: steps.commit-and-push.outcome == 'failure'
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          comment-id: ${{ github.event.comment.id }}
-          reactions: confused
-
-      - name: react if snapshots were not updated
-        if: steps.commit-and-push.outcome == 'failure'
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          body: |
-            @${{ github.actor }} I tried to update the snapshots, but it didn't work. Please update them manually.
+      - name: react and comment if snapshots were not updated
+        if: always() && (failure() || needs.update-snapshots.result != 'success')
+        env:
+          ACTOR: ${{ github.actor }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='confused'
+          gh pr comment "$PR_NUMBER" --body "@${ACTOR} I tried to update the snapshots, but not all of them worked. Please update the rest manually.
+          See [CI log](${RUN_URL}) for more details."
