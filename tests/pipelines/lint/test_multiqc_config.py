@@ -75,6 +75,35 @@ class TestLintMultiqcConfig(TestLint):
             yaml.safe_dump(mqc_yml_tmp, fh)
         assert result["failed"] == ["`assets/multiqc_config.yml` does not contain 'export_plots: true'."]
 
+    def test_multiqc_incorrect_export_plots_ignored(self):
+        """Test that linting succeeds if export_plots is incorrect but ignored via .nf-core.yml"""
+        with open(self.multiqc_config_yml) as fh:
+            mqc_yml = yaml.safe_load(fh)
+        mqc_yml_tmp = mqc_yml.copy()
+        mqc_yml["export_plots"] = False
+        with open(self.multiqc_config_yml, "w") as fh:
+            yaml.safe_dump(mqc_yml, fh)
+
+        nf_core_yml_path = Path(self.new_pipeline, ".nf-core.yml")
+        with open(nf_core_yml_path) as f:
+            content = yaml.safe_load(f)
+            old_content = content.copy()
+            content["lint"] = {"multiqc_config": ["export_plots"]}
+        with open(nf_core_yml_path, "w") as f:
+            yaml.dump(content, f)
+
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
+        lint_obj._load()
+        result = lint_obj.multiqc_config()
+
+        # Reset the files
+        with open(self.multiqc_config_yml, "w") as fh:
+            yaml.safe_dump(mqc_yml_tmp, fh)
+        with open(nf_core_yml_path, "w") as f:
+            yaml.dump(old_content, f)
+
+        assert "`assets/multiqc_config.yml` does not contain 'export_plots: true'." not in result["failed"]
+
     def test_multiqc_config_report_comment_fail(self):
         """Test that linting fails if the multiqc_config.yml file has an incorrect report_comment"""
         with open(self.multiqc_config_yml) as fh:
