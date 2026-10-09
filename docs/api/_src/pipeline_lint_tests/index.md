@@ -6,6 +6,7 @@
     - [actions_schema_validation](./actions_schema_validation/)
     - [base_config](./base_config/)
     - [container_configs](./container_configs/)
+    - [docs_pages](./docs_pages/)
     - [files_exist](./files_exist/)
     - [files_unchanged](./files_unchanged/)
     - [included_configs](./included_configs/)
