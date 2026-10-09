@@ -11,6 +11,7 @@
 
 - Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
 - Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
+- Skip included names that are not installed components (such as record types) when recreating the `installed_by` entries, which made `pipelines lint` crash ([#4491](https://github.com/nf-core/tools/pull/4491))
 
 ### Modules
 
