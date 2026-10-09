@@ -21,6 +21,7 @@
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
 - Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
+- Don't block `workflow.onComplete` waiting for the MultiQC report, which hung aborted runs forever when `--email` or `--email_on_fail` was set ([#4486](https://github.com/nf-core/tools/pull/4486))
 - Bump nft-utils to 1.2.1, matching nf-core/modules ([#4489](https://github.com/nf-core/tools/pull/4489))
 - VSCode: add recommended extensions, fix link to admonition styling CSS for markdown previews ([#4455](https://github.com/nf-core/tools/pull/4455))
 - Pin action-tower-launch to v2 ([#4502](https://github.com/nf-core/tools/pull/4502))
