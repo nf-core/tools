@@ -290,10 +290,11 @@ class TestLintNextflowConfig(TestLint):
     def test_resolve_schema_default(self):
         assert (
             resolve_schema_default(
-                "--seed ${params.seed} --hmm-ne ${params.effective_population_size}",
-                {"seed": 1, "effective_population_size": 100000},
+                "--seed ${params.seed} --hmm-ne ${params.effective_population_size} --out ${params.outdir}/process",
+                {"seed": 1, "effective_population_size": 100000, "outdir": "${projectDir}/results"},
+                project_dir=self.new_pipeline,
             )
-            == "--seed 1 --hmm-ne 100000"
+            == "--seed 1 --hmm-ne 100000 --out " + str(self.new_pipeline) + "/results/process"
         )
 
     def test_resolve_schema_default_not_string(self):
@@ -306,13 +307,11 @@ class TestLintNextflowConfig(TestLint):
         )
 
     def test_resolve_schema_default_without_bracket(self):
-        assert (
-            resolve_schema_default(
-                "--seed $params.seed --hmm-ne $params.effective_population_size",
-                {"seed": 1, "effective_population_size": 100000},
-            )
-            == "--seed 1 --hmm-ne 100000"
-        )
+        assert resolve_schema_default(
+            "--seed $params.seed --hmm-ne $params.effective_population_size --out $projectDir",
+            {"seed": 1, "effective_population_size": 100000},
+            project_dir=self.new_pipeline,
+        ) == "--seed 1 --hmm-ne 100000 --out " + str(self.new_pipeline)
 
     def test_resolve_schema_default_circular_reference(self):
         params = {
@@ -330,7 +329,9 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             new_content = re.sub(
                 r"validate_params\s*=\s*true",
-                ('validate_params = true\nseed = 1\noptions_shapeit5 = "--seed ${params.seed}"'),
+                (
+                    'validate_params = true\nseed = 1\noptions_shapeit5 = "--seed ${params.seed} --test ${projectDir}/assets"'
+                ),
                 content,
             )
         with open(nf_conf_file, "w") as f:
@@ -346,7 +347,7 @@ class TestLintNextflowConfig(TestLint):
                     '    "seed": {"type": "integer", "default": 1},\n'
                     '    "options_shapeit5": {'
                     '"type": "string", '
-                    '"default": "--seed $params.seed"},\n'
+                    '"default": "--seed $params.seed --test ${projectDir}/assets"},\n'
                     '"validate_params": {'
                 ),
                 content,
@@ -355,7 +356,7 @@ class TestLintNextflowConfig(TestLint):
             f.write(new_content)
 
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
-        lint_obj.load_pipeline_config()
+        lint_obj.load_pipeline_config(cache_config=False)
         result = lint_obj.nextflow_config()
 
         assert not any("params.options_shapeit5" in failure for failure in result["failed"])

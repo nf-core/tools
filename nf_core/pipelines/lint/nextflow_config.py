@@ -11,18 +11,28 @@ log = logging.getLogger(__name__)
 DIAGRAM_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
 
-def resolve_schema_default(value, params):
+def resolve_schema_default(value, params, project_dir=None):
     """
-    Resolve schema default values by substituting parameter references.
+    Resolve schema default values by substituting parameter references
+    and the projectDir variable.
     """
     if not isinstance(value, str):
         return value
 
-    return re.sub(
+    new_values = re.sub(
         r"\$\{?params\.([A-Za-z0-9_]+)\}?",
         lambda m: str(params.get(m.group(1), m.group(0))),
         value,
     )
+
+    if project_dir is not None:
+        new_values = re.sub(
+            r"\$\{projectDir\}|\$projectDir\b",
+            lambda _: str(project_dir),
+            new_values,
+        )
+
+    return new_values
 
 
 def nextflow_config(self) -> dict[str, list[str]]:
@@ -467,7 +477,9 @@ def nextflow_config(self) -> dict[str, list[str]]:
                     )
             else:
                 schema_default = str(schema.schema_defaults[param_name])
-                schema_default = resolve_schema_default(schema_default, schema.schema_defaults)
+                schema_default = resolve_schema_default(
+                    schema_default, schema.schema_defaults, project_dir=self.wf_path
+                )
                 config_default = str(param_value)
             if config_default is not None and config_default == schema_default:
                 passed.append(f"Config default value correct: {param}= {schema_default}")
