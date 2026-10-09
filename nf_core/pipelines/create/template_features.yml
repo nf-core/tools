@@ -415,10 +415,10 @@ configurations:
         (`--rosetta`). This requires Rosetta to be installed on the host.
 
         If you would rather run native ARM64 images built from conda packages via
-        Wave, compose the opt-in `apple_container_wave` profile alongside it:
+        Wave, compose the opt-in `apple_container_arm64` profile alongside it:
 
         ```bash
-        nextflow run <pipeline> -profile apple_container,apple_container_wave
+        nextflow run <pipeline> -profile apple_container,apple_container_arm64
         ```
 
         This is faster per task when a native arm64 build exists, but only works

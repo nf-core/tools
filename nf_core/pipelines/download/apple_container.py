@@ -61,7 +61,7 @@ class AppleContainerFetcher(DockerFetcher):
         # Architecture to request when pulling/saving images. Apple Container runs
         # amd64 images via emulation (matching the apple_container profile default),
         # so default to linux/amd64. Set to linux/arm64 for native arm64 images
-        # (parity with the opt-in apple_container_wave profile).
+        # (parity with the opt-in apple_container_arm64 profile).
         self.image_arch = image_arch
 
     def check_and_set_implementation(self) -> None:

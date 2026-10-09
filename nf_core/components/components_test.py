@@ -145,14 +145,14 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                     "type": "list",
                     "name": "profile",
                     "message": "Choose container software to run the test with",
-                    "choices": ["Docker", "Singularity", "Conda", "Apple Container", "Apple Container (Wave/arm64)"],
+                    "choices": ["Docker", "Singularity", "Conda", "Apple Container", "Apple Container (arm64)"],
                 }
                 answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
                 profile = answer["profile"]
                 # Map display names to Nextflow profile names
                 profile_map = {
                     "Apple Container": "apple_container",
-                    "Apple Container (Wave/arm64)": "apple_container_wave",
+                    "Apple Container (arm64)": "apple_container_arm64",
                 }
                 profile = profile_map.get(profile, profile.lower())
                 os.environ["PROFILE"] = profile
