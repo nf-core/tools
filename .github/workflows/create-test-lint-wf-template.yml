@@ -64,7 +64,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
 
@@ -162,6 +162,14 @@ jobs:
       # Uncomment includeConfig statement
       - name: uncomment include config
         run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+        working-directory: create-test-lint-wf
+
+      # Add a placeholder metro map and enable manifest.diagram
+      - name: add metro map
+        run: |
+          mkdir -p my-prefix-testpipeline/docs/images
+          touch my-prefix-testpipeline/docs/images/metro_map.svg
+          sed -i 's|// diagram|diagram|' my-prefix-testpipeline/nextflow.config
         working-directory: create-test-lint-wf
 
       # Replace zenodo.XXXXXX to pass readme linting
