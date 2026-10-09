@@ -1,10 +1,5 @@
-{%- if not_empty_template -%}
-
 // Copyright (c) the nf-core community under an open-source MIT license. 
 // See https://github.com/nf-core/modules for full license, file patching instructions and upstream contributing.
-
-{%- endif %}
-
 
 // TODO nf-core: If in doubt look at other nf-core/subworkflows to see how we are doing things! :)
 //               https://github.com/nf-core/modules/tree/master/subworkflows
