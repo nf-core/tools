@@ -254,6 +254,33 @@ class TestUtils(TestPipelines):
         assert "params" in config
         assert config["params"].get("param2") == "foo"
 
+    @mock.patch("nf_core.utils.run_cmd")
+    @with_temporary_folder
+    def test_fetch_wf_config_ignores_flat_cache(self, mock_run_cmd, tmpdir):
+        """A cache written from `nextflow config -flat` output should not be loaded."""
+        import hashlib
+
+        tmpdir = Path(tmpdir)
+        wf_path = tmpdir / "pipeline"
+        wf_path.mkdir()
+        (wf_path / "nextflow.config").write_text("params.param2 = 'foo'\n")
+        nxf_home = tmpdir / "nxf_home"
+        (nxf_home / "nf-core").mkdir(parents=True)
+        # Cache file name used before the switch to `nextflow config -o json`
+        file_hash = hashlib.sha256((wf_path / "nextflow.config").read_bytes()).hexdigest()
+        old_hash = hashlib.sha256(file_hash.encode("utf-8")).hexdigest()
+        old_cache = nxf_home / "nf-core" / f"wf-config-cache-{old_hash[:25]}.json"
+        old_cache.write_text('{"params.param2": "foo"}')
+        mock_run_cmd.return_value = (b'{"params": {"param2": "foo"}}', b"mock")
+
+        with mock.patch.dict(os.environ, {"NXF_HOME": str(nxf_home)}):
+            config = nf_core.utils.fetch_wf_config(wf_path)
+            assert config["params"].get("param2") == "foo"
+            mock_run_cmd.assert_called_once()
+            # The new cache is used on the next call
+            assert nf_core.utils.fetch_wf_config(wf_path) == config
+            mock_run_cmd.assert_called_once()
+
     @with_temporary_folder
     def test_get_wf_files(self, tmpdir):
         tmpdir = Path(tmpdir)
