@@ -85,12 +85,18 @@ class GitHubAPISession(requests_cache.CachedSession):
                     output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
                     log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
-        # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
-        if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
+        # Default auth if we have a GitHub Token (eg. GitHub Actions CI).
+        # Do not warn if an explicit or gh CLI credential was already loaded.
+        token = os.environ.get("GITHUB_TOKEN")
+        if self.auth is None and token:
             self.auth_mode = "Bearer token with GITHUB_TOKEN"
-            self.auth = BearerAuth(os.environ["GITHUB_TOKEN"])
-        else:
-            log.warning("Could not find GitHub authentication token. Some API requests may fail.")
+            self.auth = BearerAuth(token)
+        if self.auth is None:
+            log.warning(
+                "Could not find GitHub authentication token. Some API requests may fail. "
+                "Run 'gh auth login' (https://cli.github.com/manual/gh_auth_login) "
+                "or set the GITHUB_TOKEN environment variable."
+            )
 
         log.debug(f"Using GitHub auth: {self.auth_mode}")
 
