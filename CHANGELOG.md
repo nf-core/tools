@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v4.1.1dev
+## [v4.2.0 - Metropolitan Mouse](https://github.com/nf-core/tools/releases/tag/4.2.0) - [2026-10-12]
 
 ### General
 
