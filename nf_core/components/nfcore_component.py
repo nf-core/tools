@@ -115,6 +115,14 @@ class NFCoreComponent:
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
+    def load_main_nf(self) -> str:
+        """Return the contents of main.nf, or an empty string if it does not exist."""
+        data = ""
+        if self.main_nf.is_file():
+            with open(self.main_nf) as f:
+                data = f.read()
+        return data
+
     def load_meta_yml(self, reload: bool = False) -> dict | None:
         """
         Return the parsed content of the component's ``meta.yml``, cached after the first read.
@@ -133,28 +141,28 @@ class NFCoreComponent:
     def _get_main_nf_tags(self, test_main_nf: Path | str):
         """Collect all tags from the main.nf.test file."""
         tags = []
-        with open(test_main_nf) as fh:
-            for line in fh:
-                if line.strip().startswith("tag"):
-                    tags.append(line.strip().split()[1].strip('"'))
+        data = self.load_main_nf()
+        for line in data.splitlines():
+            if line.strip().startswith("tag"):
+                tags.append(line.strip().split()[1].strip('"'))
         return tags
 
     def _get_included_components(self, main_nf: Path | str):
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf) as fh:
-            for line in fh:
-                if line.strip().startswith("include"):
-                    # get tool/subtool or subworkflow name from include statement, can be in the form
-                    #'../../../modules/nf-core/hisat2/align/main'
-                    #'../bam_sort_stats_samtools/main'
-                    #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
-                    #'plugin/nf-validation'
-                    component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
-                    component = component.replace("'../", "subworkflows/")
-                    # Replace trailing quotes
-                    component = component.replace("'", "").replace('"', "")
-                    included_components.append(component)
+        data = self.load_main_nf()
+        for line in data.splitlines():
+            if line.strip().startswith("include"):
+                # get tool/subtool or subworkflow name from include statement, can be in the form
+                #'../../../modules/nf-core/hisat2/align/main'
+                #'../bam_sort_stats_samtools/main'
+                #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
+                #'plugin/nf-validation'
+                component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
+                component = component.replace("'../", "subworkflows/")
+                # Replace trailing quotes
+                component = component.replace("'", "").replace('"', "")
+                included_components.append(component)
         return included_components
 
     def _get_included_components_in_chained_tests(self, main_nf_test: Path | str):
@@ -202,10 +210,9 @@ class NFCoreComponent:
         return included_components
 
     def _get_process_name(self):
-        with open(self.main_nf) as fh:
-            for line in fh:
-                if re.search(r"^\s*process\s*\w*\s*{", line):
-                    return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
+        for line in self.load_main_nf().splitlines():
+            if re.search(r"^\s*process\s*\w*\s*{", line):
+                return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
         return ""
 
     def _extract_value(self, text: str, start_pos: int = 0, split_on_comma: bool = False) -> str | None:
@@ -278,10 +285,7 @@ class NFCoreComponent:
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
-        data = ""
-        if self.main_nf.is_file():
-            with open(self.main_nf) as f:
-                data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
             # regex matches:
@@ -325,10 +329,7 @@ class NFCoreComponent:
             self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
-        data = ""
-        if self.main_nf.is_file():
-            with open(self.main_nf) as f:
-                data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
@@ -370,10 +371,7 @@ class NFCoreComponent:
             self.outputs = outputs
 
     def get_topics_from_main_nf(self) -> None:
-        data = ""
-        if self.main_nf.is_file():
-            with open(self.main_nf) as f:
-                data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"
