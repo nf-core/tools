@@ -5,7 +5,7 @@
 ### General
 
 - Fixes bug in `test-datasets list` related to broken rich import ([#4477](https://github.com/nf-core/tools/pull/4477))
-- Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
+- Add `nf-core pipelines containers create-configs` to regenerate the pipeline `conf/containers_*.config` files ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
 
 ### Linting
 
@@ -18,10 +18,16 @@
 
 ### Template
 
+- Switch to using `fix-linting.yml` workflow from `nf-core/actions` repo, to avoid leakage of nf-core bot token and rename it from `fix_linting.yml` to `fix-linting.yml` ([#4485](https://github.com/nf-core/tools/pull/4485))
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
 - Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
 - Bump nft-utils to 1.2.1, matching nf-core/modules ([#4489](https://github.com/nf-core/tools/pull/4489))
+- VSCode: add recommended extensions, fix link to admonition styling CSS for markdown previews ([#4455](https://github.com/nf-core/tools/pull/4455))
+- Pin action-tower-launch to v2 ([#4502](https://github.com/nf-core/tools/pull/4502))
+- Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
+- Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
+
 
 ### Version updates
 
