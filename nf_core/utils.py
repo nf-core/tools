@@ -535,7 +535,9 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     # Hash the hash
     if len(concat_hash) > 0:
         bighash = hashlib.sha256(concat_hash.encode("utf-8")).hexdigest()
-        cache_fn = f"wf-config-cache-{bighash[:25]}.json"
+        # The name includes the `nextflow config` output format, so caches written
+        # by older versions with `nextflow config -flat` are not loaded
+        cache_fn = f"wf-config-cache-json-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
         cache_path = Path(cache_basedir, cache_fn)
