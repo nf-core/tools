@@ -219,6 +219,21 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         False,
     )
 
+    # fix-linting.yml - Nextflow version matrix
+    update_file_version(
+        Path(".github", "workflows", "fix-linting.yml"),
+        pipeline_obj,
+        [
+            (
+                # example:
+                # nextflow-versions: '["25.10.4","latest-everything"]'
+                current_version,
+                new_version,
+            )
+        ],
+        yaml_key=["jobs", "fix-linting", "with", "nextflow-versions"],
+    )
+
 
 def update_file_version(
     filename: str | Path,
