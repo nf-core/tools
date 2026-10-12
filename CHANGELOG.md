@@ -26,6 +26,7 @@
 - VSCode: add recommended extensions, fix link to admonition styling CSS for markdown previews ([#4455](https://github.com/nf-core/tools/pull/4455))
 - Pin action-tower-launch to v2 ([#4502](https://github.com/nf-core/tools/pull/4502))
 - Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
+- Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
 
 ### Version updates
 
