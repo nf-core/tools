@@ -1,4 +1,4 @@
-"""Regression tests for the general lint safety net (nf-core/tools#4447).
+"""Regression tests for the general lint safety net
 
 These confirm that _any_ exception raised from within a single lint test - not just the
 specific known bugs fixed elsewhere - is converted into a failed lint result instead of
