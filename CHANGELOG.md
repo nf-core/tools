@@ -28,7 +28,6 @@
 - Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
 - Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
 
-
 ### Version updates
 
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
