@@ -1,7 +1,4 @@
-import filecmp
 import logging
-import shutil
-import tempfile
 from pathlib import Path
 
 from nf_core.pipelines.containers_utils import ContainerConfigs
@@ -33,60 +30,49 @@ def container_configs(self):
 
     conf_dir = Path(self.wf_path) / "conf"
 
-    # Back up existing container config files before generation
-    backup_dir = Path(tempfile.mkdtemp())
-    for path in conf_dir.glob("containers_*"):
-        shutil.copy2(path, backup_dir / path.name)
+    def read_container_configs() -> dict[str, bytes]:
+        return {path.name: path.read_bytes() for path in conf_dir.glob("containers_*")}
 
+    before = read_container_configs()
     try:
         generated = ContainerConfigs(self.wf_path).generate_container_configs()
     except UserWarning as e:
         warned.append(f"Could not generate container configuration files: {e}")
-        shutil.rmtree(backup_dir)
         return {"passed": passed, "failed": failed, "warned": warned}
+    after = read_container_configs()
 
-    log.debug(f"Generated {len(generated)} container config file(s): {', '.join(sorted(generated)) or 'none'}")
+    new = after.keys() - before.keys()
+    removed = before.keys() - after.keys()
+    modified = {name for name in before.keys() & after.keys() if before[name] != after[name]}
+    correct = generated - new - modified
 
-    # Compare generated files to their pre-generation backups
-    modified: set[str] = set()
-    new: set[str] = set()
-    correct: set[str] = set()
-
-    for name in generated:
-        if not (backup_dir / name).exists():
-            new.add(name)
-        elif not (conf_dir / name).exists() or not filecmp.cmp(conf_dir / name, backup_dir / name, shallow=False):
-            modified.add(name)
-        else:
-            correct.add(name)
-
-    log.debug(f"Container config status — correct: {len(correct)}, modified: {len(modified)}, new: {len(new)}")
+    log.debug(
+        f"Container config status — correct: {len(correct)}, modified: {len(modified)}, "
+        f"new: {len(new)}, removed: {len(removed)}"
+    )
 
     fixing = "container_configs" in self.fix
 
     for name in sorted(correct):
         passed.append(f"`conf/{name}` is up to date")
 
-    for name in sorted(modified | new):
+    for name in sorted(new | modified | removed):
         if fixing:
-            log.debug(f"Overwriting `conf/{name}` with regenerated container configuration")
-            passed.append(f"`conf/{name}` is up to date")
-            fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
-        else:
-            if name in new:
-                failed.append(f"`conf/{name}` is missing – please regenerate the container configuration files.")
+            if name in removed:
+                fixed.append(f"`conf/{name}` removed, as no module provides containers for it anymore.")
             else:
-                failed.append(f"`conf/{name}` is out of date – please regenerate the container configuration files.")
-            could_fix = True
+                passed.append(f"`conf/{name}` is up to date")
+                fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
+        else:
+            reason = "missing" if name in new else "obsolete" if name in removed else "out of date"
+            failed.append(f"`conf/{name}` is {reason} – please regenerate the container configuration files.")
 
     if not fixing:
-        # Restore working tree: write back original content for modified files, remove new files
-        log.debug(f"Restoring working tree: resetting {len(modified)} modified, removing {len(new)} new file(s)")
-        for name in modified:
-            shutil.copy2(backup_dir / name, conf_dir / name)
+        could_fix = bool(new | modified | removed)
+        # Restore working tree to its pre-generation state
+        for name in modified | removed:
+            (conf_dir / name).write_bytes(before[name])
         for name in new:
-            (conf_dir / name).unlink(missing_ok=True)
-
-    shutil.rmtree(backup_dir)
+            (conf_dir / name).unlink()
 
     return {"passed": passed, "failed": failed, "warned": warned, "fixed": fixed, "could_fix": could_fix}
