@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 import nf_core.pipelines.lint
+from nf_core.pipelines.lint.nextflow_config import resolve_schema_param_references
 
 from ..test_lint import TestLint
 
@@ -12,6 +13,19 @@ class TestLintNextflowConfig(TestLint):
     def setUp(self) -> None:
         super().setUp()
         self.new_pipeline = self._make_pipeline_copy()
+
+    def test_schema_reference_uses_evaluated_config_values(self):
+        """#4504: schema defaults should match resolved Nextflow params."""
+        params = {"seed": 1, "effective_population_size": 100000}
+        template = "--seed ${params.seed} --hmm-ne ${params.effective_population_size}"
+        assert resolve_schema_param_references(template, params) == "--seed 1 --hmm-ne 100000"
+
+    def test_schema_reference_does_not_evaluate_unknown_or_groovy_expressions(self):
+        value = "${params.missing} - ${params.count + 1} - ${env.SECRET}"
+        assert resolve_schema_param_references(value, {"count": 3}) == value
+
+    def test_schema_reference_keeps_literal_non_ref_text(self):
+        assert resolve_schema_param_references("hello world", {"seed": 1}) == "hello world"
 
     def test_nextflow_config_example_pass(self):
         """Tests that config variable existence test works with good pipeline example"""
