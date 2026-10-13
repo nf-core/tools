@@ -406,7 +406,7 @@ configurations:
         default (`process.arch = 'linux/amd64'`, `--platform linux/amd64`), so
         standard pipelines run out of the box.
 
-        For faster emulation, set `--apple_rosetta` to run images through Rosetta. 
+        For faster emulation, set `--apple_rosetta` to run images through Rosetta.
         This requires Rosetta to be installed on the host.
       nfcore_pipelines: True
       custom_pipelines: True
