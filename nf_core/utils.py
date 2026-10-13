@@ -374,12 +374,12 @@ class Pipeline:
 
         return files
 
-    def load_pipeline_config(self) -> bool:
+    def load_pipeline_config(self, cache_config=True) -> bool:
         """Get the nextflow config for this pipeline
 
         Once loaded, set a few convenience reference class attributes
         """
-        self.nf_config = fetch_wf_config(self.wf_path)
+        self.nf_config = fetch_wf_config(self.wf_path, cache_config=cache_config)
         manifest = self.nf_config.get("manifest", {})
 
         self.pipeline_prefix, self.pipeline_name = manifest.get("name", "/").split("/")
