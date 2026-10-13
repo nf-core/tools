@@ -38,7 +38,7 @@ def merge_markers(self):
 
     ignored_config = self.lint_config.get("merge_markers", []) if self.lint_config is not None else []
 
-    ignore = [".git"]
+    ignore = [".git", ".pixi"]
     if Path(self.wf_path, ".gitignore").is_file():
         with open(Path(self.wf_path, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
