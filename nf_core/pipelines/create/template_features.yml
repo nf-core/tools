@@ -404,14 +404,10 @@ configurations:
         can also run amd64 images via emulation. Because most nf-core modules ship
         amd64 container images, the `apple_container` profile emulates amd64 by
         default (`process.arch = 'linux/amd64'`, `--platform linux/amd64`), so
-        standard pipelines run out of the box with no Wave dependency and no
-        Seqera token.
+        standard pipelines run out of the box.
 
-        For faster emulation, set `--apple_rosetta` to run images through Rosetta
-        . This requires Rosetta to be installed on the host.
-
-        The `nf-core pipelines download` command will also support downloading
-        images for offline use with `--container-system appleContainer`.
+        For faster emulation, set `--apple_rosetta` to run images through Rosetta. 
+        This requires Rosetta to be installed on the host.
       nfcore_pipelines: True
       custom_pipelines: True
       default: true

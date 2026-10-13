@@ -1,13 +1,5 @@
 """Apple Container fetcher for nf-core download.
 
-Apple Container (https://github.com/apple/container) is a lightweight
-container runtime for macOS on Apple Silicon. It uses standard OCI/Docker
-images and provides its own CLI (``container``) with native ``pull`` and
-``save`` commands for offline bundling.
-
-Images are pulled and saved using the ``container`` CLI directly — no
-Docker installation is required. Loading images on the target machine
-uses ``container image load``.
 """
 
 import logging
@@ -35,8 +27,6 @@ class AppleContainerFetcher(DockerFetcher):
     """
     Fetcher for Apple Container images.
 
-    Subclasses :class:`DockerFetcher` — uses the native Apple Container CLI
-    (``container image pull`` / ``container image save``) instead of Docker.
     The cleanup step writes an Apple-Container-specific load script.
     """
 
@@ -58,10 +48,6 @@ class AppleContainerFetcher(DockerFetcher):
         )
         # Override the container output directory name
         self._container_output_dir = outdir / "apple-container-images"
-        # Architecture to request when pulling/saving images. Apple Container runs
-        # amd64 images via emulation (matching the apple_container profile default),
-        # so default to linux/amd64. Set to linux/arm64 for native arm64 images
-        # (parity with the opt-in apple_container_arm64 profile).
         self.image_arch = image_arch
 
     def check_and_set_implementation(self) -> None:
