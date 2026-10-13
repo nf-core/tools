@@ -20,6 +20,12 @@ class AppleContainerTest(unittest.TestCase):
     def use_caplog(self, caplog):
         self._caplog = caplog
 
+    def setUp(self):
+        # Don't depend on the Apple Container system services being started on the test host
+        patcher = mock.patch("nf_core.utils.run_cmd", return_value=(b"", b""))
+        self.mock_run_cmd = patcher.start()
+        self.addCleanup(patcher.stop)
+
     #
     # Test for AppleContainerFetcher initialization and output directory
     #
@@ -135,7 +141,23 @@ class AppleContainerTest(unittest.TestCase):
             container_library=[],
             registry_set=[],
         )
-        assert fetcher.implementation == "container"
+        assert fetcher.implementation == "apple container"
+        self.mock_run_cmd.assert_called_once_with(shutil.which("container"), "system status")
+
+    #
+    # Test that check_and_set_implementation raises when the system services are not running
+    #
+    @with_temporary_folder
+    @mock.patch("shutil.which", return_value="/usr/local/bin/container")
+    def test_apple_container_services_not_running_raises(self, tmp_path, mock_which):
+        self.mock_run_cmd.side_effect = RuntimeError("apiserver is not running")
+        with pytest.raises(OSError, match="container system start"):
+            AppleContainerFetcher(
+                outdir=Path(tmp_path),
+                container_library=[],
+                registry_set=[],
+            )
+        self.mock_run_cmd.assert_called_once_with("/usr/local/bin/container", "system status")
 
     #
     # Test that check_and_set_implementation raises when container CLI is missing

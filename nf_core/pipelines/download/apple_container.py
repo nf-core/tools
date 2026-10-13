@@ -1,6 +1,4 @@
-"""Apple Container fetcher for nf-core download.
-
-"""
+"""Apple Container fetcher for nf-core download."""
 
 import logging
 import shutil
@@ -52,7 +50,7 @@ class AppleContainerFetcher(DockerFetcher):
 
     def check_and_set_implementation(self) -> None:
         """
-        Check if Apple Container CLI is installed and set the implementation.
+        Check that the Apple Container CLI is installed and its system services are running.
         """
         container_binary = shutil.which("container")
         if not container_binary:
@@ -61,6 +59,14 @@ class AppleContainerFetcher(DockerFetcher):
                 "but it is not installed or not in $PATH.\n"
                 "See: https://github.com/apple/container"
             )
+
+        try:
+            nf_core.utils.run_cmd(container_binary, "system status")
+        except RuntimeError as e:
+            raise OSError(
+                "Apple Container system services are required to pull images, but they are not running.\n"
+                "Start them with: container system start"
+            ) from e
 
         self.implementation = "apple container"
 
