@@ -2,6 +2,8 @@
 
 import os
 import shutil
+import subprocess
+import tarfile
 import unittest
 from contextlib import redirect_stderr
 from io import StringIO
@@ -11,8 +13,23 @@ from unittest import mock
 import pytest
 
 from nf_core.pipelines.download.apple_container import AppleContainerFetcher
+from nf_core.pipelines.download.docker import DockerError
 
 from ...utils import with_temporary_folder
+
+
+def _apple_container_running() -> bool:
+    """True if the `container` CLI is installed and its system services are started."""
+    container_binary = shutil.which("container")
+    if container_binary is None:
+        return False
+    return subprocess.run([container_binary, "system", "status"], capture_output=True, check=False).returncode == 0
+
+
+requires_apple_container = pytest.mark.skipif(
+    not _apple_container_running(),
+    reason="Can't test what Apple Container does if it's not installed and running.",
+)
 
 
 class AppleContainerTest(unittest.TestCase):
@@ -218,3 +235,120 @@ class AppleContainerTest(unittest.TestCase):
             str(output_path),
             "quay.io/biocontainers/fastqc:0.12.1",
         ]
+
+    #
+    # Integration tests: these run the real `container` CLI against public registries
+    #
+    def _make_fetcher(self, tmp_path: Path) -> AppleContainerFetcher:
+        fetcher = AppleContainerFetcher(
+            outdir=tmp_path,
+            container_library=[],
+            registry_set=[],
+        )
+        fetcher.progress = mock.MagicMock()
+        return fetcher
+
+    #
+    # Tests for 'pull_image'
+    #
+    @requires_apple_container
+    @with_temporary_folder
+    def test_apple_container_pull_image(self, tmp_path):
+        fetcher = self._make_fetcher(Path(tmp_path))
+        task = mock.MagicMock()
+
+        # Successful pulls: short name and absolute URI
+        fetcher.pull_image("hello-world", task)
+        fetcher.pull_image("docker.io/bschiffthaler/sed", task)
+
+        # Known `container` CLI limitation (v1.2.2): Seqera Containers serve a bare single-platform
+        # OCI manifest, which Apple Container rejects with "does not list any supported platform".
+        # If this starts passing, upstream has fixed it and this can move to the successful pulls.
+        with pytest.raises(DockerError.OtherError):
+            fetcher.pull_image("community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6", task)
+
+        # Failed pulls must raise, not pass silently
+        with pytest.raises((DockerError.ImageNotFoundError, DockerError.OtherError)):
+            fetcher.pull_image("docker.io/bschiffthaler/nothingtopullhere", task)
+        with pytest.raises((DockerError.InvalidTagError, DockerError.OtherError)):
+            fetcher.pull_image("ghcr.io/ewels/multiqc:go-rewrite", task)
+        with pytest.raises(DockerError.OtherError):
+            fetcher.pull_image("Not:A:Valid//reference", task)
+
+    #
+    # Tests for 'save_image'
+    #
+    @requires_apple_container
+    @with_temporary_folder
+    def test_apple_container_save_image_not_pulled(self, tmp_path):
+        tmp_path = Path(tmp_path)
+        fetcher = self._make_fetcher(tmp_path)
+        output_path = tmp_path / "not-pulled.tar"
+        with pytest.raises(DockerError.ImageNotPulledError):
+            fetcher.save_image(
+                "this-image-cannot-possibly-be-pulled-to-this-machine:latest",
+                output_path,
+                mock.MagicMock(),
+            )
+        assert not output_path.exists()
+
+    #
+    # Tests for 'pull_and_save_image'
+    #
+    @requires_apple_container
+    @with_temporary_folder
+    def test_apple_container_pull_and_save_image(self, tmp_path):
+        tmp_path = Path(tmp_path)
+        fetcher = self._make_fetcher(tmp_path)
+        output_path = tmp_path / "hello-world.tar"
+
+        progress = fetcher.progress = mock.MagicMock()
+
+        fetcher.pull_and_save_image("hello-world", output_path)
+
+        assert output_path.exists()
+        assert tarfile.is_tarfile(output_path)
+        assert "ERROR" not in [record.levelname for record in self._caplog.records]
+        progress.advance_remote_fetch_task.assert_called_once()
+
+    @requires_apple_container
+    @with_temporary_folder
+    def test_apple_container_pull_and_save_image_missing(self, tmp_path):
+        tmp_path = Path(tmp_path)
+        fetcher = self._make_fetcher(tmp_path)
+        output_path = tmp_path / "nothingtopullhere.tar"
+
+        progress = fetcher.progress = mock.MagicMock()
+
+        # Errors are logged, not raised, so that one bad image doesn't stop the whole download
+        fetcher.pull_and_save_image("docker.io/bschiffthaler/nothingtopullhere", output_path)
+
+        assert not output_path.exists()
+        assert "ERROR" in [record.levelname for record in self._caplog.records]
+        progress.advance_remote_fetch_task.assert_called_once()
+
+    #
+    # Tests for 'fetch_containers': end-to-end through the base class and fetch_remote_containers
+    #
+    @requires_apple_container
+    @with_temporary_folder
+    @mock.patch.object(AppleContainerFetcher, "gather_registries", return_value=set())
+    def test_apple_container_fetch_containers(self, tmp_path, mock_gather_registries):
+        tmp_path = Path(tmp_path)
+        fetcher = AppleContainerFetcher(
+            outdir=tmp_path,
+            container_library=[],
+            registry_set=[],
+            hide_progress=True,
+        )
+        out_dir = fetcher.get_container_output_dir()
+        out_dir.mkdir()
+
+        good = "hello-world"
+        bad = "docker.io/bschiffthaler/nothingtopullhere"
+        fetcher.fetch_containers([good, bad], [], workflow_directory=tmp_path)
+
+        good_tar = out_dir / fetcher.get_container_filename(good)
+        assert good_tar.exists()
+        assert tarfile.is_tarfile(good_tar)
+        assert not (out_dir / fetcher.get_container_filename(bad)).exists()

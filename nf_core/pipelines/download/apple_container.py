@@ -28,6 +28,9 @@ class AppleContainerFetcher(DockerFetcher):
     The cleanup step writes an Apple-Container-specific load script.
     """
 
+    # The `container` CLI reports failures as `Error: ...` lines, not with Docker's daemon messages
+    error_markers: tuple[str, ...] = ("Error:",)
+
     def __init__(
         self,
         outdir: Path,
