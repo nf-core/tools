@@ -59,6 +59,7 @@ def container_configs(self):
     for name in sorted(new | modified | removed):
         if fixing:
             if name in removed:
+                passed.append(f"`conf/{name}` is up to date")
                 fixed.append(f"`conf/{name}` removed, as no module provides containers for it anymore.")
             else:
                 passed.append(f"`conf/{name}` is up to date")
