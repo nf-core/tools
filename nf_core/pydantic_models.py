@@ -85,6 +85,9 @@ class NFCoreYamlLintConfig(BaseModel):
             - tests/<test_name>.nf.test
             - tests/nextflow.config
             - nf-test.config
+        # docs_pages: False
+        docs_pages:
+            - docs/implementation_design.md
     """
 
     files_unchanged: bool | list[str] | None = None
@@ -149,6 +152,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint that container configuration files in conf/ are up to date """
     rocrate_readme_sync: bool | None = None
     """ Lint for README.md and rocrate.json sync """
+    docs_pages: bool | list[str] | None = None
+    """ List of documentation pages that are deliberately not rendered on the website """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
