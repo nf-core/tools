@@ -62,7 +62,7 @@ class AppleContainerFetcher(DockerFetcher):
                 "See: https://github.com/apple/container"
             )
 
-        self.implementation = "container"
+        self.implementation = "apple container"
 
     def construct_pull_command(self, address: str) -> list[str]:
         """
