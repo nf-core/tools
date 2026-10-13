@@ -228,7 +228,6 @@ class SingularityFetcher(ContainerFetcher):
 
         # Select registries defined in pipeline config
         configured_registry_keys = [
-            "appleContainer.registry",
             "apptainer.registry",
             "docker.registry",
             "podman.registry",
