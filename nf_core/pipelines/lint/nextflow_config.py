@@ -8,6 +8,20 @@ from nf_core.utils import load_tools_config
 log = logging.getLogger(__name__)
 
 
+def resolve_schema_param_references(value: str, params: dict) -> str:
+    """Resolve simple params references using evaluated Nextflow defaults.
+
+    Schema defaults are plain strings, while Nextflow evaluates references
+    in nextflow.config. Never evaluate arbitrary Groovy expressions here.
+    Unknown references stay literal and should still fail lint comparison.
+    """
+    return re.sub(
+        r"\$\{params\.([A-Za-z_][A-Za-z0-9_]*)\}",
+        lambda match: str(params[match.group(1)]) if match.group(1) in params else match.group(0),
+        value,
+    )
+
+
 def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
 
@@ -417,7 +431,9 @@ def nextflow_config(self) -> dict[str, list[str]]:
                         f"Config default value incorrect: `{param}` is set as type `integer` in nextflow_schema.json, but is not an integer in `nextflow.config`."
                     )
             else:
-                schema_default = str(schema.schema_defaults[param_name])
+                schema_default = resolve_schema_param_references(
+                    str(schema.schema_defaults[param_name]), self.nf_config.get("params", {})
+                )
                 config_default = str(param_value)
             if config_default is not None and config_default == schema_default:
                 passed.append(f"Config default value correct: {param}= {schema_default}")
