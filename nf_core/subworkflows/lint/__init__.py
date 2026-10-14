@@ -216,7 +216,12 @@ class SubworkflowLint(ComponentLint):
                 swf.git_sha = version
 
             for test_name in self.lint_tests:
-                getattr(self, test_name)(swf)
+                try:
+                    getattr(self, test_name)(swf)
+                except Exception as e:  # noqa: BLE001 — isolate individual test error from linting run
+                    swf.failed.append(
+                        (test_name, test_name, f"Lint test raised an unexpected error: {e}", swf.component_dir)
+                    )
 
             self.passed += [LintResult(swf, *s) for s in swf.passed]
             warned = [LintResult(swf, *s) for s in swf.warned]
