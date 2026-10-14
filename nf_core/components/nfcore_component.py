@@ -168,7 +168,7 @@ class NFCoreComponent:
                 included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str):
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf_test) as fh:
