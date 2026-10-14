@@ -138,19 +138,22 @@ class NFCoreComponent:
             self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
         return self._meta_yml_content
 
-    def _get_main_nf_tags(self, test_main_nf: Path | str):
+    def _get_main_nf_tags(self, test_main_nf: Path | str) -> list[str]:
         """Collect all tags from the main.nf.test file."""
-        tags = []
-        data = self.load_main_nf()
-        for line in data.splitlines():
+        tags: list[str] = []
+        test_main_nf = Path(test_main_nf)
+        if not test_main_nf.is_file():
+            return tags
+        for line in test_main_nf.read_text().splitlines():
             if line.strip().startswith("tag"):
                 tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Path | str):
+    def _get_included_components(self, main_nf: Path | str) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
-        data = self.load_main_nf()
+        main_nf = Path(main_nf)
+        data = main_nf.read_text() if main_nf.is_file() else ""
         for line in data.splitlines():
             if line.strip().startswith("include"):
                 # get tool/subtool or subworkflow name from include statement, can be in the form
