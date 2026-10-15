@@ -181,3 +181,111 @@ def test_long_reports_are_cut_between_entries(repo: git.Repo) -> None:
     # Then no collapsed diff is left open
     assert section.count("<details>") == section.count("</details>")
     assert section.count("```") % 2 == 0
+
+
+def test_no_branch_to_migrate_leaves_the_plain_merge(repo: git.Repo) -> None:
+    # Given
+    sync = make_sync(repo, "clean")
+    sync.from_branch = None
+
+    # When
+    sync.apply_template_migrations()
+
+    # Then
+    assert repo.commit(sync.merge_branch).hexsha == repo.commit("TEMPLATE").hexsha
+    assert sync.migration_result is None
+
+
+def test_pull_request_has_no_migration_section_without_migrations(repo: git.Repo) -> None:
+    # Given
+    sync = make_sync(repo, "off")
+    sync.apply_template_migrations()
+
+    # When
+    section = sync._migration_pr_section()
+
+    # Then
+    assert section == ""
+
+
+def test_pull_request_explains_a_conflicting_migration(repo: git.Repo) -> None:
+    # Given dev customised the line the template changes
+    repo.git.switch("-q", "dev")
+    commit_files(repo, {"base.config": BASE_CONFIG.replace("memory = 1", "memory = 'custom'")}, "customise")
+    repo.git.switch("-q", "TEMPLATE")
+    sync = make_sync(repo, "clean")
+    sync.apply_template_migrations()
+
+    # When
+    section = sync._migration_pr_section()
+
+    # Then
+    assert "so this PR is a plain template merge" in section
+    assert "`base.config`: old text not found" in section
+
+
+def test_pull_request_explains_a_partial_migration(repo: git.Repo) -> None:
+    # Given
+    repo.git.switch("-q", "dev")
+    commit_files(repo, {"base.config": BASE_CONFIG.replace("memory = 1", "memory = 'custom'")}, "customise")
+    repo.git.switch("-q", "TEMPLATE")
+    sync = make_sync(repo, "partial")
+    sync.apply_template_migrations()
+
+    # When
+    section = sync._migration_pr_section()
+
+    # Then
+    assert "Files with a conflicting change were left as they were" in section
+
+
+def test_unknown_migration_mode_is_rejected(tmp_path: Path) -> None:
+    # Given / When / Then
+    with pytest.raises(nf_core.pipelines.sync.SyncExceptionError, match="Unknown template migration mode"):
+        PipelineSync(tmp_path, template_migrations="sometimes")
+
+
+def test_sync_applies_migrations_between_creating_and_pushing_the_merge_branch(
+    repo: git.Repo, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Given a sync that made template changes and opens a PR
+    sync = make_sync(repo, "clean")
+    sync.made_changes = False
+    sync.make_pr = True
+    sync.force_pr = False
+    sync.gh_username = "nf-core-bot"
+    sync.gh_repo = "nf-core/testpipeline"
+    sync.pipeline_dir = Path(repo.working_dir)
+    monkeypatch.setenv("GITHUB_AUTH_TOKEN", "test-token")
+    steps: list[str] = []
+
+    def record(name: str):
+        def step() -> None:
+            steps.append(name)
+            if name == "commit_template_changes":
+                sync.made_changes = True
+
+        return step
+
+    for name in [
+        "inspect_sync_dir",
+        "get_wf_config",
+        "checkout_template_branch",
+        "delete_tracked_template_branch_files",
+        "make_template_pipeline",
+        "commit_template_changes",
+        "push_template_branch",
+        "create_merge_base_branch",
+        "apply_template_migrations",
+        "push_merge_branch",
+        "make_pull_request",
+        "reset_target_dir",
+    ]:
+        monkeypatch.setattr(sync, name, record(name))
+
+    # When
+    sync.sync()
+
+    # Then
+    merge_steps = steps[steps.index("create_merge_base_branch") : steps.index("push_merge_branch") + 1]
+    assert merge_steps == ["create_merge_base_branch", "apply_template_migrations", "push_merge_branch"]

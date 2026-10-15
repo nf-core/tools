@@ -6,7 +6,7 @@ from pathlib import Path
 import git
 import pytest
 
-from nf_core.pipelines.template_migrations.generate import diff_hunks, generate_operations
+from nf_core.pipelines.template_migrations.generate import diff_hunks, generate_operations, template_version
 from nf_core.pipelines.template_migrations.operations import (
     CreateFile,
     DeleteFile,
@@ -15,6 +15,7 @@ from nf_core.pipelines.template_migrations.operations import (
     Outcome,
     Replace,
     Workspace,
+    find_line_aligned,
 )
 
 BASE_CONFIG_OLD = "".join(f"line {number}\n" for number in range(1, 21))
@@ -213,3 +214,58 @@ def test_nf_core_yaml_spelling_is_treated_like_nf_core_yml(template_repo: git.Re
 
     # Then the version line is left to the version stamp
     assert operations == []
+
+
+@pytest.mark.parametrize(
+    ("old_text", "new_text"),
+    [
+        # A change whose neighbours repeat elsewhere grows into the next change.
+        ("b\nb\na\n", "c\nb\nc\n"),
+        # The last change grows back into the previous one.
+        ("b\na\nb\nb\na\nb\n", "b\na\nb\nb\nb\nb\n"),
+        # Two changes whose context overlaps become one.
+        ("a\nb\nb\na\na\na\nb\n", "a\nc\nc\na\na\nb\nb\n"),
+        # A template file that was empty.
+        ("", "x\n"),
+    ],
+)
+def test_hunks_turn_the_old_text_into_the_new_text(old_text: str, new_text: str) -> None:
+    # Given
+    hunks = diff_hunks(old_text, new_text)
+
+    # When each hunk is replaced in turn
+    text = old_text
+    for old, new in hunks:
+        positions = find_line_aligned(text, old)
+        assert len(positions) == 1
+        text = text[: positions[0]] + new + text[positions[0] + len(old) :]
+
+    # Then
+    assert text == new_text
+
+
+def test_template_without_nf_core_config_still_generates_operations(template_repo: git.Repo) -> None:
+    # Given
+    old_ref = commit_files(template_repo, {"a.txt": "a\n"})
+    new_ref = commit_files(template_repo, {"a.txt": None, "b.txt": "b\n"})
+
+    # When
+    operations = generate_operations(template_repo, old_ref, new_ref)
+
+    # Then
+    assert operations == [DeleteFile("a.txt", expected_content="a\n"), CreateFile("b.txt", content="b\n")]
+    assert template_version(template_repo.commit(new_ref)) is None
+
+
+def test_component_files_missing_from_modules_json_are_not_patched(template_repo: git.Repo) -> None:
+    # Given a module directory that modules.json does not list
+    old_ref = commit_files(template_repo, {".nf-core.yml": "nf_core_version: 4.0.3\n"})
+    new_ref = commit_files(
+        template_repo, {".nf-core.yml": "nf_core_version: 4.1.0\n", "modules/nf-core/fastp/main.nf": "process FASTP\n"}
+    )
+
+    # When
+    operations = generate_operations(template_repo, old_ref, new_ref)
+
+    # Then
+    assert operations == [NfCoreComponent("modules", "fastp", git_sha=None)]

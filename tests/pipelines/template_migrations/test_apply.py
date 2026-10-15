@@ -190,3 +190,13 @@ def test_version_is_stamped_in_nf_core_yaml(tmp_path: Path) -> None:
     assert result.report.to_version == "4.1.0"
     assert result.commit is not None
     assert show(repo, result.commit, ".nf-core.yaml") == "nf_core_version: 4.1.0\n# keep me\n"
+
+
+def test_branch_without_template_history_is_rejected(repo: git.Repo) -> None:
+    # Given a branch that shares no commit with TEMPLATE
+    repo.git.switch("-q", "--orphan", "unrelated")
+    commit_files(repo, {"other.txt": "x\n"}, "unrelated history")
+
+    # When / Then
+    with pytest.raises(ValueError, match="never merged"):
+        merge_template(repo, "unrelated", "TEMPLATE")

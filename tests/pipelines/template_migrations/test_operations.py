@@ -320,3 +320,16 @@ def test_create_file_can_make_an_executable_file(tmp_path: Path) -> None:
 
     # Then
     assert (tmp_path / ".devcontainer/setup.sh").stat().st_mode & 0o111
+
+
+def test_component_without_modules_json_asks_for_an_install(tmp_path: Path) -> None:
+    # Given a pipeline with no modules.json
+    workspace = Workspace(tmp_path)
+    operation = NfCoreComponent("modules", "multiqc", git_sha="abc123")
+
+    # When
+    result = operation.apply(workspace)
+
+    # Then
+    assert result.outcome is Outcome.MANUAL
+    assert "nf-core modules install multiqc" in result.message
