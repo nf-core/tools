@@ -218,7 +218,7 @@ class SubworkflowLint(ComponentLint):
             for test_name in self.lint_tests:
                 try:
                     getattr(self, test_name)(swf)
-                except Exception as e:  # noqa: BLE001 — isolate individual test error from linting run
+                except (LookupError, AttributeError) as e:
                     swf.failed.append(
                         (test_name, test_name, f"Lint test raised an unexpected error: {e}", swf.component_dir)
                     )

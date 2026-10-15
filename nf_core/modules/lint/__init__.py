@@ -202,7 +202,7 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             mod.get_topics_from_main_nf()
-        except Exception as e:  # noqa: BLE001 — isolate individual test error from linting run
+        except (LookupError, AttributeError) as e:
             mod.failed.append(
                 ("main_nf_parseable", "main_nf_parseable", f"Unexpected error parsing main.nf: {e}", mod.main_nf)
             )
@@ -253,7 +253,7 @@ class ModuleLint(ComponentLint):
                         getattr(self, test_name)(mod, allow_missing=True)
                     else:
                         getattr(self, test_name)(mod)
-                except Exception as e:  # noqa: BLE001 — isolate individual test error from linting run
+                except (LookupError, AttributeError) as e:
                     mod.failed.append(
                         (test_name, test_name, f"Lint test raised an unexpected error: {e}", mod.component_dir)
                     )
@@ -287,7 +287,7 @@ class ModuleLint(ComponentLint):
                         getattr(self, test_name)(mod, fix_version=fix_version, progress_bar=progress_bar)
                     else:
                         getattr(self, test_name)(mod)
-                except Exception as e:  # noqa: BLE001 — isolate individual test error from linting run
+                except (LookupError, AttributeError) as e:
                     mod.failed.append(
                         (test_name, test_name, f"Lint test raised an unexpected error: {e}", mod.component_dir)
                     )
