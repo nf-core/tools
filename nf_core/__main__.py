@@ -650,6 +650,14 @@ def rocrate(
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
+@click.option(
+    "--template-migrations",
+    type=click.Choice(["off", "clean", "partial"]),
+    default="off",
+    show_default=True,
+    help="Apply the template update to --from-branch change by change instead of leaving a git merge: "
+    "'clean' only when every change applies, 'partial' with the changes that fit.",
+)
 def command_pipelines_sync(
     ctx,
     directory,
@@ -661,6 +669,7 @@ def command_pipelines_sync(
     force_pr,
     blog_post,
     no_prompts,
+    template_migrations,
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
@@ -678,6 +687,7 @@ def command_pipelines_sync(
         force_pr,
         blog_post,
         no_prompts,
+        template_migrations,
     )
 
 

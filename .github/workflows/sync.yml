@@ -24,6 +24,14 @@ on:
         description: "link to release blogpost"
         type: string
         required: true
+      template_migrations:
+        description: "Apply the template update change by change: off, clean (only when every change applies) or partial"
+        type: choice
+        options:
+          - "off"
+          - clean
+          - partial
+        default: clean
 
 # Cancel if a newer run is started
 concurrency:
@@ -80,6 +88,8 @@ jobs:
     env:
       PIPELINE: ${{ matrix.pipeline }}
       BLOG_POST: ${{ inputs.blog_post }}
+      # Falls back to clean when the workflow runs without dispatch inputs.
+      TEMPLATE_MIGRATIONS: ${{ inputs.template_migrations || 'clean' }}
       VERBOSE: ${{ inputs.debug && '--verbose' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -147,7 +157,8 @@ jobs:
             --pull-request \
             --username nf-core-bot \
             --github-repository "nf-core/${PIPELINE}" \
-            --blog-post "$BLOG_POST"
+            --blog-post "$BLOG_POST" \
+            --template-migrations "$TEMPLATE_MIGRATIONS"
 
       - name: Install newer Nextflow (retry fallback)
         if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
@@ -171,7 +182,8 @@ jobs:
             --pull-request \
             --username nf-core-bot \
             --github-repository "nf-core/${PIPELINE}" \
-            --blog-post "$BLOG_POST"
+            --blog-post "$BLOG_POST" \
+            --template-migrations "$TEMPLATE_MIGRATIONS"
 
       - name: Upload sync log file artifact
         if: ${{ always() }}

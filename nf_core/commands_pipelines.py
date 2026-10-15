@@ -353,6 +353,7 @@ def pipelines_sync(
     force_pr,
     blog_post,
     no_prompts=False,
+    template_migrations="off",
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
@@ -383,6 +384,7 @@ def pipelines_sync(
             force_pr,
             blog_post,
             no_prompts,
+            template_migrations,
         )
         sync_obj.sync()
     except (UserWarning, SyncExceptionError, PullRequestExceptionError) as e:

@@ -20,8 +20,26 @@ import nf_core.pipelines.create.create
 import nf_core.utils
 from nf_core.github_api import gh_api
 from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
+from nf_core.pipelines.template_migrations.apply import TemplateMergeResult, merge_template
 
 log = logging.getLogger(__name__)
+
+TEMPLATE_MIGRATION_MODES = ("off", "clean", "partial")
+# GitHub caps a PR description at 65536 characters; leave room for the rest.
+MAX_MIGRATION_REPORT_LENGTH = 50000
+
+
+def _cut_between_entries(report_markdown: str, max_length: int) -> str:
+    """Shorten a migration report at the start of a list entry.
+
+    Cutting anywhere else could leave a collapsed diff open and render the
+    rest of the PR description as code.
+    """
+    if len(report_markdown) <= max_length:
+        return report_markdown
+    entry_start = report_markdown.rfind("\n- ", 0, max_length)
+    cut_at = entry_start if entry_start != -1 else max_length
+    return report_markdown[:cut_at] + "\n\n_The report was cut to fit the PR description._\n"
 
 
 class SyncExceptionError(Exception):
@@ -47,6 +65,9 @@ class PipelineSync:
         gh_repo (str): GitHub repository name
         template_yaml_path (str): Path to template.yml file for pipeline creation settings. DEPRECATED
         force_pr (bool): Force the creation of a pull request, even if there are no changes to the template
+        template_migrations (str): Apply the template update to `from_branch` change by change instead of
+            leaving a plain git merge: "off", "clean" (only when every change applies) or "partial" (apply
+            what fits and report the rest)
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -70,6 +91,7 @@ class PipelineSync:
         force_pr: bool = False,
         blog_post: str = "",
         no_prompts: bool = False,
+        template_migrations: str = "off",
     ):
         """Initialise syncing object"""
 
@@ -85,6 +107,12 @@ class PipelineSync:
             "manifest": ["name", "description", "version", "contributors"],
         }
         self.force_pr = force_pr
+        if template_migrations not in TEMPLATE_MIGRATION_MODES:
+            raise SyncExceptionError(
+                f"Unknown template migration mode '{template_migrations}', use one of {TEMPLATE_MIGRATION_MODES}"
+            )
+        self.template_migrations = template_migrations
+        self.migration_result: TemplateMergeResult | None = None
 
         self.gh_username = gh_username
         self.gh_repo = gh_repo
@@ -165,6 +193,7 @@ class PipelineSync:
 
                 self.push_template_branch()
                 self.create_merge_base_branch()
+                self.apply_template_migrations()
                 self.push_merge_branch()
                 self.make_pull_request()
             except PullRequestExceptionError as e:
@@ -396,6 +425,70 @@ class PipelineSync:
         except GitCommandError as e:
             raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}") from e
 
+    def apply_template_migrations(self) -> None:
+        """Apply the template update to `from_branch` change by change.
+
+        When the changes apply (all of them, or with "partial" all that fit),
+        the merge branch is moved to a merge commit of `from_branch` and the
+        template commit, so the PR has nothing left for git to merge. Otherwise
+        the merge branch stays on the template commit, as without migrations.
+        The report is added to the PR description either way.
+        """
+        if self.template_migrations == "off":
+            return
+        if self.from_branch is None:
+            log.warning("No branch to apply the template update to, leaving a plain merge")
+            return
+
+        log.info("Applying the template update as migrations")
+        try:
+            self.migration_result = merge_template(
+                self.repo,
+                self.from_branch,
+                self.merge_branch,
+                allow_conflicts=self.template_migrations == "partial",
+            )
+        # Migrations are an opt-in improvement on the plain merge PR, so any
+        # failure falls back to that PR rather than failing the whole sync.
+        except Exception as e:
+            log.warning(f"Could not apply the template update as migrations, leaving a plain merge:\n{e}")
+            log.debug("Template migration error", exc_info=True)
+            return
+        log.info(f"Template migration report:\n{self.migration_result.report.render_markdown()}")
+
+        if self.migration_result.commit is None:
+            log.info("Some template changes conflict, so the PR keeps the plain template merge")
+            return
+        self.repo.git.branch("--force", self.merge_branch, self.migration_result.commit)
+        log.info(f"Moved '{self.merge_branch}' to the migrated merge commit {self.migration_result.commit[:7]}")
+
+    def _migration_pr_section(self) -> str:
+        """The PR description section about template migrations, if they ran."""
+        if self.migration_result is None:
+            return ""
+        report = self.migration_result.report
+        if self.migration_result.commit is None:
+            outcome = (
+                "nf-core/tools tried to apply this template update change by change, but some changes "
+                "conflict with the pipeline, so this PR is a plain template merge. The changes that "
+                "conflict are listed below with the template diff."
+            )
+        elif report.succeeded:
+            outcome = (
+                f"nf-core/tools applied every template change to `{self.from_branch}` one by one, so this "
+                f"branch already merges `{self.from_branch}` and has no merge conflicts. Please review the "
+                "changes and work through the steps below."
+            )
+        else:
+            outcome = (
+                f"nf-core/tools applied the template changes that fit `{self.from_branch}`, so this branch "
+                f"already merges `{self.from_branch}`. Files with a conflicting change were left as they "
+                "were: apply the template changes listed below by hand before merging."
+            )
+
+        report_markdown = _cut_between_entries(report.render_markdown(), MAX_MIGRATION_REPORT_LENGTH)
+        return f"\n\n## Template migrations\n\n{outcome}\n\n{report_markdown}"
+
     def push_merge_branch(self):
         """Push the newly created merge branch to the remote repository"""
         log.info(f"Pushing '{self.merge_branch}' branch to remote")
@@ -431,6 +524,7 @@ class PipelineSync:
             "> Since nf-core/tools 3.5.0, older template update PRs will not be automatically closed, but will remain open in your pipeline repository. "
             "Older template PRs will be automatically closed once a newer template PR has been merged."
         ).format(tag=nf_core.__version__)
+        pr_body_text += self._migration_pr_section()
 
         # Make new pull-request
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
