@@ -375,8 +375,8 @@ class PipelineSync:
     def resolve_merge_conflicts(self):
         """Try to resolve the conflicts that merging TEMPLATE into the PR base branch would have.
 
-        If every conflict can be resolved by applying the template changes to the pipeline files,
-        the merge commit is used as the head of the PR, so that it can be merged without conflicts.
+        If every conflict can be resolved, the merge (plus the commits that update template components and
+        regenerate generated files) is used as the head of the PR, so that it can be merged without conflicts.
         Otherwise the PR is opened from TEMPLATE as before, and the PR body lists what is left to resolve.
         """
         log.info(f"Trying to resolve merge conflicts between '{self.from_branch}' and 'TEMPLATE'")
@@ -387,14 +387,16 @@ class PipelineSync:
                 template_ref="TEMPLATE",
                 message=f"Merge nf-core/tools {nf_core.__version__} template into {self.from_branch}",
             )
-        except GitCommandError as e:
-            # Never let the conflict resolution get in the way of opening the PR
+        # Never let the conflict resolution get in the way of opening the PR
+        except Exception as e:  # noqa: BLE001
             log.warning(f"Could not try to resolve merge conflicts:\n{e}")
             self.template_merge = TemplateMergeResult()
             return
 
+        for warning in self.template_merge.warnings:
+            log.warning(warning)
         if self.template_merge.commit is not None:
-            log.info(f"Resolved merge conflicts in {len(self.template_merge.resolved)} file(s)")
+            log.info(f"Resolved merge conflicts in {len(self.template_merge.conflicts)} file(s)")
         elif self.template_merge.unresolved:
             log.info(
                 f"Could not resolve merge conflicts in {len(self.template_merge.unresolved)} file(s): "
@@ -492,24 +494,44 @@ class PipelineSync:
     def _merge_conflicts_pr_text(self) -> str:
         """Describe the automatic merge conflict resolution for the PR body."""
         merge = self.template_merge
+        sections = []
         if merge.commit is not None:
-            files = "\n".join(f"- `{path}`" for path in merge.resolved)
-            return (
-                "\n\n## Merge conflicts\n\n"
-                f"Merging the template into `{self.from_branch}` conflicted in the files below. "
-                "They were resolved automatically by applying the template changes to your versions of the files, "
-                "so this PR can be merged without conflicts. Please review these files carefully:\n\n"
-                f"{files}"
+            sections.append(
+                f"Merging the template into `{self.from_branch}` conflicted, but every conflict was resolved "
+                "automatically, so this PR can be merged without conflicts. Please review these changes carefully."
             )
-        if merge.unresolved:
-            # The merge was aborted, so every conflicting file is still in conflict
-            files = "\n".join(f"- `{path}`" for path in sorted(merge.resolved + merge.unresolved))
-            return (
-                "\n\n## Merge conflicts\n\n"
+            if merge.resolved:
+                sections.append(
+                    "Resolved by applying the template changes to your version of the file:\n\n"
+                    + "\n".join(f"- `{path}`" for path in merge.resolved)
+                )
+            if merge.by_rule:
+                sections.append(
+                    "Resolved by rule:\n\n"
+                    + "\n".join(f"- `{path}`: {action}" for path, action in merge.by_rule.items())
+                )
+            if merge.regenerated:
+                sections.append(
+                    "Commits after the merge on this branch:\n\n" + "\n".join(f"- {step}" for step in merge.regenerated)
+                )
+            if merge.todo:
+                sections.append(
+                    "These steps failed. Please run them on this branch:\n\n"
+                    + "\n".join(f"- [ ] {command}" for command in merge.todo)
+                )
+        elif merge.conflicts:
+            sections.append(
                 f"Merging the template into `{self.from_branch}` will conflict in these files:\n\n"
-                f"{files}"
+                + "\n".join(f"- `{path}`" for path in merge.conflicts)
             )
-        return ""
+            if merge.unresolved:
+                sections.append(
+                    "These could not be resolved automatically: " + ", ".join(f"`{path}`" for path in merge.unresolved)
+                )
+        if not sections:
+            return ""
+        sections += [f"> [!WARNING]\n> {warning}" for warning in merge.warnings]
+        return "\n\n## Merge conflicts\n\n" + "\n\n".join(sections)
 
     @staticmethod
     def _parse_json_response(response) -> tuple[Any, str]:
