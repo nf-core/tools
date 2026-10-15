@@ -23,17 +23,20 @@ jobs:
           echo "revision={%- raw -%}${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'release') && github.sha || 'dev' }}" >> "$GITHUB_OUTPUT"
 
       - name: Launch workflow via Seqera Platform
-        uses: seqeralabs/action-tower-launch@v2
+        uses: seqeralabs/action-seqera-launch@v1.0.0-rc.2
         # TODO nf-core: You can customise AWS full pipeline tests as required
         # Add full size test data (but still relatively small datasets for few samples)
         # on the `test_full.config` test runs with only one set of parameters
         with:
-          workspace_id: ${{ vars.TOWER_WORKSPACE_ID }}
-          access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
-          compute_env: ${{ vars.TOWER_COMPUTE_ENV }}
+          wait: none
+          # TODO: uncomment the line below if your pipeline uses the v2 parser
+          # syntax-parser: v2
+          workspace-id: ${{ vars.TOWER_WORKSPACE_ID }}
+          access-token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+          compute-env: ${{ vars.TOWER_COMPUTE_ENV }}
           revision: ${{ steps.revision.outputs.revision }}
-          workdir: s3://${{ vars.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ steps.revision.outputs.revision }}{% endraw %}
-          nextflow_config: |
+          work-dir: s3://${{ vars.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ steps.revision.outputs.revision }}{% endraw %}
+          nextflow-config: |
             plugins {
               id 'nf-slack@0.5.0'
               id 'nf-schema@2.7.2'
@@ -59,10 +62,3 @@ jobs:
               "outdir": "s3://{% raw %}${{ vars.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ steps.revision.outputs.revision }}{% endraw %}"
             }
           profiles: test_full
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: Seqera Platform debug log file
-          path: |
-            tower_action_*.log
-            tower_action_*.json
