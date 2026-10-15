@@ -572,7 +572,7 @@ class ModuleLint(ComponentLint):
         if "topics" in corrected_meta_yml:
             _populate_versions_metadata("topics", corrected_meta_yml["topics"])
 
-        def _add_edam_ontologies(section, edam_formats, desc):
+        def _add_edam_ontologies(section, edam_formats, edam_ok, desc):
             expected_ontologies = []
             current_ontologies = []
             if "pattern" in section:
@@ -595,7 +595,9 @@ class ModuleLint(ComponentLint):
                         current_ontologies.append(ontology["edam"])
                     except KeyError:
                         log.warning(f"Could not add ontologies in {desc}: {ontology}")
-            elif "type" in section and section["type"] == "file":
+            elif "type" in section and section["type"] == "file" and edam_ok:
+                # Only assert "no ontologies" when the ontology actually loaded;
+                # otherwise a failed download looks identical to a real empty answer.
                 section["ontologies"] = []
             log.debug(f"expected ontologies for {desc}: {expected_ontologies}")
             log.debug(f"current ontologies for {desc}: {current_ontologies}")
@@ -616,19 +618,22 @@ class ModuleLint(ComponentLint):
                             break
 
         # EDAM ontologies
-        edam_formats = nf_core.modules.modules_utils.load_edam()
+        edam_formats, edam_ok = nf_core.modules.modules_utils.load_edam_with_status(nf_core.utils.NFCORE_CACHE_DIR)
         if "input" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["input"]):
                 if isinstance(channel, list):
                     for j, element in enumerate(channel):
                         element_name = list(element.keys())[0]
                         _add_edam_ontologies(
-                            corrected_meta_yml["input"][i][j][element_name], edam_formats, f"input - {element_name}"
+                            corrected_meta_yml["input"][i][j][element_name],
+                            edam_formats,
+                            edam_ok,
+                            f"input - {element_name}",
                         )
                 elif isinstance(channel, dict):
                     element_name = list(channel.keys())[0]
                     _add_edam_ontologies(
-                        corrected_meta_yml["input"][i][element_name], edam_formats, f"input - {element_name}"
+                        corrected_meta_yml["input"][i][element_name], edam_formats, edam_ok, f"input - {element_name}"
                     )
 
         if "output" in meta_yml:
@@ -640,6 +645,7 @@ class ModuleLint(ComponentLint):
                         _add_edam_ontologies(
                             corrected_meta_yml["output"][ch_name][0][i][element_name],
                             edam_formats,
+                            edam_ok,
                             f"output - {ch_name} - {element_name}",
                         )
                 elif isinstance(ch_content, dict):
@@ -647,6 +653,7 @@ class ModuleLint(ComponentLint):
                     _add_edam_ontologies(
                         corrected_meta_yml["output"][ch_name][0][element_name],
                         edam_formats,
+                        edam_ok,
                         f"output - {ch_name} - {element_name}",
                     )
 
