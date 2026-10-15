@@ -99,6 +99,29 @@ def pipelines_bump_version(ctx, new_version, directory, nextflow):
         sys.exit(1)
 
 
+# nf-core pipelines containers create-configs
+def pipelines_containers_create_configs(ctx, directory):
+    """
+    Regenerate the pipeline container config files.
+
+    Scans all modules installed in the pipeline and rewrites the
+    `conf/containers_*.config` files from their `meta.yml` container entries.
+
+    Useful after resolving a template sync merge conflict in these files: the
+    contents are always regenerated from scratch, so whatever they contained
+    before is discarded.
+    """
+    from nf_core.pipelines.containers_utils import ContainerConfigs
+    from nf_core.utils import is_pipeline_directory
+
+    try:
+        is_pipeline_directory(directory)
+        ContainerConfigs(Path(directory)).generate_container_configs()
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core pipelines lint
 def pipelines_lint(
     ctx,
