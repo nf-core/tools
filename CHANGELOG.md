@@ -17,6 +17,8 @@
 
 ### Modules
 
+- modules main.nf template: match nf-core container formatting in main.nf ([#4459](https://github.com/nf-core/tools/pull/4459))
+
 ### Subworkflows
 
 ### Template
