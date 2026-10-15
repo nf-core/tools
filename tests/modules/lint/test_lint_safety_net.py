@@ -1,8 +1,10 @@
 """Regression tests for the general lint safety net
 
-These confirm that _any_ exception raised from within a single lint test - not just the
-specific known bugs fixed elsewhere - is converted into a failed lint result instead of
-aborting the whole lint run, and that other components in the same batch are unaffected.
+These confirm that a LookupError or AttributeError raised from within a single lint test -
+the realistic failure modes when parsing a community module's main.nf/meta.yml/environment.yml -
+is converted into a failed lint result instead of aborting the whole lint run, and that other
+components in the same batch are unaffected. Other exception types are intentionally left
+uncaught so bugs in the linting code itself surface loudly instead of being swallowed.
 """
 
 from unittest.mock import patch
@@ -18,11 +20,11 @@ class TestModuleLintSafetyNet(TestModules):
     """Test that ModuleLint.lint_module isolates exceptions raised by individual lint tests"""
 
     def test_unexpected_exception_in_single_test_becomes_failed_result(self):
-        """A lint test that raises an arbitrary exception must not abort linting"""
+        """A lint test that raises a LookupError/AttributeError must not abort linting"""
         self.mods_install.install("trimgalore")
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
 
-        with patch.object(nf_core.modules.lint.ModuleLint, "module_todos", side_effect=RuntimeError("boom")):
+        with patch.object(nf_core.modules.lint.ModuleLint, "module_todos", side_effect=AttributeError("boom")):
             module_lint.lint(print_results=False, module="trimgalore")
 
         failed_tests = [f.lint_test for f in module_lint.failed]
@@ -38,7 +40,7 @@ class TestModuleLintSafetyNet(TestModules):
 
         def flaky_module_todos(self, module):
             if module.component_name == "trimgalore":
-                raise RuntimeError("boom")
+                raise AttributeError("boom")
 
         with patch.object(nf_core.modules.lint.ModuleLint, "module_todos", flaky_module_todos):
             module_lint.lint(print_results=False, all_modules=True)
@@ -53,14 +55,14 @@ class TestModuleLintSafetyNet(TestModules):
         assert not any(r.component_name == "tabix/tabix" and r.lint_test == "module_todos" for r in module_lint.failed)
 
     def test_safe_parse_component_contains_arbitrary_exception(self):
-        """An unexpected exception while parsing main.nf (inputs/outputs/topics) must not
+        """A LookupError while parsing main.nf (inputs/outputs/topics) must not
         abort linting, and must be reported as a failed result"""
         self.mods_install.install("trimgalore")
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
 
         with patch(
             "nf_core.components.nfcore_component.NFCoreComponent.get_outputs_from_main_nf",
-            side_effect=RuntimeError("parse boom"),
+            side_effect=KeyError("parse boom"),
         ):
             module_lint.lint(print_results=False, module="trimgalore")
 
@@ -74,12 +76,12 @@ class TestSubworkflowLintSafetyNet(TestSubworkflows):
     """Test that SubworkflowLint.lint_subworkflow isolates exceptions raised by individual lint tests"""
 
     def test_unexpected_exception_in_single_test_becomes_failed_result(self):
-        """A lint test that raises an arbitrary exception must not abort linting"""
+        """A lint test that raises a LookupError/AttributeError must not abort linting"""
         self.subworkflow_install.install("bam_sort_stats_samtools")
         subworkflow_lint = nf_core.subworkflows.lint.SubworkflowLint(directory=self.pipeline_dir)
 
         with patch.object(
-            nf_core.subworkflows.lint.SubworkflowLint, "subworkflow_todos", side_effect=RuntimeError("boom")
+            nf_core.subworkflows.lint.SubworkflowLint, "subworkflow_todos", side_effect=AttributeError("boom")
         ):
             subworkflow_lint.lint(print_results=False, subworkflow="bam_sort_stats_samtools")
 
