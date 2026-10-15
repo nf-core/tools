@@ -65,13 +65,11 @@ class Workspace:
     def restore(self, snapshot: dict[str, str | None]) -> None:
         self._pending = dict(snapshot)
 
-    def restore_paths(self, snapshot: dict[str, str | None], paths: set[str]) -> None:
-        """Undo changes to `paths` made since `snapshot`."""
+    def discard(self, paths: set[str]) -> None:
+        """Drop the pending changes to `paths`, leaving those files as they are on disk."""
         for path in paths:
-            if path in snapshot:
-                self._pending[path] = snapshot[path]
-            else:
-                self._pending.pop(path, None)
+            self._pending.pop(path, None)
+            self._executable.discard(path)
 
     def changed_paths(self) -> list[str]:
         return [path for path, content in sorted(self._pending.items()) if content != self._read_from_disk(path)]

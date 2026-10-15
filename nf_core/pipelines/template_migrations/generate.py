@@ -106,12 +106,12 @@ def _operations_for_change(
 
     old_file = _read(old_commit, change.path)
     new_file = _read(new_commit, change.path)
-    if old_file is None and new_file is not None:
+    if old_file is None:
+        # git only lists a file that one of the two commits has.
+        assert new_file is not None
         return [CreateFile(change.path, content=new_file.content, executable=new_file.executable)]
-    if new_file is None and old_file is not None:
+    if new_file is None:
         return [DeleteFile(change.path, expected_content=old_file.content)]
-    if old_file is None or new_file is None:
-        return []
 
     old_text = old_file.content
     # The version stamp is set separately; diffing that line too would tie
@@ -204,11 +204,14 @@ def _hunk_blocks(hunk: Hunk, opcodes: list, old_lines: list[str], new_lines: lis
 
 
 def _equal_length(opcodes: list, index: int) -> int:
+    """Length of the equal block next to a hunk, 0 at the start or end of the file.
+
+    SequenceMatcher alternates equal and non-equal opcodes, so the neighbour
+    of a change is always an equal block.
+    """
     if index < 0 or index >= len(opcodes):
         return 0
-    tag, old_start, old_end, _, _ = opcodes[index]
-    if tag != "equal":
-        return 0
+    _, old_start, old_end, _, _ = opcodes[index]
     return old_end - old_start
 
 

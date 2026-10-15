@@ -123,12 +123,10 @@ def _apply_operations(operations: list, workspace: Workspace, allow_conflicts: b
     if not allow_conflicts:
         workspace.restore(checkpoint)
         return results
-    return _hold_back_conflicting_files(results, workspace, checkpoint)
+    return _hold_back_conflicting_files(results, workspace)
 
 
-def _hold_back_conflicting_files(
-    results: list[OperationResult], workspace: Workspace, checkpoint: dict[str, str | None]
-) -> list[OperationResult]:
+def _hold_back_conflicting_files(results: list[OperationResult], workspace: Workspace) -> list[OperationResult]:
     """Leave every file with a conflict as it was before the update.
 
     A file that got some of the template's changes but not others can end
@@ -136,7 +134,7 @@ def _hold_back_conflicting_files(
     a maintainer instead.
     """
     conflicting_paths = {result.path for result in results if result.outcome is Outcome.CONFLICT}
-    workspace.restore_paths(checkpoint, conflicting_paths)
+    workspace.discard(conflicting_paths)
 
     held_back_results: list[OperationResult] = []
     for result in results:
