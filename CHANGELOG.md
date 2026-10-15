@@ -12,6 +12,7 @@
 
 - Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
 - Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
+- remove `ext.use_gpu` as a permitted ext key, superseded by `task.accelerator` ([#4445](https://github.com/nf-core/tools/pull/4445))
 - fix(lint): use repo-root-relative path in `git restore` call in `container_configs` ([#4301](https://github.com/nf-core/tools/pull/4301))
 
 ### Modules
@@ -20,6 +21,7 @@
 
 ### Template
 
+- remove redundant `ext.use_gpu` from the `process_gpu` label, use `accelerator` only ([#4445](https://github.com/nf-core/tools/pull/4445))
 - Switch to using `fix-linting.yml` workflow from `nf-core/actions` repo, to avoid leakage of nf-core bot token and rename it from `fix_linting.yml` to `fix-linting.yml` ([#4485](https://github.com/nf-core/tools/pull/4485))
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
 - git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
