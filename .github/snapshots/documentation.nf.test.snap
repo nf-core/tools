@@ -105,10 +105,10 @@
                 "multiqc_general_stats.txt:md5,0b54e4e764665bd57fe0f95216744a78"
             ]
         ],
-        "timestamp": "2026-10-12T11:57:32.687080131",
         "meta": {
-            "nf-test": "0.9.4",
-            "nextflow": "26.09.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.03.1"
+        },
+        "timestamp": "2025-05-07T13:52:10.350817122"
     }
 }
