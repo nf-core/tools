@@ -92,14 +92,12 @@ To familiarise yourself with what the pipeline produces:
 
 {% endif -%}
 
-{% if is_nfcore -%}
-
 ## Support and troubleshooting
 
 If you have a question or hit an issue:
 
 - See the relevant documentation on the relevant [pipeline documentation page](https://nf-co.re/{{ short_name }}/).
-- Ask on the nf-core [Slack `#{{ short_name }}` channel](https://nfcore.slack.com/channels/{{ short_name }}).
+  {% if is_nfcore -%} - Ask on the nf-core [Slack `#{{ short_name }}` channel](https://nfcore.slack.com/channels/{{ short_name }}).
 
 > [!NOTE]
 > Not on the nf-core Slack?
