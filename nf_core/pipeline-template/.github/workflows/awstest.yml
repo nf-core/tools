@@ -14,7 +14,7 @@ jobs:
         uses: seqeralabs/action-seqera-launch@f7b1a39afc8bb65f58b84150cd214b33fe416fef #v1
         with:
           wait: none
-          # TODO: uncomment the line below if your pipeline uses the v2 parser
+          # nf-core TODO: uncomment the line below if your pipeline uses the v2 parser
           # syntax-parser: v2
           workspace-id: ${{ vars.TOWER_WORKSPACE_ID }}
           access-token: ${{ secrets.TOWER_ACCESS_TOKEN }}
