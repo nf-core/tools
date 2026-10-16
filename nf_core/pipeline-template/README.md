@@ -13,7 +13,7 @@
 
 {% endif -%}
 {% if github_badges -%}
-{% if codespaces %}[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/{{ name }}){% endif %}
+{% if codespaces %}[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/{{ name }}){% endif -%}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/nf-test.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/nf-test.yml)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/actions/workflows/linting.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/linting.yml){% endif -%}
 {% if is_nfcore -%}[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif -%}
@@ -51,8 +51,8 @@
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-{%- if fastqc %}1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)).{% endif %}
-{%- if multiqc %}2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)).{% endif %}
+{%- if fastqc %}1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)).{% endif -%}
+{%- if multiqc %}2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)).{% endif -%}
 
 ## Usage
 
@@ -81,7 +81,8 @@ nextflow run {{ name }} \
 
 > [!NOTE]
 > Want to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) first?
-> Run with `-profile test` before running the workflow on actual data.{% endif %}
+> Run with `-profile test` before running the workflow on actual data.
+> {% endif -%}
 
 {% endif -%}
 
@@ -129,7 +130,7 @@ We thank the following people for their assistance in the development of this pi
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline in CITATIONS file -->
 
 References for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
-{%- endif %}
+{%- endif -%}
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/main/LICENSE).
 
