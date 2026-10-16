@@ -83,6 +83,8 @@ nextflow run {{ name }} \
 > Want to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) first?
 > Run with `-profile test` before running the workflow on actual data.{% endif %}
 
+{% endif -%}
+
 ## Pipeline output
 
 To familiarise yourself with what the pipeline produces:
@@ -123,7 +125,8 @@ We thank the following people for their assistance in the development of this pi
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
 <!-- If you use {{ name }} for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
-{% if citations %}<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+{% if citations %}
+<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline in CITATIONS file -->
 
 References for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 {%- endif %}
