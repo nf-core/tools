@@ -7,7 +7,7 @@ import rich.prompt
 import ruamel.yaml
 
 import nf_core.utils
-from nf_core.components.nfcore_component import parse_include_statement
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 def prompt_component_version_sha(
     component_name: str,
     component_type: str,
-    modules_repo: "ModulesRepo",
+    modules_repo: ModulesRepo,
     installed_sha: str | None = None,
 ) -> str:
     """
@@ -160,7 +160,7 @@ def get_components_to_install(
 
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
-            for name, _alias, link in parse_include_statement(line):
+            for name, _alias, link in NFCoreComponent.parse_include_statement(line):
                 if link.startswith("../../../"):
                     if "../subworkflows/" in link:
                         component_name = name.lower()

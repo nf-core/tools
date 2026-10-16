@@ -13,31 +13,6 @@ from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, run
 log = logging.getLogger(__name__)
 
 
-def parse_include_statement(line: str) -> list[tuple[str, str, str]]:
-    """Parse a Nextflow ``include`` statement.
-
-    Handles multiple symbols per statement (``include { A; B as C } from 'path'``) and
-    ``as`` aliasing. Returns a list of ``(name, alias, link)`` tuples, one per imported
-    symbol - ``alias`` is ``""`` if the symbol isn't aliased. Returns an empty list if
-    the line isn't a parseable include statement.
-    """
-    match = re.search(r"include\s*{\s*(.+?)\s*}\s*from\s*(?:'|\")(.+?)(?:'|\")", line.strip())
-    if not match:
-        return []
-    symbols_part, link = match.groups()
-    parsed = []
-    for symbol in symbols_part.split(";"):
-        symbol = symbol.strip()
-        if not symbol:
-            continue
-        if " as " in symbol:
-            name, alias = (part.strip() for part in symbol.split(" as ", 1))
-        else:
-            name, alias = symbol, ""
-        parsed.append((name, alias, link))
-    return parsed
-
-
 class NFCoreComponent:
     """
     A class to hold the information about a nf-core module or subworkflow.
@@ -140,6 +115,31 @@ class NFCoreComponent:
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
+    @staticmethod
+    def parse_include_statement(line: str) -> list[tuple[str, str, str]]:
+        """Parse a Nextflow ``include`` statement.
+
+        Handles multiple symbols per statement (``include { A; B as C } from 'path'``) and
+        ``as`` aliasing. Returns a list of ``(name, alias, link)`` tuples, one per imported
+        symbol - ``alias`` is ``""`` if the symbol isn't aliased. Returns an empty list if
+        the line isn't a parseable include statement.
+        """
+        match = re.search(r"include\s*{\s*(.+?)\s*}\s*from\s*(?:'|\")(.+?)(?:'|\")", line.strip())
+        if not match:
+            return []
+        symbols_part, link = match.groups()
+        parsed = []
+        for symbol in symbols_part.split(";"):
+            symbol = symbol.strip()
+            if not symbol:
+                continue
+            if " as " in symbol:
+                name, alias = (part.strip() for part in symbol.split(" as ", 1))
+            else:
+                name, alias = symbol, ""
+            parsed.append((name, alias, link))
+        return parsed
+
     def load_main_nf(self) -> str:
         """Return the contents of main.nf, or an empty string if it does not exist."""
         data = ""
@@ -181,7 +181,7 @@ class NFCoreComponent:
         data = main_nf.read_text() if main_nf.is_file() else ""
         for line in data.splitlines():
             if line.strip().startswith("include"):
-                for _name, _alias, link in parse_include_statement(line):
+                for _name, _alias, link in self.parse_include_statement(line):
                     # get tool/subtool or subworkflow name from the include link, can be in the form
                     #'../../../modules/nf-core/hisat2/align/main'
                     #'../bam_sort_stats_samtools/main'

@@ -5,7 +5,7 @@ Lint the main.nf file of a subworkflow
 import logging
 import re
 
-from nf_core.components.nfcore_component import NFCoreComponent, parse_include_statement
+from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
@@ -195,7 +195,7 @@ def check_subworkflow_section(self, lines: list[str]) -> list[str]:
     includes = []
     for line in lines:
         if line.strip().startswith("include"):
-            for name, alias, _link in parse_include_statement(line):
+            for name, alias, _link in self.parse_include_statement(line):
                 includes.append(alias or name)
     # remove duplicated components
     includes = list(set(includes))
