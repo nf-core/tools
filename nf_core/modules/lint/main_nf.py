@@ -32,6 +32,14 @@ def main_nf(
     as ``<tool>`` or single subcommand with distinct functionality as
     ``<tool/subtool>``.
 
+    main_nf_patch_reversible
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+    If the module is patched, the patch must be reverse-applicable to the
+    current ``main.nf`` so the pre-patch content can be linted. A warning is
+    issued, and the remaining ``main_nf`` checks are skipped for this module,
+    if the patch is outdated or has been edited and can no longer be applied.
+
     main_nf_exists
     ^^^^^^^^^^^^^^
 
@@ -119,14 +127,25 @@ def main_nf(
     # otherwise read the lines directly from the module
     lines: list[str] = []
     if module.is_patched:
-        lines = ComponentsDiffer.try_apply_patch(
-            module.component_type,
-            module.component_name,
-            module_lint_object.modules_repo.repo_path,
-            module.patch_path,
-            Path(module.component_dir).relative_to(module.base_dir),
-            reverse=True,
-        ).get("main.nf", [""])
+        try:
+            lines = ComponentsDiffer.try_apply_patch(
+                module.component_type,
+                module.component_name,
+                module_lint_object.modules_repo.repo_path,
+                module.patch_path,
+                Path(module.component_dir).relative_to(module.base_dir),
+                reverse=True,
+            ).get("main.nf", [""])
+        except LookupError:
+            module.warned.append(
+                (
+                    "main_nf",
+                    "main_nf_patch_reversible",
+                    "Could not reverse-apply patch to read module file for linting; skipping main_nf checks",
+                    module.main_nf,
+                )
+            )
+            return inputs, emits
 
     if len(lines) == 0:
         try:
@@ -134,9 +153,9 @@ def main_nf(
             with open(module.main_nf) as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf", "main_nf_exists", "Module file exists", module.main_nf))
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             module.failed.append(("main_nf", "main_nf_exists", "Module file does not exist", module.main_nf))
-            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}") from e
+            return inputs, emits
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
     lines_j = "\n".join(lines) if len(lines) > 0 else ""
@@ -326,7 +345,7 @@ def main_nf(
     return inputs, emits
 
 
-def check_nf_module_name(self, component_name):
+def check_nf_module_name(module, component_name):
     """
     Lint the module name
     Checks whether the module name has at most two levels of granularity, no
@@ -334,34 +353,43 @@ def check_nf_module_name(self, component_name):
     """
     # Module name is lowercase
     if component_name.islower():
-        self.passed.append(("main_nf", "main_nf_module_lowercase", "Process name is lowercase", self.main_nf))
+        module.passed.append(("main_nf", "main_nf_module_lowercase", "Process name is lowercase", module.main_nf))
     else:
-        self.failed.append(("main_nf", "main_nf_module_lowercase", "Process name should be lowercase", self.main_nf))
+        module.failed.append(
+            ("main_nf", "main_nf_module_lowercase", "Process name should be lowercase", module.main_nf)
+        )
 
     # Module name has no punctuation
     if component_name.replace("/", "").isalnum():
-        self.passed.append(
-            ("main_nf", "main_nf_module_no_punctuation", "Module properly named without punctuation", self.main_nf)
+        module.passed.append(
+            ("main_nf", "main_nf_module_no_punctuation", "Module properly named without punctuation", module.main_nf)
         )
     else:
-        self.failed.append(
-            ("main_nf", "main_nf_module_no_punctuation", "Module name should not have any punctuation", self.main_nf)
+        module.failed.append(
+            ("main_nf", "main_nf_module_no_punctuation", "Module name should not have any punctuation", module.main_nf)
         )
 
     # Module name granularity
     if component_name.count("/") > 1:
-        self.failed.append(
-            ("main_nf", "main_nf_module_granularity", "Module not named as `<tool>` or `<tool/subtool>`", self.main_nf)
+        module.failed.append(
+            (
+                "main_nf",
+                "main_nf_module_granularity",
+                "Module not named as `<tool>` or `<tool/subtool>`",
+                module.main_nf,
+            )
         )
     elif component_name.count("/") == 1:
-        self.passed.append(
-            ("main_nf", "main_nf_module_granularity", "Module properly named as `<tool/subtool>`", self.main_nf)
+        module.passed.append(
+            ("main_nf", "main_nf_module_granularity", "Module properly named as `<tool/subtool>`", module.main_nf)
         )
     else:
-        self.passed.append(("main_nf", "main_nf_module_granularity", "Module properly named as `<tool>`", self.main_nf))
+        module.passed.append(
+            ("main_nf", "main_nf_module_granularity", "Module properly named as `<tool>`", module.main_nf)
+        )
 
 
-def check_script_section(self, lines):
+def check_script_section(module, lines):
     """
     Lint the script section
     Checks whether `def prefix` is defined and whether getProcessName is used for `versions.yml`.
@@ -369,23 +397,23 @@ def check_script_section(self, lines):
     script = "".join(lines)
 
     # check for prefix (only if module has a meta map as input)
-    if self.has_meta:
+    if module.has_meta:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
-            self.passed.append(
+            module.passed.append(
                 (
                     "main_nf",
                     "main_nf_meta_prefix",
                     "'prefix' specified in script section",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
         else:
-            self.failed.append(
+            module.failed.append(
                 (
                     "main_nf",
                     "main_nf_meta_prefix",
                     "'prefix' unspecified in script section",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
 
@@ -397,14 +425,14 @@ def check_script_section(self, lines):
         if key not in permitted_meta_keys
     ]
     if not invalid_meta_keys:
-        self.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", self.main_nf))
+        module.passed.append(("main_nf", "main_nf_meta_key", "All 'meta' keys are valid", module.main_nf))
     else:
-        self.failed.append(
+        module.failed.append(
             (
                 "main_nf",
                 "main_nf_meta_key",
                 f"Invalid 'meta' keys detected: {', '.join(invalid_meta_keys)}",
-                self.main_nf,
+                module.main_nf,
             )
         )
 
@@ -416,40 +444,40 @@ def check_script_section(self, lines):
         if key not in permitted_ext_keys and not re.match(r"^ext\.args([2-9]|\d{2,})$", key)
     ]
     if not invalid_ext_keys:
-        self.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", self.main_nf))
+        module.passed.append(("main_nf", "main_nf_ext_key", "All 'ext' keys are valid", module.main_nf))
     else:
-        self.failed.append(
+        module.failed.append(
             (
                 "main_nf",
                 "main_nf_ext_key",
                 f"Invalid 'ext' keys detected: {', '.join(invalid_ext_keys)}",
-                self.main_nf,
+                module.main_nf,
             )
         )
 
 
-def check_when_section(self, lines):
+def check_when_section(module, lines):
     """
     Lint the when: section
     Checks whether the line is modified from 'task.ext.when == null || task.ext.when'
     """
     if len(lines) == 0:
-        self.failed.append(("main_nf", "when_exist", "when: condition has been removed", self.main_nf))
+        module.failed.append(("main_nf", "when_exist", "when: condition has been removed", module.main_nf))
         return
     if len(lines) > 1:
-        self.failed.append(("main_nf", "when_exist", "when: condition has too many lines", self.main_nf))
+        module.failed.append(("main_nf", "when_exist", "when: condition has too many lines", module.main_nf))
         return
-    self.passed.append(("main_nf", "when_exist", "when: condition is present", self.main_nf))
+    module.passed.append(("main_nf", "when_exist", "when: condition is present", module.main_nf))
 
     # Check the condition hasn't been changed.
     if lines[0].strip() != "task.ext.when == null || task.ext.when":
-        self.failed.append(("main_nf", "when_condition", "when: condition has been altered", self.main_nf))
+        module.failed.append(("main_nf", "when_condition", "when: condition has been altered", module.main_nf))
         return
-    self.passed.append(("main_nf", "when_condition", "when: condition is unchanged", self.main_nf))
+    module.passed.append(("main_nf", "when_condition", "when: condition is unchanged", module.main_nf))
 
 
 def check_process_section(
-    self, lines: list[str], registry: tuple[str, ...], fix_version: bool, progress_bar: Progress | None
+    module, lines: list[str], registry: tuple[str, ...], fix_version: bool, progress_bar: Progress | None
 ):
     """Lint the section of a module between the process definition
     and the 'input:' definition
@@ -470,17 +498,17 @@ def check_process_section(
     """
     # Check that we have a process section
     if len(lines) == 0:
-        self.failed.append(("main_nf", "process_exist", "Process definition does not exist", self.main_nf))
+        module.failed.append(("main_nf", "process_exist", "Process definition does not exist", module.main_nf))
         return None
-    self.passed.append(("main_nf", "process_exist", "Process definition exists", self.main_nf))
+    module.passed.append(("main_nf", "process_exist", "Process definition exists", module.main_nf))
 
     # Resolve the docker and singularity containers via `nextflow inspect` rather than
     # parsing the container ternary in main.nf with regexes. Running inspect once per
     # profile lets Nextflow evaluate the container selection logic for us and return the
     # fully resolved container in its JSON output. Either may be None if the corresponding
     # container could not be resolved (e.g. Nextflow too old, or no such container).
-    docker_container = self.get_container_with_inspect(profile="docker")
-    singularity_container = self.get_container_with_inspect(profile="singularity")
+    docker_container = module.get_container_with_inspect(profile="docker")
+    singularity_container = module.get_container_with_inspect(profile="singularity")
 
     # `nextflow inspect -profile singularity` falls back to the docker container when the
     # module has no singularity-specific image. A bare biocontainers/Seqera docker image is
@@ -493,37 +521,42 @@ def check_process_section(
 
     # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
     # container on purpose, so the singularity_tag check is skipped for them.
-    skip_singularity = str(Path(self.component_dir).resolve()) in _load_skip_nf_test_sets(str(self.base_dir)).get(
+    skip_singularity = str(Path(module.component_dir).resolve()) in _load_skip_nf_test_sets(str(module.base_dir)).get(
         "singularity", frozenset()
     )
 
     if skip_singularity:
-        log.debug(f"Skipping singularity_tag check for {self.component_name} (skipped in skip_nf_test.json)")
+        log.debug(f"Skipping singularity_tag check for {module.component_name} (skipped in skip_nf_test.json)")
     elif singularity_container is not None:
-        self.passed.append(
-            ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", self.main_nf)
+        module.passed.append(
+            ("main_nf", "singularity_tag", f"Found singularity container: {singularity_container}", module.main_nf)
         )
         if singularity_container.startswith("oras://"):
-            self.failed.append(
-                ("main_nf", "oras_singularity_tag", "Singularity container should not use oras:// scheme", self.main_nf)
+            module.failed.append(
+                (
+                    "main_nf",
+                    "oras_singularity_tag",
+                    "Singularity container should not use oras:// scheme",
+                    module.main_nf,
+                )
             )
         else:
-            self.passed.append(
-                ("main_nf", "oras_singularity_tag", "Singularity container uses valid scheme", self.main_nf)
+            module.passed.append(
+                ("main_nf", "oras_singularity_tag", "Singularity container uses valid scheme", module.main_nf)
             )
 
     else:
-        self.failed.append(("main_nf", "singularity_tag", "Unable to resolve singularity container", self.main_nf))
+        module.failed.append(("main_nf", "singularity_tag", "Unable to resolve singularity container", module.main_nf))
     if docker_container is not None:
-        self.passed.append(("main_nf", "docker_tag", f"Found docker container: {docker_container}", self.main_nf))
+        module.passed.append(("main_nf", "docker_tag", f"Found docker container: {docker_container}", module.main_nf))
     else:
-        self.failed.append(("main_nf", "docker_tag", "Unable to resolve docker container", self.main_nf))
+        module.failed.append(("main_nf", "docker_tag", "Unable to resolve docker container", module.main_nf))
 
     # Check that the process name is correctly formated from the component name
-    check_process_name_format(self, self.process_name, self.component_name)
+    check_process_name_format(module, module.process_name, module.component_name)
 
     # Check that process labels are correct
-    check_process_labels(self, lines)
+    check_process_labels(module, lines)
 
     # Deprecated enable_conda
     for _i, raw_line in enumerate(lines):
@@ -536,26 +569,26 @@ def check_process_section(
         if _container_type(line) == "conda":
             match = re.search(r"params\.enable_conda", line)
             if match is None:
-                self.passed.append(
+                module.passed.append(
                     (
                         "main_nf",
                         "deprecated_enable_conda",
                         "Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
             else:
-                self.failed.append(
+                module.failed.append(
                     (
                         "main_nf",
                         "deprecated_enable_conda",
                         "Found deprecated parameter 'params.enable_conda' in the conda definition",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
 
         if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
-            check_container_link_line(self, raw_line, registry)
+            check_container_link_line(module, raw_line, registry)
 
     # Compare versions only when both resolved containers expose a parseable version tag.
     # Legacy biocontainers-style URLs carry a shared `:<version>` tag (e.g. `:0.11.9--0`)
@@ -571,7 +604,7 @@ def check_process_section(
     return docker_match.group(1) == singularity_match.group(1)
 
 
-def check_process_name_format(self, process_name, component_name):
+def check_process_name_format(module, process_name, component_name):
     """
     Lint the process name
     Checks that the process name in the module file is uppercase and derived
@@ -579,20 +612,22 @@ def check_process_name_format(self, process_name, component_name):
     """
     # Process name should be all capital letters
     if process_name.isupper():
-        self.passed.append(("main_nf", "process_capitals", "Process name is in capital letters", self.main_nf))
+        module.passed.append(("main_nf", "process_capitals", "Process name is in capital letters", module.main_nf))
     else:
-        self.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", self.main_nf))
+        module.failed.append(("main_nf", "process_capitals", "Process name is not in capital letters", module.main_nf))
 
     # Process name should be made from the module name
     if component_name.upper().replace("/", "_") == process_name:
-        self.passed.append(("main_nf", "module_process_name", "Process name is derived from module name", self.main_nf))
+        module.passed.append(
+            ("main_nf", "module_process_name", "Process name is derived from module name", module.main_nf)
+        )
     else:
-        self.failed.append(
-            ("main_nf", "module_process_name", "Process name is not derived from module name", self.main_nf)
+        module.failed.append(
+            ("main_nf", "module_process_name", "Process name is not derived from module name", module.main_nf)
         )
 
 
-def check_process_labels(self, lines):
+def check_process_labels(module, lines):
     correct_process_labels = [
         "process_single",
         "process_low",
@@ -610,12 +645,12 @@ def check_process_labels(self, lines):
             try:
                 label = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label).group(1)
             except AttributeError:
-                self.warned.append(
+                module.warned.append(
                     (
                         "main_nf",
                         "process_standard_label",
                         f"Specified label appears to contain non-alphanumerics: {label}",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
                 continue
@@ -624,41 +659,43 @@ def check_process_labels(self, lines):
             else:
                 good_labels.append(label)
         if len(good_labels) > 1:
-            self.warned.append(
+            module.warned.append(
                 (
                     "main_nf",
                     "process_standard_label",
                     f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
         elif len(good_labels) == 1:
-            self.passed.append(("main_nf", "process_standard_label", "Correct process label", self.main_nf))
+            module.passed.append(("main_nf", "process_standard_label", "Correct process label", module.main_nf))
         else:
-            self.warned.append(("main_nf", "process_standard_label", "Standard process label not found", self.main_nf))
+            module.warned.append(
+                ("main_nf", "process_standard_label", "Standard process label not found", module.main_nf)
+            )
         if len(bad_labels) > 0:
-            self.warned.append(
+            module.warned.append(
                 (
                     "main_nf",
                     "process_standard_label",
                     f"Non-standard labels found: `{'`,`'.join(bad_labels)}`",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
         if len(all_labels) > len(set(all_labels)):
-            self.warned.append(
+            module.warned.append(
                 (
                     "main_nf",
                     "process_standard_label",
                     f"Duplicate labels found: `{'`,`'.join(sorted(all_labels))}`",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
     else:
-        self.warned.append(("main_nf", "process_standard_label", "Process label not specified", self.main_nf))
+        module.warned.append(("main_nf", "process_standard_label", "Process label not specified", module.main_nf))
 
 
-def check_container_link_line(self, raw_line, registry):
+def check_container_link_line(module, raw_line, registry):
     """Look for common problems in the container name / URL, for docker and singularity."""
 
     line = raw_line.strip(" \n'\"}:?")
@@ -666,21 +703,21 @@ def check_container_link_line(self, raw_line, registry):
 
     # lint double quotes
     if line.count('"') > 2:
-        self.failed.append(
+        module.failed.append(
             (
                 "main_nf",
                 "container_links",
                 f"Too many double quotes found when specifying container: {line.removeprefix('container ')}",
-                self.main_nf,
+                module.main_nf,
             )
         )
     else:
-        self.passed.append(
+        module.passed.append(
             (
                 "main_nf",
                 "container_links",
                 f"Correct number of double quotes found when specifying container: {line.removeprefix('container ')}",
-                self.main_nf,
+                module.main_nf,
             )
         )
 
@@ -698,43 +735,43 @@ def check_container_link_line(self, raw_line, registry):
         container_link = double_quoted_items[1]
     if container_link:
         if " " in container_link:
-            self.failed.append(
+            module.failed.append(
                 (
                     "main_nf",
                     "container_links",
                     f"Space character found in container: '{container_link}'",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
         else:
-            self.passed.append(
+            module.passed.append(
                 (
                     "main_nf",
                     "container_links",
                     f"No space characters found in container: '{container_link}'",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
 
         # Check container registry prefix.
         if _container_type(container_link) == "docker":
             if container_link.startswith(registry):
-                self.passed.append(
+                module.passed.append(
                     (
                         "main_nf",
                         "container_links",
                         f"Container prefix is correct: {container_link}",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
             else:
                 log.debug(f"Container link: '{container_link}' does not start with registry prefix: {registry}")
-                self.failed.append(
+                module.failed.append(
                     (
                         "main_nf",
                         "container_links",
                         f"Container prefix is not correct. Please add one of the allowed registry prefixes: {', '.join(registry)}",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
 
@@ -742,17 +779,17 @@ def check_container_link_line(self, raw_line, registry):
         if ("https://containers" in line or "https://depot" in line) and (
             "biocontainers/" in line or line.startswith(registry)
         ):
-            self.warned.append(
+            module.warned.append(
                 (
                     "main_nf",
                     "container_links",
                     "Docker and Singularity containers specified in the same line. Only first one checked.",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
 
 
-def check_meta_input_names(self, inputs):
+def check_meta_input_names(module, inputs):
     """
     Check ``meta_input_names``: The  meta* variable names must follow the pattern `meta`, `meta2`, `meta3`, etc.
     Args:
@@ -782,12 +819,12 @@ def check_meta_input_names(self, inputs):
 
     # Check for invalid names
     if invalid_meta_vars:
-        self.failed.append(
+        module.failed.append(
             (
                 "main_nf",
                 "meta_input_names",
                 f"Meta variables must be named 'meta', 'meta2', 'meta3', etc. Found: {', '.join(invalid_meta_vars)}",
-                self.main_nf,
+                module.main_nf,
             )
         )
 
@@ -795,27 +832,27 @@ def check_meta_input_names(self, inputs):
     # equal to the empty range, i.e. it counts as trivially sequential.
     is_sequential = valid_numbers == list(range(2, len(valid_numbers) + 2))
     if valid_numbers and not is_sequential:
-        self.warned.append(
+        module.warned.append(
             (
                 "main_nf",
                 "meta_input_names",
                 f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
-                self.main_nf,
+                module.main_nf,
             )
         )
 
     if not invalid_meta_vars and is_sequential:
-        self.passed.append(
+        module.passed.append(
             (
                 "main_nf",
                 "meta_input_names",
                 f"Meta variable names follow correct pattern: {', '.join(sorted(meta_vars))}",
-                self.main_nf,
+                module.main_nf,
             )
         )
 
 
-def _parse_input(self, line_raw):
+def _parse_input(module, line_raw):
     """
     Return list of input channel names from an input line.
 
@@ -834,21 +871,21 @@ def _parse_input(self, line_raw):
         matches = re.findall(r"\((\w+)\)", line)
         if matches:
             inputs.extend(matches)
-            self.passed.append(
+            module.passed.append(
                 (
                     "main_nf",
                     "main_nf_input_tuple",
                     f"Channel names for tuple found: `{line}`",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
         else:
-            self.failed.append(
+            module.failed.append(
                 (
                     "main_nf",
                     "main_nf_input_tuple",
                     f"Found tuple but no channel names: `{line}`",
-                    self.main_nf,
+                    module.main_nf,
                 )
             )
     # Single element inputs
@@ -862,19 +899,20 @@ def _parse_input(self, line_raw):
     return inputs
 
 
-def _parse_output_emits(self, line: str) -> list[str]:
+def _parse_output_emits(module, line: str) -> list[str]:
     output = []
     if "meta" in line:
         output.append("meta")
     emit_regex = re.search(r"^.*emit:\s*([^,\s]*)", line)
     if not emit_regex:
-        self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
+        module.failed.append(("main_nf", "missing_emit", f"Missing emit statement: {line.strip()}", module.main_nf))
     else:
+        module.passed.append(("main_nf", "missing_emit", "Emit is present", module.main_nf))
         output.append(emit_regex.group(1).strip())
     return output
 
 
-def _parse_output_topics(self, line: str) -> list[str]:
+def _parse_output_topics(module, line: str) -> list[str]:
     output = []
     if "meta" in line:
         output.append("meta")
@@ -886,61 +924,61 @@ def _parse_output_topics(self, line: str) -> list[str]:
             if re.search(
                 r'tuple\s+val\("\${\s*task\.process\s*}"\)\s*,\s*val\(.*\)\s*,\s*(?:eval|val)\(.*\)', line
             ) or re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
-                self.passed.append(
+                module.passed.append(
                     (
                         "main_nf",
                         "wrong_version_output",
                         "Versions topic output is correctly formatted",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
 
             else:
-                self.failed.append(
+                module.failed.append(
                     (
                         "main_nf",
                         "wrong_version_output",
                         "Versions topic output is not correctly formatted, expected `tuple val(\"${task.process}\"), val('<tool>'), eval(\"<version_command>\")|val('<version>')`` or `path version.yml` if using a template script.",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
 
             if re.search(r"emit:\s*versions_[\d\w]+", line):
-                self.passed.append(
+                module.passed.append(
                     (
                         "main_nf",
                         "wrong_version_emit",
                         "Version emit is correctly formatted",
-                        self.main_nf,
+                        module.main_nf,
                     )
                 )
             else:
                 if re.search(r"path\s*\(?\"versions\.yml\"\)?", line):
                     if re.search(r"emit:\s*versions\b", line):
-                        self.passed.append(
+                        module.passed.append(
                             (
                                 "main_nf",
                                 "wrong_version_yml_emit",
                                 "Version emit is correctly formatted",
-                                self.main_nf,
+                                module.main_nf,
                             )
                         )
                     else:
-                        self.failed.append(
+                        module.failed.append(
                             (
                                 "main_nf",
                                 "wrong_versions_yml_emit",
                                 "Version emit should be `versions`",
-                                self.main_nf,
+                                module.main_nf,
                             )
                         )
                 else:
-                    self.failed.append(
+                    module.failed.append(
                         (
                             "main_nf",
                             "wrong_version_emit",
                             "Version emit should follow the format `versions_<tool_or_package>`, e.g.: `versions_samtools`, `versions_gatk4`",
-                            self.main_nf,
+                            module.main_nf,
                         )
                     )
 
