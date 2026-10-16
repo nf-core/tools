@@ -158,11 +158,17 @@ Internal run intermediate files useful for debugging runs are stored under `work
 
 Other Nextflow run internal files are stored under `.nextflow/`.
 
-<!-- TODO JAMES UP TO HERE -->
+## Frequently asked questions
 
-## Troubleshooting and other frequently asked questions
+- **How do I update the pipeline to a more recent version?**: see the nf-core documentation on <!-- TODO docs team: [updating pipelines](https://nf-co.re/docs/running/updating). -->
+- **How do I ensure reproducibility of my analysis? Use [`-r` flag](https://docs.seqera.io/nextflow/cli#revision-selection) and [parameter files](https://docs.seqera.io/nextflow/cli#pipeline-parameters)**
+- **How do I resume a pipeline run?**: use the Nextflow [`-resume` flag](https://docs.seqera.io/nextflow/cache-and-resume)
+- **Can I use a different container for a process?**: First ask the developer for an update, otherwise see[updating tool versions](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#update-tool-versions)
+- **How can I use a tool parameter that is not supported by the pipeline?**: First ask the developer for an update, otherwise see [modifying tool arguments](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#modifying-tool-arguments)
 
-If you encounter any problems running the pipeline, please see the [troubleshooting documentation](faq_troubleshooting.md) for help.
+## Troubleshooting
+
+See the [FAQ and troubleshooting page](usage/faq_troubleshooting.md) for pipeline specific common questions and solutions.
 
 {% if is_nfcore -%}
 If after reviewing the documentation, your problem is still unresolved, please post a message to the [nf-core Slack](https://nfcore.slack.com/) (you can sign up for an invite [here](https://nfcore.slack.com/join/shared_invite/zt-1f4x0g7k9-
