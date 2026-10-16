@@ -1,5 +1,4 @@
 import logging
-import re
 from pathlib import Path
 
 import questionary
@@ -8,6 +7,7 @@ import rich.prompt
 import ruamel.yaml
 
 import nf_core.utils
+from nf_core.components.nfcore_component import parse_include_statement
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -160,12 +160,7 @@ def get_components_to_install(
 
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
-            regex = re.compile(
-                r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
-            )
-            match = regex.search(line)
-            if match and len(match.groups()) == 2:
-                name, link = match.groups()
+            for name, _alias, link in parse_include_statement(line):
                 if link.startswith("../../../"):
                     if "../subworkflows/" in link:
                         component_name = name.lower()
