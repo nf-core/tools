@@ -37,7 +37,19 @@ jobs:
             plugins {
               id 'nf-slack@0.5.0'
               id 'nf-schema@2.7.2'
+              // Experimental: enable after committing a baseline from a successful test_full run.
+              // id 'nf-snapshot@0.1.0'
             }
+            // Experimental output validation. See docs/usage.md before enabling.
+            // snapshot {
+            //   enabled  = true
+            //   file     = 'tests/snapshots/test_full.json'
+            //   ignore   = ['pipeline_info/**']
+            //   nameOnly = [
+            //     '**/*.html', '**/*.log', '**/*.pdf', '**/*.png', '**/*.svg', '**/*.parquet', '**/*.json',
+            //     'multiqc/multiqc_data/llms-full.txt', 'multiqc/multiqc_data/multiqc_sources.txt'
+            //   ]
+            // }
             slack {
               enabled = true
               bot {
