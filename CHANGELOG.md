@@ -23,6 +23,7 @@
 
 ### Template
 
+- Migrate AWS test workflows to `seqeralabs/action-seqera-launch@f7b1a39afc8bb65f58b84150cd214b33fe416fef`, preserving fire-and-forget launches and removing obsolete debug artifact uploads ([#4518](https://github.com/nf-core/tools/pull/4518)).
 - remove redundant `ext.use_gpu` from the `process_gpu` label, use `accelerator` only ([#4445](https://github.com/nf-core/tools/pull/4445))
 - Switch to using `fix-linting.yml` workflow from `nf-core/actions` repo, to avoid leakage of nf-core bot token and rename it from `fix_linting.yml` to `fix-linting.yml` ([#4485](https://github.com/nf-core/tools/pull/4485))
 - Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))

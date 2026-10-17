@@ -10,24 +10,19 @@ jobs:
     if: github.repository == '{{ name }}'
     runs-on: ubuntu-latest
     steps:
-      # Launch workflow using Seqera Platform CLI tool action {%- raw %}
-      - name: Launch workflow via Seqera Platform
-        uses: seqeralabs/action-tower-launch@v2
+      - name: Launch workflow via Seqera Platform {%- raw %}
+        uses: seqeralabs/action-seqera-launch@f7b1a39afc8bb65f58b84150cd214b33fe416fef #v1
         with:
-          workspace_id: ${{ vars.TOWER_WORKSPACE_ID }}
-          access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
-          compute_env: ${{ vars.TOWER_COMPUTE_ENV }}
+          wait: none
+          # nf-core TODO: uncomment the line below if your pipeline uses the v2 parser
+          # syntax-parser: v2
+          workspace-id: ${{ vars.TOWER_WORKSPACE_ID }}
+          access-token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+          compute-env: ${{ vars.TOWER_COMPUTE_ENV }}
           revision: ${{ github.sha }}
-          workdir: s3://${{ vars.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
+          work-dir: s3://${{ vars.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
           parameters: |
             {
               "outdir": "s3://{% raw %}${{ vars.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}"
             }
           profiles: test
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: Seqera Platform debug log file
-          path: |
-            tower_action_*.log
-            tower_action_*.json
