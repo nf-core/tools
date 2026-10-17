@@ -322,10 +322,10 @@ class ModuleContainers:
             indent = match.group(1)
             inner_indent = indent + "    "
             return (
-                f"{indent}container \"${{ workflow.containerEngine in ['singularity', 'apptainer'] "
+                f"{indent}container \"${{workflow.containerEngine in ['singularity', 'apptainer'] "
                 "&& !task.ext.singularity_pull_docker_container\n"
-                f"? {inner_indent}'{singularity_image}'\n"
-                f": {inner_indent}'{docker_image}' }}\""
+                f"{inner_indent}? '{singularity_image}'\n"
+                f"{inner_indent}: '{docker_image}'}}\""
             )
 
         new_content = re.sub(

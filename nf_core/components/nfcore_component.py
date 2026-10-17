@@ -115,6 +115,39 @@ class NFCoreComponent:
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
+    @staticmethod
+    def parse_include_statement(line: str) -> list[tuple[str, str, str]]:
+        """Parse a Nextflow ``include`` statement.
+
+        Handles multiple symbols per statement (``include { A; B as C } from 'path'``) and
+        ``as`` aliasing. Returns a list of ``(name, alias, link)`` tuples, one per imported
+        symbol - ``alias`` is ``""`` if the symbol isn't aliased. Returns an empty list if
+        the line isn't a parseable include statement.
+        """
+        match = re.search(r"include\s*{\s*(.+?)\s*}\s*from\s*(?:'|\")(.+?)(?:'|\")", line.strip())
+        if not match:
+            return []
+        symbols_part, link = match.groups()
+        parsed = []
+        for symbol in symbols_part.split(";"):
+            symbol = symbol.strip()
+            if not symbol:
+                continue
+            if " as " in symbol:
+                name, alias = (part.strip() for part in symbol.split(" as ", 1))
+            else:
+                name, alias = symbol, ""
+            parsed.append((name, alias, link))
+        return parsed
+
+    def load_main_nf(self) -> str:
+        """Return the contents of main.nf, or an empty string if it does not exist."""
+        data = ""
+        if self.main_nf.is_file():
+            with open(self.main_nf) as f:
+                data = f.read()
+        return data
+
     def load_meta_yml(self, reload: bool = False) -> dict | None:
         """
         Return the parsed content of the component's ``meta.yml``, cached after the first read.
@@ -130,34 +163,37 @@ class NFCoreComponent:
             self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
         return self._meta_yml_content
 
-    def _get_main_nf_tags(self, test_main_nf: Path | str):
+    def _get_main_nf_tags(self, test_main_nf: Path | str) -> list[str]:
         """Collect all tags from the main.nf.test file."""
-        tags = []
-        with open(test_main_nf) as fh:
-            for line in fh:
-                if line.strip().startswith("tag"):
-                    tags.append(line.strip().split()[1].strip('"'))
+        tags: list[str] = []
+        test_main_nf = Path(test_main_nf)
+        if not test_main_nf.is_file():
+            return tags
+        for line in test_main_nf.read_text().splitlines():
+            if line.strip().startswith("tag"):
+                tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Path | str):
+    def _get_included_components(self, main_nf: Path | str) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf) as fh:
-            for line in fh:
-                if line.strip().startswith("include"):
-                    # get tool/subtool or subworkflow name from include statement, can be in the form
+        main_nf = Path(main_nf)
+        data = main_nf.read_text() if main_nf.is_file() else ""
+        for line in data.splitlines():
+            if line.strip().startswith("include"):
+                for _name, _alias, link in self.parse_include_statement(line):
+                    # get tool/subtool or subworkflow name from the include link, can be in the form
                     #'../../../modules/nf-core/hisat2/align/main'
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
                     #'plugin/nf-validation'
-                    component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
-                    component = component.replace("'../", "subworkflows/")
-                    # Replace trailing quotes
-                    component = component.replace("'", "").replace('"', "")
+                    component = link.split(self.org)[-1].split("main")[0].strip("/")
+                    if link.startswith("../") and self.org not in link:
+                        component = f"subworkflows/{component}"
                     included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str):
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf_test) as fh:
@@ -202,10 +238,9 @@ class NFCoreComponent:
         return included_components
 
     def _get_process_name(self):
-        with open(self.main_nf) as fh:
-            for line in fh:
-                if re.search(r"^\s*process\s*\w*\s*{", line):
-                    return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
+        for line in self.load_main_nf().splitlines():
+            if re.search(r"^\s*process\s*\w*\s*{", line):
+                return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
         return ""
 
     def _extract_value(self, text: str, start_pos: int = 0, split_on_comma: bool = False) -> str | None:
@@ -278,8 +313,7 @@ class NFCoreComponent:
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
             # regex matches:
@@ -323,8 +357,7 @@ class NFCoreComponent:
             self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
@@ -366,8 +399,7 @@ class NFCoreComponent:
             self.outputs = outputs
 
     def get_topics_from_main_nf(self) -> None:
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"
