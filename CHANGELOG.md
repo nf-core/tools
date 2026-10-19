@@ -14,6 +14,7 @@
 - Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
 - remove `ext.use_gpu` as a permitted ext key, superseded by `task.accelerator` ([#4445](https://github.com/nf-core/tools/pull/4445))
 - fix(lint): use repo-root-relative path in `git restore` call in `container_configs` ([#4301](https://github.com/nf-core/tools/pull/4301))
+- Fix subworkflow lint parsing sibling subworkflow include statements ([#4527](https://github.com/nf-core/tools/pull/4527))
 
 ### Modules
 
