@@ -8,6 +8,7 @@ import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from copy import copy
 from pathlib import Path
 from urllib.parse import quote
 
@@ -118,7 +119,7 @@ class ModuleContainers:
             self.repo_type = None
             self.org = "nf-core"  # Default to nf-core if repo info not available
 
-        # Get available modules (local modules for pipelines, repo modules for modules repos).
+        # Get available modules (local and installed modules for pipelines).
         # A pre-scanned list can be passed in to avoid re-scanning the modules directory.
         self.available_modules = components if components is not None else self._get_available_modules()
 
@@ -129,8 +130,14 @@ class ModuleContainers:
         # Only allow "all modules" for pipeline repos
         if module is None and not all_modules and len(self.available_modules) > 0:
             allow_all = self.repo_type == "pipeline"
+            prompt_modules = self.available_modules
+            if self.repo_type == "pipeline":
+                # Qualify prompt choices without changing the components' actual names.
+                prompt_modules = [copy(comp) for comp in self.available_modules]
+                for comp in prompt_modules:
+                    comp.component_name = comp.component_dir.relative_to(self.directory / "modules").as_posix()
             module = prompt_module_selection(
-                self.available_modules, component_type="modules", action="Build containers for", allow_all=allow_all
+                prompt_modules, component_type="modules", action="Build containers for", allow_all=allow_all
             )
             # If None returned from prompt, user selected "All modules" (only possible in pipeline repos)
             if module is None:
@@ -139,11 +146,14 @@ class ModuleContainers:
         self.module = module
         self.all_modules = all_modules
 
-        # When a module name is given, use filter_modules_by_name so that a parent folder
-        # like "samtools" also selects submodules (samtools/sort, samtools/view, …).
+        # A parent folder like "samtools" also selects submodules (samtools/sort, samtools/view, …).
         matched: list[NFCoreComponent] = []
-        if module is not None and not self.all_modules and self.available_modules:
-            matched = filter_modules_by_name(self.available_modules, module)
+        if module is not None and not self.all_modules:
+            matched = (
+                self._filter_pipeline_modules(module)
+                if self.repo_type == "pipeline"
+                else filter_modules_by_name(self.available_modules, module)
+            )
             if len(matched) > 1:
                 # Prefix match returned several submodules – treat as a filtered "all" run
                 self.available_modules = matched
@@ -153,8 +163,10 @@ class ModuleContainers:
         # For single module mode
         if not self.all_modules:
             # Try exact lookup in the components we already created
-            if module is not None and module in self.components_by_name:
-                self.nfcore_component: NFCoreComponent | None = self.components_by_name[module]
+            if self.repo_type == "pipeline" and matched:
+                self.nfcore_component: NFCoreComponent | None = matched[0]
+            elif module is not None and module in self.components_by_name:
+                self.nfcore_component = self.components_by_name[module]
             elif module is not None and self.available_modules:
                 if matched:
                     self.nfcore_component = matched[0]
@@ -199,7 +211,7 @@ class ModuleContainers:
         """
         Get list of available modules based on repository type.
 
-        For pipeline repos: Returns only local modules (modules/local/)
+        For pipeline repos: Returns local and installed nf-core modules
         For modules repos: Returns modules from the repository
         """
         if not self.repo_type:
@@ -208,7 +220,7 @@ class ModuleContainers:
 
         if self.repo_type == "pipeline":
             local_modules_dir = self.directory / "modules" / "local"
-            return [
+            local_modules = [
                 NFCoreComponent(
                     name,
                     None,
@@ -220,11 +232,41 @@ class ModuleContainers:
                 )
                 for name in scan_modules_dir(local_modules_dir)
             ]
+            installed_modules_dir = self.directory / "modules" / "nf-core"
+            return local_modules + [
+                NFCoreComponent(
+                    Path(name).as_posix(),
+                    "https://github.com/nf-core/modules.git",
+                    installed_modules_dir / name,
+                    self.repo_type,
+                    self.directory,
+                    "modules",
+                )
+                for name in scan_modules_dir(installed_modules_dir)
+            ]
         elif self.repo_type == "modules":
             return [
                 self._init_nfcore_component(name) for name in scan_modules_dir(self.directory / "modules" / self.org)
             ]
         return []
+
+    def _filter_pipeline_modules(self, module: str) -> list[NFCoreComponent]:
+        """Select exact names or tool families, allowing local/ and nf-core/ qualifiers."""
+        qualified = module.startswith(("local/", "nf-core/"))
+        candidates = [
+            (comp.component_dir.relative_to(self.directory / "modules").as_posix(), comp)
+            for comp in self.available_modules
+        ]
+        named = [(name if qualified else name.split("/", 1)[1], comp) for name, comp in candidates]
+        matched = [(name, comp) for name, comp in named if name == module]
+        if not matched:
+            matched = [(name, comp) for name, comp in named if name.startswith(f"{module}/")]
+        if not matched:
+            raise ValueError(f"Module '{module}' not found in modules/local or modules/nf-core")
+        names = [name for name, _ in matched]
+        if len(names) != len(set(names)):
+            raise ValueError(f"Ambiguous module '{module}': specify local/{module} or nf-core/{module}")
+        return [comp for _, comp in matched]
 
     def _init_nfcore_component(self, module: str) -> NFCoreComponent:
         """Initialize NFCoreComponent for the module."""
@@ -592,12 +634,16 @@ class ModuleContainers:
                 )
                 try:
                     if self.all_modules:
-                        # Per-module instance, reusing the already-scanned component list
+                        # Keep the selected component's path even when names occur in both namespaces.
                         module_containers = ModuleContainers(
-                            module=module_name,
+                            module=(
+                                component.component_dir.relative_to(self.directory / "modules").as_posix()
+                                if self.repo_type == "pipeline"
+                                else module_name
+                            ),
                             directory=self.directory,
                             verbose=self.verbose,
-                            components=self.available_modules,
+                            components=[component],
                         )
                     else:
                         module_containers = self
