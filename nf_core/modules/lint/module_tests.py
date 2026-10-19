@@ -358,7 +358,7 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
                 continue
 
             # Valid patterns: echo "" | gzip >, echo '' | gzip >, or echo | gzip >
-            valid_pattern = r'''echo(?:\s+(?:""|''))?\s*\|\s*gzip\s*>\s*.*\.gz$'''
+            valid_pattern = r"""echo(?:\s+(?:""|''))?\s*\|\s*gzip\s*>\s*.*\.gz$"""
 
             if not re.search(valid_pattern, line):
                 invalid_gz_patterns.append(line.strip())
