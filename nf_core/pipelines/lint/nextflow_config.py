@@ -9,17 +9,22 @@ log = logging.getLogger(__name__)
 
 
 def resolve_schema_param_references(value: str, params: dict) -> str:
-    """Resolve simple params references using evaluated Nextflow defaults.
+    r"""Resolve simple ${params.name} references using evaluated Nextflow defaults.
 
-    Schema defaults are plain strings, while Nextflow evaluates references
+    Schema defaults are plain strings, while Nextflow interpolates references
     in nextflow.config. Never evaluate arbitrary Groovy expressions here.
-    Unknown references stay literal and should still fail lint comparison.
+    Keep missing references literal so they cannot silently match a value.
     """
-    return re.sub(
-        r"\$\{params\.([A-Za-z_][A-Za-z0-9_]*)\}",
-        lambda match: str(params[match.group(1)]) if match.group(1) in params else match.group(0),
-        value,
-    )
+
+    def replace(match: re.Match) -> str:
+        referenced = params.get(match.group(1))
+        if referenced is None:
+            return match.group(0)
+        if isinstance(referenced, bool):
+            return str(referenced).lower()
+        return str(referenced)
+
+    return re.sub(r"\$\{params\.([A-Za-z_][A-Za-z0-9_]*)\}", replace, value)
 
 
 def nextflow_config(self) -> dict[str, list[str]]:

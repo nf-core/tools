@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## Unreleased
+
+### Linting
+
+- Allow schema string defaults containing `${params.name}` references to match their evaluated Nextflow config values ([#4517](https://github.com/nf-core/tools/pull/4517)).
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General

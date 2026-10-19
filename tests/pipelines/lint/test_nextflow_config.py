@@ -1,10 +1,13 @@
+import importlib
+import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import yaml
 
 import nf_core.pipelines.lint
-from nf_core.pipelines.lint.nextflow_config import resolve_schema_param_references
 
 from ..test_lint import TestLint
 
@@ -13,19 +16,6 @@ class TestLintNextflowConfig(TestLint):
     def setUp(self) -> None:
         super().setUp()
         self.new_pipeline = self._make_pipeline_copy()
-
-    def test_schema_reference_uses_evaluated_config_values(self):
-        """#4504: schema defaults should match resolved Nextflow params."""
-        params = {"seed": 1, "effective_population_size": 100000}
-        template = "--seed ${params.seed} --hmm-ne ${params.effective_population_size}"
-        assert resolve_schema_param_references(template, params) == "--seed 1 --hmm-ne 100000"
-
-    def test_schema_reference_does_not_evaluate_unknown_or_groovy_expressions(self):
-        value = "${params.missing} - ${params.count + 1} - ${env.SECRET}"
-        assert resolve_schema_param_references(value, {"count": 3}) == value
-
-    def test_schema_reference_keeps_literal_non_ref_text(self):
-        assert resolve_schema_param_references("hello world", {"seed": 1}) == "hello world"
 
     def test_nextflow_config_example_pass(self):
         """Tests that config variable existence test works with good pipeline example"""
@@ -230,3 +220,66 @@ class TestLintNextflowConfig(TestLint):
         assert len(result["failed"]) == 1
         assert len(result["warned"]) == 0
         assert "Config default value incorrect: `params.dummy" in str(result["failed"])
+
+
+def test_schema_default_interpolation_compares_loaded_params(tmp_path):
+    """#4504: lint compares schema defaults to values Nextflow has evaluated."""
+    lint_module = importlib.import_module("nf_core.pipelines.lint.nextflow_config")
+    schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "options_shapeit5": {
+                "type": "string",
+                "default": r"--seed ${params.seed} --hmm-ne ${params.effective_population_size}",
+            }
+        },
+    }
+    (tmp_path / "nextflow_schema.json").write_text(json.dumps(schema))
+    (tmp_path / "nextflow.config").write_text("profiles { test { } }\n")
+    nf_config = {
+        "params": {
+            "seed": 1,
+            "effective_population_size": 100000,
+            "options_shapeit5": "--seed 1 --hmm-ne 100000",
+        },
+        "manifest": {
+            "name": "nf-core/demo",
+            "homePage": "https://github.com/nf-core/demo",
+            "version": "1.0dev",
+            "nextflowVersion": ">=24",
+        },
+        "process": {"cpus": 1, "memory": "1.GB", "time": "1h"},
+        "timeline": {"enabled": True},
+        "trace": {"enabled": True},
+        "report": {"enabled": True},
+        "dag": {"enabled": True},
+    }
+    lint = SimpleNamespace(
+        wf_path=tmp_path,
+        nf_config=nf_config,
+        lint_config={"nextflow_config": ["custom_config"]},
+        release_mode=False,
+        _wrap_quotes=lambda value: f"`{value}`",
+    )
+    with patch.object(lint_module, "load_tools_config", return_value=(None, None)):
+        result = lint_module.nextflow_config(lint)
+        assert any("Config default value correct: params.options_shapeit5" in x for x in result["passed"])
+        assert not any("params.options_shapeit5" in x for x in result["failed"])
+
+        nf_config["params"]["options_shapeit5"] = "--seed 2 --hmm-ne 100000"
+        result = lint_module.nextflow_config(lint)
+        assert any("params.options_shapeit5" in x for x in result["failed"])
+
+
+def test_schema_default_interpolation_handles_scalars_and_ignores_expressions():
+    from nf_core.pipelines.lint.nextflow_config import resolve_schema_param_references
+
+    resolve = resolve_schema_param_references
+    assert resolve("${params.active}", {"active": True}) == "true"
+    assert resolve("${params.active}", {"active": False}) == "false"
+    assert resolve("${params.missing}", {}) == "${params.missing}"
+    assert resolve("${params.missing}", {"missing": None}) == "${params.missing}"
+    value = "${params.missing} - ${params.count + 1} - ${env.SECRET}"
+    assert resolve(value, {"count": 3}) == value
+    assert resolve("hello world", {"seed": 1}) == "hello world"
