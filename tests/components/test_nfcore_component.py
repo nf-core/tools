@@ -13,7 +13,7 @@ from nf_core.components.nfcore_component import NFCoreComponent
             "include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort/main'",
             ["samtools/sort"],
         ),
-        # Sibling subworkflow (nf-core/tools#4521)
+        # Sibling subworkflow
         (
             "include { BAM_SORT_STATS_SAMTOOLS } from '../bam_sort_stats_samtools/main'",
             ["subworkflows/bam_sort_stats_samtools"],
@@ -27,6 +27,11 @@ from nf_core.components.nfcore_component import NFCoreComponent
         (
             'include { BAM_SORT_STATS_SAMTOOLS } from "../bam_sort_stats_samtools/main"',
             ["subworkflows/bam_sort_stats_samtools"],
+        ),
+        # Sibling subworkflow included by its directory
+        (
+            "include { FASTQ_QC_STATS } from '../fastq_qc_stats'",
+            ["subworkflows/fastq_qc_stats"],
         ),
     ],
 )
