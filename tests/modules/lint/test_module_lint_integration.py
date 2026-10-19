@@ -1,3 +1,9 @@
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import pytest
+
 import nf_core.modules.lint
 
 from ...test_modules import TestModules
@@ -39,3 +45,52 @@ class TestModulesLintIntegration(TestModules):
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
+
+
+def test_missing_module_metadata_reports_failure_and_continues(tmp_path):
+    """#4447: broken modules should appear in results without hiding later modules."""
+    mod_lint = nf_core.modules.lint.ModuleLint.__new__(nf_core.modules.lint.ModuleLint)
+    mod_lint.hide_progress = True
+    mod_lint.directory = tmp_path
+    mod_lint.component_type = "modules"
+    mod_lint.failed = []
+    mod_lint.warned = []
+    mod_lint.passed = []
+    components = [
+        SimpleNamespace(component_name=name, component_dir=tmp_path / name, repo_url=None)
+        for name in ["broken/module", "healthy/module"]
+    ]
+    for mod in components:
+        Path(mod.component_dir).mkdir(parents=True)
+
+    def lint_one(mod, _progress, **kwargs):
+        if mod.component_name == "broken/module":
+            raise FileNotFoundError(f"meta.yml not found at {mod.component_dir}/meta.yml")
+        mod_lint.passed.append(
+            nf_core.modules.lint.LintResult(mod, "module_changes", "ok", "passed", Path(mod.component_dir))
+        )
+
+    with patch.object(mod_lint, "lint_module", side_effect=lint_one) as lint_module:
+        mod_lint.lint_modules(components, local=False)
+    assert lint_module.call_count == 2
+    assert len(mod_lint.failed) == 1
+    failure = mod_lint.failed[0]
+    assert failure.component_name == "broken/module"
+    assert failure.lint_test == "module_lint_error"
+    assert "FileNotFoundError" in failure.message
+    assert "meta.yml" in failure.message
+    assert len(mod_lint.passed) == 1
+    assert mod_lint.passed[0].component_name == "healthy/module"
+    mod_lint._print_results(plain_text=True)
+
+
+@pytest.mark.parametrize("exc", [LookupError("missing cache"), ValueError("bad metadata")])
+def test_bad_module_values_are_recorded_as_failures(tmp_path, exc):
+    mod_lint = nf_core.modules.lint.ModuleLint.__new__(nf_core.modules.lint.ModuleLint)
+    mod_lint.hide_progress = True
+    mod_lint.failed = []
+    component = SimpleNamespace(component_name="bad/tool", component_dir=tmp_path, repo_url=None)
+    with patch.object(mod_lint, "lint_module", side_effect=exc):
+        mod_lint.lint_modules([component])
+    assert len(mod_lint.failed) == 1
+    assert str(exc) in mod_lint.failed[0].message

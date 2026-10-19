@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## Unreleased
+
+### Linting
+
+- Report module metadata and other expected per-module errors as lint failures without hiding results for remaining modules ([#4447](https://github.com/nf-core/tools/issues/4447)).
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General

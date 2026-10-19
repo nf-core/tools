@@ -193,7 +193,21 @@ class ModuleLint(ComponentLint):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.component_name)
-                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
+                try:
+                    self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
+                except (FileNotFoundError, LintExceptionError, LookupError, ValueError) as exc:
+                    # A broken module must not hide lint results for the rest of the pipeline.
+                    # Surface the original error as a failure and continue with other modules.
+                    log.error("Unable to lint module %s: %s", mod.component_name, exc)
+                    self.failed.append(
+                        LintResult(
+                            mod,
+                            "module_lint",
+                            "module_lint_error",
+                            f"{type(exc).__name__}: {exc}",
+                            Path(mod.component_dir),
+                        )
+                    )
 
     def lint_module(
         self,
