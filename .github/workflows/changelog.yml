@@ -85,7 +85,7 @@ jobs:
 
       - name: Run pre-commit rules with prek
         if: steps.file_changed.outputs.changed == 'TRUE'
-        uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+        uses: j178/prek-action@af4d4fcb6922b8e6f65c0426947125fcc38794ce # v3.0.2
         continue-on-error: true
         with:
           extra-args: --config ${{ runner.temp }}/pre-commit-config.yaml --files CHANGELOG.md
