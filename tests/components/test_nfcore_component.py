@@ -8,7 +8,12 @@ from nf_core.components.nfcore_component import NFCoreComponent
 @pytest.mark.parametrize(
     "include_line,expected",
     [
-        # Module from the same org
+        # Module from the same org without subtool
+        (
+            "include { PROKKA } from '../../../modules/nf-core/prokka/main'",
+            ["prokka"],
+        ),
+        # Module from the same org with subtool
         (
             "include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort/main'",
             ["samtools/sort"],
@@ -33,7 +38,12 @@ from nf_core.components.nfcore_component import NFCoreComponent
             "include { FASTQ_QC_STATS } from '../fastq_qc_stats'",
             ["subworkflows/fastq_qc_stats"],
         ),
-        # Module from another org
+        # Module from another org without subtool
+        (
+            "include { PROKKA } from '../../../modules/another_org/prokka/main'",
+            ["another_org/prokka"],
+        ),
+        # Module from another org with subtool
         (
             "include { SAMTOOLS_SORT } from '../../../modules/another_org/samtools/sort/main'",
             ["another_org/samtools/sort"],
@@ -42,6 +52,11 @@ from nf_core.components.nfcore_component import NFCoreComponent
         (
             "include { BAM_SORT_STATS_SAMTOOLS } from '../../another_org/bam_sort_stats_samtools/main'",
             ["another_org/subworkflows/bam_sort_stats_samtools"],
+        ),
+        # Plugin
+        (
+            "include { paramsSummaryLog   } from 'plugin/nf-schema'",
+            ["plugin/nf-schema"],
         ),
     ],
 )
