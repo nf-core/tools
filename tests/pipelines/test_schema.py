@@ -19,6 +19,17 @@ import nf_core.pipelines.schema
 from ..utils import with_temporary_file, with_temporary_folder
 
 
+@pytest.mark.parametrize("value", ["3", "12.34", "true", "false", "null", "text", "", "'3'", '"3"'])
+def test_build_schema_param_preserves_string_type(value):
+    param = nf_core.pipelines.schema.PipelineSchema().build_schema_param(value)
+    assert param == ({"type": "string", "default": value} if value else {"type": "string"})
+
+
+def test_build_schema_param_rejects_unknown_type():
+    with pytest.raises(TypeError, match="Unsupported schema parameter type: list"):
+        nf_core.pipelines.schema.PipelineSchema().build_schema_param([])
+
+
 class TestSchema(unittest.TestCase):
     """Class for schema tests"""
 
@@ -430,17 +441,17 @@ class TestSchema(unittest.TestCase):
 
     def test_build_schema_param_bool(self):
         """Build a new schema param from a config value (bool)"""
-        param = self.schema_obj.build_schema_param("True")
+        param = self.schema_obj.build_schema_param(True)
         assert param == {"type": "boolean", "default": True}
 
     def test_build_schema_param_int(self):
         """Build a new schema param from a config value (int)"""
-        param = self.schema_obj.build_schema_param("12")
+        param = self.schema_obj.build_schema_param(12)
         assert param == {"type": "integer", "default": 12}
 
     def test_build_schema_param_float(self):
         """Build a new schema param from a config value (float)"""
-        param = self.schema_obj.build_schema_param("12.34")
+        param = self.schema_obj.build_schema_param(12.34)
         assert param == {"type": "number", "default": 12.34}
 
     def test_build_schema(self):
