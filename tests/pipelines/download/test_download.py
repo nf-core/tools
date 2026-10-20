@@ -404,20 +404,25 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
     def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
         """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
-        download_obj = DownloadWorkflow(container_system="docker")
-        # Nextflow prints the details to stdout and only a summary to stderr
-        mock_run_cmd.side_effect = CommandError(
-            "nextflow inspect",
-            1,
-            stdout=b"Error: Invalid process directive\n",
-            stderr=b"ERROR ~ Script compilation failed",
-        )
+        details = b"Error main.nf:5:5: Invalid process directive\n"
+        summary = b"ERROR ~ Script compilation failed\n"
+        # Nextflow >= 26.05 moved the summary from stdout to stderr (nextflow-io/nextflow#7121)
+        stream_layouts = {
+            "nextflow < 26.05": {"stdout": details + summary, "stderr": b""},
+            "nextflow >= 26.05": {"stdout": details, "stderr": summary},
+        }
+        for layout, streams in stream_layouts.items():
+            with self.subTest(layout):
+                mock_run_cmd.reset_mock()
+                mock_get_remote_workflows.reset_mock()
+                mock_run_cmd.side_effect = CommandError("nextflow inspect", 1, **streams)
+                download_obj = DownloadWorkflow(container_system="docker")
 
-        with pytest.raises(DownloadError, match="downgrade to Nextflow"):
-            download_obj.find_container_images(Path("workflow"), "dummy-revision")
+                with pytest.raises(DownloadError, match="downgrade to Nextflow"):
+                    download_obj.find_container_images(Path("workflow"), "dummy-revision")
 
-        assert mock_run_cmd.call_count == 1
-        mock_get_remote_workflows.assert_called_once()
+                assert mock_run_cmd.call_count == 1
+                mock_get_remote_workflows.assert_called_once()
 
     #
     # Tests for the main entry method 'download_workflow'

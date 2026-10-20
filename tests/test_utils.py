@@ -1,5 +1,6 @@
 """Tests covering for utility functions."""
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -255,6 +256,19 @@ class TestUtils(TestPipelines):
         assert err.returncode == 3
         assert err.output == "summary\ndetails"
         assert err.output in str(err)
+
+    def test_parse_nextflow_json_ignores_status_lines(self):
+        """Status lines that Nextflow prints around its JSON output on stdout are skipped."""
+        outputs = {
+            "plain": '{"processes": []}',
+            "status lines": '[PIPELINE] main.nf | profile=standard\n[WORKDIR] /work\n{"processes": []}\n[SUCCESS] done',
+            "nextflow < 26.05": 'Monitor the execution with Seqera Platform using this URL: https://x\n{"processes": []}',
+        }
+        for name, text in outputs.items():
+            with self.subTest(name):
+                assert nf_core.utils.parse_nextflow_json(text) == {"processes": []}
+        with pytest.raises(json.JSONDecodeError):
+            nf_core.utils.parse_nextflow_json("ERROR ~ no json here")
 
     @mock.patch("nf_core.utils.run_cmd")
     def test_fetch_wf_config(self, mock_run_cmd):
