@@ -1,7 +1,6 @@
 """Downloads a nf-core pipeline to the local file system."""
 
 import io
-import json
 import logging
 import os
 import re
@@ -31,6 +30,7 @@ from nf_core.utils import (
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
     CommandError,
     check_nextflow_version,
+    parse_nextflow_json,
     pretty_nf_version,
     run_cmd,
     set_wd_tempdir,
@@ -699,7 +699,7 @@ class DownloadWorkflow:
                     raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
                 out, _ = cmd_out
-                return json.loads(out)
+                return parse_nextflow_json(out.decode("utf-8"))
 
         try:
             out_json = run_nextflow_inspect()
