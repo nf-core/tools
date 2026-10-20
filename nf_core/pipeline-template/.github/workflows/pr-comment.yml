@@ -11,6 +11,7 @@ name: Post PR comment
 #   pr_number.txt  - the pull request number
 #   header.txt     - sticky-comment identifier (keeps comment types separate)
 #   comment.md     - the Markdown body (omit the file to post nothing)
+#   delete         - optional marker; delete this header's existing comment
 
 on:
   workflow_run:
@@ -50,14 +51,18 @@ jobs:
             exit 0
           fi
 
-          if [ ! -f pr-comment/comment.md ]; then
-            echo "Artifact present but no comment.md; nothing to post."
+          if [ -f pr-comment/comment.md ]; then
+            action=post
+          elif [ -f pr-comment/delete ]; then
+            action=delete
+          else
+            echo "Artifact present but no comment.md or delete marker; nothing to do."
             exit 0
           fi
 
           pr_number=$(cat pr-comment/pr_number.txt)
           header=$(cat pr-comment/header.txt)
-          echo "Found comment.md (header='$header', pr_number='$pr_number')."
+          echo "Requested action: $action (header='$header', pr_number='$pr_number')."
 
           # Guard against anything unexpected ending up in the PR number.
           case "$pr_number" in
@@ -69,8 +74,8 @@ jobs:
 
           echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
           echo "header=$header" >> "$GITHUB_OUTPUT"
-          echo "post=true" >> "$GITHUB_OUTPUT"
-          echo "Will post comment to PR #${pr_number}."
+          echo "$action=true" >> "$GITHUB_OUTPUT"
+          echo "Will $action comment on PR #${pr_number}."
 
       - name: Post PR comment
         if: steps.meta.outputs.post == 'true'
@@ -79,4 +84,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           number: ${{ steps.meta.outputs.pr_number }}
           header: ${{ steps.meta.outputs.header }}
-          path: pr-comment/comment.md{%- endraw %}
+          path: pr-comment/comment.md
+
+      # Producers request this once their failure clears, so a fixed PR does not keep
+      # showing the previous run's failure comment.
+      - name: Delete stale PR comment
+        if: steps.meta.outputs.delete == 'true'
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.meta.outputs.pr_number }}
+          header: ${{ steps.meta.outputs.header }}
+          delete: "true"{%- endraw %}
