@@ -192,11 +192,24 @@ class NFCoreComponent:
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
                     #'plugin/nf-validation'
-                    component = link.split(self.org)[-1].split("main")[0].strip("/")
-                    if link.startswith("../") and self.org not in link:
-                        component = component.removeprefix("../")
-                        component = f"subworkflows/{component}"
-                    included_components.append(component)
+
+                    if link.startswith("plugin/"):
+                        included_components.append(link)
+                    else:
+                        component_full_path = Path(self.component_dir / link).resolve()
+                        component_parts = list(component_full_path.parts)
+
+                        if component_parts[-1] in ("main", "main.nf"):
+                            component_parts.pop()
+
+                        if len(component_parts) >= 3 and component_parts[-3] == "subworkflows":
+                            name = component_parts[-1]
+                            included_components.append(f"subworkflows/{name}")
+                        elif len(component_parts) >= 3 and component_parts[-3] == "modules":
+                            included_components.append(component_parts[-1])
+                        elif len(component_parts) >= 4 and component_parts[-4] == "modules":
+                            included_components.append("/".join(component_parts[-2:]))
+
         return included_components
 
     def _get_included_components_in_chained_tests(self, main_nf_test: Path | str) -> list[str]:
