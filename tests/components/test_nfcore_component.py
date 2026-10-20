@@ -33,6 +33,16 @@ from nf_core.components.nfcore_component import NFCoreComponent
             "include { FASTQ_QC_STATS } from '../fastq_qc_stats'",
             ["subworkflows/fastq_qc_stats"],
         ),
+        # Module from another org
+        (
+            "include { SAMTOOLS_SORT } from '../../../modules/another_org/samtools/sort/main'",
+            ["samtools/sort"],
+        ),
+        # Sibling subworkflow from another org
+        (
+            "include { BAM_SORT_STATS_SAMTOOLS } from '../../another_org/bam_sort_stats_samtools/main'",
+            ["subworkflows/bam_sort_stats_samtools"],
+        ),
     ],
 )
 def test_get_included_components_subworkflow(tmp_path: Path, include_line: str, expected: list[str]):
