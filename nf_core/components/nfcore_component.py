@@ -189,6 +189,7 @@ class NFCoreComponent:
                     #'plugin/nf-validation'
                     component = link.split(self.org)[-1].split("main")[0].strip("/")
                     if link.startswith("../") and self.org not in link:
+                        component = component.removeprefix("../")
                         component = f"subworkflows/{component}"
                     included_components.append(component)
         return included_components
