@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,7 +21,7 @@ from nf_core.pipelines.download import DownloadWorkflow
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, get_nf_version
+from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, CommandError, check_nextflow_version, get_nf_version
 
 from ...utils import TEST_DATA_DIR, with_temporary_folder
 
@@ -372,10 +371,7 @@ class DownloadTest(unittest.TestCase):
                 nf_output = (
                     b"The following invalid input values have been detected:\n * Missing required parameter: --outdir\n"
                 )
-                cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=nf_output)
-                exc = RuntimeError("Command failed")
-                exc.__cause__ = cause
-                raise exc
+                raise CommandError("nextflow inspect", 1, stdout=nf_output, stderr=b"ERROR ~ Validation failed")
 
             assert "-params-file" in cmd_params
             params_file_match = re.search(r'-params-file\s+"([^"]+)"', cmd_params)
@@ -409,10 +405,13 @@ class DownloadTest(unittest.TestCase):
     def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
         """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
         download_obj = DownloadWorkflow(container_system="docker")
-        cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=b"Error: Invalid process directive\n")
-        exc = RuntimeError("Command failed")
-        exc.__cause__ = cause
-        mock_run_cmd.side_effect = exc
+        # Nextflow prints the details to stdout and only a summary to stderr
+        mock_run_cmd.side_effect = CommandError(
+            "nextflow inspect",
+            1,
+            stdout=b"Error: Invalid process directive\n",
+            stderr=b"ERROR ~ Script compilation failed",
+        )
 
         with pytest.raises(DownloadError, match="downgrade to Nextflow"):
             download_obj.find_container_images(Path("workflow"), "dummy-revision")

@@ -246,6 +246,16 @@ class TestUtils(TestPipelines):
             raise RuntimeError
         assert wd_before_context == Path().resolve()
 
+    def test_run_cmd_raises_command_error_with_both_streams(self):
+        """A failing command keeps stdout and stderr on the error and includes both in its message."""
+        with pytest.raises(nf_core.utils.CommandError) as exc_info:
+            nf_core.utils.run_cmd("sh", "-c 'echo details; echo summary >&2; exit 3'")
+        err = exc_info.value
+        assert isinstance(err, RuntimeError)
+        assert err.returncode == 3
+        assert err.output == "summary\ndetails"
+        assert err.output in str(err)
+
     @mock.patch("nf_core.utils.run_cmd")
     def test_fetch_wf_config(self, mock_run_cmd):
         """Test the fetch_wf_config() regular expression to read config params."""
