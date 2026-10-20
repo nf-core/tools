@@ -20,6 +20,23 @@ class TestLintActionsNfTest(TestLint):
         assert len(results.get("failed", [])) == 0
         assert len(results.get("ignored", [])) == 0
 
+    def test_actions_nf_test_pass_bare_pull_request(self):
+        """Lint test: actions_nf_test - PASS - `pull_request:` carries no subtree"""
+
+        new_pipeline = self._make_pipeline_copy()
+        with open(Path(new_pipeline, ".github", "workflows", "nf-test.yml")) as fh:
+            ci_yml = yaml.safe_load(fh)
+        ci_yml[True]["pull_request"] = None
+        with open(Path(new_pipeline, ".github", "workflows", "nf-test.yml"), "w") as fh:
+            yaml.dump(ci_yml, fh)
+
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+        lint_obj._load()
+
+        results = lint_obj.actions_nf_test()
+        assert "'.github/workflows/nf-test.yml' is triggered on expected events" in results["passed"]
+        assert len(results.get("failed", [])) == 0
+
     def test_actions_nf_test_fail_wrong_nf(self):
         """Lint test: actions_nf_test - FAIL - wrong minimum version of Nextflow tested"""
         self.lint_obj._load()
