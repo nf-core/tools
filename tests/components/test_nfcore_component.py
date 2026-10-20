@@ -36,12 +36,12 @@ from nf_core.components.nfcore_component import NFCoreComponent
         # Module from another org
         (
             "include { SAMTOOLS_SORT } from '../../../modules/another_org/samtools/sort/main'",
-            ["samtools/sort"],
+            ["another_org/samtools/sort"],
         ),
         # Sibling subworkflow from another org
         (
             "include { BAM_SORT_STATS_SAMTOOLS } from '../../another_org/bam_sort_stats_samtools/main'",
-            ["subworkflows/bam_sort_stats_samtools"],
+            ["another_org/subworkflows/bam_sort_stats_samtools"],
         ),
     ],
 )

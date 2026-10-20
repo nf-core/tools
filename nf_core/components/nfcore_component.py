@@ -192,18 +192,25 @@ class NFCoreComponent:
                         included_components.append(link)
                     else:
                         component_full_path = Path(self.component_dir / link).resolve()
-                        component_parts = list(component_full_path.parts)
+                        parts = list(component_full_path.parts)
 
-                        if component_parts[-1] in ("main", "main.nf"):
-                            component_parts.pop()
+                        if parts[-1] in ("main", "main.nf"):
+                            parts.pop()
 
-                        if len(component_parts) >= 3 and component_parts[-3] == "subworkflows":
-                            name = component_parts[-1]
-                            included_components.append(f"subworkflows/{name}")
-                        elif len(component_parts) >= 3 and component_parts[-3] == "modules":
-                            included_components.append(component_parts[-1])
-                        elif len(component_parts) >= 4 and component_parts[-4] == "modules":
-                            included_components.append("/".join(component_parts[-2:]))
+                        def build_component_name(component_type, component_org, name):
+                            org = ""
+                            if component_org != self.org:
+                                org = component_org + "/"
+                            return (
+                                f"{org}{component_type}/{name}" if component_type == "subworkflows" else f"{org}{name}"
+                            )
+
+                        if len(parts) >= 3 and parts[-3] == "subworkflows":
+                            included_components.append(build_component_name("subworkflows", parts[-2], parts[-1]))
+                        elif len(parts) >= 3 and parts[-3] == "modules":
+                            included_components.append(build_component_name("modules", parts[-2], parts[-1]))
+                        elif len(parts) >= 4 and parts[-4] == "modules":
+                            included_components.append(build_component_name("modules", parts[-3], "/".join(parts[-2:])))
 
         return included_components
 
