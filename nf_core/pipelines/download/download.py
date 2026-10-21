@@ -1,6 +1,7 @@
 """Downloads a nf-core pipeline to the local file system."""
 
 import io
+import json
 import logging
 import os
 import re
@@ -699,7 +700,10 @@ class DownloadWorkflow:
                     raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
                 out, _ = cmd_out
-                return parse_nextflow_json(out.decode("utf-8"))
+                try:
+                    return parse_nextflow_json(out.decode("utf-8"))
+                except json.JSONDecodeError as e:
+                    raise DownloadError(f"Failed to parse output of `nextflow inspect` as JSON: {e}") from e
 
         try:
             out_json = run_nextflow_inspect()

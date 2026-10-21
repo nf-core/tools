@@ -402,6 +402,18 @@ class DownloadTest(unittest.TestCase):
 
     @mock.patch("nf_core.pipelines.download.download.run_cmd")
     @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_raises_on_invalid_json(self, mock_get_remote_workflows, mock_run_cmd):
+        download_obj = DownloadWorkflow(container_system="docker")
+        mock_run_cmd.return_value = (b"[PIPELINE] not json at all", b"")
+
+        with pytest.raises(DownloadError, match="Failed to parse output of `nextflow inspect`"):
+            download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+        assert mock_run_cmd.call_count == 1
+        mock_get_remote_workflows.assert_called_once()
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
     def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
         """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
         details = b"Error main.nf:5:5: Invalid process directive\n"
