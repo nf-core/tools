@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,7 +21,7 @@ from nf_core.pipelines.download import DownloadWorkflow
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, get_nf_version
+from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, CommandError, check_nextflow_version, get_nf_version
 
 from ...utils import TEST_DATA_DIR, with_temporary_folder
 
@@ -372,10 +371,7 @@ class DownloadTest(unittest.TestCase):
                 nf_output = (
                     b"The following invalid input values have been detected:\n * Missing required parameter: --outdir\n"
                 )
-                cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=nf_output)
-                exc = RuntimeError("Command failed")
-                exc.__cause__ = cause
-                raise exc
+                raise CommandError("nextflow inspect", 1, stdout=nf_output, stderr=b"ERROR ~ Validation failed")
 
             assert "-params-file" in cmd_params
             params_file_match = re.search(r'-params-file\s+"([^"]+)"', cmd_params)
@@ -406,19 +402,39 @@ class DownloadTest(unittest.TestCase):
 
     @mock.patch("nf_core.pipelines.download.download.run_cmd")
     @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
-    def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
-        """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
+    def test_find_container_images_raises_on_invalid_json(self, mock_get_remote_workflows, mock_run_cmd):
         download_obj = DownloadWorkflow(container_system="docker")
-        cause = subprocess.CalledProcessError(1, ["nextflow", "inspect"], output=b"Error: Invalid process directive\n")
-        exc = RuntimeError("Command failed")
-        exc.__cause__ = cause
-        mock_run_cmd.side_effect = exc
+        mock_run_cmd.return_value = (b"[PIPELINE] not json at all", b"")
 
-        with pytest.raises(DownloadError, match="downgrade to Nextflow"):
+        with pytest.raises(DownloadError, match="Failed to parse output of `nextflow inspect`"):
             download_obj.find_container_images(Path("workflow"), "dummy-revision")
 
         assert mock_run_cmd.call_count == 1
         mock_get_remote_workflows.assert_called_once()
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_raises_on_strict_syntax_error(self, mock_get_remote_workflows, mock_run_cmd):
+        """Nextflow >= 26.04 rejects old if/else container directives; tool should give actionable guidance."""
+        details = b"Error main.nf:5:5: Invalid process directive\n"
+        summary = b"ERROR ~ Script compilation failed\n"
+        # Nextflow >= 26.05 moved the summary from stdout to stderr (nextflow-io/nextflow#7121)
+        stream_layouts = {
+            "nextflow < 26.05": {"stdout": details + summary, "stderr": b""},
+            "nextflow >= 26.05": {"stdout": details, "stderr": summary},
+        }
+        for layout, streams in stream_layouts.items():
+            with self.subTest(layout):
+                mock_run_cmd.reset_mock()
+                mock_get_remote_workflows.reset_mock()
+                mock_run_cmd.side_effect = CommandError("nextflow inspect", 1, **streams)
+                download_obj = DownloadWorkflow(container_system="docker")
+
+                with pytest.raises(DownloadError, match="downgrade to Nextflow"):
+                    download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+                assert mock_run_cmd.call_count == 1
+                mock_get_remote_workflows.assert_called_once()
 
     #
     # Tests for the main entry method 'download_workflow'

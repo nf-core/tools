@@ -1,7 +1,8 @@
 import logging
 import os
 
-import rich
+from rich.console import Console
+from rich.table import Table
 
 from nf_core.test_datasets.test_datasets_utils import (
     IGNORED_FILE_PREFIXES,
@@ -14,7 +15,7 @@ from nf_core.test_datasets.test_datasets_utils import (
 )
 from nf_core.utils import rich_force_colors
 
-stdout = rich.console.Console(force_terminal=rich_force_colors())
+stdout = Console(force_terminal=rich_force_colors())
 log = logging.getLogger(__name__)
 
 
@@ -26,7 +27,7 @@ def list_dataset_branches() -> None:
     """
     remote_branches = get_remote_branch_names()
 
-    table = rich.table.Table()
+    table = Table()
     table.add_column("Test-Dataset Branches")
     for b in remote_branches:
         table.add_row(b)
@@ -71,7 +72,7 @@ def list_datasets(
         stdout.print(os.linesep.join(out))
 
     else:
-        table = rich.table.Table()
+        table = Table()
         table.add_column("File", overflow="fold")
 
         for el in out:

@@ -322,10 +322,10 @@ class ModuleContainers:
             indent = match.group(1)
             inner_indent = indent + "    "
             return (
-                f"{indent}container \"${{ workflow.containerEngine in ['singularity', 'apptainer'] "
+                f"{indent}container \"${{workflow.containerEngine in ['singularity', 'apptainer'] "
                 "&& !task.ext.singularity_pull_docker_container\n"
-                f"? {inner_indent}'{singularity_image}'\n"
-                f": {inner_indent}'{docker_image}' }}\""
+                f"{inner_indent}? '{singularity_image}'\n"
+                f"{inner_indent}: '{docker_image}'}}\""
             )
 
         new_content = re.sub(
@@ -703,6 +703,7 @@ class ModuleContainers:
             "containerPlatform": platform,
             "freeze": True,
             "buildTemplate": "conda/pixi:v1",
+            "basePackages": "conda-forge::procps conda-forge::gzip",
             "format": WAVE_FORMAT[container_system],
             "nameStrategy": "imageSuffix",
         }
