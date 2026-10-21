@@ -254,7 +254,7 @@ class TestUtils(TestPipelines):
         err = exc_info.value
         assert isinstance(err, RuntimeError)
         assert err.returncode == 3
-        assert err.output == "summary\ndetails"
+        assert err.output == "details\nsummary"
         assert err.output in str(err)
 
     def test_parse_nextflow_json_ignores_status_lines(self):
