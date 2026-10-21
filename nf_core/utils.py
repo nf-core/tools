@@ -625,7 +625,7 @@ class CommandError(RuntimeError):
         self.returncode = returncode
         self.stdout = stdout
         self.stderr = stderr
-        decoded = (stream.decode("utf-8", errors="replace").strip() for stream in (stderr, stdout))
+        decoded = (stream.decode("utf-8", errors="replace").strip() for stream in (stdout, stderr))
         self.output = "\n".join(text for text in decoded if text)
         super().__init__(f"Command '{cmd}' failed with exit code {returncode}\n{self.output}")
 
