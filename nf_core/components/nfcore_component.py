@@ -192,30 +192,28 @@ class NFCoreComponent:
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
                     #'plugin/nf-validation'
-
                     if link.startswith("plugin/"):
                         included_components.append(link)
-                    else:
-                        component_full_path = Path(self.component_dir / link).resolve()
-                        parts = list(component_full_path.parts)
+                        continue
 
-                        if parts[-1] in ("main", "main.nf"):
-                            parts.pop()
+                    # resolve the full path to drop annoying ../
+                    component_full_path = Path(self.component_dir / link).resolve()
+                    component_path_parts = list(component_full_path.parts)
 
-                        def build_component_name(component_type, component_org, name):
-                            org = ""
-                            if component_org != self.org:
-                                org = component_org + "/"
-                            return (
-                                f"{org}{component_type}/{name}" if component_type == "subworkflows" else f"{org}{name}"
-                            )
+                    sel_parts = []
+                    for idx, i in enumerate(component_path_parts[::-1]):
+                        if idx == 0 and i in ["main", "main.nf"]:
+                            continue
 
-                        if len(parts) >= 3 and parts[-3] == "subworkflows":
-                            included_components.append(build_component_name("subworkflows", parts[-2], parts[-1]))
-                        elif len(parts) >= 3 and parts[-3] == "modules":
-                            included_components.append(build_component_name("modules", parts[-2], parts[-1]))
-                        elif len(parts) >= 4 and parts[-4] == "modules":
-                            included_components.append(build_component_name("modules", parts[-3], "/".join(parts[-2:])))
+                        sel_parts.append(i)
+                        if i in ("modules", "subworkflows"):
+                            break
+
+                    component_type = sel_parts[-1] if sel_parts[-1] == "subworkflows" else None
+                    component_org = sel_parts[-2] if sel_parts[-2] != self.org else None
+                    component_name = sel_parts[-3::-1]
+                    component_tag = "/".join(filter(None, [component_org, component_type, *component_name]))
+                    included_components.append(component_tag)
 
         return included_components
 
