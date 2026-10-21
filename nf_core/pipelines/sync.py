@@ -195,7 +195,7 @@ class PipelineSync:
         log.info(f"Original pipeline repository branch is '{self.original_branch}'")
 
         # Check to see if there are uncommitted changes on current branch
-        if self.repo.is_dirty(untracked_files=True):
+        if self._has_sync_changes():
             raise SyncExceptionError(
                 "Uncommitted changes found in pipeline directory!\n"
                 "Please commit these before running nf-core pipelines sync.\n"
@@ -342,7 +342,7 @@ class PipelineSync:
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
         # Check that we have something to commit
-        if not self.repo.is_dirty(untracked_files=True):
+        if not self._has_sync_changes():
             log.info("Template contains no changes - no new commit created")
             return False
         # Commit changes
@@ -350,7 +350,10 @@ class PipelineSync:
             newly_ignored_files = self._get_ignored_files()
             # add and commit all files except self.ignored_files
             # :! syntax to exclude files using git pathspec
-            self.repo.git.add([f":!{f}" for f in self.ignored_files if f not in newly_ignored_files], all=True)
+            self.repo.git.add(
+                [".", ":(exclude).pixi", *[f":!{f}" for f in self.ignored_files if f not in newly_ignored_files]],
+                all=True,
+            )
             self.repo.index.commit(f"Template update for nf-core/tools version {nf_core.__version__}")
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
@@ -481,6 +484,20 @@ class PipelineSync:
             self.repo.git.checkout(self.original_branch)
         except GitCommandError as e:
             raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}") from e
+
+    def _has_sync_changes(self) -> bool:
+        """Ignore untracked Pixi environments, but never ignore tracked edits.
+
+        Git's excludes are used rather than walking .pixi, which can hold
+        thousands of environment files.
+        """
+        if self.repo.is_dirty(untracked_files=False):
+            return True
+        return bool(
+            self.repo.git.ls_files(
+                "--others", "--exclude-standard", "--", ".", ":(exclude).pixi"
+            )
+        )
 
     def _get_ignored_files(self) -> list[str]:
         """
