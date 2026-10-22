@@ -111,9 +111,11 @@ class SubworkflowLint(ComponentLint):
         if subworkflow:
             if all_subworkflows:
                 raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
-            local_subworkflows = []
-            remote_subworkflows = [s for s in self.all_remote_components if s.component_name == subworkflow]
-            if len(remote_subworkflows) == 0:
+            local_subworkflows = [s for s in self.all_local_components if s.component_name == subworkflow] if local else []
+            remote_subworkflows = (
+                [s for s in self.all_remote_components if s.component_name == subworkflow] if not local else []
+            )
+            if not (local_subworkflows if local else remote_subworkflows):
                 raise LintExceptionError(f"Could not find the specified subworkflow: '{subworkflow}'")
         else:
             local_subworkflows = self.all_local_components
