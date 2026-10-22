@@ -26,6 +26,18 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+def _has_bare_ontology_url(error: exceptions.ValidationError) -> bool:
+    """Find the underlying type error even when nested inside a oneOf failure."""
+    if (
+        error.validator == "type"
+        and error.validator_value == "object"
+        and isinstance(error.instance, str)
+        and "ontologies" in error.path
+    ):
+        return True
+    return any(_has_bare_ontology_url(child) for child in error.context)
+
+
 @cache
 def _load_skip_nf_test_sets(base_dir: str) -> dict[str, frozenset[str]]:
     """
@@ -219,6 +231,8 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
             hint = f"\nCheck the entry for `{e.path}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
+        if _has_bare_ontology_url(e):
+            hint += "\nOntology entries must be mappings such as '- edam: http://edamontology.org/format_1975', not bare URLs."
         if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
             e.message = e.schema["message"]
             incorrect_value = meta_yaml
