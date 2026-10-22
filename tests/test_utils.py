@@ -1,5 +1,6 @@
 """Tests covering for utility functions."""
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -245,6 +246,29 @@ class TestUtils(TestPipelines):
         with pytest.raises(RuntimeError), nf_core.utils.set_wd(self.tmp_dir):
             raise RuntimeError
         assert wd_before_context == Path().resolve()
+
+    def test_run_cmd_raises_command_error_with_both_streams(self):
+        """A failing command keeps stdout and stderr on the error and includes both in its message."""
+        with pytest.raises(nf_core.utils.CommandError) as exc_info:
+            nf_core.utils.run_cmd("sh", "-c 'echo details; echo summary >&2; exit 3'")
+        err = exc_info.value
+        assert isinstance(err, RuntimeError)
+        assert err.returncode == 3
+        assert err.output == "details\nsummary"
+        assert err.output in str(err)
+
+    def test_parse_nextflow_json_ignores_status_lines(self):
+        """Status lines that Nextflow prints around its JSON output on stdout are skipped."""
+        outputs = {
+            "plain": '{"processes": []}',
+            "status lines": '[PIPELINE] main.nf | profile=standard\n[WORKDIR] /work\n{"processes": []}\n[SUCCESS] done',
+            "nextflow < 26.05": 'Monitor the execution with Seqera Platform using this URL: https://x\n{"processes": []}',
+        }
+        for name, text in outputs.items():
+            with self.subTest(name):
+                assert nf_core.utils.parse_nextflow_json(text) == {"processes": []}
+        with pytest.raises(json.JSONDecodeError):
+            nf_core.utils.parse_nextflow_json("ERROR ~ no json here")
 
     @mock.patch("nf_core.utils.run_cmd")
     def test_fetch_wf_config(self, mock_run_cmd):

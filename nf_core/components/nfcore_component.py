@@ -8,7 +8,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from nf_core.utils import NF_INSPECT_MIN_NF_VERSION, check_nextflow_version, run_cmd, set_wd_tempdir
+from nf_core.utils import (
+    NF_INSPECT_MIN_NF_VERSION,
+    check_nextflow_version,
+    parse_nextflow_json,
+    run_cmd,
+    set_wd_tempdir,
+)
 
 log = logging.getLogger(__name__)
 
@@ -485,15 +491,8 @@ class NFCoreComponent:
                 return None
             out, _ = cmd_out
             out_str = out.decode()
-            # nextflow inspect mixes status lines ([PIPELINE], [SUCCESS], etc.) with JSON on stdout
-            json_start = out_str.find("{")
-            json_end = out_str.rfind("}") + 1
-            if json_start == -1 or json_end == 0:
-                log.debug("Could not find JSON in nextflow inspect output")
-                log.debug(f"Output of nextflow inspect: {out_str}")
-                return None
             try:
-                out_json = json.loads(out_str[json_start:json_end])
+                out_json = parse_nextflow_json(out_str)
             except json.JSONDecodeError:
                 log.debug("Failed to parse JSON from nextflow inspect output")
                 log.debug(f"Output of nextflow inspect: {out_str}")
