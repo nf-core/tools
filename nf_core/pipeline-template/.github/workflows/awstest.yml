@@ -13,7 +13,7 @@ jobs:
       - name: Launch workflow via Seqera Platform {%- raw %}
         uses: seqeralabs/action-seqera-launch@v1
         with:
-          wait: none
+          wait: running
           # nf-core TODO: uncomment the line below if your pipeline uses the v2 parser
           # syntax-parser: v2
           workspace-id: ${{ vars.TOWER_WORKSPACE_ID }}

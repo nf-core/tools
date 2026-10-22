@@ -28,7 +28,7 @@ jobs:
         # Add full size test data (but still relatively small datasets for few samples)
         # on the `test_full.config` test runs with only one set of parameters
         with:
-          wait: none
+          wait: running
           # nf-core TODO: uncomment the line below if your pipeline uses the v2 parser
           # syntax-parser: v2
           workspace-id: ${{ vars.TOWER_WORKSPACE_ID }}
