@@ -117,18 +117,6 @@ jobs:
         with:
           version: "25.10.4"
 
-      - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
-
-        run: |
-          pushd "nf-core/${PIPELINE}"
-          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
-          if [ -z "$defaultBranch" ]; then
-            defaultBranch="master"
-          fi
-          popd
-          echo "Default branch: $defaultBranch"
-          git config --global init.defaultBranch "$defaultBranch"
-
       - name: Run synchronisation
         id: sync
         if: github.repository == 'nf-core/tools'
