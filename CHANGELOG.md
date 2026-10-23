@@ -4,6 +4,8 @@
 
 ### General
 
+- Make the changelog action react a bit more and harden its security ([#4544](https://github.com/nf-core/tools/pull/4544))
+
 ### Linting
 
 ### Modules
