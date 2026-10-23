@@ -87,6 +87,8 @@ class PipelineCreate:
         # Set fields used by the class methods
         self.no_git = no_git
         self.default_branch = default_branch or self.get_default_branch()
+        if not self.no_git:
+            self._check_default_branch()
         self.is_interactive = is_interactive
 
         if self.config.outdir is None:
@@ -458,22 +460,28 @@ class PipelineCreate:
             log.debug(f"Default branch name: {default_branch}")
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
-        if default_branch in ["dev", "TEMPLATE"]:
+        return default_branch
+
+    def _check_default_branch(self) -> None:
+        """Checks that the default branch does not clash with the 'dev' and 'TEMPLATE' branches created by nf-core.
+
+        Raises:
+            UserWarning: if the default branch is set to 'dev' or 'TEMPLATE'.
+        """
+        if self.default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
+                f"Default branch '{self.default_branch}' is incompatible with nf-core.\n"
                 "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
                 "Set the default branch name with "
                 "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                "Or set the default_branch parameter in this class.\n"
-                "Pipeline git repository will not be initialised."
+                "Or set the default_branch parameter in this class."
             )
-        return default_branch
 
     def git_init_pipeline(self) -> None:
         """Initialises the new pipeline as a Git repository and submits first commit.
 
         Raises:
-            UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
+            UserWarning: if the 'TEMPLATE' and 'dev' branches already exist and force is not set.
         """
 
         log.info("Initialising local pipeline git repository")

@@ -62,6 +62,29 @@ class NfcoreCreateTest(unittest.TestCase):
         assert pipeline.default_branch == "master"
 
     @with_temporary_folder
+    def test_pipeline_creation_incompatible_default_branch(self, tmp_path):
+        """'dev' and 'TEMPLATE' are rejected as default branch, unless no git repository is created"""
+        pipeline_args = {
+            "name": self.pipeline_name,
+            "description": self.pipeline_description,
+            "author": self.pipeline_author,
+            "outdir": tmp_path,
+        }
+        for branch in ["dev", "TEMPLATE"]:
+            with self.assertRaises(UserWarning):
+                nf_core.pipelines.create.create.PipelineCreate(**pipeline_args, default_branch=branch)
+            with (
+                mock.patch("git.config.GitConfigParser.get_value", return_value=branch),
+                self.assertRaises(UserWarning),
+            ):
+                nf_core.pipelines.create.create.PipelineCreate(**pipeline_args)
+
+            pipeline = nf_core.pipelines.create.create.PipelineCreate(
+                **pipeline_args, default_branch=branch, no_git=True
+            )
+            assert pipeline.default_branch == branch
+
+    @with_temporary_folder
     def test_pipeline_creation_initiation(self, tmp_path):
         pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
