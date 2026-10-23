@@ -116,6 +116,12 @@ norecursedirs = [
     "docs",
 ]
 
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py311"
