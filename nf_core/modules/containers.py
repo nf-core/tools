@@ -699,11 +699,12 @@ class ModuleContainers:
             "packages": {
                 "type": "CONDA",
                 "environment": base64.b64encode(conda_bytes).decode(),
+                # Wave reads Pixi base packages only from PackagesSpec.pixiOpts.
+                "pixiOpts": {"basePackages": "conda-forge::procps conda-forge::gzip"},
             },
             "containerPlatform": platform,
             "freeze": True,
             "buildTemplate": "conda/pixi:v1",
-            "basePackages": "conda-forge::procps conda-forge::gzip",
             "format": WAVE_FORMAT[container_system],
             "nameStrategy": "imageSuffix",
         }
