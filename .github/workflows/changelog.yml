@@ -99,5 +99,5 @@ jobs:
           git config user.name "nf-core-bot"
           git add "${GITHUB_WORKSPACE}/CHANGELOG.md"
           git status
-          git commit -m "[automated] Update CHANGELOG.md [skip ci]"
+          git commit -m "[automated] Update CHANGELOG.md"
           git push
