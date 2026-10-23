@@ -20,7 +20,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Nextflow
-      uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+      uses: nf-core/setup-nextflow@v3
       with:
         version: "{% raw %}${{ env.NXF_VERSION }}"
 
@@ -30,7 +30,7 @@ runs:
         python-version: "3.14"
 
     - name: Install nf-test
-      uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+      uses: nf-core/setup-nf-test@v2
       with:
         version: "${{ env.NFT_VER }}"
         install-pdiff: true
