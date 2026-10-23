@@ -12,6 +12,17 @@
 
 <!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
+### Experimental: AWS full test output snapshots
+
+The AWS full test workflow includes an experimental `nf-snapshot` configuration. It is disabled until a baseline for this pipeline has been committed. To enable it:
+
+1. Run the `test_full` profile on AWS and inspect the published results.
+2. Create `tests/snapshots/test_full.json` from those results, with a `files` object mapping output paths to MD5 hashes. Use `null` for files whose presence should be checked without comparing their contents. Exclude run-specific `pipeline_info` outputs and use the workflow's `nameOnly` patterns for variable reports and other non-deterministic files.
+3. Uncomment the `nf-snapshot` plugin and `snapshot` block in `.github/workflows/awsfulltest.yml`, then commit the baseline. Keep the `nf-schema` plugin in the launch configuration because it replaces the pipeline's plugin list.
+4. Ensure that the Seqera Platform launch uses a Nextflow version supported by `nf-snapshot@0.1.0` (at least 26.04.6), then run the AWS full test again to validate the baseline.
+
+Update the baseline only after reviewing an intentional change in published outputs. The snapshot is specific to this pipeline and its `test_full` dataset; the template cannot supply one.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
