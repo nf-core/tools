@@ -12,6 +12,8 @@
 
 ### Template
 
+- pin our own controlled actions to major version to get faster udpates ([#4543](https://github.com/nf-core/tools/pull/4543))
+
 #### Version updates
 
 ## [v4.2.0 - Metropolitan Mouse](https://github.com/nf-core/tools/releases/tag/4.2.0) - [2026-10-21]
