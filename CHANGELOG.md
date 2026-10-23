@@ -8,6 +8,8 @@
 
 ### Modules
 
+- Keep the full name of local TOOL/SUBTOOL components in `nf-core modules lint` and `nf-core modules containers create` ([#4541](https://github.com/nf-core/tools/pull/4541))
+
 ### Subworkflows
 
 ### Template

@@ -412,6 +412,17 @@ class TestModuleContainersPipeline(TestModules):
         assert module_containers.environment_yml == module_dir / "environment.yml"
         assert module_containers.meta_yml == module_dir / "meta.yml"
 
+    def test_init_pipeline_local_tool_subtool(self):
+        """ModuleContainers should keep the full TOOL/SUBTOOL name of local modules"""
+        module_dir = self._create_local_module("tool/sub")
+        self._create_local_module("other/sub")
+        module_containers = ModuleContainers("tool/sub", directory=self.pipeline_dir)
+
+        names = {c.component_name for c in module_containers.available_modules}
+        assert {"other/sub", "tool/sub"} <= names
+        assert "sub" not in names
+        assert module_containers.module_directory == module_dir
+
     def test_update_containers_in_meta_pipeline(self):
         """update_containers_in_meta writes containers to the local module's meta.yml"""
         module_dir = self._create_local_module("testmodule")
