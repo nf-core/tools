@@ -1,22 +1,14 @@
 # nf-core/tools: Changelog
 
-## v4.2.1dev
-
-### General
-
-### Linting
+## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-23]
 
 ### Modules
 
 - Keep the full name of local TOOL/SUBTOOL components in `nf-core modules lint` and `nf-core modules containers create` ([#4541](https://github.com/nf-core/tools/pull/4541))
 
-### Subworkflows
-
 ### Template
 
-- pin our own controlled actions to major version to get faster updates ([#4543](https://github.com/nf-core/tools/pull/4543))
-
-#### Version updates
+- Pin our own controlled actions to major version to get faster updates ([#4543](https://github.com/nf-core/tools/pull/4543))
 
 ## [v4.2.0 - Metropolitan Mouse](https://github.com/nf-core/tools/releases/tag/4.2.0) - [2026-10-21]
 
