@@ -105,3 +105,24 @@ jobs:
           git status
           git commit -m "[automated] Update CHANGELOG.md"
           git push
+
+      - name: React if the changelog bot finished
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='hooray'
+
+      - name: React if the commenter is not allowed to trigger the bot
+        if: failure() && steps.verify.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='-1'
+
+      - name: React if a step failed
+        if: failure() && steps.verify.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='confused'
