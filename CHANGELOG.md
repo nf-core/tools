@@ -1,5 +1,21 @@
 # nf-core/tools: Changelog
 
+## v4.2.1dev
+
+### General
+
+### Linting
+
+### Modules
+
+- Keep the full name of local TOOL/SUBTOOL components in `nf-core modules lint` and `nf-core modules containers create` ([#4541](https://github.com/nf-core/tools/pull/4541))
+
+### Subworkflows
+
+### Template
+
+#### Version updates
+
 ## [v4.2.0 - Metropolitan Mouse](https://github.com/nf-core/tools/releases/tag/4.2.0) - [2026-10-21]
 
 ### General
