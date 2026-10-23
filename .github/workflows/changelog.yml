@@ -13,17 +13,21 @@ jobs:
       contains(github.event.comment.body, '@nf-core-bot changelog')
 
     steps:
-      - name: Verify commenter is on the nf-core/infrastructure team
+      - name: Verify commenter is on the nf-core/infrastructure or nf-core/core team
+        id: verify
         env:
           GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
           ACTOR: ${{ github.event.comment.user.login }}
         run: |
-          state=$(gh api "orgs/nf-core/teams/infrastructure/memberships/${ACTOR}" --jq '.state' 2>/dev/null || true)
-          if [ "$state" != "active" ]; then
-            echo "::error::@${ACTOR} is not an active member of nf-core/infrastructure; refusing to run."
-            exit 1
-          fi
-          echo "@${ACTOR} is on nf-core/infrastructure — proceeding."
+          for team in infrastructure core; do
+            state=$(gh api "orgs/nf-core/teams/${team}/memberships/${ACTOR}" --jq '.state' 2>/dev/null || true)
+            if [ "$state" = "active" ]; then
+              echo "@${ACTOR} is on nf-core/${team} — proceeding."
+              exit 0
+            fi
+          done
+          echo "::error::@${ACTOR} is not an active member of nf-core/infrastructure or nf-core/core; refusing to run."
+          exit 1
 
       - name: React to the triggering comment
         env:
