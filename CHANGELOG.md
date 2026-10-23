@@ -2,6 +2,10 @@
 
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-23]
 
+### General
+
+- Make the changelog action react a bit more and harden its security ([#4544](https://github.com/nf-core/tools/pull/4544))
+
 ### Modules
 
 - Keep the full name of local TOOL/SUBTOOL components in `nf-core modules lint` and `nf-core modules containers create` ([#4541](https://github.com/nf-core/tools/pull/4541))
