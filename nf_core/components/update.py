@@ -868,8 +868,9 @@ class ComponentUpdate(ComponentCommand):
                 self.component_type, component, repo_path, patch_path, temp_component_dir
             )
         except LookupError:
-            # Patch failed. Save the patch file by moving to the install dir
-            shutil.move(patch_path, Path(component_install_dir, patch_path.relative_to(component_dir)))
+            # Retain the original patch until an update is actually accepted. Preview
+            # may be declined after this point, so moving it would silently delete it.
+            shutil.copy2(patch_path, Path(component_install_dir, patch_path.relative_to(component_dir)))
             log.warning(
                 f"Failed to apply patch for {self.component_type[:-1]} '{component_fullname}'. You will have to apply the patch manually"
             )
