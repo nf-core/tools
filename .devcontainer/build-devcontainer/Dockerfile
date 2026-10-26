@@ -2,19 +2,26 @@
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
 FROM mcr.microsoft.com/devcontainers/miniconda@sha256:3b861bb106043cc6e8af5011dbb9f75a163a18f9320c6a7f5f7fbac3ff0694a5 AS build
 
+# Replace the Anaconda defaults channels (which require accepting their Terms of Service)
+# with conda-forge and bioconda. Uses --system because defaults is set in /opt/conda/.condarc
+RUN conda config --system --remove channels defaults && \
+    conda config --system --add channels bioconda && \
+    conda config --system --add channels conda-forge && \
+    conda config --system --set channel_priority strict
+
 # copy this repo at current revision
 COPY . /root/nfcore-tools/
 
-# Explicitly reinstall python 3.13 via conda
+# Explicitly install python 3.14 via conda (the image's Anaconda packages are built for 3.14)
 # Install uv and local nf-core tools version, and precommit hooks
 RUN cd /root/nfcore-tools/ && \
-    conda install -y python=3.13 && \
+    conda install -y python=3.14 && \
     pip install --no-cache-dir --upgrade pip uv && \
     uv pip install --system --no-cache-dir . && \
     rm -rf /root/.cache/pip /root/.cache/uv
 
 # Install nextflow and nf-test via conda and run conda clean
-RUN conda install -c bioconda -y nextflow nf-test && \
+RUN conda install -y nextflow nf-test && \
     conda clean -afy
 
 # Install dependencies for apptainer build and apptainer and run apt clean
