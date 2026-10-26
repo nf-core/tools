@@ -18,7 +18,10 @@
 {%- endif %}
 
 process {{ component_name_underscore|upper }} {
-    tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
+    {% if not has_meta -%}
+    // TODO nf-core: Update the variable name used in the tag
+    {% endif -%}
+    tag {{ '"$meta.id"' if has_meta else '"$bam"' }}
     label '{{ process_label }}'
 
     {% if not_empty_template -%}
