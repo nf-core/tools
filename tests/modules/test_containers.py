@@ -142,6 +142,8 @@ class TestModuleContainers(TestModules):
         assert payload["freeze"] is True
         assert payload["nameStrategy"] == "imageSuffix"
         assert payload["packages"]["type"] == "CONDA"
+        assert payload["packages"]["pixiOpts"]["basePackages"] == "conda-forge::procps conda-forge::gzip"
+        assert "basePackages" not in payload
 
     @mock.patch.object(ModuleContainers, "request_image_inspect")
     @mock.patch("nf_core.modules.containers.requests.post")
