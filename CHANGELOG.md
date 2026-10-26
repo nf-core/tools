@@ -1,5 +1,20 @@
 # nf-core/tools: Changelog
 
+## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
+
+### General
+
+- Remove unnecessary default branch detection from sync action ([#4540](https://github.com/nf-core/tools/pull/4540))
+- Make the changelog action react a bit more and harden its security ([#4544](https://github.com/nf-core/tools/pull/4544))
+
+### Modules
+
+- Keep the full name of local TOOL/SUBTOOL components in `nf-core modules lint` and `nf-core modules containers create` ([#4541](https://github.com/nf-core/tools/pull/4541))
+
+### Template
+
+- Pin our own controlled actions to major version to get faster updates ([#4543](https://github.com/nf-core/tools/pull/4543))
+
 ## [v4.2.0 - Metropolitan Mouse](https://github.com/nf-core/tools/releases/tag/4.2.0) - [2026-10-21]
 
 ### General

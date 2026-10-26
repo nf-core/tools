@@ -100,7 +100,6 @@ class NFCoreComponent:
             # The main file is just the local module
             if self.component_dir.is_dir():
                 self.main_nf = Path(self.component_dir, "main.nf")
-                self.component_name = self.component_dir.stem
                 # These attributes are only required by nf-core modules
                 # so just set them to None if they don't exist
                 self.meta_yml = p if (p := Path(self.component_dir, "meta.yml")).exists() else None
