@@ -162,7 +162,7 @@ class ComponentCreate(ComponentCommand):
 
         # Add a valid organization name for nf-test tags
         not_alphabet = re.compile(r"[^a-zA-Z]")
-        self.org_alphabet = not_alphabet.sub("", self.org)
+        self.org_alphabet = "local" if self.repo_type == "pipeline" else not_alphabet.sub("", self.org)
 
         # Create component template with jinja2
         assert self._render_template()
@@ -377,12 +377,12 @@ class ComponentCreate(ComponentCommand):
         """
         file_paths = {}
         if self.repo_type == "pipeline":
-            component_dir = Path(self.directory, self.component_type, "local", self.component_dir)
-
+            base_dir = Path(self.directory, self.component_type, "local")
         elif self.repo_type == "modules":
-            component_dir = Path(self.directory, self.component_type, self.org, self.component_dir)
+            base_dir = Path(self.directory, self.component_type, self.org)
         else:
             raise ValueError("`repo_type` not set correctly")
+        component_dir = base_dir / self.component_dir
 
         # Check if module/subworkflow directories exist already
         if component_dir.exists() and not self.force_overwrite:
@@ -392,20 +392,14 @@ class ComponentCreate(ComponentCommand):
 
         if self.component_type == "modules":
             # If a subtool, check if there is a module called the base tool name already
-            parent_tool_main_nf = Path(
-                self.directory,
-                self.component_type,
-                self.org,
-                self.component,
-                "main.nf",
-            )
+            parent_tool_main_nf = base_dir / self.component / "main.nf"
             if self.subtool and parent_tool_main_nf.exists():
                 raise UserWarning(
                     f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = list(Path(self.directory, self.component_type, self.org, self.component).glob("*/main.nf"))
+            tool_glob = list((base_dir / self.component).glob("*/main.nf"))
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
