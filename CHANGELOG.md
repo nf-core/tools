@@ -4,6 +4,7 @@
 
 ### General
 
+- Remove unnecessary default branch detection from sync action ([#4540](https://github.com/nf-core/tools/pull/4540))
 - Make the changelog action react a bit more and harden its security ([#4544](https://github.com/nf-core/tools/pull/4544))
 
 ### Modules
