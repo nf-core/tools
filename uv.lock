@@ -1745,7 +1745,6 @@ dependencies = [
     { name = "rich-click" },
     { name = "rocrate" },
     { name = "ruamel-yaml" },
-    { name = "setuptools" },
     { name = "tabulate" },
     { name = "textual" },
     { name = "trogon" },
@@ -1775,8 +1774,6 @@ dev = [
     { name = "types-markdown" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "typing-extensions" },
 ]
 
 [package.metadata]
@@ -1804,7 +1801,6 @@ requires-dist = [
     { name = "rich-click", specifier = "==1.9.*" },
     { name = "rocrate" },
     { name = "ruamel-yaml" },
-    { name = "setuptools", specifier = "<85" },
     { name = "tabulate" },
     { name = "textual", specifier = "==8.2.8" },
     { name = "trogon" },
@@ -1832,8 +1828,6 @@ dev = [
     { name = "types-markdown" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "typing-extensions", specifier = ">=4.0.0" },
 ]
 
 [[package]]
@@ -3287,15 +3281,6 @@ wheels = [
 ]
 
 [[package]]
-name = "setuptools"
-version = "83.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/34/26/f5d29e25ffdb535afef2d35cdb55b325298f96debd670da4c325e08d70f4/setuptools-83.0.0.tar.gz", hash = "sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef", size = 1154254, upload-time = "2026-07-04T15:31:22.699Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl", hash = "sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3", size = 1008090, upload-time = "2026-07-04T15:31:20.885Z" },
-]
-
-[[package]]
 name = "shellingham"
 version = "1.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -3689,15 +3674,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/57/15/9b7e2e2e7c87d01366185b198b3febc6bc0c973f2bf21a62da4ab7d3495e/types_requests-2.33.0.20261006.tar.gz", hash = "sha256:0652999e9306aea345f40732d58fa49a7f6cade6a0d74d92119c5c8d82eddaf0", size = 25316, upload-time = "2026-10-06T08:15:57.782Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/72/b82789207b3d360ce9f5a4372c790c52cc3dd928aeb7d4faeec652b651b2/types_requests-2.33.0.20261006-py3-none-any.whl", hash = "sha256:26cc8146505cab33cda9737991929e4144c559bebe05078ccc6998f27c4ca2c1", size = 21445, upload-time = "2026-10-06T08:15:56.658Z" },
-]
-
-[[package]]
-name = "types-setuptools"
-version = "84.0.0.20261006"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fc/36/012e992d81f3c3575e6428d53c2bbe266858cf1b7df7335476ab99f17908/types_setuptools-84.0.0.20261006.tar.gz", hash = "sha256:0f123655f44390a15ec62c9fa30b57f6dafe53014524d28b62cab1edbc303059", size = 46604, upload-time = "2026-10-06T08:15:27.42Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/24/add82014f533f2ebf62088b39db86d6a341bb0fd94af50b3a3c1e8886683/types_setuptools-84.0.0.20261006-py3-none-any.whl", hash = "sha256:f435ec88f8f2319316969e37b5a1ca49496b276889124de249b422b061b492fe", size = 70326, upload-time = "2026-10-06T08:15:26.289Z" },
 ]
 
 [[package]]
