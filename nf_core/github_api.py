@@ -79,7 +79,7 @@ class GitHubAPISession(requests_cache.CachedSession):
                         gh_cli_config["github.com"]["oauth_token"],
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
-            except (OSError, KeyError, yaml.YAMLError):
+            except (OSError, KeyError, TypeError, yaml.YAMLError):
                 ex_type, ex_value, _ = sys.exc_info()
                 if ex_type is not None:
                     output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
