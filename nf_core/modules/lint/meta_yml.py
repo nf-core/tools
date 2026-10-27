@@ -5,6 +5,7 @@ import logging
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlsplit
 
 from jsonschema import exceptions, validators
 
@@ -24,6 +25,23 @@ if TYPE_CHECKING:
     from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
+
+
+def _has_bare_ontology_url(error: exceptions.ValidationError) -> bool:
+    """Find the underlying type error even when nested inside a oneOf failure."""
+    if (
+        error.validator == "type"
+        and error.validator_value == "object"
+        and isinstance(error.instance, str)
+        and "ontologies" in error.path
+    ):
+        try:
+            parsed = urlsplit(error.instance)
+            if parsed.scheme in ("http", "https") and parsed.hostname and not any(c.isspace() for c in error.instance):
+                return True
+        except ValueError:
+            pass
+    return any(_has_bare_ontology_url(child) for child in error.context)
 
 
 @cache
@@ -219,6 +237,8 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
             hint = f"\nCheck the entry for `{e.path}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
+        if _has_bare_ontology_url(e):
+            hint += "\nOntology entries must be mappings such as '- edam: http://edamontology.org/format_1975', not bare URLs."
         if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
             e.message = e.schema["message"]
             incorrect_value = meta_yaml

@@ -37,6 +37,32 @@ class TestMetaYml(TestModules):
         assert len(module_lint.warned) >= 0
         assert module_lint.failed[0].lint_test == "meta_yml_valid"
 
+    def test_bare_ontology_url_has_actionable_error(self):
+        """A bare ontology URL should identify the missing edam mapping key."""
+        with open(self.bpipe_test_module_path / "meta.yml") as fh:
+            meta_yml = yaml.safe_load(fh)
+        meta_yml["output"] = {
+            "broken_ontology": [
+                {
+                    "file": {
+                        "type": "file",
+                        "description": "Example output",
+                        "ontologies": ["http://edamontology.org/format_1975"],
+                    }
+                }
+            ]
+        }
+        with open(self.bpipe_test_module_path / "meta.yml", "w") as fh:
+            yaml.safe_dump(meta_yml, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        validation_errors = [x.message for x in module_lint.failed if x.lint_test == "meta_yml_valid"]
+        assert validation_errors
+        assert "not bare URLs" in validation_errors[0]
+        assert "edam:" in validation_errors[0]
+
     def test_modules_meta_yml_output_mismatch(self):
         """Test linting a module with an extra entry in output fields in meta.yml compared to module.output"""
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf")) as fh:
