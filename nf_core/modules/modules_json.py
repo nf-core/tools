@@ -1142,9 +1142,9 @@ class ModulesJson:
             )
         return branch
 
-    def dump(self, run_prettier: bool = False) -> None:
+    def dump(self, run_prettier: bool = True) -> None:
         """
-        Sort the modules.json, and write it to file
+        Sort and write modules.json, applying consistent Prettier formatting by default.
         """
         # Sort the modules.json
         if self.modules_json is None:
