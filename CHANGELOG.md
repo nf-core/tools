@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+## v4.3.0dev
+
+### General
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### Template
+
+#### Version updates
+
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
 
 ### General
