@@ -5,6 +5,7 @@ import logging
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlsplit
 
 from jsonschema import exceptions, validators
 
@@ -34,7 +35,12 @@ def _has_bare_ontology_url(error: exceptions.ValidationError) -> bool:
         and isinstance(error.instance, str)
         and "ontologies" in error.path
     ):
-        return True
+        try:
+            parsed = urlsplit(error.instance)
+            if parsed.scheme in ("http", "https") and parsed.hostname and not any(c.isspace() for c in error.instance):
+                return True
+        except ValueError:
+            pass
     return any(_has_bare_ontology_url(child) for child in error.context)
 
 
