@@ -2,6 +2,7 @@ import shutil
 from pathlib import Path
 
 import nf_core.subworkflows
+from nf_core.components.lint import LintExceptionError
 
 from ...test_subworkflows import TestSubworkflows
 
@@ -22,6 +23,22 @@ class TestSubworkflowsLintLocal(TestSubworkflows):
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
         assert len(subworkflow_lint.warned) >= 0
+
+    def test_lint_one_named_local_subworkflow(self):
+        shutil.move(self.install_path, self.local_path)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
+
+        subworkflow_lint.lint(print_results=False, local=True, subworkflow="fastq_align_bowtie2")
+
+        assert len(subworkflow_lint.failed) == 0
+        assert len(subworkflow_lint.passed) > 0
+
+    def test_lint_named_missing_local_subworkflow(self):
+        shutil.move(self.install_path, self.local_path)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
+
+        with self.assertRaisesRegex(LintExceptionError, "Could not find the specified subworkflow"):
+            subworkflow_lint.lint(print_results=False, local=True, subworkflow="not_a_local_subworkflow")
 
     def test_subworkflows_lint_local_missing_files(self):
         shutil.move(self.install_path, self.local_path)
