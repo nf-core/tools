@@ -119,6 +119,28 @@ class TestModules(TestPipelines):
         finally:
             test_fn.unlink()
 
+    def test_inspect_sync_with_untracked_pixi_environment(self):
+        """Untracked Pixi environments must not block sync or get staged."""
+        pixi = Path(self.pipeline_dir, ".pixi", "envs", "default")
+        pixi.mkdir(parents=True)
+        (pixi / "executable").write_text("local environment")
+        try:
+            psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+            psync.inspect_sync_dir()
+            assert not psync._has_sync_changes()
+
+            other = Path(self.pipeline_dir, "real-change.txt")
+            other.write_text("legitimate change")
+            try:
+                assert psync._has_sync_changes()
+            finally:
+                other.unlink()
+        finally:
+            (pixi / "executable").unlink()
+            pixi.rmdir()
+            pixi.parent.rmdir()
+            pixi.parent.parent.rmdir()
+
     def test_inspect_sync_ignored_files(self):
         """
         Try inspecting the repo for syncing with untracked changes that are ignored.
