@@ -12,6 +12,8 @@
 
 ### Template
 
+- simplify patterns in .gitignore ([#4567](https://github.com/nf-core/tools/pull/4567))
+
 #### Version updates
 
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
