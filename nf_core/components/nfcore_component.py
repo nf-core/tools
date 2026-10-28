@@ -191,29 +191,22 @@ class NFCoreComponent:
                     #'../../../modules/nf-core/hisat2/align/main'
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
+                    #'../../another_org/bam_sort_stats_samtools/main'
                     #'plugin/nf-validation'
                     if link.startswith("plugin/"):
                         included_components.append(link)
                         continue
 
-                    # resolve the full path to drop annoying ../
-                    component_full_path = Path(self.component_dir / link).resolve()
-                    component_path_parts = list(component_full_path.parts)
+                    # resolve ../ relative to the repo root, giving <type>/<org>/<name>[/main]
+                    component_path = (self.component_dir / link).resolve().relative_to(self.base_dir.resolve())
+                    component_type, component_org, *component_name = component_path.parts
+                    if component_name[-1] in ("main", "main.nf"):
+                        component_name.pop()
 
-                    sel_parts = []
-                    for idx, i in enumerate(component_path_parts[::-1]):
-                        if idx == 0 and i in ["main", "main.nf"]:
-                            continue
-
-                        sel_parts.append(i)
-                        if i in ("modules", "subworkflows"):
-                            break
-
-                    component_type = sel_parts[-1] if sel_parts[-1] == "subworkflows" else None
-                    component_org = sel_parts[-2] if sel_parts[-2] != self.org else None
-                    component_name = sel_parts[-3::-1]
-                    component_tag = "/".join(filter(None, [component_org, component_type, *component_name]))
-                    included_components.append(component_tag)
+                    prefix = [] if component_org == self.org else [component_org]
+                    if component_type == "subworkflows":
+                        prefix.append(component_type)
+                    included_components.append("/".join([*prefix, *component_name]))
 
         return included_components
 
