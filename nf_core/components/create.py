@@ -161,8 +161,7 @@ class ComponentCreate(ComponentCommand):
             self._get_module_structure_components()
 
         # Add a valid organization name for nf-test tags
-        not_alphabet = re.compile(r"[^a-zA-Z]")
-        self.org_alphabet = "local" if self.repo_type == "pipeline" else not_alphabet.sub("", self.org)
+        self.org_alphabet = re.sub(r"[^a-zA-Z]", "", self.component_subdir)
 
         # Create component template with jinja2
         assert self._render_template()
@@ -377,11 +376,12 @@ class ComponentCreate(ComponentCommand):
         """
         file_paths = {}
         if self.repo_type == "pipeline":
-            base_dir = Path(self.directory, self.component_type, "local")
+            self.component_subdir = "local"
         elif self.repo_type == "modules":
-            base_dir = Path(self.directory, self.component_type, self.org)
+            self.component_subdir = self.org
         else:
             raise ValueError("`repo_type` not set correctly")
+        base_dir = Path(self.directory, self.component_type, self.component_subdir)
         component_dir = base_dir / self.component_dir
 
         # Check if module/subworkflow directories exist already
