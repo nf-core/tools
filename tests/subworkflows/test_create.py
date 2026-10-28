@@ -14,11 +14,9 @@ class TestSubworkflowsCreate(TestSubworkflows):
             self.pipeline_dir, "test_subworkflow_local", "@author", True
         )
         subworkflow_create.create()
-        assert Path(self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local/main.nf").exists()
-        main_nf_test = Path(
-            self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local", "tests", "main.nf.test"
-        )
-        assert 'tag "subworkflows_local"' in main_nf_test.read_text()
+        subworkflow_dir = Path(self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local")
+        assert Path(subworkflow_dir, "main.nf").exists()
+        assert 'tag "subworkflows_local"' in Path(subworkflow_dir, "tests", "main.nf.test").read_text()
 
     def test_subworkflows_create_fail_exists(self):
         """Fail at creating the same subworkflow twice"""
