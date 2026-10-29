@@ -75,6 +75,36 @@ class TestModulesUtils(TestModules):
         assert len(filtered) == 1
         assert filtered[0].component_name == "samtools"
 
+    def test_filter_modules_by_name_no_partial_tool_match(self):
+        """Test that a tool name does not select other tools that start with the same characters"""
+        for module in ["bwa/mem", "bwa/index", "bwamem2/mem", "bwameth/align"]:
+            module_dir = self.nfcore_modules / "modules" / "nf-core" / module
+            module_dir.mkdir(parents=True, exist_ok=True)
+            (module_dir / "main.nf").touch()
+
+        _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.nfcore_modules)
+
+        filtered = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "bwa")
+        assert {m.component_name for m in filtered} == {"bwa/mem", "bwa/index"}
+
+        # A part of a tool name does not select any module
+        assert nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "b") == []
+        assert nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "bwa/m") == []
+
+    def test_filter_modules_by_name_trailing_slash(self):
+        """Test that a trailing slash after a tool or tool/subtool name is ignored"""
+        for module in ["samtools/view", "samtools/sort"]:
+            module_dir = self.nfcore_modules / "modules" / "nf-core" / module
+            module_dir.mkdir(parents=True, exist_ok=True)
+            (module_dir / "main.nf").touch()
+
+        _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.nfcore_modules)
+
+        filtered = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "samtools/")
+        assert {m.component_name for m in filtered} == {"samtools/view", "samtools/sort"}
+        filtered = nf_core.modules.modules_utils.filter_modules_by_name(nfcore_modules, "samtools/view/")
+        assert [m.component_name for m in filtered] == ["samtools/view"]
+
     def test_filter_modules_by_name_no_match(self):
         """Test filtering modules by name with no matches"""
         _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.nfcore_modules)

@@ -58,8 +58,8 @@ jobs:
       - runner=4cpu-linux-x64
     strategy:
       matrix:
-        # On PRs to main test with 3.10 and 3.14, otherwise just 3.10
-        python-version: ${{ github.base_ref == 'main' && fromJson('["3.10", "3.14"]') || fromJson('["3.10"]') }}
+        # On PRs to main test with 3.11 and 3.14, otherwise just 3.11
+        python-version: ${{ github.base_ref == 'main' && fromJson('["3.11", "3.14"]') || fromJson('["3.11"]') }}
         test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
         # On push/release test both NF versions, otherwise just 25.10.4
         # Note: python×nextflow must stay ≤2 with 88 tests to stay under GitHub's 256-config limit
@@ -76,13 +76,13 @@ jobs:
         name: Check out source-code repository
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: ${{ matrix.python-version }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
@@ -91,7 +91,7 @@ jobs:
 
       - name: Set up Apptainer
         if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
-        uses: eWaterCycle/setup-apptainer@4bb22c52d4f63406c49e94c804632975787312b3 # v2.0.0
+        uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
