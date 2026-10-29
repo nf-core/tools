@@ -12,6 +12,8 @@
 
 ### Template
 
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
+
 #### Version updates
 
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
