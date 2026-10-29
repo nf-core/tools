@@ -29,7 +29,7 @@ keywords = [
 authors = [
     {name = "Phil Ewels", email = "phil.ewels@scilifelab.se"}
 ]
-requires-python = ">=3.10, <4"
+requires-python = ">=3.11, <4"
 dependencies = [
     "click",
     "filetype",
@@ -116,9 +116,15 @@ norecursedirs = [
     "docs",
 ]
 
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 cache-dir = "~/.cache/ruff"
 
 [tool.ruff.lint]

@@ -4,6 +4,8 @@
 
 ### General
 
+- remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
+
 ### Linting
 
 ### Modules
@@ -13,6 +15,7 @@
 ### Template
 
 - simplify patterns in .gitignore ([#4567](https://github.com/nf-core/tools/pull/4567))
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
 
 #### Version updates
 
