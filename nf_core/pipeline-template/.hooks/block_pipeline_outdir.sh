@@ -34,7 +34,7 @@ while IFS= read -r file; do
         case "$seen_dirs" in
             *"|$top_dir|"*) ;;
             *)
-                echo "Run 'git restore --staged $top_dir' to remove the whole output folder from the staging area."
+                echo "Run 'git restore --staged $(printf '%q' "$top_dir")' to remove the whole output folder from the staging area."
                 seen_dirs="$seen_dirs|$top_dir|"
                 ;;
         esac
