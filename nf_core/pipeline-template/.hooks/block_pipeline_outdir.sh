@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This hook is used to block commits if they include staged files inside a directory
+# This hook is used to block commits if they include files (passed as arguments by pre-commit) inside a directory
 # which also contains a subdirectory called `pipeline_info`. The purpose of this is to
 # prevent users from inadvertently committing output from pipeline test runs inside the
 # development directory.
@@ -39,6 +39,6 @@ while IFS= read -r file; do
                 ;;
         esac
     fi
-done < <(git diff --cached --name-only)
+done < <(printf '%s\n' "$@")
 
 exit "$status"
