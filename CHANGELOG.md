@@ -12,6 +12,8 @@
 
 ### Template
 
+- Switch to `action-seqera-launch` action for megatests ([#4518](https://github.com/nf-core/tools/pull/4518))
+
 #### Version updates
 
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
