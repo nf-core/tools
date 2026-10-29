@@ -14,9 +14,8 @@
 
 ### Template
 
-- match the nf-schema version in `awsfulltest.yml`, set `pass_filenames: false` on the `block-pipeline-outdir` hook, and correct the `upload-artifact` version comments in `nf-test.yml` ([#4570](https://github.com/nf-core/tools/pull/4570))
+- Fix small nits from 4.2.1: match the nf-schema version in `awsfulltest.yml`, have the `block-pipeline-outdir` hook check the files passed by pre-commit instead of the staged diff, and correct the `upload-artifact` version comments in `nf-test.yml` ([#4570](https://github.com/nf-core/tools/pull/4570))
 - Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
-- Fix small nits from 4.2.1: match the nf-schema version in `awsfulltest.yml`, set `pass_filenames: false` on the `block-pipeline-outdir` hook, and correct the `upload-artifact` version comments in `nf-test.yml` ([#4570](https://github.com/nf-core/tools/pull/4570))
 
 #### Version updates
 

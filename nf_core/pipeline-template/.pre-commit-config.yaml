@@ -48,4 +48,3 @@ repos:
         name: Prevent committing output from pipeline test runs to the pipeline code itself
         entry: ./.hooks/block_pipeline_outdir.sh
         language: script
-        pass_filenames: false
