@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
+
+### Template
+
+- Update eWaterCycle/setup-apptainer action to v3 ([#4571](https://github.com/nf-core/tools/pull/4571))
+
 ## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
 
 ### General
