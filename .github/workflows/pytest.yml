@@ -91,7 +91,7 @@ jobs:
 
       - name: Set up Apptainer
         if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
-        uses: eWaterCycle/setup-apptainer@3f706d898c9db585b1d741b4692e66755f3a1b40 # v2
+        uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
