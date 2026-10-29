@@ -4,6 +4,8 @@
 
 ### General
 
+- remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
+
 ### Linting
 
 ### Modules
