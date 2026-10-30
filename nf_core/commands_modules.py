@@ -171,11 +171,11 @@ def modules_create(
     """
     Create a new DSL2 module from the nf-core template.
 
-    If the specified directory is a pipeline, this function creates a file called
-    'modules/local/tool_subtool.nf'
+    If the specified directory is a pipeline, this function creates the module files
+    in 'modules/local/<tool>' or 'modules/local/<tool>/<subtool>'.
 
-    If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'modules/' and 'tests/modules'
+    If the specified directory is a clone of nf-core/modules, it creates the module files
+    in 'modules/<org>/<tool>' or 'modules/<org>/<tool>/<subtool>'.
     """
     # Combine two bool flags into one variable
     has_meta = None
