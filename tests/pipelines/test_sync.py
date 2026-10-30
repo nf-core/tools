@@ -10,6 +10,7 @@ import pytest
 import yaml
 
 import nf_core.pipelines.sync
+import nf_core.pipelines.sync_merge
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
@@ -375,6 +376,21 @@ class TestModules(TestPipelines):
         psync.create_merge_base_branch()
 
         assert psync.merge_branch in psync.repo.branches
+
+    def test_create_merge_base_branch_from_resolved_merge(self):
+        """The merge branch starts at the merge commit when conflicts were resolved"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        merge_commit = psync.repo.index.commit("Merge template", parent_commits=(psync.repo.head.commit,), head=False)
+        psync.template_merge = nf_core.pipelines.sync_merge.TemplateMergeResult(
+            commit=merge_commit.hexsha, resolved=["main.nf"]
+        )
+
+        psync.create_merge_base_branch()
+
+        assert psync.repo.branches[psync.merge_branch].commit == merge_commit
+        assert "`main.nf`" in psync._merge_conflicts_pr_text()
 
     def test_create_merge_base_branch_thrice(self):
         """Try creating a merge base branch thrice
