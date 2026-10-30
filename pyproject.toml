@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=40.6.0", "wheel"]
+requires = ["setuptools>=77"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -52,7 +52,6 @@ dependencies = [
     "rich>=13.3.1",
     "rocrate",
     "repo2rocrate",
-    "setuptools<85",
     "tabulate",
     "textual==8.2.8",
     "trogon",
@@ -75,8 +74,6 @@ dev = [
     "types-requests",
     "types-jsonschema",
     "types-Markdown",
-    "types-setuptools",
-    "typing_extensions>=4.0.0",
     "pytest-asyncio",
     "pytest-clarity>=1.0.1",
     "pytest-codspeed>=5.0.3",
@@ -90,7 +87,7 @@ dev = [
 Homepage = "https://github.com/nf-core/tools"
 Documentation = "https://nf-co.re/docs/nf-core-tools"
 Repository = "https://github.com/nf-core/tools"
-Changelog = "https://github.com/nf-core/tools/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/nf-core/tools/blob/main/CHANGELOG.md"
 
 [project.scripts]
 nf-core = "nf_core.__main__:run_nf_core"
