@@ -12,6 +12,169 @@ from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 from ..test_modules import TestModules
 
 
+class TestModuleContainersInstalled:
+    """Small pipeline fixtures: no module installation, Wave API or container runtime."""
+
+    @pytest.fixture
+    def pipeline(self, tmp_path):
+        (tmp_path / ".nf-core.yml").write_text("repository_type: pipeline\n", encoding="utf-8")
+        with mock.patch("nf_core.utils.fetch_wf_config", return_value={}):
+            yield tmp_path
+
+    @staticmethod
+    def make_module(pipeline, namespace, name):
+        module_dir = pipeline / "modules" / namespace / name
+        module_dir.mkdir(parents=True)
+        (module_dir / "main.nf").write_text('process TEST {\n    container "old:1"\n}\n', encoding="utf-8")
+        (module_dir / "environment.yml").write_text("dependencies:\n  - samtools=1.22\n", encoding="utf-8")
+        (module_dir / "meta.yml").write_text(f"name: {name}\n", encoding="utf-8")
+        return module_dir
+
+    def test_installed_module_is_discovered_and_selected(self, pipeline):
+        installed = self.make_module(pipeline, "nf-core", "samtools/view")
+        local = self.make_module(pipeline, "local", "custom")
+        manager = ModuleContainers("samtools/view", directory=pipeline)
+
+        assert manager.repo_type == "pipeline"
+        assert {c.component_dir for c in manager.available_modules} == {installed, local}
+        assert manager.module_directory == installed
+        assert manager.environment_yml == installed / "environment.yml"
+        assert manager.meta_yml == installed / "meta.yml"
+        assert manager.nfcore_component.repo_type == "pipeline"
+
+    @pytest.mark.parametrize("module", ["custom", "local/custom"])
+    def test_local_module_paths_are_preserved(self, pipeline, module):
+        local = self.make_module(pipeline, "local", "custom")
+        self.make_module(pipeline, "nf-core", "fastqc")
+        manager = ModuleContainers(module, directory=pipeline)
+        assert manager.module_directory == local
+        assert manager.environment_yml == local / "environment.yml"
+        assert manager.meta_yml == local / "meta.yml"
+
+    @pytest.mark.parametrize("module", ["samtools/view", "nf-core/samtools/view"])
+    def test_exact_name_does_not_select_other_submodules(self, pipeline, module):
+        selected = self.make_module(pipeline, "nf-core", "samtools/view")
+        self.make_module(pipeline, "nf-core", "samtools/viewextra")
+        manager = ModuleContainers(module, directory=pipeline)
+        assert not manager.all_modules
+        assert manager.module_directory == selected
+
+    @pytest.mark.parametrize("module", ["missing", "sam", "nf-core/missing", "local/fastqc", "../fastqc"])
+    def test_unknown_name_is_rejected(self, pipeline, module):
+        self.make_module(pipeline, "nf-core", "samtools/view")
+        with pytest.raises(ValueError, match="not found"):
+            ModuleContainers(module, directory=pipeline)
+
+    def test_unknown_name_in_empty_pipeline_is_rejected(self, pipeline):
+        with pytest.raises(ValueError, match="not found"):
+            ModuleContainers("missing", directory=pipeline)
+
+    def test_duplicate_name_requires_namespace(self, pipeline):
+        local = self.make_module(pipeline, "local", "fastqc")
+        installed = self.make_module(pipeline, "nf-core", "fastqc")
+        with pytest.raises(ValueError, match="Ambiguous.*local/fastqc.*nf-core/fastqc"):
+            ModuleContainers("fastqc", directory=pipeline)
+        assert ModuleContainers("local/fastqc", directory=pipeline).module_directory == local
+        assert ModuleContainers("nf-core/fastqc", directory=pipeline).module_directory == installed
+
+    def test_tool_family_selects_only_its_submodules(self, pipeline):
+        expected = {
+            self.make_module(pipeline, "nf-core", "samtools/view"),
+            self.make_module(pipeline, "nf-core", "samtools/sort"),
+        }
+        self.make_module(pipeline, "nf-core", "samtoolsother")
+        manager = ModuleContainers("samtools", directory=pipeline)
+        assert manager.all_modules
+        assert {c.component_dir for c in manager.available_modules} == expected
+
+    def test_prompt_disambiguates_names_and_preserves_components(self, pipeline):
+        local = self.make_module(pipeline, "local", "fastqc")
+        installed = self.make_module(pipeline, "nf-core", "fastqc")
+        with mock.patch("nf_core.modules.containers.prompt_module_selection", return_value="nf-core/fastqc") as prompt:
+            manager = ModuleContainers(None, directory=pipeline)
+        assert {c.component_name for c in prompt.call_args.args[0]} == {"local/fastqc", "nf-core/fastqc"}
+        assert {c.component_name for c in manager.available_modules} == {"fastqc"}
+        assert manager.module_directory == installed
+        assert local != installed
+
+    def test_all_modules_builds_each_path_once_even_with_duplicate_names(self, pipeline):
+        expected = {
+            self.make_module(pipeline, "local", "fastqc"),
+            self.make_module(pipeline, "local", "custom/nested"),
+            self.make_module(pipeline, "nf-core", "fastqc"),
+            self.make_module(pipeline, "nf-core", "samtools/view"),
+        }
+        with mock.patch("nf_core.modules.containers.prompt_module_selection", return_value=None) as prompt:
+            manager = ModuleContainers(None, directory=pipeline)
+        assert manager.all_modules
+        assert prompt.call_args.kwargs["allow_all"]
+        built = []
+
+        def create(selected, **kwargs):
+            built.append(selected.module_directory)
+            return MetaYmlContainers(), True
+
+        with (
+            mock.patch.object(ModuleContainers, "create", autospec=True, side_effect=create),
+            mock.patch("nf_core.pipelines.containers_utils.try_generate_container_configs") as configs,
+        ):
+            assert manager.build_containers_with_progress(hide_progress=True) == []
+        assert len(built) == len(expected)
+        assert set(built) == expected
+        configs.assert_called_once_with(pipeline)
+        direct_all = ModuleContainers(None, directory=pipeline, all_modules=True)
+        assert {c.component_dir for c in direct_all.available_modules} == expected
+
+    def test_cli_builds_only_selected_installed_module(self, pipeline):
+        from click.testing import CliRunner
+
+        from nf_core.__main__ import nf_core_cli
+
+        installed = self.make_module(pipeline, "nf-core", "samtools/view")
+        local = self.make_module(pipeline, "local", "custom")
+        before = {p: p.read_bytes() for p in pipeline.rglob("*") if p.is_file()}
+
+        def request_container(system, platform, environment, *args):
+            assert environment == installed / "environment.yml"
+            assert environment.is_file()
+            return ContainerEntry(name=f"new-{system}:1", build_id=f"test-{platform.replace('/', '_')}")
+
+        ModuleContainers._build_cache.clear()
+        ModuleContainers._conda_lock_paths.clear()
+        with (
+            mock.patch.object(ModuleContainers, "request_container", side_effect=request_container) as build,
+            mock.patch.object(ModuleContainers, "get_conda_lock_file", return_value="# mock lock\n"),
+            mock.patch("nf_core.modules.containers.ModuleLint", side_effect=UserWarning("no lint needed")),
+            mock.patch("nf_core.modules.containers.run_prettier_on_file"),
+            mock.patch("nf_core.pipelines.containers_utils.try_generate_container_configs") as configs,
+            mock.patch("requests.sessions.Session.request", side_effect=AssertionError("Unexpected network request")),
+        ):
+            result = CliRunner().invoke(
+                nf_core_cli,
+                ["--hide-progress", "modules", "containers", "create", "samtools/view", "-d", str(pipeline), "--force"],
+            )
+
+        assert result.exit_code == 0, result.output
+        assert build.call_count == len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS)
+        assert {(c.args[0], c.args[1]) for c in build.call_args_list} == {
+            (system, platform) for system in CONTAINER_SYSTEMS for platform in CONTAINER_PLATFORMS
+        }
+        configs.assert_called_once_with(pipeline, installed)
+        assert "new-docker:1" in (installed / "main.nf").read_text()
+        meta = yaml.safe_load((installed / "meta.yml").read_text())
+        for platform in CONTAINER_PLATFORMS:
+            assert meta["containers"]["docker"][platform]["name"] == "new-docker:1"
+            lock = Path(meta["containers"]["conda"][platform]["lock_file"])
+            assert lock.parent == installed / ".conda-lock"
+            assert lock.read_text() == "# mock lock\n"
+        after = {p: p.read_bytes() for p in pipeline.rglob("*") if p.is_file()}
+        changed = {p for p in before.keys() | after.keys() if before.get(p) != after.get(p)}
+        assert changed == {installed / "main.nf", installed / "meta.yml"} | set(
+            (installed / ".conda-lock").glob("*.txt")
+        )
+        assert all(after[p] == before[p] for p in local.iterdir())
+
+
 class TestModuleContainers(TestModules):
     """Tests for the ModuleContainers class"""
 
