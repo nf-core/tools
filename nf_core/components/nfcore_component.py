@@ -168,21 +168,19 @@ class NFCoreComponent:
             self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
         return self._meta_yml_content
 
-    def _get_main_nf_tags(self, test_main_nf: Path | str) -> list[str]:
+    def _get_main_nf_tags(self, main_nf_test: Path) -> list[str]:
         """Collect all tags from the main.nf.test file."""
         tags: list[str] = []
-        test_main_nf = Path(test_main_nf)
-        if not test_main_nf.is_file():
+        if not main_nf_test.is_file():
             return tags
-        for line in test_main_nf.read_text().splitlines():
+        for line in main_nf_test.read_text().splitlines():
             if line.strip().startswith("tag"):
                 tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Path | str) -> list[str]:
+    def _get_included_components(self, main_nf: Path) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
-        main_nf = Path(main_nf)
         data = main_nf.read_text() if main_nf.is_file() else ""
         for line in data.splitlines():
             if line.strip().startswith("include"):
@@ -191,57 +189,46 @@ class NFCoreComponent:
                     #'../../../modules/nf-core/hisat2/align/main'
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
+                    #'../../another_org/bam_sort_stats_samtools/main'
                     #'plugin/nf-validation'
-                    component = link.split(self.org)[-1].split("main")[0].strip("/")
-                    if link.startswith("../") and self.org not in link:
-                        component = component.removeprefix("../")
-                        component = f"subworkflows/{component}"
-                    included_components.append(component)
+                    if link.startswith("plugin/"):
+                        included_components.append(link)
+                    else:
+                        included_components.append(self._component_tag_from_path(self.component_dir / link))
+
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str) -> list[str]:
-        """Collect all included components from the main.nf file."""
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path) -> list[str]:
+        """Collect all included components from the main.nf.test file."""
         included_components = []
-        with open(main_nf_test) as fh:
-            for line in fh:
-                if line.strip().startswith("script"):
-                    # get tool/subtool or subworkflow name from script statement, can be:
-                    # if the component is a module TOOL/SUBTOOL:
-                    # '../../SUBTOOL/main.nf'
-                    # '../../../TOOL/SUBTOOL/main.nf'
-                    # '../../../TOOL/main.nf'
-                    # if the component is a module TOOL:
-                    # '../../TOOL/main.nf'
-                    # '../../TOOL/SUBTOOL/main.nf'
-                    # if the component uses full paths or is a subworkflow:
-                    # '(../../)modules/nf-core/TOOL/(SUBTOOL/)main.nf'
-                    # '(../../)subworkflows/nf-core/TOOL/(SUBTOOL/)main.nf'
-                    # the line which uses the current component script:
-                    # '../main.nf'
-                    component = (
-                        line.strip()
-                        .split("../")[-1]
-                        .split(self.org)[-1]
-                        .split("main.nf")[0]
-                        .strip("'")
-                        .strip('"')
-                        .strip("/")
-                    )
-                    if (
-                        "/" in self.component_name
-                        and "/" not in component
-                        and line.count("../") == 2
-                        and self.org not in line
-                        and component != ""
-                    ):
-                        # Add the current component name "TOOL" to the tag
-                        component = f"{self.component_name.split('/')[0]}/{component}"
-                    if "subworkflows" in line:
-                        # Add the subworkflows prefix to the tag
-                        component = f"subworkflows/{component}"
-                    if component != "":
-                        included_components.append(component)
+        main_nf_test = Path(main_nf_test)
+        for line in main_nf_test.read_text().splitlines():
+            # script paths starting with ../ are relative to the test file, others to the repo root, e.g.
+            # '../main.nf' (the current component, skipped)
+            # '../../SUBTOOL/main.nf'
+            # '../../../../modules/nf-core/TOOL/SUBTOOL/main.nf'
+            # 'subworkflows/nf-core/SUBWORKFLOW/main.nf'
+            match = re.match(r"\s*script\s+[\"'](.+?)[\"']", line)
+            if not match:
+                continue
+            script = match.group(1)
+            script_path = (main_nf_test.parent if script.startswith(".") else self.base_dir) / script
+            if script_path.resolve() != self.main_nf.resolve():
+                included_components.append(self._component_tag_from_path(script_path))
         return included_components
+
+    def _component_tag_from_path(self, path: Path) -> str:
+        """Turn the path to a component into its nf-test tag, e.g. 'samtools/sort' or 'other_org/subworkflows/name'."""
+        # resolve ../ relative to the repo root, giving <type>/<org>/<name>[/main]
+        component_path = path.resolve().relative_to(self.base_dir.resolve())
+        component_type, component_org, *component_name = component_path.parts
+        if component_name[-1] in ("main", "main.nf"):
+            component_name.pop()
+
+        prefix = [] if component_org == self.org else [component_org]
+        if component_type == "subworkflows":
+            prefix.append(component_type)
+        return "/".join([*prefix, *component_name])
 
     def _get_process_name(self):
         for line in self.load_main_nf().splitlines():
