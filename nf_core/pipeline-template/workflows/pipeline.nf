@@ -64,14 +64,16 @@ workflow {{ short_name|upper }} {
             versions_tuple: true
         }
 
+    // Serialize version values as YAML strings so versions like 1.20 never become 1.2
+    // when downstream tools parse the versions file using SnakeYAML's numeric inference.
     def topic_versions_string = topic_versions.versions_tuple
         .map { process, tool, version ->
-            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+            [ process[process.lastIndexOf(':')+1..-1], [(tool): "${version}"] ]
         }
         .groupTuple(by:0)
         .map { process, tool_versions ->
-            tool_versions.unique().sort()
-            "${process}:\n${tool_versions.join('\n')}"
+            def merged = tool_versions.unique().sort { it.keySet().first() }.sum()
+            new org.yaml.snakeyaml.Yaml().dumpAsMap([(process): merged]).trim()
         }
 
     def ch_collated_versions = softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
