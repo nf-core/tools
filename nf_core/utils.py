@@ -1411,7 +1411,7 @@ def validate_file_md5(file_name, expected_md5hex):
 
     Args:
         file_name (str): Path to a local file.
-        expected (str): The expected md5sum.
+        expected_md5hex (str): The expected md5sum.
 
     Raises:
         IOError, if the md5sum does not match the remote sum.
