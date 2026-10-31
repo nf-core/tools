@@ -62,7 +62,7 @@ jobs:
       # import/start-up cost, which CodSpeed's instruction-counting
       # "simulation" instrument can't see. Use "walltime" mode instead.
       - name: Run start-up benchmarks
-        uses: CodSpeedHQ/action@78102a468f96d8e0ccb92d0ec49425753fc42062 # v5.6.0
+        uses: CodSpeedHQ/action@61efe07e57e55bedeab750c434504de272a56e8c # v5.6.1
         with:
           mode: walltime
           run: uv run pytest benchmarks/test_startup_benchmarks.py --codspeed
