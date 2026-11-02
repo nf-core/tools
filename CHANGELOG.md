@@ -10,6 +10,8 @@
 
 ### Modules
 
+- Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
+
 ### Subworkflows
 
 ### Template

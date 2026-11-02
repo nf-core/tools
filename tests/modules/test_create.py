@@ -9,12 +9,13 @@ import yaml
 import nf_core.components.create
 import nf_core.modules.create
 from tests.utils import (
+    NF_CORE_LICENSE_HEADER,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
     mock_biotools_api_calls,
 )
 
-from ..test_modules import TestModules
+from ..test_modules import TestModules, create_modules_repo_dummy
 
 
 def test_modules_create_accepts_dotted_git_provider_username():
@@ -34,6 +35,24 @@ def test_modules_create_accepts_dotted_git_provider_username():
     prompt_ask.assert_not_called()
 
 
+def test_modules_create_other_org_no_license_header(tmp_path):
+    """Create a module in a modules repo with a non-nf-core org_path, without the nf-core license header"""
+    nfcore_modules = create_modules_repo_dummy(tmp_path)
+    nf_core_yml_path = Path(nfcore_modules, ".nf-core.yml")
+    nf_core_yml = yaml.safe_load(nf_core_yml_path.read_text())
+    nf_core_yml["org_path"] = "myorg"
+    nf_core_yml_path.write_text(yaml.dump(nf_core_yml))
+    with responses.RequestsMock() as rsps:
+        mock_anaconda_api_calls(rsps, "fastqc", "0.11.9")
+        mock_biocontainers_api_calls(rsps, "fastqc", "0.11.9")
+        module_create = nf_core.modules.create.ModuleCreate(
+            nfcore_modules, "fastqc", "@author", "process_low", False, False
+        )
+        with requests_cache.disabled():
+            module_create.create()
+    assert NF_CORE_LICENSE_HEADER not in Path(nfcore_modules, "modules", "myorg", "fastqc", "main.nf").read_text()
+
+
 class TestModulesCreate(TestModules):
     def test_modules_create_succeed(self):
         """Succeed at creating the TrimGalore! module"""
@@ -46,6 +65,9 @@ class TestModulesCreate(TestModules):
             with requests_cache.disabled():
                 module_create.create()
         assert Path(self.pipeline_dir, "modules", "local", "trimgalore/main.nf").exists()
+        assert (
+            NF_CORE_LICENSE_HEADER not in Path(self.pipeline_dir, "modules", "local", "trimgalore/main.nf").read_text()
+        )
         main_nf_test = Path(self.pipeline_dir, "modules", "local", "trimgalore", "tests", "main.nf.test")
         assert 'tag "modules_local"' in main_nf_test.read_text()
 
@@ -100,7 +122,8 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf").exists()
+        main_nf = Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf").read_text()
+        assert main_nf.startswith(NF_CORE_LICENSE_HEADER)
         main_nf_test = Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "tests", "main.nf.test")
         assert 'tag "modules_nfcore"' in main_nf_test.read_text()
 
