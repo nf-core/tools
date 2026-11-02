@@ -188,7 +188,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                     # update snapshot using nf-test --update-snapshot
                     self.generate_snapshot()
 
-            else:
+            elif nftest_err:
                 self.errors.append("nf-test failed")
 
     def generate_snapshot(self) -> bool:
