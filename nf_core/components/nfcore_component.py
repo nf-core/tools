@@ -70,6 +70,7 @@ class NFCoreComponent:
         self.container: dict = {}
         self.container_from_main_nf: str | None = None
         self._meta_yml_content: dict | None = None
+        self.main_nf_test_snap: Path | None = None
 
         if remote_component:
             # Initialize the important files
@@ -88,7 +89,8 @@ class NFCoreComponent:
 
             self.org = repo_dir
             self.nftest_testdir: Path | None = Path(self.component_dir, "tests")
-            self.nftest_main_nf: Path | None = Path(self.nftest_testdir, "main.nf.test")
+            self.main_nf_test: Path | None = Path(self.nftest_testdir, "main.nf.test")
+            self.main_nf_test_snap = Path(self.nftest_testdir, "main.nf.test.snap")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -106,14 +108,15 @@ class NFCoreComponent:
                 self.environment_yml = p if (p := Path(self.component_dir, "environment.yml")).exists() else None
                 self.nftest_testdir = p if (p := Path(self.component_dir, "tests")).exists() else None
                 if self.nftest_testdir is not None:
-                    self.nftest_main_nf = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+                    self.main_nf_test = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+                    self.main_nf_test_snap = Path(self.nftest_testdir, "main.nf.test.snap")
             else:
                 self.main_nf = self.component_dir
                 self.component_dir = self.component_dir.parent
                 self.meta_yml = None
                 self.environment_yml = None
                 self.nftest_testdir = None
-                self.nftest_main_nf = None
+                self.main_nf_test = None
 
         self.process_name: str = self._get_process_name()
 
