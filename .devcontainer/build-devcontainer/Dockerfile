@@ -1,6 +1,6 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:3b861bb106043cc6e8af5011dbb9f75a163a18f9320c6a7f5f7fbac3ff0694a5 AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:c8a96d3426476d967a14b03a65b2914a4149de3f79c01741d38dc6f14c7c6d00 AS build
 
 # Replace the Anaconda defaults channels (which require accepting their Terms of Service)
 # with conda-forge and bioconda. Uses --system because defaults is set in /opt/conda/.condarc
