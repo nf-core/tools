@@ -284,7 +284,7 @@ class PipelineCreate:
             ):
                 current_dir = Path.cwd()
                 os.chdir(self.outdir)
-                run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+                run_prettier_on_file(*map(Path, nf_core.utils.get_wf_files(self.outdir)))
                 os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
@@ -397,7 +397,7 @@ class PipelineCreate:
 
         # Run prettier on files for pipelines sync
         log.debug("Running prettier on pipeline files")
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+        run_prettier_on_file(*map(Path, nf_core.utils.get_wf_files(self.outdir)))
 
     def fix_linting(self):
         """

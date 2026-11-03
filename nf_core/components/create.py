@@ -171,11 +171,11 @@ class ComponentCreate(ComponentCommand):
             # Generate meta.yml inputs and outputs
             self.generate_meta_yml_file()
 
-        new_files = [str(path) for path in self.file_paths.values()]
+        new_files = list(self.file_paths.values())
 
-        run_prettier_on_file(new_files)
+        run_prettier_on_file(*new_files)
 
-        log.info("Created following files:\n  " + "\n  ".join(new_files))
+        log.info("Created following files:\n  " + "\n  ".join(str(f) for f in new_files))
 
         if self.component_type == "modules":
             log.info(

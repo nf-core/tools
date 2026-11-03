@@ -80,9 +80,9 @@ def create_modules_repo_dummy(tmp_dir):
         conda={"linux/amd64": conda_amd64, "linux/arm64": conda_arm64},
     )
     meta_yml["containers"] = containers.dump_for_meta_yml()
-    with open(str(meta_yml_path), "w") as fh:
+    with open(meta_yml_path, "w") as fh:
         yaml.dump(meta_yml, fh)
-        run_prettier_on_file(fh.name)
+    run_prettier_on_file(meta_yml_path)
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
 
