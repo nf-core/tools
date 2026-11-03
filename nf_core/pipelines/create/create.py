@@ -270,6 +270,11 @@ class PipelineCreate:
         # Make the new pipeline
         self.render_template()
 
+        if self.config.skip_features is None or "rocrate" not in self.config.skip_features:
+            # Create the RO-Crate metadata file (needs network access, so it is not part of render_template)
+            rocrate_obj = ROCrate(self.outdir)
+            rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
+
         # Init the git repository and make the first commit
         if not self.no_git:
             self.git_init_pipeline()
@@ -375,11 +380,6 @@ class PipelineCreate:
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
-
-        if self.config.skip_features is None or "rocrate" not in self.config.skip_features:
-            # Create the RO-Crate metadata file
-            rocrate_obj = ROCrate(self.outdir)
-            rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
 
         # Update the .nf-core.yml with linting configurations
         self.fix_linting()

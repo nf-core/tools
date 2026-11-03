@@ -135,7 +135,8 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     create_obj = nf_core.pipelines.create.create.PipelineCreate(
         None, None, None, no_git=True, outdir=test_pipeline_dir, template_config=template_yaml_path
     )
-    create_obj.init_pipeline()
+    # Only render the template files: building the RO-Crate is not needed for the comparison and needs network access
+    create_obj.render_template()
 
     # Helper functions for file paths
     def _pf(file_path: str | Path) -> Path:
