@@ -8,6 +8,8 @@
 
 ### Linting
 
+- make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
+
 ### Modules
 
 - Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
