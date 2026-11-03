@@ -7,32 +7,13 @@ from unittest import mock
 
 import git
 import pytest
-import requests
 import yaml
 
 import nf_core.pipelines.sync
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
-from ..utils import with_temporary_folder
-
-
-class MockResponse:
-    def __init__(self, data: dict | list[dict], status_code: int, url: str):
-        self.url: str = url
-        self.status_code: int = status_code
-        self.from_cache: bool = False
-        self.reason: str = "Mocked response"
-        self.data: dict | list[dict] = data
-        self.content: str = json.dumps(data)
-        self.headers: dict[str, str] = {"content-encoding": "test", "connection": "fake"}
-
-    def json(self):
-        return self.data
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise requests.exceptions.HTTPError(f"{self.status_code} Error for url: {self.url}")
+from ..utils import MockResponse, with_temporary_folder
 
 
 def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
