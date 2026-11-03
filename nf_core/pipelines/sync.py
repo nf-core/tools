@@ -315,7 +315,7 @@ class PipelineSync:
 
         try:
             pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
-                outdir=str(self.pipeline_dir),
+                outdir=self.pipeline_dir,
                 from_config_file=True,
                 no_git=True,
                 force=True,
