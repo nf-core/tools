@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 def create_logo(
     text: str,
-    directory: Path | str,
+    directory: Path,
     filename: str = "",
     theme: str = "light",
     width: int = 2300,

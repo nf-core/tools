@@ -168,7 +168,7 @@ class NFCoreComponent:
             self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
         return self._meta_yml_content
 
-    def _get_main_nf_tags(self, test_main_nf: Path | str) -> list[str]:
+    def _get_main_nf_tags(self, test_main_nf: Path) -> list[str]:
         """Collect all tags from the main.nf.test file."""
         tags: list[str] = []
         test_main_nf = Path(test_main_nf)
@@ -179,7 +179,7 @@ class NFCoreComponent:
                 tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Path | str) -> list[str]:
+    def _get_included_components(self, main_nf: Path) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
         main_nf = Path(main_nf)
@@ -199,7 +199,7 @@ class NFCoreComponent:
                     included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str) -> list[str]:
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf_test) as fh:
