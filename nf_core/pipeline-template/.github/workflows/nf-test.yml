@@ -194,6 +194,9 @@ jobs:
               echo ""
               echo "See the [full run](${RUN_URL}) for details."
             } > pr-comment/comment.md
+          else
+            # Clear the comment a previous failing run left on this PR.
+            touch pr-comment/delete
           fi
 
       - name: Upload PR comment artifact
