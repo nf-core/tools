@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest import mock
 
 import nf_core.pipelines.lint
 
@@ -8,7 +9,10 @@ from ..test_lint import TestLint
 class TestLintFilesUnchanged(TestLint):
     def test_files_unchanged_pass(self):
         self.lint_obj._load()
-        results = self.lint_obj.files_unchanged()
+        # The comparison template is rendered without building an RO-Crate (which needs network access)
+        with mock.patch("nf_core.pipelines.create.create.ROCrate") as mock_rocrate:
+            results = self.lint_obj.files_unchanged()
+        mock_rocrate.assert_not_called()
         assert len(results.get("warned", [])) == 0
         assert len(results.get("failed", [])) == 0
         assert len(results.get("ignored", [])) == 0

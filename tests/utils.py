@@ -4,11 +4,13 @@ Helper functions for tests
 
 import filecmp
 import functools
+import json
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import requests
 import responses
 import yaml
 
@@ -34,6 +36,26 @@ GITLAB_BRANCH_ORG_PATH_BRANCH = "org-path"
 GITLAB_BRANCH_TEST_OLD_SHA = "e772abc22c1ff26afdf377845c323172fb3c19ca"
 GITLAB_BRANCH_TEST_NEW_SHA = "7d73e21f30041297ea44367f2b4fd4e045c0b991"
 GITLAB_NFTEST_BRANCH = "nf-test-tests"
+
+
+class MockResponse:
+    """Minimal stand-in for :class:`requests.Response`, for mocking ``requests.get`` and friends."""
+
+    def __init__(self, data: Any, status_code: int = 200, url: str = ""):
+        self.url = url
+        self.status_code = status_code
+        self.from_cache = False
+        self.reason = "Mocked response"
+        self.data = data
+        self.content = json.dumps(data)
+        self.headers = {"content-encoding": "test", "connection": "fake"}
+
+    def json(self) -> Any:
+        return self.data
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise requests.exceptions.HTTPError(f"{self.status_code} Error for url: {self.url}")
 
 
 def with_temporary_folder(func: Callable[..., Any]) -> Callable[..., Any]:
