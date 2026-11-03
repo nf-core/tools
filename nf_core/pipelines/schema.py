@@ -933,21 +933,9 @@ class PipelineSchema:
         if isinstance(p_val, float):
             return {"type": "number", "default": p_val}
 
-        # TODO: remove string branch once old text-format config caches are no longer supported
-        p_val = p_val.strip("\"'")
-        if not p_val or p_val == "null":
-            return {"type": "string"}
-        if p_val in ("true", "True"):
-            return {"type": "boolean", "default": True}
-        if p_val in ("false", "False"):
-            return {"type": "boolean"}
-        try:
-            num = float(p_val)
-            if num == int(num):
-                return {"type": "integer", "default": int(num)}
-            return {"type": "number", "default": num}
-        except ValueError:
-            return {"type": "string", "default": p_val}
+        if isinstance(p_val, str):
+            return {"type": "string", "default": p_val} if p_val else {"type": "string"}
+        raise TypeError(f"Unsupported schema parameter type: {type(p_val).__name__}")
 
     def launch_web_builder(self):
         """
