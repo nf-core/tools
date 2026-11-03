@@ -42,6 +42,7 @@ class PipelineCreate:
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
         default_branch (str): Specifies the --initial-branch name. If not given, read from the Git configuration.
+        ignored_files (list[str]): Paths relative to the output directory to exclude from prettier. Used by sync.
     """
 
     def __init__(
@@ -58,6 +59,7 @@ class PipelineCreate:
         from_config_file: bool = False,
         default_branch: str | None = None,
         is_interactive: bool = False,
+        ignored_files: list[str] | None = None,
     ) -> None:
         if isinstance(template_config, CreateConfig):
             self.config = template_config
@@ -90,6 +92,7 @@ class PipelineCreate:
         if not self.no_git:
             self._check_default_branch()
         self.is_interactive = is_interactive
+        self.ignored_files = ignored_files or []
 
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
@@ -395,9 +398,11 @@ class PipelineCreate:
         # generate container configs
         try_generate_container_configs(self.outdir)
 
-        # Run prettier on files for pipelines sync
+        # Run prettier, skipping files ignored by the pipeline's own .gitignore (passed in by sync)
         log.debug("Running prettier on pipeline files")
-        run_prettier_on_file(*map(Path, nf_core.utils.get_wf_files(self.outdir)))
+        ignored = {str(self.outdir / f) for f in self.ignored_files}
+        wf_files = [f for f in nf_core.utils.get_wf_files(self.outdir) if f not in ignored]
+        run_prettier_on_file(*map(Path, wf_files))
 
     def fix_linting(self):
         """

@@ -320,6 +320,7 @@ class PipelineSync:
                 no_git=True,
                 force=True,
                 default_branch=self.wf_config.get("manifest", {}).get("defaultBranch") or "master",
+                ignored_files=self.ignored_files,
             )
             pipeline_create_obj.init_pipeline()
 
