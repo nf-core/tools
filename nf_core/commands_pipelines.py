@@ -400,8 +400,7 @@ def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, 
     from nf_core.pipelines.create_logo import create_logo
 
     try:
-        if directory == ".":
-            directory = Path.cwd()
+        directory = Path(directory).resolve()
         logo_path = create_logo(logo_text, directory, name, theme, width, img_format, force)
         # Print path to logo relative to current working directory
         try:

@@ -171,7 +171,6 @@ class NFCoreComponent:
     def _get_main_nf_tags(self, test_main_nf: Path) -> list[str]:
         """Collect all tags from the main.nf.test file."""
         tags: list[str] = []
-        test_main_nf = Path(test_main_nf)
         if not test_main_nf.is_file():
             return tags
         for line in test_main_nf.read_text().splitlines():
@@ -182,7 +181,6 @@ class NFCoreComponent:
     def _get_included_components(self, main_nf: Path) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
-        main_nf = Path(main_nf)
         data = main_nf.read_text() if main_nf.is_file() else ""
         for line in data.splitlines():
             if line.strip().startswith("include"):

@@ -404,7 +404,7 @@ def is_pipeline_directory(wf_path):
     """
     for fn in ["main.nf", "nextflow.config"]:
         if not Path(wf_path, fn).is_file():
-            if wf_path == ".":
+            if Path(wf_path).resolve() == Path.cwd():
                 warning = f"Current directory is not a pipeline - '{fn}' is missing."
             else:
                 warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
