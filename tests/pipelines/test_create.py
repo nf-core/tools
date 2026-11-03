@@ -3,6 +3,7 @@
 import os
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import git
 import jinja2
@@ -43,6 +44,45 @@ class NfcoreCreateTest(unittest.TestCase):
         assert pipeline.config.description == self.pipeline_description
         assert pipeline.config.author == self.pipeline_author
         assert pipeline.config.version == self.pipeline_version
+
+    @with_temporary_folder
+    @mock.patch("git.config.GitConfigParser.get_value", return_value="main")
+    def test_pipeline_creation_default_branch_from_git_config(self, tmp_path, mock_get_value):
+        """Git's init.defaultBranch is only used when no default branch is given, e.g. not for sync"""
+        pipeline_args = {
+            "name": self.pipeline_name,
+            "description": self.pipeline_description,
+            "author": self.pipeline_author,
+            "outdir": tmp_path,
+        }
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(**pipeline_args)
+        assert pipeline.default_branch == "main"
+
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(**pipeline_args, default_branch="master")
+        assert pipeline.default_branch == "master"
+
+    @with_temporary_folder
+    def test_pipeline_creation_incompatible_default_branch(self, tmp_path):
+        """'dev' and 'TEMPLATE' are rejected as default branch, unless no git repository is created"""
+        pipeline_args = {
+            "name": self.pipeline_name,
+            "description": self.pipeline_description,
+            "author": self.pipeline_author,
+            "outdir": tmp_path,
+        }
+        for branch in ["dev", "TEMPLATE"]:
+            with self.assertRaises(UserWarning):
+                nf_core.pipelines.create.create.PipelineCreate(**pipeline_args, default_branch=branch)
+            with (
+                mock.patch("git.config.GitConfigParser.get_value", return_value=branch),
+                self.assertRaises(UserWarning),
+            ):
+                nf_core.pipelines.create.create.PipelineCreate(**pipeline_args)
+
+            pipeline = nf_core.pipelines.create.create.PipelineCreate(
+                **pipeline_args, default_branch=branch, no_git=True
+            )
+            assert pipeline.default_branch == branch
 
     @with_temporary_folder
     def test_pipeline_creation_initiation(self, tmp_path):

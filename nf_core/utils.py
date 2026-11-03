@@ -562,9 +562,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     if result is not None:
         nfconfig_raw, _ = result
         try:
-            raw_str = nfconfig_raw.decode("utf-8")
-            json_start = raw_str.find("{")
-            parsed = json.loads(raw_str[json_start:] if json_start >= 0 else raw_str)
+            parsed = parse_nextflow_json(nfconfig_raw.decode("utf-8"))
             config.update(parsed)
             for k in parsed:
                 log.debug(f"Config section: {k}")
@@ -600,6 +598,38 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     return config
 
 
+def parse_nextflow_json(text: str) -> Any:
+    """Parse the JSON output of a Nextflow command, ignoring status lines printed around it.
+
+    Nextflow can print status lines to stdout next to the JSON, e.g. `[PIPELINE] ...`
+    or, before 26.05, the Seqera Platform monitoring URL.
+
+    Raises:
+        json.JSONDecodeError: If the text contains no valid JSON object.
+    """
+    json_start = text.find("{")
+    if json_start == -1:
+        return json.loads(text)
+    parsed, _ = json.JSONDecoder().raw_decode(text, json_start)
+    return parsed
+
+
+class CommandError(RuntimeError):
+    """Raised by `run_cmd` when a command exits with a non-zero code.
+
+    Keeps the captured streams, so callers can inspect the command's output instead of parsing the error message.
+    `output` holds both streams decoded, since Nextflow prints error details to stdout and only a summary to stderr.
+    """
+
+    def __init__(self, cmd: str, returncode: int, stdout: bytes, stderr: bytes):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        decoded = (stream.decode("utf-8", errors="replace").strip() for stream in (stdout, stderr))
+        self.output = "\n".join(text for text in decoded if text)
+        super().__init__(f"Command '{cmd}' failed with exit code {returncode}\n{self.output}")
+
+
 def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     """Run a specified command and capture the output. Handle errors nicely."""
     import shlex
@@ -619,14 +649,7 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     if proc.returncode != 0:
         if executable == "nf-test":
             return (proc.stdout, proc.stderr)
-        output = (
-            proc.stderr.decode("utf-8", errors="replace").strip()
-            if proc.stderr
-            else proc.stdout.decode("utf-8", errors="replace").strip()
-            if proc.stdout
-            else ""
-        )
-        raise RuntimeError(f"Command '{full_cmd}' failed with exit code {proc.returncode}\n{output}")
+        raise CommandError(full_cmd, proc.returncode, proc.stdout, proc.stderr)
 
     return (proc.stdout, proc.stderr)
 

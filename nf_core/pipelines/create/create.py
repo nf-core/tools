@@ -41,7 +41,7 @@ class PipelineCreate:
         template_config (str|CreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
-        default_branch (str): Specifies the --initial-branch name.
+        default_branch (str): Specifies the --initial-branch name. If not given, read from the Git configuration.
     """
 
     def __init__(
@@ -56,7 +56,7 @@ class PipelineCreate:
         template_config: CreateConfig | str | Path | None = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: str = "master",
+        default_branch: str | None = None,
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -86,15 +86,13 @@ class PipelineCreate:
 
         # Set fields used by the class methods
         self.no_git = no_git
-        self.default_branch = default_branch
+        self.default_branch = default_branch or self.get_default_branch()
+        if not self.no_git:
+            self._check_default_branch()
         self.is_interactive = is_interactive
 
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
-
-        # Get the default branch name from the Git configuration if it was not parsed from nextflow.config previously
-        if self.default_branch == "master":
-            self.get_default_branch()
 
         self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
             self.config.skip_features or [], str(self.config.outdir)
@@ -454,38 +452,43 @@ class PipelineCreate:
                 force=bool(self.force),
             )
 
-    def get_default_branch(self) -> None:
-        """Gets the default branch name from the Git configuration."""
+    def get_default_branch(self) -> str:
+        """Gets the default branch name from the Git configuration, defaulting to master."""
+        default_branch = "master"
         try:
-            self.default_branch = (
-                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "master"
-            )  # default to master
-            log.debug(f"Default branch name: {self.default_branch}")
+            default_branch = str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or default_branch
+            log.debug(f"Default branch name: {default_branch}")
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
+        return default_branch
+
+    def _check_default_branch(self) -> None:
+        """Checks that the default branch does not clash with the 'dev' and 'TEMPLATE' branches created by nf-core.
+
+        Raises:
+            UserWarning: if the default branch is set to 'dev' or 'TEMPLATE'.
+        """
         if self.default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch '{self.default_branch}' is incompatible with nf-core.\n"
+                f"Default branch '{self.default_branch}' is incompatible with nf-core.\n"
                 "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
                 "Set the default branch name with "
                 "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                "Or set the default_branch parameter in this class.\n"
-                "Pipeline git repository will not be initialised."
+                "Or set the default_branch parameter in this class."
             )
 
     def git_init_pipeline(self) -> None:
         """Initialises the new pipeline as a Git repository and submits first commit.
 
         Raises:
-            UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
+            UserWarning: if the 'TEMPLATE' and 'dev' branches already exist and force is not set.
         """
 
         log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
-        if self.default_branch:
-            repo.active_branch.rename(self.default_branch)
+        repo.active_branch.rename(self.default_branch)
         try:
             repo.git.branch("TEMPLATE")
             repo.git.branch("dev")

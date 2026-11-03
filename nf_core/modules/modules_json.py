@@ -6,12 +6,13 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import NotRequired
 
 import git
 import questionary
 import rich.prompt
 from git.exc import GitCommandError
-from typing_extensions import NotRequired, TypedDict  # for py<3.11
+from typing_extensions import TypedDict
 
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install

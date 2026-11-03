@@ -27,6 +27,7 @@ GITLAB_DEFAULT_BRANCH = "main"
 GITLAB_SUBWORKFLOWS_BRANCH = "subworkflows"
 GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH = "subworkflows-org-path"
 OLD_SUBWORKFLOWS_SHA = "f3c078809a2513f1c95de14f6633fe1f03572fdb"
+NF_CORE_LICENSE_HEADER = "// Copyright (c) the nf-core community under an open-source MIT license."
 # Branch test stuff
 GITLAB_BRANCH_TEST_BRANCH = "branch-tester"
 GITLAB_BRANCH_ORG_PATH_BRANCH = "org-path"

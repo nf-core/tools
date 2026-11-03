@@ -195,6 +195,18 @@ class ModuleLint(ComponentLint):
                 progress_bar.update(lint_progress, advance=1, test_name=mod.component_name)
                 self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
 
+    @staticmethod
+    def _safe_parse_main_nf(mod: NFCoreComponent) -> None:
+        """Parse inputs/outputs/topics from main.nf, converting unexpected errors into a failed result."""
+        try:
+            mod.get_inputs_from_main_nf()
+            mod.get_outputs_from_main_nf()
+            mod.get_topics_from_main_nf()
+        except (LookupError, AttributeError) as e:
+            mod.failed.append(
+                ("main_nf_parseable", "main_nf_parseable", f"Unexpected error parsing main.nf: {e}", mod.main_nf)
+            )
+
     def lint_module(
         self,
         mod: NFCoreComponent,
@@ -220,9 +232,7 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint_module() function and add it to the ComponentLint class
         # Only check the main script in case of a local module
         if local:
-            mod.get_inputs_from_main_nf()
-            mod.get_outputs_from_main_nf()
-            mod.get_topics_from_main_nf()
+            self._safe_parse_main_nf(mod)
             # TODO container-conversion:  get_containers from main_nf
             # Update meta.yml file if requested
             if self.fix and mod.meta_yml is not None:
@@ -231,17 +241,22 @@ class ModuleLint(ComponentLint):
             for test_name in self.lint_tests:
                 if test_name in self.local_module_exclude_tests:
                     continue
-                if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
-                elif test_name == "environment_yml":
-                    getattr(self, test_name)(
-                        mod, allow_missing=True, fix_version=fix_version, progress_bar=progress_bar
+                try:
+                    if test_name == "main_nf":
+                        getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                    elif test_name == "environment_yml":
+                        getattr(self, test_name)(
+                            mod, allow_missing=True, fix_version=fix_version, progress_bar=progress_bar
+                        )
+                    elif test_name == "meta_yml":
+                        # Allow files to be missing for local
+                        getattr(self, test_name)(mod, allow_missing=True)
+                    else:
+                        getattr(self, test_name)(mod)
+                except (LookupError, AttributeError) as e:
+                    mod.failed.append(
+                        (test_name, test_name, f"Lint test raised an unexpected error: {e}", mod.component_dir)
                     )
-                elif test_name == "meta_yml":
-                    # Allow files to be missing for local
-                    getattr(self, test_name)(mod, allow_missing=True)
-                else:
-                    getattr(self, test_name)(mod)
 
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
@@ -252,9 +267,7 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
-            mod.get_inputs_from_main_nf()
-            mod.get_outputs_from_main_nf()
-            mod.get_topics_from_main_nf()
+            self._safe_parse_main_nf(mod)
             # TODO container-conversion:  get_containers from main_nf
 
             # Update meta.yml file if requested
@@ -267,12 +280,17 @@ class ModuleLint(ComponentLint):
                 mod.git_sha = version
 
             for test_name in self.lint_tests:
-                if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
-                elif test_name == "environment_yml":
-                    getattr(self, test_name)(mod, fix_version=fix_version, progress_bar=progress_bar)
-                else:
-                    getattr(self, test_name)(mod)
+                try:
+                    if test_name == "main_nf":
+                        getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                    elif test_name == "environment_yml":
+                        getattr(self, test_name)(mod, fix_version=fix_version, progress_bar=progress_bar)
+                    else:
+                        getattr(self, test_name)(mod)
+                except (LookupError, AttributeError) as e:
+                    mod.failed.append(
+                        (test_name, test_name, f"Lint test raised an unexpected error: {e}", mod.component_dir)
+                    )
 
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in mod.warned]
@@ -331,7 +349,11 @@ class ModuleLint(ComponentLint):
         """
         Update the meta.yml file with the correct inputs, outputs, topics and containers
         """
-        meta_yml = self.read_meta_yml_patched(mod)
+        try:
+            meta_yml = self.read_meta_yml_patched(mod)
+        except LookupError:
+            log.warning(f"Could not reverse-apply patch to read meta.yml for {mod.component_name}, skipping update")
+            return
         if meta_yml is None:
             log.warning(f"Could not read meta.yml for {mod.component_name}, skipping update")
             return

@@ -199,7 +199,7 @@ workflow PIPELINE_COMPLETION {
                 plaintext_email,
                 outdir,
                 monochrome_logs,
-                {% if multiqc %}multiqc_reports.getVal(),{% else %}[]{% endif %}
+                {% if multiqc %}multiqc_reports.isBound() ? multiqc_reports.getVal() : [],{% else %}[]{% endif %}
             )
         }
         {%- endif %}

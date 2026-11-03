@@ -267,19 +267,25 @@ def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> 
     """
     Filter modules by name, supporting exact matches and tool family matching.
 
+    A name matches a module exactly ('tool' or 'tool/subtool'), or it matches all
+    subtools of a tool ('tool' selects 'tool/subtool1', 'tool/subtool2', ...).
+    A name does not match other tools that start with the same characters
+    ('bwa' does not select 'bwamem2/mem').
+
     Args:
         modules (list[NFCoreComponent]): List of modules to filter
-        module_name (str): The module name or prefix to match
+        module_name (str): The tool or tool/subtool name to match
 
     Returns:
         list[NFCoreComponent]: List of matching modules
     """
+    module_name = module_name.rstrip("/")
     # First try to find an exact match
     exact_matches = [m for m in modules if m.component_name == module_name]
     if exact_matches:
         return exact_matches
-    # If no exact match, look for modules that start with the given name (subtools)
-    return [m for m in modules if m.component_name.startswith(module_name)]
+    # If no exact match, look for the subtools of the given tool
+    return [m for m in modules if m.component_name.startswith(f"{module_name}/")]
 
 
 def prompt_module_selection(

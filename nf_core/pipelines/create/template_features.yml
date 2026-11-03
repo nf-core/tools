@@ -385,7 +385,7 @@ configurations:
       short_description: "Use GPU"
       description: "Add GPU support to the pipeline"
       help_text: |
-        This will add GPU support to the pipeline. It will add a `use_gpu` parameter to the pipeline.
+        This will add GPU support to the pipeline via the `process_gpu` label, using the `accelerator` directive.
         The pipeline will be able to run on GPU-enabled compute environments.
       nfcore_pipelines: True
       custom_pipelines: True
