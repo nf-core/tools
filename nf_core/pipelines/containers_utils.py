@@ -96,6 +96,9 @@ class ContainerConfigs:
     def __init__(self, workflow_directory: Path = Path()) -> None:
         self.workflow_directory = workflow_directory
 
+    def _config_path(self, platform: str) -> Path:
+        return self.workflow_directory / "conf" / f"containers_{platform}.config"
+
     def update_module_container_config(self, module_path: Path) -> None:
         """Targeted update for a single module.
 
@@ -113,9 +116,8 @@ class ContainerConfigs:
         else:
             module_name, platform_containers = result
 
-        conf_dir = self.workflow_directory / "conf"
         for platform in PLATFORMS:
-            config_path = conf_dir / f"containers_{platform}.config"
+            config_path = self._config_path(platform)
             entries = _parse_config_file(config_path)
             if platform in platform_containers:
                 entries[module_name] = platform_containers[platform]
@@ -147,13 +149,11 @@ class ContainerConfigs:
                 for platform_name, container in platform_containers.items():
                     containers[platform_name][module_name] = container
 
-        # remove all generated config files, to handle removed modules
-        for platform in PLATFORMS:
-            (self.workflow_directory / "conf" / f"containers_{platform}.config").unlink(missing_ok=True)
-
+        # Every platform is visited, so each config is fully rewritten (dropping removed
+        # modules) or deleted when empty; unchanged files are left untouched.
         written: set[str] = set()
         for platform, module_containers in containers.items():
-            config_path = self.workflow_directory / "conf" / f"containers_{platform}.config"
+            config_path = self._config_path(platform)
             if _write_platform_config(config_path, module_containers, _container_key(platform)):
                 written.add(config_path.name)
 
