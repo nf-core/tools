@@ -1315,21 +1315,22 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
     return config_fn, nf_core_yaml_config
 
 
-def determine_base_dir(directory: Path | str = ".") -> Path:
-    base_dir = start_dir = Path(directory).absolute()
-    # Only iterate up the tree if the start dir doesn't have a config
-    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
-        base_dir = base_dir.parent
-        config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
-        if config_fn:
-            break
-    return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
+def determine_base_dir(directory: Path | None = None) -> Path:
+    start_dir = directory or Path.cwd()
+    abs_start = start_dir.absolute()
+    if get_first_available_path(abs_start, CONFIG_PATHS):
+        return start_dir
+    # Search ancestors for a config, skipping the filesystem root; fall back to the start dir
+    return next(
+        (d for d in abs_start.parents[:-1] if get_first_available_path(d, CONFIG_PATHS)),
+        start_dir,
+    )
 
 
 def get_first_available_path(directory: Path | str, paths: list[str]) -> Path | None:
-    for p in paths:
-        if Path(directory, p).is_file():
-            return Path(directory, p)
+    for name in paths:
+        if (path := Path(directory, name)).is_file():
+            return path
     return None
 
 

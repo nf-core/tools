@@ -317,9 +317,9 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 # nf-core pipelines rocrate
 def pipelines_rocrate(
     ctx,
-    pipeline_dir: str | Path,
-    json_path: str | Path | None,
-    zip_path: str | Path | None,
+    pipeline_dir: Path,
+    json_path: Path | None,
+    zip_path: Path | None,
     pipeline_version: str,
 ) -> None:
     from nf_core.pipelines.rocrate import ROCrate
@@ -328,11 +328,6 @@ def pipelines_rocrate(
         log.error("Either `--json_path` or `--zip_path` must be specified.")
         sys.exit(1)
     else:
-        pipeline_dir = Path(pipeline_dir)
-        if json_path is not None:
-            json_path = Path(json_path)
-        if zip_path is not None:
-            zip_path = Path(zip_path)
         try:
             rocrate_obj = ROCrate(pipeline_dir, pipeline_version)
             rocrate_obj.create_rocrate(json_path=json_path, zip_path=zip_path)
@@ -400,7 +395,7 @@ def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, 
     from nf_core.pipelines.create_logo import create_logo
 
     try:
-        directory = Path(directory).resolve()
+        directory = directory.resolve()
         logo_path = create_logo(logo_text, directory, name, theme, width, img_format, force)
         # Print path to logo relative to current working directory
         try:

@@ -117,7 +117,7 @@ class ComponentCreate(ComponentCommand):
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
 
         log.info(f"Repository type: [blue]{self.repo_type}")
-        if Path(self.directory).resolve() != Path.cwd():
+        if self.directory.resolve() != Path.cwd():
             log.info(f"Base directory: '{self.directory}'")
 
         log.info(

@@ -588,10 +588,10 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     "-j",
     "--json_path",
     default=".",
-    type=str,
+    type=click.Path(path_type=Path),
     help="Path to save RO Crate metadata json file to",
 )
-@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option("-z", "--zip_path", type=click.Path(path_type=Path), help="Path to save RO Crate zip file to")
 @click.option(
     "-pv",
     "--pipeline_version",
@@ -602,9 +602,9 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
 @click.pass_context
 def rocrate(
     ctx,
-    pipeline_dir: str,
-    json_path: str,
-    zip_path: str,
+    pipeline_dir: Path,
+    json_path: Path,
+    zip_path: Path,
     pipeline_version: str,
 ):
     """
