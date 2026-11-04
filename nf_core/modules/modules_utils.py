@@ -117,10 +117,9 @@ class MetaYmlContainers(BaseModel):
 def module_uses_dockerfile(module: NFCoreComponent) -> bool:
     """Return True if the module has a Dockerfile (in its dir or parent) but no environment.yml."""
     env_yml = module.environment_yml
-    if env_yml is not None and Path(env_yml).exists():
+    if env_yml is not None and env_yml.exists():
         return False
-    component_dir = Path(module.component_dir)
-    return (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists()
+    return (module.component_dir / "Dockerfile").exists() or (module.component_dir.parent / "Dockerfile").exists()
 
 
 def repo_full_name_from_remote(remote_url: str) -> str:
@@ -213,7 +212,7 @@ def cache_is_expired(path: Path) -> bool:
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    cache_path = Path(NFCORE_CACHE_DIR) / "EDAM.tsv"
+    cache_path = NFCORE_CACHE_DIR / "EDAM.tsv"
 
     # Remove stale cache file
     if cache_path.exists() and cache_is_expired(cache_path):

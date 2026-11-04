@@ -314,8 +314,8 @@ class PipelineCreate:
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
-        template_files = list(Path(template_dir).glob("**/*"))
-        template_files += list(Path(template_dir).glob("*"))
+        template_files = list(template_dir.glob("**/*"))
+        template_files += list(template_dir.glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.jinja_params["short_name"]
         rename_files: dict[str, str] = {
