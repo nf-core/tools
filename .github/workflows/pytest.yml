@@ -56,6 +56,7 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
       - runner=4cpu-linux-x64
+      - extras=s3-cache+git-cache
     strategy:
       matrix:
         # On PRs to main test with 3.11 and 3.14, otherwise just 3.11
