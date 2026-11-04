@@ -201,7 +201,7 @@ class NFCoreComponent:
         return included_components
 
     def _get_included_components_in_chained_tests(self, main_nf_test: Path) -> list[str]:
-        """Collect all included components from the main.nf file."""
+        """Collect all included components from the script statements in the main.nf.test file."""
         included_components = []
         with open(main_nf_test) as fh:
             for line in fh:
