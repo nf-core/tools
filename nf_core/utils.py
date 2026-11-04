@@ -1225,7 +1225,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCoreYamlConfig | None]":
+def load_tools_config(directory: Path | None = None) -> tuple[Path | None, NFCoreYamlConfig | None]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1242,7 +1242,7 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
     from nf_core.pydantic_models import NFCoreTemplateConfig, NFCoreYamlConfig
 
     tools_config = {}
-
+    directory = directory or Path()
     config_fn = get_first_available_path(directory, CONFIG_PATHS)
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
@@ -1295,7 +1295,7 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
                 description=manifest.get("description", ""),
                 author=author_names,
                 version=manifest.get("version", ""),
-                outdir=str(directory),
+                outdir=Path(directory),
                 is_nfcore=True,
             )
         elif "prefix" in config_template_keys or "skip" in config_template_keys:
@@ -1316,7 +1316,7 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
 
 
 def determine_base_dir(directory: Path | None = None) -> Path:
-    start_dir = directory or Path.cwd()
+    start_dir = directory or Path()
     abs_start = start_dir.absolute()
     if get_first_available_path(abs_start, CONFIG_PATHS):
         return start_dir

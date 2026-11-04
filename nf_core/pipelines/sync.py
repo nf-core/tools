@@ -61,7 +61,7 @@ class PipelineSync:
 
     def __init__(
         self,
-        pipeline_dir: str | Path,
+        pipeline_dir: Path,
         from_branch: str | None = None,
         make_pr: bool = False,
         gh_repo: str | None = None,
@@ -73,7 +73,7 @@ class PipelineSync:
     ):
         """Initialise syncing object"""
 
-        self.pipeline_dir: Path = Path(pipeline_dir).resolve()
+        self.pipeline_dir = pipeline_dir.resolve()
         self.from_branch = from_branch
         self.original_branch = None
         self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
@@ -329,7 +329,7 @@ class PipelineSync:
                 # Set force true in config to overwrite existing files
                 self.config_yml.template.force = False
                 # Set outdir as the current directory to avoid local info leaking
-                self.config_yml.template.outdir = "."
+                self.config_yml.template.outdir = Path()
                 # Update nf-core version
                 self.config_yml.nf_core_version = nf_core.__version__
                 dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump(exclude_none=True))
