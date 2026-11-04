@@ -161,11 +161,11 @@ class NFCoreComponent:
         Returns ``None`` if the component has no ``meta.yml``.
         """
         if reload or self._meta_yml_content is None:
-            if self.meta_yml is None or not Path(self.meta_yml).exists():
+            if self.meta_yml is None or not self.meta_yml.exists():
                 return None
             from nf_core.components.components_utils import read_meta_yml
 
-            self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
+            self._meta_yml_content = read_meta_yml(self.meta_yml)
         return self._meta_yml_content
 
     def _get_main_nf_tags(self, test_main_nf: Path) -> list[str]:

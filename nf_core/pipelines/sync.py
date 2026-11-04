@@ -226,7 +226,7 @@ class PipelineSync:
 
         # Fetch workflow variables
         log.debug("Fetching workflow config variables")
-        self.wf_config = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
+        self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
 
         # Check that we have the required variables
         for section, keys in self.required_config_vars.items():
@@ -263,7 +263,7 @@ class PipelineSync:
         Delete all tracked files in the repository
         """
         for the_file in self._get_tracked_files():
-            file_path = Path(self.pipeline_dir) / the_file
+            file_path = self.pipeline_dir / the_file
             log.debug(f"Deleting {file_path}")
             try:
                 file_path.unlink()
