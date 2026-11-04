@@ -48,7 +48,7 @@ class Launch:
         self.schema_obj = None
         self.use_params_file = not command_only
         self.params_in = params_in
-        self.params_out = params_out or Path.cwd() / "nf-params.json"
+        self.params_out = params_out or Path("nf-params.json")
         self.save_all = save_all
         self.show_hidden = show_hidden
         self.web_schema_launch_url = url or "https://nf-co.re/launch"
