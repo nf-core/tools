@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import itertools
 import logging
 import os
 import re
@@ -30,7 +31,12 @@ from nf_core.modules.modules_utils import (
     scan_modules_dir,
 )
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS, ContainerRegistryUrls
+from nf_core.utils import (
+    CONTAINER_PLATFORMS,
+    CONTAINER_SYSTEMS,
+    REQUIRED_CONTAINER_PLATFORMS,
+    ContainerRegistryUrls,
+)
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +46,8 @@ WAVE_API_ALPHA2 = f"{WAVE_URL}/v1alpha2"
 
 # Wave container build `format` field, keyed by nf-core container system.
 WAVE_FORMAT = {"docker": "docker", "singularity": "sif"}
+# (connect, read) timeout in seconds for every Wave HTTP request.
+WAVE_TIMEOUT = (10, 60)
 
 
 def wave_send(
@@ -68,7 +76,7 @@ def wave_send(
         if json_body is not None:
             json_body = {**json_body, "towerAccessToken": token}
 
-    resp = getattr(requests, method)(url, json=json_body, headers=headers)
+    resp = getattr(requests, method)(url, json=json_body, headers=headers, timeout=WAVE_TIMEOUT)
     if resp.status_code != 200:
         raise RuntimeError(f"{error_context} failed: HTTP {resp.status_code} {resp.text}")
     return resp
@@ -280,8 +288,6 @@ class ModuleContainers:
         """Update the container name in main.nf using the docker amd64 image without registry.
         Don't update if the container name is already correct.
         """
-        import re
-
         if self._uses_dockerfile():
             log.info(f"Module '{self.module}' uses a Dockerfile - skipping main.nf container update")
             return
@@ -290,7 +296,7 @@ class ModuleContainers:
             log.warning("Cannot update main.nf: containers or nfcore_component not available")
             return
 
-        linux_amd64 = CONTAINER_PLATFORMS[0]
+        linux_amd64 = REQUIRED_CONTAINER_PLATFORMS[0]
 
         # Get docker image
         _docker_entry = self.containers.docker.get(linux_amd64)
@@ -345,7 +351,7 @@ class ModuleContainers:
         force: bool = False,
     ) -> tuple[MetaYmlContainers, bool]:
         """
-        Build docker and singularity containers for linux/amd64 and linux/arm64 using wave.
+        Build docker and singularity containers for linux/amd64 and linux/arm64 via the Wave HTTP API.
 
         Args:
             progress_bar: Optional progress bar to use for tracking progress
@@ -356,8 +362,12 @@ class ModuleContainers:
         """
         containers = MetaYmlContainers()
         build_tasks = {}
-        threads = max(len(CONTAINER_SYSTEMS) * len(CONTAINER_PLATFORMS), 1)
+        build_targets = list(itertools.product(CONTAINER_SYSTEMS, CONTAINER_PLATFORMS))
         has_failures = False
+
+        def set_status(tid: rich.progress.TaskID | None, status: str, **kwargs) -> None:
+            if progress_bar and tid is not None:
+                progress_bar.update(tid, status=status, **kwargs)
 
         if not self.environment_yml:
             if self._uses_dockerfile():
@@ -369,22 +379,17 @@ class ModuleContainers:
         # One spinner per build target — they run visually in parallel
         build_task_ids: dict[tuple[str, str], rich.progress.TaskID] = {}
         if progress_bar:
-            for cs in CONTAINER_SYSTEMS:
-                for platform in CONTAINER_PLATFORMS:
-                    short_platform = platform.split("/")[-1]
-                    build_task_ids[(cs, platform)] = progress_bar.add_task(
-                        f"  {cs}/{short_platform}",
-                        total=1,
-                        completed=0,
-                        status="submitting wave build request...",
-                    )
+            for cs, platform in build_targets:
+                build_task_ids[(cs, platform)] = progress_bar.add_task(
+                    f"  {cs}/{platform.split('/')[-1]}",
+                    total=1,
+                    completed=0,
+                    status="submitting wave build request...",
+                )
 
         def make_on_build_id(cs: str, platform: str) -> Callable[[str], None]:
             def callback(build_id: str) -> None:
-                build_tid = build_task_ids.get((cs, platform))
-                if progress_bar and build_tid is not None:
-                    url = f"{WAVE_URL}/view/builds/{build_id}"
-                    progress_bar.update(build_tid, status=f"building… {url}")
+                set_status(build_task_ids.get((cs, platform)), f"building… {WAVE_URL}/view/builds/{build_id}")
 
             return callback
 
@@ -393,43 +398,38 @@ class ModuleContainers:
         cancel_event = threading.Event()
 
         # Submit all container build tasks
-        with ThreadPoolExecutor(max_workers=threads) as pool:
-            for cs in CONTAINER_SYSTEMS:
-                for platform in CONTAINER_PLATFORMS:
-                    fut = pool.submit(
-                        self.request_container,
-                        cs,
-                        platform,
-                        self.environment_yml,
-                        self.verbose,
-                        make_on_build_id(cs, platform) if progress_bar else None,
-                        cancel_event,
-                    )
-                    build_tasks[fut] = (cs, platform)
+        with ThreadPoolExecutor(max_workers=len(build_targets)) as pool:
+            for cs, platform in build_targets:
+                fut = pool.submit(
+                    self.request_container,
+                    cs,
+                    platform,
+                    self.environment_yml,
+                    self.verbose,
+                    make_on_build_id(cs, platform) if progress_bar else None,
+                    cancel_event,
+                )
+                build_tasks[fut] = (cs, platform)
 
             # Process completed container builds
             try:
                 for fut in as_completed(build_tasks):
                     cs, platform = build_tasks[fut]
-                    short_platform = platform.split("/")[-1]
                     build_tid = build_task_ids.get((cs, platform))
 
                     try:
                         getattr(containers, cs)[platform] = fut.result()
-                        if progress_bar and build_tid is not None:
-                            progress_bar.update(build_tid, completed=1, status="[green]done[/green]")
+                        set_status(build_tid, "[green]done[/green]", completed=1)
                     except (ValueError, RuntimeError, OSError, AssertionError) as e:
-                        # make it a warning for arm (not required), but fail for other platforms
-                        if platform == "linux/arm64":
+                        # Optional platforms (e.g. arm64) only warn; required ones fail the module
+                        if platform not in REQUIRED_CONTAINER_PLATFORMS:
                             log.warning(
-                                f"Failed to build {cs} container for {platform}: {e}. This is only critical if the tool should support arm64."
+                                f"Failed to build {cs} container for {platform}: {e}. This is only critical if the tool should support {platform}."
                             )
                         else:
                             log.error(f"Failed to build {cs} container for {platform}: {e}")
                             has_failures = True
-                        if progress_bar and build_tid is not None:
-                            progress_bar.update(build_tid, completed=1, status="[red]failed[/red]")
-                        continue
+                        set_status(build_tid, "[red]failed[/red]", completed=1)
             except KeyboardInterrupt:
                 # Signal the running build waiters to stop, drop anything not yet started,
                 # and re-raise so the command aborts instead of blocking on the executor's
@@ -456,8 +456,7 @@ class ModuleContainers:
             short_platform = platform.split("/")[-1]
             if not build_id:
                 log.debug(f"Docker image for {platform} missing - Conda-lock skipped")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} skipped")
+                set_status(task_id, f"conda lock {short_platform} skipped")
                 continue
 
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
@@ -468,15 +467,13 @@ class ModuleContainers:
                     cached_lock_path = self._conda_lock_paths.get(build_id)
                 if cached_lock_path is not None and cached_lock_path.exists():
                     log.debug(f"Reusing conda lock file for build {build_id} (from {cached_lock_path})")
-                    if progress_bar and task_id is not None:
-                        progress_bar.update(task_id, status=f"conda lock {short_platform} (cached)...")
+                    set_status(task_id, f"conda lock {short_platform} (cached)...")
                     if cached_lock_path != conda_lock_path:
                         shutil.copyfile(cached_lock_path, conda_lock_path)
                 else:
                     # Download conda lock file (it will look up build_id from docker container)
                     log.debug(f"Downloading conda lock file for {platform} to {conda_lock_path}")
-                    if progress_bar and task_id is not None:
-                        progress_bar.update(task_id, status=f"conda lock {short_platform}...")
+                    set_status(task_id, f"conda lock {short_platform}...")
                     conda_lock_path.write_text(self.get_conda_lock_file(platform))
                     with self._build_cache_lock:
                         self._conda_lock_paths[build_id] = conda_lock_path
@@ -484,16 +481,14 @@ class ModuleContainers:
                 # meta.yml never points at a missing lock file.
                 containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
                 new_lock_files.add(conda_lock_path)
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} done")
+                set_status(task_id, f"conda lock {short_platform} done")
 
             except (ValueError, RuntimeError, OSError, requests.RequestException) as e:
                 # Wave does not always expose a conda lock for every build (e.g. some
                 # freshly built arm64 images). A missing lock is not fatal: keep the
                 # other platforms' containers and locks instead of failing the module.
                 log.warning(f"No conda lock file available for {platform}: {e}")
-                if progress_bar and task_id is not None:
-                    progress_bar.update(task_id, status=f"conda lock {short_platform} unavailable")
+                set_status(task_id, f"conda lock {short_platform} unavailable")
 
         # Clean up stale conda-lock files
         self.cleanup_stale_conda_lock_files(new_lock_files)
@@ -632,7 +627,7 @@ class ModuleContainers:
         """
         Wait for a Wave container request to finish by polling its status endpoint.
 
-        Replaces the wave CLI ``--await`` flag. Polls ``GET /v1alpha2/container/{id}/status``
+        Polls ``GET /v1alpha2/container/{id}/status``
         until the request reports ``DONE``, then raises (with the failure ``reason``) if it
         did not succeed.
 
@@ -645,13 +640,15 @@ class ModuleContainers:
         """
         if not request_id:
             raise RuntimeError("Wave did not return a requestId to await")
+        # A never-set Event makes wait() a plain interruptible sleep, so one code path serves both cases.
+        cancel_event = cancel_event or threading.Event()
 
         status_url = f"{WAVE_API_ALPHA2}/container/{quote(request_id, safe='')}/status"
         # Updated from each status response; the API returns a ready-made build log URL.
         details_uri = ""
         deadline = time.monotonic() + timeout
         while True:
-            if cancel_event is not None and cancel_event.is_set():
+            if cancel_event.is_set():
                 raise RuntimeError(f"Wave build {request_id} await cancelled")
             status = wave_request("get", status_url, error_context=f"Wave status check for request {request_id}")
             details_uri = status.get("detailsUri") or details_uri
@@ -663,13 +660,9 @@ class ModuleContainers:
                 raise RuntimeError(
                     f"Wave build {request_id} did not complete within {timeout}s. Build log: {details_uri}"
                 )
-            # Interruptible sleep: Event.wait returns True immediately once cancelled,
-            # otherwise blocks for poll_interval like time.sleep.
-            if cancel_event is not None:
-                if cancel_event.wait(poll_interval):
-                    raise RuntimeError(f"Wave build {request_id} await cancelled")
-            else:
-                time.sleep(poll_interval)
+            # Interruptible sleep: Event.wait returns True immediately once cancelled.
+            if cancel_event.wait(poll_interval):
+                raise RuntimeError(f"Wave build {request_id} await cancelled")
 
     @classmethod
     def request_container(
@@ -792,7 +785,7 @@ class ModuleContainers:
         Try (in that order):
             1. reading from meta.yml
             2. reading from cached containers
-            3. recreating with wave commands
+            3. building via the Wave API (``create()``)
         """
         assert platform in CONTAINER_PLATFORMS
 
