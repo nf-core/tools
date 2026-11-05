@@ -278,7 +278,7 @@ class PipelineCreate:
             self.written_files.add(self.outdir / "ro-crate-metadata.json")
 
         if self.no_git:
-            run_prettier_on_file(*self.written_files)
+            self.format_written_files()
         else:
             self.git_init_pipeline()
 
@@ -392,6 +392,14 @@ class PipelineCreate:
         # generate container configs
         try_generate_container_configs(self.outdir)
 
+    def format_written_files(self) -> None:
+        """Run prettier on the files written by this run, unless the pipeline skips code linting."""
+        # Without code_linters the pipeline has no .prettierrc.yml, so prettier would apply its default style
+        if "code_linters" in (self.config.skip_features or []):
+            log.debug("Pipeline skips code linters, not running prettier")
+            return
+        run_prettier_on_file(*self.written_files)
+
     def fix_linting(self):
         """
         Updates the .nf-core.yml with linting configurations
@@ -480,11 +488,8 @@ class PipelineCreate:
         log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
         # Format between init (prek needs a repo) and the first commit, so the new pipeline starts clean
-        if self.config.skip_features is None or not (
-            "code_linters" in self.config.skip_features or "github" in self.config.skip_features
-        ):
-            with nf_core.utils.set_wd(self.outdir):
-                run_prettier_on_file(*self.written_files)
+        with nf_core.utils.set_wd(self.outdir):
+            self.format_written_files()
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         repo.active_branch.rename(self.default_branch)
