@@ -2,7 +2,9 @@ import json
 import logging
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 import git
 import rich
@@ -146,6 +148,8 @@ def run_prettier_on_file(*files: Path) -> None:
     Args:
         *files (Path): The files to format.
     """
+    if not files:
+        return
     # prek refuses to run outside a git repository
     if not check_git_repo():
         log.debug("Not in a git repository, skipping prettier hook.")
@@ -168,12 +172,12 @@ def run_prettier_on_file(*files: Path) -> None:
         )
 
 
-def dump_json_with_prettier(file_name: Path | str, file_content: dict) -> None:
+def dump_json_with_prettier(file_name: Path | str, file_content: Mapping[str, Any]) -> None:
     """Dump a JSON file and run prettier on it.
 
     Args:
         file_name (Path | str): A file identifier as a string or pathlib.Path.
-        file_content (dict): Content to dump into the JSON file
+        file_content (Mapping[str, Any]): Content to dump into the JSON file
     """
     with open(file_name, "w") as fh:
         json.dump(file_content, fh, indent=4)

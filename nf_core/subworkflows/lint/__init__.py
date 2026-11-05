@@ -8,7 +8,6 @@ nf-core subworkflows lint
 
 import logging
 import os
-from pathlib import Path
 
 import rich
 import ruamel.yaml

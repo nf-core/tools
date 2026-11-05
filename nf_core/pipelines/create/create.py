@@ -4,7 +4,6 @@ organization's specification based on a template.
 
 import configparser
 import logging
-import os
 import re
 import shutil
 from pathlib import Path
@@ -42,7 +41,6 @@ class PipelineCreate:
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
         default_branch (str): Specifies the --initial-branch name. If not given, read from the Git configuration.
-        ignored_files (list[str]): Paths relative to the output directory to exclude from prettier. Used by sync.
     """
 
     def __init__(
@@ -59,7 +57,6 @@ class PipelineCreate:
         from_config_file: bool = False,
         default_branch: str | None = None,
         is_interactive: bool = False,
-        ignored_files: list[str] | None = None,
     ) -> None:
         if isinstance(template_config, CreateConfig):
             self.config = template_config
@@ -92,7 +89,8 @@ class PipelineCreate:
         if not self.no_git:
             self._check_default_branch()
         self.is_interactive = is_interactive
-        self.ignored_files = ignored_files or []
+        # Files written by this run; only these get formatted, so sync leaves gitignored files alone
+        self.written_files: set[Path] = set()
 
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
@@ -277,6 +275,7 @@ class PipelineCreate:
             # Create the RO-Crate metadata file (needs network access, so it is not part of render_template)
             rocrate_obj = ROCrate(self.outdir)
             rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
+            self.written_files.add(self.outdir / "ro-crate-metadata.json")
 
         # Init the git repository and make the first commit
         if not self.no_git:
@@ -285,10 +284,8 @@ class PipelineCreate:
             if self.config.skip_features is None or not (
                 "code_linters" in self.config.skip_features or "github" in self.config.skip_features
             ):
-                current_dir = Path.cwd()
-                os.chdir(self.outdir)
-                run_prettier_on_file(*map(Path, nf_core.utils.get_wf_files(self.outdir)))
-                os.chdir(current_dir)
+                with nf_core.utils.set_wd(self.outdir):
+                    run_prettier_on_file(*self.written_files)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
@@ -379,6 +376,7 @@ class PipelineCreate:
 
                 # Mirror file permissions
                 output_path.chmod(template_fn_path.stat().st_mode)
+                self.written_files.add(output_path)
 
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
@@ -394,15 +392,13 @@ class PipelineCreate:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                self.written_files.add(Path(config_fn))
 
         # generate container configs
         try_generate_container_configs(self.outdir)
 
-        # Run prettier, skipping files ignored by the pipeline's own .gitignore (passed in by sync)
         log.debug("Running prettier on pipeline files")
-        ignored = {str(self.outdir / f) for f in self.ignored_files}
-        wf_files = [f for f in nf_core.utils.get_wf_files(self.outdir) if f not in ignored]
-        run_prettier_on_file(*map(Path, wf_files))
+        run_prettier_on_file(*self.written_files)
 
     def fix_linting(self):
         """
