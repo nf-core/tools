@@ -1225,7 +1225,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Path | None = None) -> tuple[Path | None, NFCoreYamlConfig | None]:
+def load_tools_config(directory: Path | None = None) -> tuple[Path | None, "NFCoreYamlConfig | None"]:
     """
     Parse the nf-core.yml configuration file
 
