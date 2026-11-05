@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 
 import nf_core.pipelines.create.create
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -140,6 +141,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     )
     # Only render the template files: building the RO-Crate is not needed for the comparison and needs network access
     create_obj.render_template()
+    run_prettier_on_file(*create_obj.written_files)
 
     # Helper functions for file paths
     def _pf(file_path: str | Path) -> Path:

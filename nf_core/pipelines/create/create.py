@@ -277,15 +277,10 @@ class PipelineCreate:
             rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
             self.written_files.add(self.outdir / "ro-crate-metadata.json")
 
-        # Init the git repository and make the first commit
-        if not self.no_git:
+        if self.no_git:
+            run_prettier_on_file(*self.written_files)
+        else:
             self.git_init_pipeline()
-            # Run prettier on files
-            if self.config.skip_features is None or not (
-                "code_linters" in self.config.skip_features or "github" in self.config.skip_features
-            ):
-                with nf_core.utils.set_wd(self.outdir):
-                    run_prettier_on_file(*self.written_files)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
@@ -397,9 +392,6 @@ class PipelineCreate:
         # generate container configs
         try_generate_container_configs(self.outdir)
 
-        log.debug("Running prettier on pipeline files")
-        run_prettier_on_file(*self.written_files)
-
     def fix_linting(self):
         """
         Updates the .nf-core.yml with linting configurations
@@ -487,6 +479,12 @@ class PipelineCreate:
 
         log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
+        # Format between init (prek needs a repo) and the first commit, so the new pipeline starts clean
+        if self.config.skip_features is None or not (
+            "code_linters" in self.config.skip_features or "github" in self.config.skip_features
+        ):
+            with nf_core.utils.set_wd(self.outdir):
+                run_prettier_on_file(*self.written_files)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         repo.active_branch.rename(self.default_branch)
