@@ -1,4 +1,6 @@
+import os
 import shutil
+from pathlib import Path
 
 import git
 import pytest
@@ -63,12 +65,11 @@ def test_run_prettier_on_syntax_error_file(syntax_error_json, caplog):
     assert expected_critical_log in caplog.text
 
 
-def test_run_prettier_prek_not_in_path(malformed_json, monkeypatch, tmp_path):
+def test_run_prettier_prek_not_in_path(malformed_json, monkeypatch):
     """prek must be found via sys.executable when not on PATH (e.g. uv tool install)."""
-    # Leave only git on PATH (prek needs it), so the file only gets formatted if prek is found without PATH
-    git_bin = shutil.which("git")
-    assert git_bin is not None
-    (tmp_path / "git").symlink_to(git_bin)
-    monkeypatch.setenv("PATH", str(tmp_path))
+    # Drop only dirs containing prek; installing the hook env still needs node, git and coreutils
+    path_dirs = [d for d in os.environ["PATH"].split(os.pathsep) if not (Path(d) / "prek").exists()]
+    monkeypatch.setenv("PATH", os.pathsep.join(path_dirs))
+    assert shutil.which("prek") is None
     nf_core.pipelines.lint_utils.run_prettier_on_file(malformed_json)
     assert malformed_json.read_text() == JSON_FORMATTED
