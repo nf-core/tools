@@ -68,7 +68,7 @@ class PipelineSync:
         gh_username: str | None = None,
         template_yaml_path: str | None = None,
         force_pr: bool = False,
-        blog_post: str = "",
+        blog_post: str | None = None,
         no_prompts: bool = False,
     ):
         """Initialise syncing object"""
@@ -414,9 +414,7 @@ class PipelineSync:
         log.info("Submitting a pull request via the GitHub API")
 
         pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
-        blog_post_sentence = (
-            f"For more details, check out the blog post: {self.blog_post}" if self.blog_post != "" else ""
-        )
+        blog_post_sentence = f"For more details, check out the blog post: {self.blog_post}" if self.blog_post else ""
         pr_body_text = (
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
             f"{blog_post_sentence}\n\n"

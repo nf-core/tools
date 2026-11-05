@@ -2,15 +2,16 @@ import logging
 import sys
 from pathlib import Path
 
-import rich
+import click
+from rich.console import Console
 
 from nf_core.utils import CONTAINER_PLATFORMS, rich_force_colors
 
 log = logging.getLogger(__name__)
-stdout = rich.console.Console(force_terminal=rich_force_colors())
+stdout = Console(force_terminal=rich_force_colors())
 
 
-def modules_list_remote(ctx, keywords, json):
+def modules_list_remote(ctx: click.Context, keywords: tuple[str, ...], json: bool) -> None:
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -30,7 +31,7 @@ def modules_list_remote(ctx, keywords, json):
         sys.exit(1)
 
 
-def modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
+def modules_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -50,7 +51,9 @@ def modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redef
         sys.exit(1)
 
 
-def modules_install(ctx, tool, directory, prompt, force, sha):
+def modules_install(
+    ctx: click.Context, tool: str | None, directory: Path, prompt: bool, force: bool, sha: str | None
+) -> None:
     """
     Install DSL2 modules within a pipeline.
 
@@ -77,19 +80,19 @@ def modules_install(ctx, tool, directory, prompt, force, sha):
 
 
 def modules_update(
-    ctx,
-    tool,
-    directory,
-    force,
-    prompt,
-    sha,
-    install_all,
-    preview,
-    save_diff,
-    update_deps,
-    limit_output,
-    skip_deps,
-):
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    force: bool,
+    prompt: bool,
+    sha: str | None,
+    install_all: bool,
+    preview: bool | None,
+    save_diff: str | None,
+    update_deps: bool,
+    limit_output: bool,
+    skip_deps: bool,
+) -> None:
     """
     Update DSL2 modules within a pipeline.
 
@@ -121,7 +124,7 @@ def modules_update(
         sys.exit(1)
 
 
-def modules_patch(ctx, tool, directory, remove):
+def modules_patch(ctx: click.Context, tool: str | None, directory: Path, remove: bool) -> None:
     """
     Create a patch file for minor changes in a module
 
@@ -146,7 +149,7 @@ def modules_patch(ctx, tool, directory, remove):
         sys.exit(1)
 
 
-def modules_remove(ctx, directory, tool, force):
+def modules_remove(ctx: click.Context, directory: Path, tool: str | None, force: bool) -> None:
     """
     Remove a module from a pipeline.
     """
@@ -166,8 +169,18 @@ def modules_remove(ctx, directory, tool, force):
 
 
 def modules_create(
-    ctx, tool, directory, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
-):
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    author: str | None,
+    label: str | None,
+    meta: bool,
+    no_meta: bool,
+    force: bool,
+    conda_name: str | None,
+    conda_package_version: str | None,
+    empty_template: bool,
+) -> None:
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -210,7 +223,15 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
+def modules_test(
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    no_prompts: bool,
+    update: bool,
+    once: bool,
+    profile: str | None,
+) -> None:
     """
     Run nf-test for a module.
 
@@ -238,8 +259,20 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
 
 
 def modules_lint(
-    ctx, tool, directory, registry, key, all_modules, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
-):
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    registry: tuple[str, ...],
+    key: tuple[str, ...],
+    all_modules: bool,
+    fail_warned: bool,
+    local: bool,
+    passed: bool,
+    sort_by: str,
+    fix_version: bool,
+    fix: bool,
+    plain_text: bool,
+) -> None:
     """
     Lint one or more modules in a directory.
 
@@ -284,7 +317,7 @@ def modules_lint(
         sys.exit(1)
 
 
-def modules_info(ctx, tool, directory):
+def modules_info(ctx: click.Context, tool: str | None, directory: Path) -> None:
     """
     Show developer usage information about a given module.
 
@@ -312,7 +345,9 @@ def modules_info(ctx, tool, directory):
         sys.exit(1)
 
 
-def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
+def modules_bump_versions(
+    ctx: click.Context, tool: str | None, directory: Path, all_modules: bool, show_all: bool, dry_run: bool
+) -> None:
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
@@ -342,7 +377,7 @@ def modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
         sys.exit(1)
 
 
-def modules_containers_create(ctx, module: str, directory: Path, force: bool) -> None:
+def modules_containers_create(ctx: click.Context, module: str, directory: Path, force: bool) -> None:
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """
@@ -378,7 +413,9 @@ def modules_containers_create(ctx, module: str, directory: Path, force: bool) ->
         sys.exit(1)
 
 
-def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
+def modules_containers_conda_lock(
+    ctx: click.Context, module: str | None, platform: str = CONTAINER_PLATFORMS[0]
+) -> None:
     """
     Build a Docker linux/arm64 container and fetch the conda lock file using wave.
     """
@@ -393,10 +430,12 @@ def modules_containers_conda_lock(ctx, module, platform=CONTAINER_PLATFORMS[0]):
         sys.exit(1)
 
 
-def modules_containers_list(ctx, module, plain_text=False):
+def modules_containers_list(ctx: click.Context, module: str | None, plain_text: bool = False) -> None:
     """
     Print containers defined in a module meta.yml.
     """
+    from rich.table import Table
+
     from nf_core.modules.containers import ModuleContainers
 
     try:
@@ -407,7 +446,7 @@ def modules_containers_list(ctx, module, plain_text=False):
             for cs, p, img in containers:
                 stdout.print(f"{cs} {p} {img}")
         else:
-            t = rich.table.Table("Container System", "Platform")
+            t = Table("Container System", "Platform")
             t.add_column("Image", overflow="fold")
             for cs, p, img in containers:
                 t.add_row(cs, p, img)
