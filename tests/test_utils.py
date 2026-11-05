@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from unittest import mock
 
+import git
 import pytest
 import requests
 
@@ -296,3 +297,26 @@ class TestUtils(TestPipelines):
         files = nf_core.utils.get_wf_files(tmpdir)
         files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
         assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]
+
+    @with_temporary_folder
+    def test_get_wf_files_git(self, tmpdir):
+        """Full gitignore semantics in a git repository"""
+        tmpdir = Path(tmpdir)
+        git.Repo.init(tmpdir)
+        # Cases the fnmatch fallback misses
+        (tmpdir / ".gitignore").write_text(".venv\n*.log\n!keep.log\n")
+        (tmpdir / "dir1").mkdir()
+        (tmpdir / "dir1" / ".gitignore").write_text("should-ignore-*\n")
+        for rpath in [
+            ".venv/should-ignore-1",
+            "debug.log",
+            "dir1/should-ignore-2",
+            "dir1/should-match-1",
+            "keep.log",
+        ]:
+            p = tmpdir / rpath
+            p.parent.mkdir(exist_ok=True)
+            p.touch()
+        files = nf_core.utils.get_wf_files(tmpdir)
+        files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
+        assert files == [".gitignore", "dir1/.gitignore", "dir1/should-match-1", "keep.log"]

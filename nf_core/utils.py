@@ -1494,9 +1494,38 @@ def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
         yield Path(tmp)
 
 
-def get_wf_files(wf_path: Path):
-    """Return a list of all files in a directory (ignores .gitigore files)"""
+def get_wf_files(wf_path: Path) -> list[str]:
+    """Return all files in a directory that are not ignored by git.
 
+    Uses `git ls-files` at a repository root, else fnmatches the top-level .gitignore.
+
+    Args:
+        wf_path (Path): The directory to list.
+
+    Returns:
+        list[str]: Paths of the files, prefixed with ``wf_path``.
+    """
+    import subprocess
+
+    # In a subdirectory, git would apply the parent repo's ignore rules
+    if not Path(wf_path, ".git").exists():
+        return _get_wf_files_without_git(wf_path)
+    try:
+        proc = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            cwd=wf_path,
+            capture_output=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return _get_wf_files_without_git(wf_path)
+    # Dedupe merge-conflict stages; skip deleted tracked files
+    paths = (Path(wf_path, f) for f in dict.fromkeys(proc.stdout.decode().split("\0")) if f)
+    return [str(path) for path in paths if path.is_file()]
+
+
+def _get_wf_files_without_git(wf_path: Path) -> list[str]:
+    """Fallback for `get_wf_files` outside a git repository."""
     wf_files = []
 
     ignore = [".git/*"]
@@ -1511,11 +1540,21 @@ def get_wf_files(wf_path: Path):
     except FileNotFoundError:
         pass
 
-    for path in Path(wf_path).rglob("*"):
-        rpath = str(path.relative_to(wf_path))
-        if any(fnmatch.fnmatch(rpath, pattern) for pattern in ignore):
-            continue
-        if path.is_file():
-            wf_files.append(str(path))
+    # A trailing "*" also matches everything below "dir/", so prune such dirs
+    dir_ignore = [pattern for pattern in ignore if pattern.endswith("*")]
+    root = str(wf_path)
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Relative prefix as a plain string, for speed
+        prefix = dirpath[len(root) :].lstrip(os.sep)
+        prefix = prefix + os.sep if prefix else ""
+        dirnames[:] = [
+            d for d in dirnames if not any(fnmatch.fnmatch(f"{prefix}{d}/", pattern) for pattern in dir_ignore)
+        ]
+        for filename in filenames:
+            if any(fnmatch.fnmatch(prefix + filename, pattern) for pattern in ignore):
+                continue
+            path = Path(dirpath, filename)
+            if path.is_file():
+                wf_files.append(str(path))
 
     return wf_files
