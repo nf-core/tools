@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 def create_logo(
     text: str,
     directory: Path,
-    filename: str = "",
+    filename: str | None = None,
     theme: str = "light",
     width: int = 2300,
     img_format: str = "png",

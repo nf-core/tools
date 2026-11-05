@@ -1,5 +1,6 @@
 import json
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 from typing import cast
 
@@ -34,7 +35,9 @@ class ComponentList(ComponentCommand):
             nf_dir_req = False
         return super()._configure_repo_and_paths(nf_dir_req)
 
-    def list_components(self, keywords: list[str] | None = None, print_json: bool = False) -> rich.table.Table | str:
+    def list_components(
+        self, keywords: Sequence[str] | None = None, print_json: bool = False
+    ) -> rich.table.Table | str:
         keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo
@@ -48,7 +51,7 @@ class ComponentList(ComponentCommand):
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
         components: list[str] = []
 
-        def pattern_msg(keywords: list[str]) -> str:
+        def pattern_msg(keywords: Sequence[str]) -> str:
             if len(keywords) == 0:
                 return ""
             if len(keywords) == 1:
