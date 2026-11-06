@@ -5,6 +5,8 @@ import logging
 import os
 import sys
 from pathlib import Path
+from types import TracebackType
+from typing import TYPE_CHECKING
 
 import rich_click as click
 import rich_click.rich_click as rc
@@ -13,20 +15,23 @@ from nf_core import __version__
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.utils import check_if_outdated, nfcore_logo, stderr
 
+if TYPE_CHECKING:
+    from click.shell_completion import CompletionItem
 
-def autocomplete_pipelines(ctx, param, incomplete):
+
+def autocomplete_pipelines(ctx: click.Context, param: click.Parameter, incomplete: str) -> "list[CompletionItem]":
     from nf_core.pipelines.list import autocomplete_pipelines as complete
 
     return complete(ctx, param, incomplete)
 
 
-def autocomplete_modules(ctx, param, incomplete):
+def autocomplete_modules(ctx: click.Context, param: click.Parameter, incomplete: str) -> "list[CompletionItem]":
     from nf_core.components.components_completion import autocomplete_modules as complete
 
     return complete(ctx, param, incomplete)
 
 
-def autocomplete_subworkflows(ctx, param, incomplete):
+def autocomplete_subworkflows(ctx: click.Context, param: click.Parameter, incomplete: str) -> "list[CompletionItem]":
     from nf_core.components.components_completion import autocomplete_subworkflows as complete
 
     return complete(ctx, param, incomplete)
@@ -45,7 +50,9 @@ rc.COMMANDS_BEFORE_OPTIONS = True
 # Define exceptions for which no traceback should be printed,
 # because they are actually preliminary, but intended program terminations.
 # (Custom exceptions are cleaner than `sys.exit(1)`, which we used before)
-def selective_traceback_hook(exctype, value, traceback):
+def selective_traceback_hook(
+    exctype: type[BaseException], value: BaseException, traceback: TracebackType | None
+) -> None:
     from nf_core.pipelines.download.download import DownloadError
 
     if exctype in {DownloadError, UserWarning, ValueError}:  # extend set as needed
@@ -63,13 +70,11 @@ sys.excepthook = selective_traceback_hook
 # Define callback function to normalize the case of click arguments,
 # which is used to make the module/subworkflow names, provided by the
 # user on the cli, case insensitive.
-def normalize_case(ctx, param, component_name):
-    if component_name is not None:
-        return component_name.casefold()
+def normalize_case(ctx: click.Context, param: click.Parameter, component_name: str | None) -> str | None:
+    return component_name.casefold() if component_name is not None else None
 
 
-def run_nf_core():
-    # print nf-core header if environment variable is not set
+def run_nf_core() -> None:  # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
         stderr.print("\n")
@@ -108,7 +113,7 @@ def run_nf_core():
         "options_table_column_types": ["opt_long", "opt_short", "help"],
     }
 )
-def nf_core_cli(ctx, verbose, hide_progress, log_file):
+def nf_core_cli(ctx: click.Context, verbose: bool, hide_progress: bool, log_file: str | None) -> None:
     """
     nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
 
@@ -157,7 +162,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 # nf-core interface (registered by hand so trogon is only imported when run)
 @nf_core_cli.command("interface", help="Launch the nf-core interface")
 @click.pass_context
-def interface(ctx):
+def interface(ctx: click.Context) -> None:
     from trogon import Trogon
 
     Trogon(nf_core_cli, app_name=None, command_name="interface", click_context=ctx).run()
@@ -171,7 +176,7 @@ def interface(ctx):
     commands=["bump-version", "containers", "create", "create-logo", "lint", "rocrate", "schema", "sync"],
 )
 @click.pass_context
-def pipelines(ctx):
+def pipelines(ctx: click.Context) -> None:
     """
     Commands to manage nf-core pipelines.
     """
@@ -193,15 +198,29 @@ def pipelines(ctx):
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
-@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
-@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option(
+    "-o", "--outdir", type=click.Path(path_type=Path), help="Output directory for new pipeline (default: pipeline name)"
+)
+@click.option(
+    "-t", "--template-yaml", type=click.Path(path_type=Path), help="Pass a YAML file to customize the template"
+)
 @click.option(
     "--organisation",
     type=str,
     default="nf-core",
     help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
 )
-def command_pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
+def command_pipelines_create(
+    ctx: click.Context,
+    name: str | None,
+    description: str | None,
+    author: str | None,
+    version: str,
+    force: bool,
+    outdir: Path | None,
+    template_yaml: Path | None,
+    organisation: str,
+) -> None:
     """
     Create a new pipeline using the nf-core template.
     """
@@ -213,7 +232,7 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
 # nf-core pipelines containers subcommands
 @pipelines.group("containers", aliases=["container", "con"])
 @click.pass_context
-def pipelines_containers(ctx):
+def pipelines_containers(ctx: click.Context) -> None:
     """
     Commands to manage pipeline containers.
     """
@@ -226,12 +245,12 @@ def pipelines_containers(ctx):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory [dim]\[default: current working directory][/]",
 )
 @click.pass_context
-def command_pipelines_containers_create_configs(ctx, directory):
+def command_pipelines_containers_create_configs(ctx: click.Context, directory: Path) -> None:
     """
     Regenerate the pipeline container config files.
     """
@@ -246,7 +265,7 @@ def command_pipelines_containers_create_configs(ctx, directory):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory [dim]\[default: current working directory][/]",
 )
@@ -304,19 +323,19 @@ def command_pipelines_containers_create_configs(ctx, directory):
 )
 @click.pass_context
 def command_pipelines_lint(
-    ctx,
-    directory,
-    release,
-    fix,
-    key,
-    show_passed,
-    fail_ignored,
-    fail_warned,
-    markdown,
-    json,
-    sort_by,
-    plain_text,
-):
+    ctx: click.Context,
+    directory: Path,
+    release: bool,
+    fix: tuple[str, ...],
+    key: tuple[str, ...],
+    show_passed: bool,
+    fail_ignored: bool,
+    fail_warned: bool,
+    markdown: str | None,
+    json: str | None,
+    sort_by: str,
+    plain_text: bool,
+) -> None:
     """
     Check pipeline code against nf-core guidelines.
     """
@@ -341,7 +360,7 @@ def command_pipelines_lint(
     multiple=True,
     help="Pipeline release to download. Multiple invocations are possible, e.g. `-r 1.1 -r 1.2`",
 )
-@click.option("-o", "--outdir", type=str, help="Output directory")
+@click.option("-o", "--outdir", type=click.Path(path_type=Path), help="Output directory")
 @click.option(
     "-x",
     "--compress",
@@ -391,7 +410,7 @@ def command_pipelines_lint(
 @click.option(
     "-i",
     "--container-cache-index",
-    type=str,
+    type=click.Path(path_type=Path),
     help="List of images already available in a remote `singularity.cacheDir`. Not available for Docker containers.",
 )
 @click.option(
@@ -403,21 +422,21 @@ def command_pipelines_lint(
 )
 @click.pass_context
 def command_pipelines_download(
-    ctx,
-    pipeline,
-    revision,
-    outdir,
-    compress,
-    force,
-    platform,
-    download_configuration,
-    tag,
-    container_system,
-    container_library,
-    container_cache_utilisation,
-    container_cache_index,
-    parallel_downloads,
-):
+    ctx: click.Context,
+    pipeline: str | None,
+    revision: tuple[str, ...],
+    outdir: Path | None,
+    compress: str | None,
+    force: bool,
+    platform: bool,
+    download_configuration: str,
+    tag: tuple[str, ...],
+    container_system: str | None,
+    container_library: tuple[str, ...],
+    container_cache_utilisation: str | None,
+    container_cache_index: Path | None,
+    parallel_downloads: int,
+) -> None:
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
     """
@@ -468,7 +487,15 @@ def command_pipelines_download(
 )
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 @click.pass_context
-def command_pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts):
+def command_pipelines_create_params_file(
+    ctx: click.Context,
+    pipeline: str | None,
+    revision: str | None,
+    output: str,
+    force: bool,
+    show_hidden: bool,
+    no_prompts: bool,
+) -> None:
     """
     Build a parameter file for a pipeline.
     """
@@ -498,13 +525,13 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
     "-o",
     "--params-out",
     type=click.Path(path_type=Path),
-    default=str(Path.cwd() / "nf-params.json"),
+    default="nf-params.json",
     help="Path to save run parameters file",
 )
 @click.option(
     "-p",
     "--params-in",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     help="Set of input run params to use from a previous run",
 )
 @click.option(
@@ -531,18 +558,18 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 @click.pass_context
 def command_pipelines_launch(
-    ctx,
-    pipeline,
-    launch_id,
-    revision,
-    command_only,
-    params_in,
-    params_out,
-    save_all,
-    show_hidden,
-    url,
-    no_prompts,
-):
+    ctx: click.Context,
+    pipeline: str | None,
+    launch_id: str | None,
+    revision: str | None,
+    command_only: bool,
+    params_in: Path | None,
+    params_out: Path,
+    save_all: bool,
+    show_hidden: bool,
+    url: str,
+    no_prompts: bool,
+) -> None:
     """
     Launch a pipeline using a web GUI or command line prompts.
     """
@@ -566,7 +593,9 @@ def command_pipelines_launch(
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
 @click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
 @click.pass_context
-def command_pipelines_list(ctx, keywords, sort, json, show_archived):
+def command_pipelines_list(
+    ctx: click.Context, keywords: tuple[str, ...], sort: str, json: bool, show_archived: bool
+) -> None:
     """
     List available nf-core pipelines with local info.
     """
@@ -579,19 +608,19 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
 @pipelines.command("rocrate")
 @click.argument(
     "pipeline_dir",
-    type=click.Path(exists=True),
-    default=Path.cwd(),
+    type=click.Path(exists=True, path_type=Path),
+    default=".",
     required=True,
     metavar="<pipeline directory>",
 )
 @click.option(
     "-j",
     "--json_path",
-    default=Path.cwd(),
-    type=str,
+    default=".",
+    type=click.Path(path_type=Path),
     help="Path to save RO Crate metadata json file to",
 )
-@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option("-z", "--zip_path", type=click.Path(path_type=Path), help="Path to save RO Crate zip file to")
 @click.option(
     "-pv",
     "--pipeline_version",
@@ -600,13 +629,7 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     default="",
 )
 @click.pass_context
-def rocrate(
-    ctx,
-    pipeline_dir: str,
-    json_path: str,
-    zip_path: str,
-    pipeline_version: str,
-):
+def rocrate(ctx: click.Context, pipeline_dir: Path, json_path: Path, zip_path: Path, pipeline_version: str) -> None:
     """
     Make an Research Object Crate
     """
@@ -622,7 +645,7 @@ def rocrate(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -651,17 +674,17 @@ def rocrate(
 @click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
-    ctx,
-    directory,
-    from_branch,
-    pull_request,
-    github_repository,
-    username,
-    template_yaml,
-    force_pr,
-    blog_post,
-    no_prompts,
-):
+    ctx: click.Context,
+    directory: Path,
+    from_branch: str | None,
+    pull_request: bool,
+    github_repository: str | None,
+    username: str | None,
+    template_yaml: str | None,
+    force_pr: bool,
+    blog_post: str | None,
+    no_prompts: bool,
+) -> None:
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
     """
@@ -689,7 +712,7 @@ def command_pipelines_sync(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -700,7 +723,7 @@ def command_pipelines_sync(
     default=False,
     help="Bump required nextflow version instead of pipeline version",
 )
-def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
+def command_pipelines_bump_version(ctx: click.Context, new_version: str, directory: Path, nextflow: bool) -> None:
     """
     Update nf-core pipeline version number with `nf-core pipelines bump-version`.
     """
@@ -712,7 +735,9 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
 # nf-core pipelines create-logo
 @pipelines.command("create-logo")
 @click.argument("logo-text", metavar="<logo_text>")
-@click.option("-d", "--dir", "directory", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option(
+    "-d", "--dir", "directory", type=click.Path(path_type=Path), default=".", help="Directory to save the logo in."
+)
 @click.option(
     "-n",
     "--name",
@@ -748,7 +773,9 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def command_pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force):
+def command_pipelines_create_logo(
+    logo_text: str, directory: Path, name: str | None, theme: str, width: int, img_format: str, force: bool
+) -> None:
     """
     Generate a logo with the nf-core logo template.
     """
@@ -759,7 +786,7 @@ def command_pipelines_create_logo(logo_text, directory, name, theme, width, img_
 
 # nf-core pipelines schema subcommands
 @pipelines.group("schema")
-def pipeline_schema():
+def pipeline_schema() -> None:
     """
     Suite of tools for developers to manage pipeline schema.
 
@@ -775,7 +802,7 @@ def pipeline_schema():
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -785,18 +812,16 @@ def pipeline_schema():
     metavar="<pipeline name>",
     shell_complete=autocomplete_pipelines,
 )
-@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
-def command_pipelines_schema_validate(directory, pipeline, params):
+@click.argument("params", type=click.Path(exists=True, path_type=Path), required=True, metavar="<JSON params file>")
+# click fills the optional `pipeline` first, so it is always set once `params` is
+def command_pipelines_schema_validate(directory: Path, pipeline: str, params: Path) -> None:
     """
     Validate a set of parameters against a pipeline schema.
     """
-    if Path(directory, pipeline).exists():
-        # this is a local pipeline
-        pipeline = Path(directory, pipeline)
-
     from nf_core.commands_pipelines import pipelines_schema_validate
 
-    pipelines_schema_validate(pipeline, params)
+    local_pipeline = Path(directory, pipeline)
+    pipelines_schema_validate(local_pipeline if local_pipeline.exists() else pipeline, params)
 
 
 # nf-core pipelines schema build
@@ -805,7 +830,7 @@ def command_pipelines_schema_validate(directory, pipeline, params):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -825,7 +850,7 @@ def command_pipelines_schema_validate(directory, pipeline, params):
     default="https://nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
-def command_pipelines_schema_build(directory, no_prompts, web_only, url):
+def command_pipelines_schema_build(directory: Path, no_prompts: bool, web_only: bool, url: str) -> None:
     """
     Interactively build a pipeline schema from Nextflow params.
     """
@@ -840,17 +865,17 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.argument(
     "schema_file",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
-def command_pipelines_schema_lint(directory, schema_file):
+def command_pipelines_schema_lint(directory: Path, schema_file: Path) -> None:
     """
     Check that a given pipeline schema is valid.
     """
@@ -865,13 +890,13 @@ def command_pipelines_schema_lint(directory, schema_file):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.argument(
     "schema_file",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default="nextflow_schema.json",
     required=False,
     metavar="<pipeline schema>",
@@ -900,7 +925,9 @@ def command_pipelines_schema_lint(directory, schema_file):
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def command_pipelines_schema_docs(directory, schema_file, output, output_format, force, columns):
+def command_pipelines_schema_docs(
+    directory: Path, schema_file: Path, output: str | None, output_format: str, force: bool, columns: str
+) -> None:
     """
     Outputs parameter documentation for a pipeline schema.
     """
@@ -935,7 +962,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, output_format,
 @click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
 @click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions", "containers"])
 @click.pass_context
-def modules(ctx, git_remote, branch, no_pull):
+def modules(ctx: click.Context, git_remote: str, branch: str | None, no_pull: bool) -> None:
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -952,7 +979,7 @@ def modules(ctx, git_remote, branch, no_pull):
 # nf-core modules list subcommands
 @modules.group("list", aliases=["ls"])
 @click.pass_context
-def modules_list(ctx):
+def modules_list(ctx: click.Context) -> None:
     """
     List modules in a local pipeline or remote repository.
     """
@@ -964,7 +991,7 @@ def modules_list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def command_modules_list_remote(ctx, keywords, json):
+def command_modules_list_remote(ctx: click.Context, keywords: tuple[str, ...], json: bool) -> None:
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -982,11 +1009,11 @@ def command_modules_list_remote(ctx, keywords, json):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
+def command_modules_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -1010,7 +1037,7 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1029,7 +1056,9 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
     help="Force reinstallation of module if it already exists",
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def command_modules_install(ctx, tool, directory, prompt, force, sha):
+def command_modules_install(
+    ctx: click.Context, tool: str | None, directory: Path, prompt: bool, force: bool, sha: str | None
+) -> None:
     """
     Install DSL2 modules within a pipeline.
     """
@@ -1053,7 +1082,7 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1110,19 +1139,19 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     help="Skip the cascade to linked components. Conflicts with --update-deps and --all.",
 )
 def command_modules_update(
-    ctx,
-    tool,
-    directory,
-    force,
-    prompt,
-    sha,
-    install_all,
-    preview,
-    save_diff,
-    update_deps,
-    limit_output,
-    skip_deps,
-):
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    force: bool,
+    prompt: bool,
+    sha: str | None,
+    install_all: bool,
+    preview: bool | None,
+    save_diff: str | None,
+    update_deps: bool,
+    limit_output: bool,
+    skip_deps: bool,
+) -> None:
     """
     Update DSL2 modules within a pipeline.
     """
@@ -1148,12 +1177,12 @@ def command_modules_update(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
-def command_modules_patch(ctx, tool, directory, remove):
+def command_modules_patch(ctx: click.Context, tool: str | None, directory: Path, remove: bool) -> None:
     """
     Create a patch file for minor changes in a module
     """
@@ -1177,7 +1206,7 @@ def command_modules_patch(ctx, tool, directory, remove):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1188,7 +1217,7 @@ def command_modules_patch(ctx, tool, directory, remove):
     default=False,
     help="Force removal of the module, even if it is included in the pipeline.",
 )
-def command_modules_remove(ctx, directory, tool, force):
+def command_modules_remove(ctx: click.Context, directory: Path, tool: str | None, force: bool) -> None:
     """
     Remove a module from a pipeline.
     """
@@ -1201,7 +1230,9 @@ def command_modules_remove(ctx, directory, tool, force):
 @modules.command("create", aliases=["c"])
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option(
+    "-d", "--dir", "directory", type=click.Path(exists=True, path_type=Path), default=".", metavar="<directory>"
+)
 @click.option(
     "-a",
     "--author",
@@ -1259,18 +1290,18 @@ def command_modules_remove(ctx, directory, tool, force):
     help="Create a module from the template without TODOs or examples",
 )
 def command_modules_create(
-    ctx,
-    tool,
-    directory,
-    author,
-    label,
-    meta,
-    no_meta,
-    force,
-    conda_name,
-    conda_package_version,
-    empty_template,
-):
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    author: str | None,
+    label: str | None,
+    meta: bool,
+    no_meta: bool,
+    force: bool,
+    conda_name: str | None,
+    conda_package_version: str | None,
+    empty_template: bool,
+) -> None:
     """
     Create a new DSL2 module from the nf-core template.
     """
@@ -1313,7 +1344,7 @@ def command_modules_create(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
@@ -1338,7 +1369,16 @@ def command_modules_create(
     default=None,
     help="Run tests with a specific profile",
 )
-def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, verbose):
+def command_modules_test(
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    no_prompts: bool,
+    update: bool,
+    once: bool,
+    profile: str | None,
+    verbose: bool,
+) -> None:
     """
     Run nf-test for a module. Only works on module repositories, not pipeline repositories.
     """
@@ -1364,7 +1404,7 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<pipeline/modules directory>",
 )
@@ -1408,8 +1448,20 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 def command_modules_lint(
-    ctx, tool, directory, registry, key, all_modules, fail_warned, local, passed, sort_by, fix_version, fix, plain_text
-):
+    ctx: click.Context,
+    tool: str | None,
+    directory: Path,
+    registry: str,
+    key: tuple[str, ...],
+    all_modules: bool,
+    fail_warned: bool,
+    local: bool,
+    passed: bool,
+    sort_by: str,
+    fix_version: bool,
+    fix: bool,
+    plain_text: bool,
+) -> None:
     """
     Lint one or more modules in a directory.
     """
@@ -1447,11 +1499,11 @@ def command_modules_lint(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def command_modules_info(ctx, tool, directory):
+def command_modules_info(ctx: click.Context, tool: str | None, directory: Path) -> None:
     """
     Show developer usage information about a given module.
     """
@@ -1475,14 +1527,16 @@ def command_modules_info(ctx, tool, directory):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
 @click.option("-a", "--all", "all_modules", is_flag=True, help="Run on all modules")
 @click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
 @click.option("-r", "--dry-run", is_flag=True, help="Dry run the command")
-def command_modules_bump_versions(ctx, tool, directory, all_modules, show_all, dry_run):
+def command_modules_bump_versions(
+    ctx: click.Context, tool: str | None, directory: Path, all_modules: bool, show_all: bool, dry_run: bool
+) -> None:
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
@@ -1494,7 +1548,7 @@ def command_modules_bump_versions(ctx, tool, directory, all_modules, show_all, d
 
 @modules.group("containers", aliases=["container", "con"])
 @click.pass_context
-def modules_containers(ctx):
+def modules_containers(ctx: click.Context) -> None:
     """Manage module container builds and metadata [yellow](beta)[/]."""
     from rich.panel import Panel
 
@@ -1537,7 +1591,7 @@ def modules_containers(ctx):
     default=False,
     help="Force container creation even if the container already exists.",
 )
-def command_modules_containers_create(ctx, module: str, directory: Path, force: bool) -> None:
+def command_modules_containers_create(ctx: click.Context, module: str, directory: Path, force: bool) -> None:
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
@@ -1556,7 +1610,7 @@ def command_modules_containers_create(ctx, module: str, directory: Path, force: 
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-def command_modules_containers_conda_lock(ctx, module: str) -> None:
+def command_modules_containers_conda_lock(ctx: click.Context, module: str) -> None:
     """
     Build a Docker linux/arm64 container and fetch the conda lock file for a module.
     """
@@ -1583,7 +1637,7 @@ def command_modules_containers_conda_lock(ctx, module: str) -> None:
     default=False,
     help="Output in plain text format",
 )
-def command_modules_containers_list(ctx, module, plain_text):
+def command_modules_containers_list(ctx: click.Context, module: str | None, plain_text: bool) -> None:
     """
     Print containers defined in a module meta.yml.
     """
@@ -1618,7 +1672,7 @@ def command_modules_containers_list(ctx, module, plain_text):
 @click.command_panel("For pipeline development", commands=["list", "info", "install", "update", "remove", "patch"])
 @click.command_panel("For module development", commands=["create", "lint", "test", "bump-versions"])
 @click.pass_context
-def subworkflows(ctx, git_remote, branch, no_pull):
+def subworkflows(ctx: click.Context, git_remote: str, branch: str | None, no_pull: bool) -> None:
     """
     Commands to manage Nextflow DSL2 subworkflows (tool wrappers).
     """
@@ -1636,7 +1690,9 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 @subworkflows.command("create", aliases=["c"])
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option(
+    "-d", "--dir", "directory", type=click.Path(exists=True, path_type=Path), default=".", metavar="<directory>"
+)
 @click.option(
     "-a",
     "--author",
@@ -1651,7 +1707,9 @@ def subworkflows(ctx, git_remote, branch, no_pull):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def command_subworkflows_create(ctx, subworkflow, directory, author, force):
+def command_subworkflows_create(
+    ctx: click.Context, subworkflow: str | None, directory: Path, author: str | None, force: bool
+) -> None:
     """
     Create a new subworkflow from the nf-core template.
     """
@@ -1675,7 +1733,7 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
@@ -1700,7 +1758,15 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force):
     default=None,
     help="Run tests with a specific profile",
 )
-def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
+def command_subworkflows_test(
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    no_prompts: bool,
+    update: bool,
+    once: bool,
+    profile: str | None,
+) -> None:
     """
     Run nf-test for a subworkflow.
     """
@@ -1712,7 +1778,7 @@ def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, o
 # nf-core subworkflows list subcommands
 @subworkflows.group("list", aliases=["ls"])
 @click.pass_context
-def subworkflows_list(ctx):
+def subworkflows_list(ctx: click.Context) -> None:
     """
     List subworkflows in a local pipeline or remote repository.
     """
@@ -1724,7 +1790,7 @@ def subworkflows_list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def command_subworkflows_list_remote(ctx, keywords, json):
+def command_subworkflows_list_remote(ctx: click.Context, keywords: tuple[str, ...], json: bool) -> None:
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -1742,11 +1808,11 @@ def command_subworkflows_list_remote(ctx, keywords, json):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
+def command_subworkflows_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
@@ -1770,7 +1836,7 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<pipeline/modules directory>",
 )
@@ -1809,8 +1875,19 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     help="Print results in plain text format without Rich formatting (easier to copy). Can also be enabled with env var NF_CORE_LINT_OUTPUT.",
 )
 def command_subworkflows_lint(
-    ctx, subworkflow, directory, registry, key, all_subworkflows, fail_warned, local, passed, sort_by, fix, plain_text
-):
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    registry: str,
+    key: tuple[str, ...],
+    all_subworkflows: bool,
+    fail_warned: bool,
+    local: bool,
+    passed: bool,
+    sort_by: str,
+    fix: bool,
+    plain_text: bool,
+) -> None:
     """
     Lint one or more subworkflows in a directory.
     """
@@ -1847,11 +1924,11 @@ def command_subworkflows_lint(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def command_subworkflows_info(ctx, subworkflow, directory):
+def command_subworkflows_info(ctx: click.Context, subworkflow: str | None, directory: Path) -> None:
     """
     Show developer usage information about a given subworkflow.
     """
@@ -1875,7 +1952,7 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1906,7 +1983,15 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     default=False,
     help="With --force, refresh only the named subworkflow; leave transitive deps' files and SHAs pinned.",
 )
-def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps):
+def command_subworkflows_install(
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    prompt: bool,
+    force: bool,
+    sha: str | None,
+    skip_deps: bool,
+) -> None:
     """
     Install DSL2 subworkflow within a pipeline.
     """
@@ -1930,12 +2015,12 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
-def subworkflows_patch(ctx, subworkflow, directory, remove):
+def subworkflows_patch(ctx: click.Context, subworkflow: str | None, directory: Path, remove: bool) -> None:
     """
     Create a patch file for minor changes in a subworkflow
 
@@ -1975,7 +2060,7 @@ def subworkflows_patch(ctx, subworkflow, directory, remove):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1986,7 +2071,7 @@ def subworkflows_patch(ctx, subworkflow, directory, remove):
     default=False,
     help="Force removal of the subworkflow, even if it is included in the pipeline.",
 )
-def command_subworkflows_remove(ctx, directory, subworkflow, force):
+def command_subworkflows_remove(ctx: click.Context, directory: Path, subworkflow: str | None, force: bool) -> None:
     """
     Remove a subworkflow from a pipeline.
     """
@@ -2010,7 +2095,7 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -2074,19 +2159,19 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     help="Skip the cascade to linked components. Conflicts with --update-deps and --all.",
 )
 def command_subworkflows_update(
-    ctx,
-    subworkflow,
-    directory,
-    force,
-    prompt,
-    sha,
-    install_all,
-    preview,
-    save_diff,
-    update_deps,
-    limit_output,
-    skip_deps,
-):
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    force: bool,
+    prompt: bool,
+    sha: str | None,
+    install_all: bool,
+    preview: bool | None,
+    save_diff: str | None,
+    update_deps: bool,
+    limit_output: bool,
+    skip_deps: bool,
+) -> None:
     """
     Update DSL2 subworkflow within a pipeline.
     """
@@ -2111,7 +2196,7 @@ def command_subworkflows_update(
 # nf-core test-dataset subcommands
 @nf_core_cli.group(aliases=["t", "td", "tds", "test-datasets"])
 @click.pass_context
-def test_datasets(ctx):
+def test_datasets(ctx: click.Context) -> None:
     """
     Commands to manage nf-core test datasets.
     """
@@ -2139,7 +2224,9 @@ def test_datasets(ctx):
     help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
 @click.argument("query", required=False)
-def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
+def command_test_dataset_search(
+    ctx: click.Context, branch: str | None, generate_nf_path: bool, generate_dl_url: bool, query: str | None
+) -> None:
     """
     Search files filtered by QUERY on a specified branch in the nf-core/test-datasets repository.
     If no QUERY is given or QUERY is ambiguous, an auto-completion form is shown.
@@ -2167,7 +2254,9 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, 
     default=False,
     help="Auto-generate a github url for downloading the test data file based on the branch and query result. Only applicable when not using -p / --generate-nf-path",
 )
-def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
+def command_test_dataset_list_remote(
+    ctx: click.Context, branch: str | None, generate_nf_path: bool, generate_dl_url: bool
+) -> None:
     """
     List files on a specified branch in the nf-core/test-datasets repository.
     """
@@ -2179,7 +2268,7 @@ def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_
 # nf-core test-datasets list-branches
 @test_datasets.command("list-branches", aliases=["lsb"])
 @click.pass_context
-def command_test_datasets_list_branches(ctx):
+def command_test_datasets_list_branches(ctx: click.Context) -> None:
     """
     List remote branches with test data in the nf-core/test-dataset repository.
     """

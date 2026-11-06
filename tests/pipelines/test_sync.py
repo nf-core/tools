@@ -86,7 +86,7 @@ class TestModules(TestPipelines):
         with open(nf_core_yml_path, "w") as fh:
             yaml.dump(nf_core_yml.model_dump(), fh)
 
-        psync = nf_core.pipelines.sync.PipelineSync(tmp_dir)
+        psync = nf_core.pipelines.sync.PipelineSync(Path(tmp_dir))
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
         assert "does not appear to be a git repository" in exc_info.value.args[0]

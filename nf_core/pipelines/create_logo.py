@@ -11,8 +11,8 @@ log = logging.getLogger(__name__)
 
 def create_logo(
     text: str,
-    directory: Path | str,
-    filename: str = "",
+    directory: Path,
+    filename: str | None = None,
     theme: str = "light",
     width: int = 2300,
     img_format: str = "png",
@@ -21,7 +21,6 @@ def create_logo(
     """Create a logo for a pipeline."""
     if not text:
         raise UserWarning("Please provide the name of the text to put on the logo.")
-    directory = Path(directory)
     if not directory.is_dir():
         log.debug(f"Creating directory {directory}")
         directory.mkdir(parents=True, exist_ok=True)
@@ -101,7 +100,7 @@ def create_logo(
                 log.error("Failed to create logo, no image object created.")
 
             # Save to cache
-            Path(cache_path.parent).mkdir(parents=True, exist_ok=True)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
             log.debug(f"Saving logo to cache: {cache_path}")
             if img is not None:
                 img.save(cache_path, "PNG")

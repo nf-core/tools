@@ -125,7 +125,7 @@ class TestModulesUtils(TestModules):
 
         with patch(
             "nf_core.modules.modules_utils.NFCORE_CACHE_DIR",
-            str(self.tmp_path),
+            self.tmp_path,
         ):
             cache_path = self.tmp_path / "EDAM.tsv"
 
