@@ -36,7 +36,7 @@ class PipelineCreate:
         no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False. Used for tests and sync command.
             May the force be with you.
-        outdir (str): Path to the local output directory.
+        outdir (Path): Path to the local output directory.
         template_config (str|CreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
@@ -51,8 +51,8 @@ class PipelineCreate:
         version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
-        outdir: Path | str | None = None,
-        template_config: CreateConfig | str | Path | None = None,
+        outdir: Path | None = None,
+        template_config: CreateConfig | Path | None = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: str | None = None,
@@ -63,14 +63,14 @@ class PipelineCreate:
         elif from_config_file:
             # Try reading config file
             try:
-                _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
+                _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path.cwd())
                 # Obtain a CreateConfig object from `.nf-core.yml` config file
                 if config_yml is not None and getattr(config_yml, "template", None) is not None:
                     self.config = CreateConfig(**config_yml["template"].model_dump(exclude_none=True))
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
                 # Update the output directory
-                self.config.outdir = outdir if outdir else Path().cwd()
+                self.config.outdir = outdir if outdir else Path.cwd()
             except (FileNotFoundError, UserWarning):
                 log.debug("The '.nf-core.yml' configuration file was not found.")
         elif (name and description and author) or (template_config and (isinstance(template_config, (str, Path)))):
@@ -93,10 +93,10 @@ class PipelineCreate:
         self.written_files: set[Path] = set()
 
         if self.config.outdir is None:
-            self.config.outdir = str(Path.cwd())
+            self.config.outdir = Path()
 
         self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
-            self.config.skip_features or [], str(self.config.outdir)
+            self.config.skip_features or [], self.config.outdir
         )
 
         # format strings in features yaml
@@ -123,7 +123,7 @@ class PipelineCreate:
         self.name = self.config.name
         self.force = self.config.force
 
-        if self.config.outdir == ".":
+        if self.config.outdir == Path():
             self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
         else:
             self.outdir = Path(self.config.outdir).absolute()
@@ -182,7 +182,7 @@ class PipelineCreate:
             organisation (str): Name of the GitHub organisation to create the pipeline.
             version (str): Version of the pipeline.
             force (bool): Overwrites a given workflow directory with the same name.
-            outdir (str): Path to the local output directory.
+            outdir (Path): Path to the local output directory.
         """
         if self.config.org is None:
             self.config.org = organisation
@@ -191,11 +191,11 @@ class PipelineCreate:
         if self.config.force is None:
             self.config.force = force if force else False
         if self.config.outdir is None:
-            self.config.outdir = outdir if outdir else "."
+            self.config.outdir = outdir or Path()
         if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
 
-    def obtain_jinja_params_dict(self, features_to_skip: list[str], pipeline_dir: str | Path) -> tuple[dict, list[str]]:
+    def obtain_jinja_params_dict(self, features_to_skip: list[str], pipeline_dir: Path) -> tuple[dict, list[str]]:
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -314,8 +314,8 @@ class PipelineCreate:
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
-        template_files = list(Path(template_dir).glob("**/*"))
-        template_files += list(Path(template_dir).glob("*"))
+        template_files = list(template_dir.glob("**/*"))
+        template_files += list(template_dir.glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.jinja_params["short_name"]
         rename_files: dict[str, str] = {
