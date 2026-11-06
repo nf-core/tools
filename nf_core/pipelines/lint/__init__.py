@@ -26,7 +26,7 @@ import nf_core.utils
 from nf_core import __version__
 from nf_core.components.lint import ComponentLint
 from nf_core.pipelines.lint_utils import console
-from nf_core.utils import NFCoreYamlLintConfig, strip_ansi_codes
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig, strip_ansi_codes
 from nf_core.utils import plural_s as _s
 
 from .actions_awsfulltest import actions_awsfulltest
@@ -123,6 +123,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         super().__init__(wf_path)
 
         self.lint_config: NFCoreYamlLintConfig | None = None
+        self.template_config: NFCoreTemplateConfig | None = None
         self.release_mode = release_mode
         self.fail_ignored = fail_ignored
         self.fail_warned = fail_warned
@@ -189,6 +190,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         _, tools_config = nf_core.utils.load_tools_config(self.wf_path)
         self.lint_config = getattr(tools_config, "lint", None) or None
+        self.template_config = getattr(tools_config, "template", None)
         is_correct = True
         # Check if we have any keys that don't match lint test names
         if self.lint_config is not None:
