@@ -1,6 +1,8 @@
 from pathlib import Path
 from unittest import mock
 
+import yaml
+
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
@@ -30,3 +32,19 @@ class TestLintFilesUnchanged(TestLint):
         assert len(results["failed"]) > 0
         assert str(failing_file) in results["failed"][0]
         assert results["could_fix"]
+
+    def test_files_unchanged_respects_skip_features(self):
+        """The comparison copy is rendered with the pipeline's skip_features"""
+        new_pipeline = self._make_pipeline_copy()
+        config_fn = Path(new_pipeline, ".nf-core.yml")
+        config = yaml.safe_load(config_fn.read_text())
+        config["template"]["skip_features"] = ["rocrate"]
+        config_fn.write_text(yaml.safe_dump(config))
+        # Without rocrate, the template's .prettierignore has no ro-crate entry
+        prettierignore = Path(new_pipeline, ".prettierignore")
+        prettierignore.write_text(prettierignore.read_text().replace("ro-crate-metadata.json\n", ""))
+
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+        lint_obj._load()
+        results = lint_obj.files_unchanged()
+        assert len(results.get("failed", [])) == 0

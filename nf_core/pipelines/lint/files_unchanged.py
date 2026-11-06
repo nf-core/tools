@@ -119,11 +119,14 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         names = ", ".join(c.get("name", "") for c in contributors if c.get("name"))
     else:
         names = manifest_config.get("author", "")
+    # Render the comparison with the pipeline's skipped features, so feature-dependent template content matches
+    skip_features = self.template_config.skip_features if self.template_config else None
     template_yaml = {
         "name": short_name,
         "description": manifest_config.get("description", ""),
         "author": names,
         "org": prefix,
+        "skip_features": skip_features or [],
     }
 
     template_yaml_path = Path(tmp_dir, "template.yaml")
