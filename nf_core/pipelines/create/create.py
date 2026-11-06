@@ -4,7 +4,6 @@ organization's specification based on a template.
 
 import configparser
 import logging
-import os
 import re
 import shutil
 from pathlib import Path
@@ -90,6 +89,8 @@ class PipelineCreate:
         if not self.no_git:
             self._check_default_branch()
         self.is_interactive = is_interactive
+        # Files written by this run; only these get formatted, so sync leaves gitignored files alone
+        self.written_files: set[Path] = set()
 
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
@@ -274,18 +275,12 @@ class PipelineCreate:
             # Create the RO-Crate metadata file (needs network access, so it is not part of render_template)
             rocrate_obj = ROCrate(self.outdir)
             rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
+            self.written_files.add(self.outdir / "ro-crate-metadata.json")
 
-        # Init the git repository and make the first commit
-        if not self.no_git:
+        if self.no_git:
+            self.format_written_files()
+        else:
             self.git_init_pipeline()
-            # Run prettier on files
-            if self.config.skip_features is None or not (
-                "code_linters" in self.config.skip_features or "github" in self.config.skip_features
-            ):
-                current_dir = Path.cwd()
-                os.chdir(self.outdir)
-                run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
-                os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
@@ -376,6 +371,7 @@ class PipelineCreate:
 
                 # Mirror file permissions
                 output_path.chmod(template_fn_path.stat().st_mode)
+                self.written_files.add(output_path)
 
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
@@ -391,13 +387,18 @@ class PipelineCreate:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                self.written_files.add(Path(config_fn))
 
         # generate container configs
         try_generate_container_configs(self.outdir)
 
-        # Run prettier on files for pipelines sync
-        log.debug("Running prettier on pipeline files")
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+    def format_written_files(self) -> None:
+        """Run prettier on the files written by this run, unless the pipeline skips code linting."""
+        # Without code_linters the pipeline has no .prettierrc.yml, so prettier would apply its default style
+        if "code_linters" in (self.config.skip_features or []):
+            log.debug("Pipeline skips code linters, not running prettier")
+            return
+        run_prettier_on_file(*self.written_files)
 
     def fix_linting(self):
         """
@@ -486,6 +487,9 @@ class PipelineCreate:
 
         log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
+        # Format between init (prek needs a repo) and the first commit, so the new pipeline starts clean
+        with nf_core.utils.set_wd(self.outdir):
+            self.format_written_files()
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         repo.active_branch.rename(self.default_branch)

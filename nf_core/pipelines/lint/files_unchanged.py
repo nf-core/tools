@@ -140,6 +140,7 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
     )
     # Only render the template files: building the RO-Crate is not needed for the comparison and needs network access
     create_obj.render_template()
+    create_obj.format_written_files()
 
     # Helper functions for file paths
     def _pf(file_path: str | Path) -> Path:

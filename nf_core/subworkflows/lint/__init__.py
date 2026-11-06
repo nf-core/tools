@@ -282,4 +282,5 @@ class SubworkflowLint(ComponentLint):
         with open(swf.meta_yml, "w") as fh:
             log.info(f"Updating {swf.meta_yml}")
             yaml.dump(meta_yaml_corrected, fh)
-            run_prettier_on_file(fh.name)
+        # After the with-block, so prettier sees the flushed file
+        run_prettier_on_file(swf.meta_yml)
