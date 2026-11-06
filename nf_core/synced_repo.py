@@ -418,7 +418,7 @@ class SyncedRepo:
         """
         Fetches metadata about the commit (dates, message, etc.)
         Args:
-            commit_sha (str): The SHA of the requested commit
+            sha (str): The SHA of the requested commit
         Returns:
             message (str): The commit message for the requested commit
             date (str): The commit date for the requested commit
