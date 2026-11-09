@@ -14,6 +14,7 @@ from urllib.parse import quote
 
 import requests
 import rich.progress
+import yaml
 from pydantic import ValidationError
 from rich.pretty import pretty_repr
 
@@ -89,6 +90,95 @@ def wave_request(method: str, url: str, json_body: dict | None = None, error_con
         return resp.json()
     except ValueError as e:
         raise RuntimeError(f"{error_context}: could not parse JSON response") from e
+
+
+_PIXI_CONDA_URL = re.compile(r"^- conda: (\S+)$")
+_PIXI_HASH = re.compile(r"^(md5|sha256): (\S+)$")
+_PIXI_PLATFORM = re.compile(r"^([a-z0-9]+-\w+):$")
+_PYPI_ERROR = "pixi lock contains PyPI packages, which a conda explicit spec cannot express"
+
+PixiLockContent = tuple[list[str], list[str], dict[str, dict[str, str]]]
+
+
+def _parse_pixi_lock_yaml(data: dict) -> PixiLockContent:
+    """Extract (platforms, env urls, hashes per url) from a parsed pixi.lock."""
+    env = (data.get("environments") or {}).get("default")
+    if not isinstance(env, dict):
+        raise ValueError("pixi lock has no 'default' environment")
+    env_packages = env.get("packages") or {}
+    entries = [entry for platform_entries in env_packages.values() for entry in platform_entries or []]
+    if any("pypi" in entry for entry in entries):
+        raise ValueError(_PYPI_ERROR)
+    hashes = {
+        record["conda"]: {k: str(record[k]) for k in ("md5", "sha256") if k in record}
+        for record in data.get("packages") or []
+        if isinstance(record, dict) and "conda" in record
+    }
+    return list(env_packages), [entry["conda"] for entry in entries if "conda" in entry], hashes
+
+
+# TODO: remove once Wave no longer serves locks from older builds or when we change the underlying template
+def _parse_pixi_lock_flattened(lock: str) -> PixiLockContent:
+    """Same as `_parse_pixi_lock_yaml`, for locks whose indentation Wave stripped."""
+    lines = [line.strip() for line in lock.splitlines()]
+    # First `packages:` is the environment's per-platform list, last one the package records.
+    last = len(lines) - 1 - lines[::-1].index("packages:")
+    env_lines, record_lines = lines[lines.index("packages:") + 1 : last], lines[last + 1 :]
+    if any(line.startswith("- pypi:") for line in env_lines):
+        raise ValueError(_PYPI_ERROR)
+    platforms = [m.group(1) for line in env_lines if (m := _PIXI_PLATFORM.match(line))]
+    urls = [m.group(1) for line in env_lines if (m := _PIXI_CONDA_URL.match(line))]
+    hashes: dict[str, dict[str, str]] = {}
+    url = None
+    for line in record_lines:
+        if m := _PIXI_CONDA_URL.match(line):
+            url = m.group(1)
+            hashes[url] = {}
+        elif line.startswith("- pypi:"):
+            url = None
+        elif url and (m := _PIXI_HASH.match(line)):
+            hashes[url][m.group(1)] = m.group(2)
+    return platforms, urls, hashes
+
+
+def pixi_lock_to_explicit(lock: str) -> str:
+    """
+    Convert a pixi.lock (as served by Wave's ``condalock`` endpoint) into a conda ``@EXPLICIT`` spec.
+
+    Parses the lock as YAML; if that fails, falls back to a line-based parser for locks whose
+    indentation Wave stripped. Anything that is not a pixi lock is returned unchanged.
+
+    Args:
+        lock: Lock file content from Wave.
+
+    Returns:
+        The lock as a conda explicit spec (``url#md5`` per package).
+
+    Raises:
+        ValueError: If the lock contains PyPI packages, multiple platforms, or packages without a record.
+    """
+    try:
+        data = yaml.safe_load(lock)
+    except yaml.YAMLError:
+        data = None
+    if isinstance(data, dict) and "environments" in data and "packages" in data:
+        platforms, urls, hashes = _parse_pixi_lock_yaml(data)
+    elif lock.lstrip().startswith("version:"):
+        platforms, urls, hashes = _parse_pixi_lock_flattened(lock)
+    else:
+        return lock
+
+    if len(platforms) > 1:
+        raise ValueError(f"pixi lock contains multiple platforms ({', '.join(platforms)}), expected one")
+    explicit = [f"# platform: {platforms[0]}"] if platforms else []
+    explicit.append("@EXPLICIT")
+    for url in urls:
+        if url not in hashes:
+            raise ValueError(f"pixi lock has no package record for {url}")
+        h = hashes[url]
+        suffix = h.get("md5") or (f"sha256:{h['sha256']}" if "sha256" in h else None)
+        explicit.append(f"{url}#{suffix}" if suffix else url)
+    return "\n".join(explicit) + "\n"
 
 
 class ModuleContainers:
@@ -786,6 +876,9 @@ class ModuleContainers:
             1. reading from meta.yml
             2. reading from cached containers
             3. building via the Wave API (``create()``)
+
+        Wave's pixi builds return a pixi.lock; it is converted to a conda ``@EXPLICIT`` spec,
+        the format Nextflow expects for ``.txt`` conda lock files.
         """
         assert platform in CONTAINER_PLATFORMS
 
@@ -805,7 +898,7 @@ class ModuleContainers:
         log.debug(f"Downloading conda lock file from {conda_lock_url}")
         resp = wave_send("get", conda_lock_url, error_context=f"Conda lock download for platform {platform}")
         log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
-        return resp.text
+        return pixi_lock_to_explicit(resp.text)
 
     def list_containers(self) -> list[tuple[str, str, str]]:
         """

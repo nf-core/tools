@@ -5,7 +5,8 @@ from unittest import mock
 import pytest
 import yaml
 
-from nf_core.modules.containers import ModuleContainers
+import nf_core.modules.containers as containers_mod
+from nf_core.modules.containers import ModuleContainers, pixi_lock_to_explicit
 from nf_core.modules.modules_utils import CondaEntry, ContainerEntry, MetaYmlContainers
 from nf_core.utils import CONTAINER_PLATFORMS, CONTAINER_SYSTEMS
 
@@ -512,3 +513,77 @@ class TestModuleContainersDockerfile(TestModuleContainersPipeline):
         original_meta = (self.module_dir / "meta.yml").read_text()
         self.module_containers.update_containers_in_meta()
         assert (self.module_dir / "meta.yml").read_text() == original_meta
+
+
+FASTQC_URL = "https://conda.anaconda.org/bioconda/noarch/fastqc-0.13.0-hdfd78af_0.conda"
+FONT_URL = "https://conda.anaconda.org/conda-forge/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2"
+# Shape of a Wave pixi.lock with intact indentation
+PIXI_LOCK = f"""\
+version: 6
+environments:
+  default:
+    channels:
+    - url: https://conda.anaconda.org/conda-forge/
+    - url: https://conda.anaconda.org/bioconda/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
+    packages:
+      linux-64:
+      - conda: {FASTQC_URL}
+      - conda: {FONT_URL}
+packages:
+- conda: {FASTQC_URL}
+  sha256: 05bf7ea1136779a76e8b547e73b54a89a5fbe17372552603f5736a2a03b344fa
+  md5: 174cc3aad0ac0fa338a2e1e7aa3154bb
+  depends:
+  - font-ttf-dejavu-sans-mono
+  - openjdk >=8.0.144
+  license: GPL >=3
+- conda: {FONT_URL}
+  sha256: 58d7f40d2940dd0a8aa28651239adbf5613254df0f75789919c4e6762054403b
+  md5: 0c96522c6bdaed4b1566d11387caaf45
+  license: BSD-3-Clause
+"""
+EXPECTED_EXPLICIT = f"""\
+# platform: linux-64
+@EXPLICIT
+{FASTQC_URL}#174cc3aad0ac0fa338a2e1e7aa3154bb
+{FONT_URL}#0c96522c6bdaed4b1566d11387caaf45
+"""
+
+
+@pytest.mark.parametrize(
+    "lock, uses_fallback",
+    [
+        pytest.param(PIXI_LOCK, False, id="indented"),
+        # Wave builds before #1082 stripped all indentation and added a leading blank line
+        pytest.param("\n" + "\n".join(line.lstrip() for line in PIXI_LOCK.splitlines()), True, id="flattened"),
+    ],
+)
+def test_pixi_lock_to_explicit(lock, uses_fallback):
+    with mock.patch(
+        "nf_core.modules.containers._parse_pixi_lock_flattened", wraps=containers_mod._parse_pixi_lock_flattened
+    ) as fallback:
+        assert pixi_lock_to_explicit(lock) == EXPECTED_EXPLICIT
+    assert fallback.called == uses_fallback
+
+
+def test_pixi_lock_to_explicit_passes_through_explicit_spec():
+    assert pixi_lock_to_explicit(EXPECTED_EXPLICIT) == EXPECTED_EXPLICIT
+
+
+def test_pixi_lock_to_explicit_falls_back_to_sha256():
+    lock = PIXI_LOCK.replace("  md5: 0c96522c6bdaed4b1566d11387caaf45\n", "")
+    assert f"{FONT_URL}#sha256:58d7f40d" in pixi_lock_to_explicit(lock)
+
+
+def test_pixi_lock_to_explicit_rejects_pypi():
+    lock = PIXI_LOCK.replace(f"      - conda: {FONT_URL}\n", f"      - conda: {FONT_URL}\n      - pypi: foo\n")
+    with pytest.raises(ValueError, match="PyPI"):
+        pixi_lock_to_explicit(lock)
+
+
+def test_pixi_lock_to_explicit_rejects_missing_record():
+    lock = PIXI_LOCK.replace(f"- conda: {FONT_URL}\n  sha256", "- conda: https://other/pkg.conda\n  sha256")
+    with pytest.raises(ValueError, match="no package record"):
+        pixi_lock_to_explicit(lock)
