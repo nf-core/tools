@@ -233,6 +233,7 @@ components_modules:
         modules_json: False
         base_config: False
         modules_config: False
+        container_configs: False
         files_exist:
           - "conf/base.config"
           - "conf/modules.config"
@@ -296,6 +297,26 @@ components_modules:
         schema_description: False
         nextflow_config: False
       nfcore_pipelines: True
+      custom_pipelines: True
+      default: true
+
+    container_configs:
+      skippable_paths: False
+      short_description: "Use per-platform container configs"
+      description: "Pin each module's container or conda lock file per platform via generated configs in `conf/`."
+      help_text: |
+        nf-core tools generates one `conf/containers_<platform>.config` file per container platform
+        (Docker, Singularity via ORAS or HTTPS, conda lock files; each for amd64 and arm64)
+        from the `containers` entries in the modules' `meta.yml` files.
+        These are kept up to date automatically when installing, updating or removing modules.
+
+        The pipeline gets matching profiles, e.g. `docker_arm`, `singularity_oras` or `conda_arm`,
+        to select the containers for a given platform.
+
+        Requires the "Use nf-core components" feature.
+      linting:
+        container_configs: False
+      nfcore_pipelines: False
       custom_pipelines: True
       default: true
 
