@@ -11,7 +11,13 @@ import rich_click.rich_click as rc
 
 from nf_core import __version__
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.utils import check_if_outdated, nfcore_logo, stderr
+from nf_core.utils import (
+    CONTAINER_ARCH_PROFILE_SUFFIX,
+    DEFAULT_CONTAINER_ARCH,
+    check_if_outdated,
+    nfcore_logo,
+    stderr,
+)
 
 
 def autocomplete_pipelines(ctx, param, incomplete):
@@ -401,6 +407,15 @@ def command_pipelines_lint(
     default=4,
     help="Number of allowed parallel tasks",
 )
+@click.option(
+    "-a",
+    "--container-arch",
+    type=click.Choice(list(CONTAINER_ARCH_PROFILE_SUFFIX)),
+    multiple=True,
+    default=[DEFAULT_CONTAINER_ARCH],
+    show_default=True,
+    help="CPU architecture to download container images for. Multiple invocations are possible, e.g. `-a amd64 -a arm64`",
+)
 @click.pass_context
 def command_pipelines_download(
     ctx,
@@ -417,6 +432,7 @@ def command_pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
+    container_arch,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -438,6 +454,7 @@ def command_pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        container_arch,
     )
 
 
