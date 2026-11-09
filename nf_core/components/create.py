@@ -17,7 +17,12 @@ from packaging.version import parse as parse_version
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import get_biotools_id, get_biotools_response, get_channel_info_from_biotools
+from nf_core.components.components_utils import (
+    DictWithStrAndTuple,
+    get_biotools_id,
+    get_biotools_response,
+    get_channel_info_from_biotools,
+)
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
@@ -29,6 +34,40 @@ ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=2, offset=0)
+
+# [EDAM ids, EDAM descriptions, file extensions], same shape as the bio.tools channel info
+BAM_ONTOLOGIES = (
+    [
+        "http://edamontology.org/format_2572",
+        "http://edamontology.org/format_2573",
+        "http://edamontology.org/format_3462",
+    ],
+    ["BAM", "CRAM", "SAM"],
+    ["bam", "cram", "sam"],
+)
+
+
+def _ontology_entries(ontologies: tuple | list) -> list[ruamel.yaml.comments.CommentedMap]:
+    """Build meta.yml `ontologies` entries with the EDAM description as end-of-line comment."""
+    entries = [ruamel.yaml.comments.CommentedMap({"edam": ont_id}) for ont_id in ontologies[0]]
+    for entry, ont_desc in zip(entries, ontologies[1], strict=False):
+        entry.yaml_add_eol_comment(ont_desc, "edam")
+    return entries
+
+
+def _glob(extensions: list[str]) -> str:
+    return f"*.{extensions[0]}" if len(extensions) == 1 else f"*.{{{','.join(extensions)}}}"
+
+
+def _file_docs(field: dict) -> dict:
+    """Documentation keys of a record file field; empty placeholders when it has no ontologies."""
+    if field["ontologies"] is None:
+        return {"description": "", "pattern": "", "ontologies": [{"edam": ""}]}
+    return {
+        "description": field["description"],
+        "pattern": _glob(field["ontologies"][2]),
+        "ontologies": _ontology_entries(field["ontologies"]),
+    }
 
 
 class ComponentCreate(ComponentCommand):
@@ -44,6 +83,7 @@ class ComponentCreate(ComponentCommand):
         conda_name: str | None = None,
         conda_version: str | None = None,
         empty_template: bool = False,
+        with_records: bool = False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -64,6 +104,12 @@ class ComponentCreate(ComponentCommand):
         self.docker_container = None
         self.file_paths: dict[str, Path] = {}
         self.not_empty_template = not empty_template
+        self.with_records = with_records
+        self.inputs: DictWithStrAndTuple = {}
+        self.outputs: DictWithStrAndTuple = {}
+        # File fields of the input/output records, shared by main.nf, main.nf.test and meta.yml
+        self.record_inputs: dict[str, dict] = {}
+        self.record_outputs: dict[str, dict] = {}
         self.tool_identifier = ""
 
     def create(self) -> bool:
@@ -159,6 +205,8 @@ class ComponentCreate(ComponentCommand):
 
         if self.component_type == "modules":
             self._get_module_structure_components()
+            if self.with_records:
+                self._get_record_files()
 
         # Add a valid organization name for nf-test tags
         self.org_alphabet = re.sub(r"[^a-zA-Z]", "", self.component_subdir)
@@ -271,14 +319,15 @@ class ComponentCreate(ComponentCommand):
                 default="process_single",
             ).unsafe_ask()
 
-        if self.has_meta is None:
+        # Record modules always have `id` and an optional `meta` field
+        if self.has_meta is None and not self.with_records:
             log.info(
                 "Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' "
                 "MUST be provided as an input via a Groovy Map called 'meta'. "
                 "This information may [italic]not[/] be required in some instances, for example "
                 "[link=https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf]indexing reference genome files[/link]."
             )
-        while self.has_meta is None:
+        while self.has_meta is None and not self.with_records:
             self.require_prompts(
                 "Meta map requirement not specified.\nPlease provide the `--has-meta` or `--no-meta` option"
             )
@@ -491,7 +540,7 @@ class ComponentCreate(ComponentCommand):
                 "### TODO nf-core: Add a description of all of the variables used as topics", indent=2
             )
 
-            if hasattr(self, "inputs") and len(self.inputs) > 0:
+            if self.inputs:
                 inputs_array: list[dict | list[dict]] = []
                 for i, (input_name, ontologies) in enumerate(self.inputs.items()):
                     channel_entry: dict[str, dict] = {
@@ -499,13 +548,9 @@ class ComponentCreate(ComponentCommand):
                             "type": "file",
                             "description": f"{input_name} file",
                             "pattern": f"*.{{{','.join(ontologies[2])}}}",
-                            "ontologies": [
-                                ruamel.yaml.comments.CommentedMap({"edam": f"{ont_id}"}) for ont_id in ontologies[0]
-                            ],
+                            "ontologies": _ontology_entries(ontologies),
                         }
                     }
-                    for j, ont_desc in enumerate(ontologies[1]):
-                        channel_entry[input_name]["ontologies"][j].yaml_add_eol_comment(ont_desc, "edam")
                     if self.has_meta:
                         meta_suffix = str(i + 1) if i > 0 else ""
                         meta_entry: dict[str, dict] = {
@@ -528,19 +573,12 @@ class ComponentCreate(ComponentCommand):
                             "type": "file",
                             "description": "Sorted BAM/CRAM/SAM file",
                             "pattern": "*.{bam,cram,sam}",
-                            "ontologies": [
-                                ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2572"}),
-                                ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2573"}),
-                                ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3462"}),
-                            ],
+                            "ontologies": _ontology_entries(BAM_ONTOLOGIES),
                         }
                     }
                 ]
-                meta_yml["input"][0]["bam"]["ontologies"][0].yaml_add_eol_comment("BAM", "edam")
-                meta_yml["input"][0]["bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
-                meta_yml["input"][0]["bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
 
-            if hasattr(self, "outputs") and len(self.outputs) > 0:
+            if self.outputs:
                 outputs_dict: dict[str, list | dict] = {}
                 for _i, (output_name, ontologies) in enumerate(self.outputs.items()):
                     channel_contents: list[list[dict] | dict] = []
@@ -561,13 +599,9 @@ class ComponentCreate(ComponentCommand):
                             "type": "file",
                             "description": f"{output_name} file",
                             "pattern": pattern,
-                            "ontologies": [
-                                ruamel.yaml.comments.CommentedMap({"edam": f"{ont_id}"}) for ont_id in ontologies[0]
-                            ],
+                            "ontologies": _ontology_entries(ontologies),
                         }
                     }
-                    for j, ont_desc in enumerate(ontologies[1]):
-                        file_entry[pattern]["ontologies"][j].yaml_add_eol_comment(ont_desc, "edam")
                     if self.has_meta:
                         if isinstance(channel_contents[0], list):  # for mypy
                             channel_contents[0].append(file_entry)
@@ -587,18 +621,11 @@ class ComponentCreate(ComponentCommand):
                                 "type": "file",
                                 "description": "Sorted BAM/CRAM/SAM file",
                                 "pattern": "*.{bam,cram,sam}",
-                                "ontologies": [
-                                    ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2572"}),
-                                    ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2573"}),
-                                    ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3462"}),
-                                ],
+                                "ontologies": _ontology_entries(BAM_ONTOLOGIES),
                             }
                         }
                     ]
                 }
-                meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][0].yaml_add_eol_comment("BAM", "edam")
-                meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
-                meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
                 meta_yml["output"].update(versions)
 
             meta_yml["topics"] = versions_topic
@@ -627,5 +654,105 @@ class ComponentCreate(ComponentCommand):
             meta_yml["output"].update(versions)
             meta_yml["topics"] = versions_topic
 
+        if self.with_records:
+            self._set_record_meta_yml(meta_yml)
+
         with open(self.file_paths["meta.yml"], "w") as fh:
             yaml.dump(meta_yml, fh)
+
+    def _get_record_files(self) -> None:
+        """Collect the file fields of the `--with-records` input and output records."""
+        if not self.not_empty_template:
+            self.record_inputs = {"input": {"description": "", "ontologies": None}}
+            self.record_outputs = {
+                "output": {"value": 'files("*")', "type": "Set<Path>", "description": "", "ontologies": None}
+            }
+            return
+        if self.inputs:
+            self.record_inputs = {
+                name: {"description": f"{name} file", "ontologies": ont} for name, ont in self.inputs.items()
+            }
+        else:
+            self.record_inputs = {"bam": {"description": "Sorted BAM/CRAM/SAM file", "ontologies": BAM_ONTOLOGIES}}
+        if self.outputs:
+            outputs = {name: (f"{name} file", ont) for name, ont in self.outputs.items()}
+        else:
+            outputs = {"bam": ("Sorted BAM file", (BAM_ONTOLOGIES[0][:1], BAM_ONTOLOGIES[1][:1], ["bam"]))}
+        self.record_outputs = {
+            name: {"value": f'file("{_glob(ont[2])}")', "type": "Path", "description": desc, "ontologies": ont}
+            for name, (desc, ont) in outputs.items()
+        }
+
+    def _set_record_meta_yml(self, meta_yml: ruamel.yaml.comments.CommentedMap) -> None:
+        """Replace input, output and topics with the record-based layout matching the `--with-records` main.nf."""
+        cmap = ruamel.yaml.comments.CommentedMap
+
+        input_fields = cmap(
+            {
+                "id": {"type": "String", "description": "Sample identifier, used as the default output prefix"},
+                "meta": {
+                    "type": "Record",
+                    "optional": True,
+                    "description": "Pipeline-specific sample information, passed to the output",
+                },
+            }
+        )
+        for name, field in self.record_inputs.items():
+            input_fields[name] = {"type": "Path", **_file_docs(field)}
+        input_fields[f"{self.component_name_underscore.lower()}_args"] = {
+            "type": "String",
+            "optional": True,
+            "description": f"Additional arguments for {self.component_name} (overridden by `ext.args`)",
+        }
+        input_fields["output_prefix"] = {
+            "type": "String",
+            "optional": True,
+            "description": "Output file prefix (overridden by `ext.prefix`)",
+        }
+
+        output_fields = cmap(
+            {
+                "id": {"value": "id", "type": "String", "description": "Sample identifier from the input record"},
+                "meta": {
+                    "value": "meta",
+                    "type": "Record",
+                    "optional": True,
+                    "description": "The `meta` record from the input, `null` if none was given",
+                },
+            }
+        )
+        for name, field in self.record_outputs.items():
+            output_fields[name] = {"value": field["value"], "type": field["type"], **_file_docs(field)}
+
+        version_fields = cmap(
+            {
+                "process": {"value": '"${task.process}"', "type": "String", "description": "The name of the process"},
+                "tool": {"value": f"'{self.component}'", "type": "String", "description": "The name of the tool"},
+                "version": {
+                    "value": f'eval("{self.component} --version")',
+                    "type": "String",
+                    "description": "The version of the tool",
+                },
+            }
+        )
+
+        meta_yml["input"] = ruamel.yaml.comments.CommentedSeq(
+            [cmap({"type": "record", "description": "", "fields": input_fields})]
+        )
+        meta_yml["output"] = ruamel.yaml.comments.CommentedSeq(
+            [cmap({"type": "record", "description": "", "fields": output_fields})]
+        )
+        meta_yml["topics"] = cmap({"versions": [cmap({"type": "record", "fields": version_fields})]})
+
+        if self.not_empty_template:
+            bio_tools_note = (
+                "\n# TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct"
+            )
+            for key, todo, from_bio_tools in [
+                ("input", "Add every field of the input record, mirroring `record(...)` in main.nf", self.inputs),
+                ("output", "Add every field of the output record; `value` MUST match main.nf", self.outputs),
+                ("topics", "`value` MUST match the expression in the main.nf topic block", False),
+            ]:
+                meta_yml[key].yaml_set_start_comment(
+                    f"### TODO nf-core: {todo}" + (bio_tools_note if from_bio_tools else ""), indent=2
+                )
