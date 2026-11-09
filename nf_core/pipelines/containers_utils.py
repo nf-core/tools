@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from nf_core.utils import read_module_name
+from nf_core.utils import CONFIG_PATHS, get_first_available_path, read_module_name
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +20,9 @@ PLATFORMS: dict[str, list[str]] = {
     "conda_lock_files_amd64": ["conda", "linux/amd64", "lock_file"],
     "conda_lock_files_arm64": ["conda", "linux/arm64", "lock_file"],
 }
+
+# Written when no module covers a platform: nextflow.config always includes every file, and a missing include fails parsing
+EMPTY_CONFIG = "// No module in this pipeline provides containers for this platform\n"
 
 _CONFIG_LINE_RE = re.compile(r"withName:\s*'(\w+)'\s*\{\s*(?:container|conda)\s*=\s*'([^']+)'")
 
@@ -39,20 +42,20 @@ def _parse_config_file(config_path: Path) -> dict[str, str]:
     return result
 
 
-def _write_platform_config(config_path: Path, entries: dict[str, str], key: str) -> bool:
-    """Write *entries* to *config_path*, or delete it when empty.
+def _write_platform_config(config_path: Path, entries: dict[str, str], key: str) -> None:
+    """Write *entries* to *config_path*, or a placeholder comment when empty.
 
-    Skips the write when content is unchanged.  Returns True if the file now exists.
+    Skips the write when content is unchanged.
     """
-    if not entries:
-        config_path.unlink(missing_ok=True)
-        return False
-    new_content = "".join(
-        f"process {{ withName: '{name}' {{ {key} = '{container}' }} }}\n" for name, container in sorted(entries.items())
+    new_content = (
+        "".join(
+            f"process {{ withName: '{name}' {{ {key} = '{container}' }} }}\n"
+            for name, container in sorted(entries.items())
+        )
+        or EMPTY_CONFIG
     )
     if not config_path.exists() or config_path.read_text() != new_content:
         config_path.write_text(new_content)
-    return True
 
 
 def _process_meta(meta_path: Path) -> tuple[str, dict[str, str]] | None:
@@ -121,6 +124,8 @@ class ContainerConfigs:
             entries = _parse_config_file(config_path)
             if platform in platform_containers:
                 entries[module_name] = platform_containers[platform]
+            else:
+                entries.pop(module_name, None)
             _write_platform_config(config_path, entries, _container_key(platform))
 
     def generate_container_configs(self) -> set[str]:
@@ -130,12 +135,11 @@ class ContainerConfigs:
         modules may have changed.
 
         Returns:
-            set[str]: Names of config files written (e.g. ``{'containers_docker_amd64.config'}``).
+            set[str]: Names of config files written (e.g. ``{'containers_docker_amd64.config'}``), one per platform.
         """
         modules_dir = self.workflow_directory / "modules"
-        if not modules_dir.is_dir():
-            log.debug(f"No modules directory found at {modules_dir}, skipping")
-            return set()
+        # Write placeholders even without modules/: nextflow.config includes every platform file
+        (self.workflow_directory / "conf").mkdir(exist_ok=True)
 
         containers: dict[str, dict[str, str]] = {platform: {} for platform in PLATFORMS}
 
@@ -149,16 +153,24 @@ class ContainerConfigs:
                 for platform_name, container in platform_containers.items():
                     containers[platform_name][module_name] = container
 
-        # Every platform is visited, so each config is fully rewritten (dropping removed
-        # modules) or deleted when empty; unchanged files are left untouched.
-        written: set[str] = set()
+        # Every platform is rewritten (dropping removed modules); unchanged files are left untouched.
         for platform, module_containers in containers.items():
-            config_path = self._config_path(platform)
-            if _write_platform_config(config_path, module_containers, _container_key(platform)):
-                written.add(config_path.name)
+            _write_platform_config(self._config_path(platform), module_containers, _container_key(platform))
 
         log.info("Generated container configs for the pipeline.")
-        return written
+        return {self._config_path(platform).name for platform in PLATFORMS}
+
+
+def container_configs_skipped(directory: Path) -> bool:
+    """Whether the pipeline in *directory* opted out of the ``container_configs`` template feature."""
+    # Read the YAML directly: load_tools_config runs `nextflow config`, which fails while includes are missing
+    config_fn = get_first_available_path(directory, CONFIG_PATHS)
+    if config_fn is None:
+        return False
+    with contextlib.suppress(OSError, yaml.YAMLError):
+        template = (yaml.safe_load(config_fn.read_text()) or {}).get("template") or {}
+        return "container_configs" in (template.get("skip_features") or template.get("skip") or [])
+    return False
 
 
 def try_generate_container_configs(directory: Path, module_path: Path | None = None) -> None:
@@ -166,8 +178,11 @@ def try_generate_container_configs(directory: Path, module_path: Path | None = N
 
     If *module_path* is given, only that module's entries are updated (fast
     path for single-module installs).  Otherwise a full scan of ``modules/``
-    is performed.
+    is performed.  Does nothing if the pipeline skips the ``container_configs`` feature.
     """
+    if container_configs_skipped(directory):
+        log.debug("Pipeline skips the `container_configs` feature, not generating container configs")
+        return
     try:
         configs = ContainerConfigs(directory)
         if module_path is not None:
