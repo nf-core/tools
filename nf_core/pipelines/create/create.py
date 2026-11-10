@@ -11,6 +11,7 @@ from pathlib import Path
 import git
 import git.config
 import jinja2
+import pathspec
 import yaml
 
 import nf_core
@@ -23,6 +24,16 @@ from nf_core.pipelines.rocrate import ROCrate
 from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig, custom_yaml_dumper
 
 log = logging.getLogger(__name__)
+
+
+def _filter_ignored_files(outdir: Path, files: set[Path]) -> list[Path]:
+    """Drop files matched by the .gitignore or .prettierignore in outdir."""
+    lines: list[str] = []
+    for ignore_file in (outdir / ".gitignore", outdir / ".prettierignore"):
+        if ignore_file.exists():
+            lines += ignore_file.read_text().splitlines()
+    spec = pathspec.GitIgnoreSpec.from_lines(lines)
+    return [f for f in files if not spec.match_file(f.relative_to(outdir).as_posix())]
 
 
 class PipelineCreate:
@@ -398,7 +409,7 @@ class PipelineCreate:
         if "code_linters" in (self.config.skip_features or []):
             log.debug("Pipeline skips code linters, not running prettier")
             return
-        run_prettier_on_file(*self.written_files)
+        run_prettier_on_file(*_filter_ignored_files(self.outdir, self.written_files))
 
     def fix_linting(self):
         """
