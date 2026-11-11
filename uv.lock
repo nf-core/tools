@@ -1719,7 +1719,7 @@ wheels = [
 
 [[package]]
 name = "nf-core"
-version = "4.2.2"
+version = "4.3.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
