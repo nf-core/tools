@@ -6,7 +6,7 @@
 
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
-- add type hints to commands ([#4594](https://github.com/nf-core/tools/pull/4594))
+- add type hints to commands. Fix a comment in template sync PR when no blog post given. ([#4594](https://github.com/nf-core/tools/pull/4594))
 
 ### Linting
 
