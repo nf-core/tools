@@ -251,7 +251,7 @@ def pipelines_create_params_file(
     ctx: click.Context,
     pipeline: str | None,
     revision: str | None,
-    output: str,
+    output: Path,
     force: bool,
     show_hidden: bool,
     no_prompts: bool = False,
@@ -271,7 +271,7 @@ def pipelines_create_params_file(
 
     builder = ParamsFileBuilder(pipeline, revision, no_prompts)
 
-    if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):
+    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
         sys.exit(1)
 
 
@@ -363,7 +363,7 @@ def pipelines_sync(
     pull_request: bool,
     github_repository: str | None,
     username: str | None,
-    template_yaml: str | None,
+    template_yaml: Path | None,
     force_pr: bool,
     blog_post: str | None,
     no_prompts: bool = False,
@@ -516,7 +516,9 @@ def pipelines_schema_lint(schema_path: Path) -> None:
 
 
 # nf-core pipelines schema docs
-def pipelines_schema_docs(schema_path: Path, output: str | None, output_format: str, force: bool, columns: str) -> None:
+def pipelines_schema_docs(
+    schema_path: Path, output: Path | None, output_format: str, force: bool, columns: str
+) -> None:
     """
     Outputs parameter documentation for a pipeline schema.
     """

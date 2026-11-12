@@ -479,7 +479,7 @@ def command_pipelines_download(
 @click.option(
     "-o",
     "--output",
-    type=str,
+    type=click.Path(path_type=Path),
     default="nf-params.yml",
     metavar="<filename>",
     help="Output filename. Defaults to `nf-params.yml`.",
@@ -498,7 +498,7 @@ def command_pipelines_create_params_file(
     ctx: click.Context,
     pipeline: str | None,
     revision: str | None,
-    output: str,
+    output: Path,
     force: bool,
     show_hidden: bool,
     no_prompts: bool,
@@ -679,7 +679,9 @@ def rocrate(
 )
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option(
+    "-t", "--template-yaml", type=click.Path(path_type=Path), help="Pass a YAML file to customize the template"
+)
 @click.option("--blog-post", type=str, help="Link to the blog post")
 @click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
@@ -689,7 +691,7 @@ def command_pipelines_sync(
     pull_request: bool,
     github_repository: str | None,
     username: str | None,
-    template_yaml: str | None,
+    template_yaml: Path | None,
     force_pr: bool,
     blog_post: str | None,
     no_prompts: bool,
@@ -912,7 +914,7 @@ def command_pipelines_schema_lint(directory: Path, schema_file: Path) -> None:
 @click.option(
     "-o",
     "--output",
-    type=str,
+    type=click.Path(path_type=Path),
     metavar="<filename>",
     help="Output filename. Defaults to standard out.",
 )
@@ -934,7 +936,7 @@ def command_pipelines_schema_lint(directory: Path, schema_file: Path) -> None:
     default="parameter,description,type,default,required,hidden",
 )
 def command_pipelines_schema_docs(
-    directory: Path, schema_file: Path, output: str | None, output_format: str, force: bool, columns: str
+    directory: Path, schema_file: Path, output: Path | None, output_format: str, force: bool, columns: str
 ) -> None:
     """
     Outputs parameter documentation for a pipeline schema.
@@ -1128,7 +1130,7 @@ def command_modules_install(
 @click.option(
     "-D",
     "--save-diff",
-    type=str,
+    type=click.Path(path_type=Path),
     metavar="<filename>",
     default=None,
     help="Save diffs to a file instead of updating in place",
@@ -1155,7 +1157,7 @@ def command_modules_update(
     sha: str | None,
     install_all: bool,
     preview: bool | None,
-    save_diff: str | None,
+    save_diff: Path | None,
     update_deps: bool,
     limit_output: bool,
     skip_deps: bool,
@@ -2148,7 +2150,7 @@ def command_subworkflows_remove(ctx: click.Context, directory: Path, subworkflow
 @click.option(
     "-D",
     "--save-diff",
-    type=str,
+    type=click.Path(path_type=Path),
     metavar="<filename>",
     default=None,
     help="Save diffs to a file instead of updating in place",
@@ -2175,7 +2177,7 @@ def command_subworkflows_update(
     sha: str | None,
     install_all: bool,
     preview: bool | None,
-    save_diff: str | None,
+    save_diff: Path | None,
     update_deps: bool,
     limit_output: bool,
     skip_deps: bool,

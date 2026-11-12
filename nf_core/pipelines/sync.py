@@ -45,7 +45,7 @@ class PipelineSync:
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
-        template_yaml_path (str): Path to template.yml file for pipeline creation settings. DEPRECATED
+        template_yaml_path (Path): Path to template.yml file for pipeline creation settings. DEPRECATED
         force_pr (bool): Force the creation of a pull request, even if there are no changes to the template
 
     Attributes:
@@ -66,7 +66,7 @@ class PipelineSync:
         make_pr: bool = False,
         gh_repo: str | None = None,
         gh_username: str | None = None,
-        template_yaml_path: str | None = None,
+        template_yaml_path: Path | None = None,
         force_pr: bool = False,
         blog_post: str | None = None,
         no_prompts: bool = False,

@@ -88,7 +88,7 @@ def modules_update(
     sha: str | None,
     install_all: bool,
     preview: bool | None,
-    save_diff: str | None,
+    save_diff: Path | None,
     update_deps: bool,
     limit_output: bool,
     skip_deps: bool,
