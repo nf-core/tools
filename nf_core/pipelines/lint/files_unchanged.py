@@ -33,7 +33,6 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         assets/email_template.html
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo_light.png
-        assets/sendmail_template.txt
         CODE_OF_CONDUCT.md
         docs/images/nf-core-PIPELINE_logo_light.png
         docs/images/nf-core-PIPELINE_logo_dark.png
@@ -96,7 +95,6 @@ def files_unchanged(self) -> dict[str, list[str] | bool]:
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
         [Path("assets", "email_template.txt")],
-        [Path("assets", "sendmail_template.txt")],
         [Path("assets", f"nf-core-{short_name}_logo_light.png")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],

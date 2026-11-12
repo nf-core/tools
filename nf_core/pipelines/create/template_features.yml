@@ -255,8 +255,6 @@ components_modules:
 
         The pipeline will include the MultiQC module and will have special steps which also allow the software versions to be reported in the MultiQC output for future traceability. For more information about how to use MultiQC reports, see http://multiqc.info.
       linting:
-        files_unchanged:
-          - "assets/sendmail_template.txt"
         files_exist:
           - "assets/multiqc_config.yml"
         multiqc_config: False
@@ -519,7 +517,6 @@ notifications:
     email:
       skippable_paths:
         - "assets/email_template.html"
-        - "assets/sendmail_template.txt"
         - "assets/email_template.txt"
       short_description: "Enable email updates"
       description: "Enable sending emails on pipeline completion."
@@ -528,7 +525,6 @@ notifications:
       linting:
         files_exist:
           - "assets/email_template.html"
-          - "assets/sendmail_template.txt"
           - "assets/email_template.txt"
         files_unchanged:
           - ".prettierignore"
