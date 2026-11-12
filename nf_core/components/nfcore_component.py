@@ -2,10 +2,19 @@
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
 
+import json
 import logging
 import re
 from pathlib import Path
 from typing import Any
+
+from nf_core.utils import (
+    NF_INSPECT_MIN_NF_VERSION,
+    check_nextflow_version,
+    parse_nextflow_json,
+    run_cmd,
+    set_wd_tempdir,
+)
 
 log = logging.getLogger(__name__)
 
@@ -52,11 +61,16 @@ class NFCoreComponent:
         self.failed: list[tuple[str, str, str, Path]] = []
         self.inputs: list[list[dict[str, dict[str, str]]]] = []
         self.outputs: list[str] = []
+        self.topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]]
         self.has_meta: bool = False
         self.git_sha: str | None = None
         self.is_patched: bool = False
         self.branch: str | None = None
         self.workflow_name: str | None = None
+        self.container: dict = {}
+        self.container_from_main_nf: str | None = None
+        self._meta_yml_content: dict | None = None
+        self.main_nf_test_snap: Path | None = None
 
         if remote_component:
             # Initialize the important files
@@ -75,7 +89,8 @@ class NFCoreComponent:
 
             self.org = repo_dir
             self.nftest_testdir: Path | None = Path(self.component_dir, "tests")
-            self.nftest_main_nf: Path | None = Path(self.nftest_testdir, "main.nf.test")
+            self.main_nf_test: Path | None = Path(self.nftest_testdir, "main.nf.test")
+            self.main_nf_test_snap = Path(self.nftest_testdir, "main.nf.test.snap")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -87,55 +102,106 @@ class NFCoreComponent:
             # The main file is just the local module
             if self.component_dir.is_dir():
                 self.main_nf = Path(self.component_dir, "main.nf")
-                self.component_name = self.component_dir.stem
                 # These attributes are only required by nf-core modules
                 # so just set them to None if they don't exist
                 self.meta_yml = p if (p := Path(self.component_dir, "meta.yml")).exists() else None
                 self.environment_yml = p if (p := Path(self.component_dir, "environment.yml")).exists() else None
                 self.nftest_testdir = p if (p := Path(self.component_dir, "tests")).exists() else None
                 if self.nftest_testdir is not None:
-                    self.nftest_main_nf = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+                    self.main_nf_test = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+                    self.main_nf_test_snap = Path(self.nftest_testdir, "main.nf.test.snap")
             else:
                 self.main_nf = self.component_dir
                 self.component_dir = self.component_dir.parent
                 self.meta_yml = None
                 self.environment_yml = None
                 self.nftest_testdir = None
-                self.nftest_main_nf = None
+                self.main_nf_test = None
 
         self.process_name: str = self._get_process_name()
 
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
-    def _get_main_nf_tags(self, test_main_nf: Path | str):
+    @staticmethod
+    def parse_include_statement(line: str) -> list[tuple[str, str, str]]:
+        """Parse a Nextflow ``include`` statement.
+
+        Handles multiple symbols per statement (``include { A; B as C } from 'path'``) and
+        ``as`` aliasing. Returns a list of ``(name, alias, link)`` tuples, one per imported
+        symbol - ``alias`` is ``""`` if the symbol isn't aliased. Returns an empty list if
+        the line isn't a parseable include statement.
+        """
+        match = re.search(r"include\s*{\s*(.+?)\s*}\s*from\s*(?:'|\")(.+?)(?:'|\")", line.strip())
+        if not match:
+            return []
+        symbols_part, link = match.groups()
+        parsed = []
+        for symbol in symbols_part.split(";"):
+            symbol = symbol.strip()
+            if not symbol:
+                continue
+            if " as " in symbol:
+                name, alias = (part.strip() for part in symbol.split(" as ", 1))
+            else:
+                name, alias = symbol, ""
+            parsed.append((name, alias, link))
+        return parsed
+
+    def load_main_nf(self) -> str:
+        """Return the contents of main.nf, or an empty string if it does not exist."""
+        data = ""
+        if self.main_nf.is_file():
+            with open(self.main_nf) as f:
+                data = f.read()
+        return data
+
+    def load_meta_yml(self, reload: bool = False) -> dict | None:
+        """
+        Return the parsed content of the component's ``meta.yml``, cached after the first read.
+
+        Pass ``reload=True`` after writing to ``meta.yml`` to refresh the cache.
+        Returns ``None`` if the component has no ``meta.yml``.
+        """
+        if reload or self._meta_yml_content is None:
+            if self.meta_yml is None or not self.meta_yml.exists():
+                return None
+            from nf_core.components.components_utils import read_meta_yml
+
+            self._meta_yml_content = read_meta_yml(self.meta_yml)
+        return self._meta_yml_content
+
+    def _get_main_nf_tags(self, test_main_nf: Path) -> list[str]:
         """Collect all tags from the main.nf.test file."""
-        tags = []
-        with open(test_main_nf) as fh:
-            for line in fh:
-                if line.strip().startswith("tag"):
-                    tags.append(line.strip().split()[1].strip('"'))
+        tags: list[str] = []
+        if not test_main_nf.is_file():
+            return tags
+        for line in test_main_nf.read_text().splitlines():
+            if line.strip().startswith("tag"):
+                tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Path | str):
+    def _get_included_components(self, main_nf: Path) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf) as fh:
-            for line in fh:
-                if line.strip().startswith("include"):
-                    # get tool/subtool or subworkflow name from include statement, can be in the form
+        data = main_nf.read_text() if main_nf.is_file() else ""
+        for line in data.splitlines():
+            if line.strip().startswith("include"):
+                for _name, _alias, link in self.parse_include_statement(line):
+                    # get tool/subtool or subworkflow name from the include link, can be in the form
                     #'../../../modules/nf-core/hisat2/align/main'
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
                     #'plugin/nf-validation'
-                    component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
-                    component = component.replace("'../", "subworkflows/")
-                    component = component.replace("'", "")
+                    component = link.split(self.org)[-1].split("main")[0].strip("/")
+                    if link.startswith("../") and self.org not in link:
+                        component = component.removeprefix("../")
+                        component = f"subworkflows/{component}"
                     included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str):
-        """Collect all included components from the main.nf file."""
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path) -> list[str]:
+        """Collect all included components from the script statements in the main.nf.test file."""
         included_components = []
         with open(main_nf_test) as fh:
             for line in fh:
@@ -179,17 +245,82 @@ class NFCoreComponent:
         return included_components
 
     def _get_process_name(self):
-        with open(self.main_nf) as fh:
-            for line in fh:
-                if re.search(r"^\s*process\s*\w*\s*{", line):
-                    return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
+        for line in self.load_main_nf().splitlines():
+            if re.search(r"^\s*process\s*\w*\s*{", line):
+                return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
         return ""
+
+    def _extract_value(self, text: str, start_pos: int = 0, split_on_comma: bool = False) -> str | None:
+        """
+        Extract values from input/output/topics lines, handling parentheses and quotes properly.
+
+        Can operate in two modes:
+        1. Extract content within parentheses (for parsing "val(foo), path(bar), eval(...)")
+        2. Split on first comma outside quotes (for parsing "param, option: value")
+
+        Args:
+            text: String to parse
+            start_pos: Position to start parsing from
+            split_on_comma: If True, split on first comma outside quotes and return first part.
+                          If False, extract content within matching parentheses.
+
+        Returns:
+            Extracted value or None if not found
+        """
+        rest = text[start_pos:].lstrip()
+        if not rest:
+            return None
+
+        # Mode 1: Split on comma (for extracting parameter name from "param, option: value")
+        if split_on_comma:
+            in_quote = None
+            for i, char in enumerate(rest):
+                if char in ('"', "'") and (i == 0 or rest[i - 1] != "\\"):
+                    in_quote = char if in_quote is None else (None if in_quote == char else in_quote)
+                elif char == "," and in_quote is None:
+                    return rest[:i].strip()
+            return rest.strip()
+
+        # Mode 2: Extract value within parentheses (for val(foo), path(bar), eval(...))
+        if not rest.startswith("("):
+            # No parentheses, extract until comma or newline
+            match = re.match(r"([^,\n]*)", rest)
+            return match.group(1).strip() if match else None
+
+        # Find matching closing parentheses, respecting quotes
+        # If content starts with a quote, only extract the quoted value (ignoring modifiers like "hidden: true")
+        # First check if content after opening paren starts with a quote
+        content_start = rest[1:].lstrip()  # Skip opening paren and whitespace
+        starts_with_quote = content_start and content_start[0] in ('"', "'")
+
+        depth = 0
+        in_quote = None
+        quote_closed_at = None
+        for i, char in enumerate(rest):
+            if char in ('"', "'") and (i == 0 or rest[i - 1] != "\\"):
+                if in_quote is None:
+                    in_quote = char
+                elif in_quote == char:
+                    in_quote = None
+                    # Only remember first quote position if content started with a quote
+                    if depth == 1 and quote_closed_at is None and starts_with_quote:
+                        quote_closed_at = i
+            elif char == "(" and in_quote is None:
+                depth += 1
+            elif char == ")" and in_quote is None:
+                depth -= 1
+                if depth == 0:
+                    # If content started with a quote and we found it, return only that
+                    if quote_closed_at is not None:
+                        return rest[1 : quote_closed_at + 1]
+                    # Otherwise return everything between parentheses, stripping whitespace
+                    return rest[1:i].strip()
+        return None
 
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
             # regex matches:
@@ -204,28 +335,21 @@ class NFCoreComponent:
                 log.debug(f"Could not find any inputs in {self.main_nf}")
                 return
             input_data = data.split("input:")[1].split("output:")[0]
+            # Match keywords only when followed by opening parentheses or whitespace
+            regex_keyword = r"\b(val|path)(?=\(|\s)"
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
-                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
-                matches = re.finditer(regex, line)
-                for _, match in enumerate(matches, start=1):
-                    input_val = None
-                    if match.group(3):
-                        input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                    elif match.group(4):
-                        input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                    if input_val:
-                        input_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', input_val)[
-                            0
-                        ]  # Takes only first part, avoid commas in quotes
-                        input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
+                for match in re.finditer(regex_keyword, line):
+                    if input_val := self._extract_value(line, match.end()):
+                        input_val = self._extract_value(input_val, split_on_comma=True)
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) == 1:
                     inputs.append(channel_elements[0])
                 elif len(channel_elements) > 1:
                     inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
+            log.debug(f"Inputs: {inputs}")
             self.inputs = inputs
         elif self.component_type == "subworkflows":
             # get input values from main.nf after "take:"
@@ -234,17 +358,13 @@ class NFCoreComponent:
                 return
             # get all lines between "take" and "main" or "emit"
             input_data = data.split("take:")[1].split("main:")[0].split("emit:")[0]
-            for line in input_data.split("\n"):
-                try:
-                    inputs.append(line.split()[0])
-                except IndexError:
-                    pass  # Empty lines
+            # Extract first word from non-empty lines
+            inputs = [line.split()[0] for line in input_data.split("\n") if line.split()]
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
@@ -252,32 +372,26 @@ class NFCoreComponent:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Found output_data: {output_data}")
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            # Match keywords only when followed by opening parentheses or whitespace
+            regex_keyword = r"\b(val|path|env|stdout|eval)(?=\(|\s)"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
-                matches_elements = re.finditer(regex_elements, line)
                 if not match_emit:
                     continue
                 channel_elements = []
                 outputs[match_emit.group(1)] = []
-                for _, match_element in enumerate(matches_elements, start=1):
-                    output_val = None
-                    if match_element.group(3):
-                        output_val = match_element.group(3)
-                    elif match_element.group(4):
-                        output_val = match_element.group(4)
-                    if output_val:
-                        output_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', output_val)[
-                            0
-                        ]  # Takes only first part, avoid commas in quotes
-                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
-                        channel_elements.append({output_val: {}})
+                for match in re.finditer(regex_keyword, line):
+                    if output_val := self._extract_value(line, match.end()):
+                        keyword = match.group(0)  # Store the keyword (val, eval, path, etc.)
+                        channel_elements.append({output_val: {"_keyword": keyword}})
                 if len(channel_elements) == 1:
                     outputs[match_emit.group(1)].append(channel_elements[0])
                 elif len(channel_elements) > 1:
                     outputs[match_emit.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
+            log.debug(f"Outputs: {outputs}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
             outputs = []
@@ -286,18 +400,13 @@ class NFCoreComponent:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
                 return outputs
             output_data = data.split("emit:")[1].split("}")[0]
-            for line in output_data.split("\n"):
-                try:
-                    outputs.append(line.split("=")[0].split()[0])
-                except IndexError:
-                    # Empty lines
-                    pass
+            # Extract first word before '=' from non-empty lines
+            outputs = [parts[0] for line in output_data.split("\n") if (parts := line.split("=")[0].split())]
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
 
     def get_topics_from_main_nf(self) -> None:
-        with open(self.main_nf) as f:
-            data = f.read()
+        data = self.load_main_nf()
         if self.component_type == "modules":
             topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"
@@ -306,29 +415,93 @@ class NFCoreComponent:
                 self.topics = topics
                 return
             output_data = data.split("output:")[1].split("when:")[0]
+            log.debug(f"Output data: {output_data}")
             regex_topic = r"topic:\s*([^)\s,]+)"
-            regex_elements = r"\b(val|path|env|stdout|eval)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            # Match keywords only when followed by opening parentheses or whitespace
+            regex_keyword = r"\b(val|path|env|stdout|eval)(?=\(|\s)"
             for line in output_data.split("\n"):
                 match_topic = re.search(regex_topic, line)
-                matches_elements = re.finditer(regex_elements, line)
                 if not match_topic:
                     continue
                 channel_elements: list[dict[str, dict]] = []
                 topic_name = match_topic.group(1)
-                if topic_name in topics:
-                    continue
-                topics[match_topic.group(1)] = []
-                for count, match_element in enumerate(matches_elements, start=1):
-                    output_val = None
-                    if match_element.group(3):
-                        output_val = match_element.group(3)
-                    elif match_element.group(4):
-                        output_val = match_element.group(4)
-                    if output_val:
-                        channel_elements.append({f"value{count}": {}})
+                if topic_name not in topics:
+                    topics[topic_name] = []
+                for match in re.finditer(regex_keyword, line):
+                    if topic_val := self._extract_value(line, match.end()):
+                        keyword = match.group(0)  # Store the keyword (val, eval, path, etc.)
+                        channel_elements.append({topic_val: {"_keyword": keyword}})
                 if len(channel_elements) == 1:
-                    topics[match_topic.group(1)].append(channel_elements[0])
+                    topics[topic_name].append(channel_elements[0])
                 elif len(channel_elements) > 1:
-                    topics[match_topic.group(1)].append(channel_elements)
+                    topics[topic_name].append(channel_elements)
             log.debug(f"Found {len(list(topics.keys()))} topics in {self.main_nf}")
+            log.debug(f"Topics: {topics}")
             self.topics = topics
+
+    def get_container_from_main_nf(self) -> str | None:
+        """Cached accessor for the (profile-agnostic) container resolved from ``main.nf``."""
+        if self.container_from_main_nf is not None:
+            return self.container_from_main_nf
+
+        self.container_from_main_nf = self.get_container_with_inspect()
+
+        if not self.container_from_main_nf:
+            log.warning(f"No container was extracted for {self.component_name} from {self.main_nf}")
+
+        return self.container_from_main_nf
+
+    def get_container_with_inspect(self, profile: str | None = None) -> str | None:
+        """Resolve the container declared in the module's ``main.nf`` using ``nextflow inspect``.
+
+        Running inspect lets Nextflow evaluate the container selection logic in the module
+        (and return the fully resolved container in its JSON output) instead of parsing it
+        with brittle regexes. Pass ``profile`` (e.g. ``"docker"`` or ``"singularity"``) to
+        resolve the container for a specific profile.
+
+        Returns:
+            str | None: The resolved container, or ``None`` if it could not be resolved
+            (not a module, Nextflow too old to support ``nextflow inspect``, or inspect
+            failed).
+        """
+        if self.component_type != "modules":
+            return None
+
+        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION, silent=True):
+            log.debug("Nextflow version too old to resolve containers with `nextflow inspect`")
+            return None
+
+        main_nf_abs = self.main_nf.absolute()
+
+        with set_wd_tempdir():
+            # Provide a minimal nextflow.config to avoid falling back to docker branch when
+            # resolving singularity containers via `nextflow inspect`.
+            Path("nextflow.config").write_text(
+                "profiles {\n    docker { docker.enabled = true }\n    singularity { singularity.enabled = true }\n}\n"
+            )
+            executable = "nextflow"
+            profile_param = f"-profile {profile} " if profile else ""
+            cmd_params = f"inspect {profile_param}-format json {main_nf_abs}"
+            try:
+                cmd_out = run_cmd(executable, cmd_params)
+            except RuntimeError:
+                cmd_out = None
+            if cmd_out is None:
+                log.debug("Failed to run `nextflow inspect`")
+                return None
+            out, _ = cmd_out
+            out_str = out.decode()
+            try:
+                out_json = parse_nextflow_json(out_str)
+            except json.JSONDecodeError:
+                log.debug("Failed to parse JSON from nextflow inspect output")
+                log.debug(f"Output of nextflow inspect: {out_str}")
+                return None
+            container = (out_json.get("processes") or [{}])[0].get("container", None)
+            if container is None:
+                log.debug(
+                    f"Container for {self.component_name} could not be extracted from the output of nextflow inspect"
+                )
+                log.debug(f"Output of nextflow inspect: {out_str}")
+
+            return container

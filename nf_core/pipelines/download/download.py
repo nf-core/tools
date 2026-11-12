@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import tarfile
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -19,17 +20,21 @@ import rich
 import nf_core
 import nf_core.pipelines.list
 import nf_core.utils
+from nf_core.github_api import gh_api
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR, SingularityFetcher
-from nf_core.pipelines.download.utils import DownloadError, intermediate_dir_with_cd
+from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
+    CommandError,
     check_nextflow_version,
+    parse_nextflow_json,
     pretty_nf_version,
     run_cmd,
+    set_wd_tempdir,
 )
 
 log = logging.getLogger(__name__)
@@ -40,6 +45,8 @@ stderr = rich.console.Console(
     force_terminal=nf_core.utils.rich_force_colors(),
 )
 
+SINGULARITY_SYSTEMS = ["singularity", "apptainer"]
+
 
 class DownloadWorkflow:
     """Downloads a nf-core workflow from GitHub to the local file system.
@@ -47,7 +54,7 @@ class DownloadWorkflow:
     Can also download its Singularity container image if required.
 
     Args:
-        pipeline (str | None): A nf-core pipeline name.
+        pipeline (str | None): The name of an nf-core-compatible pipeline in the form org/repo
         revision (tuple[str] | str | None): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
         outdir (Path | None): Path to the local download directory. Defaults to None.
         compress_type (str | None): Type of compression for the downloaded files. Defaults to None.
@@ -106,7 +113,7 @@ class DownloadWorkflow:
         self.platform = platform
         self.fullname: str | None = None
         # downloading configs is not supported for Seqera Platform downloads.
-        self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
+        self.include_configs = bool(download_configuration == "yes" and not bool(platform))
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
@@ -148,6 +155,11 @@ class DownloadWorkflow:
         self.container_cache_index = container_cache_index
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel = parallel
+        self.hide_progress = hide_progress
+
+        if not gh_api.has_init:
+            gh_api.lazy_init()
+        self.authenticated = gh_api.auth is not None
 
         self.wf_revisions: list[dict[str, Any]] = []
         self.wf_branches: dict[str, Any] = {}
@@ -241,7 +253,7 @@ class DownloadWorkflow:
         ]
         if self.container_system:
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
-        if self.container_system == "singularity" and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
+        if self.container_system in SINGULARITY_SYSTEMS and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
             summary_log.append(
                 f"Using [blue]{SINGULARITY_CACHE_DIR_ENV_VAR}[/]': {os.environ[SINGULARITY_CACHE_DIR_ENV_VAR]}'"
             )
@@ -252,7 +264,7 @@ class DownloadWorkflow:
 
         # Set an output filename now that we have the outdir
         if self.platform:
-            self.output_filename = self.outdir.parent / (self.outdir.name + ".git")
+            self.output_filename = self.outdir / f"{self.pipeline.split('/')[-1]}.git"
             summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
             self.output_filename = self.outdir.parent / (self.outdir.name + "." + self.compress_type)
@@ -311,7 +323,9 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        for revision, wf_sha, download_url in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
+        for revision, wf_sha, download_url in zip(
+            self.revision, self.wf_sha.values(), self.wf_download_url.values(), strict=False
+        ):
             revision_dirname = self.download_wf_files(revision=revision, wf_sha=wf_sha, download_url=download_url)
 
             if self.include_configs:
@@ -321,7 +335,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required container images
-            if self.container_system in {"singularity", "docker"}:
+            if self.container_system in {"singularity", "docker", "apptainer"}:
                 workflow_directory = self.outdir / revision_dirname
                 self.find_container_images(workflow_directory, revision)
 
@@ -344,7 +358,7 @@ class DownloadWorkflow:
         self.workflow_repo = WorkflowRepo(
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
-            commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            revision_commits=self.wf_sha if bool(self.wf_sha) else None,
             additional_tags=self.additional_tags,
             location=location if location else None,  # manual location is required for the tests to work
             in_cache=False,
@@ -354,10 +368,10 @@ class DownloadWorkflow:
         self.workflow_repo.tidy_tags_and_branches()
 
         # create a bare clone of the modified repository needed for Seqera Platform
-        self.workflow_repo.bare_clone(self.outdir / self.output_filename)
+        self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
-        if self.container_system in {"singularity", "docker"}:
+        if self.container_system in {"singularity", "docker", "apptainer"}:
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -422,7 +436,7 @@ class DownloadWorkflow:
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
-            if revision in self.wf_branches.keys():
+            if revision in self.wf_branches:
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
             else:
@@ -461,11 +475,19 @@ class DownloadWorkflow:
 
         if not self.platform:
             for revision, wf_sha in self.wf_sha.items():
-                # Set the download URL and return - only applicable for classic downloads
-                self.wf_download_url = {
-                    **self.wf_download_url,
-                    revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
-                }
+                # Set the download URL - only applicable for classic downloads
+                if self.authenticated:
+                    # For authenticated downloads, use the GitHub API
+                    self.wf_download_url = {
+                        **self.wf_download_url,
+                        revision: f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}",
+                    }
+                else:
+                    # For unauthenticated downloads, use the archive URL
+                    self.wf_download_url = {
+                        **self.wf_download_url,
+                        revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
+                    }
 
     def prompt_config_inclusion(self) -> None:
         """Prompt for inclusion of institutional configurations"""
@@ -485,7 +507,7 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity", "docker"],
+                choices=["none", "singularity", "docker", "apptainer"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -495,7 +517,7 @@ class DownloadWorkflow:
         """
         assert self.outdir is not None  # mypy
         try:
-            if self.container_system == "singularity":
+            if self.container_system in SINGULARITY_SYSTEMS:
                 self.container_fetcher = SingularityFetcher(
                     outdir=self.outdir,
                     container_library=self.container_library,
@@ -504,6 +526,7 @@ class DownloadWorkflow:
                     container_cache_index=self.container_cache_index,
                     parallel=self.parallel,
                     hide_progress=self.hide_progress,
+                    container_system=self.container_system,
                 )
             elif self.container_system == "docker":
                 self.container_fetcher = DockerFetcher(
@@ -516,9 +539,11 @@ class DownloadWorkflow:
             else:
                 self.container_fetcher = None
         except OSError as e:
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
     def prompt_use_singularity(self, fail_message: str) -> None:
+        if not stderr.is_interactive:
+            raise DownloadError(fail_message)
         use_singularity = questionary.confirm(
             "Do you want to download singularity images?",
             style=nf_core.utils.nfcore_question_style,
@@ -530,13 +555,15 @@ class DownloadWorkflow:
 
     def prompt_compression_type(self) -> None:
         """Ask user if we should compress the downloaded files"""
+        if self.compress_type is None and not stderr.is_interactive:
+            return
         if self.compress_type is None:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container_system == "singularity":
+            if self.container_system in SINGULARITY_SYSTEMS:
                 stderr.print(
-                    "[bold]This is [italic]not[/] recommended when downloading Singularity images, as it can take a long time and saves very little space."
+                    "[bold]This is [italic]not[/] recommended when downloading Singularity/Apptainer images, as it can take a long time and saves very little space."
                 )
             self.compress_type = questionary.select(
                 "Choose compression type:",
@@ -555,22 +582,23 @@ class DownloadWorkflow:
 
     def download_wf_files(self, revision: str, wf_sha: str, download_url: str) -> str:
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
+
         log.debug(f"Downloading {download_url}")
 
-        # Download GitHub zip file into memory and extract
-        url = requests.get(download_url)
-        with ZipFile(io.BytesIO(url.content)) as zipfile:
+        # GitHub API download: fetch via API and get topdir from zip contents
+        content = gh_api.get(download_url).content
+        with ZipFile(io.BytesIO(content)) as zipfile:
+            topdir = zipfile.namelist()[0]  # API zipballs have a generated directory name
             zipfile.extractall(self.outdir)
 
-        # create a filesystem-safe version of the revision name for the directory
+        # Create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
-        # account for name collisions, if there is a branch / release named "configs" or container output dir
+        # Account for name collisions, if there is a branch / release named "configs" or container output dir
         if revision_dirname in ["configs", self.get_container_output_dir()]:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
-        gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-        ((self.outdir / gh_name).rename(self.outdir / revision_dirname),)
+        (self.outdir / topdir).rename(self.outdir / revision_dirname)
 
         # Make downloaded files executable
         for dirpath, _, filelist in os.walk(self.outdir / revision_dirname):
@@ -623,6 +651,12 @@ class DownloadWorkflow:
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
                 + "\n///////////////////////////////////////"
             )
+        elif self.container_system == "apptainer" and self.container_cache_utilisation == "copy":
+            nfconfig += (
+                f"\n\n// Added by `nf-core pipelines download` v{nf_core.__version__} //\n"
+                + 'apptainer.cacheDir = "${projectDir}/../apptainer-images/"'
+                + "\n///////////////////////////////////////"
+            )
 
         # Write the file out again
         log.debug(f"Updating '{nfconfig_fn}'")
@@ -645,37 +679,76 @@ class DownloadWorkflow:
         log.info(
             f"Fetching container names for workflow revision {revision} using [magenta bold]nextflow inspect[/]. This might take a while."
         )
-        try:
-            # TODO: Select container system via profile. Is this stable enough?
-            # NOTE: We will likely don't need this after the switch to Seqera containers
-            profile_str = f"{self.container_system}"
-            if with_test_containers:
-                profile_str += ",test,test_full"
-            profile = f"-profile {profile_str}" if self.container_system else ""
+        # TODO: Select container system via profile. Is this stable enough?
+        # NOTE: We will likely don't need this after the switch to Seqera containers
+        profile_str = f"{self.container_system}"
+        if with_test_containers:
+            profile_str += ",test,test_full"
+        profile = f"-profile {profile_str}" if self.container_system else ""
 
-            working_dir = Path().absolute()
-            with intermediate_dir_with_cd(working_dir):
-                # Run nextflow inspect
+        working_dir = Path().absolute()
+
+        def run_nextflow_inspect(params_file: Path | None = None) -> dict[str, Any]:
+            with set_wd_tempdir(working_dir):
                 executable = "nextflow"
-                cmd_params = f"inspect -format json {profile} {working_dir / workflow_directory / entrypoint}"
+                params_file_arg = f' -params-file "{params_file}"' if params_file else ""
+                cmd_params = (
+                    f"inspect -format json {profile}{params_file_arg} {working_dir / workflow_directory / entrypoint}"
+                )
                 cmd_out = run_cmd(executable, cmd_params)
                 if cmd_out is None:
                     raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
                 out, _ = cmd_out
-                out_json = json.loads(out)
-                # NOTE: Should we save the container name too to have more meta information?
-                named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-                # We only want to process unique containers
-                self.containers = list(set(named_containers.values()))
+                try:
+                    return parse_nextflow_json(out.decode("utf-8"))
+                except json.JSONDecodeError as e:
+                    raise DownloadError(f"Failed to parse output of `nextflow inspect` as JSON: {e}") from e
 
+        try:
+            out_json = run_nextflow_inspect()
         except RuntimeError as e:
-            log.error("Running 'nextflow inspect' failed with the following error")
-            raise DownloadError(e)
+            # Only a failed command carries Nextflow output worth checking for known problems
+            nf_error = e.output if isinstance(e, CommandError) else ""
+
+            # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
+            # if/else container blocks with "Invalid process directive". Users need an older NF.
+            if "Invalid process directive" in nf_error:
+                raise DownloadError(
+                    "nextflow inspect failed because the pipeline uses old-style process syntax "
+                    "that the default strict syntax of Nextflow >= 26.04 no longer accepts.\n"
+                    "Please downgrade to Nextflow 25.10 or lower to download this pipeline, "
+                    "or ask the pipeline maintainers to update their container directives."
+                ) from e
+
+            # Some workflow revisions explicitly require an outdir parameter. If this is the
+            # only issue, retry inspect with an ephemeral params file that provides one.
+            if re.search(
+                r"missing required parameter\s*:\s*(?:--outdir|params\.outdir|outdir)\b",
+                nf_error,
+                flags=re.IGNORECASE,
+            ):
+                try:
+                    with tempfile.TemporaryDirectory(prefix="nf-core-inspect-") as tmp_dir:
+                        params_file = Path(tmp_dir) / "params.yml"
+                        params_file.write_text('outdir: "nf-core-tools-inspect"\n')
+                        out_json = run_nextflow_inspect(params_file=params_file)
+                except RuntimeError as retry_error:
+                    log.error("Running 'nextflow inspect' failed with the following error")
+                    raise DownloadError(retry_error) from retry_error
+            else:
+                log.error("Running 'nextflow inspect' failed with the following error")
+                raise DownloadError(e) from e
+
+        try:
+            # NOTE: Should we save the container name too to have more meta information?
+            named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+            # We only want to process unique containers
+            self.containers = list(set(named_containers.values()))
 
         except KeyError as e:
             log.error("Failed to parse output of 'nextflow inspect' to extract containers")
-            raise DownloadError(e)
+            raise DownloadError(e) from e
 
     def get_container_output_dir(self) -> Path:
         assert self.outdir is not None  # mypy

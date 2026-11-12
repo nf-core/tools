@@ -5,8 +5,8 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
+import nf_core.utils
 
 from ..test_pipelines import TestPipelines
 from ..utils import with_temporary_folder
@@ -59,14 +59,14 @@ class TestPipelinesLint(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
-        config_dict = {"repository_type": "pipeline", "lint": {test_name: False for test_name in lint_obj.lint_tests}}
+        config_dict = {"repository_type": "pipeline", "lint": dict.fromkeys(lint_obj.lint_tests, False)}
         with open(Path(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
         lint_obj._load_lint_config()
         assert lint_obj.lint_config is not None
-        assert sorted(list(lint_obj.lint_config.model_dump(exclude_none=True))) == sorted(lint_obj.lint_tests)
+        assert sorted(lint_obj.lint_config.model_dump(exclude_none=True)) == sorted(lint_obj.lint_tests)
 
         # Try running linting and make sure that all tests are ignored
         lint_obj._lint_pipeline()
@@ -113,7 +113,7 @@ class TestPipelinesLint(TestLint):
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{json_fn}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{json_fn}' due to error {e}") from e
         assert saved_json["num_tests_pass"] > 0
         assert saved_json["num_tests_warned"] > 0
         assert saved_json["num_tests_ignored"] == 0
@@ -122,6 +122,28 @@ class TestPipelinesLint(TestLint):
         assert saved_json["has_tests_warned"]
         assert not saved_json["has_tests_ignored"]
         assert not saved_json["has_tests_failed"]
+
+    def test_load_tools_config_malformed_lint(self):
+        """load_tools_config raises AssertionError for invalid lint config
+
+        pipeline_todos is typed bool | None but given a list value,
+        which should fail pydantic validation.
+        """
+        new_pipeline = self._make_pipeline_copy()
+        nf_core_yml_path = Path(new_pipeline, ".nf-core.yml")
+        with open(nf_core_yml_path) as fh:
+            config = yaml.safe_load(fh)
+        if "lint" not in config or config["lint"] is None:
+            config["lint"] = {}
+        config["lint"]["pipeline_todos"] = ["README.md", "main.nf"]
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.dump(config, fh)
+
+        with self.assertRaises(AssertionError) as cm:
+            nf_core.utils.load_tools_config(new_pipeline)
+        assert "is invalid" in str(cm.exception)
+        assert "lint.pipeline_todos" in str(cm.exception)
+        assert "Got instead" in str(cm.exception)
 
     def test_wrap_quotes(self):
         md = self.lint_obj._wrap_quotes(["one", "two", "three"])

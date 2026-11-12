@@ -6,9 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import nf_core.modules
 import nf_core.modules.install
-import nf_core.pipelines.create.create
 import nf_core.subworkflows
 
 from .utils import (
@@ -106,6 +104,10 @@ class TestSubworkflows(unittest.TestCase):
             sha="8c343b3c8a0925949783dc547666007c245c235b",
         )
         self.subworkflow_install_cross_org = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
+        )
+        # Another instance to avoid cross-contamination
+        self.subworkflow_install_cross_org_again = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
         )
 

@@ -27,6 +27,21 @@ class TestModulesLintLocal(TestModules):
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
+    def test_modules_lint_local_tool_subtool(self):
+        """Test that a local module in a TOOL/SUBTOOL directory keeps its full name"""
+        installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
+        local = Path(self.pipeline_dir, "modules", "local", "trimgalore", "sub")
+        local.parent.mkdir(parents=True)
+        shutil.move(installed, local)
+        main_nf = local / "main.nf"
+        main_nf.write_text(main_nf.read_text().replace("process TRIMGALORE", "process TRIMGALORE_SUB"))
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        assert [m.component_name for m in module_lint.all_local_components] == ["trimgalore/sub"]
+        module_lint.lint(print_results=False, local=True)
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        passed = [x.lint_test for x in module_lint.passed if x.component_name == "trimgalore/sub"]
+        assert "module_process_name" in passed
+
     def test_modules_lint_local_missing_files(self):
         """Test linting local modules with missing files"""
         installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")

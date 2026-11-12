@@ -9,6 +9,7 @@ from rich.syntax import Syntax
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 
 from .install import ComponentInstall
 
@@ -53,6 +54,10 @@ class ComponentRemove(ComponentCommand):
         if repo_url is None:
             repo_url = self.modules_repo.remote_url
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1]} name:",
                 choices=self.components_from_repo(repo_path),
@@ -130,6 +135,10 @@ class ComponentRemove(ComponentCommand):
                     )
                 # ask the user if they still want to remove the component, add it back otherwise
                 if not force:
+                    self.require_prompts(
+                        f"{self.component_type[:-1].title()} '{component}' is still included in workflow files.\n"
+                        "Use '--force' to force removal"
+                    )
                     if not questionary.confirm(
                         f"Do you still want to remove the {self.component_type[:-1]} '{component}'?",
                         style=nf_core.utils.nfcore_question_style,
@@ -144,12 +153,12 @@ class ComponentRemove(ComponentCommand):
                         removed_components.append(component)
                         return removed
             # Remove the component files of all entries removed from modules.json
-            removed = (
-                True
-                if self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed
-                else False
-            )
+            removed = bool(self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed)
             removed_components.append(component)
+
+        # Prettify modules.json file after all changes have been made
+        modules_json.load()
+        modules_json.dump(run_prettier=True)
 
         if removed:
             if self.component_type == "subworkflows":
@@ -172,9 +181,14 @@ class ComponentRemove(ComponentCommand):
                     # remember removed dependencies
                     if dependency_removed:
                         removed_components.append(component_name.replace("/", "_"))
+            # Regenerate container configuration files for the pipeline when modules are removed
+            if self.component_type == "modules":
+                try_generate_container_configs(self.directory)
+
             # print removed dependencies
-            if removed_components:
-                log.info(f"Removed files for '{component}' and its dependencies '{', '.join(removed_components)}'.")
+            dependencies = set(removed_components) - {component}
+            if dependencies:
+                log.info(f"Removed files for '{component}' and its dependencies '{', '.join(dependencies)}'.")
             else:
                 log.info(f"Removed files for '{component}'.")
         else:

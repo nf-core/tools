@@ -1,15 +1,20 @@
-import shutil
 from pathlib import Path
-from unittest import mock
 
 import pytest
-import yaml
-from git.repo import Repo
 
 import nf_core.subworkflows
-from tests.utils import GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH, GITLAB_URL
+from tests.utils import NF_CORE_LICENSE_HEADER
 
-from ..test_subworkflows import TestSubworkflows
+from ..test_subworkflows import TestSubworkflows, create_modules_repo_dummy
+
+
+def test_subworkflows_create_other_org_no_license_header(tmp_path):
+    """Create a subworkflow in a modules repo with a non-nf-core org_path, without the nf-core license header"""
+    nfcore_modules = create_modules_repo_dummy(tmp_path)
+    Path(nfcore_modules, ".nf-core.yml").write_text("repository_type: modules\norg_path: myorg\n")
+    nf_core.subworkflows.SubworkflowCreate(nfcore_modules, "test_subworkflow", "@author").create()
+    main_nf = Path(nfcore_modules, "subworkflows", "myorg", "test_subworkflow", "main.nf").read_text()
+    assert NF_CORE_LICENSE_HEADER not in main_nf
 
 
 class TestSubworkflowsCreate(TestSubworkflows):
@@ -19,7 +24,10 @@ class TestSubworkflowsCreate(TestSubworkflows):
             self.pipeline_dir, "test_subworkflow_local", "@author", True
         )
         subworkflow_create.create()
-        assert Path(self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local/main.nf").exists()
+        subworkflow_dir = Path(self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local")
+        assert Path(subworkflow_dir, "main.nf").exists()
+        assert NF_CORE_LICENSE_HEADER not in Path(subworkflow_dir, "main.nf").read_text()
+        assert 'tag "subworkflows_local"' in Path(subworkflow_dir, "tests", "main.nf.test").read_text()
 
     def test_subworkflows_create_fail_exists(self):
         """Fail at creating the same subworkflow twice"""
@@ -37,73 +45,9 @@ class TestSubworkflowsCreate(TestSubworkflows):
             self.nfcore_modules, "test_subworkflow", "@author", force=True
         )
         subworkflow_create.create()
-        assert Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "main.nf").exists()
+        main_nf = Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "main.nf").read_text()
+        assert main_nf.startswith(NF_CORE_LICENSE_HEADER)
 
         assert Path(
             self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test"
         ).exists()
-
-    @mock.patch("rich.prompt.Confirm.ask")
-    def test_subworkflows_migrate(self, mock_rich_ask):
-        """Create a subworkflow with the --migrate-pytest option to convert pytest to nf-test"""
-        pytest_dir = Path(self.nfcore_modules, "tests", "subworkflows", "nf-core", "bam_stats_samtools")
-        subworkflow_dir = Path(self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools")
-
-        # Clone modules repo with pytests
-        shutil.rmtree(self.nfcore_modules)
-        Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-        with open(subworkflow_dir / "main.nf") as fh:
-            old_main_nf = fh.read()
-        with open(subworkflow_dir / "meta.yml") as fh:
-            old_meta_yml = fh.read()
-
-        # Create a subworkflow with --migrate-pytest
-        mock_rich_ask.return_value = True
-        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(
-            self.nfcore_modules, "bam_stats_samtools", migrate_pytest=True
-        )
-        subworkflow_create.create()
-
-        with open(subworkflow_dir / "main.nf") as fh:
-            new_main_nf = fh.read()
-        with open(subworkflow_dir / "meta.yml") as fh:
-            new_meta_yml = fh.read()
-        nextflow_config = subworkflow_dir / "tests" / "nextflow.config"
-
-        # Check that old files have been copied to the new module
-        assert old_main_nf == new_main_nf
-        assert old_meta_yml == new_meta_yml
-        assert nextflow_config.is_file()
-
-        # Check that pytest folder is deleted
-        assert not pytest_dir.is_dir()
-
-        # Check that pytest_modules.yml is updated
-        with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
-            modules_yml = yaml.safe_load(fh)
-        assert "subworkflows/bam_stats_samtools" not in modules_yml.keys()
-
-    @mock.patch("rich.prompt.Confirm.ask")
-    def test_subworkflows_migrate_no_delete(self, mock_rich_ask):
-        """Create a subworkflow with the --migrate-pytest option to convert pytest to nf-test.
-        Test that pytest directory is not deleted."""
-        pytest_dir = Path(self.nfcore_modules, "tests", "subworkflows", "nf-core", "bam_stats_samtools")
-
-        # Clone modules repo with pytests
-        shutil.rmtree(self.nfcore_modules)
-        Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-
-        # Create a module with --migrate-pytest
-        mock_rich_ask.return_value = False
-        module_create = nf_core.subworkflows.SubworkflowCreate(
-            self.nfcore_modules, "bam_stats_samtools", migrate_pytest=True
-        )
-        module_create.create()
-
-        # Check that pytest folder is not deleted
-        assert pytest_dir.is_dir()
-
-        # Check that pytest_modules.yml is updated
-        with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
-            modules_yml = yaml.safe_load(fh)
-        assert "subworkflows/bam_stats_samtools" not in modules_yml.keys()

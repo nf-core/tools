@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 import questionary
-from rich import print
+from rich import print  # noqa: A004
 from rich.panel import Panel
 from rich.prompt import Confirm
 from rich.syntax import Syntax
@@ -122,6 +122,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 except LookupError:
                     raise
 
+        assert self.component_name is not None  # Set above by user input, prompt, or guard
         self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists
@@ -151,18 +152,29 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 os.environ["PROFILE"] = profile
 
     def display_nftest_output(self, nftest_out: bytes, nftest_err: bytes) -> None:
-        nftest_output = Text.from_ansi(nftest_out.decode())
-        print(Panel(nftest_output, title="nf-test output"))
-        if nftest_err:
-            syntax = Syntax(nftest_err.decode(), "diff", theme="ansi_dark")
-            print(Panel(syntax, title="nf-test error"))
+        if self.no_prompts:
+            # In no_prompts mode (e.g., tests), use simple logging to avoid Rich hanging in non-TTY environments
+            log.debug("nf-test output:\n%s", nftest_out.decode())
+            if nftest_err:
+                log.debug("nf-test error:\n%s", nftest_err.decode())
+            if "Different Snapshot:" in nftest_err.decode() and self.update:
+                log.info("Updating snapshot")
+                self.generate_snapshot()
+        else:
+            # Interactive mode: use Rich formatting
+            print("Displaying nf-test output")
+            nftest_output = Text.from_ansi(nftest_out.decode())
+            print(Panel(nftest_output, title="nf-test output"))
+            print("Displaying nf-test error", nftest_err.decode())
+            if nftest_err:
+                print("Parsing nf-test error")
+                syntax = Syntax(nftest_err.decode(), "diff", theme="ansi_dark")
+                print("Parsed nf-test error")
+                print(Panel(syntax, title="nf-test error"))
+                print("Displaying nf-test error")
             if "Different Snapshot:" in nftest_err.decode():
                 log.error("nf-test failed due to differences in the snapshots")
-                # prompt to update snapshot
-                if self.no_prompts:
-                    log.info("Updating snapshot")
-                    self.update = True
-                elif self.update is None:
+                if self.update is None:
                     answer = Confirm.ask(
                         "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
                         default=True,
@@ -189,7 +201,8 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
 
         # set verbose flag if self.verbose is True
         verbose = "--verbose --debug" if self.verbose else ""
-        update = "--update-snapshot" if self.update else ""
+        update_snapshot = self.update
+        update = "--update-snapshot" if update_snapshot else ""
         self.update = False  # reset self.update to False to test if the new snapshot is stable
         tag = f"subworkflows/{self.component_name}" if self.component_type == "subworkflows" else self.component_name
         profile = self.profile if self.profile else os.environ["PROFILE"]
@@ -209,6 +222,9 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 self.obsolete_snapshots = True
             # check if nf-test was successful
             if "Assertion failed:" in nftest_out.decode():
+                if "Different Snapshot:" in nftest_err.decode():
+                    return update_snapshot  # snapshot was updated return False only if we don't want to update the snapshot
+                self.errors.append("Assertion failed.")
                 return False
             elif "No tests to execute." in nftest_out.decode():
                 log.error("Nothing to execute. Is the file 'main.nf.test' missing?")

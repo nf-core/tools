@@ -16,7 +16,7 @@ runs:
         export NXF_WORK=$(pwd)
 
     - name: Install Nextflow
-      uses: nf-core/setup-nextflow@v2
+      uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
       with:
         version: ${{ matrix.NXF_VER }}
 
@@ -26,88 +26,115 @@ runs:
       run: |
         mkdir -p create-lint-wf && cd create-lint-wf
         export NXF_WORK=$(pwd)
-        nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+        uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
     # Try syncing it before we change anything
     - name: nf-core pipelines sync
       shell: bash
-      run: nf-core --log-file log.txt pipelines sync --dir nf-core-testpipeline/
+      run: uv run nf-core --log-file log.txt pipelines sync --dir nf-core-testpipeline/
       working-directory: create-lint-wf
+    #FIXME debugging
+    - name: check directory
+      shell: bash
+      run: |
+        pwd
+        ls -l
+      working-directory: create-lint-wf/nf-core-testpipeline
 
     # Run code style linting
-    - name: run pre-commit
+    - name: run prek
       shell: bash
-      run: pre-commit run --all-files
-      working-directory: create-lint-wf
+      run: uv run prek run --config .pre-commit-config.yaml --all-files
+      working-directory: create-lint-wf/nf-core-testpipeline
 
     # Update modules to the latest version
     - name: nf-core modules update
       shell: bash
-      run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
+      run: uv run nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
+      working-directory: create-lint-wf
+
+    # Commit regenerated container configs so lint sees them as up to date
+    - name: commit updated container configs
+      shell: bash
+      run: |
+        cd nf-core-testpipeline
+        git config user.email "nf-core-bot@nf-co.re"
+        git config user.name "nf-core-bot"
+        git add conf/containers_*.config
+        git diff --cached --quiet || git commit -m "Update container configs after modules update"
       working-directory: create-lint-wf
 
     # Remove TODO statements
     - name: remove TODO
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's#TODO nf-core:##g' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's#TODO nf-core:##g' {} \;
       working-directory: create-lint-wf
 
     # Uncomment includeConfig statement
     - name: uncomment include config
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+      working-directory: create-lint-wf
+
+    # Add a placeholder metro map and enable manifest.diagram
+    - name: add metro map
+      shell: bash
+      run: |
+        mkdir -p nf-core-testpipeline/docs/images
+        touch nf-core-testpipeline/docs/images/metro_map.svg
+        sed -i 's|// diagram|diagram|' nf-core-testpipeline/nextflow.config
       working-directory: create-lint-wf
 
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+      run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
     # Run nf-core pipelines linting
     - name: nf-core pipelines lint
       shell: bash
-      run: nf-core --verbose --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+      run: uv run nf-core --verbose --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned
       working-directory: create-lint-wf
 
     - name: nf-core pipelines bump-version to release
       shell: bash
-      run: nf-core --log-file log.txt pipelines bump-version --dir nf-core-testpipeline/ 1.1
+      run: uv run nf-core --log-file log.txt pipelines bump-version --dir nf-core-testpipeline/ 1.1
       working-directory: create-lint-wf
 
     - name: nf-core pipelines lint in release mode
       shell: bash
-      run: nf-core --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
+      run: uv run nf-core --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
       working-directory: create-lint-wf
 
     - name: Upload log file artifact
       if: ${{ always() }}
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: nf-core-log-file-${{ matrix.NXF_VER }}
         path: create-lint-wf/log.txt
 
     - name: nf-core modules install
       shell: bash
-      run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
+      run: uv run nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
       working-directory: create-lint-wf
 
     - name: nf-core modules install gitlab
       shell: bash
-      run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch branch-tester install fastp --dir nf-core-testpipeline/
+      run: uv run nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch branch-tester install fastp --dir nf-core-testpipeline/
       working-directory: create-lint-wf
 
     - name: nf-core modules list local
       shell: bash
-      run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
+      run: uv run nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
       working-directory: create-lint-wf
 
     - name: nf-core modules list remote
       shell: bash
-      run: nf-core --log-file log.txt modules list remote
+      run: uv run nf-core --log-file log.txt modules list remote
       working-directory: create-lint-wf
 
     - name: nf-core modules list remote gitlab
       shell: bash
-      run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
+      run: uv run nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
       working-directory: create-lint-wf

@@ -48,13 +48,13 @@ class TestLintNfTestContent(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         result = lint_obj.nf_test_content()
         assert len(result["failed"]) > 0
-        assert "'nf-test.config' does not set a `testsDir`, it should contain `testsDir \".\"`" in result["failed"]
+        assert "'nf-test.config' does not set a `testsDir`, it should contain `testsDir = \".\"`." in result["failed"]
         assert (
-            '\'nf-test.config\' does not set a `workDir`, it should contain `workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"`'
+            '\'nf-test.config\' does not set a `workDir`, it should contain `workDir = System.getenv("NFT_WORKDIR") ?: ".nf-test"`.'
             in result["failed"]
         )
         assert (
-            "'nf-test.config' does not set a `configFile`, it should contain `configFile \"tests/nextflow.config\"`"
+            "'nf-test.config' does not set a `configFile`, it should contain `configFile = \"tests/nextflow.config\"`."
             in result["failed"]
         )
 
@@ -73,7 +73,6 @@ class TestLintNfTestContent(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj._load()
         result = lint_obj.nf_test_content()
-        print(result)
         assert len(result["ignored"]) == 3
         assert "'tests/default.nf.test' checking ignored" in result["ignored"]
         assert "'tests/nextflow.config' checking ignored" in result["ignored"]

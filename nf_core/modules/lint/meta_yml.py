@@ -1,32 +1,159 @@
+from __future__ import annotations
+
 import json
 import logging
+from functools import cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import ruamel.yaml
 from jsonschema import exceptions, validators
 
 from nf_core.components.components_differ import ComponentsDiffer
-from nf_core.components.lint import ComponentLint, LintExceptionError
+from nf_core.components.components_utils import read_meta_yml as read_component_meta_yml
+from nf_core.components.components_utils import yaml as ruamel_yaml
+from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.lint.module_containers import (
+    lint_conda_lock_files,
+    lint_main_nf_container,
+    lint_meta_yml_containers,
+)
+from nf_core.utils import ContainerRegistryUrls, unquote
+
+if TYPE_CHECKING:
+    from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
 
 
-def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+@cache
+def _load_skip_nf_test_sets(base_dir: Path) -> dict[str, frozenset[Path]]:
     """
-    Lint a ``meta.yml`` file
+    Load the per-system skip sets from ``.github/skip_nf_test.json``, cached per base directory.
 
-    The lint test checks that the module has
-    a ``meta.yml`` file and that it follows the
-    JSON schema defined in the ``modules/meta-schema.json``
-    file in the nf-core/modules repository.
+    Skip entries may be recorded as absolute or repo-relative paths,
+    so everything is resolved to absolute paths for comparison.
+    """
+    skip_file = Path(base_dir, ".github", "skip_nf_test.json")
+    if not skip_file.is_file():
+        return {}
+    with open(skip_file) as fh:
+        data = json.load(fh)
+    return {k: frozenset((base_dir / p).resolve() for p in v) for k, v in data.items() if isinstance(v, list)}
 
-    In addition it checks that the module name
-    and module input is consistent between the
-    ``meta.yml`` and the ``main.nf``.
 
-    If the module has inputs or outputs, they are expected to be
-    formatted as:
+def meta_yml_containers(module: NFCoreComponent) -> None:
+    """
+    Lints the container information in the meta.yml file and the module's main.nf file.
+    Respects per-system skips from `skip_nf_test.json`.
+    """
+    skip_sets = _load_skip_nf_test_sets(module.base_dir)
+    module_path = module.component_dir.resolve()
+    skip_docker = module_path in skip_sets.get("docker", frozenset())
+    skip_singularity = module_path in skip_sets.get("singularity", frozenset())
+    skip_conda = module_path in skip_sets.get("conda", frozenset())
+    if skip_docker or skip_singularity or skip_conda:
+        log.debug(
+            f"Skip entries found for {module.component_name}: "
+            f"docker={skip_docker}, singularity={skip_singularity}, conda={skip_conda}"
+        )
+
+    lint_meta_yml_containers(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
+    lint_main_nf_container(module, skip_docker=skip_docker, skip_conda=skip_conda, skip_singularity=skip_singularity)
+    if not skip_conda:
+        lint_conda_lock_files(module)
+
+
+def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
+    """Lint a ``meta.yml`` file
+
+    Checks that the module has a ``meta.yml`` file, that it is valid according
+    to the nf-core JSON schema, and that its contents are consistent with
+    ``main.nf``.
+
+    The following checks are performed:
+
+    meta_yml_patch_reversible
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    If the module is patched, the patch must be reverse-applicable to the
+    current ``meta.yml`` so the pre-patch content can be linted. A warning is
+    issued, and the remaining ``meta_yml`` checks are skipped for this module,
+    if the patch is outdated or has been edited and can no longer be applied.
+
+    meta_yml_exists
+    ^^^^^^^^^^^^^^^
+
+    The ``meta.yml`` file must exist.
+
+    meta_yml_valid
+    ^^^^^^^^^^^^^^
+
+    The ``meta.yml`` must be valid according to the JSON
+    schema defined in ``modules/meta-schema.json`` in the nf-core/modules
+    repository.
+
+    meta_name
+    ^^^^^^^^^
+
+    The ``name`` field in ``meta.yml`` must match (case-insensitive)
+    the process name declared in ``main.nf``.
+
+    meta_input
+    ^^^^^^^^^^
+
+    If ``main.nf`` declares inputs, they must be listed under
+    the ``input:`` key in ``meta.yml``.
+
+    correct_meta_inputs
+    ^^^^^^^^^^^^^^^^^^^
+
+    The inputs listed in ``meta.yml`` must exactly
+    match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
+    to auto-correct.
+
+    meta_output
+    ^^^^^^^^^^^
+
+    If ``main.nf`` declares outputs, they must be listed under
+    the ``output:`` key in ``meta.yml``.
+
+    correct_meta_outputs
+    ^^^^^^^^^^^^^^^^^^^^
+
+    The outputs listed in ``meta.yml`` must exactly
+    match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
+    to auto-correct.
+
+    has_meta_topics
+    ^^^^^^^^^^^^^^^
+
+    If ``main.nf`` declares topics, ``meta.yml`` must
+    also contain a non-empty ``topics:`` block. Run
+    ``nf-core modules lint --fix`` to auto-correct.
+
+    correct_meta_topics
+    ^^^^^^^^^^^^^^^^^^^
+
+    The topics listed in ``meta.yml`` must exactly
+    match those parsed from ``main.nf``. Run ``nf-core modules lint --fix``
+    to auto-correct.
+
+    has_meta_containers
+    ^^^^^^^^^^^^^^^^^^^
+
+    If ``main.nf`` declares containers, ``meta.yml``
+    must also contain a non-empty ``containers:`` block. Run
+    ``nf-core modules lint --fix`` to auto-correct.
+
+    correct_meta_containers
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    The containers listed in ``meta.yml`` must
+    exactly match those parsed from ``main.nf``. Run
+    ``nf-core modules lint --fix`` to auto-correct.
+
+    If the module has inputs or outputs, they are expected to be formatted as:
 
     .. code-block:: groovy
 
@@ -36,12 +163,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
 
     or permutations of the above.
 
-    Args:
-        module_lint_object (ComponentLint): The lint object for the module
-        module (NFCoreComponent): The module to lint
-
     """
-    if module.meta_yml is None:
+    if module.meta_yml is None or not module.meta_yml.exists():
         if allow_missing:
             module.warned.append(
                 (
@@ -51,40 +174,47 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                     Path(module.component_dir, "meta.yml"),
                 )
             )
-            return
-        raise LintExceptionError("Module does not have a `meta.yml` file")
-    # Check if we have a patch file, get original file in that case
-    meta_yaml = read_meta_yml(module_lint_object, module)
-    if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
-        lines = ComponentsDiffer.try_apply_patch(
-            module.component_type,
-            module.component_name,
-            module_lint_object.modules_repo.repo_path,
-            module.patch_path,
-            Path(module.component_dir).relative_to(module.base_dir),
-            reverse=True,
-        ).get("meta.yml")
-        if lines is not None:
-            yaml = ruamel.yaml.YAML()
-            meta_yaml = yaml.load("".join(lines))
-    if meta_yaml is None:
-        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
+        else:
+            module.failed.append(
+                (
+                    "meta_yml",
+                    "meta_yml_exists",
+                    "Module `meta.yml` does not exist.",
+                    Path(module.component_dir, "meta.yml"),
+                )
+            )
         return
-    else:
-        module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+
+    # read_meta_yml returns the reverse-patched content for patched modules
+    try:
+        meta_yaml = read_meta_yml_patched(module_lint_object, module)
+    except LookupError:
+        module.warned.append(
+            (
+                "meta_yml",
+                "meta_yml_patch_reversible",
+                "Could not reverse-apply patch to read meta.yml for linting; skipping meta_yml checks",
+                module.meta_yml,
+            )
+        )
+        return
+    if meta_yaml is None:
+        module.failed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` could not be parsed.", module.meta_yml))
+        return
+    module.passed.append(("meta_yml", "meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+    module.container = meta_yaml.get("containers", {})
 
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
-            schema = json.load(fh)
+        schema = module_lint_object.load_meta_schema()
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
     except exceptions.ValidationError as e:
         hint = ""
         if len(e.path) > 0:
-            hint = f"\nCheck the entry for `{e.path[0]}`."
+            hint = f"\nCheck the entry for `{e.path}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
@@ -192,7 +322,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         if "output" in meta_yaml:
             correct_outputs = obtain_outputs(module_lint_object, module.outputs)
             meta_outputs = obtain_outputs(module_lint_object, meta_yaml["output"])
-
+            log.debug(f"Correct outputs: {correct_outputs}")
+            log.debug(f"Outputs in `meta.yml`: {meta_outputs}")
             if correct_outputs == meta_outputs:
                 module.passed.append(
                     (
@@ -211,9 +342,84 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                         module.meta_yml,
                     )
                 )
+        # Check that all topics are correctly specified
+        if "topics" in meta_yaml or module.topics:
+            correct_topics = obtain_topics(module_lint_object, module.topics)
+            meta_topics = obtain_topics(module_lint_object, meta_yaml.get("topics", {}))
+
+            if not meta_topics:
+                module.failed.append(
+                    (
+                        "meta_yml",
+                        "has_meta_topics",
+                        f"Module `meta.yml` does not contain any topics, even though they appear in `main.nf`. Use `nf-core modules lint {module.component_name} --fix` to automatically resolve this.",
+                        module.meta_yml,
+                    )
+                )
+                return
+            else:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        "has_meta_topics",
+                        "Module `meta.yml` and `main.nf` contain topics.",
+                        module.meta_yml,
+                    )
+                )
+
+            if correct_topics == meta_topics:
+                module.passed.append(
+                    (
+                        "meta_yml",
+                        "correct_meta_topics",
+                        "Correct topics specified in module `meta.yml`",
+                        module.meta_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "meta_yml",
+                        "correct_meta_topics",
+                        f"Module `meta.yml` does not match `main.nf`. Topics should contain: {correct_topics}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        module.meta_yml,
+                    )
+                )
+
+        # Check that meta_yml specifies containers (skip modules that use a Dockerfile)
+        from nf_core.modules.modules_utils import module_uses_dockerfile
+
+        container = module.get_container_from_main_nf()
+        if container and not module_uses_dockerfile(module):
+            if "containers" not in meta_yaml:
+                if ContainerRegistryUrls.SEQERA_DOCKER.value in container:
+                    module.warned.append(
+                        (
+                            "meta_yml",
+                            "has_meta_containers",
+                            "Module `meta.yml` does not contain any containers, even though they appear in `main.nf`.",
+                            module.meta_yml,
+                        )
+                    )
+                else:
+                    log.debug(
+                        f"Module `{module.component_name}` has no containers section in `meta.yml` but does not use the Wave registry — skipping container lint."
+                    )
+                return
+
+            module.passed.append(
+                (
+                    "meta_yml",
+                    "has_meta_containers",
+                    "Module `meta.yml` and `main.nf` contain container definition.",
+                    module.meta_yml,
+                )
+            )
+
+            meta_yml_containers(module)
 
 
-def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
+def read_meta_yml_patched(module_lint_object: ComponentLint, module: NFCoreComponent) -> dict | None:
     """
     Read a `meta.yml` file and return it as a dictionary
 
@@ -224,9 +430,9 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     Returns:
         dict: The `meta.yml` file as a dictionary
     """
-    meta_yaml = None
-    yaml = ruamel.yaml.YAML()
-    yaml.preserve_quotes = True
+    if module_lint_object.modules_repo.repo_path is None:
+        raise ValueError("modules_repo.repo_path is None")
+
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ComponentsDiffer.try_apply_patch(
@@ -238,13 +444,10 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
             reverse=True,
         ).get("meta.yml")
         if lines is not None:
-            meta_yaml = yaml.load("".join(lines))
-    if meta_yaml is None:
-        if module.meta_yml is None:
-            return None
-        with open(module.meta_yml) as fh:
-            meta_yaml = yaml.load(fh)
-    return meta_yaml
+            return ruamel_yaml.load("".join(lines))
+    if module.meta_yml is None:
+        return None
+    return read_component_meta_yml(module.meta_yml)
 
 
 def obtain_inputs(_, inputs: list) -> list:
@@ -257,15 +460,17 @@ def obtain_inputs(_, inputs: list) -> list:
     Returns:
         formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    formatted_inputs = []
+    formatted_inputs: list[list[str] | str] = []
     for input_channel in inputs:
         if isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
             formatted_inputs.append(channel_elements)
         else:
-            formatted_inputs.append(list(input_channel.keys())[0])
+            key = list(input_channel.keys())[0]
+            formatted_inputs.append(unquote(key))
 
     return formatted_inputs
 
@@ -285,19 +490,49 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
     if old_structure:
         outputs = {k: v for d in outputs for k, v in d.items()}
     assert isinstance(outputs, dict)  # mypy
-    for channel_name in outputs.keys():
+    for channel_name in outputs:
         output_channel = outputs[channel_name]
         channel_elements: list = []
         for element in output_channel:
             if isinstance(element, list):
                 channel_elements.append([])
                 for e in element:
-                    channel_elements[-1].append(list(e.keys())[0])
+                    key = list(e.keys())[0]
+                    channel_elements[-1].append(unquote(key))
             else:
-                channel_elements.append(list(element.keys())[0])
+                key = list(element.keys())[0]
+                channel_elements.append(unquote(key))
         formatted_outputs[channel_name] = channel_elements
 
     if old_structure:
         return [{k: v} for k, v in formatted_outputs.items()]
     else:
         return formatted_outputs
+
+
+def obtain_topics(_, topics: dict) -> dict:
+    """
+    Obtain the dictionary of topics and elements of each topic.
+
+    Args:
+        topics (dict): The dictionary of topics from main.nf or meta.yml files.
+
+    Returns:
+        formatted_topics (dict): A dictionary containing the topics and their elements obtained from main.nf or meta.yml files.
+    """
+    formatted_topics: dict = {}
+    for name in topics:
+        content = topics[name]
+        t_elements: list = []
+        for element in content:
+            if isinstance(element, list):
+                t_elements.append([])
+                for e in element:
+                    key = list(e.keys())[0]
+                    t_elements[-1].append(unquote(key))
+            else:
+                key = list(element.keys())[0]
+                t_elements.append(unquote(key))
+        formatted_topics[name] = t_elements
+
+    return formatted_topics

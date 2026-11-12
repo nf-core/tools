@@ -3,6 +3,7 @@
 import os
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import git
 import jinja2
@@ -45,6 +46,45 @@ class NfcoreCreateTest(unittest.TestCase):
         assert pipeline.config.version == self.pipeline_version
 
     @with_temporary_folder
+    @mock.patch("git.config.GitConfigParser.get_value", return_value="main")
+    def test_pipeline_creation_default_branch_from_git_config(self, tmp_path, mock_get_value):
+        """Git's init.defaultBranch is only used when no default branch is given, e.g. not for sync"""
+        pipeline_args = {
+            "name": self.pipeline_name,
+            "description": self.pipeline_description,
+            "author": self.pipeline_author,
+            "outdir": tmp_path,
+        }
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(**pipeline_args)
+        assert pipeline.default_branch == "main"
+
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(**pipeline_args, default_branch="master")
+        assert pipeline.default_branch == "master"
+
+    @with_temporary_folder
+    def test_pipeline_creation_incompatible_default_branch(self, tmp_path):
+        """'dev' and 'TEMPLATE' are rejected as default branch, unless no git repository is created"""
+        pipeline_args = {
+            "name": self.pipeline_name,
+            "description": self.pipeline_description,
+            "author": self.pipeline_author,
+            "outdir": tmp_path,
+        }
+        for branch in ["dev", "TEMPLATE"]:
+            with self.assertRaises(UserWarning):
+                nf_core.pipelines.create.create.PipelineCreate(**pipeline_args, default_branch=branch)
+            with (
+                mock.patch("git.config.GitConfigParser.get_value", return_value=branch),
+                self.assertRaises(UserWarning),
+            ):
+                nf_core.pipelines.create.create.PipelineCreate(**pipeline_args)
+
+            pipeline = nf_core.pipelines.create.create.PipelineCreate(
+                **pipeline_args, default_branch=branch, no_git=True
+            )
+            assert pipeline.default_branch == branch
+
+    @with_temporary_folder
     def test_pipeline_creation_initiation(self, tmp_path):
         pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
@@ -64,6 +104,26 @@ class NfcoreCreateTest(unittest.TestCase):
             assert "template" in fh.read()
 
     @with_temporary_folder
+    def test_format_written_files_skips_without_code_linters(self, tmp_path):
+        """Pipelines skipping code_linters have no .prettierrc.yml, so prettier must not run on them"""
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
+            name=self.pipeline_name,
+            description=self.pipeline_description,
+            author=self.pipeline_author,
+            no_git=True,
+            outdir=tmp_path,
+        )
+        pipeline.written_files = {Path(tmp_path, "main.nf")}
+        with mock.patch("nf_core.pipelines.create.create.run_prettier_on_file") as mock_prettier:
+            pipeline.format_written_files()
+            mock_prettier.assert_called_once_with(Path(tmp_path, "main.nf"))
+
+            mock_prettier.reset_mock()
+            pipeline.config.skip_features = ["code_linters"]
+            pipeline.format_written_files()
+            mock_prettier.assert_not_called()
+
+    @with_temporary_folder
     def test_pipeline_creation_initiation_with_yml(self, tmp_path):
         pipeline = nf_core.pipelines.create.create.PipelineCreate(
             no_git=False,
@@ -72,13 +132,13 @@ class NfcoreCreateTest(unittest.TestCase):
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()
-        assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+        assert Path(pipeline.outdir, ".git").is_dir()
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
 
         # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
+        assert Path(pipeline.outdir, ".nf-core.yml").exists()
+        with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
@@ -89,13 +149,13 @@ class NfcoreCreateTest(unittest.TestCase):
             outdir=tmp_path, template_config=PIPELINE_TEMPLATE_YML, default_branch=self.default_branch
         )
         pipeline.init_pipeline()
-        assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+        assert Path(pipeline.outdir, ".git").is_dir()
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
 
         # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
+        assert Path(pipeline.outdir, ".nf-core.yml").exists()
+        with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
@@ -151,7 +211,7 @@ class NfcoreCreateTest(unittest.TestCase):
         ]
         all_skipped_files = []
         for section in template_features_yml.values():
-            for feature in section["features"].keys():
+            for feature in section["features"]:
                 if section["features"][feature]["skippable_paths"]:
                     all_skipped_files.extend(section["features"][feature]["skippable_paths"])
 
@@ -177,3 +237,11 @@ class NfcoreCreateTest(unittest.TestCase):
                             )
                         else:
                             raise
+
+    @with_temporary_folder
+    def test_filter_ignored_files(self, tmp_path):
+        outdir = Path(tmp_path)
+        (outdir / ".gitignore").write_text("work/\n")
+        (outdir / ".prettierignore").write_text("*.log\n")
+        files = {outdir / "main.nf", outdir / "work" / "a.yml", outdir / "run.log"}
+        assert nf_core.pipelines.create.create._filter_ignored_files(outdir, files) == [outdir / "main.nf"]

@@ -1,15 +1,13 @@
 import logging
-import os
 from pathlib import Path
 
 import questionary
-from rich import print
+from rich import print  # noqa: A004
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
 
-import nf_core.components
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
@@ -22,6 +20,7 @@ from nf_core.components.constants import (
 )
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +37,7 @@ class ComponentInstall(ComponentCommand):
         branch: str | None = None,
         no_pull: bool = False,
         installed_by: list[str] | None = None,
+        skip_deps: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = ModulesRepo(remote_url, branch)
@@ -46,6 +46,7 @@ class ComponentInstall(ComponentCommand):
         self.prompt = prompt
         self.sha = sha
         self.current_sha = sha
+        self.skip_deps = skip_deps
         if installed_by is not None:
             self.installed_by = installed_by
         else:
@@ -132,6 +133,9 @@ class ComponentInstall(ComponentCommand):
             )
             modules_json.load()
             modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
+            if not silent:
+                modules_json.load()
+                modules_json.dump(run_prettier=True)
             return False
         try:
             version = self.get_version(component, self.current_sha, self.prompt, current_version, self.modules_repo)
@@ -157,15 +161,30 @@ class ComponentInstall(ComponentCommand):
         if not self.install_component_files(component, version, self.modules_repo, install_folder):
             return False
 
-        # Update module.json with newly installed subworkflow
+        # Update module.json with newly installed component
         modules_json.load()
         modules_json.update(
             self.component_type, self.modules_repo, component, version, self.installed_by, install_track
         )
 
         if self.component_type == "subworkflows":
-            # Install included modules and subworkflows
-            self.install_included_components(component_dir)
+            # Under --skip-deps, don't propagate --force to transitive deps so
+            # already-installed ones keep their pinned SHAs and just have
+            # installed_by tracking refreshed.
+            if self.skip_deps:
+                original_force = self.force
+                self.force = False
+                try:
+                    self.install_included_components(component_dir)
+                finally:
+                    self.force = original_force
+            else:
+                self.install_included_components(component_dir)
+
+        # Update container configs for the installed module. Subworkflows have no container entries of their
+        # own; their included modules each trigger this when installed above.
+        if self.component_type == "modules":
+            try_generate_container_configs(self.directory, component_dir)
 
         if not silent:
             modules_json.load()
@@ -194,6 +213,7 @@ class ComponentInstall(ComponentCommand):
         """
         Install included modules and subworkflows
         """
+        ini_modules_repo = self.modules_repo
         modules_to_install, subworkflows_to_install = get_components_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
             original_installed = self.installed_by
@@ -208,6 +228,8 @@ class ComponentInstall(ComponentCommand):
             self.install(m_install, silent=True)
             self.component_type = original_component_type
             self.installed_by = original_installed
+        # self.install will have modified self.modules_repo. Restore its original value
+        self.modules_repo = ini_modules_repo
 
     def collect_and_verify_name(
         self, component: str | None, modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
@@ -217,6 +239,11 @@ class ComponentInstall(ComponentCommand):
         Check that the supplied name is an available module/subworkflow.
         """
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument:\n"
+                f"  `nf-core {self.component_type} install <name>`"
+            )
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
                 choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.current_sha)),
@@ -245,10 +272,11 @@ class ComponentInstall(ComponentCommand):
 
             raise ValueError
 
-        if self.current_remote.remote_url == modules_repo.remote_url:
-            if not modules_repo.component_exists(component, self.component_type, commit=self.current_sha):
-                warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
-                log.warning(warn_msg)
+        if self.current_remote.remote_url == modules_repo.remote_url and not modules_repo.component_exists(
+            component, self.component_type, commit=self.current_sha
+        ):
+            warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
+            log.warning(warn_msg)
 
         return component
 
@@ -260,7 +288,7 @@ class ComponentInstall(ComponentCommand):
             True: if the component is not installed
             False: if the component is installed
         """
-        if (current_version is not None and os.path.exists(component_dir)) and not force:
+        if (current_version is not None and component_dir.exists()) and not force:
             # make sure included components are also installed
             if self.component_type == "subworkflows":
                 self.install_included_components(component_dir)
@@ -268,6 +296,10 @@ class ComponentInstall(ComponentCommand):
                 log.info(f"{self.component_type[:-1].title()} '{component}' is already installed.")
 
             if prompt:
+                self.require_prompts(
+                    f"{self.component_type[:-1].title()} '{component}' is already installed.\n"
+                    "Use '--force' to force reinstallation"
+                )
                 message = (
                     "?" if self.component_type == "modules" else " of this subworkflow and all it's imported modules?"
                 )
@@ -298,16 +330,17 @@ class ComponentInstall(ComponentCommand):
         if sha:
             version = sha
         elif prompt:
-            try:
-                version = prompt_component_version_sha(
-                    component,
-                    self.component_type,
-                    installed_sha=current_version,
-                    modules_repo=modules_repo,
-                )
-            except SystemError as e:
-                log.error(e)
-                return False
+            self.require_prompts(
+                f"Cannot interactively select a version for '{component}'.\n"
+                "Please specify the version using the '--sha' option:\n"
+                f"  nf-core {self.component_type} install --sha <commit_sha> {component}"
+            )
+            version = prompt_component_version_sha(
+                component,
+                self.component_type,
+                installed_sha=current_version,
+                modules_repo=modules_repo,
+            )
         else:
             # Fetch the latest commit for the module
             version = modules_repo.get_latest_component_version(component, self.component_type)
@@ -340,9 +373,9 @@ class ComponentInstall(ComponentCommand):
             False: if problematic components are not found
         """
         modules_json.load()
-        for repo_url, repo_content in modules_json.modules_json.get("repos", dict()).items():
+        for repo_url, repo_content in modules_json.modules_json.get("repos", {}).items():
             for component_type in repo_content:
-                for directory in repo_content.get(component_type, dict()).keys():
+                for directory in repo_content.get(component_type, {}):
                     if directory == self.modules_repo.repo_path and repo_url != self.modules_repo.remote_url:
                         return True
         return False

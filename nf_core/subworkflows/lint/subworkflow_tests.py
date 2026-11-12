@@ -14,13 +14,57 @@ log = logging.getLogger(__name__)
 
 
 def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = False):
-    """
-    Lint the tests of a subworkflow in ``nf-core/modules``
+    """Lint the tests of a subworkflow in ``nf-core/modules``
 
-    It verifies that the test directory exists
-    and contains a ``main.nf.test`` and a ``main.nf.test.snap``
+    Checks the ``tests/`` directory and ``main.nf.test`` file for correctness,
+    validates snapshot content, and verifies that nf-test tags follow guidelines.
 
-    Additionally, checks that all included components in test ``main.nf`` are specified in ``test.yml``
+    The following checks are performed:
+
+    test_dir_exists
+    ^^^^^^^^^^^^^^^
+
+    The nf-test directory ``tests/`` must exist.
+
+    test_main_nf_exists
+    ^^^^^^^^^^^^^^^^^^^
+
+    The file ``tests/main.nf.test`` must exist.
+
+    test_snapshot_exists
+    ^^^^^^^^^^^^^^^^^^^^
+
+    If ``snapshot()`` is called in ``main.nf.test``,
+    the snapshot file ``tests/main.nf.test.snap`` must exist and be valid JSON.
+
+    test_snap_md5sum
+    ^^^^^^^^^^^^^^^^
+
+    The snapshot must not contain md5sums for empty files
+    (``d41d8cd98f00b204e9800998ecf8427e``) or empty compressed files
+    (``7029066c27ac6f5ef18d660d5741979a``), unless the test name contains ``stub``.
+
+    test_snap_versions
+    ^^^^^^^^^^^^^^^^^^
+
+    The snapshot should contain a ``versions`` key.
+    A warning (not a failure) is issued if it is absent, since subworkflows that
+    use topic channels may not emit versions directly.
+
+    test_main_tags
+    ^^^^^^^^^^^^^^
+
+    The ``main.nf.test`` file must declare the required tags:
+    ``subworkflows``, ``subworkflows/<component_name>``, ``subworkflows_<org>``,
+    all components included in the subworkflow's ``main.nf``, and any chained
+    components referenced via ``include`` statements in the test file.
+
+    test_old_test_dir
+    ^^^^^^^^^^^^^^^^^
+
+    The legacy pytest directory
+    ``tests/subworkflows/<component_name>/`` must not exist.
+
     """
     if subworkflow.nftest_testdir is None:
         if allow_missing:
@@ -35,7 +79,8 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
             return
         raise LintExceptionError("Module does not have a `tests` dir")
 
-    if subworkflow.nftest_main_nf is None:
+    # main_nf_test_snap is set together with main_nf_test, so this also narrows it to Path
+    if subworkflow.main_nf_test is None or subworkflow.main_nf_test_snap is None:
         if allow_missing:
             subworkflow.warned.append(
                 (
@@ -92,13 +137,13 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
         return
 
     # Lint the test main.nf file
-    if subworkflow.nftest_main_nf.is_file():
+    if subworkflow.main_nf_test.is_file():
         subworkflow.passed.append(
             (
                 "subworkflow_tests",
                 "test_main_nf_exists",
                 "test `main.nf.test` exists",
-                subworkflow.nftest_main_nf,
+                subworkflow.main_nf_test,
             )
         )
     else:
@@ -108,7 +153,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                     "subworkflow_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
-                    subworkflow.nftest_main_nf,
+                    subworkflow.main_nf_test,
                 )
             )
         else:
@@ -117,15 +162,15 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                     "subworkflow_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
-                    subworkflow.nftest_main_nf,
+                    subworkflow.main_nf_test,
                 )
             )
 
-    if subworkflow.nftest_main_nf.is_file():
-        with open(subworkflow.nftest_main_nf) as fh:
+    if subworkflow.main_nf_test.is_file():
+        with open(subworkflow.main_nf_test) as fh:
             # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
             if "snapshot(" in fh.read():
-                snap_file = subworkflow.nftest_testdir / "main.nf.test.snap"
+                snap_file = subworkflow.main_nf_test_snap
                 if snap_file.is_file():
                     subworkflow.passed.append(
                         (
@@ -139,7 +184,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                     with open(snap_file) as snap_fh:
                         try:
                             snap_content = json.load(snap_fh)
-                            for test_name in snap_content.keys():
+                            for test_name in snap_content:
                                 if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
                                     if "stub" not in test_name:
                                         subworkflow.failed.append(
@@ -196,24 +241,6 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                                             snap_file,
                                         )
                                     )
-                            if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
-                                subworkflow.passed.append(
-                                    (
-                                        "subworkflow_tests",
-                                        "test_snap_versions",
-                                        "versions found in snapshot file",
-                                        snap_file,
-                                    )
-                                )
-                            else:
-                                subworkflow.warned.append(
-                                    (
-                                        "subworkflow_tests",
-                                        "test_snap_versions",
-                                        "versions not found in snapshot file",
-                                        snap_file,
-                                    )
-                                )
                         except json.decoder.JSONDecodeError as e:
                             subworkflow.failed.append(
                                 (
@@ -233,7 +260,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                         )
                     )
             # Verify that tags are correct.
-            main_nf_tags = subworkflow._get_main_nf_tags(subworkflow.nftest_main_nf)
+            main_nf_tags = subworkflow._get_main_nf_tags(subworkflow.main_nf_test)
             not_alphabet = re.compile(r"[^a-zA-Z]")
             org_alp = not_alphabet.sub("", subworkflow.org)
             org_alphabet = org_alp if org_alp != "" else "nfcore"
@@ -243,11 +270,11 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                 f"subworkflows_{org_alphabet}",
             ]
             included_components = []
-            if subworkflow.main_nf is not None and Path(subworkflow.main_nf).is_file():
+            if subworkflow.main_nf is not None and subworkflow.main_nf.is_file():
                 included_components = subworkflow._get_included_components(subworkflow.main_nf)
-            if subworkflow.nftest_main_nf is not None and subworkflow.nftest_main_nf.is_file():
+            if subworkflow.main_nf_test is not None and subworkflow.main_nf_test.is_file():
                 chained_components_tags = subworkflow._get_included_components_in_chained_tests(
-                    subworkflow.nftest_main_nf
+                    subworkflow.main_nf_test
                 )
             log.debug(f"Included components: {included_components}")
             log.debug(f"Required tags: {required_tags}")
@@ -262,7 +289,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                         "subworkflow_tests",
                         "test_main_tags",
                         "Tags adhere to guidelines",
-                        subworkflow.nftest_main_nf,
+                        subworkflow.main_nf_test,
                     )
                 )
             else:
@@ -271,7 +298,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = Fal
                         "subworkflow_tests",
                         "test_main_tags",
                         f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: {missing_tags}",
-                        subworkflow.nftest_main_nf,
+                        subworkflow.main_nf_test,
                     )
                 )
 

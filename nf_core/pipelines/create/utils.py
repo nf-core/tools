@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
+from pydantic import ValidationError, ValidationInfo, field_validator
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Grid, HorizontalScroll
@@ -18,8 +18,12 @@ from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 import nf_core
 from nf_core.utils import NFCoreTemplateConfig
 
+# Sphinx/autodoc triggers Pydantic model rebuilds which require `Dict` in this module's namespace.
+# Using the builtin dict (not typing.Dict) because Pydantic v2 only accepts the lowercase form.
+Dict = dict
+
 # Use ContextVar to define a context on the model initialization
-_init_context_var: ContextVar = ContextVar("_init_context_var", default={})
+_init_context_var: ContextVar = ContextVar("_init_context_var", default=None)
 
 
 @contextmanager
@@ -41,14 +45,13 @@ features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "te
 class CreateConfig(NFCoreTemplateConfig):
     """Pydantic model for the nf-core create config."""
 
-    model_config = ConfigDict(extra="allow")
-
     def __init__(self, /, **data: Any) -> None:
         """Custom init method to allow using a context on the model initialization."""
+        context = _init_context_var.get()
         self.__pydantic_validator__.validate_python(
             data,
             self_instance=self,
-            context=_init_context_var.get(),
+            context=context if context is not None else {},
         )
 
     @field_validator("name")
@@ -64,11 +67,19 @@ class CreateConfig(NFCoreTemplateConfig):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
-    @field_validator("org", "description", "author", "version", "outdir")
+    @field_validator("org", "description", "author", "version")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
         if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("outdir", mode="before")
+    @classmethod
+    def outdir_notempty(cls, v: Any) -> Any:
+        """Check that the output directory is not empty, before "" is converted to Path(".")."""
+        if isinstance(v, str) and v.strip() == "":
             raise ValueError("Cannot be left empty.")
         return v
 
@@ -84,9 +95,9 @@ class CreateConfig(NFCoreTemplateConfig):
 
     @field_validator("outdir")
     @classmethod
-    def path_valid(cls, v: str) -> str:
+    def path_valid(cls, v: Path) -> Path:
         """Check that a path is valid."""
-        if not Path(v).is_dir():
+        if not v.is_dir():
             raise ValueError("Must be a valid path.")
         return v
 

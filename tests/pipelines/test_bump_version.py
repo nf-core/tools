@@ -11,6 +11,8 @@ from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 from ..test_pipelines import TestPipelines
 
+FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+
 
 class TestBumpVersion(TestPipelines):
     def test_bump_pipeline_version(self):
@@ -22,7 +24,7 @@ class TestBumpVersion(TestPipelines):
 
         # Check nextflow.config
         new_pipeline_obj.load_pipeline_config()
-        assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.1.0"
+        assert new_pipeline_obj.nf_config["manifest"]["version"].strip("'\"") == "1.1.0"
 
         # Check multiqc_config.yml
         with open(new_pipeline_obj._fp("assets/multiqc_config.yml")) as fh:
@@ -45,7 +47,7 @@ class TestBumpVersion(TestPipelines):
 
         # Check the pipeline config
         new_pipeline_obj.load_pipeline_config()
-        assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.2dev"
+        assert new_pipeline_obj.nf_config["manifest"]["version"].strip("'\"") == "1.2dev"
 
     def test_bump_nextflow_version(self):
         # Bump the version number to a specific version, preferably one
@@ -56,12 +58,17 @@ class TestBumpVersion(TestPipelines):
         new_pipeline_obj._load()
 
         # Check nextflow.config
-        assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == f"!>={version}"
+        assert new_pipeline_obj.nf_config["manifest"]["nextflowVersion"].strip("'\"") == f"!>={version}"
 
         # Check .github/workflows/nf-test.yml
         with open(new_pipeline_obj._fp(".github/workflows/nf-test.yml")) as fh:
             ci_yaml = yaml.safe_load(fh)
         assert ci_yaml["jobs"]["nf-test"]["strategy"]["matrix"]["NXF_VER"][0] == version
+
+        # Check .github/workflows/fix-linting.yml
+        with open(new_pipeline_obj._fp(".github/workflows/fix-linting.yml")) as fh:
+            ci_yaml = yaml.safe_load(fh)
+        assert ci_yaml["jobs"]["fix-linting"]["with"]["nextflow-versions"] == f'["{version}","latest-everything"]'
 
         # Check README.md
         with open(new_pipeline_obj._fp("README.md")) as fh:
@@ -80,16 +87,18 @@ class TestBumpVersion(TestPipelines):
         snapshot_dir.mkdir(parents=True, exist_ok=True)
         snapshot_fn = snapshot_dir / "main.nf.test.snap"
         snapshot_fn.touch()
+
+        pipeline_slug = f"{self.pipeline_obj.pipeline_prefix}/{self.pipeline_obj.pipeline_name}"
         # write version number in snapshot
         with open(snapshot_fn, "w") as fh:
-            fh.write("nf-core/testpipeline=1.0.0dev")
+            fh.write(f"{pipeline_slug}=1.0.0dev")
 
         # Bump the version number
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
 
         # Check the snapshot
         with open(snapshot_fn) as fh:
-            assert fh.read().strip() == "nf-core/testpipeline=1.1.0"
+            assert fh.read().strip() == f"{pipeline_slug}=1.1.0"
 
     def test_bump_pipeline_version_in_snapshot_no_version(self):
         """Test that bump version does not update versions in the snapshot if no version is given."""
@@ -106,6 +115,67 @@ class TestBumpVersion(TestPipelines):
         self.caplog.set_level(logging.INFO)
         nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
         assert "Could not find version number in " in self.caplog.text
+
+    def test_bump_pipeline_version_in_svg(self):
+        """Test that bump version updates versions in SVG files and exports PNG."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check the SVG was updated
+        svg_content = test_svg.read_text()
+        assert ">v1.1.0<" in svg_content
+        assert ">v1.0.0dev<" not in svg_content
+
+    def test_bump_pipeline_version_in_svg_warning_pdf_if_exists(self):
+        """Test that bump version throws a warning to update pdf manually only if PDF already exists."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge_pdf.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Create existing PDF file (empty placeholder)
+        pdf_path = test_svg.with_suffix(".pdf")
+        pdf_path.touch()
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check PDF warning was logged
+        assert "Please export the bumped SVG manually to PDF." in self.caplog.text
+
+    def test_bump_pipeline_version_in_svg_warning_png_if_exists(self):
+        """Test that bump version throws a warning to update png manually only if PNG already exists."""
+        # Create docs/images directory
+        svg_dir = self.pipeline_dir / "docs" / "images"
+        svg_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy fixture SVG
+        fixture_svg = FIXTURES_DIR / "test_svg_version.svg"
+        test_svg = svg_dir / "test_badge_pdf.svg"
+        test_svg.write_text(fixture_svg.read_text())
+
+        # Create existing PNG file (empty placeholder)
+        png_path = test_svg.with_suffix(".png")
+        png_path.touch()
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check PNG warning was logged
+        assert "Please export the bumped SVG manually to PNG." in self.caplog.text
 
     def test_bump_pipeline_version_nf_core_yml_prettier(self):
         """Test that lists in .nf-core.yml have correct formatting after version bump."""

@@ -9,13 +9,12 @@ import requests_cache
 import responses
 import ruamel.yaml
 
-import nf_core.modules
 import nf_core.modules.create
 import nf_core.modules.install
 import nf_core.modules.modules_repo
 import nf_core.modules.remove
-import nf_core.pipelines.create.create
 from nf_core import __version__
+from nf_core.modules.modules_utils import CondaEntry, ContainerEntry, MetaYmlContainers
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import NFCoreYamlConfig
 
@@ -23,6 +22,7 @@ from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_BRANCH_TEST_OLD_SHA,
     GITLAB_DEFAULT_BRANCH,
+    GITLAB_NFTEST_BRANCH,
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
@@ -66,9 +66,23 @@ def create_modules_repo_dummy(tmp_dir):
         meta_yml = yaml.load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
     meta_yml["keywords"] = ["pipelines", "bioinformatics", "run"]
-    with open(str(meta_yml_path), "w") as fh:
+    docker = ContainerEntry(name="quay.io/biocontainers/bpipe:0.9.13--hdfd78af_0", build_id="", scan_id="")
+    sing = ContainerEntry(
+        name="oras://community.wave.seqera.io/library/bpipe:0.9.13--hdfd78af_0",
+        build_id="",
+        https="https://depot.galaxyproject.org/singularity/bpipe:0.9.13--hdfd78af_0",
+    )
+    conda_amd64 = CondaEntry(lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_amd64-bd-dummy_1.txt")
+    conda_arm64 = CondaEntry(lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_arm64-bd-dummy_1.txt")
+    containers = MetaYmlContainers(
+        docker={"linux/amd64": docker, "linux/arm64": docker},
+        singularity={"linux/amd64": sing, "linux/arm64": sing},
+        conda={"linux/amd64": conda_amd64, "linux/arm64": conda_arm64},
+    )
+    meta_yml["containers"] = containers.dump_for_meta_yml()
+    with open(meta_yml_path, "w") as fh:
         yaml.dump(meta_yml, fh)
-        run_prettier_on_file(fh.name)
+    run_prettier_on_file(meta_yml_path)
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
 
@@ -149,6 +163,13 @@ class TestModules(unittest.TestCase):
             branch=GITLAB_BRANCH_TEST_BRANCH,
             sha=GITLAB_BRANCH_TEST_OLD_SHA,
         )
+        self.mods_install_gitlab_nftest = nf_core.modules.install.ModuleInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_NFTEST_BRANCH,
+        )
 
         # Set up remove objects
         self.mods_remove = nf_core.modules.remove.ModuleRemove(self.pipeline_dir)
@@ -173,3 +194,7 @@ class TestModules(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):
         self.caplog = caplog
+
+    @pytest.fixture(autouse=True)
+    def _tmp_path(self, tmp_path):
+        self.tmp_path = tmp_path
