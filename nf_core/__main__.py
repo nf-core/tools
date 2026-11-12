@@ -11,7 +11,16 @@ import rich_click.rich_click as rc
 
 from nf_core import __version__
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.utils import check_if_outdated, nfcore_logo, stderr
+from nf_core.utils import (
+    COMPLETION_ENV_VAR,
+    COMPLETION_SHELLS,
+    check_if_outdated,
+    is_interactive,
+    nfcore_logo,
+    setup_shell_completion,
+    shell_completion_missing,
+    stderr,
+)
 
 
 def autocomplete_pipelines(ctx, param, incomplete):
@@ -70,7 +79,7 @@ def normalize_case(ctx, param, component_name):
 
 def run_nf_core():
     # print nf-core header if environment variable is not set
-    if os.environ.get("_NF_CORE_COMPLETE") is None:
+    if os.environ.get(COMPLETION_ENV_VAR) is None:
         # Print nf-core header
         stderr.print("\n")
         for line in nfcore_logo:
@@ -153,6 +162,13 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
         "hide_progress": hide_progress or verbose,  # Always hide progress bar with verbose logging
     }
 
+    # nudge people at a terminal, but not while they run the setup itself
+    if ctx.invoked_subcommand != "completion" and is_interactive() and shell_completion_missing():
+        stderr.print(
+            "[grey39]    Tip: run [bold]nf-core completion[/] to enable tab completion for nf-core commands\n",
+            highlight=False,
+        )
+
 
 # nf-core interface (registered by hand so trogon is only imported when run)
 @nf_core_cli.command("interface", help="Launch the nf-core interface")
@@ -161,6 +177,25 @@ def interface(ctx):
     from trogon import Trogon
 
     Trogon(nf_core_cli, app_name=None, command_name="interface", click_context=ctx).run()
+
+
+# nf-core completion
+@nf_core_cli.command("completion")
+@click.option(
+    "-s",
+    "--shell",
+    "shells",
+    type=click.Choice(COMPLETION_SHELLS),
+    multiple=True,
+    help="Shell to set up, can be given multiple times. [dim]\\[default: detected from $SHELL][/]",
+)
+def command_completion(shells):
+    """
+    Enable tab completion for nf-core commands in your shell.
+
+    Adds the setup to [cyan]~/.bashrc[/], [cyan]~/.zshrc[/] or [cyan]~/.config/fish/completions/nf-core.fish[/].
+    """
+    setup_shell_completion(shells)
 
 
 # nf-core pipelines subcommands

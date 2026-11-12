@@ -4,6 +4,7 @@ Most tests check the cli arguments are passed along and that some action is
 taken.
 """
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,8 @@ from click.testing import CliRunner
 
 import nf_core.__main__
 import nf_core.utils
+
+from .utils import with_temporary_folder
 
 
 @mock.patch("nf_core.__main__.nf_core_cli")
@@ -78,6 +81,33 @@ class TestCli(unittest.TestCase):
         result = self.invoke_cli(["-v"])
         # Checks that -v was considered valid
         assert "No such option: -v" not in nf_core.utils.strip_ansi_codes(result.output)
+
+    @with_temporary_folder
+    def test_completion_skips_manual_setup(self, home):
+        """Test nf-core completion leaves an existing manual setup alone"""
+        bashrc = Path(home, ".bashrc")
+        manual_setup = 'eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"\n'
+        bashrc.write_text(manual_setup)
+        with mock.patch.dict(os.environ, {"HOME": home}):
+            assert self.invoke_cli(["completion", "--shell", "bash"]).exit_code == 0
+        assert bashrc.read_text() == manual_setup
+
+    @with_temporary_folder
+    def test_completion_missing_until_set_up(self, home):
+        """Test nf-core completion sets up the detected shell once and clears the hint condition"""
+        with mock.patch.dict(os.environ, {"HOME": home, "SHELL": "/usr/bin/fish", "XDG_CONFIG_HOME": home}):
+            assert nf_core.utils.shell_completion_missing()
+            assert self.invoke_cli(["completion"]).exit_code == 0
+            assert self.invoke_cli(["completion"]).exit_code == 0
+            assert not nf_core.utils.shell_completion_missing()
+        config = Path(home, "fish/completions/nf-core.fish").read_text()
+        assert config.count("_NF_CORE_COMPLETE=fish_source nf-core | source") == 1
+
+    def test_completion_unsupported_shell(self):
+        """Test nf-core completion fails on an undetectable shell"""
+        with mock.patch.dict(os.environ, {"SHELL": "/bin/tcsh"}):
+            result = self.invoke_cli(["completion"])
+        assert isinstance(result.exception, UserWarning)
 
     @mock.patch("nf_core.pipelines.list.list_workflows", return_value="pipeline test list")
     def test_cli_list(self, mock_list_workflows):

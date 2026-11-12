@@ -653,6 +653,61 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     return (proc.stdout, proc.stderr)
 
 
+COMPLETION_SHELLS = ("bash", "zsh", "fish")
+COMPLETION_ENV_VAR = "_NF_CORE_COMPLETE"
+
+
+def _completion_config(shell: str) -> Path:
+    if shell == "fish":
+        return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config", "fish/completions/nf-core.fish")
+    return Path.home() / f".{shell}rc"
+
+
+def _has_completion_setup(config: Path) -> bool:
+    # also matches the `eval` line from the previously documented manual setup
+    try:
+        return f"{COMPLETION_ENV_VAR}=" in config.read_text(errors="ignore")
+    except OSError:
+        return False
+
+
+def shell_completion_missing() -> bool:
+    """Check whether the user's shell (from ``$SHELL``) is supported but has no nf-core tab completion.
+
+    Returns:
+        True if ``nf-core completion`` would add a setup for the current shell.
+    """
+    shell = Path(os.environ.get("SHELL", "")).name
+    return shell in COMPLETION_SHELLS and not _has_completion_setup(_completion_config(shell))
+
+
+def setup_shell_completion(shells: tuple[str, ...]) -> None:
+    """Add nf-core tab completion to the shell config files.
+
+    Args:
+        shells: Shells to set up (bash, zsh, fish). Detected from ``$SHELL`` if empty.
+
+    Raises:
+        UserWarning: If no shell is given and ``$SHELL`` is not a supported shell.
+    """
+    if not shells:
+        shell = Path(os.environ.get("SHELL", "")).name
+        if shell not in COMPLETION_SHELLS:
+            raise UserWarning("Could not detect a supported shell from $SHELL. Choose one with `--shell`.")
+        shells = (shell,)
+    for shell in shells:
+        config = _completion_config(shell)
+        if _has_completion_setup(config):
+            log.info(f"Tab completion is already set up in [cyan]{config}[/]")
+            continue
+        source = f"{COMPLETION_ENV_VAR}={shell}_source nf-core"
+        load = f"{source} | source" if shell == "fish" else f'eval "$({source})"'
+        config.parent.mkdir(parents=True, exist_ok=True)
+        with config.open("a") as fh:
+            fh.write(f"\n# nf-core tab completion\ncommand -v nf-core > /dev/null 2>&1 && {load}\n")
+        log.info(f"Added tab completion to [cyan]{config}[/], open a new shell to use it")
+
+
 def setup_requests_cachedir() -> dict[str, Path | datetime.timedelta | str]:
     """Sets up local caching for faster remote HTTP requests.
 
