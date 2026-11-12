@@ -380,6 +380,22 @@ class TestCli(unittest.TestCase):
             self.invoke_cli(cmd)
             mock_get_schema_path.assert_called_with(Path("some_other_filename"))
 
+    @mock.patch("nf_core.pipelines.schema.PipelineSchema.get_schema_path")
+    @mock.patch("nf_core.pipelines.schema.PipelineSchema.load_lint_schema")
+    @mock.patch("nf_core.pipelines.schema.PipelineSchema.validate_schema_title_description")
+    def test_schema_lint_fail_warned(self, mock_validate, mock_load, mock_get_schema_path):
+        """Test nf-core pipelines schema lint exits non-zero on warnings with --fail-warned"""
+        mock_validate.side_effect = AssertionError("schema title is missing")
+        cmd_warn = ["pipelines", "schema", "lint", "-w"]
+        cmd = ["pipelines", "schema", "lint"]
+        with self.runner.isolated_filesystem():
+            with open("nextflow_schema.json", "w") as f:
+                f.write("{}")
+            result = self.invoke_cli(cmd_warn)
+            assert result.exit_code == 1
+            result = self.invoke_cli(cmd)
+            assert result.exit_code == 0
+
     @mock.patch("nf_core.pipelines.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
         # Set up the mock to return a specific value
