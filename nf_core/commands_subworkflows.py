@@ -3,13 +3,10 @@ import sys
 from pathlib import Path
 
 import click
-from rich.console import Console
 
-from nf_core.utils import rich_force_colors
+from nf_core.utils import stdout
 
 log = logging.getLogger(__name__)
-
-stdout = Console(force_terminal=rich_force_colors())
 
 
 def subworkflows_create(

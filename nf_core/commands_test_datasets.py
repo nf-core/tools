@@ -1,12 +1,8 @@
 import logging
 
 import click
-from rich.console import Console
-
-from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
-stdout = Console(force_terminal=rich_force_colors())
 
 
 def test_datasets_list_branches(ctx: click.Context) -> None:

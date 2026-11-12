@@ -151,7 +151,7 @@ class TestSchema(unittest.TestCase):
             self.schema_obj.print_documentation()
             docs_tty = mock_stdout.getvalue()
 
-        self.schema_obj.print_documentation(output_fn=tmp_file.name, force=True)
+        self.schema_obj.print_documentation(output_fn=Path(tmp_file.name), force=True)
         tmp_file.seek(0)
 
         assert docs_tty.count("\n") > docs.count("\n")

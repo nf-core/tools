@@ -3,12 +3,10 @@ import sys
 from pathlib import Path
 
 import click
-from rich.console import Console
 
-from nf_core.utils import CONTAINER_PLATFORMS, rich_force_colors
+from nf_core.utils import CONTAINER_PLATFORMS, stdout
 
 log = logging.getLogger(__name__)
-stdout = Console(force_terminal=rich_force_colors())
 
 
 def modules_list_remote(ctx: click.Context, keywords: tuple[str, ...], json: bool) -> None:

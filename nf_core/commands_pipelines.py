@@ -3,14 +3,12 @@ import sys
 from pathlib import Path
 
 import click
-from rich.console import Console
 
 import nf_core.utils
-from nf_core.utils import rich_force_colors
+from nf_core.utils import stdout
 
 log = logging.getLogger(__name__)
 
-stdout = Console(force_terminal=rich_force_colors())
 
 ## nf-core pipelines command functions ##
 
@@ -127,7 +125,7 @@ def pipelines_containers_create_configs(ctx: click.Context | None, directory: Pa
 
     try:
         is_pipeline_directory(directory)
-        ContainerConfigs(Path(directory)).generate_container_configs()
+        ContainerConfigs(directory).generate_container_configs()
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
@@ -422,13 +420,7 @@ def pipelines_create_logo(
     from nf_core.pipelines.create_logo import create_logo
 
     try:
-        directory = directory.resolve()
         logo_path = create_logo(logo_text, directory, name, theme, width, img_format, force)
-        # Print path to logo relative to current working directory
-        try:
-            logo_path = Path(logo_path).relative_to(Path.cwd())
-        except ValueError:
-            logo_path = Path(logo_path)
         log.info(f"Created logo: [magenta]{logo_path}[/]")
     except UserWarning as e:
         log.error(e)
