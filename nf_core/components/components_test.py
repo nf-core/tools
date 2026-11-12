@@ -32,7 +32,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         type of component to test (modules or subworkflows)
     component_name : str
         name of the tool to run tests for
-    directory: str
+    directory: Path
         path to modules repository directory
     no_prompts : bool
         flat indicating if prompts are used
@@ -65,7 +65,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self,
         component_type: str,
         component_name: str | None = None,
-        directory: str = ".",
+        directory: Path = Path(),
         no_prompts: bool = False,
         remote_url: str | None = None,
         branch: str | None = None,

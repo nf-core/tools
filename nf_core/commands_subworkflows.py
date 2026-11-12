@@ -1,16 +1,20 @@
 import logging
 import sys
+from pathlib import Path
 
-import rich
+import click
+from rich.console import Console
 
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
-stdout = rich.console.Console(force_terminal=rich_force_colors())
+stdout = Console(force_terminal=rich_force_colors())
 
 
-def subworkflows_create(ctx, subworkflow, directory, author, force):
+def subworkflows_create(
+    ctx: click.Context, subworkflow: str | None, directory: Path, author: str | None, force: bool
+) -> None:
     """
     Create a new subworkflow from the nf-core template.
 
@@ -34,7 +38,15 @@ def subworkflows_create(ctx, subworkflow, directory, author, force):
         sys.exit(1)
 
 
-def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
+def subworkflows_test(
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    no_prompts: bool,
+    update: bool,
+    once: bool,
+    profile: str | None,
+) -> None:
     """
     Run nf-test for a subworkflow.
 
@@ -61,7 +73,7 @@ def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, pro
         sys.exit(1)
 
 
-def subworkflows_list_remote(ctx, keywords, json):
+def subworkflows_list_remote(ctx: click.Context, keywords: tuple[str, ...], json: bool) -> None:
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -82,7 +94,7 @@ def subworkflows_list_remote(ctx, keywords, json):
         sys.exit(1)
 
 
-def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
+def subworkflows_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
@@ -103,8 +115,19 @@ def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=
 
 
 def subworkflows_lint(
-    ctx, subworkflow, directory, registry, key, all_subworkflows, fail_warned, local, passed, sort_by, fix, plain_text
-):
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    registry: tuple[str, ...],
+    key: tuple[str, ...],
+    all_subworkflows: bool,
+    fail_warned: bool,
+    local: bool,
+    passed: bool,
+    sort_by: str,
+    fix: bool,
+    plain_text: bool,
+) -> None:
     """
     Lint one or more subworkflows in a directory.
 
@@ -148,7 +171,7 @@ def subworkflows_lint(
         sys.exit(1)
 
 
-def subworkflows_info(ctx, subworkflow, directory):
+def subworkflows_info(ctx: click.Context, subworkflow: str | None, directory: Path) -> None:
     """
     Show developer usage information about a given subworkflow.
 
@@ -176,7 +199,15 @@ def subworkflows_info(ctx, subworkflow, directory):
         sys.exit(1)
 
 
-def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_deps=False):
+def subworkflows_install(
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    prompt: bool,
+    force: bool,
+    sha: str | None,
+    skip_deps: bool = False,
+) -> None:
     """
     Install DSL2 subworkflow within a pipeline.
 
@@ -203,7 +234,7 @@ def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha, skip_d
         sys.exit(1)
 
 
-def subworkflows_remove(ctx, directory, subworkflow, force):
+def subworkflows_remove(ctx: click.Context, directory: Path, subworkflow: str | None, force: bool) -> None:
     """
     Remove a subworkflow from a pipeline.
     """
@@ -223,19 +254,19 @@ def subworkflows_remove(ctx, directory, subworkflow, force):
 
 
 def subworkflows_update(
-    ctx,
-    subworkflow,
-    directory,
-    force,
-    prompt,
-    sha,
-    install_all,
-    preview,
-    save_diff,
-    update_deps,
-    limit_output,
-    skip_deps,
-):
+    ctx: click.Context,
+    subworkflow: str | None,
+    directory: Path,
+    force: bool,
+    prompt: bool,
+    sha: str | None,
+    install_all: bool,
+    preview: bool | None,
+    save_diff: str | None,
+    update_deps: bool,
+    limit_output: bool,
+    skip_deps: bool,
+) -> None:
     """
     Update DSL2 subworkflow within a pipeline.
 

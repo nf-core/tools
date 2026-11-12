@@ -1,12 +1,12 @@
 import logging
 
 import click
-import rich
+from rich.console import Console
 
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
-stdout = rich.console.Console(force_terminal=rich_force_colors())
+stdout = Console(force_terminal=rich_force_colors())
 
 
 def test_datasets_list_branches(ctx: click.Context) -> None:
@@ -20,7 +20,9 @@ def test_datasets_list_branches(ctx: click.Context) -> None:
     list_dataset_branches()
 
 
-def test_datasets_list_remote(ctx: click.Context, branch: str, generate_nf_path: bool, generate_dl_url: bool) -> None:
+def test_datasets_list_remote(
+    ctx: click.Context, branch: str | None, generate_nf_path: bool, generate_dl_url: bool
+) -> None:
     """
     List all files on a given branch in the remote nf-core/testdatasets repository on github.
     The resulting files can be parsed as a nextflow path or a url for downloading.
@@ -31,7 +33,7 @@ def test_datasets_list_remote(ctx: click.Context, branch: str, generate_nf_path:
 
 
 def test_datasets_search(
-    ctx: click.Context, branch: str, generate_nf_path: bool, generate_dl_url: bool, query: str | None
+    ctx: click.Context, branch: str | None, generate_nf_path: bool, generate_dl_url: bool, query: str | None
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
