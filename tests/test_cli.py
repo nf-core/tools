@@ -295,8 +295,8 @@ class TestCli(unittest.TestCase):
                 "fail-ignored" in params,
                 "fail-warned" in params,
                 "test",
-                params["markdown"],
-                params["json"],
+                Path(params["markdown"]),
+                Path(params["json"]),
                 "hide-progress" in params,
                 False,  # plain_text
             )

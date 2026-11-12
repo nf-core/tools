@@ -106,7 +106,13 @@ def run_nf_core() -> None:
     help="Print verbose output to the console.",
 )
 @click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
-@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
+@click.option(
+    "-l",
+    "--log-file",
+    type=click.Path(path_type=Path),
+    help="Save a verbose log to a file.",
+    metavar="<filename>",
+)
 @click.pass_context
 @click.rich_config(
     {
@@ -114,7 +120,7 @@ def run_nf_core() -> None:
         "options_table_column_types": ["opt_long", "opt_short", "help"],
     }
 )
-def nf_core_cli(ctx: click.Context, verbose: bool, hide_progress: bool, log_file: str | None) -> None:
+def nf_core_cli(ctx: click.Context, verbose: bool, hide_progress: bool, log_file: Path | None) -> None:
     """
     nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
 
@@ -299,13 +305,13 @@ def command_pipelines_containers_create_configs(ctx: click.Context, directory: P
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option(
     "--markdown",
-    type=str,
+    type=click.Path(path_type=Path),
     metavar="<filename>",
     help="File to write linting results to (Markdown)",
 )
 @click.option(
     "--json",
-    type=str,
+    type=click.Path(path_type=Path),
     metavar="<filename>",
     help="File to write linting results to (JSON)",
 )
@@ -332,8 +338,8 @@ def command_pipelines_lint(
     show_passed: bool,
     fail_ignored: bool,
     fail_warned: bool,
-    markdown: str | None,
-    json: str | None,
+    markdown: Path | None,
+    json: Path | None,
     sort_by: str,
     plain_text: bool,
 ) -> None:
@@ -630,7 +636,9 @@ def command_pipelines_list(
     default="",
 )
 @click.pass_context
-def rocrate(ctx: click.Context, pipeline_dir: Path, json_path: Path, zip_path: Path | None, pipeline_version: str) -> None:
+def rocrate(
+    ctx: click.Context, pipeline_dir: Path, json_path: Path, zip_path: Path | None, pipeline_version: str
+) -> None:
     """
     Make an Research Object Crate
     """

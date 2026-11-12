@@ -143,8 +143,8 @@ def pipelines_lint(
     show_passed: bool,
     fail_ignored: bool,
     fail_warned: bool,
-    markdown: str | None,
-    json: str | None,
+    markdown: Path | None,
+    json: Path | None,
     sort_by: str,
     plain_text: bool,
 ) -> None:

@@ -517,12 +517,12 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         return markdown
 
-    def _save_json_results(self, json_fn):
+    def _save_json_results(self, json_fn: Path) -> None:
         """
         Function to dump lint results to a JSON file for downstream use
 
         Arguments:
-            json_fn (str): File path to write JSON to.
+            json_fn (Path): File path to write JSON to.
         """
 
         log.info(f"Writing lint results to {json_fn}")
@@ -578,8 +578,8 @@ def run_linting(
     fail_ignored: bool = False,
     fail_warned: bool = False,
     sort_by: str = "test",
-    md_fn=None,
-    json_fn=None,
+    md_fn: Path | None = None,
+    json_fn: Path | None = None,
     hide_progress: bool = False,
     plain_text: bool = False,
 ) -> tuple[PipelineLint, ComponentLint | None, ComponentLint | None]:
