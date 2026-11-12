@@ -12,10 +12,11 @@ include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endi
 {%- if nf_schema %}
 include { paramsSummaryMap       } from 'plugin/nf-schema'{% endif %}
 {%- if multiqc %}
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
-include { softwareVersionsToYAML } from 'plugin/nf-core-utils'
-{%- if citations or multiqc %}
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+include { paramsSummaryMultiqc   } from 'plugin/nf-core-utils'{% endif %}
+include { collectVersions        } from 'plugin/nf-core-utils'
+{%- if citations and multiqc %}
+include { citationsOnTheFly      } from 'plugin/nf-core-utils'
+include { methodsDescriptionText } from 'plugin/nf-core-utils'{% endif %}
 {%- endif %}
 
 /*
@@ -57,7 +58,10 @@ workflow {{ short_name|upper }} {
     //
     // Collate and save software versions
     //
-    def ch_collated_versions = softwareVersionsToYAML(ch_versions.mix(channel.topic("versions")))
+    def ch_all_versions = ch_versions.mix(channel.topic("versions")).toList()
+
+    def ch_collated_versions = ch_all_versions
+        .map { versions -> collectVersions(versions) }
         .collectFile(
             storeDir: "${outdir}/pipeline_info",
             name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
@@ -82,7 +86,12 @@ workflow {{ short_name|upper }} {
     def ch_multiqc_custom_methods_description = multiqc_methods_description
         ? file(multiqc_methods_description, checkIfExists: true)
         : file("${projectDir}/assets/methods_description_template.yml", checkIfExists: true)
-    def ch_methods_description = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+    def ch_methods_description = ch_all_versions.map { versions ->
+        methodsDescriptionText(
+            ch_multiqc_custom_methods_description.toString(),
+            citationsOnTheFly(versions, files("${projectDir}/modules/**/meta.yml").collect { meta_yml -> meta_yml.toString() }, ['multiqc'])
+        )
+    }
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: true))
 
     {%- endif %}

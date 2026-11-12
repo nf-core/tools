@@ -278,7 +278,6 @@ components_modules:
 
     nf_schema:
       skippable_paths:
-        - "subworkflows/nf-core/utils_nfschema_plugin"
         - "nextflow_schema.json"
         - "assets/schema_input.json"
         - "assets/samplesheet.csv"

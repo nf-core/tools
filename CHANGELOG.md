@@ -26,7 +26,7 @@
 - Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
 - remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
 - cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
-- Use `softwareVersionsToYAML()` from the nf-core-utils 0.7.0 plugin to collate software versions from the `versions` topic ([#3870](https://github.com/nf-core/tools/pull/3870))
+- Replace the `utils_nextflow_pipeline`, `utils_nfcore_pipeline` and `utils_nfschema_plugin` subworkflows with the nf-core-utils 0.7.0 and nf-schema plugins, collate software versions with `collectVersions()` and build tool citations from the `versions` topic with `citationsOnTheFly()` ([#3870](https://github.com/nf-core/tools/pull/3870))
 
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 
