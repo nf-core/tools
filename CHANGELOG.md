@@ -6,6 +6,7 @@
 
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
+- add command to install shell completions ([#4609](https://github.com/nf-core/tools/pull/4609))
 
 ### Linting
 
