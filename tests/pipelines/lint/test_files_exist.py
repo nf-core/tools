@@ -19,7 +19,7 @@ class TestLintFilesExist(TestLint):
         Path(self.new_pipeline, "CHANGELOG.md").unlink()
 
         assert self.lint_obj._load()
-        self.lint_obj.nf_config["manifest.name"] = "nf-core/testpipeline"
+        self.lint_obj.nf_config["manifest"]["name"] = "nf-core/testpipeline"
 
         results = self.lint_obj.files_exist()
         assert "File not found: `CHANGELOG.md`" in results["failed"]
@@ -61,7 +61,7 @@ class TestLintFilesExist(TestLint):
             f.write(config)
 
         assert self.lint_obj._load()
-        self.lint_obj.nf_config["manifest.schema"] = "nf-core"
+        self.lint_obj.nf_config["manifest"]["schema"] = "nf-core"
         results = self.lint_obj.files_exist()
         assert results["failed"] == []
         assert results["ignored"] == []
@@ -70,7 +70,7 @@ class TestLintFilesExist(TestLint):
         """Check if linting passes with a valid nf-core.yml config"""
         valid_yaml = """
         files_exist:
-            - .github/CONTRIBUTING.md
+            - docs/CONTRIBUTING.md
             - CITATIONS.md
         """
         yaml = YAML()
@@ -85,7 +85,7 @@ class TestLintFilesExist(TestLint):
 
         results = self.lint_obj.files_exist()
         assert results["failed"] == []
-        assert "File is ignored: `.github/CONTRIBUTING.md`" in results["ignored"]
+        assert "File is ignored: `docs/CONTRIBUTING.md`" in results["ignored"]
         assert "File is ignored: `CITATIONS.md`" in results["ignored"]
 
     def test_files_exists_fail_nf_core_yml_config(self):

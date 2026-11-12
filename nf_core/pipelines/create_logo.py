@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Optional, Union
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -12,23 +11,22 @@ log = logging.getLogger(__name__)
 
 def create_logo(
     text: str,
-    directory: Union[Path, str],
+    directory: Path,
     filename: str = "",
     theme: str = "light",
     width: int = 2300,
-    format: str = "png",
+    img_format: str = "png",
     force: bool = False,
 ) -> Path:
     """Create a logo for a pipeline."""
     if not text:
         raise UserWarning("Please provide the name of the text to put on the logo.")
-    directory = Path(directory)
     if not directory.is_dir():
         log.debug(f"Creating directory {directory}")
         directory.mkdir(parents=True, exist_ok=True)
     assets = Path(nf_core.__file__).parent / "assets/logo"
 
-    if format == "svg":
+    if img_format == "svg":
         template_fn = "placeholder_logo.svg"
 
         if width != 2300:
@@ -41,14 +39,14 @@ def create_logo(
             svg = svg.replace("#050505", "#fafafa")
 
         # save the svg
-        logo_filename = f"nf-core-{text}_logo_{theme}.svg" if not filename else filename
+        logo_filename = filename if filename else f"nf-core-{text}_logo_{theme}.svg"
         logo_filename = f"{logo_filename}.svg" if not logo_filename.lower().endswith(".svg") else logo_filename
         logo_path = Path(directory, logo_filename)
         with open(logo_path, "w") as fh:
             fh.write(svg)
 
     else:
-        logo_filename = f"nf-core-{text}_logo_{theme}.png" if not filename else filename
+        logo_filename = filename if filename else f"nf-core-{text}_logo_{theme}.png"
         logo_filename = f"{logo_filename}.png" if not logo_filename.lower().endswith(".png") else logo_filename
         cache_name = f"nf-core-{text}_logo_{theme}_{width}.png"
         logo_path = Path(directory, logo_filename)
@@ -59,7 +57,7 @@ def create_logo(
             return logo_path
         # cache file
         cache_path = Path(NFCORE_CACHE_DIR, "logo", cache_name)
-        img: Optional[Image.Image] = None
+        img: Image.Image | None = None
         if cache_path.is_file():
             log.debug(f"Logo already exists in cache at: {cache_path}. Reusing this file.")
             img = Image.open(cache_path)
@@ -82,6 +80,8 @@ def create_logo(
 
             template_path = assets / template_fn
             img = Image.open(template_path)
+            if img is None:
+                raise RuntimeError("Failed to create logo image")
             # get the height of the template image
             height = img.size[1]
 
@@ -100,11 +100,15 @@ def create_logo(
                 log.error("Failed to create logo, no image object created.")
 
             # Save to cache
-            Path(cache_path.parent).mkdir(parents=True, exist_ok=True)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
             log.debug(f"Saving logo to cache: {cache_path}")
-            img.save(cache_path, "PNG")
+            if img is not None:
+                img.save(cache_path, "PNG")
         # Save
-        img.save(logo_path, "PNG")
+        if img is not None:
+            img.save(logo_path, "PNG")
+        else:
+            raise RuntimeError("Failed to create logo image")
 
     log.debug(f"Saved logo to: '{logo_path}'")
 

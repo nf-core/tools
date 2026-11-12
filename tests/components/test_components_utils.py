@@ -1,5 +1,7 @@
 import importlib
 import os
+import tempfile
+from pathlib import Path
 from unittest import mock
 
 import responses
@@ -10,14 +12,60 @@ from ..test_components import TestComponents
 from ..utils import mock_biotools_api_calls
 
 
+def test_get_components_to_install_full_path_subworkflow(tmp_path):
+    """Full-path includes pointing to subworkflows should preserve underscores."""
+    main_nf = tmp_path / "main.nf"
+    main_nf.write_text("include { VCF_GATHER_BCFTOOLS } from '../../../subworkflows/nf-core/vcf_gather_bcftools'\n")
+    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
+    assert len(subworkflows) == 1
+    assert subworkflows[0]["name"] == "vcf_gather_bcftools"
+    assert len(modules) == 0
+
+
+def test_get_components_to_install_full_path_module(tmp_path):
+    """Full-path includes pointing to modules should convert underscores to slashes."""
+    main_nf = tmp_path / "main.nf"
+    main_nf.write_text("include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort'\n")
+    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
+    assert len(modules) == 1
+    assert modules[0]["name"] == "samtools/sort"
+    assert len(subworkflows) == 0
+
+
+def test_get_components_to_install_relative_subworkflow(tmp_path):
+    """Relative includes (../) should be treated as subworkflows with underscores preserved."""
+    main_nf = tmp_path / "main.nf"
+    main_nf.write_text("include { VCF_GATHER_BCFTOOLS } from '../vcf_gather_bcftools'\n")
+    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
+    assert len(subworkflows) == 1
+    assert subworkflows[0]["name"] == "vcf_gather_bcftools"
+    assert len(modules) == 0
+
+
+def test_get_components_to_install_mixed_includes(tmp_path):
+    """A main.nf with both module and subworkflow full-path includes should be parsed correctly."""
+    main_nf = tmp_path / "main.nf"
+    main_nf.write_text(
+        "include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort'\n"
+        "include { VCF_GATHER_BCFTOOLS } from '../../../subworkflows/nf-core/vcf_gather_bcftools'\n"
+        "include { BAM_MARKDUPLICATES } from '../bam_markduplicates'\n"
+    )
+    modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
+    assert len(modules) == 1
+    assert modules[0]["name"] == "samtools/sort"
+    assert len(subworkflows) == 2
+    sw_names = {sw["name"] for sw in subworkflows}
+    assert sw_names == {"vcf_gather_bcftools", "bam_markduplicates"}
+
+
 class TestTestComponentsUtils(TestComponents):
     def test_get_biotools_id(self):
         """Test getting the bio.tools ID for a tool"""
         with responses.RequestsMock() as rsps:
             mock_biotools_api_calls(rsps, "bpipe")
             response = nf_core.components.components_utils.get_biotools_response("bpipe")
-            id = nf_core.components.components_utils.get_biotools_id(response, "bpipe")
-            assert id == "biotools:bpipe"
+            biotools_id = nf_core.components.components_utils.get_biotools_id(response, "bpipe")
+            assert biotools_id == "biotools:bpipe"
 
     def test_get_biotools_id_warn(self):
         """Test getting the bio.tools ID for a tool and failing"""
@@ -70,12 +118,29 @@ class TestTestComponentsUtils(TestComponents):
 
         try:
             with mock.patch.dict(os.environ, mock_env):
-                importlib.reload(nf_core.components.components_utils)
-                assert nf_core.components.components_utils.NF_CORE_MODULES_NAME == mock_env["NF_CORE_MODULES_NAME"]
-                assert nf_core.components.components_utils.NF_CORE_MODULES_REMOTE == mock_env["NF_CORE_MODULES_REMOTE"]
+                importlib.reload(nf_core.components.constants)
+                assert mock_env["NF_CORE_MODULES_NAME"] == nf_core.components.constants.NF_CORE_MODULES_NAME
+                assert mock_env["NF_CORE_MODULES_REMOTE"] == nf_core.components.constants.NF_CORE_MODULES_REMOTE
                 assert (
-                    nf_core.components.components_utils.NF_CORE_MODULES_DEFAULT_BRANCH
-                    == mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
+                    mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
+                    == nf_core.components.constants.NF_CORE_MODULES_DEFAULT_BRANCH
                 )
         finally:
-            importlib.reload(nf_core.components.components_utils)
+            importlib.reload(nf_core.components.constants)
+
+    def test_get_meta_returns_dict(self):
+        """Test that read_meta_yml returns the meta.yml content"""
+        tmp_dir = Path(tempfile.mkdtemp())
+        meta_yml = tmp_dir / "meta.yml"
+        meta_yml.write_text(
+            """
+name: test
+description: test
+version: 1.0.0
+"""
+        )
+        assert nf_core.components.components_utils.read_meta_yml(meta_yml) == {
+            "name": "test",
+            "description": "test",
+            "version": "1.0.0",
+        }

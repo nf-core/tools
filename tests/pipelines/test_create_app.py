@@ -12,11 +12,11 @@ async def test_app_bindings():
     app = PipelineCreateApp()
     async with app.run_test() as pilot:
         # Test pressing the D key
-        assert app.dark
+        assert app.theme == "textual-dark"
         await pilot.press("d")
-        assert not app.dark
+        assert app.theme == "textual-light"
         await pilot.press("d")
-        assert app.dark
+        assert app.theme == "textual-dark"
 
         # Test pressing the Q key
         await pilot.press("q")
@@ -108,7 +108,7 @@ def test_type_nfcore_validation(snap_compare):
         await pilot.click("#start")
         await pilot.click("#type_nfcore")
         await pilot.click("#next")
-        await pilot.pause()
+        await pilot.pause(delay=1)
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
@@ -182,14 +182,13 @@ def test_customisation_help(snap_compare):
         await pilot.press("tab")
         await pilot.press("M", "e")
         await pilot.click("#next")
-        await pilot.click("#igenomes")
-        await pilot.press("tab")
-        await pilot.press("enter")
+        await pilot.pause(delay=1)
+        await pilot.click("#show_help_github_badges")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
-def test_github_question(tmpdir, snap_compare):
+def test_github_question(tmp_path, snap_compare):
     """Test snapshot for the github_repo_question screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -213,7 +212,7 @@ def test_github_question(tmpdir, snap_compare):
         await pilot.click("#continue")
         await pilot.press("backspace")
         await pilot.press("tab")
-        await pilot.press(*str(tmpdir))
+        await pilot.press(*str(tmp_path))
         await pilot.click("#finish")
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
@@ -222,7 +221,7 @@ def test_github_question(tmpdir, snap_compare):
 
 
 @mock.patch("nf_core.pipelines.create.githubrepo.GithubRepo._get_github_credentials")
-def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
+def test_github_details(mock_get_github_credentials, tmp_path, snap_compare):
     """Test snapshot for the github_repo screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -251,7 +250,7 @@ def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
         await pilot.click("#continue")
         await pilot.press("backspace")
         await pilot.press("tab")
-        await pilot.press(*str(tmpdir))
+        await pilot.press(*str(tmp_path))
         await pilot.click("#finish")
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
@@ -260,7 +259,7 @@ def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
-def test_github_exit_message(tmpdir, snap_compare):
+def test_github_exit_message(tmp_path, snap_compare):
     """Test snapshot for the github_exit screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -286,7 +285,7 @@ def test_github_exit_message(tmpdir, snap_compare):
         await pilot.click("#continue")
         await pilot.press("backspace")
         await pilot.press("tab")
-        await pilot.press(*str(tmpdir))
+        await pilot.press(*str(tmp_path))
         await pilot.click("#finish")
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")

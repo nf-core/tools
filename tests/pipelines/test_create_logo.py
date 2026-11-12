@@ -2,9 +2,24 @@
 
 from pathlib import Path
 
+from PIL import Image, ImageChops, ImageStat
+
 import nf_core.pipelines.create_logo
 
 from ..test_pipelines import TestPipelines
+
+
+def assert_similar_image(actual: Path, expected: Path) -> None:
+    """Compare pixels with a small tolerance: font anti-aliasing differs slightly between environments."""
+    a, b = Image.open(actual).convert("RGBA"), Image.open(expected).convert("RGBA")
+    assert a.size == b.size, f"size {a.size} != {b.size}"
+    diff = ImageChops.difference(a, b).convert("L")
+    strong = sum(diff.histogram()[64:]) / (a.size[0] * a.size[1])
+    mean = ImageStat.Stat(diff).mean[0]
+    # a wrong theme or missing text changes far more than this
+    assert strong < 0.005 and mean < 1.0, (
+        f"{strong:.3%} pixels differ strongly, mean diff {mean:.3f}, bbox {diff.getbbox()}"
+    )
 
 
 class TestCreateLogo(TestPipelines):
@@ -19,8 +34,7 @@ class TestCreateLogo(TestPipelines):
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
         fixture_fn = Path(__file__).parent.parent / "fixtures" / "create_logo.png"
-        # allow some flexibility in the file size
-        self.assertTrue(int(logo_fn.stat().st_size / 1000) == int(fixture_fn.stat().st_size / 1000))
+        assert_similar_image(logo_fn, fixture_fn)
 
     def test_create_logo_png_dark(self):
         """Test that the create-logo command works for dark PNGs"""
@@ -33,8 +47,7 @@ class TestCreateLogo(TestPipelines):
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
         fixture_fn = Path(__file__).parent.parent / "fixtures" / "create_logo_dark.png"
-        # allow some flexibility in the file size
-        self.assertTrue(int(logo_fn.stat().st_size / 1000) == int(fixture_fn.stat().st_size / 1000))
+        assert_similar_image(logo_fn, fixture_fn)
 
     def test_create_log_png_width(self):
         """Test that the create-logo command works for PNGs with a custom width"""
@@ -88,7 +101,7 @@ class TestCreateLogo(TestPipelines):
         """Test that the create-logo command works for SVGs"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, format="svg")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, img_format="svg")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a SVG
@@ -104,7 +117,7 @@ class TestCreateLogo(TestPipelines):
         """Test that the create-logo command works for svgs and dark theme"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, format="svg", theme="dark")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, img_format="svg", theme="dark")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a SVG

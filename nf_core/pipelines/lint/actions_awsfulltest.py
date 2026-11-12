@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Dict, List
 
 import yaml
 
 
-def actions_awsfulltest(self) -> Dict[str, List[str]]:
+def actions_awsfulltest(self) -> dict[str, list[str]]:
     """Checks the GitHub Actions awsfulltest is valid.
 
     In addition to small test datasets run on GitHub Actions, we provide the possibility of testing the pipeline on full size datasets on AWS.
@@ -35,19 +34,19 @@ def actions_awsfulltest(self) -> Dict[str, List[str]]:
         try:
             with open(fn) as fh:
                 wf = yaml.safe_load(fh)
-        except Exception as e:
+        except (OSError, yaml.YAMLError) as e:
             return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
         aws_profile = "-profile test "
 
         # Check that the action is only turned on for published releases
         try:
-            if wf[True]["pull_request"]["branches"] != ["main", "master"]:
-                raise AssertionError()
             if wf[True]["pull_request_review"]["types"] != ["submitted"]:
-                raise AssertionError()
+                raise AssertionError
             if "workflow_dispatch" not in wf[True]:
-                raise AssertionError()
+                raise AssertionError
+            if wf[True]["release"]["types"] != ["published"]:
+                raise AssertionError
         except (AssertionError, KeyError, TypeError):
             failed.append("`.github/workflows/awsfulltest.yml` is not triggered correctly")
         else:
@@ -56,8 +55,8 @@ def actions_awsfulltest(self) -> Dict[str, List[str]]:
         # Warn if `-profile test` is still unchanged
         try:
             steps = wf["jobs"]["run-platform"]["steps"]
-            if not any(aws_profile in step["run"] for step in steps if "run" in step.keys()):
-                raise AssertionError()
+            if not any(aws_profile in step["run"] for step in steps if "run" in step):
+                raise AssertionError
         except (AssertionError, KeyError, TypeError):
             passed.append("`.github/workflows/awsfulltest.yml` does not use `-profile test`")
         else:

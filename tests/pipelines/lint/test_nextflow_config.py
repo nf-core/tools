@@ -1,13 +1,14 @@
-import os
 import re
 from pathlib import Path
 
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
+
+# The template ships `manifest.diagram` commented out, so a new pipeline always warns about it
+MISSING_DIAGRAM_WARNING = "Config variable not found: `manifest.diagram`"
 
 
 class TestLintNextflowConfig(TestLint):
@@ -15,12 +16,24 @@ class TestLintNextflowConfig(TestLint):
         super().setUp()
         self.new_pipeline = self._make_pipeline_copy()
 
+    def _set_manifest_diagram(self, value: str) -> None:
+        """Uncomment the templated `manifest.diagram` line and set it to `value`."""
+        nf_conf_file = Path(self.new_pipeline) / "nextflow.config"
+        content = nf_conf_file.read_text()
+        assert "// diagram" in content
+        nf_conf_file.write_text(content.replace("// diagram", f"diagram = '{value}' //"))
+
+    def _lint_new_pipeline(self) -> dict:
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
+        lint_obj.load_pipeline_config()
+        return lint_obj.nextflow_config()
+
     def test_nextflow_config_example_pass(self):
         """Tests that config variable existence test works with good pipeline example"""
         self.lint_obj.load_pipeline_config()
         result = self.lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
 
     def test_default_values_match(self):
         """Test that the default values in nextflow.config match the default values defined in the nextflow_schema.json."""
@@ -28,7 +41,7 @@ class TestLintNextflowConfig(TestLint):
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
         assert "Config default value correct: params.validate_params" in str(result["passed"])
 
     def test_nextflow_config_bad_name_fail(self):
@@ -36,10 +49,10 @@ class TestLintNextflowConfig(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
 
-        lint_obj.nf_config["manifest.name"] = "bad_name"
+        lint_obj.nf_config["manifest"]["name"] = "bad_name"
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
 
     def test_nextflow_config_dev_in_release_mode_failed(self):
         """Tests that config variable existence test fails with dev version in release mode"""
@@ -47,25 +60,26 @@ class TestLintNextflowConfig(TestLint):
         lint_obj.load_pipeline_config()
 
         lint_obj.release_mode = True
-        lint_obj.nf_config["manifest.version"] = "dev_is_bad_name"
+        lint_obj.nf_config["manifest"]["version"] = "dev_is_bad_name"
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
 
     def test_nextflow_config_missing_test_profile_failed(self):
         """Test failure if config file does not contain `test` profile."""
         # Change the name of the test profile so there is no such profile
-        nf_conf_file = os.path.join(self.new_pipeline, "nextflow.config")
+        nf_conf_file = Path(self.new_pipeline, "nextflow.config")
         with open(nf_conf_file) as f:
             content = f.read()
             fail_content = re.sub(r"\btest\b", "testfail", content)
         with open(nf_conf_file, "w") as f:
             f.write(fail_content)
+        Path(self.new_pipeline, "conf", "testfail.config").touch()
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) > 0
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
 
     def test_default_values_fail(self):
         """Test linting fails if the default values in nextflow.config do not match the ones defined in the nextflow_schema.json."""
@@ -107,8 +121,12 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 2
         assert (
+            result["failed"][0]
+            == "Config `params.custom_config_base` is not set to `https://raw.githubusercontent.com/nf-core/configs/master`"
+        )
+        assert (
             result["failed"][1]
-            == "Config default value incorrect: `params.custom_config_base` is set as `https://raw.githubusercontent.com/nf-core/configs/master` in `nextflow_schema.json` but is `null` in `nextflow.config`."
+            == "Default value from the Nextflow schema `params.custom_config_base = `https://raw.githubusercontent.com/nf-core/configs/master`` not found in `nextflow.config`."
         )
 
     def test_allow_params_reference_in_main_nf(self):
@@ -157,7 +175,7 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             fail_content = re.sub(
                 r"validate_params\s*=\s*true",
-                "params.validate_params = true\ndummy = 0.000000001",
+                "validate_params = true\ndummy = 0.000000001",
                 content,
             )
         with open(nf_conf_file, "w") as f:
@@ -178,7 +196,7 @@ class TestLintNextflowConfig(TestLint):
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
         assert "Config default value correct: params.dummy" in str(result["passed"])
 
     def test_default_values_float_fail(self):
@@ -189,7 +207,7 @@ class TestLintNextflowConfig(TestLint):
             content = f.read()
             fail_content = re.sub(
                 r"validate_params\s*=\s*true",
-                "params.validate_params = true\ndummy = 0.000000001",
+                "validate_params = true\ndummy = 0.000000001",
                 content,
             )
         with open(nf_conf_file, "w") as f:
@@ -211,5 +229,59 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
 
         assert len(result["failed"]) == 1
-        assert len(result["warned"]) == 0
+        assert result["warned"] == [MISSING_DIAGRAM_WARNING]
         assert "Config default value incorrect: `params.dummy" in str(result["failed"])
+
+    def test_manifest_diagram_pass(self):
+        """Test that a `manifest.diagram` pointing at an existing file passes."""
+        diagram = self.new_pipeline / "docs" / "images" / "metro_map.svg"
+        diagram.parent.mkdir(parents=True, exist_ok=True)
+        diagram.write_text("<svg></svg>")
+        self._set_manifest_diagram("docs/images/metro_map.svg")
+
+        result = self._lint_new_pipeline()
+        assert len(result["failed"]) == 0
+        assert len(result["warned"]) == 0
+        assert "Config ``manifest.diagram`` file found: ``docs/images/metro_map.svg``" in result["passed"]
+
+    def test_manifest_diagram_missing_file_fail(self):
+        """Test that a `manifest.diagram` pointing at a non-existent file fails."""
+        self._set_manifest_diagram("docs/images/metro_map.svg")
+
+        result = self._lint_new_pipeline()
+        assert "Config ``manifest.diagram`` file not found: ``docs/images/metro_map.svg``" in result["failed"]
+
+    def test_manifest_diagram_bad_format_fail(self):
+        """Test that a `manifest.diagram` that is not a supported image format fails."""
+        diagram = Path(self.new_pipeline) / "docs" / "images" / "metro_map.pdf"
+        diagram.parent.mkdir(parents=True, exist_ok=True)
+        diagram.write_text("not an image")
+        self._set_manifest_diagram("docs/images/metro_map.pdf")
+
+        result = self._lint_new_pipeline()
+        assert (
+            "Config ``manifest.diagram`` is not a supported image format "
+            "(.gif, .jpeg, .jpg, .png, .svg, .webp): ``docs/images/metro_map.pdf``" in result["failed"]
+        )
+
+    def test_manifest_diagram_url_fail(self):
+        """Test that a `manifest.diagram` set to a URL fails - it should be a relative path."""
+        url = "https://example.com/metro_map.svg"
+        self._set_manifest_diagram(url)
+
+        result = self._lint_new_pipeline()
+        assert (
+            f"Config ``manifest.diagram`` should be a relative path inside the pipeline: ``{url}``" in result["failed"]
+        )
+
+    def test_manifest_diagram_absolute_path_fail(self):
+        """Test that an absolute `manifest.diagram` fails, instead of resolving outside the pipeline."""
+        outside = Path(self.new_pipeline).parent / "metro_map.svg"
+        outside.write_text("<svg></svg>")
+        self._set_manifest_diagram(str(outside))
+
+        result = self._lint_new_pipeline()
+        assert (
+            f"Config ``manifest.diagram`` should be a relative path inside the pipeline: ``{outside}``"
+            in result["failed"]
+        )

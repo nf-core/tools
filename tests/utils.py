@@ -4,14 +4,16 @@ Helper functions for tests
 
 import filecmp
 import functools
+import json
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import Any
 
+import requests
 import responses
 import yaml
 
-import nf_core.modules
 import nf_core.pipelines.create.create
 from nf_core import __version__
 from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig, custom_yaml_dumper
@@ -20,17 +22,40 @@ TEST_DATA_DIR = Path(__file__).parent / "data"
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
+CROSS_ORGANIZATION_URL = "https://github.com/nf-core-test/modules.git"
+CROSS_ORGANIZATION_BRANCH = "main"
 GITLAB_REPO = "nf-core-test"
 GITLAB_DEFAULT_BRANCH = "main"
 GITLAB_SUBWORKFLOWS_BRANCH = "subworkflows"
 GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH = "subworkflows-org-path"
 OLD_SUBWORKFLOWS_SHA = "f3c078809a2513f1c95de14f6633fe1f03572fdb"
+NF_CORE_LICENSE_HEADER = "// Copyright (c) the nf-core community under an open-source MIT license."
 # Branch test stuff
 GITLAB_BRANCH_TEST_BRANCH = "branch-tester"
 GITLAB_BRANCH_ORG_PATH_BRANCH = "org-path"
 GITLAB_BRANCH_TEST_OLD_SHA = "e772abc22c1ff26afdf377845c323172fb3c19ca"
 GITLAB_BRANCH_TEST_NEW_SHA = "7d73e21f30041297ea44367f2b4fd4e045c0b991"
-GITLAB_NFTEST_BRANCH = "nf-test-tests-self-hosted-runners"
+GITLAB_NFTEST_BRANCH = "nf-test-tests"
+
+
+class MockResponse:
+    """Minimal stand-in for :class:`requests.Response`, for mocking ``requests.get`` and friends."""
+
+    def __init__(self, data: Any, status_code: int = 200, url: str = ""):
+        self.url = url
+        self.status_code = status_code
+        self.from_cache = False
+        self.reason = "Mocked response"
+        self.data = data
+        self.content = json.dumps(data)
+        self.headers = {"content-encoding": "test", "connection": "fake"}
+
+    def json(self) -> Any:
+        return self.data
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise requests.exceptions.HTTPError(f"{self.status_code} Error for url: {self.url}")
 
 
 def with_temporary_folder(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -131,7 +156,7 @@ def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
     rsps.get(biotools_api_url, json=biotools_mock, status=200)
 
 
-def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
+def create_tmp_pipeline(no_git: bool = False) -> tuple[Path, Path, str, Path]:
     """Create a new Pipeline for testing"""
 
     tmp_dir = Path(tempfile.TemporaryDirectory().name)

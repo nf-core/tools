@@ -2,43 +2,33 @@
 Common utility functions for the nf-core python package.
 """
 
-import concurrent.futures
+import ast
 import datetime
 import errno
 import fnmatch
-import hashlib
+import functools
+import importlib
 import io
 import json
 import logging
-import mimetypes
 import os
-import random
 import re
-import shlex
-import subprocess
 import sys
 import time
-from contextlib import contextmanager
+from collections.abc import Callable, Generator
+from contextlib import contextmanager, suppress
+from enum import Enum
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
-import git
-import prompt_toolkit.styles
-import questionary
-import requests.auth
-import requests_cache
-import rich
-import rich.markup
-import yaml
-from packaging.version import Version
-from pydantic import BaseModel, ValidationError, field_validator
-from rich.live import Live
-from rich.spinner import Spinner
+from rich.console import Console
 
 import nf_core
 
 if TYPE_CHECKING:
     from nf_core.pipelines.schema import PipelineSchema
+    from nf_core.pydantic_models import NFCoreYamlConfig
 
 log = logging.getLogger(__name__)
 
@@ -51,51 +41,196 @@ nfcore_logo = [
     r"[green]                                          `._,._,'",
 ]
 
-# Custom style for questionary
-nfcore_question_style = prompt_toolkit.styles.Style(
-    [
-        ("qmark", "fg:ansiblue bold"),  # token in front of the question
-        ("question", "bold"),  # question text
-        (
-            "answer",
-            "fg:ansigreen nobold bg:",
-        ),  # submitted answer text behind the question
-        (
-            "pointer",
-            "fg:ansiyellow bold",
-        ),  # pointer used in select and checkbox prompts
-        (
-            "highlighted",
-            "fg:ansiblue bold",
-        ),  # pointed-at choice in select and checkbox prompts
-        (
-            "selected",
-            "fg:ansiyellow noreverse bold",
-        ),  # style for a selected item of a checkbox
-        ("separator", "fg:ansiblack"),  # separator in lists
-        ("instruction", ""),  # user instructions for select, rawselect, checkbox
-        ("text", ""),  # plain text
-        (
-            "disabled",
-            "fg:gray italic",
-        ),  # disabled choices for select and checkbox prompts
-        ("choice-default", "fg:ansiblack"),
-        ("choice-default-changed", "fg:ansiyellow"),
-        ("choice-required", "fg:ansired"),
-    ]
+
+def lazy_attrs(module_globals: dict, mapping: dict[str, "str | Callable"]):
+    """Build module-level ``__getattr__`` and ``__dir__`` for lazy attributes (PEP 562).
+
+    Each attribute maps either to the dotted path of the module to import it
+    from, or to a zero-argument callable that builds it. Resolved attributes
+    are cached in the module's globals, so the hook only fires once per name.
+
+    Usage::
+
+        __getattr__, __dir__ = lazy_attrs(globals(), {"PipelineCreateApp": "nf_core.pipelines.create"})
+    """
+
+    def module_getattr(name):
+        target = mapping.get(name)
+        if target is None:
+            raise AttributeError(f"module {module_globals['__name__']!r} has no attribute {name!r}")
+        value = target() if callable(target) else getattr(importlib.import_module(target), name)
+        module_globals[name] = value
+        return value
+
+    def module_dir():
+        return sorted(set(module_globals) | set(mapping))
+
+    return module_getattr, module_dir
+
+
+# Custom style for questionary (built lazily to keep CLI start-up fast)
+@functools.cache
+def _nfcore_question_style():
+    import prompt_toolkit.styles
+
+    return prompt_toolkit.styles.Style(
+        [
+            ("qmark", "fg:ansiblue bold"),  # token in front of the question
+            ("question", "bold"),  # question text
+            (
+                "answer",
+                "fg:ansigreen nobold bg:",
+            ),  # submitted answer text behind the question
+            (
+                "pointer",
+                "fg:ansiyellow bold",
+            ),  # pointer used in select and checkbox prompts
+            (
+                "highlighted",
+                "fg:ansiblue bold",
+            ),  # pointed-at choice in select and checkbox prompts
+            (
+                "selected",
+                "fg:ansiyellow noreverse bold",
+            ),  # style for a selected item of a checkbox
+            ("separator", "fg:ansiblack"),  # separator in lists
+            ("instruction", ""),  # user instructions for select, rawselect, checkbox
+            ("text", ""),  # plain text
+            (
+                "disabled",
+                "fg:gray italic",
+            ),  # disabled choices for select and checkbox prompts
+            ("choice-default", "fg:ansiblack"),
+            ("choice-default-changed", "fg:ansiyellow"),
+            ("choice-required", "fg:ansired"),
+        ]
+    )
+
+
+# Lazy imports to keep CLI start-up fast
+__getattr__, __dir__ = lazy_attrs(
+    globals(),
+    {
+        "nfcore_question_style": _nfcore_question_style,
+        "gh_api": "nf_core.github_api",
+        "NFCoreTemplateConfig": "nf_core.pydantic_models",
+        "NFCoreYamlLintConfig": "nf_core.pydantic_models",
+        "NFCoreYamlConfig": "nf_core.pydantic_models",
+    },
 )
+
+
+def is_interactive() -> bool:
+    """Check if the current session is interactive (has a TTY on stdin, stdout, and stderr)."""
+    return sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()
+
 
 NFCORE_CACHE_DIR = Path(
-    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
+    os.environ.get("XDG_CACHE_HOME") or Path(os.getenv("HOME") or "") / ".cache",
     "nfcore",
 )
-NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(
+    os.environ.get("XDG_CONFIG_HOME") or Path(os.getenv("HOME") or "") / ".config",
+    "nfcore",
+)
 
 
-def fetch_remote_version(source_url):
-    response = requests.get(source_url, timeout=3)
-    remote_version = re.sub(r"[^0-9\.]", "", response.text)
-    return remote_version
+CONTAINER_SYSTEMS = ["docker", "singularity"]
+CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
+# Platforms a module must provide containers for. Others (e.g. linux/arm64) are
+# supported and validated when present, but not required.
+REQUIRED_CONTAINER_PLATFORMS = ["linux/amd64"]
+
+
+class ContainerRegistryUrls(Enum):
+    SEQERA_DOCKER = "community.wave.seqera.io/library"
+    SEQERA_SINGULARITY = "community-cr-prod.seqera.io/docker/registry/v2"
+    GALAXY_SINGULARITY = "depot.galaxyproject.org/singularity"
+
+
+def unquote(s: str) -> str:
+    """
+    Remove paired quotes (single or double) from start and end of string.
+
+    Uses ast.literal_eval to safely parse Python string literals, preserving
+    the original string if it's not a valid literal.
+
+    Special handling for ruamel.yaml DoubleQuotedScalarString to preserve
+    strings that should not be converted to numbers (e.g., "123" stays as string).
+
+    Args:
+        s: String potentially containing quotes
+
+    Returns:
+        String with outer quotes removed if present, otherwise original string
+    """
+    import ruamel.yaml.scalarstring
+
+    if isinstance(
+        s, (ruamel.yaml.scalarstring.DoubleQuotedScalarString, ruamel.yaml.scalarstring.SingleQuotedScalarString)
+    ):
+        return s
+
+    try:
+        return ast.literal_eval(s)
+    except (ValueError, SyntaxError):
+        return s
+
+
+# The version check never fetches on the hot path (update-notifier pattern):
+# it only reads the cached remote version, and refreshes the cache in a
+# detached background process so that no run ever blocks on the network.
+REMOTE_VERSION_CACHE = Path(NFCORE_CACHE_DIR, "latest_version.json")
+REMOTE_VERSION_CACHE_EXPIRY = 60 * 60 * 24  # refresh at most once a day
+REMOTE_VERSION_REFRESH_BACKOFF = 60 * 10  # wait at least this long between refresh attempts
+
+
+def _load_version_cache() -> dict:
+    try:
+        with open(REMOTE_VERSION_CACHE) as fh:
+            cached = json.load(fh)
+        if isinstance(cached, dict):
+            return cached
+    except (OSError, ValueError):
+        pass
+    return {}
+
+
+def _load_cached_remote_version() -> str | None:
+    from packaging.version import InvalidVersion, Version
+
+    cached = _load_version_cache()
+    try:
+        if time.time() - cached["timestamp"] < REMOTE_VERSION_CACHE_EXPIRY:
+            Version(cached["version"])  # guard against a corrupted cache
+            return cached["version"]
+    except (KeyError, TypeError, InvalidVersion):
+        pass
+    return None
+
+
+def _spawn_remote_version_refresh(source_url: str) -> None:
+    """Kick off a detached background process to refresh the remote version cache."""
+    import subprocess
+
+    try:
+        cached = _load_version_cache()
+        if time.time() - float(cached.get("attempted_at") or 0) < REMOTE_VERSION_REFRESH_BACKOFF:
+            return
+        # Record the attempt up front, so failed refreshes back off instead of respawning every run
+        cached["attempted_at"] = time.time()
+        setup_nfcore_cachedir()
+        with open(REMOTE_VERSION_CACHE, "w") as fh:
+            json.dump(cached, fh)
+        subprocess.Popen(
+            [sys.executable, "-m", "nf_core.version_updater", source_url, str(REMOTE_VERSION_CACHE)],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError) as e:
+        log.debug(f"Could not start background version check: {e}")
 
 
 def check_if_outdated(
@@ -108,7 +243,10 @@ def check_if_outdated(
     """
     # Exit immediately if disabled via ENV var
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
-        return (True, "", "")
+        return (False, "", "")
+
+    from packaging.version import Version
+
     # Set and clean up the current version string
     if current_version is None:
         current_version = nf_core.__version__
@@ -119,15 +257,12 @@ def check_if_outdated(
     # check if we have a newer version without blocking the rest of the script
     is_outdated = False
     if remote_version is None:  # we set it manually for tests
-        try:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(fetch_remote_version, source_url)
-                remote_version = future.result()
-        except Exception as e:
-            log.debug(f"Could not check for nf-core updates: {e}")
-    if remote_version is not None:
-        if Version(remote_version) > Version(current_version):
-            is_outdated = True
+        remote_version = _load_cached_remote_version()
+        if remote_version is None:
+            # No fresh cache - refresh it in the background for the next run
+            _spawn_remote_version_refresh(source_url)
+    if remote_version is not None and Version(remote_version) > Version(current_version):
+        is_outdated = True
     return (is_outdated, current_version, remote_version)
 
 
@@ -138,6 +273,10 @@ def rich_force_colors():
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
     return None
+
+
+stdout = Console(force_terminal=rich_force_colors())
+stderr = Console(stderr=True, force_terminal=rich_force_colors())
 
 
 class Pipeline:
@@ -160,22 +299,24 @@ class Pipeline:
 
     def __init__(self, wf_path: Path) -> None:
         """Initialise pipeline object"""
-        self.conda_config: Dict = {}
-        self.conda_package_info: Dict = {}
-        self.nf_config: Dict = {}
-        self.files: List[Path] = []
-        self.git_sha: Optional[str] = None
-        self.minNextflowVersion: Optional[str] = None
-        self.wf_path = Path(wf_path)
-        self.pipeline_name: Optional[str] = None
-        self.pipeline_prefix: Optional[str] = None
-        self.schema_obj: Optional[PipelineSchema] = None
-        self.repo: Optional[git.Repo] = None
+        import git
+
+        self.conda_config: dict = {}
+        self.conda_package_info: dict = {}
+        self.nf_config: dict = {}
+        self.files: list[Path] = []
+        self.git_sha: str | None = None
+        self.minNextflowVersion: str | None = None
+        self.wf_path = Path(wf_path).resolve()
+        self.pipeline_name: str | None = None
+        self.pipeline_prefix: str | None = None
+        self.schema_obj: PipelineSchema | None = None
+        self.repo: git.Repo | None = None
 
         try:
             self.repo = git.Repo(self.wf_path)
             self.git_sha = self.repo.head.object.hexsha
-        except Exception as e:
+        except git.exc.GitError as e:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
@@ -192,6 +333,8 @@ class Pipeline:
 
     def _load_conda_environment(self) -> bool:
         """Try to load the pipeline environment.yml file, if it exists"""
+        import yaml
+
         try:
             with open(Path(self.wf_path, "environment.yml")) as fh:
                 self.conda_config = yaml.safe_load(fh)
@@ -200,12 +343,14 @@ class Pipeline:
             log.debug("No conda `environment.yml` file found.")
             return False
 
-    def _fp(self, fn: Union[str, Path]) -> Path:
+    def _fp(self, fn: str | Path) -> Path:
         """Convenience function to get full path to a file in the pipeline"""
         return Path(self.wf_path, fn)
 
-    def list_files(self) -> List[Path]:
+    def list_files(self) -> list[Path]:
         """Get a list of all files in the pipeline"""
+        import subprocess
+
         files = []
         try:
             # First, try to get the list of files using git
@@ -234,12 +379,13 @@ class Pipeline:
         Once loaded, set a few convenience reference class attributes
         """
         self.nf_config = fetch_wf_config(self.wf_path)
+        manifest = self.nf_config.get("manifest", {})
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = manifest.get("name", "/").split("/")
 
-        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        nextflow_version_match = re.search(r"(?P<version>[0-9\.]+(-edge)?)", manifest.get("nextflowVersion", "") or "")
         if nextflow_version_match:
-            self.minNextflowVersion = nextflow_version_match.group(0)
+            self.minNextflowVersion = nextflow_version_match.group("version")
             return True
         return False
 
@@ -256,13 +402,93 @@ def is_pipeline_directory(wf_path):
         UserWarning: If one of the files are missing
     """
     for fn in ["main.nf", "nextflow.config"]:
-        path = os.path.join(wf_path, fn)
-        if not os.path.isfile(path):
-            if wf_path == ".":
+        if not Path(wf_path, fn).is_file():
+            if Path(wf_path).resolve() == Path.cwd():
                 warning = f"Current directory is not a pipeline - '{fn}' is missing."
             else:
                 warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
             raise UserWarning(warning)
+
+
+# This is the minimal version of Nextflow required to fetch containers with `nextflow inspect`
+NF_INSPECT_MIN_NF_VERSION = (25, 4, 4, False)
+
+# This is the maximal version of nf-core/tools that does not require `nextflow inspect` for downloads
+NFCORE_VER_LAST_WITHOUT_NF_INSPECT = (3, 3, 2)
+
+
+# Pretty print a Nextflow version tuple
+def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
+    return f"{version[0]}.{version[1]:02}.{version[2]}" + ("-edge" if version[3] else "")
+
+
+@lru_cache(maxsize=1)
+def get_nf_version() -> tuple[int, int, int, bool] | None:
+    """Get the version of Nextflow installed on the system. Cached for the lifetime of the process."""
+    import subprocess
+
+    try:
+        cmd_out = run_cmd("nextflow", "-v")
+        if cmd_out is None:
+            raise RuntimeError("Failed to run Nextflow version check.")
+        out, _ = cmd_out
+        out_str = str(out, encoding="utf-8")  # Ensure we have a string
+
+        version_str = out_str.strip().split()[-1]
+
+        # Check if we are using an edge release
+        is_edge = False
+        edge_split = version_str.split("-")
+        if len(edge_split) > 1:
+            is_edge = True
+            version_str = edge_split[0]
+
+        split_version_str = version_str.split(".")
+        parsed_version_tuple = (
+            int(split_version_str[0]),
+            int(split_version_str[1]),
+            int(split_version_str[2]),
+            is_edge,
+        )
+        return parsed_version_tuple
+    except (subprocess.CalledProcessError, IndexError, ValueError) as e:
+        log.warning(f"Error getting Nextflow version: {e}")
+        return None
+
+
+# Check that the Nextflow version >= the minimal version required
+# This is used to ensure that we can run `nextflow inspect`
+def check_nextflow_version(minimal_nf_version: tuple[int, int, int, bool], silent=False) -> bool:
+    """Check the version of Nextflow installed on the system.
+
+    Args:
+        minimal_nf_version (tuple[int, int, int, bool]): The minimal version of Nextflow required.
+        silent (bool): Whether to log the version or not.
+    Returns:
+        bool: True if the installed version is greater than or equal to `minimal_nf_version`
+    """
+    nf_version = get_nf_version()
+    if nf_version is None:
+        return False
+
+    parsed_version_str = pretty_nf_version(nf_version)
+
+    if silent:
+        log.debug(f"Detected Nextflow version {parsed_version_str}")
+    else:
+        log.info(f"Detected Nextflow version {parsed_version_str}")
+
+    return nf_version >= minimal_nf_version
+
+
+def read_module_name(main_nf: Path) -> str | None:
+    """Return the process name declared in a Nextflow ``main.nf`` file, or ``None``."""
+    nf_process_name_regex = re.compile(r"^\s*process\s+(\w+)\s*\{", re.MULTILINE)
+    try:
+        match = nf_process_name_regex.search(main_nf.read_text())
+    except OSError:
+        return None
+    return match.group(1) if match else None
 
 
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
@@ -277,9 +503,11 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
         dict: Workflow configuration settings.
     """
 
+    import hashlib
+
     log.debug(f"Got '{wf_path}' as path")
     wf_path = Path(wf_path)
-    config = {}
+    config: dict[str, Any] = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
@@ -312,36 +540,47 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
         cache_path = Path(cache_basedir, cache_fn)
         if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path) as fh:
-                try:
+            try:
+                with open(cache_path) as fh:
                     config = json.load(fh)
-                except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
-            return config
+                return config
+            except json.JSONDecodeError as e:
+                # Log warning but don't raise - just regenerate the cache
+                log.warning(f"Unable to load cached JSON file '{cache_path}' due to error: {e}")
+                log.debug("Removing corrupted cache file and regenerating...")
+                cache_path.unlink(missing_ok=True)
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    try:
+        result = run_cmd("nextflow", f"config -o json {wf_path}")
+    except RuntimeError as e:
+        raise UserWarning(
+            f"Could not parse Nextflow config for '{wf_path}'. Possibly because of a Nextflow version mismatch?\n{e}"
+        ) from e
     if result is not None:
         nfconfig_raw, _ = result
-        for line in nfconfig_raw.splitlines():
-            ul = line.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v.strip("'\"")
-            except ValueError:
-                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+        try:
+            parsed = parse_nextflow_json(nfconfig_raw.decode("utf-8"))
+            config.update(parsed)
+            for k in parsed:
+                log.debug(f"Config section: {k}")
+        except json.JSONDecodeError as e:
+            log.warning(f"Unable to parse nextflow config output as JSON: {e}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
+
+    main_nf = Path(wf_path, "main.nf")
     try:
-        main_nf = Path(wf_path, "main.nf")
         with open(main_nf, "rb") as fh:
+            params_section = config.setdefault("params", {})
             for line in fh:
                 line_str = line.decode("utf-8")
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
+                match = re.match(r"^\s*params\.([a-zA-Z0-9_]+)\s*=(?!=)", line_str)
                 if match:
-                    config[match.group(1)] = "null"
+                    params_section[match.group(1)] = None
+
     except FileNotFoundError as e:
         log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
 
@@ -358,41 +597,63 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     return config
 
 
-def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
+def parse_nextflow_json(text: str) -> Any:
+    """Parse the JSON output of a Nextflow command, ignoring status lines printed around it.
+
+    Nextflow can print status lines to stdout next to the JSON, e.g. `[PIPELINE] ...`
+    or, before 26.05, the Seqera Platform monitoring URL.
+
+    Raises:
+        json.JSONDecodeError: If the text contains no valid JSON object.
+    """
+    json_start = text.find("{")
+    if json_start == -1:
+        return json.loads(text)
+    parsed, _ = json.JSONDecoder().raw_decode(text, json_start)
+    return parsed
+
+
+class CommandError(RuntimeError):
+    """Raised by `run_cmd` when a command exits with a non-zero code.
+
+    Keeps the captured streams, so callers can inspect the command's output instead of parsing the error message.
+    `output` holds both streams decoded, since Nextflow prints error details to stdout and only a summary to stderr.
+    """
+
+    def __init__(self, cmd: str, returncode: int, stdout: bytes, stderr: bytes):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        decoded = (stream.decode("utf-8", errors="replace").strip() for stream in (stdout, stderr))
+        self.output = "\n".join(text for text in decoded if text)
+        super().__init__(f"Command '{cmd}' failed with exit code {returncode}\n{self.output}")
+
+
+def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     """Run a specified command and capture the output. Handle errors nicely."""
+    import shlex
+    import subprocess
+
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
-        return (proc.stdout, proc.stderr)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=False)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
-            )
-        else:
-            return None
-    except subprocess.CalledProcessError as e:
-        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
+            ) from e
+        return None
+
+    if proc.returncode != 0:
         if executable == "nf-test":
-            return (e.stdout, e.stderr)
-        else:
-            raise RuntimeError(
-                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-            )
+            return (proc.stdout, proc.stderr)
+        raise CommandError(full_cmd, proc.returncode, proc.stdout, proc.stderr)
+
+    return (proc.stdout, proc.stderr)
 
 
-def setup_nfcore_dir() -> bool:
-    """Creates a directory for files that need to be kept between sessions
-
-    Currently only used for keeping local copies of modules repos
-    """
-    if not NFCORE_DIR.exists():
-        NFCORE_DIR.mkdir(parents=True)
-    return True
-
-
-def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]:
+def setup_requests_cachedir() -> dict[str, Path | datetime.timedelta | str]:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -403,7 +664,7 @@ def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]
     """
     pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+    config: dict[str, Path | datetime.timedelta | str] = {
         "cache_name": Path(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
         "backend": "sqlite",
@@ -413,16 +674,18 @@ def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]
     return config
 
 
-def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
-    """Sets up local caching for caching files between sessions."""
+def setup_nfcore_cachedir(cache_fn: str | Path | None = None) -> Path:
+    """Sets up local caching for caching files between sessions.
 
-    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+    Creates and returns a subdirectory of the nf-core cache directory,
+    or the cache directory itself if no subdirectory is given.
+    """
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn) if cache_fn else NFCORE_CACHE_DIR
 
     try:
-        if not Path(cachedir).exists():
-            Path(cachedir).mkdir(parents=True)
+        cachedir.mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        log.warn(f"Could not create cache directory: {cachedir}")
+        log.warning(f"Could not create cache directory: {cachedir}")
 
     return cachedir
 
@@ -440,6 +703,9 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
     Returns:
        None. Just sits in an infinite loop until the function returns True.
     """
+    from rich.live import Live
+    from rich.spinner import Spinner
+
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
         with Live(spinner, refresh_per_second=refresh_per_second):
@@ -447,11 +713,11 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
                 if poll_func():
                     break
                 time.sleep(2)
-    except KeyboardInterrupt:
-        raise AssertionError("Cancelled!")
+    except KeyboardInterrupt as e:
+        raise AssertionError("Cancelled!") from e
 
 
-def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
+def poll_nfcore_web_api(api_url: str, post_data: dict | None = None) -> dict:
     """
     Poll the nf-core website API
 
@@ -459,6 +725,9 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
 
     Expects API response to be valid JSON and contain a top-level 'status' key.
     """
+    import requests
+    import requests_cache
+
     # Run without requests_cache so that we get the updated statuses
     with requests_cache.disabled():
         try:
@@ -467,10 +736,10 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
             else:
                 log.debug(f"requesting {api_url} with {post_data}")
                 response = requests.post(url=api_url, data=post_data)
-        except requests.exceptions.Timeout:
-            raise AssertionError(f"URL timed out: {api_url}")
-        except requests.exceptions.ConnectionError:
-            raise AssertionError(f"Could not connect to URL: {api_url}")
+        except requests.exceptions.Timeout as e:
+            raise AssertionError(f"URL timed out: {api_url}") from e
+        except requests.exceptions.ConnectionError as e:
+            raise AssertionError(f"Could not connect to URL: {api_url}") from e
         else:
             if response.status_code != 200 and response.status_code != 301:
                 response_content = response.content
@@ -486,8 +755,8 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
-                    raise AssertionError()
-            except (json.decoder.JSONDecodeError, AssertionError, TypeError):
+                    raise AssertionError
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                 response_content = response.content
                 if isinstance(response_content, bytes):
                     response_content = response_content.decode()
@@ -495,174 +764,9 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"
-                )
+                ) from e
             else:
                 return web_response
-
-
-class GitHubAPISession(requests_cache.CachedSession):
-    """
-    Class to provide a single session for interacting with the GitHub API for a run.
-    Inherits the requests_cache.CachedSession and adds additional functionality,
-    such as automatically setting up GitHub authentication if we can.
-    """
-
-    def __init__(self) -> None:
-        self.auth_mode: Optional[str] = None
-        self.return_ok: List[int] = [200, 201]
-        self.return_retry: List[int] = [403]
-        self.return_unauthorised: List[int] = [401]
-        self.has_init: bool = False
-
-    def lazy_init(self) -> None:
-        """
-        Initialise the object.
-
-        Only do this when it's actually being used (due to global import)
-        """
-        log.debug("Initialising GitHub API requests session")
-        cache_config = setup_requests_cachedir()
-        super().__init__(**cache_config)
-        self.setup_github_auth()
-        self.has_init = True
-
-    def setup_github_auth(self, auth=None):
-        """
-        Try to automatically set up GitHub authentication
-        """
-        if auth is not None:
-            self.auth = auth
-            self.auth_mode = "supplied to function"
-
-        # Class for Bearer token authentication
-        # https://stackoverflow.com/a/58055668/713980
-        class BearerAuth(requests.auth.AuthBase):
-            def __init__(self, token):
-                self.token = token
-
-            def __call__(self, r):
-                r.headers["authorization"] = f"Bearer {self.token}"
-                return r
-
-        # Default auth if we're running and the gh CLI tool is installed
-        gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
-        if self.auth is None and os.path.exists(gh_cli_config_fn):
-            try:
-                with open(gh_cli_config_fn) as fh:
-                    gh_cli_config = yaml.safe_load(fh)
-                    self.auth = requests.auth.HTTPBasicAuth(
-                        gh_cli_config["github.com"]["user"],
-                        gh_cli_config["github.com"]["oauth_token"],
-                    )
-                    self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
-            except Exception:
-                ex_type, ex_value, _ = sys.exc_info()
-                if ex_type is not None:
-                    output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
-                    log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
-
-        # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
-        if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
-            self.auth_mode = "Bearer token with GITHUB_TOKEN"
-            self.auth = BearerAuth(os.environ["GITHUB_TOKEN"])
-        else:
-            log.warning("Could not find GitHub authentication token. Some API requests may fail.")
-
-        log.debug(f"Using GitHub auth: {self.auth_mode}")
-
-    def log_content_headers(self, request, post_data=None):
-        """
-        Try to dump everything to the console, useful when things go wrong.
-        """
-        log.debug(f"Requested URL: {request.url}")
-        log.debug(f"From requests cache: {request.from_cache}")
-        log.debug(f"Request status code: {request.status_code}")
-        log.debug(f"Request reason: {request.reason}")
-        if post_data is None:
-            post_data = {}
-        try:
-            log.debug(json.dumps(dict(request.headers), indent=4))
-            log.debug(json.dumps(request.json(), indent=4))
-            log.debug(json.dumps(post_data, indent=4))
-        except Exception as e:
-            log.debug(f"Could not parse JSON response from GitHub API! {e}")
-            log.debug(request.headers)
-            log.debug(request.content)
-            log.debug(post_data)
-
-    def safe_get(self, url):
-        """
-        Run a GET request, raise a nice exception with lots of logging if it fails.
-        """
-        if not self.has_init:
-            self.lazy_init()
-        request = self.get(url)
-        if request.status_code in self.return_retry:
-            stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
-            try:
-                r = self.request_retry(url)
-            except Exception as e:
-                stderr.print_exception()
-                raise e
-            else:
-                return r
-        elif request.status_code in self.return_unauthorised:
-            raise RuntimeError("GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
-
-        return request
-
-    def get(self, url, **kwargs):
-        """
-        Initialise the session if we haven't already, then call the superclass get method.
-        """
-        if not self.has_init:
-            self.lazy_init()
-        return super().get(url, **kwargs)
-
-    def request_retry(self, url, post_data=None):
-        """
-        Try to fetch a URL, keep retrying if we get a certain return code.
-
-        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
-        See https://github.com/nf-core/tools/issues/911
-        """
-        if not self.has_init:
-            self.lazy_init()
-
-        # Start the loop for a retry mechanism
-        while True:
-            # GET request
-            if post_data is None:
-                log.debug(f"Sending GET request to {url}")
-                r = self.get(url=url)
-            # POST request
-            else:
-                log.debug(f"Sending POST request to {url}")
-                r = self.post(url=url, json=post_data)
-
-            # Failed but expected - try again
-            if r.status_code in self.return_retry:
-                self.log_content_headers(r, post_data)
-                log.debug(f"GitHub API PR failed - got return code {r.status_code}")
-                wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
-                if wait_time == 0:
-                    log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
-                    wait_time = random.randrange(10, 60)
-                log.warning(f"Got API return code {r.status_code}. Trying again after {wait_time} seconds..")
-                time.sleep(wait_time)
-
-            # Unexpected error - raise
-            elif r.status_code not in self.return_ok:
-                self.log_content_headers(r, post_data)
-                raise RuntimeError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
-
-            # Success!
-            else:
-                return r
-
-
-# Single session object to use for entire codebase. Not sure if there's a better way to do this?
-gh_api = GitHubAPISession()
 
 
 def anaconda_package(dep, dep_channels=None):
@@ -678,6 +782,7 @@ def anaconda_package(dep, dep_channels=None):
         A LookupError, if the connection fails or times out or gives an unexpected status code
         A ValueError, if the package name can not be found (404)
     """
+    import requests
 
     if dep_channels is None:
         dep_channels = ["conda-forge", "bioconda"]
@@ -700,10 +805,10 @@ def anaconda_package(dep, dep_channels=None):
         anaconda_api_url = f"https://api.anaconda.org/package/{ch}/{depname}"
         try:
             response = requests.get(anaconda_api_url, timeout=10)
-        except requests.exceptions.Timeout:
-            raise LookupError(f"Anaconda API timed out: {anaconda_api_url}")
-        except requests.exceptions.ConnectionError:
-            raise LookupError("Could not connect to Anaconda API")
+        except requests.exceptions.Timeout as e:
+            raise LookupError(f"Anaconda API timed out: {anaconda_api_url}") from e
+        except requests.exceptions.ConnectionError as e:
+            raise LookupError("Could not connect to Anaconda API") from e
         else:
             if response.status_code == 200:
                 return response.json()
@@ -728,28 +833,26 @@ def parse_anaconda_licence(anaconda_response, version=None):
     # Licence for each version
     for f in anaconda_response["files"]:
         if not version or version == f.get("version"):
-            try:
+            with suppress(KeyError):
                 licences.add(f["attrs"]["license"])
-            except KeyError:
-                pass
     # Main licence field
     if len(list(licences)) == 0 and isinstance(anaconda_response["license"], str):
         licences.add(anaconda_response["license"])
 
     # Clean up / standardise licence names
     clean_licences = []
-    for license in licences:
-        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
-        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
-        license = license.replace("GPL-", "GPLv")
-        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
-        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superfluous .0 from GPL version
-        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
-        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
-        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
-        license = license.replace("Clause", "clause")  # BSD capitalisation
-        license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
-        clean_licences.append(license)
+    for lic in licences:
+        lic = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", lic)
+        lic = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", lic, flags=re.IGNORECASE)
+        lic = lic.replace("GPL-", "GPLv")
+        lic = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", lic)  # Add v prefix to GPL version if none found
+        lic = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", lic)  # Remove superfluous .0 from GPL version
+        lic = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", lic)
+        lic = re.sub(r"GPL\s*v", "GPL v", lic)  # Normalise whitespace to one space between GPL and v
+        lic = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", lic)  # Normalise whitespace around >= GPL versions
+        lic = lic.replace("Clause", "clause")  # BSD capitalisation
+        lic = re.sub(r"-only$", "", lic)  # Remove superfluous GPL "only" version suffixes
+        clean_licences.append(lic)
     return clean_licences
 
 
@@ -765,14 +868,16 @@ def pip_package(dep):
         A LookupError, if the connection fails or times out
         A ValueError, if the package name can not be found
     """
+    import requests
+
     pip_depname, _ = dep.split("=", 1)
     pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
-    except requests.exceptions.Timeout:
-        raise LookupError(f"PyPI API timed out: {pip_api_url}")
-    except requests.exceptions.ConnectionError:
-        raise LookupError(f"PyPI API Connection error: {pip_api_url}")
+    except requests.exceptions.Timeout as e:
+        raise LookupError(f"PyPI API timed out: {pip_api_url}") from e
+    except requests.exceptions.ConnectionError as e:
+        raise LookupError(f"PyPI API Connection error: {pip_api_url}") from e
     else:
         if response.status_code == 200:
             return response.json()
@@ -793,6 +898,8 @@ def get_biocontainer_tag(package, version):
         A ValueError, if the package name can not be found (404)
     """
 
+    import requests
+
     biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{package}/versions/{package}-{version}"
 
     def get_tag_date(tag_date):
@@ -804,8 +911,8 @@ def get_biocontainer_tag(package, version):
 
     try:
         response = requests.get(biocontainers_api_url)
-    except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to biocontainers.pro API")
+    except requests.exceptions.ConnectionError as e:
+        raise LookupError("Could not connect to biocontainers.pro API") from e
     else:
         if response.status_code == 200:
             try:
@@ -847,8 +954,8 @@ def get_biocontainer_tag(package, version):
                 if singularity_image is None:
                     raise LookupError(f"Could not find singularity container for {package}")
                 return docker_image_name, singularity_image["image_name"]
-            except TypeError:
-                raise LookupError(f"Could not find docker or singularity container for {package}")
+            except TypeError as e:
+                raise LookupError(f"Could not find docker or singularity container for {package}") from e
         elif response.status_code != 404:
             raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
@@ -857,6 +964,7 @@ def get_biocontainer_tag(package, version):
 
 def custom_yaml_dumper():
     """Overwrite default PyYAML output to make Prettier YAML linting happy"""
+    import yaml
 
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
@@ -889,11 +997,13 @@ def custom_yaml_dumper():
 
 def is_file_binary(path):
     """Check file path to see if it is a binary file"""
+    import mimetypes
+
     binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
     # Check common file extensions
-    _, file_extension = os.path.splitext(path)
+    file_extension = Path(path).suffix
     if file_extension in binary_extensions:
         return True
 
@@ -915,11 +1025,17 @@ def prompt_remote_pipeline_name(wfs):
     Raises:
         AssertionError, if pipeline cannot be found
     """
+    import questionary
+    import requests
 
+    from nf_core.github_api import gh_api
+
+    if not is_interactive():
+        raise UserWarning("No pipeline name provided and session is not interactive (no TTY detected).")
     pipeline = questionary.autocomplete(
         "Pipeline name:",
         choices=[wf.name for wf in wfs.remote_workflows],
-        style=nfcore_question_style,
+        style=_nfcore_question_style(),
     ).unsafe_ask()
 
     # Check nf-core repos
@@ -931,7 +1047,7 @@ def prompt_remote_pipeline_name(wfs):
     if pipeline.count("/") == 1:
         try:
             gh_api.safe_get(f"https://api.github.com/repos/{pipeline}")
-        except Exception:
+        except requests.exceptions.RequestException:
             # No repo found - pass and raise error at the end
             pass
         else:
@@ -942,8 +1058,8 @@ def prompt_remote_pipeline_name(wfs):
 
 
 def prompt_pipeline_release_branch(
-    wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
-) -> Tuple[Any, List[str]]:
+    wf_releases: list[dict[str, Any]], wf_branches: dict[str, Any], multiple: bool = False
+) -> tuple[Any, list[str]]:
     """Prompt for pipeline release / branch
 
     Args:
@@ -954,13 +1070,15 @@ def prompt_pipeline_release_branch(
     Returns:
         choice (questionary.Choice or bool): Selected release / branch or False if no releases / branches available
     """
+    import questionary
+
     # Prompt user for release tag, tag_set will contain all available.
-    choices: List[questionary.Choice] = []
-    tag_set: List[str] = []
+    choices: list[questionary.Choice] = []
+    tag_set: list[str] = []
 
     # Releases
     if len(wf_releases) > 0:
-        for tag in map(lambda release: release.get("tag_name"), wf_releases):
+        for tag in (release.get("tag_name") for release in wf_releases):
             tag_display = [
                 ("fg:ansiblue", f"{tag}  "),
                 ("class:choice-default", "[release]"),
@@ -969,7 +1087,7 @@ def prompt_pipeline_release_branch(
             tag_set.append(str(tag))
 
     # Branches
-    for branch in wf_branches.keys():
+    for branch in wf_branches:
         branch_display = [
             ("fg:ansiyellow", f"{branch}  "),
             ("class:choice-default", "[branch]"),
@@ -980,35 +1098,24 @@ def prompt_pipeline_release_branch(
     if len(choices) == 0:
         return [], []
 
+    if not is_interactive():
+        raise UserWarning("No release/branch specified and session is not interactive (no TTY detected).")
+
     if multiple:
         return (
-            questionary.checkbox("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            questionary.checkbox(
+                "Select release / branch:", choices=choices, style=_nfcore_question_style()
+            ).unsafe_ask(),
             tag_set,
         )
 
     else:
         return (
-            questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            questionary.select(
+                "Select release / branch:", choices=choices, style=_nfcore_question_style()
+            ).unsafe_ask(),
             tag_set,
         )
-
-
-class SingularityCacheFilePathValidator(questionary.Validator):
-    """
-    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
-    """
-
-    def validate(self, value):
-        if len(value.text):
-            if os.path.isfile(value.text):
-                return True
-            else:
-                raise questionary.ValidationError(
-                    message="Invalid remote cache index file",
-                    cursor_position=len(value.text),
-                )
-        else:
-            return True
 
 
 def get_repo_releases_branches(pipeline, wfs):
@@ -1024,6 +1131,7 @@ def get_repo_releases_branches(pipeline, wfs):
     Raises:
         LockupError, if the pipeline can not be found.
     """
+    from nf_core.github_api import gh_api
 
     wf_releases = []
     wf_branches = {}
@@ -1035,12 +1143,10 @@ def get_repo_releases_branches(pipeline, wfs):
             pipeline = wf.full_name
 
             # Store releases and stop loop
-            wf_releases = list(
-                sorted(
-                    wf.releases,
-                    key=lambda k: k.get("published_at_timestamp", 0),
-                    reverse=True,
-                )
+            wf_releases = sorted(
+                wf.releases,
+                key=lambda k: k.get("published_at_timestamp", 0),
+                reverse=True,
             )
             break
 
@@ -1061,12 +1167,10 @@ def get_repo_releases_branches(pipeline, wfs):
                     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
-                wf_releases = list(
-                    sorted(
-                        rel_r.json(),
-                        key=lambda k: k.get("published_at_timestamp", 0),
-                        reverse=True,
-                    )
+                wf_releases = sorted(
+                    rel_r.json(),
+                    key=lambda k: k.get("published_at_timestamp", 0),
+                    reverse=True,
                 )
 
                 # Get release tag commit hashes
@@ -1106,6 +1210,7 @@ def get_repo_commit(pipeline, commit_id):
     Returns:
         commit_id: String or None
     """
+    from nf_core.github_api import gh_api
 
     commit_response = gh_api.get(
         f"https://api.github.com/repos/{pipeline}/commits/{commit_id}", headers={"Accept": "application/vnd.github.sha"}
@@ -1120,193 +1225,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-class NFCoreTemplateConfig(BaseModel):
-    """Template configuration schema"""
-
-    org: Optional[str] = None
-    """ Organisation name """
-    name: Optional[str] = None
-    """ Pipeline name """
-    description: Optional[str] = None
-    """ Pipeline description """
-    author: Optional[str] = None
-    """ Pipeline author """
-    version: Optional[str] = None
-    """ Pipeline version """
-    force: Optional[bool] = True
-    """ Force overwrite of existing files """
-    outdir: Optional[Union[str, Path]] = None
-    """ Output directory """
-    skip_features: Optional[list] = None
-    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
-    is_nfcore: Optional[bool] = None
-    """ Whether the pipeline is an nf-core pipeline. """
-
-    # convert outdir to str
-    @field_validator("outdir")
-    @classmethod
-    def outdir_to_str(cls, v: Optional[Union[str, Path]]) -> Optional[str]:
-        if v is not None:
-            v = str(v)
-        return v
-
-    def __getitem__(self, item: str) -> Any:
-        if self is None:
-            return None
-        return getattr(self, item)
-
-    def get(self, item: str, default: Any = None) -> Any:
-        return getattr(self, item, default)
-
-
-class NFCoreYamlLintConfig(BaseModel):
-    """
-    schema for linting config in `.nf-core.yml` should cover:
-
-    .. code-block:: yaml
-        files_unchanged:
-            - .github/workflows/branch.yml
-        modules_config: False
-        modules_config:
-                - fastqc
-        # merge_markers: False
-        merge_markers:
-                - docs/my_pdf.pdf
-        nextflow_config: False
-        nextflow_config:
-            - manifest.name
-            - config_defaults:
-                - params.annotation_db
-                - params.multiqc_comment_headers
-                - params.custom_table_headers
-        # multiqc_config: False
-        multiqc_config:
-            - report_section_order
-            - report_comment
-        files_exist:
-            - .github/CONTRIBUTING.md
-            - CITATIONS.md
-        template_strings: False
-        template_strings:
-                - docs/my_pdf.pdf
-        nfcore_components: False
-    """
-
-    files_unchanged: Optional[Union[bool, List[str]]] = None
-    """ List of files that should not be changed """
-    modules_config: Optional[Optional[Union[bool, List[str]]]] = None
-    """ List of modules that should not be changed """
-    merge_markers: Optional[Optional[Union[bool, List[str]]]] = None
-    """ List of files that should not contain merge markers """
-    nextflow_config: Optional[Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]]] = None
-    """ List of Nextflow config files that should not be changed """
-    multiqc_config: Optional[Union[bool, List[str]]] = None
-    """ List of MultiQC config options that be changed """
-    files_exist: Optional[Union[bool, List[str]]] = None
-    """ List of files that can not exist """
-    template_strings: Optional[Optional[Union[bool, List[str]]]] = None
-    """ List of files that can contain template strings """
-    readme: Optional[Union[bool, List[str]]] = None
-    """ Lint the README.md file """
-    nfcore_components: Optional[bool] = None
-    """ Lint all required files to use nf-core modules and subworkflows """
-    actions_ci: Optional[bool] = None
-    """ Lint all required files to use GitHub Actions CI """
-    actions_awstest: Optional[bool] = None
-    """ Lint all required files to run tests on AWS """
-    actions_awsfulltest: Optional[bool] = None
-    """ Lint all required files to run full tests on AWS """
-    pipeline_todos: Optional[bool] = None
-    """ Lint for TODOs statements"""
-    pipeline_if_empty_null: Optional[bool] = None
-    """ Lint for ifEmpty(null) statements"""
-    plugin_includes: Optional[bool] = None
-    """ Lint for nextflow plugin """
-    pipeline_name_conventions: Optional[bool] = None
-    """ Lint for pipeline name conventions """
-    schema_lint: Optional[bool] = None
-    """ Lint nextflow_schema.json file"""
-    schema_params: Optional[bool] = None
-    """ Lint schema for all params """
-    system_exit: Optional[bool] = None
-    """ Lint for System.exit calls in groovy/nextflow code """
-    schema_description: Optional[bool] = None
-    """ Check that every parameter in the schema has a description. """
-    actions_schema_validation: Optional[bool] = None
-    """ Lint GitHub Action workflow files with schema"""
-    modules_json: Optional[bool] = None
-    """ Lint modules.json file """
-    modules_structure: Optional[bool] = None
-    """ Lint modules structure """
-    base_config: Optional[bool] = None
-    """ Lint base.config file """
-    nfcore_yml: Optional[bool] = None
-    """ Lint nf-core.yml """
-    version_consistency: Optional[bool] = None
-    """ Lint for version consistency """
-    included_configs: Optional[bool] = None
-    """ Lint for included configs """
-    local_component_structure: Optional[bool] = None
-    """ Lint local components use correct structure mirroring remote"""
-
-    def __getitem__(self, item: str) -> Any:
-        return getattr(self, item)
-
-    def get(self, item: str, default: Any = None) -> Any:
-        if getattr(self, item, default) is None:
-            return default
-        return getattr(self, item, default)
-
-    def __setitem__(self, item: str, value: Any) -> None:
-        setattr(self, item, value)
-
-
-class NFCoreYamlConfig(BaseModel):
-    """.nf-core.yml configuration file schema"""
-
-    repository_type: Optional[Literal["pipeline", "modules"]] = None
-    """ Type of repository """
-    nf_core_version: Optional[str] = None
-    """ Version of nf-core/tools used to create/update the pipeline """
-    org_path: Optional[str] = None
-    """ Path to the organisation's modules repository (used for modules repo_type only) """
-    lint: Optional[NFCoreYamlLintConfig] = None
-    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
-    template: Optional[NFCoreTemplateConfig] = None
-    """ Pipeline template configuration """
-    bump_version: Optional[Dict[str, bool]] = None
-    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
-    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
-    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
-
-    def __getitem__(self, item: str) -> Any:
-        return getattr(self, item)
-
-    def get(self, item: str, default: Any = None) -> Any:
-        return getattr(self, item, default)
-
-    def __setitem__(self, item: str, value: Any) -> None:
-        setattr(self, item, value)
-
-    def model_dump(self, **kwargs) -> Dict[str, Any]:
-        # Get the initial data
-        config = super().model_dump(**kwargs)
-
-        if self.repository_type == "modules":
-            # Fields to exclude for modules
-            fields_to_exclude = ["template", "update"]
-        else:  # pipeline
-            # Fields to exclude for pipeline
-            fields_to_exclude = ["bump_version", "org_path"]
-
-        # Remove the fields based on repository_type
-        for field in fields_to_exclude:
-            config.pop(field, None)
-
-        return config
-
-
-def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
+def load_tools_config(directory: Path | None = None) -> tuple[Path | None, "NFCoreYamlConfig | None"]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1317,8 +1236,13 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
 
     Returns the loaded config dict or False, if the file couldn't be loaded
     """
-    tools_config = {}
+    import yaml
+    from pydantic import ValidationError
 
+    from nf_core.pydantic_models import NFCoreTemplateConfig, NFCoreYamlConfig
+
+    tools_config = {}
+    directory = directory or Path()
     config_fn = get_first_available_path(directory, CONFIG_PATHS)
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
@@ -1343,8 +1267,10 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     except ValidationError as e:
         error_message = f"Config file '{config_fn}' is invalid"
         for error in e.errors():
-            error_message += f"\n{error['loc'][0]}: {error['msg']}\ninput: {error['input']}"
-        raise AssertionError(error_message)
+            error_message += (
+                f"\n{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}\nGot instead: {error['input']}"
+            )
+        raise AssertionError(error_message) from e
 
     wf_config = fetch_wf_config(Path(directory))
     if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
@@ -1352,33 +1278,34 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         template = tools_config.get("template")
         config_template_keys = template.keys() if template is not None else []
         # Get author names from contributors first, then fallback to author
-        if "manifest.contributors" in wf_config:
-            contributors = wf_config["manifest.contributors"]
-            names = re.findall(r"name:'([^']+)'", contributors)
+        manifest = wf_config.get("manifest", {})
+        contributors = manifest.get("contributors", [])
+        if contributors:
+            names = [c.get("name", "") for c in contributors if c.get("name")]
             author_names = ", ".join(names)
-        elif "manifest.author" in wf_config:
-            author_names = wf_config["manifest.author"].strip("'\"")
+        elif manifest.get("author"):
+            author_names = manifest.get("author", "")
         else:
             author_names = None
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org="nf-core",
-                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
-                description=wf_config["manifest.description"].strip("'\""),
+                name=manifest.get("name", "/").split("/")[-1],
+                description=manifest.get("description", ""),
                 author=author_names,
-                version=wf_config["manifest.version"].strip("'\""),
-                outdir=str(directory),
+                version=manifest.get("version", ""),
+                outdir=Path(directory),
                 is_nfcore=True,
             )
         elif "prefix" in config_template_keys or "skip" in config_template_keys:
             # The .nf-core.yml file contained the old prefix or skip keys
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
-                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
-                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                name=tools_config["template"].get("name", manifest.get("name", "/").split("/")[-1]),
+                description=tools_config["template"].get("description", manifest.get("description", "")),
                 author=tools_config["template"].get("author", author_names),
-                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                version=tools_config["template"].get("version", manifest.get("version", "")),
                 outdir=tools_config["template"].get("outdir", str(directory)),
                 skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
                 is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
@@ -1388,25 +1315,26 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     return config_fn, nf_core_yaml_config
 
 
-def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
-    base_dir = start_dir = Path(directory).absolute()
-    # Only iterate up the tree if the start dir doesn't have a config
-    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
-        base_dir = base_dir.parent
-        config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
-        if config_fn:
-            break
-    return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
+def determine_base_dir(directory: Path | None = None) -> Path:
+    start_dir = directory or Path()
+    abs_start = start_dir.absolute()
+    if get_first_available_path(abs_start, CONFIG_PATHS):
+        return start_dir
+    # Search ancestors for a config, skipping the filesystem root; fall back to the start dir
+    return next(
+        (d for d in abs_start.parents[:-1] if get_first_available_path(d, CONFIG_PATHS)),
+        start_dir,
+    )
 
 
-def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> Union[Path, None]:
-    for p in paths:
-        if Path(directory, p).is_file():
-            return Path(directory, p)
+def get_first_available_path(directory: Path | str, paths: list[str]) -> Path | None:
+    for name in paths:
+        if (path := Path(directory, name)).is_file():
+            return path
     return None
 
 
-def sort_dictionary(d: Dict) -> Dict:
+def sort_dictionary(d: dict) -> dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):
@@ -1448,24 +1376,14 @@ def strip_ansi_codes(string, replace_with=""):
     return ANSI_ESCAPE_RE.sub(replace_with, string)
 
 
-def is_relative_to(path1, path2):
-    """
-    Checks if a path is relative to another.
-
-    Should mimic Path.is_relative_to which not available in Python < 3.9
-
-    path1 (Path | str): The path that could be a subpath
-    path2 (Path | str): The path the could be the superpath
-    """
-    return str(path1).startswith(str(path2) + os.sep)
-
-
 def file_md5(fname):
     """Calculates the md5sum for a file on the disk.
 
     Args:
         fname (str): Path to a local file.
     """
+
+    import hashlib
 
     # Calculate the md5 for the file on disk
     hash_md5 = hashlib.md5()
@@ -1549,17 +1467,41 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         os.chdir(start_wd)
 
 
+@contextmanager
+def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
+    """
+    Context manager to create a tempdir and change into it, ensuring its removal and a return to
+    the original working directory on exit (including exceptions).
+
+    Args:
+        base_dir: Directory in which to create the tempdir. Defaults to the system temp location.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory(dir=base_dir) as tmp, set_wd(Path(tmp)):
+        yield Path(tmp)
+
+
 def get_wf_files(wf_path: Path):
     """Return a list of all files in a directory (ignores .gitigore files)"""
 
     wf_files = []
 
-    with open(Path(wf_path, ".gitignore")) as f:
-        lines = f.read().splitlines()
-    ignore = [line for line in lines if line and not line.startswith("#")]
+    ignore = [".git/*"]
+    try:
+        with open(Path(wf_path, ".gitignore")) as f:
+            for line in f.read().splitlines():
+                if not line or line.startswith("#"):
+                    continue
+                # Make trailing-slash patterns match their entire subtree
+                line = re.sub("/$", "/*", line)
+                ignore.append(line)
+    except FileNotFoundError:
+        pass
 
     for path in Path(wf_path).rglob("*"):
-        if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
+        rpath = str(path.relative_to(wf_path))
+        if any(fnmatch.fnmatch(rpath, pattern) for pattern in ignore):
             continue
         if path.is_file():
             wf_files.append(str(path))

@@ -1,0 +1,34 @@
+{
+    "-profile test": {
+        "content": [
+            {
+                
+            },
+            [
+                "fastqc",
+                "fastqc/SAMPLE1_PE_1_fastqc.html",
+                "fastqc/SAMPLE1_PE_1_fastqc.zip",
+                "fastqc/SAMPLE1_PE_2_fastqc.html",
+                "fastqc/SAMPLE1_PE_2_fastqc.zip",
+                "fastqc/SAMPLE2_PE_1_fastqc.html",
+                "fastqc/SAMPLE2_PE_1_fastqc.zip",
+                "fastqc/SAMPLE2_PE_2_fastqc.html",
+                "fastqc/SAMPLE2_PE_2_fastqc.zip",
+                "fastqc/SAMPLE3_SE_1_fastqc.html",
+                "fastqc/SAMPLE3_SE_1_fastqc.zip",
+                "fastqc/SAMPLE3_SE_2_fastqc.html",
+                "fastqc/SAMPLE3_SE_2_fastqc.zip",
+                "pipeline_info",
+                "pipeline_info/testpipeline_software_versions.yml"
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-10-02T08:58:12.980564849",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "26.09.1"
+        }
+    }
+}

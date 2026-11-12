@@ -7,6 +7,7 @@ from nf_core.subworkflows.install import SubworkflowInstall
 
 from ..test_subworkflows import TestSubworkflows
 from ..utils import (
+    CROSS_ORGANIZATION_URL,
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
@@ -17,6 +18,33 @@ from ..utils import (
 
 
 class TestSubworkflowsInstall(TestSubworkflows):
+    def test_subworkflow_install_force_skip_deps_does_not_reinstall_deps(self):
+        """`install --force --skip-deps` leaves transitive deps' SHAs pinned."""
+        assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
+        samtools_index_path = Path(self.pipeline_dir, "modules", "nf-core", "samtools", "index")
+        assert samtools_index_path.exists()
+        before_sha = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
+
+        force_skip = SubworkflowInstall(self.pipeline_dir, prompt=False, force=True, skip_deps=True)
+        assert force_skip.install("bam_sort_stats_samtools") is not False
+        after_sha = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["modules"]["nf-core"]["samtools/index"]["git_sha"]
+        assert before_sha == after_sha
+
+    def test_subworkflow_install_skip_deps_preserves_installed_by_tracking(self):
+        """`install --skip-deps` of a parent records the new dependent in shared subcomponents' installed_by."""
+        # Install the sub-subworkflow first so it's already on disk before we --skip-deps the parent.
+        assert self.subworkflow_install.install("bam_stats_samtools") is not False
+        skip_install = SubworkflowInstall(self.pipeline_dir, prompt=False, force=False, skip_deps=True)
+        assert skip_install.install("bam_sort_stats_samtools") is not False
+        installed_by = ModulesJson(self.pipeline_dir).get_modules_json()["repos"][
+            "https://github.com/nf-core/modules.git"
+        ]["subworkflows"]["nf-core"]["bam_stats_samtools"]["installed_by"]
+        assert sorted(installed_by) == sorted(["subworkflows", "bam_sort_stats_samtools"])
+
     def test_subworkflows_install_bam_sort_stats_samtools(self):
         """Test installing a subworkflow - bam_sort_stats_samtools"""
         assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
@@ -82,6 +110,52 @@ class TestSubworkflowsInstall(TestSubworkflows):
         with pytest.raises(Exception) as excinfo:
             install_obj.install("bam_stats_samtools")
             assert "Subworkflow 'bam_stats_samtools' not found in available subworkflows" in str(excinfo.value)
+
+    def test_subworkflows_install_across_organizations(self):
+        """Test installing a subworkflow with modules from different organizations"""
+        # The fastq_trim_fastp_fastqc subworkflow contains modules from different organizations
+        self.subworkflow_install_cross_org.install("fastq_trim_fastp_fastqc")
+        # Verify that the installed_by entry was added correctly
+        modules_json = ModulesJson(self.pipeline_dir)
+        mod_json = modules_json.get_modules_json()
+        assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["nf-core-test"]["fastqc"]["installed_by"] == [
+            "fastq_trim_fastp_fastqc"
+        ]
+
+    def test_subworkflows_install_across_organizations_only_nfcore(self):
+        """Test installing a subworkflow from a different organization but only with modules from nf-core"""
+        # The wget_subwf subworkflow contains nf-core/modules/wget (and only that). It used to not be possible to install it twice
+        # because of some org/nf-core confusion (https://github.com/nf-core/tools/issues/3876)
+        # Note that we use two SubworkflowInstall to avoid cross-contamination
+        for swfi in (self.subworkflow_install_cross_org, self.subworkflow_install_cross_org_again):
+            swfi.install("wget_subwf")
+            # Verify that the installed_by entry was added correctly
+            modules_json = ModulesJson(self.pipeline_dir)
+            mod_json = modules_json.get_modules_json()
+            assert mod_json["repos"][CROSS_ORGANIZATION_URL]["subworkflows"]["nf-core-test"]["wget_subwf"][
+                "installed_by"
+            ] == ["subworkflows"]
+            # This assertion used to fail on the second attempt
+            assert (
+                "wget_subwf"
+                not in mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"]
+            )
+
+    def test_subworkflow_install_with_same_module(self):
+        """Test installing a subworkflow with a module from a different organization that is already installed from another org"""
+        # The fastq_trim_fastp_fastqc subworkflow contains the cross-org fastqc module, not the nf-core one
+        self.subworkflow_install_cross_org.install("fastq_trim_fastp_fastqc")
+        # Verify that the installed_by entry was added correctly
+        modules_json = ModulesJson(self.pipeline_dir)
+        mod_json = modules_json.get_modules_json()
+
+        assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]["fastqc"][
+            "installed_by"
+        ] == ["modules"]
+
+        assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["nf-core-test"]["fastqc"]["installed_by"] == [
+            "fastq_trim_fastp_fastqc"
+        ]
 
     def test_subworkflows_install_tracking(self):
         """Test installing a subworkflow and finding the correct entries in installed_by section of modules.json"""

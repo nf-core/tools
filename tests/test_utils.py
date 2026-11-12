@@ -1,13 +1,14 @@
 """Tests covering for utility functions."""
 
+import json
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
 import pytest
 import requests
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
 
@@ -15,6 +16,36 @@ from .test_pipelines import TestPipelines
 from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
+
+
+def test_is_interactive_consults_all_streams():
+    """Verify all three streams are checked — catches a forgotten stream or hardcoded return."""
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=True) as m_in,
+        mock.patch.object(sys.stdout, "isatty", return_value=True) as m_out,
+        mock.patch.object(sys.stderr, "isatty", return_value=True) as m_err,
+    ):
+        assert nf_core.utils.is_interactive() is True
+        m_in.assert_called_once()
+        m_out.assert_called_once()
+        m_err.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "stdin,stdout,stderr",
+    [
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+    ],
+)
+def test_is_interactive_false_if_any_non_tty(stdin, stdout, stderr):
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=stdin),
+        mock.patch.object(sys.stdout, "isatty", return_value=stdout),
+        mock.patch.object(sys.stderr, "isatty", return_value=stderr),
+    ):
+        assert nf_core.utils.is_interactive() is False
 
 
 def test_strip_ansi_codes():
@@ -74,7 +105,7 @@ class TestUtils(TestPipelines):
     def testload_pipeline_config(self):
         """Load the pipeline Nextflow config"""
         self.pipeline_obj.load_pipeline_config()
-        assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
+        assert self.pipeline_obj.nf_config["dag"]["enabled"] is True
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2
 
@@ -98,16 +129,16 @@ class TestUtils(TestPipelines):
         files = pipeline_obj.list_files()
         assert tmp_fn in files
 
-    @mock.patch("os.path.exists")
-    @mock.patch("os.makedirs")
-    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.exists")
+    def test_request_cant_create_cache(self, mock_exists, mock_mkdir):
         """Test that we don't get an error when we can't create cachedirs"""
-        mock_mkd.side_effect = PermissionError()
         mock_exists.return_value = False
+        mock_mkdir.side_effect = PermissionError()
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):
-        result = nf_core.utils.pip_package("multiqc=1.10")
+        result = nf_core.utils.pip_package("multiqc=1.32")
         assert isinstance(result, dict)
 
     @mock.patch("requests.get")
@@ -118,7 +149,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     @mock.patch("requests.get")
     def test_pip_package_connection_error(self, mock_get):
@@ -128,7 +159,7 @@ class TestUtils(TestPipelines):
         mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
         with pytest.raises(LookupError):
-            nf_core.utils.pip_package("multiqc=1.10")
+            nf_core.utils.pip_package("multiqc=1.32")
 
     def test_pip_erroneous_package(self):
         """Tests the PyPi API package information query"""
@@ -144,18 +175,18 @@ class TestUtils(TestPipelines):
                 break
         else:
             raise AssertionError("Release 1.6 not found")
-        assert "dev" in wf_branches.keys()
+        assert "dev" in wf_branches
 
     def test_get_repo_releases_branches_not_nf_core(self):
         wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
-            if r.get("tag_name") == "v1.10":
+            if r.get("tag_name") == "v1.32":
                 break
         else:
-            raise AssertionError("MultiQC release v1.10 not found")
-        assert "main" in wf_branches.keys()
+            raise AssertionError("MultiQC release v1.32 not found")
+        assert "main" in wf_branches
 
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.pipelines.list.Workflows()
@@ -212,7 +243,56 @@ class TestUtils(TestPipelines):
 
     def test_set_wd_revert_on_raise(self):
         wd_before_context = Path().resolve()
-        with pytest.raises(Exception):
-            with nf_core.utils.set_wd(self.tmp_dir):
-                raise Exception
+        with pytest.raises(RuntimeError), nf_core.utils.set_wd(self.tmp_dir):
+            raise RuntimeError
         assert wd_before_context == Path().resolve()
+
+    def test_run_cmd_raises_command_error_with_both_streams(self):
+        """A failing command keeps stdout and stderr on the error and includes both in its message."""
+        with pytest.raises(nf_core.utils.CommandError) as exc_info:
+            nf_core.utils.run_cmd("sh", "-c 'echo details; echo summary >&2; exit 3'")
+        err = exc_info.value
+        assert isinstance(err, RuntimeError)
+        assert err.returncode == 3
+        assert err.output == "details\nsummary"
+        assert err.output in str(err)
+
+    def test_parse_nextflow_json_ignores_status_lines(self):
+        """Status lines that Nextflow prints around its JSON output on stdout are skipped."""
+        outputs = {
+            "plain": '{"processes": []}',
+            "status lines": '[PIPELINE] main.nf | profile=standard\n[WORKDIR] /work\n{"processes": []}\n[SUCCESS] done',
+            "nextflow < 26.05": 'Monitor the execution with Seqera Platform using this URL: https://x\n{"processes": []}',
+        }
+        for name, text in outputs.items():
+            with self.subTest(name):
+                assert nf_core.utils.parse_nextflow_json(text) == {"processes": []}
+        with pytest.raises(json.JSONDecodeError):
+            nf_core.utils.parse_nextflow_json("ERROR ~ no json here")
+
+    @mock.patch("nf_core.utils.run_cmd")
+    def test_fetch_wf_config(self, mock_run_cmd):
+        """Test the fetch_wf_config() regular expression to read config params."""
+        mock_run_cmd.return_value = (b'{"params": {"param2": "foo"}}', b"mock")
+        config = nf_core.utils.fetch_wf_config(Path(), False)
+        assert "params" in config
+        assert config["params"].get("param2") == "foo"
+
+    @with_temporary_folder
+    def test_get_wf_files(self, tmpdir):
+        tmpdir = Path(tmpdir)
+        (tmpdir / ".gitignore").write_text(".nextflow*\nwork/\nresults/\n")
+        for rpath in [
+            ".git/should-ignore-1",
+            "work/should-ignore-2",
+            "results/should-ignore-3",
+            ".nextflow.should-ignore-4",
+            "dir1/should-match-1",
+            "should-match-2",
+        ]:
+            p = tmpdir / rpath
+            p.parent.mkdir(exist_ok=True)
+            p.touch()
+        files = nf_core.utils.get_wf_files(tmpdir)
+        files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
+        assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]

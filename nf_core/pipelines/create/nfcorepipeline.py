@@ -30,11 +30,27 @@ class NfcorePipeline(Screen):
         )
 
     def on_mount(self) -> None:
-        for name, feature in self.parent.template_features_yml.items():
-            if feature["nfcore_pipelines"]:
-                self.query_one("#features").mount(
-                    PipelineFeature(feature["help_text"], feature["short_description"], feature["description"], name)
-                )
+        for section_name, section in self.parent.template_features_yml.items():
+            section_title = section["name"]
+            features = section["features"]
+            show_section = False
+            self.query_one("#features").mount(
+                Markdown(section_title, id=section_name),
+            )
+            for name, feature in features.items():
+                if feature["nfcore_pipelines"]:
+                    show_section = True
+                    self.query_one("#features").mount(
+                        PipelineFeature(
+                            feature["help_text"],
+                            feature["short_description"],
+                            feature["description"],
+                            name,
+                            feature["default"],
+                        )
+                    )
+            if not show_section:
+                self.query_one("#features").query_one(f"#{section_name}").remove()
 
     @on(Button.Pressed, "#continue")
     def on_button_pressed(self, event: Button.Pressed) -> None:

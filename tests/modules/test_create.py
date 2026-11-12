@@ -1,5 +1,3 @@
-import os
-import shutil
 from pathlib import Path
 from unittest import mock
 
@@ -7,17 +5,52 @@ import pytest
 import requests_cache
 import responses
 import yaml
-from git.repo import Repo
 
+import nf_core.components.create
 import nf_core.modules.create
 from tests.utils import (
-    GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
-    GITLAB_URL,
+    NF_CORE_LICENSE_HEADER,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
+    mock_biotools_api_calls,
 )
 
-from ..test_modules import TestModules
+from ..test_modules import TestModules, create_modules_repo_dummy
+
+
+def test_modules_create_accepts_dotted_git_provider_username():
+    """Accept dotted usernames used by non-GitHub git providers."""
+    component_create = nf_core.components.create.ComponentCreate.__new__(nf_core.components.create.ComponentCreate)
+    component_create.author = "@first.last"
+    component_create.require_prompts = mock.Mock()
+
+    with (
+        mock.patch("nf_core.components.create.subprocess.check_output", side_effect=FileNotFoundError),
+        mock.patch("nf_core.components.create.rich.prompt.Prompt.ask") as prompt_ask,
+    ):
+        component_create._get_username()
+
+    assert component_create.author == "@first.last"
+    component_create.require_prompts.assert_not_called()
+    prompt_ask.assert_not_called()
+
+
+def test_modules_create_other_org_no_license_header(tmp_path):
+    """Create a module in a modules repo with a non-nf-core org_path, without the nf-core license header"""
+    nfcore_modules = create_modules_repo_dummy(tmp_path)
+    nf_core_yml_path = Path(nfcore_modules, ".nf-core.yml")
+    nf_core_yml = yaml.safe_load(nf_core_yml_path.read_text())
+    nf_core_yml["org_path"] = "myorg"
+    nf_core_yml_path.write_text(yaml.dump(nf_core_yml))
+    with responses.RequestsMock() as rsps:
+        mock_anaconda_api_calls(rsps, "fastqc", "0.11.9")
+        mock_biocontainers_api_calls(rsps, "fastqc", "0.11.9")
+        module_create = nf_core.modules.create.ModuleCreate(
+            nfcore_modules, "fastqc", "@author", "process_low", False, False
+        )
+        with requests_cache.disabled():
+            module_create.create()
+    assert NF_CORE_LICENSE_HEADER not in Path(nfcore_modules, "modules", "myorg", "fastqc", "main.nf").read_text()
 
 
 class TestModulesCreate(TestModules):
@@ -31,7 +64,39 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore/main.nf"))
+        assert Path(self.pipeline_dir, "modules", "local", "trimgalore/main.nf").exists()
+        assert (
+            NF_CORE_LICENSE_HEADER not in Path(self.pipeline_dir, "modules", "local", "trimgalore/main.nf").read_text()
+        )
+        main_nf_test = Path(self.pipeline_dir, "modules", "local", "trimgalore", "tests", "main.nf.test")
+        assert 'tag "modules_local"' in main_nf_test.read_text()
+
+    def test_modules_create_fail_subtool_exists_local(self):
+        """Fail at creating a local tool when a local tool/subtool exists already"""
+        subtool_main_nf = Path(self.pipeline_dir, "modules", "local", "trimgalore", "sub", "main.nf")
+        subtool_main_nf.parent.mkdir(parents=True)
+        subtool_main_nf.touch()
+        # Use force to skip the module directory check, as 'trimgalore/' exists already
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.pipeline_dir, "trimgalore", "@author", "process_single", False, True, conda_name="trim-galore"
+        )
+        with pytest.raises(UserWarning) as excinfo:
+            module_create.create()
+        assert "cannot make tool 'trimgalore'" in str(excinfo.value)
+        assert not Path(self.pipeline_dir, "modules", "local", "trimgalore", "main.nf").exists()
+
+    def test_modules_create_fail_tool_exists_local(self):
+        """Fail at creating a local tool/subtool when a local tool exists already"""
+        tool_main_nf = Path(self.pipeline_dir, "modules", "local", "trimgalore", "main.nf")
+        tool_main_nf.parent.mkdir(parents=True)
+        tool_main_nf.touch()
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.pipeline_dir, "trimgalore/sub", "@author", "process_single", False, False, conda_name="trim-galore"
+        )
+        with pytest.raises(UserWarning) as excinfo:
+            module_create.create()
+        assert "cannot make subtool 'trimgalore/sub'" in str(excinfo.value)
+        assert not Path(self.pipeline_dir, "modules", "local", "trimgalore", "sub", "main.nf").exists()
 
     def test_modules_create_fail_exists(self):
         """Fail at creating the same module twice"""
@@ -43,9 +108,8 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-            with pytest.raises(UserWarning) as excinfo:
-                with requests_cache.disabled():
-                    module_create.create()
+            with pytest.raises(UserWarning) as excinfo, requests_cache.disabled():
+                module_create.create()
         assert "module directory exists:" in str(excinfo.value)
 
     def test_modules_create_nfcore_modules(self):
@@ -58,10 +122,10 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf"))
-        assert os.path.exists(
-            os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "tests", "main.nf.test")
-        )
+        main_nf = Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf").read_text()
+        assert main_nf.startswith(NF_CORE_LICENSE_HEADER)
+        main_nf_test = Path(self.nfcore_modules, "modules", "nf-core", "fastqc", "tests", "main.nf.test")
+        assert 'tag "modules_nfcore"' in main_nf_test.read_text()
 
     def test_modules_create_nfcore_modules_subtool(self):
         """Create a tool/subtool module in a nf-core/modules clone"""
@@ -73,92 +137,585 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "main.nf"))
-        assert os.path.exists(
-            os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "tests", "main.nf.test")
+        assert Path(self.nfcore_modules, "modules", "nf-core", "star", "index", "main.nf").exists()
+        assert Path(self.nfcore_modules, "modules", "nf-core", "star", "index", "tests", "main.nf.test").exists()
+
+    def test_modules_meta_yml_structure_biotools_meta(self):
+        """Test the structure of the module meta.yml file when it was generated with INFORMATION from bio.tools and WITH a meta."""
+        with responses.RequestsMock() as rsps:
+            mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biotools_api_calls(rsps, "bpipe")
+            module_create = nf_core.modules.create.ModuleCreate(
+                self.nfcore_modules, "bpipe/test", "@author", "process_single", has_meta=True, force=True
+            )
+            module_create.create()
+
+        expected_yml = {
+            "name": "bpipe_test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "bpipe": {
+                        "description": "",
+                        "homepage": "http://test",
+                        "documentation": "http://test",
+                        "tool_dev_url": "http://test",
+                        "doi": "",
+                        "licence": ["MIT"],
+                        "identifier": "biotools:bpipe",
+                    }
+                }
+            ],
+            "input": [
+                [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                        }
+                    },
+                    {
+                        "raw_sequence": {
+                            "type": "file",
+                            "description": "raw_sequence file",
+                            "pattern": "*.{fastq-like,sam}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/data_0848"},
+                                {"edam": "http://edamontology.org/format_2182"},
+                                {"edam": "http://edamontology.org/format_2573"},
+                            ],
+                        }
+                    },
+                ]
+            ],
+            "output": {
+                "sequence_report": [
+                    [
+                        {
+                            "meta": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                            }
+                        },
+                        {
+                            "*.{html}": {
+                                "type": "file",
+                                "description": "sequence_report file",
+                                "pattern": "*.{html}",
+                                "ontologies": [
+                                    {"edam": "http://edamontology.org/data_2955"},
+                                    {"edam": "http://edamontology.org/format_2331"},
+                                ],
+                            }
+                        },
+                    ]
+                ],
+                "versions_bpipe": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
+                "versions": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    def test_modules_meta_yml_structure_biotools_nometa(self):
+        """Test the structure of the module meta.yml file when it was generated with INFORMATION from bio.tools and WITHOUT a meta."""
+        with responses.RequestsMock() as rsps:
+            mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+            mock_biotools_api_calls(rsps, "bpipe")
+            module_create = nf_core.modules.create.ModuleCreate(
+                self.nfcore_modules, "bpipe/test", "@author", "process_single", has_meta=False, force=True
+            )
+            module_create.create()
+
+        expected_yml = {
+            "name": "bpipe_test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "bpipe": {
+                        "description": "",
+                        "homepage": "http://test",
+                        "documentation": "http://test",
+                        "tool_dev_url": "http://test",
+                        "doi": "",
+                        "licence": ["MIT"],
+                        "identifier": "biotools:bpipe",
+                    }
+                }
+            ],
+            "input": [
+                {
+                    "raw_sequence": {
+                        "type": "file",
+                        "description": "raw_sequence file",
+                        "pattern": "*.{fastq-like,sam}",
+                        "ontologies": [
+                            {"edam": "http://edamontology.org/data_0848"},
+                            {"edam": "http://edamontology.org/format_2182"},
+                            {"edam": "http://edamontology.org/format_2573"},
+                        ],
+                    }
+                }
+            ],
+            "output": {
+                "sequence_report": [
+                    {
+                        "*.{html}": {
+                            "type": "file",
+                            "description": "sequence_report file",
+                            "pattern": "*.{html}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/data_2955"},
+                                {"edam": "http://edamontology.org/format_2331"},
+                            ],
+                        }
+                    }
+                ],
+                "versions_bpipe": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
+                "versions": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"bpipe": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "bpipe --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
+    @mock.patch("rich.prompt.Confirm.ask")
+    def test_modules_meta_yml_structure_template_meta(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with TEMPLATE data and WITH a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=True, empty_template=False
         )
-
-    @mock.patch("rich.prompt.Confirm.ask")
-    def test_modules_migrate(self, mock_rich_ask):
-        """Create a module with the --migrate-pytest option to convert pytest to nf-test"""
-        pytest_dir = Path(self.nfcore_modules, "tests", "modules", "nf-core", "samtools", "sort")
-        module_dir = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort")
-
-        # Clone modules repo with pytests
-        shutil.rmtree(self.nfcore_modules)
-        Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-        with open(module_dir / "main.nf") as fh:
-            old_main_nf = fh.read()
-        with open(module_dir / "meta.yml") as fh:
-            old_meta_yml = fh.read()
-
-        # Create a module with --migrate-pytest
-        mock_rich_ask.return_value = True
-        module_create = nf_core.modules.create.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
         module_create.create()
 
-        with open(module_dir / "main.nf") as fh:
-            new_main_nf = fh.read()
-        with open(module_dir / "meta.yml") as fh:
-            new_meta_yml = fh.read()
-        nextflow_config = module_dir / "tests" / "nextflow.config"
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [
+                [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information\ne.g. `[ id:'sample1' ]`\n",
+                        }
+                    },
+                    {
+                        "bam": {
+                            "type": "file",
+                            "description": "Sorted BAM/CRAM/SAM file",
+                            "pattern": "*.{bam,cram,sam}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/format_2572"},
+                                {"edam": "http://edamontology.org/format_2573"},
+                                {"edam": "http://edamontology.org/format_3462"},
+                            ],
+                        }
+                    },
+                ]
+            ],
+            "output": {
+                "bam": [
+                    [
+                        {
+                            "meta": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information\ne.g. `[ id:'sample1' ]`\n",
+                            }
+                        },
+                        {
+                            "*.bam": {
+                                "type": "file",
+                                "description": "Sorted BAM/CRAM/SAM file",
+                                "pattern": "*.{bam,cram,sam}",
+                                "ontologies": [
+                                    {"edam": "http://edamontology.org/format_2572"},
+                                    {"edam": "http://edamontology.org/format_2573"},
+                                    {"edam": "http://edamontology.org/format_3462"},
+                                ],
+                            }
+                        },
+                    ]
+                ],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
+                "versions": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
 
-        # Check that old files have been copied to the new module
-        assert old_main_nf == new_main_nf
-        assert old_meta_yml == new_meta_yml
-        assert nextflow_config.is_file()
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
 
-        # Check that pytest folder is deleted
-        assert not pytest_dir.is_dir()
+        assert meta_yml == expected_yml
 
-        # Check that pytest_modules.yml is updated
-        with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
-            modules_yml = yaml.safe_load(fh)
-        assert "samtools/sort" not in modules_yml.keys()
-
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
     @mock.patch("rich.prompt.Confirm.ask")
-    def test_modules_migrate_no_delete(self, mock_rich_ask):
-        """Create a module with the --migrate-pytest option to convert pytest to nf-test.
-        Test that pytest directory is not deleted."""
-        pytest_dir = Path(self.nfcore_modules, "tests", "modules", "nf-core", "samtools", "sort")
-
-        # Clone modules repo with pytests
-        shutil.rmtree(self.nfcore_modules)
-        Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-
-        # Create a module with --migrate-pytest
-        mock_rich_ask.return_value = False
-        module_create = nf_core.modules.create.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
+    def test_modules_meta_yml_structure_template_nometa(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with TEMPLATE data and WITHOUT a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=False, empty_template=False
+        )
         module_create.create()
 
-        # Check that pytest folder is not deleted
-        assert pytest_dir.is_dir()
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [
+                {
+                    "bam": {
+                        "type": "file",
+                        "description": "Sorted BAM/CRAM/SAM file",
+                        "pattern": "*.{bam,cram,sam}",
+                        "ontologies": [
+                            {"edam": "http://edamontology.org/format_2572"},
+                            {"edam": "http://edamontology.org/format_2573"},
+                            {"edam": "http://edamontology.org/format_3462"},
+                        ],
+                    }
+                }
+            ],
+            "output": {
+                "bam": [
+                    {
+                        "*.bam": {
+                            "type": "file",
+                            "description": "Sorted BAM/CRAM/SAM file",
+                            "pattern": "*.{bam,cram,sam}",
+                            "ontologies": [
+                                {"edam": "http://edamontology.org/format_2572"},
+                                {"edam": "http://edamontology.org/format_2573"},
+                                {"edam": "http://edamontology.org/format_3462"},
+                            ],
+                        }
+                    }
+                ],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
+                "versions": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
 
-        # Check that pytest_modules.yml is updated
-        with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
-            modules_yml = yaml.safe_load(fh)
-        assert "samtools/sort" not in modules_yml.keys()
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
 
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
     @mock.patch("rich.prompt.Confirm.ask")
-    def test_modules_migrate_symlink(self, mock_rich_ask):
-        """Create a module with the --migrate-pytest option to convert pytest with symlinks to nf-test.
-        Test that the symlink is deleted and the file is copied."""
-
-        pytest_dir = Path(self.nfcore_modules, "tests", "modules", "nf-core", "samtools", "sort")
-        module_dir = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort")
-
-        # Clone modules repo with pytests
-        shutil.rmtree(self.nfcore_modules)
-        Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-
-        # Create a symlinked file in the pytest directory
-        symlink_file = pytest_dir / "symlink_file.txt"
-        symlink_file.symlink_to(module_dir / "main.nf")
-
-        # Create a module with --migrate-pytest
-        mock_rich_ask.return_value = True
-        module_create = nf_core.modules.create.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
+    def test_modules_meta_yml_structure_empty_meta(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with an EMPTY template and WITH a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=True, empty_template=True
+        )
         module_create.create()
 
-        # Check that symlink is deleted
-        assert not symlink_file.is_symlink()
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [
+                [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                        }
+                    },
+                    {"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}},
+                ]
+            ],
+            "output": {
+                "output": [
+                    [
+                        {
+                            "meta": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                            }
+                        },
+                        {"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}},
+                    ]
+                ],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
+                "versions": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    @mock.patch("nf_core.utils.get_biocontainer_tag")
+    @mock.patch("nf_core.components.components_utils.get_biotools_response")
+    @mock.patch("rich.prompt.Confirm.ask")
+    def test_modules_meta_yml_structure_empty_nometa(
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
+    ):
+        """Test the structure of the module meta.yml file when it was generated with an EMPTY template and WITHOUT a meta."""
+        mock_biotools_response.return_value = {}
+        mock_biocontainer_tag.return_value = {}
+        mock_anaconda_package.return_value = {}
+        mock_rich_ask.return_value = False  # Don't provide Bioconda package name
+        module_create = nf_core.modules.create.ModuleCreate(
+            self.nfcore_modules, "test", "@author", "process_single", has_meta=False, empty_template=True
+        )
+        module_create.create()
+
+        expected_yml = {
+            "name": "test",
+            "description": "write your description here",
+            "keywords": ["sort", "example", "genomics"],
+            "tools": [
+                {
+                    "test": {
+                        "description": "",
+                        "homepage": "",
+                        "documentation": "",
+                        "tool_dev_url": "",
+                        "doi": "",
+                        "licence": None,
+                        "identifier": None,
+                    }
+                }
+            ],
+            "input": [{"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}],
+            "output": {
+                "output": [{"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}],
+                "versions_test": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "topics": {
+                "versions": [
+                    [
+                        {"${task.process}": {"type": "string", "description": "The name of the process"}},
+                        {"test": {"type": "string", "description": "The name of the tool"}},
+                        {
+                            "test --version": {
+                                "type": "eval",
+                                "description": "The expression to obtain the version of the tool",
+                            }
+                        },
+                    ]
+                ],
+            },
+            "authors": ["@author"],
+            "maintainers": ["@author"],
+        }
+
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "test", "meta.yml")) as fh:
+            meta_yml = yaml.safe_load(fh)
+
+        assert meta_yml == expected_yml

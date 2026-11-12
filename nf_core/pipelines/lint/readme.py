@@ -26,6 +26,7 @@ def readme(self):
     To disable this test, add the following to the pipeline's ``.nf-core.yml`` file:
 
     .. code-block:: yaml
+
         lint:
             readme: False
 
@@ -37,7 +38,7 @@ def readme(self):
                 readme:
                     - nextflow_badge
                     - nfcore_template_badge
-                    - zenodo_release
+                    - zenodo_doi
 
     """
     passed = []
@@ -52,7 +53,7 @@ def readme(self):
 
     if "nextflow_badge" not in ignore_configs:
         # Check that there is a readme badge showing the minimum required version of Nextflow
-        # [![Nextflow](https://img.shields.io/badge/version-%E2%89%A524.04.2-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
+        # [![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
         # and that it has the correct version
         nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/version-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-green\?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow\.io\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)
@@ -60,7 +61,7 @@ def readme(self):
             nf_badge_version = match.group(1).strip("'\"")
             try:
                 if nf_badge_version != self.minNextflowVersion:
-                    raise AssertionError()
+                    raise AssertionError
             except (AssertionError, KeyError):
                 failed.append(
                     f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "

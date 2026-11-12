@@ -4,7 +4,7 @@ import json
 import logging
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 import questionary
 
@@ -85,6 +85,7 @@ class ParamsFileBuilder:
         self,
         pipeline=None,
         revision=None,
+        no_prompts=False,
     ) -> None:
         """Initialise the ParamFileBuilder class
 
@@ -94,18 +95,25 @@ class ParamsFileBuilder:
         """
         self.pipeline = pipeline
         self.pipeline_revision = revision
-        self.schema_obj: Optional[PipelineSchema] = None
+        self.schema_obj: PipelineSchema | None = None
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
         # Fetch remote workflows
         self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
-    def get_pipeline(self) -> Optional[bool]:
+    def get_pipeline(self) -> bool | None:
         """
         Prompt the user for a pipeline name and get the schema
         """
         # Prompt for pipeline if not supplied
         if self.pipeline is None:
+            if self.no_prompts:
+                log.error(
+                    "No pipeline name provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the pipeline name as a command-line argument."
+                )
+                return False
             launch_type = questionary.select(
                 "Generate parameter file for local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],
@@ -171,8 +179,8 @@ class ParamsFileBuilder:
         return out
 
     def format_param(
-        self, name: str, properties: Dict, required_properties: List[str] = [], show_hidden: bool = False
-    ) -> Optional[str]:
+        self, name: str, properties: dict, required_properties: list[str] | None = None, show_hidden: bool = False
+    ) -> str | None:
         """
         Format a single parameter of the schema as commented YAML
 
@@ -186,6 +194,8 @@ class ParamsFileBuilder:
             str: Section of a params-file.yml for given parameter
             None: If the parameter is skipped because it is hidden and show_hidden is not set
         """
+        if required_properties is None:
+            required_properties = []
         out = ""
         hidden = properties.get("hidden", False)
 
@@ -198,7 +208,7 @@ class ParamsFileBuilder:
             return ""
         self.schema_obj.get_schema_defaults()
         default = properties.get("default")
-        type = properties.get("type")
+        param_type = properties.get("type")
         required = name in required_properties
 
         out += _print_wrapped(name, "-", mode="both")
@@ -206,8 +216,8 @@ class ParamsFileBuilder:
         if description:
             out += _print_wrapped(description + "\n", mode="none", indent=4)
 
-        if type:
-            out += _print_wrapped(f"Type: {type}", mode="none", indent=4)
+        if param_type:
+            out += _print_wrapped(f"Type: {param_type}", mode="none", indent=4)
 
         if required:
             out += _print_wrapped("Required", mode="none", indent=4)

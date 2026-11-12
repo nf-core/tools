@@ -17,7 +17,7 @@ and is a requirement for nf-core pipelines.
 > 💡 If you want to add a pipeline to nf-core, please
 > [join on Slack](https://nf-co.re/join) and discuss your plans with the
 > community as early as possible; _**ideally before you start on your pipeline!**_
-> See the [nf-core guidelines](https://nf-co.re/docs/contributing/guidelines)
+> See the [nf-core pipeline contribution documentation](https://nf-co.re/docs/contributing/overview#pipelines)
 > and the [#new-pipelines](https://nfcore.slack.com/channels/new-pipelines)
 > Slack channel for more information.
 """

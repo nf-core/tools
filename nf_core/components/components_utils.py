@@ -1,27 +1,30 @@
 import logging
-import os
-import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import questionary
 import requests
 import rich.prompt
-
-if TYPE_CHECKING:
-    from nf_core.modules.modules_repo import ModulesRepo
+import ruamel.yaml
 
 import nf_core.utils
+from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
-# Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = os.environ.get("NF_CORE_MODULES_NAME", "nf-core")
-NF_CORE_MODULES_REMOTE = os.environ.get("NF_CORE_MODULES_REMOTE", "https://github.com/nf-core/modules.git")
-NF_CORE_MODULES_DEFAULT_BRANCH = os.environ.get("NF_CORE_MODULES_DEFAULT_BRANCH", "master")
+# Set yaml options for meta.yml files
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = lambda x, y: (
+    True
+)  # Fix to not print aliases. https://stackoverflow.com/a/64717341
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+yaml.indent(mapping=2, sequence=2, offset=0)
+# Disable line wrapping: long plain-scalar keys (e.g. version `eval` expressions)
+# become invalid YAML if ruamel folds them onto a second line.
+yaml.width = 4096
 
 
-def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
+def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path, str | None, str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -70,7 +73,7 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
     # Check for org if modules repo
     if repo_type == "modules":
         org = getattr(tools_config, "org_path", "") or ""
-        if org == "":
+        if org == "" and use_prompt:
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -93,8 +96,8 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
 def prompt_component_version_sha(
     component_name: str,
     component_type: str,
-    modules_repo: "ModulesRepo",
-    installed_sha: Optional[str] = None,
+    modules_repo: ModulesRepo,
+    installed_sha: str | None = None,
 ) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
@@ -107,6 +110,8 @@ def prompt_component_version_sha(
     Returns:
         git_sha (str): The selected version of the module/subworkflow
     """
+    if not nf_core.utils.is_interactive():
+        raise UserWarning("Cannot interactively select a version and session is not interactive (no TTY detected).")
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )
@@ -144,29 +149,81 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[str], List[str]]:
+def get_components_to_install(
+    subworkflow_dir: str | Path,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
-    modules = []
-    subworkflows = []
+    modules: dict[str, dict[str, str]] = {}
+    subworkflows: dict[str, dict[str, str]] = {}
+
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
-            regex = re.compile(
-                r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
-            )
-            match = regex.search(line)
-            if match and len(match.groups()) == 2:
-                name, link = match.groups()
+            for name, _alias, link in NFCoreComponent.parse_include_statement(line):
                 if link.startswith("../../../"):
-                    name_split = name.lower().split("_")
-                    modules.append("/".join(name_split))
+                    if "../subworkflows/" in link:
+                        component_name = name.lower()
+                        component_dict: dict[str, str] = {"name": component_name}
+                        subworkflows[component_name] = component_dict
+                    else:
+                        name_split = name.lower().split("_")
+                        component_name = "/".join(name_split)
+                        component_dict = {
+                            "name": component_name,
+                        }
+                        modules[component_name] = component_dict
                 elif link.startswith("../"):
-                    subworkflows.append(name.lower())
-    return modules, subworkflows
+                    component_name = name.lower()
+                    component_dict = {"name": component_name}
+                    subworkflows[component_name] = component_dict
+
+    if (sw_meta := Path(subworkflow_dir, "meta.yml")).exists():
+        with open(sw_meta) as fh:
+            meta = yaml.load(fh)
+            if "components" in meta:
+                components = meta["components"]
+                for component in components:
+                    if isinstance(component, dict):
+                        component_name = list(component.keys())[0].lower()
+                        branch = component[component_name].get("branch")
+                        git_remote = component[component_name]["git_remote"]
+                        modules_repo = ModulesRepo(git_remote, branch=branch)
+                        current_comp_dict = subworkflows if component_name in subworkflows else modules
+
+                        component_dict = {
+                            "org_path": modules_repo.repo_path,
+                            "git_remote": git_remote,
+                            "branch": branch,
+                        }
+
+                        current_comp_dict[component_name].update(component_dict)
+
+    return list(modules.values()), list(subworkflows.values())
 
 
-def get_biotools_response(tool_name: str) -> Optional[Dict]:
+def read_meta_yml(meta_yml_path: Path) -> dict:
+    """
+    Read and parse a meta.yml file.
+
+    Args:
+        meta_yml_path: Path to the meta.yml file
+
+    Returns:
+        dict: Parsed YAML content
+
+    Raises:
+        FileNotFoundError: If meta.yml doesn't exist
+    """
+    if not meta_yml_path.exists():
+        raise FileNotFoundError(f"meta.yml not found at {meta_yml_path}")
+
+    with open(meta_yml_path) as f:
+        meta = yaml.load(f)
+    return meta
+
+
+def get_biotools_response(tool_name: str) -> dict | None:
     """
     Try to get bio.tools information for 'tool'
     """
@@ -200,12 +257,12 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     return ""
 
 
-DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str], List[str]]]
+DictWithStrAndTuple = dict[str, tuple[list[str], list[str], list[str]]]
 
 
 def get_channel_info_from_biotools(
     data: dict, tool_name: str
-) -> Optional[Tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
+) -> tuple[DictWithStrAndTuple, DictWithStrAndTuple] | None:
     """
     Try to find input and output channels and the respective EDAM ontology terms
 
@@ -216,22 +273,22 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> DictWithStrAndTuple:
+    def _iterate_input_output(funct_data, io_type) -> DictWithStrAndTuple:
         type_info = {}
-        if type in funct:
-            for element in funct[type]:
+        if io_type in funct_data:
+            for element in funct_data[io_type]:
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
                     uris = [element["data"]["uri"]]
                     terms = [element["data"]["term"]]
                     patterns = []
                 if "format" in element:
-                    for format in element["format"]:
+                    for fmt in element["format"]:
                         # Append the EDAM URI
-                        uris.append(format["uri"])
+                        uris.append(fmt["uri"])
                         # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
-                        patterns.append(format["term"].lower().split(" ")[0])
-                        terms.append(format["term"])
+                        patterns.append(fmt["term"].lower().split(" ")[0])
+                        terms.append(fmt["term"])
                     type_info[element_name] = (uris, terms, patterns)
         return type_info
 
@@ -241,8 +298,8 @@ def get_channel_info_from_biotools(
             if "function" in tool:
                 # Parse all tool functions
                 for funct in tool["function"]:
-                    inputs.update(_iterate_input_output("input"))
-                    outputs.update(_iterate_input_output("output"))
+                    inputs.update(_iterate_input_output(funct, "input"))
+                    outputs.update(_iterate_input_output(funct, "output"))
             return inputs, outputs
 
     # If the tool name was not found in the response

@@ -1,15 +1,13 @@
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from logging import LogRecord
 from pathlib import Path
-from typing import Any, Dict, Iterator, Union
+from typing import Any
 
 import yaml
-from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
-from rich.logging import RichHandler
+from pydantic import ValidationError, ValidationInfo, field_validator
 from textual import on
-from textual._context import active_app
 from textual.app import ComposeResult
 from textual.containers import Grid, HorizontalScroll
 from textual.message import Message
@@ -20,12 +18,16 @@ from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 import nf_core
 from nf_core.utils import NFCoreTemplateConfig
 
+# Sphinx/autodoc triggers Pydantic model rebuilds which require `Dict` in this module's namespace.
+# Using the builtin dict (not typing.Dict) because Pydantic v2 only accepts the lowercase form.
+Dict = dict
+
 # Use ContextVar to define a context on the model initialization
-_init_context_var: ContextVar = ContextVar("_init_context_var", default={})
+_init_context_var: ContextVar = ContextVar("_init_context_var", default=None)
 
 
 @contextmanager
-def init_context(value: Dict[str, Any]) -> Iterator[None]:
+def init_context(value: dict[str, Any]) -> Iterator[None]:
     token = _init_context_var.set(value)
     try:
         yield
@@ -43,14 +45,13 @@ features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "te
 class CreateConfig(NFCoreTemplateConfig):
     """Pydantic model for the nf-core create config."""
 
-    model_config = ConfigDict(extra="allow")
-
     def __init__(self, /, **data: Any) -> None:
         """Custom init method to allow using a context on the model initialization."""
+        context = _init_context_var.get()
         self.__pydantic_validator__.validate_python(
             data,
             self_instance=self,
-            context=_init_context_var.get(),
+            context=context if context is not None else {},
         )
 
     @field_validator("name")
@@ -66,11 +67,19 @@ class CreateConfig(NFCoreTemplateConfig):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
-    @field_validator("org", "description", "author", "version", "outdir")
+    @field_validator("org", "description", "author", "version")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
         if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("outdir", mode="before")
+    @classmethod
+    def outdir_notempty(cls, v: Any) -> Any:
+        """Check that the output directory is not empty, before "" is converted to Path(".")."""
+        if isinstance(v, str) and v.strip() == "":
             raise ValueError("Cannot be left empty.")
         return v
 
@@ -86,9 +95,9 @@ class CreateConfig(NFCoreTemplateConfig):
 
     @field_validator("outdir")
     @classmethod
-    def path_valid(cls, v: str) -> str:
+    def path_valid(cls, v: Path) -> Path:
         """Check that a path is valid."""
-        if not Path(v).is_dir():
+        if not v.is_dir():
             raise ValueError("Must be a valid path.")
         return v
 
@@ -127,7 +136,7 @@ class TextInput(Static):
 
     @on(Input.Changed)
     @on(Input.Submitted)
-    def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
+    def show_invalid_reasons(self, event: Input.Changed | Input.Submitted) -> None:
         """Validate the text input and show errors if invalid."""
         val_msg = self.query_one(".validation_msg")
         if not isinstance(val_msg, Static):
@@ -179,18 +188,19 @@ class HelpText(Markdown):
 class PipelineFeature(Static):
     """Widget for the selection of pipeline features."""
 
-    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, **kwargs) -> None:
+    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, default: bool, **kwargs) -> None:
         super().__init__(**kwargs)
         self.markdown = markdown
         self.title = title
         self.subtitle = subtitle
         self.field_id = field_id
+        self.default = default
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """When the button is pressed, change the type of the button."""
-        if event.button.id == "show_help":
+        if event.button.id and event.button.id.startswith("show_help_"):
             self.add_class("displayed")
-        elif event.button.id == "hide_help":
+        elif event.button.id and event.button.id.startswith("hide_help_"):
             self.remove_class("displayed")
 
     def compose(self) -> ComposeResult:
@@ -201,11 +211,11 @@ class PipelineFeature(Static):
         Hidden row with a help text box.
         """
         yield HorizontalScroll(
-            Switch(value=True, id=self.field_id),
+            Switch(value=self.default, id=self.field_id),
             Static(self.title, classes="feature_title"),
             Static(self.subtitle, classes="feature_subtitle"),
-            Button("Show help", id="show_help", variant="primary"),
-            Button("Hide help", id="hide_help"),
+            Button("Show help", id="show_help_" + self.field_id, classes="show_help", variant="primary"),
+            Button("Hide help", id="hide_help_" + self.field_id, classes="hide_help"),
             classes="custom_grid",
         )
         yield HelpText(markdown=self.markdown, classes="help_box")
@@ -217,19 +227,6 @@ class LoggingConsole(RichLog):
 
     def print(self, content):
         self.write(content)
-
-
-class CustomLogHandler(RichHandler):
-    """A Logging handler which extends RichHandler to write to a Widget and handle a Textual App."""
-
-    def emit(self, record: LogRecord) -> None:
-        """Invoked by logging."""
-        try:
-            _app = active_app.get()
-        except LookupError:
-            pass
-        else:
-            super().emit(record)
 
 
 class ShowLogs(Message):
@@ -249,7 +246,7 @@ def remove_hide_class(app, widget_id: str) -> None:
     app.get_widget_by_id(widget_id).remove_class("hide")
 
 
-def load_features_yaml() -> Dict:
+def load_features_yaml() -> dict:
     """Load the YAML file describing template features."""
     with open(features_yml_path) as fh:
         return yaml.safe_load(fh)

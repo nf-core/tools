@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths:
       - nf_core/pipeline-template/**
   pull_request:
@@ -12,14 +14,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -37,17 +31,18 @@ jobs:
     outputs:
       all_features: ${{ steps.create_matrix.outputs.matrix }}
     steps:
-      - name: 🏗 Set up yq
-        uses: frenck/action-setup-yq@v1
       - name: checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Create Matrix
         id: create_matrix
         run: |
-          echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/template_features.yml)" >> $GITHUB_OUTPUT
+          echo "matrix=$(yq '.[].features | keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config")' nf_core/pipelines/create/template_features.yml | \
+          yq 'flatten | tojson(0)' -)" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
-    runs-on: ${{ matrix.runner }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-run-test-worfklow
+      - runner=4cpu-linux-x64
     needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
@@ -55,46 +50,37 @@ jobs:
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
-        runner:
-          # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-          - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
-        profile: ["self_hosted_runner"]
         include:
           - TEMPLATE: all
-            runner: ubuntu-latest
-            profile: "docker"
-          - TEMPLATE: nf_core_configs
-            runner: ubuntu-latest
-            profile: "docker"
-        exclude:
-          - TEMPLATE: nf_core_configs
-            profile: "self_hosted_runner"
       fail-fast: false
 
     steps:
-      - name: go to working directory
-        run: |
-          mkdir -p create-lint-wf-template
-          cd create-lint-wf-template
-          export NXF_WORK=$(pwd)
+      - name: Check out source-code repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        name: Check out source-code repository
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: "3.12"
+          python-version: "3.15"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
 
       - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
+        run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
         with:
           version: latest-everything
+
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+        with:
+          version: "0.9.4"
+          install-pdiff: true
 
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}
@@ -112,35 +98,78 @@ jobs:
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           cd create-test-lint-wf
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
+          uv run nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
+      # Copy snapshot file
+      - name: copy snapshot file
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        run: |
+          if [ ! -f ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap ]; then
+              echo "Generate a snapshot when creating a pipeline and skipping the feature ${{ matrix.TEMPLATE }}."
+              echo "Then, copy it to the directory .github/snapshots"
+          else
+            cp ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+          fi
+
+      # Run pipeline with nf-test
+      - name: run pipeline nf-test
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        shell: bash
+        run: |
+          cd create-test-lint-wf/my-prefix-testpipeline
+          nf-test test \
+            --profile=+docker \
+            --verbose \
+            --ci
+
+      # Remove .nf-test folder before linting
+      - name: remove .nf-test folder
+        if: ${{ matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        run: |
+          rm -rf create-test-lint-wf/my-prefix-testpipeline/.nf-test
+          rm create-test-lint-wf/my-prefix-testpipeline/.nf-test.log
+          rm create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+
+      # Run the pipeline when nf-test is not available
       - name: run the pipeline
+        if: ${{ matrix.TEMPLATE == 'all' || matrix.TEMPLATE == 'nf-test' }}
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test,${{matrix.profile}} --outdir ./results
+          echo "aws.client.anonymous = true" >> nextflow.config
+          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder
+        if: ${{ matrix.TEMPLATE == 'all' || matrix.TEMPLATE == 'nf-test' }}
         run: |
           rm -rf create-test-lint-wf/results
 
       # Try syncing it before we change anything
       - name: nf-core pipelines sync
-        run: nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
+        run: uv run nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
-      - name: Run pre-commit
-        run: pre-commit run --all-files
-        working-directory: create-test-lint-wf
+      - name: Run prek
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
+        run: uv run prek run --config .pre-commit-config.yaml --all-files
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Remove TODO statements
       - name: remove TODO
-        run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/TODO nf-core:/TODONT nf-core:/g' {} \;
         working-directory: create-test-lint-wf
 
       # Uncomment includeConfig statement
       - name: uncomment include config
         run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+        working-directory: create-test-lint-wf
+
+      # Add a placeholder metro map and enable manifest.diagram
+      - name: add metro map
+        run: |
+          mkdir -p my-prefix-testpipeline/docs/images
+          touch my-prefix-testpipeline/docs/images/metro_map.svg
+          sed -i 's|// diagram|diagram|' my-prefix-testpipeline/nextflow.config
         working-directory: create-test-lint-wf
 
       # Replace zenodo.XXXXXX to pass readme linting
@@ -155,23 +184,34 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core pipelines lint
-        run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
+        run: uv run nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
         working-directory: create-test-lint-wf
 
       # Run code style linting
-      - name: run pre-commit
-        shell: bash
-        run: pre-commit run --all-files
-        working-directory: create-test-lint-wf
+      - name: Run prek
+        id: prek
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
+        run: uv run prek run --config .pre-commit-config.yaml --all-files --verbose | tee prek_output.txt
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
+
+      - name: Report prek warnings
+        if: ${{ matrix.TEMPLATE != 'code_linters' && matrix.TEMPLATE != 'all' }}
+        run: |
+          warnings=$(sed -n '/^  {$/,/^  }$/p' prek_output.txt | jq '.summary.warnings')
+          if [ "${warnings:-0}" -gt 0 ]; then
+            echo "### :warning: prek found ${warnings} warning(s)" >> $GITHUB_STEP_SUMMARY
+            nextflow lint . -o full >> $GITHUB_STEP_SUMMARY 2>&1 || true
+          fi
+        working-directory: create-test-lint-wf/my-prefix-testpipeline
 
       # Run bump-version
       - name: nf-core pipelines bump-version
-        run: nf-core --log-file log.txt pipelines bump-version --dir my-prefix-testpipeline/ 1.1
+        run: uv run nf-core --log-file log.txt pipelines bump-version --dir my-prefix-testpipeline/ 1.1
         working-directory: create-test-lint-wf
 
       # Run nf-core linting in release mode
       - name: nf-core pipelines lint in release mode
-        run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned --release
+        run: uv run nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned --release
         working-directory: create-test-lint-wf
 
       - name: Tar files
@@ -180,7 +220,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}
           path: create-test-lint-wf/artifact_files.tar

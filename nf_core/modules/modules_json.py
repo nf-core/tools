@@ -6,16 +6,17 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import NotRequired
 
 import git
 import questionary
 import rich.prompt
 from git.exc import GitCommandError
-from typing_extensions import NotRequired, TypedDict  # for py<3.11
+from typing_extensions import TypedDict
 
 import nf_core.utils
-from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE, get_components_to_install
+from nf_core.components.components_utils import get_components_to_install
+from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
@@ -27,14 +28,14 @@ log = logging.getLogger(__name__)
 class ModulesJsonModuleEntry(TypedDict):
     branch: str
     git_sha: str
-    installed_by: List[str]
+    installed_by: list[str]
     patch: NotRequired[str]
 
 
 class ModulesJsonType(TypedDict):
     name: str
     homePage: str
-    repos: Dict[str, Dict[str, Dict[str, Dict[str, ModulesJsonModuleEntry]]]]
+    repos: dict[str, dict[str, dict[str, dict[str, ModulesJsonModuleEntry]]]]
 
 
 class ModulesJson:
@@ -42,21 +43,28 @@ class ModulesJson:
     An object for handling a 'modules.json' file in a pipeline
     """
 
-    def __init__(self, pipeline_dir: Union[str, Path]) -> None:
+    def __init__(self, pipeline_dir: str | Path, no_prompts: bool = False) -> None:
         """
         Initialise the object.
 
         Args:
             pipeline_dir (str): The pipeline directory
+            no_prompts (bool): Whether to disable interactive prompts
         """
         self.directory = Path(pipeline_dir)
         self.modules_dir = self.directory / "modules"
         self.subworkflows_dir = self.directory / "subworkflows"
         self.modules_json_path = self.directory / "modules.json"
-        self.modules_json: Optional[ModulesJsonType] = None
+        self.modules_json: ModulesJsonType | None = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
-        self.pipeline_components: Optional[Dict[str, List[Tuple[str, str]]]] = None
+        self.pipeline_components: dict[str, list[tuple[str, str]]] | None = None
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
+
+    def require_prompts(self, msg: str) -> None:
+        """Raise UserWarning if prompts are disabled (via --no-prompts or non-interactive session)."""
+        if self.no_prompts:
+            raise UserWarning(f"{msg} and prompts are disabled.")
 
     def __str__(self):
         if self.modules_json is None:
@@ -74,11 +82,13 @@ class ModulesJson:
             UserWarning: If the creation fails
         """
         pipeline_config = nf_core.utils.fetch_wf_config(self.directory)
-        pipeline_name = pipeline_config.get("manifest.name", "")
-        pipeline_url = pipeline_config.get("manifest.homePage", "")
+        manifest = pipeline_config.get("manifest", {})
+        pipeline_name = manifest.get("name", "")
+        pipeline_url = manifest.get("homePage", "")
         new_modules_json = ModulesJsonType(name=pipeline_name, homePage=pipeline_url, repos={})
 
         if not self.modules_dir.exists():
+            self.require_prompts("Can't find a ./modules directory.\nPlease create the modules directory manually")
             if rich.prompt.Confirm.ask(
                 "[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True
             ):
@@ -115,8 +125,8 @@ class ModulesJson:
         self.dump()
 
     def get_component_names_from_repo(
-        self, repos: Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]], directory: Path
-    ) -> List[Tuple[str, List[str], str]]:
+        self, repos: dict[str, dict[str, dict[str, dict[str, dict[str, str | list[str]]]]]], directory: Path
+    ) -> list[tuple[str, list[str], str]]:
         """
         Get component names from repositories in a pipeline.
 
@@ -147,8 +157,8 @@ class ModulesJson:
         return names
 
     def get_pipeline_module_repositories(
-        self, component_type: str, directory: Path, repos: Optional[Dict] = None
-    ) -> Tuple[Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]], Dict[Path, Path]]:
+        self, component_type: str, directory: Path, repos: dict | None = None
+    ) -> tuple[dict[str, dict[str, dict[str, dict[str, dict[str, str | list[str]]]]]], dict[Path, Path]]:
         """
         Finds all module repositories in the modules and subworkflows directory.
         Ignores the local modules/subworkflows.
@@ -165,7 +175,7 @@ class ModulesJson:
         if repos is None:
             repos = {}
         # Check if there are any nf-core modules installed
-        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos.keys():
+        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos:
             repos[NF_CORE_MODULES_REMOTE] = {}
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
@@ -175,12 +185,17 @@ class ModulesJson:
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
+            self.require_prompts(
+                f"Found untracked directories in '{component_type}'.\n"
+                f"Untracked: {', '.join(str(directory.relative_to(directory)) for directory in dirs_not_covered)}\n"
+                "Please configure these directories in your modules.json manually"
+            )
             while len(dirs_not_covered) > 0:
                 log.info(
                     "The following director{s} in the {t} directory are untracked: '{l}'".format(
                         s="ies" if len(dirs_not_covered) > 0 else "y",
                         t=component_type,
-                        l="', '".join(str(dir.relative_to(directory)) for dir in dirs_not_covered),
+                        l="', '".join(str(d.relative_to(directory)) for d in dirs_not_covered),
                     )
                 )
                 nrepo_remote = questionary.text(
@@ -253,7 +268,7 @@ class ModulesJson:
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
             for directory in fifo:
                 rel_dir = directory.relative_to(components_directory)
-                if rel_dir in repos_at_level.keys():
+                if rel_dir in repos_at_level:
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
                         temp_queue.extend(directory.iterdir())
@@ -267,10 +282,10 @@ class ModulesJson:
     def determine_branches_and_shas(
         self,
         component_type: str,
-        install_dir: Union[str, Path],
+        install_dir: str | Path,
         remote_url: str,
-        components: List[str],
-    ) -> Dict[str, ModulesJsonModuleEntry]:
+        components: list[str],
+    ) -> dict[str, ModulesJsonModuleEntry]:
         """
         Determines what branch and commit sha each module/subworkflow in the pipeline belongs to
 
@@ -297,7 +312,7 @@ class ModulesJson:
         available_branches = ModulesRepo.get_remote_branches(remote_url)
         sb_local = []
         dead_components = []
-        repo_entry: Dict[str, ModulesJsonModuleEntry] = {}
+        repo_entry: dict[str, ModulesJsonModuleEntry] = {}
         for component in sorted(components):
             modules_repo = default_modules_repo
             component_path = Path(repo_path, component)
@@ -327,6 +342,12 @@ class ModulesJson:
                     log.info(
                         f"Was unable to find matching {component_type[:-1]} files in the {modules_repo.branch} branch."
                     )
+                    if self.no_prompts:
+                        log.warning(
+                            f"Unable to find matching {component_type[:-1]} files for '{component}' and prompts are disabled. Treating as local."
+                        )
+                        sb_local.append(component)
+                        break
                     choices = [{"name": "No", "value": False}] + [
                         {"name": branch, "value": branch} for branch in (available_branches - tried_branches)
                     ]
@@ -375,10 +396,10 @@ class ModulesJson:
     def find_correct_commit_sha(
         self,
         component_type: str,
-        component_name: Union[str, Path],
-        component_path: Union[str, Path],
+        component_name: str | Path,
+        component_path: str | Path,
         modules_repo: ModulesRepo,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Returns the SHA for the latest commit where the local files are identical to the remote files
         Args:
@@ -434,7 +455,7 @@ class ModulesJson:
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
         shutil.move(str(current_path), local_dir / to_name)
 
-    def unsynced_components(self) -> Tuple[List[str], List[str], Dict]:
+    def unsynced_components(self) -> tuple[list[str], list[str], dict]:
         """
         Compute the difference between the modules/subworkflows in the directory and the
         modules/subworkflows in the 'modules.json' file. This is done by looking at all
@@ -449,6 +470,7 @@ class ModulesJson:
         # Add all modules from modules.json to missing_installation
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         # Obtain the path of all installed modules
+        # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
         module_dirs = [
             Path(dir_name).relative_to(self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
@@ -457,6 +479,7 @@ class ModulesJson:
         untracked_dirs_modules, missing_installation = self.parse_dirs(module_dirs, missing_installation, "modules")
 
         # Obtain the path of all installed subworkflows
+        # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
         subworkflow_dirs = [
             Path(dir_name).relative_to(self.subworkflows_dir)
             for dir_name, _, file_names in os.walk(self.subworkflows_dir)
@@ -469,7 +492,7 @@ class ModulesJson:
 
         return untracked_dirs_modules, untracked_dirs_subworkflows, missing_installation
 
-    def parse_dirs(self, dirs: List[Path], missing_installation: Dict, component_type: str) -> Tuple[List[str], Dict]:
+    def parse_dirs(self, dirs: list[Path], missing_installation: dict, component_type: str) -> tuple[list[str], dict]:
         """
         Parse directories and check if they are tracked in the modules.json file
 
@@ -492,12 +515,14 @@ class ModulesJson:
             git_url = ""
 
             for repo in missing_installation:
-                if component_type in missing_installation[repo]:
-                    if install_dir in missing_installation[repo][component_type]:
-                        if component in missing_installation[repo][component_type][install_dir]:
-                            component_in_file = True
-                            git_url = repo
-                            break
+                if (
+                    component_type in missing_installation[repo]
+                    and install_dir in missing_installation[repo][component_type]
+                    and component in missing_installation[repo][component_type][install_dir]
+                ):
+                    component_in_file = True
+                    git_url = repo
+                    break
             if not component_in_file:
                 # If it is not, add it to the list of missing components
                 untracked_dirs.append(component)
@@ -539,12 +564,7 @@ class ModulesJson:
             elif (
                 not isinstance(repo_url, str)
                 or repo_url == ""
-                or not (
-                    repo_url.startswith("http")
-                    or repo_url.startswith("ftp")
-                    or repo_url.startswith("ssh")
-                    or repo_url.startswith("git")
-                )
+                or not repo_url.startswith(("http", "ftp", "ssh", "git"))
                 or not isinstance(repo_entry["modules"], dict)
                 or repo_entry["modules"] == {}
             ):
@@ -618,7 +638,7 @@ class ModulesJson:
             for _, repo_entry in self.modules_json.get("repos", {}).items():
                 for component_type in ["modules", "subworkflows"]:
                     if component_type in repo_entry:
-                        for install_dir, install_dir_entry in repo_entry[component_type].items():
+                        for _install_dir, install_dir_entry in repo_entry[component_type].items():
                             for _, component in install_dir_entry.items():
                                 if "installed_by" in component and isinstance(component["installed_by"], str):
                                     log.debug(f"Updating {component} in modules.json")
@@ -640,12 +660,10 @@ class ModulesJson:
         # we try to reinstall them
         if len(missing_installation) > 0:
             if "subworkflows" in [
-                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content
             ]:
                 self.resolve_missing_installation(missing_installation, "subworkflows")
-            if "modules" in [
-                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
-            ]:
+            if "modules" in [c_type for _, repo_content in missing_installation.items() for c_type in repo_content]:
                 self.resolve_missing_installation(missing_installation, "modules")
 
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
@@ -676,7 +694,7 @@ class ModulesJson:
             dump_modules_json = True
             for repo, subworkflows in subworkflows_dict.items():
                 for org, subworkflow in subworkflows:
-                    self.recreate_dependencies(repo, org, subworkflow)
+                    self.recreate_dependencies(repo, org, {"name": subworkflow})
         self.pipeline_components = original_pipeline_components
 
         if dump_modules_json:
@@ -697,10 +715,10 @@ class ModulesJson:
                 try:
                     self.modules_json = json.load(fh)
                 except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}")
+                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}") from e
 
-        except FileNotFoundError:
-            raise UserWarning("File 'modules.json' is missing")
+        except FileNotFoundError as e:
+            raise UserWarning("File 'modules.json' is missing") from e
 
     def update(
         self,
@@ -708,8 +726,8 @@ class ModulesJson:
         modules_repo: ModulesRepo,
         component_name: str,
         component_version: str,
-        installed_by: Optional[List[str]],
-        installed_by_log: Optional[List[str]] = None,
+        installed_by: list[str] | None,
+        installed_by_log: list[str] | None = None,
         write_file: bool = True,
     ) -> bool:
         """
@@ -823,7 +841,7 @@ class ModulesJson:
             )
         self.modules_json["repos"][repo_url][component_type][install_dir][component_name]["patch"] = str(patch_filename)
         if write_file:
-            self.dump()
+            self.dump(run_prettier=True)
 
     def remove_patch_entry(self, module_name, repo_url, install_dir, write_file=True):
         if self.modules_json is None:
@@ -835,7 +853,7 @@ class ModulesJson:
         except KeyError:
             log.warning("No patch entry in 'modules.json' to remove")
         if write_file:
-            self.dump()
+            self.dump(run_prettier=True)
 
     def get_patch_fn(self, component_type, component_name, repo_url, install_dir):
         """
@@ -889,7 +907,7 @@ class ModulesJson:
         except LookupError as e:
             raise LookupError(
                 f"Failed to apply patch in reverse for {component_type[:-1]} '{component_fullname}' due to: {e}"
-            )
+            ) from e
 
         # Write the patched files to a temporary directory
         log.debug("Writing patched files to tmpdir")
@@ -971,7 +989,7 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_module_version(self, module_name: str, repo_url: str, install_dir: str) -> Optional[str]:
+    def get_module_version(self, module_name: str, repo_url: str, install_dir: str) -> str | None:
         """
         Returns the version of a module
 
@@ -1016,7 +1034,7 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_all_components(self, component_type: str) -> Dict[str, List[Tuple[(str, str)]]]:
+    def get_all_components(self, component_type: str) -> dict[str, list[tuple[(str, str)]]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
 
@@ -1041,10 +1059,8 @@ class ModulesJson:
         self,
         component_type,
         name,
-        repo_url,
-        install_dir,
         dependent_components,
-    ):
+    ) -> dict[str, tuple[str, str, str]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
         as being installed by the given component
@@ -1052,8 +1068,6 @@ class ModulesJson:
         Args:
             component_type (str): Type of component [modules, subworkflows]
             name (str): Name of the component to find dependencies for
-            repo_url (str): URL of the repository containing the components
-            install_dir (str): Name of the directory where components are installed
 
         Returns:
             (dict[str: str,]): Dictionary indexed with the component names, with component_type as value
@@ -1064,16 +1078,20 @@ class ModulesJson:
             assert self.modules_json is not None  # mypy
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
-        for type in component_types:
-            try:
-                components = self.modules_json["repos"][repo_url][type][install_dir].items()
-            except KeyError as e:
-                # This exception will raise when there are only modules installed
-                log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
-                continue
-            for component_name, component_entry in components:
-                if name in component_entry["installed_by"]:
-                    dependent_components[component_name] = type
+        for comp_type in component_types:
+            for repo_url in self.modules_json["repos"]:
+                modules_repo = ModulesRepo(repo_url)
+                install_dir = modules_repo.repo_path
+                try:
+                    for comp in self.modules_json["repos"][repo_url][comp_type][install_dir]:
+                        if name in self.modules_json["repos"][repo_url][comp_type][install_dir][comp]["installed_by"]:
+                            dependent_components[comp] = (repo_url, install_dir, comp_type)
+                except KeyError as e:
+                    # This exception will raise when there are only modules installed
+                    log.debug(
+                        f"Trying to retrieve all {comp_type}. There aren't {comp_type} installed. Failed with error {e}"
+                    )
+                    continue
 
         return dependent_components
 
@@ -1140,7 +1158,7 @@ class ModulesJson:
                 with open(self.modules_json_path, "w") as fh:
                     json.dump(self.modules_json, fh, indent=4)
 
-    def resolve_missing_installation(self, missing_installation: Dict, component_type: str) -> None:
+    def resolve_missing_installation(self, missing_installation: dict, component_type: str) -> None:
         missing_but_in_mod_json = [
             f"'{component_type}/{install_dir}/{component}'"
             for repo_url, contents in missing_installation.items()
@@ -1180,7 +1198,7 @@ class ModulesJson:
                     self.modules_json["repos"].pop(repo_url)
 
     def resolve_missing_from_modules_json(self, missing_from_modules_json, component_type):
-        format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
+        format_missing = [f"'{d}'" for d in missing_from_modules_json]
         if len(format_missing) == 1:
             log.info(
                 f"Recomputing commit SHA for {component_type[:-1]} {format_missing[0]} which was missing from 'modules.json'"
@@ -1191,7 +1209,7 @@ class ModulesJson:
             )
         assert self.modules_json is not None  # mypy
         # Get the remotes we are missing
-        tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
+        tracked_repos = dict(self.modules_json["repos"].items())
         repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
 
         # Get tuples of components that miss installation and their install directory
@@ -1206,10 +1224,11 @@ class ModulesJson:
                         modules_repo.repo_path,
                     )
                     for dir_name, _, _ in os.walk(repo_url_path):
-                        if component_type == "modules":
-                            if len(Path(directory).parts) > 1:  # The module name is TOOL/SUBTOOL
-                                paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
-                                pass
+                        if (
+                            component_type == "modules" and len(Path(directory).parts) > 1
+                        ):  # The module name is TOOL/SUBTOOL
+                            paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
+                            pass
                         paths_in_directory.append(Path(dir_name).parts[-1])
                     if directory in paths_in_directory:
                         yield (modules_repo.repo_path, directory)
@@ -1254,27 +1273,36 @@ class ModulesJson:
                             }
                         )
 
-    def recreate_dependencies(self, repo, org, subworkflow):
+    def recreate_dependencies(self, repo: str, org: str, subworkflow: dict[str, str]) -> None:
         """
         Try to recreate the installed_by entries for subworkflows.
         Remove self installation entry from dependencies, assuming that the modules.json has been freshly created,
         i.e., no module or subworkflow has been installed by the user in the meantime
         """
 
-        sw_path = Path(self.subworkflows_dir, org, subworkflow)
+        sw_name = subworkflow["name"]
+        sw_path = Path(self.subworkflows_dir, org, sw_name)
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
         assert self.modules_json is not None  # mypy
         for dep_mod in dep_mods:
-            installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
+            name = dep_mod["name"]
+            current_repo = dep_mod.get("git_remote", repo)
+            current_org = dep_mod.get("org_path", org)
+            assert current_repo is not None and current_org is not None
+            installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
             if installed_by == ["modules"]:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
-            if subworkflow not in installed_by:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"].append(subworkflow)
+                self.modules_json["repos"][repo]["modules"][org][name]["installed_by"] = []
+            if sw_name not in installed_by:
+                self.modules_json["repos"][repo]["modules"][org][name]["installed_by"].append(sw_name)
 
         for dep_subwf in dep_subwfs:
-            installed_by = self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"]
+            name = dep_subwf["name"]
+            current_repo = dep_subwf.get("git_remote", repo)
+            current_org = dep_subwf.get("org_path", org)
+            assert current_repo is not None and current_org is not None
+            installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
-            if subworkflow not in installed_by:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"].append(subworkflow)
+                self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"] = []
+            if sw_name not in installed_by:
+                self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"].append(sw_name)
             self.recreate_dependencies(repo, org, dep_subwf)

@@ -3,37 +3,21 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Union
 from unittest import mock
 
 import git
 import pytest
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.sync
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
-from ..utils import with_temporary_folder
+from ..utils import MockResponse, with_temporary_folder
 
 
-class MockResponse:
-    def __init__(self, data: Union[Dict, List[Dict]], status_code: int, url: str):
-        self.url: str = url
-        self.status_code: int = status_code
-        self.from_cache: bool = False
-        self.reason: str = "Mocked response"
-        self.data: Union[Dict, List[Dict]] = data
-        self.content: str = json.dumps(data)
-        self.headers: Dict[str, str] = {"content-encoding": "test", "connection": "fake"}
-
-    def json(self):
-        return self.data
-
-
-def mocked_requests_get(url) -> MockResponse:
-    """Helper function to emulate POST requests responses from the web"""
+def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
+    """Helper function to emulate GET request responses from the web"""
 
     url_template = "https://api.github.com/repos/{}/response/"
     if url == Path(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
@@ -102,7 +86,7 @@ class TestModules(TestPipelines):
         with open(nf_core_yml_path, "w") as fh:
             yaml.dump(nf_core_yml.model_dump(), fh)
 
-        psync = nf_core.pipelines.sync.PipelineSync(tmp_dir)
+        psync = nf_core.pipelines.sync.PipelineSync(Path(tmp_dir))
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
         assert "does not appear to be a git repository" in exc_info.value.args[0]
@@ -119,7 +103,18 @@ class TestModules(TestPipelines):
                 psync.inspect_sync_dir()
             assert exc_info.value.args[0].startswith("Uncommitted changes found in pipeline directory!")
         finally:
-            os.remove(test_fn)
+            test_fn.unlink()
+
+    def test_inspect_sync_ignored_files(self):
+        """
+        Try inspecting the repo for syncing with untracked changes that are ignored.
+        No assertions, we are checking that no exception is raised in the process.
+        """
+        test_fn = Path(self.pipeline_dir) / "ignored.txt"
+        self._make_ignored_file(test_fn)
+
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
 
     def test_get_wf_config_no_branch(self):
         """Try getting a workflow config when the branch doesn't exist"""
@@ -134,14 +129,14 @@ class TestModules(TestPipelines):
         """Try getting a workflow config, then make it miss a required config option"""
         # Try to sync, check we halt with the right error
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.required_config_vars = ["fakethisdoesnotexist"]
+        psync.required_config_vars = {"fakesection": ["fakethisdoesnotexist"]}
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
         # Check that we did actually get some config back
-        assert psync.wf_config["params.validate_params"] == "true"
+        assert psync.wf_config["params"]["validate_params"] is True
         # Check that we raised because of the missing fake config var
-        assert exc_info.value.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
+        assert exc_info.value.args[0] == "Workflow config variable `fakesection.fakethisdoesnotexist` not found!"
 
     def test_checkout_template_branch(self):
         """Try checking out the TEMPLATE branch of the pipeline"""
@@ -162,28 +157,148 @@ class TestModules(TestPipelines):
             psync.checkout_template_branch()
         assert exc_info.value.args[0] == "Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'"
 
-    def test_delete_template_branch_files(self):
-        """Confirm that we can delete all files in the TEMPLATE branch"""
+    def test_delete_tracked_template_branch_files(self):
+        """Confirm that we can delete all tracked files in the TEMPLATE branch"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
         psync.checkout_template_branch()
-        psync.delete_template_branch_files()
-        assert os.listdir(self.pipeline_dir) == [".git"]
+        psync.delete_tracked_template_branch_files()
+        top_level_ignored = self._get_top_level_ignored(psync)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
+
+    def test_delete_tracked_template_branch_files_unlink_throws_error(self):
+        """Test that SyncExceptionError is raised when Path.unlink throws an exception"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+
+        # Create a test file that would normally be deleted
+        test_file = Path(self.pipeline_dir) / "test_file.txt"
+        test_file.touch()
+
+        # Mock Path.unlink to raise an exception
+        with mock.patch("pathlib.Path.unlink", side_effect=OSError("Permission denied")) as mock_unlink:
+            with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
+                psync.delete_tracked_template_branch_files()
+
+            # Verify the exception contains the original error
+            assert "Permission denied" in str(exc_info.value)
+
+            # Verify Path.unlink was called
+            mock_unlink.assert_called()
+
+    def test_delete_tracked_template_branch_rmdir_throws_error(self):
+        """Test that SyncExceptionError is raised when Path.rmdir throws an exception"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+
+        # Create an empty directory that would normally be deleted
+        empty_dir = Path(self.pipeline_dir) / "empty_test_dir"
+        empty_dir.mkdir()
+
+        # Mock Path.rmdir to raise an exception
+        with mock.patch("pathlib.Path.rmdir", side_effect=OSError("Permission denied")) as mock_rmdir:
+            with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
+                psync.delete_tracked_template_branch_files()
+
+            # Verify the exception contains the original error
+            assert "Permission denied" in str(exc_info.value)
+
+            # Verify Path.rmdir was called
+            mock_rmdir.assert_called()
+
+    def test_delete_staged_template_branch_files_ignored(self):
+        """Confirm that files in .gitignore are not deleted by delete_staged_template_branch_files"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+        ignored_file = Path(self.pipeline_dir) / "ignored.txt"
+        self._make_ignored_file(ignored_file)
+
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_tracked_template_branch_files()
+
+        # Ignored file should still exist
+        assert ignored_file.exists()
+
+        # .git directory should still exist
+        assert (Path(self.pipeline_dir) / ".git").exists()
+
+    def test_delete_staged_template_branch_files_ignored_nested_dir(self):
+        """Confirm that deletion of ignored files respects directory structure"""
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+        repo = git.Repo(self.pipeline_dir)
+
+        # Create this structure:
+        # dir
+        # ├── subdirA                   # (should be kept)
+        # │   └── subdirB               # (should be kept)
+        # │       └── ignored.txt       # add to .gitignore (should be kept)
+        # └── subdirC                   # (should be deleted)
+        #     └── subdirD               # (should be deleted)
+        #         └── not_ignored.txt   # commit this file (should be deleted)
+        parent_dir = Path(self.pipeline_dir) / "dir"
+        to_be_kept_dir = parent_dir / "subdirA" / "subdirB"
+        ignored_file = to_be_kept_dir / "ignored.txt"
+        to_be_deleted_dir = parent_dir / "subdirC" / "subdirD"
+        non_ignored_file = to_be_deleted_dir / "not_ignored.txt"
+
+        to_be_kept_dir.mkdir(parents=True)
+        to_be_deleted_dir.mkdir(parents=True)
+        non_ignored_file.touch()
+
+        repo.git.add(non_ignored_file)
+        repo.index.commit("Add non-ignored file")
+
+        self._make_ignored_file(ignored_file)
+
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_tracked_template_branch_files()
+
+        # Ignored file and its parent directory should still exist
+        assert ignored_file.exists()
+        assert to_be_kept_dir.exists()  # subdirB
+        assert to_be_kept_dir.parent.exists()  # subdirA
+
+        # Non-ignored file and its parent directory should be deleted
+        assert not non_ignored_file.exists()
+        assert not to_be_deleted_dir.exists()  # subdirD
+        assert not to_be_deleted_dir.parent.exists()  # subdirC
+
+        # .git directory should still exist
+        assert (Path(self.pipeline_dir) / ".git").exists()
 
     def test_create_template_pipeline(self):
-        """Confirm that we can delete all files in the TEMPLATE branch"""
+        """Confirm that we can create a new template pipeline in an empty directory,
+        without running prettier on files ignored by the pipeline's (not the template's) .gitignore"""
+        ignored_file = Path(self.pipeline_dir) / "ignored.json"
+        self._make_ignored_file(ignored_file)
         # First, delete all the files
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
         psync.checkout_template_branch()
-        psync.delete_template_branch_files()
-        assert os.listdir(self.pipeline_dir) == [".git"]
+        psync.delete_tracked_template_branch_files()
+        top_level_ignored = self._get_top_level_ignored(psync)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
         # Now create the new template
-        psync.make_template_pipeline()
-        assert "main.nf" in os.listdir(self.pipeline_dir)
-        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+        with mock.patch("nf_core.pipelines.create.create.run_prettier_on_file") as mock_prettier:
+            psync.make_template_pipeline()
+        pipeline_path = Path(self.pipeline_dir)
+        assert (pipeline_path / "main.nf").exists()
+        assert (pipeline_path / "nextflow.config").exists()
+        formatted = {f for call in mock_prettier.call_args_list for f in call.args}
+        assert (pipeline_path / "main.nf").resolve() in formatted
+        assert ignored_file.resolve() not in formatted
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""
@@ -211,6 +326,22 @@ class TestModules(TestPipelines):
         assert psync.commit_template_changes() is True
         # Check that we don't have any uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is False
+
+    def test_commit_template_preserves_ignored(self):
+        """Try to commit the TEMPLATE branch, but no changes were made"""
+        # Check out the TEMPLATE branch but skip making the new template etc.
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+        ignored_file = Path(self.pipeline_dir) / "ignored.txt"
+
+        self._make_ignored_file(ignored_file)
+
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.commit_template_changes()
+
+        assert ignored_file.exists()
 
     def test_push_template_branch_error(self):
         """Try pushing the changes, but without a remote (should fail)"""
@@ -265,7 +396,7 @@ class TestModules(TestPipelines):
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
-        psync.repo.create_remote("origin", self.remote_path)
+        psync.repo.create_remote("origin", str(self.remote_path))
 
         psync.create_merge_base_branch()
         psync.push_merge_branch()
@@ -277,7 +408,7 @@ class TestModules(TestPipelines):
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
-        psync.repo.create_remote("origin", self.remote_path)
+        psync.repo.create_remote("origin", str(self.remote_path))
 
         with pytest.raises(nf_core.pipelines.sync.PullRequestExceptionError) as exc_info:
             psync.push_merge_branch()
@@ -312,71 +443,6 @@ class TestModules(TestPipelines):
             "Something went badly wrong - GitHub API PR failed - got return code 404"
         )
 
-    @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
-    def test_close_open_template_merge_prs(self, mock_get):
-        """Try closing all open prs"""
-        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.inspect_sync_dir()
-        psync.get_wf_config()
-        psync.gh_api.get = mock_get
-        psync.gh_username = "list_prs"
-        psync.gh_repo = "list_prs/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-
-        with mock.patch("nf_core.pipelines.sync.PipelineSync.close_open_pr") as mock_close_open_pr:
-            psync.close_open_template_merge_prs()
-
-            prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data
-            for pr in prs:
-                if pr.get("state", None) == "open":
-                    mock_close_open_pr.assert_any_call(pr)
-
-    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
-    @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
-    def test_close_open_pr(self, mock_patch, mock_post) -> None:
-        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.inspect_sync_dir()
-        psync.get_wf_config()
-        psync.gh_api.post = mock_post
-        psync.gh_api.patch = mock_patch
-        psync.gh_username = "bad_url"
-        psync.gh_repo = "bad_url/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr: Dict[str, Union[str, Dict[str, str]]] = {
-            "state": "open",
-            "head": {"ref": "nf-core-template-merge-3"},
-            "base": {"ref": "main"},
-            "html_url": "pr_html_url",
-            "url": "url_to_update_pr",
-            "comments_url": "pr_comments_url",
-        }
-
-        assert psync.close_open_pr(pr)
-        mock_patch.assert_called_once_with(url="url_to_update_pr", data='{"state": "closed"}')
-
-    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
-    @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
-    def test_close_open_pr_fail(self, mock_patch, mock_post):
-        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.inspect_sync_dir()
-        psync.get_wf_config()
-        psync.gh_api.post = mock_post
-        psync.gh_api.patch = mock_patch
-        psync.gh_username = "bad_url"
-        psync.gh_repo = "bad_url/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr = {
-            "state": "open",
-            "head": {"ref": "nf-core-template-merge-3"},
-            "base": {"ref": "main"},
-            "html_url": "pr_html_url",
-            "url": "bad_url_to_update_pr",
-            "comments_url": "pr_comments_url",
-        }
-
-        assert not psync.close_open_pr(pr)
-        mock_patch.assert_called_once_with(url="bad_url_to_update_pr", data='{"state": "closed"}')
-
     def test_reset_target_dir(self):
         """Try resetting target pipeline directory"""
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
@@ -403,9 +469,10 @@ class TestModules(TestPipelines):
 
     def test_sync_no_changes(self):
         """Test pipeline sync when no changes are needed"""
-        with mock.patch("requests.get", side_effect=mocked_requests_get), mock.patch(
-            "requests.post", side_effect=mocked_requests_post
-        ) as mock_post:
+        with (
+            mock.patch("requests.get", side_effect=mocked_requests_get),
+            mock.patch("requests.post", side_effect=mocked_requests_post) as mock_post,
+        ):
             psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
 
             # Mock that no changes were made
@@ -430,3 +497,39 @@ class TestModules(TestPipelines):
         with self.assertRaises(nf_core.pipelines.sync.PullRequestExceptionError) as exc_info:
             psync.sync()
         self.assertIn("GITHUB_AUTH_TOKEN not set!", str(exc_info.exception))
+
+    def test_sync_preserves_ignored_files(self):
+        """Test that sync preserves files and directories specified in .gitignore"""
+        with (
+            mock.patch("requests.get", side_effect=mocked_requests_get),
+        ):
+            psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+            ignored_file = Path(self.pipeline_dir) / "ignored.txt"
+            self._make_ignored_file(ignored_file)
+
+            psync.made_changes = True
+
+            psync.sync()
+
+            self.assertTrue(ignored_file.exists())
+
+    def _make_ignored_file(self, file_path: Path):
+        """Helper function to create an ignored file."""
+        if not self.pipeline_dir:
+            raise ValueError("Instantiate a pipeline before adding ignored files.")
+
+        file_path.touch()
+
+        gitignore_path = Path(self.pipeline_dir) / ".gitignore"
+        with open(gitignore_path, "a") as f:
+            f.write(f"{file_path.name}\n")
+
+        repo = git.Repo(self.pipeline_dir)
+        repo.git.add(".gitignore")
+        repo.index.commit("Add .gitignore")
+
+    def _get_top_level_ignored(self, psync: nf_core.pipelines.sync.PipelineSync) -> set[str]:
+        """Helper function to get top-level part of relative directory of ignored files from psync.ignored_files."""
+        top_level_ignored = {Path(f).parts[0] for f in psync.ignored_files}
+        return top_level_ignored

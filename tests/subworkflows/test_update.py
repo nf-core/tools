@@ -4,17 +4,19 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
+import pytest
 import questionary
 import yaml
 
 import nf_core.utils
-from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.update import ModuleUpdate
+from nf_core.subworkflows.install import SubworkflowInstall
 from nf_core.subworkflows.update import SubworkflowUpdate
 
 from ..test_subworkflows import TestSubworkflows
-from ..utils import OLD_SUBWORKFLOWS_SHA, cmp_component
+from ..utils import CROSS_ORGANIZATION_URL, OLD_SUBWORKFLOWS_SHA, cmp_component
 
 
 class TestSubworkflowsUpdate(TestSubworkflows):
@@ -30,6 +32,66 @@ class TestSubworkflowsUpdate(TestSubworkflows):
 
         assert update_obj.update("bam_stats_samtools") is True
         assert cmp_component(tmpdir, sw_path) is True
+
+    def test_subworkflow_update_skip_deps_skips_linked_components(self):
+        """`--skip-deps` updates the named subworkflow's SHA but leaves transitive deps untouched."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+        old_dep_sha = old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][
+            "samtools/flagstat"
+        ]["git_sha"]
+
+        update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, skip_deps=True)
+        assert update_obj.update("fastq_align_bowtie2") is True
+
+        mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+        # The named subworkflow's SHA moved.
+        assert (
+            mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME]["fastq_align_bowtie2"][
+                "git_sha"
+            ]
+            != old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME][
+                "fastq_align_bowtie2"
+            ]["git_sha"]
+        )
+        # A transitively-linked module's SHA did not.
+        assert (
+            mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]["samtools/flagstat"]["git_sha"]
+            == old_dep_sha
+        )
+
+    def test_subworkflow_update_skip_deps_save_diff_only_named_component(self):
+        """`--skip-deps --save-diff` writes a diff for only the named subworkflow, no linked components."""
+        assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+        diff_path = Path(tempfile.mkdtemp()) / "skipdeps.diff"
+        update_obj = SubworkflowUpdate(
+            self.pipeline_dir,
+            show_diff=False,
+            save_diff_fn=diff_path,
+            skip_deps=True,
+        )
+        assert update_obj.update("fastq_align_bowtie2") is True
+
+        diff_text = diff_path.read_text()
+        # The named subworkflow's main.nf should be in the diff
+        assert "subworkflows/nf-core/fastq_align_bowtie2/main.nf" in diff_text
+        # Transitively-linked module files (e.g. samtools/*) must not be in the diff
+        for linked in (
+            "modules/nf-core/samtools/flagstat/main.nf",
+            "modules/nf-core/samtools/index/main.nf",
+            "modules/nf-core/samtools/sort/main.nf",
+        ):
+            assert linked not in diff_text, f"unexpected linked component in --skip-deps diff: {linked}"
+
+    def test_subworkflow_update_skip_deps_with_update_deps_errors(self):
+        """`--skip-deps` and `--update-deps` are mutually exclusive."""
+        with pytest.raises(UserWarning, match="mutually exclusive"):
+            SubworkflowUpdate(self.pipeline_dir, skip_deps=True, update_deps=True, show_diff=False)._parameter_checks()
+
+    def test_subworkflow_update_skip_deps_with_all_errors(self):
+        """`--skip-deps` and `--all` are mutually exclusive."""
+        with pytest.raises(UserWarning, match="mutually exclusive"):
+            SubworkflowUpdate(self.pipeline_dir, skip_deps=True, update_all=True, show_diff=False)._parameter_checks()
 
     def test_install_at_hash_and_update(self):
         """Installs an old version of a subworkflow in the pipeline and updates it"""
@@ -156,7 +218,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Fix the subworkflow version in the .nf-core.yml to an old version
         update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": OLD_SUBWORKFLOWS_SHA}}}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -187,7 +249,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Set the fastq_align_bowtie2 field to no update in the .nf-core.yml
         update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": False}}}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -218,7 +280,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Fix the version of all nf-core subworkflows in the .nf-core.yml to an old version
         update_config = {NF_CORE_MODULES_REMOTE: OLD_SUBWORKFLOWS_SHA}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -249,7 +311,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Set all repository updates to False
         update_config = {NF_CORE_MODULES_REMOTE: False}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -365,10 +427,35 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         # Check that tabix/bgziptabix is not there
         assert "tabix/bgziptabix" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert not Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/bgziptabix").is_dir()
-        # Check that tabix/tabix is there
-        assert "tabix/tabix" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
-        assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
         # Check that ensemblevep is not there but instead we have ensemblevep/vep (due to a file re-naming)
         assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "ensemblvep/vep").is_dir()
+
+    def test_update_subworkflow_across_orgs(self):
+        """Install and update a subworkflow with modules from different organizations"""
+        install_obj = SubworkflowInstall(
+            self.pipeline_dir,
+            remote_url=CROSS_ORGANIZATION_URL,
+            # Hash for an old version of fastq_trim_fastp_fastqc
+            # A dummy code change was made in order to have a commit to compare with
+            sha="9627f4367b11527194ef14473019d0e1a181b741",
+        )
+        # The fastq_trim_fastp_fastqc subworkflow contains the cross-org fastqc module, not the nf-core one
+        install_obj.install("fastq_trim_fastp_fastqc")
+
+        patch_path = Path(self.pipeline_dir, "fastq_trim_fastp_fastqc.patch")
+        update_obj = SubworkflowUpdate(
+            self.pipeline_dir,
+            remote_url=CROSS_ORGANIZATION_URL,
+            save_diff_fn=patch_path,
+            update_all=False,
+            update_deps=True,
+            show_diff=False,
+        )
+        assert update_obj.update("fastq_trim_fastp_fastqc") is True
+
+        with open(patch_path) as fh:
+            content = fh.read()
+            assert "-        fastqc_raw_html = FASTQC_RAW.out.html" in content
+            assert "+        ch_fastqc_raw_html = FASTQC_RAW.out.html" in content

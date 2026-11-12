@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
@@ -19,13 +21,10 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
+      nextflow-version:
+        description: "Nextflow version to test against"
+        required: false
+        default: "latest-stable"
 
 # Cancel if a newer run with the same workflow name is queued
 concurrency:
@@ -36,32 +35,12 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  setup:
-    runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.12"]
-        runner: ["ubuntu-latest"]
-        include:
-          - python-version: "3.8"
-            runner: "ubuntu-20.04"
-
-    steps:
-      - name: Check conditions
-        id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/main' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
-
-    outputs:
-      python-version: ${{ matrix.python-version }}
-      runner: ${{ matrix.runner }}
-      run-tests: ${{ steps.conditions.outputs.run-tests }}
-
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out source-code repository
 
       - name: List tests
@@ -72,13 +51,19 @@ jobs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
   test:
-    name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
-    needs: [setup, list_tests]
-    if: ${{ needs.setup.outputs.run-tests }}
-    # run on self-hosted runners for test_components_generate_snapshot.py (because of the gitlab branch), based on the input if it is dispatched manually, on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ matrix.test == 'components/test_components_generate_snapshot.py' && 'self-hosted' || (github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted') }}
+    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} and Nextflow ${{ matrix.nextflow-version }}
+    needs: list_tests
+    runs-on:
+      - runs-on=${{ github.run_id }}-run-test
+      - runner=4cpu-linux-x64
     strategy:
-      matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
+      matrix:
+        # On PRs to main test with 3.11 and 3.14, otherwise just 3.11
+        python-version: ${{ github.base_ref == 'main' && fromJson('["3.11", "3.14"]') || fromJson('["3.11"]') }}
+        test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
+        # On push/release test both NF versions, otherwise just 25.10.4
+        # Note: python×nextflow must stay ≤2 with 88 tests to stay under GitHub's 256-config limit
+        nextflow-version: ${{ (github.event_name == 'push' || github.event_name == 'release') && fromJson('["25.10.4", "latest-stable"]') || fromJson('["25.10.4"]') }}
       fail-fast: false # run all tests even if one fails
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -87,52 +72,46 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out source-code repository
 
-      - name: Set up Python ${{ needs.setup.outputs.python-version }}
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: ${{ needs.setup.outputs.python-version }}
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip -r requirements-dev.txt
-          pip install -e .
-
-      - name: Downgrade git to the Ubuntu official repository's version
-        if: ${{ needs.setup.outputs.runner == 'ubuntu-20.04' && needs.setup.outputs.python-version == '3.8' }}
-        run: |
-          sudo apt update
-          sudo apt remove -y git git-man
-          sudo add-apt-repository --remove ppa:git-core/ppa
-          sudo apt install -y git
-
-      - name: Set up Singularity
-        if: ${{ matrix.test == 'test_download.py'}}
-        uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          singularity-version: 3.8.3
+          enable-cache: true
 
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Set up Apptainer
+        if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
+        uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: ${{ github.event.inputs.nextflow-version || matrix.nextflow-version }}
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@v1
+        uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+        with:
+          version: 0.9.5
+          install-fast-diff: true
 
       - name: move coveragerc file up
         run: |
           mv .github/.coveragerc .
 
       - name: Test with pytest
+        id: pytest
         run: |
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 && exit_code=0|| exit_code=$?
+          uv run python -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 -n logical && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
@@ -142,64 +121,31 @@ jobs:
             exit 1
           fi
 
+      - name: Generate coverage XML
+        if: always()
+        run: |
+          uv run coverage xml --rcfile=.coveragerc
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: ./coverage.xml
+          flags: python-${{ matrix.python-version }}
+          env_vars: MATRIX_TEST
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          MATRIX_TEST: ${{ matrix.test }}
+
       - name: remove slashes from test name
         run: |
           test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
           echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
-        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
         with:
           include-hidden-files: true
           name: Snapshot Report ${{ env.test }}
           path: ./snapshot_report.html
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
-        with:
-          include-hidden-files: true
-          name: coverage_${{ env.test }}
-          path: .coverage
-
-  coverage:
-    needs: test
-    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
-    steps:
-      - name: go to subdirectory
-        run: |
-          mkdir -p pytest
-          cd pytest
-
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
-        env:
-          AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
-        with:
-          python-version: "3.12"
-          cache: "pip"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip -r requirements-dev.txt
-          pip install -e .
-
-      - name: move coveragerc file up
-        run: |
-          mv .github/.coveragerc .
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
-      - name: Run coverage
-        run: |
-          coverage combine --keep coverage*/.coverage*
-          coverage report
-          coverage xml
-
-      - uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5
-        with:
-          files: coverage.xml
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

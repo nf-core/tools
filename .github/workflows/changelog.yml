@@ -1,90 +1,141 @@
 name: Update CHANGELOG.md
 on:
   issue_comment:
-    types: [created]
-  pull_request_target:
-    types: [opened]
-    branches:
-      - dev
+    types: [created] # Add "@nf-core-bot changelog" as a PR comment to trigger this workflow.
+
+# No step runs code from the pull request: changelog.py and the prettier config are taken from the base branch,
+# and prettier runs outside the checkout. The bot token is only used for the team check and the push.
+permissions: {}
 
 jobs:
   update_changelog:
     runs-on: ubuntu-latest
-    # Run if comment is on a PR with the main repo, and if it contains the magic keywords.
-    # Or run on PR creation, unless asked otherwise in the title.
-    if: |
-      github.repository_owner == 'nf-core' && (
-        github.event_name == 'pull_request_target' ||
-        github.event.issue.pull_request && startsWith(github.event.comment.body, '@nf-core-bot changelog')
-      )
+    if: >
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@nf-core-bot changelog')
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: changelog-${{ github.event.issue.number }}
+    # Plain event values, no secrets: GH_TOKEN stays per step so it never reaches changelog.py or prettier.
+    env:
+      ACTOR: ${{ github.event.comment.user.login }}
+      COMMENT_ID: ${{ github.event.comment.id }}
+      PR_NUMBER: ${{ github.event.issue.number }}
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        with:
-          token: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
-
-      # Action runs on the issue comment, so we don't get the PR by default.
-      # Use the GitHub CLI to check out the PR:
-      - name: Checkout Pull Request
+      # github.token can't read org team membership, so this needs the bot token.
+      - name: Verify commenter is on the nf-core/infrastructure or nf-core/core team
+        id: verify
         env:
           GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
         run: |
-          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            PR_NUMBER="${{ github.event.issue.number }}"
-          elif [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-          fi
-          gh pr checkout $PR_NUMBER
+          for team in infrastructure core; do
+            state=$(gh api "orgs/nf-core/teams/${team}/memberships/${ACTOR}" --jq '.state' 2>/dev/null || true)
+            if [ "$state" = "active" ]; then
+              echo "@${ACTOR} is on nf-core/${team} — proceeding."
+              exit 0
+            fi
+          done
+          echo "::error::@${ACTOR} is not an active member of nf-core/infrastructure or nf-core/core; refusing to run."
+          exit 1
 
-      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+      - name: React to the triggering comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='eyes'
+
+      # Checks out the base ref (the trusted version of the repo) first.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.12"
+          persist-credentials: false
 
-      - name: Install packages
+      # Prettier formats in its own folder next to the trusted config, so the config's `overrides` globs match.
+      # Its version comes from the trusted pre-commit config, which Renovate keeps up to date.
+      - name: Save trusted scripts
+        id: trusted
         run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml
+          cp "${GITHUB_WORKSPACE}/.github/workflows/changelog.py" "${RUNNER_TEMP}/changelog.py"
+          mkdir -p "${RUNNER_TEMP}/prettier"
+          cp "${GITHUB_WORKSPACE}/.prettierrc.yml" "${RUNNER_TEMP}/prettier/.prettierrc.yml"
+          prettier=$(grep -oE 'prettier@[0-9][0-9.]*' "${GITHUB_WORKSPACE}/.pre-commit-config.yaml" | head -n 1)
+          if [ -z "$prettier" ]; then
+            echo "::error::Could not find the prettier version in .pre-commit-config.yaml."
+            exit 1
+          fi
+          echo "prettier=${prettier}" >> "$GITHUB_OUTPUT"
+
+      # `gh pr checkout` sets up the push target, including fork branches.
+      - name: Checkout Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr checkout "$PR_NUMBER"
 
       - name: Update CHANGELOG.md from the PR title
         env:
           COMMENT: ${{ github.event.comment.body }}
-          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
+          PR_TITLE: ${{ github.event.issue.title }}
         run: |
-          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            export PR_NUMBER='${{ github.event.issue.number }}'
-            export PR_TITLE='${{ github.event.issue.title }}'
-          elif [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            export PR_NUMBER='${{ github.event.pull_request.number }}'
-            export PR_TITLE='${{ github.event.pull_request.title }}'
-          fi
-          python ${GITHUB_WORKSPACE}/.github/workflows/changelog.py
+          python3 -I "${RUNNER_TEMP}/changelog.py"
 
       - name: Check if CHANGELOG.md actually changed
+        id: file_changed
         run: |
-          git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=YES" >> $GITHUB_ENV
-          echo "File changed: ${{ env.changed }}"
+          # Show the diff for debugging
+          git diff -- "${GITHUB_WORKSPACE}/CHANGELOG.md"
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
+          # Check if file has unstaged changes
+          [ -n "$(git diff -- "${GITHUB_WORKSPACE}/CHANGELOG.md")" ] && file_changed="TRUE" || file_changed="FALSE"
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+          echo "File changed: $file_changed"
+          echo "changed=$file_changed" >> "$GITHUB_OUTPUT"
 
-      - name: Run pre-commit checks
-        if: env.changed == 'YES'
+      # Runs outside the checkout, so prettier and npx never load config files, plugins or binaries from the
+      # pull request.
+      - name: Format CHANGELOG.md with prettier
+        if: steps.file_changed.outputs.changed == 'TRUE'
+        working-directory: ${{ runner.temp }}/prettier
+        env:
+          PRETTIER: ${{ steps.trusted.outputs.prettier }}
         run: |
-          pre-commit run --all-files
+          cp "${GITHUB_WORKSPACE}/CHANGELOG.md" CHANGELOG.md
+          npx --yes "$PRETTIER" --config .prettierrc.yml --no-editorconfig --write CHANGELOG.md
+          cp CHANGELOG.md "${GITHUB_WORKSPACE}/CHANGELOG.md"
 
       - name: Commit and push changes
-        if: env.changed == 'YES'
+        if: steps.file_changed.outputs.changed == 'TRUE'
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
         run: |
+          gh auth setup-git
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
           git config push.default upstream
-          git add ${GITHUB_WORKSPACE}/CHANGELOG.md
+          git add "${GITHUB_WORKSPACE}/CHANGELOG.md"
           git status
           git commit -m "[automated] Update CHANGELOG.md"
           git push
+
+      - name: React if the changelog bot finished
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='hooray'
+
+      - name: React if the commenter is not allowed to trigger the bot
+        if: failure() && steps.verify.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='-1'
+
+      - name: React and comment if a step failed
+        if: failure() && steps.verify.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}/reactions" -f content='confused'
+          gh pr comment "$PR_NUMBER" --body "@${ACTOR} I tried to update the changelog, but it didn't work. Please update it manually.
+          See [CI log](${RUN_URL}) for more details."

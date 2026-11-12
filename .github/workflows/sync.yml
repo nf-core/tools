@@ -8,13 +8,6 @@ on:
         type: boolean
         description: Only run on nf-core/testpipeline?
         required: true
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
       force_pr:
         description: "Force a PR to be created"
         type: boolean
@@ -27,11 +20,19 @@ on:
         description: "Enable debug/verbose mode (true or false)"
         type: boolean
         default: false
+      blog_post:
+        description: "link to release blogpost"
+        type: string
+        required: true
 
 # Cancel if a newer run is started
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+# Pushes and pull requests use the nf-core-bot token; the default token only needs to read this repo.
+permissions:
+  contents: read
 
 jobs:
   get-pipelines:
@@ -39,37 +40,57 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      # Inputs and the fetched pipeline list go through env and jq, never into the script text, so a value can't run
+      # as code in this workflow, which holds the bot token.
       - id: set-matrix
+        env:
+          TESTPIPELINE: ${{ inputs.testpipeline }}
+          PIPELINE: ${{ inputs.pipeline }}
         run: |
-          if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
+          if [ "$TESTPIPELINE" == "true" ]; then
             echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
-          elif [ "${{ github.event.inputs.pipeline }}" != "all" ] && [ "${{ github.event.inputs.pipeline }}" != "" ]; then
-            curl -O https://nf-co.re/pipeline_names.json
-            # check if the pipeline exists
-            if ! grep -q "\"${{ github.event.inputs.pipeline }}\"" pipeline_names.json; then
-              echo "Pipeline ${{ github.event.inputs.pipeline }} does not exist"
-              exit 1
-            fi
-            echo '{"pipeline":["${{ github.event.inputs.pipeline }}"]}' > pipeline_names.json
           else
-            curl -O https://nf-co.re/pipeline_names.json
+            curl -fsSL -o all_pipelines.json https://nf-co.re/pipeline_names.json
+            if [ "$PIPELINE" != "all" ] && [ -n "$PIPELINE" ]; then
+              # check if the pipeline exists
+              if ! jq -e --arg p "$PIPELINE" '.pipeline | index($p)' all_pipelines.json > /dev/null; then
+                echo "::error::Pipeline '$PIPELINE' does not exist"
+                exit 1
+              fi
+              jq -c --arg p "$PIPELINE" '{pipeline: [$p]}' all_pipelines.json > pipeline_names.json
+            else
+              jq -c '{pipeline: .pipeline}' all_pipelines.json > pipeline_names.json
+            fi
           fi
-          echo "matrix=$(cat pipeline_names.json)" >> $GITHUB_OUTPUT
+          # Pipeline names end up in paths and repository names, so only allow plain names.
+          if ! jq -e '.pipeline | length > 0 and all(test("^[a-z0-9_-]+$"))' pipeline_names.json > /dev/null; then
+            echo "::error::Unexpected pipeline name in: $(cat pipeline_names.json)"
+            exit 1
+          fi
+          echo "matrix=$(jq -c . pipeline_names.json)" >> "$GITHUB_OUTPUT"
 
   sync:
     needs: get-pipelines
-    # use the github runner on release otherwise use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-    runs-on: ${{github.event_name == 'release' && 'self-hosted' || github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-sync
+      - runner=4cpu-linux-x64
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
+    env:
+      PIPELINE: ${{ matrix.pipeline }}
+      BLOG_POST: ${{ inputs.blog_post }}
+      VERBOSE: ${{ inputs.debug && '--verbose' || '' }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out nf-core/tools
         with:
           ref: ${{ github.ref_name }}
+          persist-credentials: false
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      # The bot token stays in this checkout's git config: `nf-core pipelines sync` pushes with plain `git push`. The only
+      # artifact this job uploads is the sync log, never the checkout.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7 # zizmor: ignore[artipacked]
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -78,52 +99,71 @@ jobs:
           path: nf-core/${{ matrix.pipeline }}
           fetch-depth: "0"
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: "3.12"
+          python-version: "3.15"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
 
       - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
+        run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
         with:
-          version: "latest-everything"
-
-      - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
-
-        run: |
-          pushd nf-core/${{ matrix.pipeline }}
-          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
-          if [ -z "$defaultBranch" ]; then
-            defaultBranch="master"
-          fi
-          popd
-          echo "Default branch: $defaultBranch"
-          echo "defaultBranch=$defaultBranch" >> GITHUB_OUTPUT
-          git config --global init.defaultBranch $defaultBranch
+          version: "25.10.4"
 
       - name: Run synchronisation
+        id: sync
         if: github.repository == 'nf-core/tools'
+        continue-on-error: true
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
-            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
-            pipelines sync -d nf-core/${{ matrix.pipeline }} \
+          # $VERBOSE is unquoted on purpose: when empty, it must add no argument at all.
+          # shellcheck disable=SC2086
+          uv run nf-core --log-file "sync_log_${PIPELINE}.txt" \
+            $VERBOSE \
+            pipelines sync -d "nf-core/${PIPELINE}" \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
-            --github-repository nf-core/${{ matrix.pipeline }}
+            --github-repository "nf-core/${PIPELINE}" \
+            --blog-post "$BLOG_POST"
+
+      - name: Install newer Nextflow (retry fallback)
+        if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: "26.04.6"
+
+      - name: Retry synchronisation with newer Nextflow
+        if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+        run: |
+          git config --global user.email "core@nf-co.re"
+          git config --global user.name "nf-core-bot"
+          # $VERBOSE is unquoted on purpose: when empty, it must add no argument at all.
+          # shellcheck disable=SC2086
+          uv run nf-core --log-file "sync_log_${PIPELINE}.txt" \
+            $VERBOSE \
+            pipelines sync -d "nf-core/${PIPELINE}" \
+            --from-branch dev \
+            --pull-request \
+            --username nf-core-bot \
+            --github-repository "nf-core/${PIPELINE}" \
+            --blog-post "$BLOG_POST"
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

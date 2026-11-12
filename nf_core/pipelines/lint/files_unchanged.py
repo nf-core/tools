@@ -1,11 +1,8 @@
 import filecmp
 import logging
-import os
-import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Union
 
 import yaml
 
@@ -14,7 +11,7 @@ import nf_core.pipelines.create.create
 log = logging.getLogger(__name__)
 
 
-def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
+def files_unchanged(self) -> dict[str, list[str] | bool]:
     """Checks that certain pipeline files are not modified from template output.
 
     Iterates through the pipeline's directory content and compares specified files
@@ -26,13 +23,12 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         .gitattributes
         .prettierrc.yml
         .github/.dockstore.yml
-        .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
-        .github/workflows/linting_comment.yml
+        .github/workflows/pr-comment.yml
         .github/workflows/linting.yml
         assets/email_template.html
         assets/email_template.txt
@@ -61,28 +57,26 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
 
     """
 
-    passed: List[str] = []
-    failed: List[str] = []
-    warned: List[str] = []
-    ignored: List[str] = []
-    fixed: List[str] = []
+    passed: list[str] = []
+    failed: list[str] = []
+    warned: list[str] = []
+    ignored: list[str] = []
+    fixed: list[str] = []
     could_fix: bool = False
 
     # Check that we have the minimum required config
-    required_pipeline_config = {
-        "manifest.name",
-        "manifest.description",
-    }  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
-    missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
+    manifest_config = self.nf_config.get("manifest", {})
+    missing_pipeline_config = {k for k in ("name", "description", "contributors") if not manifest_config.get(k)}
     if missing_pipeline_config:
-        return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
+        missing_keys = {f"manifest.{k}" for k in missing_pipeline_config}
+        return {"ignored": [f"Required pipeline config not found - {missing_keys}"]}
     try:
-        prefix, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+        prefix, short_name = manifest_config.get("name", "").split("/")
     except ValueError:
         log.warning(
             "Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is <pipeline> and default to repo 'nf-core'"
         )
-        short_name = self.nf_config["manifest.name"].strip("\"'")
+        short_name = manifest_config.get("name", "")
         prefix = "nf-core"
 
     # NB: Should all be files, not directories
@@ -93,13 +87,12 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         [Path("CODE_OF_CONDUCT.md")],
         [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path(".github", ".dockstore.yml")],
-        [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
         [Path(".github", "workflows", "branch.yml")],
-        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "pr-comment.yml")],
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
         [Path("assets", "email_template.txt")],
@@ -121,16 +114,19 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     tmp_dir.mkdir(parents=True)
 
     # Create a template.yaml file for the pipeline creation
-    if "manifest.author" in self.nf_config:
-        names = self.nf_config["manifest.author"].strip("\"'")
-    if "manifest.contributors" in self.nf_config:
-        contributors = self.nf_config["manifest.contributors"]
-        names = ", ".join(re.findall(r"name:'([^']+)'", contributors))
+    contributors = manifest_config.get("contributors", [])
+    if contributors:
+        names = ", ".join(c.get("name", "") for c in contributors if c.get("name"))
+    else:
+        names = manifest_config.get("author", "")
+    # Render the comparison with the pipeline's skipped features, so feature-dependent template content matches
+    skip_features = self.template_config.skip_features if self.template_config else None
     template_yaml = {
         "name": short_name,
-        "description": self.nf_config["manifest.description"].strip("\"'"),
+        "description": manifest_config.get("description", ""),
         "author": names,
         "org": prefix,
+        "skip_features": skip_features or [],
     }
 
     template_yaml_path = Path(tmp_dir, "template.yaml")
@@ -142,14 +138,16 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     create_obj = nf_core.pipelines.create.create.PipelineCreate(
         None, None, None, no_git=True, outdir=test_pipeline_dir, template_config=template_yaml_path
     )
-    create_obj.init_pipeline()
+    # Only render the template files: building the RO-Crate is not needed for the comparison and needs network access
+    create_obj.render_template()
+    create_obj.format_written_files()
 
     # Helper functions for file paths
-    def _pf(file_path: Union[str, Path]) -> Path:
+    def _pf(file_path: str | Path) -> Path:
         """Helper function - get file path for pipeline file"""
         return Path(self.wf_path, file_path)
 
-    def _tf(file_path: Union[str, Path]) -> Path:
+    def _tf(file_path: str | Path) -> Path:
         """Helper function - get file path for template file"""
         return Path(test_pipeline_dir, file_path)
 
@@ -158,11 +156,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # Files that must be completely unchanged from template
     for files in files_exact:
         # Ignore if file specified in linting config
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in files]):
+        elif not any(_pf(f).is_file() for f in files):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
@@ -172,8 +170,8 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if f.name.endswith(".png") and int(os.stat(_pf(f)).st_size / 500) == int(
-                            os.stat(_tf(f)).st_size / 500
+                        if f.name.endswith(".png") and int(_pf(f).stat().st_size / 500) == int(
+                            _tf(f).stat().st_size / 500
                         ):
                             # almost the same file, good enough for the logo
                             log.debug(f"Files are almost the same. Will pass: {f}")
@@ -198,11 +196,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        if any([str(f) in ignore_files for f in files]):
+        if any(str(f) in ignore_files for f in files):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in files]):
+        elif not any(_pf(f).is_file() for f in files):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents

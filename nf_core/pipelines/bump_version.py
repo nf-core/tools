@@ -5,7 +5,6 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import rich.console
 from ruamel.yaml import YAML
@@ -27,8 +26,8 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version (str): The new version tag for the pipeline. Semantic versioning only.
     """
 
-    # Collect the old and new version numbers
-    current_version = pipeline_obj.nf_config.get("manifest.version", "").strip(" '\"")
+    manifest = pipeline_obj.nf_config.get("manifest", {})
+    current_version = manifest.get("version", "") or ""
     if new_version.startswith("v"):
         log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
@@ -100,8 +99,8 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["report_comment"],
     )
     # nf-test snap files
-    pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
-    snap_files = [f for f in Path().glob("tests/pipeline/*.snap")]
+    pipeline_name = manifest.get("name", "")
+    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in pipeline_obj.wf_path.glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
             snap_file,
@@ -112,6 +111,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                     f"{pipeline_name}={new_version}",
                 )
             ],
+            required=False,
         )
     # .nf-core.yml - pipeline version
     # update entry: version: 1.0.0dev, but not `nf_core_version`, or `bump_version`
@@ -128,6 +128,33 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["template", "version"],
     )
 
+    # SVG files in docs/images/ - version badges
+    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in pipeline_obj.wf_path.glob("docs/images/*.svg")]
+    for svg_file in svg_files:
+        update_file_version(
+            svg_file,
+            pipeline_obj,
+            [
+                (
+                    rf"(>v?){re.escape(current_version)}(<)",
+                    rf"\g<1>{new_version}\g<2>",
+                )
+            ],
+            required=False,
+        )
+        # Throw a warning if PDF or PNG versions of the SVG exist
+        svg_path = pipeline_obj._fp(svg_file)
+        if svg_path.exists():
+            png_path = svg_path.with_suffix(".png")
+            if png_path.exists():
+                # Future idea, add SVG to PNG conversion here
+                log.warning(f"PNG file exists: {png_path}. Please export the bumped SVG manually to PNG.")
+
+            pdf_path = svg_path.with_suffix(".pdf")
+            if pdf_path.exists():
+                # Future idea, add SVG to PDF conversion here
+                log.warning(f"PDF file exists: {pdf_path}. Please export the bumped SVG manually to PDF.")
+
     # update rocrate if ro-crate is present
     if Path(pipeline_obj.wf_path, "ro-crate-metadata.json").exists():
         ROCrate(pipeline_obj.wf_path).update_rocrate()
@@ -142,8 +169,8 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version (str): The new version tag for the required Nextflow version.
     """
 
-    # Collect the old and new version numbers - strip leading non-numeric characters (>=)
-    current_version = pipeline_obj.nf_config.get("manifest.nextflowVersion", "").strip(" '\"")
+    manifest = pipeline_obj.nf_config.get("manifest", {})
+    current_version = manifest.get("nextflowVersion", "") or ""
     current_version = re.sub(r"^[^0-9\.]*", "", current_version)
     new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:
@@ -162,9 +189,9 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         ],
     )
 
-    # .github/workflows/ci.yml - Nextflow version matrix
+    # .github/workflows/nf-test.yml - Nextflow version matrix
     update_file_version(
-        Path(".github", "workflows", "ci.yml"),
+        Path(".github", "workflows", "nf-test.yml"),
         pipeline_obj,
         [
             (
@@ -175,7 +202,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 new_version,
             )
         ],
-        yaml_key=["jobs", "test", "strategy", "matrix", "NXF_VER"],
+        yaml_key=["jobs", "nf-test", "strategy", "matrix", "NXF_VER"],
     )
 
     # README.md - Nextflow version badge
@@ -192,13 +219,28 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         False,
     )
 
+    # fix-linting.yml - Nextflow version matrix
+    update_file_version(
+        Path(".github", "workflows", "fix-linting.yml"),
+        pipeline_obj,
+        [
+            (
+                # example:
+                # nextflow-versions: '["25.10.4","latest-everything"]'
+                current_version,
+                new_version,
+            )
+        ],
+        yaml_key=["jobs", "fix-linting", "with", "nextflow-versions"],
+    )
+
 
 def update_file_version(
-    filename: Union[str, Path],
+    filename: str | Path,
     pipeline_obj: Pipeline,
-    patterns: List[Tuple[str, str]],
+    patterns: list[tuple[str, str]],
     required: bool = True,
-    yaml_key: Optional[List[str]] = None,
+    yaml_key: list[str] | None = None,
 ) -> None:
     """
     Updates a file with a new version number.
@@ -210,7 +252,7 @@ def update_file_version(
         patterns (List[Tuple[str, str]]): A list of tuples containing the regex patterns to
             match and the replacement strings.
         required (bool, optional): Whether the file is required to exist. Defaults to `True`.
-        yaml_key (Optional[List[str]], optional): The YAML key to update. Defaults to `None`.
+        yaml_key (List[str] | None, optional): The YAML key to update. Defaults to `None`.
     """
     fn: Path = pipeline_obj._fp(filename)
 
@@ -224,7 +266,7 @@ def update_file_version(
         update_text_file(fn, patterns, required)
 
 
-def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[str], required: bool):
+def update_yaml_file(fn: Path, patterns: list[tuple[str, str]], yaml_key: list[str], required: bool):
     """
     Updates a YAML file with a new version number.
 
@@ -237,6 +279,7 @@ def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[s
     """
     yaml = YAML()
     yaml.preserve_quotes = True
+    yaml.width = 4096  # Prevent line wrapping
     with open(fn) as file:
         yaml_content = yaml.load(file)
 
@@ -259,6 +302,7 @@ def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[s
         if new_value != current_value:
             target[last_key] = new_value
             with open(fn, "w") as file:
+                yaml.indent(mapping=2, sequence=4, offset=2)  # from https://stackoverflow.com/a/44389139/1696643
                 yaml.dump(yaml_content, file)
             log.info(f"Updated version in YAML file '{fn}'")
             log_change(str(current_value), str(new_value))
@@ -266,7 +310,7 @@ def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[s
         handle_error(f"Could not find key {e} in the YAML structure of {fn}", required)
 
 
-def update_text_file(fn: Path, patterns: List[Tuple[str, str]], required: bool):
+def update_text_file(fn: Path, patterns: list[tuple[str, str]], required: bool):
     """
     Updates a text file with a new version number.
 
@@ -288,7 +332,7 @@ def update_text_file(fn: Path, patterns: List[Tuple[str, str]], required: bool):
             updated = True
             log.info(f"Updated version in '{fn}'")
             log.debug(f"Replaced pattern '{pattern}' with '{replacement}' {count} times")
-        elif required:
+        else:
             handle_error(f"Could not find version number in {fn}: `{pattern}`", required)
 
     if updated:
@@ -307,7 +351,7 @@ def log_change(old_content: str, new_content: str):
     old_lines = old_content.splitlines()
     new_lines = new_content.splitlines()
 
-    for old_line, new_line in zip(old_lines, new_lines):
+    for old_line, new_line in zip(old_lines, new_lines, strict=False):
         if old_line != new_line:
             stderr.print(f"          [red] - {old_line.strip()}", highlight=False)
             stderr.print(f"          [green] + {new_line.strip()}", highlight=False)

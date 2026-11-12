@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Union
 
 from rich import box
 from rich.console import Console, Group, RenderableType
@@ -188,7 +187,7 @@ class ComponentsDiffer:
                 elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                     # The file was removed between the commits
                     fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
-                elif limit_output and not file.suffix == ".nf":
+                elif limit_output and file.suffix != ".nf":
                     # Skip printing the diff for files other than main.nf
                     fh.write(f"Changes in '{Path(component, file)}' but not shown\n")
                 else:
@@ -236,16 +235,16 @@ class ComponentsDiffer:
 
     @staticmethod
     def print_diff(
-        component,
-        repo_path,
-        from_dir,
-        to_dir,
-        current_version=None,
-        new_version=None,
-        dsp_from_dir=None,
-        dsp_to_dir=None,
-        limit_output=False,
-    ):
+        component: str,
+        repo_path: str,
+        from_dir: str | Path,
+        to_dir: str | Path,
+        current_version: str | None = None,
+        new_version: str | None = None,
+        dsp_from_dir: str | Path | None = None,
+        dsp_to_dir: str | Path | None = None,
+        limit_output: bool = False,
+    ) -> None:
         """
         Prints the diffs between two component versions to the terminal
 
@@ -287,7 +286,7 @@ class ComponentsDiffer:
             elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
                 log.info(f"'{Path(dsp_from_dir, file)}' was removed")
-            elif limit_output and not file.suffix == ".nf":
+            elif limit_output and file.suffix != ".nf":
                 # Skip printing the diff for files other than main.nf
                 log.info(f"Changes in '{Path(component, file)}' but not shown")
             else:
@@ -296,19 +295,19 @@ class ComponentsDiffer:
                 # Pretty print the diff using the pygments diff lexer
                 syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
                 panel_group.append(Panel(syntax, title=str(file), title_align="left", padding=0))
-            console.print(
-                Panel(
-                    Group(*panel_group),
-                    title=f"[white]{str(component)}[/white]",
-                    title_align="left",
-                    padding=0,
-                    border_style="blue",
-                    box=box.HEAVY,
-                )
+        console.print(
+            Panel(
+                Group(*panel_group),
+                title=f"[white]{str(component)}[/white]",
+                title_align="left",
+                padding=0,
+                border_style="blue",
+                box=box.HEAVY,
             )
+        )
 
     @staticmethod
-    def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
+    def per_file_patch(patch_fn: str | Path) -> dict[str, list[str]]:
         """
         Splits a patch file for several files into one patch per file.
 
@@ -324,7 +323,7 @@ class ComponentsDiffer:
 
         patches = {}
         i = 0
-        patch_lines: List[str] = []
+        patch_lines: list[str] = []
         key = "preamble"
         while i < len(lines):
             line = lines[i]
@@ -466,11 +465,11 @@ class ComponentsDiffer:
     def try_apply_patch(
         component_type: str,
         component: str,
-        repo_path: Union[str, Path],
-        patch_path: Union[str, Path],
+        repo_path: str | Path,
+        patch_path: str | Path,
         component_dir: Path,
         reverse: bool = False,
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """
         Try applying a full patch file to a module or subworkflow
 

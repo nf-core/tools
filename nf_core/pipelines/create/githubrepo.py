@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 from pathlib import Path
@@ -6,6 +7,7 @@ from textwrap import dedent
 import git
 import yaml
 from github import Github, GithubException, UnknownObjectException
+from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
@@ -56,7 +58,7 @@ class GithubRepo(Screen):
             yield TextInput(
                 "token",
                 "GitHub token",
-                "Your GitHub [link=https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens]personal access token[/link] for login.",
+                Text.from_markup("Your GitHub [link=https://shorturl.at/RKJzS]personal access token[/link] for login."),
                 default=gh_token if gh_token is not None else "GitHub token",
                 password=True,
                 classes="column",
@@ -133,13 +135,13 @@ class GithubRepo(Screen):
             org = None
             # Make sure that the authentication was successful
             try:
-                user.login
-                log.debug("GitHub authentication successful")
-            except GithubException:
+                user_name = user.login
+                log.debug(f"GitHub authentication successful for user '{user_name}'")
+            except GithubException as e:
                 raise UserWarning(
                     f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
                     "Please make sure that the provided user name and token are correct."
-                )
+                ) from e
 
             # Check if organisation exists
             # If the organisation is nf-core or it doesn't exist, the repo will be created in the user account
@@ -150,7 +152,7 @@ class GithubRepo(Screen):
                         f"Repo will be created in the GitHub organisation account '{github_variables['repo_org']}'"
                     )
                 except UnknownObjectException:
-                    log.warn(f"Provided organisation '{github_variables['repo_org']}' not found. ")
+                    log.warning(f"Provided organisation '{github_variables['repo_org']}' not found. ")
 
             # Create the repo
             try:
@@ -198,8 +200,8 @@ class GithubRepo(Screen):
             repo = org.get_repo(repo_name)
             # Check if it has a commit history
             try:
-                repo.get_commits().totalCount
-                raise UserWarning(f"GitHub repository '{repo_name}' already exists")
+                n = repo.get_commits().totalCount
+                raise UserWarning(f"GitHub repository '{repo_name}' already exists, with {n} commits")
             except GithubException:
                 # Repo is empty
                 repo_exists = True
@@ -218,12 +220,9 @@ class GithubRepo(Screen):
             log.info(f"GitHub repository '{repo_name}' created successfully")
             remove_hide_class(self.parent, "close_app")
 
-        # Add the remote
-        try:
+        # Add the remote (if it doesn't already exist)
+        with contextlib.suppress(git.exc.GitCommandError):
             pipeline_repo.create_remote("origin", repo.clone_url)
-        except git.exc.GitCommandError:
-            # Remote already exists
-            pass
         # Push all branches
         pipeline_repo.remotes.origin.push(all=True).raise_if_error()
 
@@ -238,8 +237,8 @@ class GithubRepo(Screen):
         gh_user = None
         gh_token = None
         # Use gh CLI config if installed
-        gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
-        if os.path.exists(gh_cli_config_fn):
+        gh_cli_config_fn = Path.home() / ".config" / "gh" / "hosts.yml"
+        if gh_cli_config_fn.exists():
             try:
                 with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)

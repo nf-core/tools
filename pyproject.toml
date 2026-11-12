@@ -1,11 +1,107 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=40.6.0", "wheel"]
+requires = ["setuptools>=77"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nf_core*"]
+
+[tool.setuptools.package-data]
+nf_core = ["**/*"]
+
+[project]
+name = "nf-core"
+version = "4.3.0dev"
+description = "Helper tools for use with nf-core Nextflow pipelines."
+readme = "README.md"
+license = "MIT"
+keywords = [
+    "nf-core",
+    "nextflow",
+    "bioinformatics",
+    "workflow",
+    "pipeline",
+    "biology",
+    "sequencing",
+    "NGS",
+    "next generation sequencing",
+]
+authors = [
+    {name = "Phil Ewels", email = "phil.ewels@scilifelab.se"}
+]
+requires-python = ">=3.11, <4"
+dependencies = [
+    "click",
+    "filetype",
+    "GitPython",
+    "PyGithub",
+    "jinja2",
+    "jsonschema>=4.0",
+    "markdown>=3.3",
+    "packaging",
+    "pillow",
+    "prek",
+    "prompt_toolkit<=3.0.52",
+    "pydantic>=2.2.1",
+    "pyyaml",
+    "questionary>=2.0.1",
+    "refgenie",
+    "requests",
+    "requests_cache",
+    "rich-click==1.9.*",
+    "rich>=13.3.1",
+    "rocrate",
+    "repo2rocrate",
+    "tabulate",
+    "textual==8.2.8",
+    "trogon",
+    "pdiff",
+    "ruamel.yaml",
+    "pathspec>=1.1.1",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.0.0",
+    "myst_parser",
+    "pytest-cov",
+    "pytest-datafiles",
+    "responses",
+    "ruff",
+    "Sphinx",
+    "sphinx-rtd-theme",
+    "textual-dev==1.8.0",
+    "types-PyYAML",
+    "types-requests",
+    "types-jsonschema",
+    "types-Markdown",
+    "pytest-asyncio",
+    "pytest-clarity>=1.0.1",
+    "pytest-codspeed>=5.0.3",
+    "pytest-sugar>=1.1.1",
+    "pytest-textual-snapshot==1.1.0",
+    "pytest-xdist>=3.7.0",
+    "pytest>=8.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/nf-core/tools"
+Documentation = "https://nf-co.re/docs/nf-core-tools"
+Repository = "https://github.com/nf-core/tools"
+Changelog = "https://github.com/nf-core/tools/blob/main/CHANGELOG.md"
+
+[project.scripts]
+nf-core = "nf_core.__main__:run_nf_core"
+
+[project.entry-points."refgenie.hooks.post_update"]
+nf-core-refgenie = "nf_core.pipelines.refgenie:update_config"
 
 [tool.pytest.ini_options]
-markers = ["datafiles: load datafiles"]
+markers = ["datafiles: load datafiles", "integration"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 norecursedirs = [
     ".*",
     "build",
@@ -18,13 +114,35 @@ norecursedirs = [
     "docs",
 ]
 
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py38"
+target-version = "py311"
 cache-dir = "~/.cache/ruff"
 
 [tool.ruff.lint]
-select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
+select = [
+    "I",                     # isort
+    "E1", "E4", "E7", "E9","E902",  # pycodestyle errors (partial)
+    "F",                     # pyflakes
+    "UP",                    # pyupgrade
+    "N",                     # pep8-naming
+    "B",                     # flake8-bugbear - catches common bugs and design problems
+    "RSE",                   # flake8-raise - unnecessary parentheses on raised exceptions
+    "PTH",                   # flake8-use-pathlib - prefer pathlib over os.path
+    "SIM",                   # flake8-simplify - simplifies code patterns
+    "C4",                    # flake8-comprehensions - better list/dict/set comprehensions
+    "BLE",                   # flake8-blind-except - catches blind except clauses
+    "W",                     # pycodestyle warnings
+    "A",                     # flake8-builtins - catches shadowing of Python builtins
+    "PIE",                   # flake8-pie - misc lints for common issues
+]
+ignore = ["PTH123", "PIE790"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["nf_core"]

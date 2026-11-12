@@ -33,12 +33,13 @@ nextflow_workflow {
                 """
             }
         }
-
         then {
+            assert workflow.success
             assertAll(
-                { assert workflow.success},
-                { assert snapshot(workflow.out).match()}
-                //TODO nf-core: Add all required assertions to verify the test output.
+                { assert snapshot(
+                    workflow.out
+                    //TODO nf-core: Add all required assertions to verify the test output.
+                ).match() }
             )
         }
     }
