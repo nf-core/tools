@@ -1,0 +1,148 @@
+"""Apple Container fetcher for nf-core download."""
+
+import logging
+import shutil
+from collections.abc import Iterable
+from pathlib import Path
+
+import rich.console
+
+import nf_core.utils
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher
+from nf_core.pipelines.download.docker import DockerFetcher
+from nf_core.pipelines.download.utils import copy_container_load_scripts
+from nf_core.utils import ContainerRegistryUrls
+
+log = logging.getLogger(__name__)
+stderr = rich.console.Console(
+    stderr=True,
+    highlight=False,
+    force_terminal=nf_core.utils.rich_force_colors(),
+)
+
+
+class AppleContainerFetcher(DockerFetcher):
+    """
+    Fetcher for Apple Container images.
+
+    The cleanup step writes an Apple-Container-specific load script.
+    """
+
+    # The `container` CLI reports failures as `Error: ...` lines, not with Docker's daemon messages
+    error_markers: tuple[str, ...] = ("Error:",)
+
+    def __init__(
+        self,
+        outdir: Path,
+        container_library: Iterable[str],
+        registry_set: Iterable[str],
+        parallel: int = 4,
+        hide_progress: bool = False,
+        image_arch: str = "linux/amd64",
+    ):
+        super().__init__(
+            outdir=outdir,
+            container_library=container_library,
+            registry_set=registry_set,
+            parallel=parallel,
+            hide_progress=hide_progress,
+        )
+        # Override the container output directory name
+        self._container_output_dir = outdir / "apple-container-images"
+        self.image_arch = image_arch
+
+    def check_and_set_implementation(self) -> None:
+        """
+        Check that the Apple Container CLI is installed and its system services are running.
+        """
+        container_binary = shutil.which("container")
+        if not container_binary:
+            raise OSError(
+                "Apple Container CLI ('container') is needed to pull images, "
+                "but it is not installed or not in $PATH.\n"
+                "See: https://github.com/apple/container"
+            )
+
+        try:
+            nf_core.utils.run_cmd(container_binary, "system status")
+        except RuntimeError as e:
+            raise OSError(
+                "Apple Container system services are required to pull images, but they are not running.\n"
+                "Start them with: container system start"
+            ) from e
+
+        self.implementation = "apple container"
+
+    def construct_pull_command(self, address: str) -> list[str]:
+        """
+        Construct the command to pull an image using Apple Container CLI.
+
+        Args:
+            address (str): The address of the container to pull.
+        """
+        pull_command = ["container", "image", "pull", "--platform", self.image_arch, address]
+        log.debug(f"Apple Container command: {' '.join(pull_command)}")
+        return pull_command
+
+    def construct_save_command(self, output_path: Path, address: str) -> list[str]:
+        """
+        Construct the command to save an image using Apple Container CLI.
+
+        Args:
+            output_path (Path): The path to save the container image.
+            address (str): The address of the container to save.
+        """
+        save_command = [
+            "container",
+            "image",
+            "save",
+            "--platform",
+            self.image_arch,
+            "--output",
+            str(output_path),
+            address,
+        ]
+        log.debug(f"Apple Container command: {' '.join(save_command)}")
+        return save_command
+
+    def gather_registries(self, workflow_directory: Path) -> set[str]:
+        """
+        Gather the registries for Apple Container downloads.
+
+        Checks ``appleContainer.registry``, ``docker.registry``, and
+        ``podman.registry`` keys from the workflow configuration.
+        """
+        registry_set = self.base_registry_set.copy()
+        configured_registry_keys = ["appleContainer.registry", "docker.registry", "podman.registry"]
+
+        registry_set |= self.gather_config_registries(
+            workflow_directory,
+            configured_registry_keys,
+        )
+
+        # Add the Seqera Docker container registry
+        registry_set.add(ContainerRegistryUrls.SEQERA_DOCKER.value)
+        return registry_set
+
+    def cleanup(self) -> None:
+        """
+        Write the Apple Container load message (skipping the Docker-specific one).
+        """
+        # Call the grandparent cleanup directly to skip DockerFetcher.cleanup()
+        ContainerFetcher.cleanup(self)
+        self._write_apple_container_load_message()
+
+    def _write_apple_container_load_message(self) -> None:
+        """
+        Inform the user how to load downloaded images into Apple Container.
+        """
+        img_dir = self.get_container_output_dir()
+        apple_load_script, _ = copy_container_load_scripts("appleContainer", img_dir)
+        indent = "    "
+        stderr.print(
+            "\n"
+            f"{indent}Downloaded container images written to [magenta]'{img_dir}'[/].\n"
+            f"{indent}After copying the pipeline and images to the target macOS machine, run\n\n"
+            f"{indent}{indent}[green]./{apple_load_script}[/]\n\n"
+            f"{indent}inside [magenta]'{img_dir}'[/] to load the images into Apple Container.\n"
+        )
