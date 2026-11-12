@@ -31,7 +31,7 @@ def modules_list_remote(ctx: click.Context, keywords: tuple[str, ...], json: boo
         sys.exit(1)
 
 
-def modules_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
+def modules_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:
     """
     List modules installed locally in a pipeline
     """
@@ -377,7 +377,7 @@ def modules_bump_versions(
         sys.exit(1)
 
 
-def modules_containers_create(ctx: click.Context, module: str, directory: Path, force: bool) -> None:
+def modules_containers_create(ctx: click.Context, module: str | None, directory: Path, force: bool) -> None:
     """
     Build docker and singularity containers for linux/arm64 and linux/amd64 using wave.
     """

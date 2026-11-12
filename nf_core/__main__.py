@@ -74,7 +74,8 @@ def normalize_case(ctx: click.Context, param: click.Parameter, component_name: s
     return component_name.casefold() if component_name is not None else None
 
 
-def run_nf_core() -> None:  # print nf-core header if environment variable is not set
+def run_nf_core() -> None:
+    # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
         stderr.print("\n")
@@ -629,7 +630,7 @@ def command_pipelines_list(
     default="",
 )
 @click.pass_context
-def rocrate(ctx: click.Context, pipeline_dir: Path, json_path: Path, zip_path: Path, pipeline_version: str) -> None:
+def rocrate(ctx: click.Context, pipeline_dir: Path, json_path: Path, zip_path: Path | None, pipeline_version: str) -> None:
     """
     Make an Research Object Crate
     """
@@ -813,7 +814,6 @@ def pipeline_schema() -> None:
     shell_complete=autocomplete_pipelines,
 )
 @click.argument("params", type=click.Path(exists=True, path_type=Path), required=True, metavar="<JSON params file>")
-# click fills the optional `pipeline` first, so it is always set once `params` is
 def command_pipelines_schema_validate(directory: Path, pipeline: str, params: Path) -> None:
     """
     Validate a set of parameters against a pipeline schema.
@@ -1591,7 +1591,7 @@ def modules_containers(ctx: click.Context) -> None:
     default=False,
     help="Force container creation even if the container already exists.",
 )
-def command_modules_containers_create(ctx: click.Context, module: str, directory: Path, force: bool) -> None:
+def command_modules_containers_create(ctx: click.Context, module: str | None, directory: Path, force: bool) -> None:
     """
     Build docker and singularity container files for linux/arm64 and linux/amd64 with wave from environment.yml and create container config file.
     """
@@ -1610,7 +1610,7 @@ def command_modules_containers_create(ctx: click.Context, module: str, directory
     metavar="<module> or <module/submodule>",
     shell_complete=autocomplete_modules,
 )
-def command_modules_containers_conda_lock(ctx: click.Context, module: str) -> None:
+def command_modules_containers_conda_lock(ctx: click.Context, module: str | None) -> None:
     """
     Build a Docker linux/arm64 container and fetch the conda lock file for a module.
     """
@@ -1812,7 +1812,7 @@ def command_subworkflows_list_remote(ctx: click.Context, keywords: tuple[str, ..
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def command_subworkflows_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
+def command_subworkflows_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:
     """
     List subworkflows installed locally in a pipeline
     """

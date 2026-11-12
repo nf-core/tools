@@ -94,7 +94,7 @@ def subworkflows_list_remote(ctx: click.Context, keywords: tuple[str, ...], json
         sys.exit(1)
 
 
-def subworkflows_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:  # pylint: disable=redefined-builtin
+def subworkflows_list_local(ctx: click.Context, keywords: tuple[str, ...], json: bool, directory: Path) -> None:
     """
     List subworkflows installed locally in a pipeline
     """
