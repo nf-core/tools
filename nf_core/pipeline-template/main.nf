@@ -22,7 +22,7 @@ include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {%- if igenomes %}
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
+include { getGenomeAttribute      } from 'plugin/nf-core-utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +90,8 @@ workflow {
         params.monochrome_logs{% endif %},
         args,
         params.outdir,
-        params.input{% if nf_schema %},
+        params.input,
+        params{% if nf_schema %},
         params.help,
         params.help_full,
         params.show_hidden{% endif %}

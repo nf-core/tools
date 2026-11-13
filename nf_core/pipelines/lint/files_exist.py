@@ -40,7 +40,6 @@ def files_exist(self) -> dict[str, list[str]]:
         assets/email_template.html
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo_light.png
-        assets/sendmail_template.txt
         conf/modules.config
         conf/test.config
         conf/test_full.config
@@ -153,7 +152,6 @@ def files_exist(self) -> dict[str, list[str]]:
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
         [Path("assets", "email_template.txt")],
-        [Path("assets", "sendmail_template.txt")],
         [Path("assets", f"nf-core-{short_name}_logo_light.png")],
         [Path("conf", "modules.config")],
         [Path("conf", "test.config")],
