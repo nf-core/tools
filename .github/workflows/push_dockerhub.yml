@@ -12,53 +12,35 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-jobs:
-  push_dockerhub:
-    name: Push new Docker image to Docker Hub
-    runs-on: ubuntu-latest
-    if: ${{ github.repository == 'nf-core/tools' }}
-    env:
-      TARGET_PLATFORM: "linux/amd64,linux/arm64"
-    steps:
-      # Free up disk space on GitHub Actions runner (only for dev builds)
-      - name: Free Disk Space (Ubuntu)
-        if: github.event_name == 'push'
-        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
-        with:
-          tool-cache: true
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+env:
+  VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || 'dev' }}
 
+jobs:
+  # Each image/arch is built natively in parallel (no QEMU), pushed under an arch-suffixed tag,
+  # then merged into multi-arch tags by the merge_* jobs.
+  build_tools:
+    name: Build nfcore/tools (${{ matrix.arch }})
+    if: ${{ github.repository == 'nf-core/tools' }}
+    runs-on: ${{ matrix.runner }}
+    strategy: &arch-matrix
+      matrix:
+        include:
+          - { arch: amd64, platform: linux/amd64, runner: ubuntu-latest }
+          - { arch: arm64, platform: linux/arm64, runner: ubuntu-26.04-arm }
+    steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Set up QEMU for multi-architecture build
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
-
-      - name: Set up Docker Buildx
+      - &setup-buildx
+        name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      - name: Log in to Docker Hub
+      - &login
+        name: Log in to Docker Hub
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
-
-      # Determine Docker tags based on trigger
-      - name: Set Docker tags
-        id: tags
-        run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            echo "TOOLS_TAGS=-t nfcore/tools:${{ github.event.release.tag_name }} -t nfcore/tools:latest" >> $GITHUB_OUTPUT
-            echo "DEVCONTAINER_TAGS=${{ github.event.release.tag_name }},latest" >> $GITHUB_OUTPUT
-          else
-            echo "TOOLS_TAGS=-t nfcore/tools:dev" >> $GITHUB_OUTPUT
-            echo "DEVCONTAINER_TAGS=dev" >> $GITHUB_OUTPUT
-          fi
 
       # Retry building tools image (for 403 errors with nf-test)
       - name: Build and push nfcore/tools image
@@ -69,16 +51,71 @@ jobs:
           retry_wait_seconds: 60
           command: |
             docker buildx build \
-              --platform ${{ env.TARGET_PLATFORM }} \
-              ${{ steps.tags.outputs.TOOLS_TAGS }} \
+              --platform ${{ matrix.platform }} \
+              -t nfcore/tools:${{ env.VERSION }}-${{ matrix.arch }} \
               --push --no-cache .
+
+  build_devcontainer:
+    name: Build nfcore/devcontainer (${{ matrix.arch }})
+    if: ${{ github.repository == 'nf-core/tools' }}
+    runs-on: ${{ matrix.runner }}
+    strategy: *arch-matrix
+    steps:
+      # large-packages is skipped: it is the slowest cleanup and the rest frees enough space
+      - name: Free Disk Space (Ubuntu)
+        if: github.event_name == 'push'
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: true
+
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - *setup-buildx
+      - *login
 
       - name: Build and push nfcore/devcontainer image
         uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3
         with:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: nfcore/devcontainer
-          imageTag: ${{ steps.tags.outputs.DEVCONTAINER_TAGS }}
-          platform: ${{ env.TARGET_PLATFORM }}
+          imageTag: ${{ env.VERSION }}-${{ matrix.arch }}
+          platform: ${{ matrix.platform }}
           push: always
           noCache: true
+
+  # Separate merge jobs so each image publishes as soon as its own builds finish
+  merge_tools:
+    name: Publish nfcore/tools multi-arch tags
+    runs-on: ubuntu-latest
+    needs: build_tools
+    env:
+      IMAGE: nfcore/tools
+      LATEST: ${{ github.event_name == 'release' }}
+    steps:
+      - *login
+      - &merge
+        name: Create multi-arch manifest
+        run: |
+          tags=(-t "${IMAGE}:${VERSION}")
+          if [ "$LATEST" = true ]; then tags+=(-t "${IMAGE}:latest"); fi
+          docker buildx imagetools create "${tags[@]}" \
+            "${IMAGE}:${VERSION}-amd64" \
+            "${IMAGE}:${VERSION}-arm64"
+
+  merge_devcontainer:
+    name: Publish nfcore/devcontainer multi-arch tags
+    runs-on: ubuntu-latest
+    needs: build_devcontainer
+    env:
+      IMAGE: nfcore/devcontainer
+      LATEST: ${{ github.event_name == 'release' }}
+    steps:
+      - *login
+      - *merge
