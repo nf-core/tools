@@ -74,7 +74,7 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-sync
       - runner=4cpu-linux-x64
-      - image=ubuntu26-minimal-x64
+      - image=ubuntu24-minimal-x64
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
