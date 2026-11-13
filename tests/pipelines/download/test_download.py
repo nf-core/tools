@@ -390,6 +390,42 @@ class DownloadTest(unittest.TestCase):
 
     @mock.patch("nf_core.pipelines.download.download.run_cmd")
     @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_multiple_arch(self, mock_get_remote_workflows, mock_run_cmd):
+        """Each architecture runs inspect with its own profile and the containers are merged."""
+        amd64 = "oras://community.wave.seqera.io/library/fastqc:0.13.0--aadddbed09923ea6"
+        arm64 = "oras://community.wave.seqera.io/library/fastqc:0.13.0--f5a404ab2c13e090"
+
+        def _run_cmd_side_effect(_executable, cmd_params):
+            container = arm64 if "-profile singularity_arm" in cmd_params else amd64
+            payload = {"processes": [{"name": "FASTQC", "container": container}]}
+            return (json.dumps(payload).encode(), b"")
+
+        mock_run_cmd.side_effect = _run_cmd_side_effect
+        download_obj = DownloadWorkflow(container_system="singularity", container_arch=("amd64", "arm64"))
+
+        download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+        assert mock_run_cmd.call_count == 2
+        assert set(download_obj.containers) == {amd64, arm64}
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_find_container_images_raises_on_missing_arch_profile(self, mock_get_remote_workflows, mock_run_cmd):
+        mock_run_cmd.side_effect = CommandError(
+            "nextflow inspect", 1, stdout=b"Unknown configuration profile: 'docker_arm'\n", stderr=b""
+        )
+        download_obj = DownloadWorkflow(container_system="docker", container_arch="arm64")
+
+        with pytest.raises(DownloadError, match="no arm64 profile"):
+            download_obj.find_container_images(Path("workflow"), "dummy-revision")
+
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
+    def test_download_rejects_unknown_arch(self, mock_get_remote_workflows):
+        with pytest.raises(DownloadError, match="Unsupported container architecture"):
+            DownloadWorkflow(container_system="docker", container_arch="riscv64")
+
+    @mock.patch("nf_core.pipelines.download.download.run_cmd")
+    @mock.patch("nf_core.pipelines.list.Workflows.get_remote_workflows")
     def test_find_container_images_raises_on_unexpected_runtime_error(self, mock_get_remote_workflows, mock_run_cmd):
         download_obj = DownloadWorkflow(container_system="docker")
         mock_run_cmd.side_effect = RuntimeError("unexpected inspect failure")
