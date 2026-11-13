@@ -26,6 +26,7 @@
 - Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
 - remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
 - cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
+- skip `latest-everything` nf-test runs on PRs to `main`/`master` ([#4393](https://github.com/nf-core/tools/pull/4393))
 
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 
