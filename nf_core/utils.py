@@ -289,7 +289,6 @@ class Pipeline:
         conda_config (dict): The parsed conda configuration file content (``environment.yml``).
         conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
         nf_config (dict): The Nextflow pipeline configuration file content.
-        files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
         wf_path (str): Path to the pipeline directory.
@@ -304,7 +303,6 @@ class Pipeline:
         self.conda_config: dict = {}
         self.conda_package_info: dict = {}
         self.nf_config: dict = {}
-        self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
         self.wf_path = Path(wf_path).resolve()
@@ -346,32 +344,6 @@ class Pipeline:
     def _fp(self, fn: str | Path) -> Path:
         """Convenience function to get full path to a file in the pipeline"""
         return Path(self.wf_path, fn)
-
-    def list_files(self) -> list[Path]:
-        """Get a list of all files in the pipeline"""
-        import subprocess
-
-        files = []
-        try:
-            # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
-            for fn in git_ls_files:
-                full_fn = Path(self.wf_path) / fn.decode("utf-8")
-                if full_fn.is_file():
-                    files.append(full_fn)
-                else:
-                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-        except subprocess.CalledProcessError:
-            # Failed, so probably not initialised as a git repository - just a list of all files
-            files = []
-            for file_path in self.wf_path.rglob("*"):
-                if file_path.is_file():
-                    # Append the file path to the list
-                    files.append(file_path)
-            if len(files) == 0:
-                log.debug(f"No files found in pipeline: {self.wf_path}")
-
-        return files
 
     def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
