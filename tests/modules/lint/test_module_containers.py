@@ -1,6 +1,9 @@
+import contextlib
 import logging
 from pathlib import Path
 from unittest import mock
+
+import pytest
 
 from nf_core.modules.lint.module_containers import lint_main_nf_container, lint_meta_yml_containers
 
@@ -69,3 +72,32 @@ def test_lint_main_nf_container_dockerfile_skip_flag_ignored(tmp_path):
     assert comp.passed == []
     assert comp.warned == []
     assert comp.failed == []
+
+
+# ---------------------------------------------------------------------------
+# lint_meta_yml_containers – conda lock_file resolved against repo root
+# ---------------------------------------------------------------------------
+
+LOCK_FILE = "modules/nf-core/test/module/.conda-lock/linux_amd64-bd-abc123_1.txt"
+
+
+@pytest.mark.parametrize("write_lock", [True, False], ids=["found_from_other_cwd", "missing_warns"])
+def test_lint_conda_lock_file_resolved_from_repo_root(tmp_path, write_lock):
+    repo = tmp_path / "repo"
+    lock = repo / LOCK_FILE
+    lock.parent.mkdir(parents=True)
+    if write_lock:
+        lock.write_text("# lock\n")
+
+    comp = _make_component(lock.parent.parent)
+    comp.base_dir = repo
+    comp.load_meta_yml.return_value = {"containers": {"conda": {"linux/amd64": {"lock_file": LOCK_FILE}}}}
+
+    # cwd outside the repo, so a cwd-relative lookup would miss the lock file
+    with contextlib.chdir(tmp_path):
+        lint_meta_yml_containers(comp, skip_docker=True, skip_singularity=True)
+
+    def lock_checks(results):
+        return [r for r in results if r[1] == "containers_conda_lock_exists"]
+
+    assert (len(lock_checks(comp.passed)), len(lock_checks(comp.warned))) == ((1, 0) if write_lock else (0, 1))
