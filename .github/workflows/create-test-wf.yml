@@ -26,6 +26,7 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-run-test-worfklow
       - runner=4cpu-linux-x64
+      - image=ubuntu26-minimal-x64
     env:
       NXF_ANSI_LOG: false
 
