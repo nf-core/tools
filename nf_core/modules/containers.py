@@ -461,6 +461,7 @@ class ModuleContainers:
 
             conda_lock_path = self.module_directory / ".conda-lock" / f"{platform.replace('/', '_')}-{build_id}.txt"
             conda_lock_path.parent.mkdir(parents=True, exist_ok=True)
+            repo_relative_lock_file = conda_lock_path.resolve().relative_to(self.directory.resolve()).as_posix()
 
             try:
                 with self._build_cache_lock:
@@ -479,7 +480,7 @@ class ModuleContainers:
                         self._conda_lock_paths[build_id] = conda_lock_path
                 # Only register the entry once the lock has actually been written, so
                 # meta.yml never points at a missing lock file.
-                containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
+                containers.conda[platform] = CondaEntry(lock_file=repo_relative_lock_file)
                 new_lock_files.add(conda_lock_path)
                 set_status(task_id, f"conda lock {short_platform} done")
 
