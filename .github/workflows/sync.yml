@@ -113,7 +113,7 @@ jobs:
         run: uv sync
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        uses: nf-core/setup-nextflow@c66f1bfa2dc817ae23f4b34eaa26fa5f1453ca71 # v3
         with:
           version: "25.10.4"
 
@@ -139,7 +139,7 @@ jobs:
 
       - name: Install newer Nextflow (retry fallback)
         if: github.repository == 'nf-core/tools' && steps.sync.outcome == 'failure'
-        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        uses: nf-core/setup-nextflow@c66f1bfa2dc817ae23f4b34eaa26fa5f1453ca71 # v3
         with:
           version: "26.04.6"
 
