@@ -1,7 +1,6 @@
-import fnmatch
 import logging
-import os
-from pathlib import Path
+
+from nf_core.utils import get_wf_files
 
 log = logging.getLogger(__name__)
 
@@ -39,35 +38,27 @@ def pipeline_todos(self, root_dir=None):
     if root_dir is None:
         root_dir = self.wf_path
 
-    # Ignore ro-crate-metadata.json to avoid warnings when TODOs are not deleted.
-    ignore = [".git", "ro-crate-metadata.json"]
-    if Path(root_dir, ".gitignore").is_file():
-        with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
-            for line in fh:
-                ignore.append(Path(line.strip().rstrip("/")).name)
-    for root, dirs, files in os.walk(root_dir, topdown=True):
-        # Ignore files
-        for i_base in ignore:
-            i = str(Path(root, i_base))
-            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(str(Path(root, d)), i)]
-            files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
-        for fname in files:
-            try:
-                with open(Path(root, fname), encoding="latin1") as fh:
-                    for line in fh:
-                        if "TODO nf-core" in line:
-                            line = (
-                                line.replace("<!--", "")
-                                .replace("-->", "")
-                                .replace("# TODO nf-core: ", "")
-                                .replace("// TODO nf-core: ", "")
-                                .replace("TODO nf-core: ", "")
-                                .strip()
-                            )
-                            warned.append(f"TODO string in `{fname}`: _{line}_")
-                            file_paths.append(Path(root, fname))
-            except FileNotFoundError:
-                log.debug(f"Could not open file {fname} in pipeline_todos lint test")
+    for path in get_wf_files(root_dir):
+        # Ignore ro-crate-metadata.json to avoid warnings when TODOs are not deleted.
+        if path.name == "ro-crate-metadata.json":
+            continue
+        fname = path.name
+        try:
+            with open(path, encoding="latin1") as fh:
+                for line in fh:
+                    if "TODO nf-core" in line:
+                        line = (
+                            line.replace("<!--", "")
+                            .replace("-->", "")
+                            .replace("# TODO nf-core: ", "")
+                            .replace("// TODO nf-core: ", "")
+                            .replace("TODO nf-core: ", "")
+                            .strip()
+                        )
+                        warned.append(f"TODO string in `{fname}`: _{line}_")
+                        file_paths.append(path)
+        except FileNotFoundError:
+            log.debug(f"Could not open file {fname} in pipeline_todos lint test")
 
     if len(warned) == 0:
         passed.append("No TODO strings found")

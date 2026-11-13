@@ -1454,7 +1454,7 @@ def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
         yield Path(tmp)
 
 
-def get_wf_files(wf_path: Path) -> list[str]:
+def get_wf_files(wf_path: Path) -> list[Path]:
     """Return all files in a directory that are not ignored by git.
 
     Uses `git ls-files` at a repository root, else fnmatches the top-level .gitignore.
@@ -1463,7 +1463,7 @@ def get_wf_files(wf_path: Path) -> list[str]:
         wf_path (Path): The directory to list.
 
     Returns:
-        list[str]: Paths of the files, prefixed with ``wf_path``.
+        list[Path]: Paths of the files, prefixed with ``wf_path``.
     """
     import subprocess
 
@@ -1481,12 +1481,12 @@ def get_wf_files(wf_path: Path) -> list[str]:
         return _get_wf_files_without_git(wf_path)
     # Dedupe merge-conflict stages; skip deleted tracked files
     paths = (Path(wf_path, f) for f in dict.fromkeys(proc.stdout.decode().split("\0")) if f)
-    return [str(path) for path in paths if path.is_file()]
+    return [path for path in paths if path.is_file()]
 
 
-def _get_wf_files_without_git(wf_path: Path) -> list[str]:
+def _get_wf_files_without_git(wf_path: Path) -> list[Path]:
     """Fallback for `get_wf_files` outside a git repository."""
-    wf_files = []
+    wf_files: list[Path] = []
 
     ignore = [".git/*"]
     try:
@@ -1515,6 +1515,6 @@ def _get_wf_files_without_git(wf_path: Path) -> list[str]:
                 continue
             path = Path(dirpath, filename)
             if path.is_file():
-                wf_files.append(str(path))
+                wf_files.append(path)
 
     return wf_files
