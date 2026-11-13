@@ -1,5 +1,8 @@
 import mimetypes
 import re
+from pathlib import Path
+
+from nf_core.utils import get_wf_files
 
 
 def template_strings(self):
@@ -40,7 +43,7 @@ def template_strings(self):
     # Files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("template_strings", []) if self.lint_config is not None else []
 
-    files = self.list_files()
+    files = [Path(fn) for fn in get_wf_files(self.wf_path)]
     # Loop through files, searching for string
     num_matches = 0
     for fn in files:
@@ -62,6 +65,6 @@ def template_strings(self):
                         failed.append(f"Found a Jinja template string in `{fn}` L{i}: {cc_match}")
                         num_matches += 1
     if num_matches == 0:
-        passed.append(f"Did not find any Jinja template strings ({len(self.files)} files)")
+        passed.append(f"Did not find any Jinja template strings ({len(files)} files)")
 
     return {"passed": passed, "failed": failed, "ignored": ignored}

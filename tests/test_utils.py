@@ -115,21 +115,6 @@ class TestUtils(TestPipelines):
     #     self.pipeline_obj._load_conda_environment()
     #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda"]
 
-    def test_list_files_git(self):
-        """Test listing pipeline files using `git ls`"""
-        files = self.pipeline_obj.list_files()
-        assert Path(self.pipeline_dir, "main.nf") in files
-
-    @with_temporary_folder
-    def test_list_files_no_git(self, tmpdir):
-        """Test listing pipeline files without `git-ls`"""
-        # Create a test file in a temporary directory
-        tmp_fn = Path(tmpdir, "testfile")
-        tmp_fn.touch()
-        pipeline_obj = nf_core.utils.Pipeline(tmpdir)
-        files = pipeline_obj.list_files()
-        assert tmp_fn in files
-
     @mock.patch("pathlib.Path.mkdir")
     @mock.patch("pathlib.Path.exists")
     def test_request_cant_create_cache(self, mock_exists, mock_mkdir):
@@ -313,10 +298,20 @@ class TestUtils(TestPipelines):
             "dir1/should-ignore-2",
             "dir1/should-match-1",
             "keep.log",
+            "dir1/naïve-ünïcode.txt",
         ]:
             p = tmpdir / rpath
             p.parent.mkdir(exist_ok=True)
             p.touch()
+        repo = git.Repo(tmpdir)
+        # Tracked non-ASCII paths are quoted by git unless `-z` is used
+        repo.index.add(["dir1/naïve-ünïcode.txt"])
         files = nf_core.utils.get_wf_files(tmpdir)
         files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
-        assert files == [".gitignore", "dir1/.gitignore", "dir1/should-match-1", "keep.log"]
+        assert files == [
+            ".gitignore",
+            "dir1/.gitignore",
+            "dir1/naïve-ünïcode.txt",
+            "dir1/should-match-1",
+            "keep.log",
+        ]
