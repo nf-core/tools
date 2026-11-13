@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from unittest import mock
 
@@ -50,17 +51,13 @@ class TestModuleContainers(TestModules):
         resp.json.return_value = payload or {}
         return resp
 
-    @mock.patch("nf_core.modules.containers.requests.get")
-    @mock.patch.object(ModuleContainers, "request_image_inspect")
-    @mock.patch("nf_core.modules.containers.requests.post")
-    def test_create_builds_containers(self, mock_post, mock_request_image_inspect, mock_requests_get):
+    def _mock_wave(self):
         def fake_post(url, json=None, headers=None, timeout=None):
-            # `format` is "sif" for singularity, "docker" otherwise
             system = "singularity" if json.get("format") == "sif" else "docker"
             image = "community.wave.seqera.io/library/bpipe_test:0.1.0--abc123"
             meta = {
                 "buildId": f"bd-abc123-{system}",
-                "cached": True,  # cached -> no status polling needed
+                "cached": True,
                 "containerImage": image,
                 "freeze": True,
                 "requestId": f"req-abc123-{system}",
@@ -71,26 +68,32 @@ class TestModuleContainers(TestModules):
                 meta["scanId"] = f"sc-abc123-{system}"
             return self._fake_response(meta)
 
-        def fake_request_image_inspect(image: str):
-            return {
-                "container": {
-                    "manifest": {
-                        "layers": [
-                            {
-                                "mediaType": "application/vnd.sif",
-                                "digest": "sha256:abcde12345",
-                            }
-                        ]
-                    }
-                }
-            }
+        inspect = {
+            "container": {"manifest": {"layers": [{"mediaType": "application/vnd.sif", "digest": "sha256:abcde12345"}]}}
+        }
+        patches = [
+            mock.patch("nf_core.modules.containers.requests.post", side_effect=fake_post),
+            mock.patch.object(ModuleContainers, "request_image_inspect", return_value=inspect),
+            mock.patch(
+                "nf_core.modules.containers.requests.get",
+                return_value=self._fake_response(text="# conda lock file content"),
+            ),
+        ]
+        for p in patches:
+            p.start()
+            self.addCleanup(p.stop)
 
-        # requests.get is used to download the conda lock file
-        mock_requests_get.return_value = self._fake_response(text="# conda lock file content")
+    @staticmethod
+    def _expected_lock_file(platform: str) -> str:
+        return f"modules/nf-core/bpipe/test/.conda-lock/{platform.replace('/', '_')}-bd-abc123-docker.txt"
 
-        mock_post.side_effect = fake_post
-        mock_request_image_inspect.side_effect = fake_request_image_inspect
+    def _assert_lock_files_in_meta(self) -> None:
+        meta = yaml.safe_load((self.bpipe_test_module_path / "meta.yml").read_text())
+        for platform in CONTAINER_PLATFORMS:
+            assert meta["containers"]["conda"][platform]["lock_file"] == self._expected_lock_file(platform)
 
+    def test_create_builds_containers(self):
+        self._mock_wave()
         containers, success = self.module_containers.create()
         assert self.module_containers.containers == containers
         assert success
@@ -102,14 +105,31 @@ class TestModuleContainers(TestModules):
                 assert entry.build_id == f"bd-abc123-{system}"
                 if system == "docker":
                     assert entry.scan_id == f"sc-abc123-{system}"
-                    platform_safe = platform.replace("/", "_")
-                    build_id = f"bd-abc123-{system}"
-                    expected_lock_path = str(
-                        self.bpipe_test_module_path / ".conda-lock" / f"{platform_safe}-{build_id}.txt"
-                    )
-                    assert containers.conda[platform].lock_file == expected_lock_path
+                    assert containers.conda[platform].lock_file == self._expected_lock_file(platform)
+                    assert (Path(self.nfcore_modules) / containers.conda[platform].lock_file).exists()
                 else:
                     assert not entry.scan_id
+
+    def test_create_lock_file_relative_to_repo_with_relative_dir(self):
+        self._mock_wave()
+        cwd = Path.cwd()
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(Path(self.nfcore_modules).parent)
+        ModuleContainers("bpipe/test", directory=Path(self.nfcore_modules).name).create()
+        self._assert_lock_files_in_meta()
+
+    def test_create_lock_file_relative_to_repo_via_bump_versions(self):
+        from nf_core.modules.bump_versions import ModuleVersionBumper
+        from nf_core.modules.modules_utils import get_installed_modules
+
+        self._mock_wave()
+        directory = Path(self.nfcore_modules).resolve()
+        _, modules = get_installed_modules(directory)
+        bumper = ModuleVersionBumper(pipeline_dir=directory)
+        with mock.patch.dict("os.environ", {"TOWER_ACCESS_TOKEN": "x"}):
+            bumper._build_wave_containers([m for m in modules if m.component_name == "bpipe/test"])
+        assert bumper.failed == []
+        self._assert_lock_files_in_meta()
 
     @mock.patch.object(ModuleContainers, "request_container")
     def test_create_skips_conda_lock_when_build_id_missing(self, mock_request_container):
