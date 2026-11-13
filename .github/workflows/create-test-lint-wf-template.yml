@@ -43,6 +43,8 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-run-test-worfklow
       - runner=4cpu-linux-x64
+      - image=ubuntu24-minimal-x64
+      - volume=30gb
     needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
@@ -58,18 +60,32 @@ jobs:
       - name: Check out source-code repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version: "3.15"
-
-      - name: Install uv
+      # uv installs and caches Python itself, so no separate setup-python step
+      - name: Install uv and Python
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
+          python-version: "3.15"
           enable-cache: true
+          cache-python: true
 
       - name: Install python dependencies
         run: uv sync
+
+      # Replaces setup-nf-test's install-pdiff, which needs `python -m pip` on PATH
+      - name: Install pdiff
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          printf '#!/bin/bash\nexec uvx --from pdiff==1.1.5 python -m pdiff "$@"\n' > "$RUNNER_TEMP/bin/pdiff"
+          chmod +x "$RUNNER_TEMP/bin/pdiff"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          echo "NFT_DIFF=pdiff" >> "$GITHUB_ENV"
+          echo "NFT_DIFF_ARGS=--line-numbers --expand-tabs=2" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/bin/pdiff" --help > /dev/null
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@c66f1bfa2dc817ae23f4b34eaa26fa5f1453ca71 # v3
@@ -80,7 +96,6 @@ jobs:
         uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
         with:
           version: "0.9.4"
-          install-pdiff: true
 
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}

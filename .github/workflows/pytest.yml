@@ -56,6 +56,8 @@ jobs:
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
       - runner=4cpu-linux-x64
+      - image=ubuntu24-minimal-x64
+      - volume=30gb
     strategy:
       matrix:
         # On PRs to main test with 3.11 and 3.14, otherwise just 3.11
@@ -92,6 +94,11 @@ jobs:
       - name: Set up Apptainer
         if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
         uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@c66f1bfa2dc817ae23f4b34eaa26fa5f1453ca71 # v3
