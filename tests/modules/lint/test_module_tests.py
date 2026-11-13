@@ -211,6 +211,36 @@ class TestModuleTests(TestModules):
         assert "test_stub_gzip_syntax" in passed_tests, "test_stub_gzip_syntax not found in passed tests"
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
 
+    def test_modules_stub_gzip_valid_syntax_no_empty_string(self):
+        """Test linting a module with valid stub gzip syntax without the empty string: echo | gzip > file.gz"""
+        main_nf = self.bpipe_test_module_path / "main.nf"
+        original_content = main_nf.read_text()
+
+        import re
+
+        new_stub = '''    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo | gzip > ${prefix}.txt.gz
+    touch ${prefix}.txt.gz.stats
+    touch ${prefix}.txt
+    """
+}'''
+        new_content = re.sub(r"stub:.*?^}", new_stub, original_content, flags=re.DOTALL | re.MULTILINE)
+
+        main_nf.write_text(new_content)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Reset the file
+        main_nf.write_text(original_content)
+
+        # Check that stub gzip syntax check passed
+        passed_tests = [x.lint_test if hasattr(x, "lint_test") else x[1] for x in module_lint.passed]
+        assert "test_stub_gzip_syntax" in passed_tests, "test_stub_gzip_syntax not found in passed tests"
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+
     def test_modules_stub_gzip_invalid_syntax_touch(self):
         """Test linting a module with invalid stub gzip syntax using touch"""
         main_nf = self.bpipe_test_module_path / "main.nf"
