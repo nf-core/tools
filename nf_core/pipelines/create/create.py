@@ -384,6 +384,10 @@ class PipelineCreate:
                 output_path.chmod(template_fn_path.stat().st_mode)
                 self.written_files.add(output_path)
 
+        # Before anything runs `nextflow config`, which fails while included container configs are missing
+        if not {"modules", "container_configs"} & set(self.config.skip_features or []):
+            try_generate_container_configs(self.outdir)
+
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
@@ -399,9 +403,6 @@ class PipelineCreate:
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
                 self.written_files.add(Path(config_fn))
-
-        # generate container configs
-        try_generate_container_configs(self.outdir)
 
     def format_written_files(self) -> None:
         """Run prettier on the files written by this run, unless the pipeline skips code linting."""
