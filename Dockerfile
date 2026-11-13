@@ -5,32 +5,31 @@ LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
 # Do not pick up python packages from $HOME
 ENV PYTHONNUSERSITE=1
 
-# Update pip and install uv
-RUN python -m pip install --upgrade pip uv
+# Install uv
+RUN python -m pip install --no-cache-dir uv
 
-# Install Nextflow dependencies
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y git \
-    && apt-get install -y curl
-
-# Create man dir required for Java installation
-# and install Java
+# Install Nextflow dependencies (headless Java: no desktop libraries needed)
+# man dir is required for the Java installation
 RUN mkdir -p /usr/share/man/man1 \
-    && apt-get install -y default-jre \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends git curl default-jre-headless \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# Setup ARG for NXF_VER ENV
+# Install nf-test (pinned: avoids the installer's rate-limited GitHub API lookup, which 403s)
+# renovate: datasource=github-releases depName=askimed/nf-test extractVersion=^v(?<version>.*)$
+ARG NF_TEST_VERSION=0.9.5
+RUN curl -fsSL https://get.nf-test.com | bash -s "${NF_TEST_VERSION}" \
+    && mv nf-test /usr/local/bin \
+    && chmod a+rx /usr/local/bin/nf-test
+
+# Setup ARG for NXF_VER ENV (after nf-test, so changing it doesn't rebuild that layer)
 ARG NXF_VER=""
 ENV NXF_VER=${NXF_VER}
 # Install Nextflow
 RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
     && chmod a+rx /usr/local/bin/nextflow
-# Install nf-test
-RUN curl -fsSL https://get.nf-test.com | bash \
-    && mv nf-test /usr/local/bin \
-    && chmod a+rx /usr/local/bin/nf-test
 
 # Add the nf-core source files to the image
 COPY . /usr/src/nf_core
