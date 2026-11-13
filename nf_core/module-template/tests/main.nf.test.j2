@@ -1,3 +1,11 @@
+{%- if with_records -%}
+{%- set record_input -%}
+input[0] = record(
+                    id: 'test',
+                    {{ (record_inputs|list)[0] }}: file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
+                )
+{%- endset -%}
+{%- endif -%}
 // TODO nf-core: Once you have added the required tests, please run the following command to build this file:
 // nf-core modules test {{ component_name }}
 nextflow_process {
@@ -25,7 +33,9 @@ nextflow_process {
             process {
                 """
                 // TODO nf-core: define inputs of the process here. Example:
-                {% if has_meta %}
+                {% if with_records %}
+                {{ record_input }}
+                {%- elif has_meta %}
                 input[0] = [
                     [ id:'test' ],
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
@@ -40,10 +50,14 @@ nextflow_process {
         then {
             assert process.success
             assertAll(
+                {%- if with_records %}
+                { assert snapshot(process.out).match() }
+                {%- else %}
                 { assert snapshot(
                     process.out,
                     process.out.findAll { key, val -> key.startsWith('versions') }
                 ).match() }
+                {%- endif %}
                 //TODO nf-core: Add all required assertions to verify the test output.
                 // See https://nf-co.re/docs/developing/testing/assertions for more information and examples.
             )
@@ -60,7 +74,9 @@ nextflow_process {
             process {
                 """
                 // TODO nf-core: define inputs of the process here. Example:
-                {% if has_meta %}
+                {% if with_records %}
+                {{ record_input }}
+                {%- elif has_meta %}
                 input[0] = [
                     [ id:'test' ],
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
