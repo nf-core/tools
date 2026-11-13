@@ -1,6 +1,6 @@
 {
     $schema: "https://docs.renovatebot.com/renovate-schema.json",
-    extends: ["local>nf-core/.github:renovate-config"],
+    extends: ["local>nf-core/.github:renovate-config", "customManagers:dockerfileVersions"],
     ignorePaths: ["**/nf_core/pipeline-template/modules/nf-core/**"],
     baseBranchPatterns: ["dev"],
     packageRules: [

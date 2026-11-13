@@ -9,19 +9,8 @@ RUN conda config --system --remove channels defaults && \
     conda config --system --add channels conda-forge && \
     conda config --system --set channel_priority strict
 
-# copy this repo at current revision
-COPY . /root/nfcore-tools/
-
-# Explicitly install python 3.14 via conda (the image's Anaconda packages are built for 3.14)
-# Install uv and local nf-core tools version, and precommit hooks
-RUN cd /root/nfcore-tools/ && \
-    conda install -y python=3.14 && \
-    pip install --no-cache-dir --upgrade pip uv && \
-    uv pip install --system --no-cache-dir . && \
-    rm -rf /root/.cache/pip /root/.cache/uv
-
-# Install nextflow and nf-test via conda and run conda clean
-RUN conda install -y nextflow nf-test && \
+# Install python 3.14 (the image's Anaconda packages are built for 3.14), uv, nextflow and nf-test in one solve
+RUN conda install -y python=3.14 uv nextflow nf-test && \
     conda clean -afy
 
 # Install dependencies for apptainer build and apptainer and run apt clean
@@ -32,6 +21,12 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list && \
     echo "PATH=/usr/local/apptainer/bin:$PATH" >> $HOME/.bashrc && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# copy this repo at current revision (after the slow installs, so source edits keep their cache)
+COPY . /root/nfcore-tools/
+
+# Install local nf-core tools version
+RUN uv pip install --system --no-cache-dir /root/nfcore-tools/
 
 # Final stage to copy only the required files after installation
 FROM mcr.microsoft.com/devcontainers/base:2.2.5-debian12@sha256:99f5250dd2d5f8b11046d5662dd94c1e3c1dae56b560c7caad5ceb7edf349046 AS final
