@@ -29,7 +29,9 @@ from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
+    CommandError,
     check_nextflow_version,
+    parse_nextflow_json,
     pretty_nf_version,
     run_cmd,
     set_wd_tempdir,
@@ -698,19 +700,16 @@ class DownloadWorkflow:
                     raise DownloadError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
 
                 out, _ = cmd_out
-                return json.loads(out)
+                try:
+                    return parse_nextflow_json(out.decode("utf-8"))
+                except json.JSONDecodeError as e:
+                    raise DownloadError(f"Failed to parse output of `nextflow inspect` as JSON: {e}") from e
 
         try:
             out_json = run_nextflow_inspect()
         except RuntimeError as e:
-            # Nextflow's error text is embedded in the RuntimeError message by run_cmd;
-            # a chained CalledProcessError (if any) may carry it in stdout/stderr instead.
-            nf_error_parts = [str(e), getattr(e.__cause__, "output", None), getattr(e.__cause__, "stderr", None)]
-            nf_error = "\n".join(
-                part.decode("utf-8", errors="replace") if isinstance(part, bytes) else part
-                for part in nf_error_parts
-                if part
-            )
+            # Only a failed command carries Nextflow output worth checking for known problems
+            nf_error = e.output if isinstance(e, CommandError) else ""
 
             # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
             # if/else container blocks with "Invalid process directive". Users need an older NF.

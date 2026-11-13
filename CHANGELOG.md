@@ -1,5 +1,90 @@
 # nf-core/tools: Changelog
 
+## v4.3.0dev
+
+### General
+
+- remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
+- move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
+- avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
+
+### Linting
+
+- make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
+- respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
+
+### Modules
+
+- Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
+- make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
+
+### Template
+
+- simplify patterns in .gitignore ([#4567](https://github.com/nf-core/tools/pull/4567))
+- Switch to `action-seqera-launch` action for megatests ([#4518](https://github.com/nf-core/tools/pull/4518))
+- match the nf-schema version in `awsfulltest.yml`, have the `block-pipeline-outdir` hook check the files passed by pre-commit instead of the staged diff, and correct the `upload-artifact` version comments in `nf-test.yml` ([#4570](https://github.com/nf-core/tools/pull/4570))
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
+- remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
+- cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
+
+## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
+
+### Template
+
+- Update eWaterCycle/setup-apptainer action to v3 ([#4571](https://github.com/nf-core/tools/pull/4571))
+
+## [v4.2.1 - Metropolitan Mouse Patch 1](https://github.com/nf-core/tools/releases/tag/4.2.1) - [2026-10-26]
+
+### General
+
+- Remove unnecessary default branch detection from sync action ([#4540](https://github.com/nf-core/tools/pull/4540))
+- Make the changelog action react a bit more and harden its security ([#4544](https://github.com/nf-core/tools/pull/4544))
+
+### Modules
+
+- Keep the full name of local TOOL/SUBTOOL components in `nf-core modules lint` and `nf-core modules containers create` ([#4541](https://github.com/nf-core/tools/pull/4541))
+
+### Template
+
+- Pin our own controlled actions to major version to get faster updates ([#4543](https://github.com/nf-core/tools/pull/4543))
+
+## [v4.2.0 - Metropolitan Mouse](https://github.com/nf-core/tools/releases/tag/4.2.0) - [2026-10-21]
+
+### General
+
+- Fixes bug in `test-datasets list` related to broken rich import ([#4477](https://github.com/nf-core/tools/pull/4477))
+- Add `nf-core pipelines containers create-configs` to regenerate the pipeline `conf/containers_*.config` files ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- update update-*-snapshot actions to more robust way ([#4509](https://github.com/nf-core/tools/pull/4509))
+
+### Linting
+
+- Warn if `manifest.diagram` is not set, and fail if it is not a relative path to an existing image file ([#4460](https://github.com/nf-core/tools/pull/4460))
+- Add strandeness to permitted meta keys ([#4473](https://github.com/nf-core/tools/pull/4473))
+- remove `ext.use_gpu` as a permitted ext key, superseded by `task.accelerator` ([#4445](https://github.com/nf-core/tools/pull/4445))
+- fix(lint): use repo-root-relative path in `git restore` call in `container_configs` ([#4301](https://github.com/nf-core/tools/pull/4301))
+- Fix subworkflow lint parsing sibling subworkflow include statements ([#4527](https://github.com/nf-core/tools/pull/4527))
+
+### Modules
+
+- modules main.nf template: match nf-core container formatting in main.nf ([#4459](https://github.com/nf-core/tools/pull/4459))
+
+### Subworkflows
+
+### Template
+
+- remove redundant `ext.use_gpu` from the `process_gpu` label, use `accelerator` only ([#4445](https://github.com/nf-core/tools/pull/4445))
+- Switch to using `fix-linting.yml` workflow from `nf-core/actions` repo, to avoid leakage of nf-core bot token and rename it from `fix_linting.yml` to `fix-linting.yml` ([#4485](https://github.com/nf-core/tools/pull/4485))
+- Add a commented-out `manifest.diagram` to `nextflow.config`, for the pipeline metro map ([#4460](https://github.com/nf-core/tools/pull/4460))
+- git-ignore nf-test files ([#4461](https://github.com/nf-core/tools/pull/4461))
+- Bump nf-schema to 2.7.3 to allow running pipelines with Nextflow 26.04 ([#4463](https://github.com/nf-core/tools/pull/4463))
+- Bump nft-utils to 1.2.1, matching nf-core/modules ([#4489](https://github.com/nf-core/tools/pull/4489))
+- VSCode: add recommended extensions, fix link to admonition styling CSS for markdown previews ([#4455](https://github.com/nf-core/tools/pull/4455))
+- Pin action-tower-launch to v2 ([#4502](https://github.com/nf-core/tools/pull/4502))
+- Pin nf-schema version in awsfulltest ([#4501](https://github.com/nf-core/tools/pull/4501))
+- Don't block `workflow.onComplete` on the MultiQC report ([#4486](https://github.com/nf-core/tools/pull/4486))
+
+### Version updates
+
 ## [v4.1.0 - Marshalled Mamba](https://github.com/nf-core/tools/releases/tag/4.1.0) - [2026-07-29]
 
 ### General

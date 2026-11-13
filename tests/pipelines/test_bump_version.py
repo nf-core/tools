@@ -65,6 +65,11 @@ class TestBumpVersion(TestPipelines):
             ci_yaml = yaml.safe_load(fh)
         assert ci_yaml["jobs"]["nf-test"]["strategy"]["matrix"]["NXF_VER"][0] == version
 
+        # Check .github/workflows/fix-linting.yml
+        with open(new_pipeline_obj._fp(".github/workflows/fix-linting.yml")) as fh:
+            ci_yaml = yaml.safe_load(fh)
+        assert ci_yaml["jobs"]["fix-linting"]["with"]["nextflow-versions"] == f'["{version}","latest-everything"]'
+
         # Check README.md
         with open(new_pipeline_obj._fp("README.md")) as fh:
             readme = fh.read().splitlines()

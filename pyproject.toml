@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=40.6.0", "wheel"]
+requires = ["setuptools>=77"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -11,7 +11,7 @@ nf_core = ["**/*"]
 
 [project]
 name = "nf-core"
-version = "4.1.0"
+version = "4.3.0dev"
 description = "Helper tools for use with nf-core Nextflow pipelines."
 readme = "README.md"
 license = "MIT"
@@ -29,7 +29,7 @@ keywords = [
 authors = [
     {name = "Phil Ewels", email = "phil.ewels@scilifelab.se"}
 ]
-requires-python = ">=3.10, <4"
+requires-python = ">=3.11, <4"
 dependencies = [
     "click",
     "filetype",
@@ -52,12 +52,12 @@ dependencies = [
     "rich>=13.3.1",
     "rocrate",
     "repo2rocrate",
-    "setuptools<84",
     "tabulate",
     "textual==8.2.8",
     "trogon",
     "pdiff",
     "ruamel.yaml",
+    "pathspec>=1.1.1",
 ]
 
 [dependency-groups]
@@ -75,14 +75,11 @@ dev = [
     "types-requests",
     "types-jsonschema",
     "types-Markdown",
-    "types-setuptools",
-    "typing_extensions>=4.0.0",
     "pytest-asyncio",
     "pytest-clarity>=1.0.1",
     "pytest-codspeed>=5.0.3",
     "pytest-sugar>=1.1.1",
     "pytest-textual-snapshot==1.1.0",
-    "pytest-workflow>=2.0.0",
     "pytest-xdist>=3.7.0",
     "pytest>=8.0.0",
 ]
@@ -91,7 +88,7 @@ dev = [
 Homepage = "https://github.com/nf-core/tools"
 Documentation = "https://nf-co.re/docs/nf-core-tools"
 Repository = "https://github.com/nf-core/tools"
-Changelog = "https://github.com/nf-core/tools/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/nf-core/tools/blob/main/CHANGELOG.md"
 
 [project.scripts]
 nf-core = "nf_core.__main__:run_nf_core"
@@ -117,9 +114,15 @@ norecursedirs = [
     "docs",
 ]
 
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 cache-dir = "~/.cache/ruff"
 
 [tool.ruff.lint]

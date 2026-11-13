@@ -2,8 +2,10 @@
 
 import shutil
 
+import pytest
 import ruamel.yaml
 
+from nf_core.commands_pipelines import pipelines_containers_create_configs
 from nf_core.modules.install import ModuleInstall
 from nf_core.pipelines.containers_utils import PLATFORMS, ContainerConfigs
 
@@ -99,3 +101,22 @@ class TestContainerConfigs(TestPipelines):
             cfg_path = conf_dir / f"containers_{p_name}.config"
             if cfg_path.exists():
                 assert "FAKE" not in cfg_path.read_text(), f"{cfg_path.name} contains entry for FAKE module"
+
+
+class TestPipelinesContainersCommand(TestPipelines):
+    """Tests for the ``nf-core pipelines containers`` command function."""
+
+    def test_regenerates_config_files(self) -> None:
+        """Existing config file contents are replaced."""
+        cfg_path = self.pipeline_dir / "conf" / "containers_docker_amd64.config"
+        original = cfg_path.read_text()
+        cfg_path.write_text("not a container config\n")
+
+        pipelines_containers_create_configs(None, str(self.pipeline_dir))
+
+        assert cfg_path.read_text() == original
+
+    def test_exits_when_not_a_pipeline(self) -> None:
+        """A directory without main.nf exits with an error."""
+        with pytest.raises(SystemExit):
+            pipelines_containers_create_configs(None, str(self.tmp_dir))

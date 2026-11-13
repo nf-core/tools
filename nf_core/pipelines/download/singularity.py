@@ -14,6 +14,7 @@ import questionary
 import requests
 import requests_cache
 import rich.progress
+import rich.prompt
 
 import nf_core.utils
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress

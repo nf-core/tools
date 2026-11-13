@@ -198,6 +198,15 @@ class ROCrate:
         # Set metadata for main entity file
         self.set_main_entity("main.nf")
 
+    def _get_existing_keywords(self) -> list[str]:
+        """Return the main entity keywords of an existing RO-Crate in the pipeline directory, or an empty list."""
+        try:
+            main_entity = BaseROCrate(self.pipeline_dir).mainEntity
+        except (ValueError, OSError):  # no crate, or not valid JSON
+            return []
+        keywords = main_entity.get("keywords", []) if main_entity else []
+        return [keywords] if isinstance(keywords, str) else list(keywords)
+
     def set_main_entity(self, main_entity_filename: str):
         """
         Set the main.nf as the main entity of the crate and add necessary metadata
@@ -224,9 +233,17 @@ class ROCrate:
         self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
 
         # get keywords from nf-core website
-        remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
-        # go through all remote workflows and find the one that matches the pipeline name
         topics = ["nf-core", "nextflow"]
+        try:
+            response = requests.get("https://nf-co.re/pipelines.json", timeout=10)
+            response.raise_for_status()
+            remote_workflows = response.json()["remote_workflows"]
+        except (requests.exceptions.RequestException, ValueError, KeyError) as e:
+            # Keep the keywords from an existing crate rather than silently dropping the pipeline topics
+            topics = self._get_existing_keywords() or topics
+            log.warning(f"Could not fetch pipeline topics from nf-co.re, using keywords {topics}: {e}")
+            remote_workflows = []
+        # go through all remote workflows and find the one that matches the pipeline name
         for remote_wf in remote_workflows:
             assert self.pipeline_obj.pipeline_name is not None  # mypy
             if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):

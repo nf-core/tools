@@ -13,21 +13,7 @@ import nf_core.pipelines.sync
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
-from ..utils import with_temporary_folder
-
-
-class MockResponse:
-    def __init__(self, data: dict | list[dict], status_code: int, url: str):
-        self.url: str = url
-        self.status_code: int = status_code
-        self.from_cache: bool = False
-        self.reason: str = "Mocked response"
-        self.data: dict | list[dict] = data
-        self.content: str = json.dumps(data)
-        self.headers: dict[str, str] = {"content-encoding": "test", "connection": "fake"}
-
-    def json(self):
-        return self.data
+from ..utils import MockResponse, with_temporary_folder
 
 
 def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
@@ -100,7 +86,7 @@ class TestModules(TestPipelines):
         with open(nf_core_yml_path, "w") as fh:
             yaml.dump(nf_core_yml.model_dump(), fh)
 
-        psync = nf_core.pipelines.sync.PipelineSync(tmp_dir)
+        psync = nf_core.pipelines.sync.PipelineSync(Path(tmp_dir))
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
         assert "does not appear to be a git repository" in exc_info.value.args[0]
@@ -291,7 +277,10 @@ class TestModules(TestPipelines):
         assert (Path(self.pipeline_dir) / ".git").exists()
 
     def test_create_template_pipeline(self):
-        """Confirm that we can create a new template pipeline in an empty directory"""
+        """Confirm that we can create a new template pipeline in an empty directory,
+        without running prettier on files ignored by the pipeline's (not the template's) .gitignore"""
+        ignored_file = Path(self.pipeline_dir) / "ignored.json"
+        self._make_ignored_file(ignored_file)
         # First, delete all the files
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
@@ -302,10 +291,14 @@ class TestModules(TestPipelines):
         pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
         assert pipeline_contents == {".git"}.union(top_level_ignored)
         # Now create the new template
-        psync.make_template_pipeline()
+        with mock.patch("nf_core.pipelines.create.create.run_prettier_on_file") as mock_prettier:
+            psync.make_template_pipeline()
         pipeline_path = Path(self.pipeline_dir)
         assert (pipeline_path / "main.nf").exists()
         assert (pipeline_path / "nextflow.config").exists()
+        formatted = {f for call in mock_prettier.call_args_list for f in call.args}
+        assert (pipeline_path / "main.nf").resolve() in formatted
+        assert ignored_file.resolve() not in formatted
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""

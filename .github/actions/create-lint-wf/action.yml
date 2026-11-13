@@ -76,6 +76,15 @@ runs:
       run: find nf-core-testpipeline -not -path '*/.git/*' -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
       working-directory: create-lint-wf
 
+    # Add a placeholder metro map and enable manifest.diagram
+    - name: add metro map
+      shell: bash
+      run: |
+        mkdir -p nf-core-testpipeline/docs/images
+        touch nf-core-testpipeline/docs/images/metro_map.svg
+        sed -i 's|// diagram|diagram|' nf-core-testpipeline/nextflow.config
+      working-directory: create-lint-wf
+
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
       shell: bash
@@ -100,7 +109,7 @@ runs:
 
     - name: Upload log file artifact
       if: ${{ always() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: nf-core-log-file-${{ matrix.NXF_VER }}
         path: create-lint-wf/log.txt

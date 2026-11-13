@@ -117,7 +117,7 @@ class ComponentCreate(ComponentCommand):
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
 
         log.info(f"Repository type: [blue]{self.repo_type}")
-        if self.directory != ".":
+        if self.directory.resolve() != Path.cwd():
             log.info(f"Base directory: '{self.directory}'")
 
         log.info(
@@ -161,8 +161,7 @@ class ComponentCreate(ComponentCommand):
             self._get_module_structure_components()
 
         # Add a valid organization name for nf-test tags
-        not_alphabet = re.compile(r"[^a-zA-Z]")
-        self.org_alphabet = not_alphabet.sub("", self.org)
+        self.org_alphabet = re.sub(r"[^a-zA-Z]", "", self.component_subdir)
 
         # Create component template with jinja2
         assert self._render_template()
@@ -172,11 +171,9 @@ class ComponentCreate(ComponentCommand):
             # Generate meta.yml inputs and outputs
             self.generate_meta_yml_file()
 
-        new_files = [str(path) for path in self.file_paths.values()]
+        run_prettier_on_file(*self.file_paths.values())
 
-        run_prettier_on_file(new_files)
-
-        log.info("Created following files:\n  " + "\n  ".join(new_files))
+        log.info("Created following files:\n  " + "\n  ".join(str(f) for f in self.file_paths.values()))
 
         if self.component_type == "modules":
             log.info(
@@ -377,12 +374,13 @@ class ComponentCreate(ComponentCommand):
         """
         file_paths = {}
         if self.repo_type == "pipeline":
-            component_dir = Path(self.directory, self.component_type, "local", self.component_dir)
-
+            self.component_subdir = "local"
         elif self.repo_type == "modules":
-            component_dir = Path(self.directory, self.component_type, self.org, self.component_dir)
+            self.component_subdir = self.org
         else:
             raise ValueError("`repo_type` not set correctly")
+        base_dir = Path(self.directory, self.component_type, self.component_subdir)
+        component_dir = base_dir / self.component_dir
 
         # Check if module/subworkflow directories exist already
         if component_dir.exists() and not self.force_overwrite:
@@ -392,20 +390,14 @@ class ComponentCreate(ComponentCommand):
 
         if self.component_type == "modules":
             # If a subtool, check if there is a module called the base tool name already
-            parent_tool_main_nf = Path(
-                self.directory,
-                self.component_type,
-                self.org,
-                self.component,
-                "main.nf",
-            )
+            parent_tool_main_nf = base_dir / self.component / "main.nf"
             if self.subtool and parent_tool_main_nf.exists():
                 raise UserWarning(
                     f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = list(Path(self.directory, self.component_type, self.org, self.component).glob("*/main.nf"))
+            tool_glob = list((base_dir / self.component).glob("*/main.nf"))
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
