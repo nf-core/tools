@@ -25,7 +25,7 @@ jobs:
     strategy: &arch-matrix
       matrix:
         include:
-          - { arch: amd64, platform: linux/amd64, runner: ubuntu-latest }
+          - { arch: amd64, platform: linux/amd64, runner: ubuntu-26.04 }
           - { arch: arm64, platform: linux/arm64, runner: ubuntu-26.04-arm }
     steps:
       - name: Check out code
