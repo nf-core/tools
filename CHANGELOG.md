@@ -12,6 +12,7 @@
 
 - make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
 - respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
+- fail `modules lint` when a `meta.yml` conda `lock_file` does not exist ([#4608](https://github.com/nf-core/tools/pull/4608))
 
 ### Modules
 

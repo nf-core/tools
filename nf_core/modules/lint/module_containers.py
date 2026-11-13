@@ -189,7 +189,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     ("meta_yml", "containers_conda_lock_exists", f"Missing conda lock_file for {platform}", meta_path)
                 )
                 continue
-            lock_path = Path(lock_file)
+            lock_path = Path(module.base_dir, lock_file)
             if lock_path.exists():
                 module.passed.append(
                     (
@@ -200,7 +200,7 @@ def lint_meta_yml_containers(module: NFCoreComponent, skip_docker=False, skip_co
                     )
                 )
             else:
-                module.warned.append(
+                module.failed.append(
                     (
                         "meta_yml",
                         "containers_conda_lock_exists",
