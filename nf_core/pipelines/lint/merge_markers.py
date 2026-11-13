@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import nf_core.utils
+
+if TYPE_CHECKING:
+    from nf_core.pipelines.lint import PipelineLint
 
 log = logging.getLogger(__name__)
 
 
-def merge_markers(self):
+def merge_markers(self: PipelineLint) -> dict[str, list[str]]:
     """Check for remaining merge markers.
 
     This test looks for remaining merge markers in the code, e.g.:
@@ -29,11 +35,11 @@ def merge_markers(self):
                     - docs/my_pdf.pdf
 
     """
-    passed = []
-    failed = []
-    ignored = []
+    passed: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
 
-    ignored_config = self.lint_config.get("merge_markers", []) if self.lint_config is not None else []
+    ignored_config: list[str] = self.lint_config.get("merge_markers", []) if self.lint_config is not None else []
 
     for path in nf_core.utils.get_wf_files(self.wf_path):
         # File ignored in config
