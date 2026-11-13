@@ -1,6 +1,5 @@
 import logging
 import re
-from pathlib import Path
 
 from nf_core.utils import get_wf_files
 
@@ -29,11 +28,11 @@ def pipeline_if_empty_null(self, root_dir=None):
 
     for file in get_wf_files(root_dir):
         try:
-            with open(Path(file), encoding="latin1") as fh:
+            with open(file, encoding="latin1") as fh:
                 for line in fh:
                     if re.findall(pattern, line):
                         warned.append(f"`ifEmpty(null)` found in `{file}`: _{line}_")
-                        file_paths.append(Path(file))
+                        file_paths.append(file)
         except FileNotFoundError:
             log.debug(f"Could not open file {file} in pipeline_if_empty_null lint test")
 
