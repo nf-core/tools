@@ -1,5 +1,35 @@
 # nf-core/tools: Changelog
 
+## v4.3.0dev
+
+### General
+
+- remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
+- move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
+- avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
+- limit get_wf_files to only consider files not ignored by git and remove `Pipeline.list_files()` in favour of it ([#4593](https://github.com/nf-core/tools/pull/4593))
+- make docker builds faster ([#4614](https://github.com/nf-core/tools/pull/4614))
+
+### Linting
+
+- make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
+- respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
+
+### Modules
+
+- Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
+- make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
+
+### Template
+
+- simplify patterns in .gitignore ([#4567](https://github.com/nf-core/tools/pull/4567))
+- Switch to `action-seqera-launch` action for megatests ([#4518](https://github.com/nf-core/tools/pull/4518))
+- match the nf-schema version in `awsfulltest.yml`, have the `block-pipeline-outdir` hook check the files passed by pre-commit instead of the staged diff, and correct the `upload-artifact` version comments in `nf-test.yml` ([#4570](https://github.com/nf-core/tools/pull/4570))
+- Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
+- remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
+- cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
+- skip `latest-everything` nf-test runs on PRs to `main`/`master` ([#4393](https://github.com/nf-core/tools/pull/4393))
+
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 
 ### Template

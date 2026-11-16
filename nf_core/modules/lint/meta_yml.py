@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 
 @cache
-def _load_skip_nf_test_sets(base_dir: str) -> dict[str, frozenset[str]]:
+def _load_skip_nf_test_sets(base_dir: Path) -> dict[str, frozenset[Path]]:
     """
     Load the per-system skip sets from ``.github/skip_nf_test.json``, cached per base directory.
 
@@ -39,9 +39,7 @@ def _load_skip_nf_test_sets(base_dir: str) -> dict[str, frozenset[str]]:
         return {}
     with open(skip_file) as fh:
         data = json.load(fh)
-    return {
-        k: frozenset(str((Path(base_dir) / p).resolve()) for p in v) for k, v in data.items() if isinstance(v, list)
-    }
+    return {k: frozenset((base_dir / p).resolve() for p in v) for k, v in data.items() if isinstance(v, list)}
 
 
 def meta_yml_containers(module: NFCoreComponent) -> None:
@@ -49,8 +47,8 @@ def meta_yml_containers(module: NFCoreComponent) -> None:
     Lints the container information in the meta.yml file and the module's main.nf file.
     Respects per-system skips from `skip_nf_test.json`.
     """
-    skip_sets = _load_skip_nf_test_sets(str(module.base_dir))
-    module_path = str(Path(module.component_dir).resolve())
+    skip_sets = _load_skip_nf_test_sets(module.base_dir)
+    module_path = module.component_dir.resolve()
     skip_docker = module_path in skip_sets.get("docker", frozenset())
     skip_singularity = module_path in skip_sets.get("singularity", frozenset())
     skip_conda = module_path in skip_sets.get("conda", frozenset())

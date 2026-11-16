@@ -29,8 +29,8 @@ class Launch:
         pipeline: str | None = None,
         revision: str | None = None,
         command_only: bool = False,
-        params_in: str | Path | None = None,
-        params_out: str | Path | None = None,
+        params_in: Path | None = None,
+        params_out: Path | None = None,
         save_all: bool = False,
         show_hidden: bool = False,
         url: str | None = None,
@@ -48,10 +48,10 @@ class Launch:
         self.schema_obj = None
         self.use_params_file = not command_only
         self.params_in = params_in
-        self.params_out = params_out if params_out else Path.cwd() / "nf-params.json"
+        self.params_out = params_out or Path("nf-params.json")
         self.save_all = save_all
         self.show_hidden = show_hidden
-        self.web_schema_launch_url = url if url else "https://nf-co.re/launch"
+        self.web_schema_launch_url = url or "https://nf-co.re/launch"
         self.web_schema_launch_web_url = None
         self.web_schema_launch_api_url = None
         self.web_id = web_id
@@ -127,8 +127,10 @@ class Launch:
         # Check if the output file exists already
         if self.params_out.exists():
             # if params_in has the same name as params_out, don't ask to overwrite
-            params_in_path = Path(self.params_in) if self.params_in else None
-            if params_in_path and params_in_path.exists() and params_in_path.samefile(self.params_out):
+            same_as_input = (
+                self.params_in is not None and self.params_in.exists() and self.params_in.samefile(self.params_out)
+            )
+            if same_as_input:
                 log.warning(
                     f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
                 )
@@ -141,7 +143,7 @@ class Launch:
             else:
                 log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
                 if Confirm.ask("[yellow]Do you want to overwrite this file?"):
-                    if not (params_in_path and params_in_path.exists() and params_in_path.samefile(self.params_out)):
+                    if not same_as_input:
                         self.params_out.unlink()
                         log.info(f"Deleted {self.params_out}\n")
                 else:
@@ -732,7 +734,7 @@ class Launch:
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
                 dump_json_with_prettier(self.params_out, self.schema_obj.input_params)
-                self.nextflow_cmd += f' -params-file "{Path(self.params_out)}"'
+                self.nextflow_cmd += f' -params-file "{self.params_out}"'
 
             # Call nextflow with a list of command line flags
             else:

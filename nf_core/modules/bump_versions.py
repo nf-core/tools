@@ -263,8 +263,7 @@ class ModuleVersionBumper(ComponentCommand):
                 return False
             # Rewrite the versions in the raw file text so YAML comments (e.g. renovate hints) and
             # formatting survive - a yaml load/dump round-trip would silently drop them.
-            with open(module.environment_yml) as fh:
-                content = fh.read()
+            content = module.environment_yml.read_text(encoding="utf-8")
             for channel, tool_name, current_version, target_version in outdated:
                 log.debug(f"Updating {tool_name} version for {module.component_name}")
                 content = re.sub(
@@ -275,8 +274,20 @@ class ModuleVersionBumper(ComponentCommand):
                 self.updated.append(
                     (f"Module updated: {tool_name} {current_version} --> {target_version}", module.component_name)
                 )
-            with open(module.environment_yml, "w") as fh:
-                fh.write(content)
+
+            # Also bump the "<tool>", "<version>" pairs nf-test records in main.nf.test.snap
+            snap = module.main_nf_test_snap
+            if snap is not None and snap.is_file():
+                snap_content = snap.read_text(encoding="utf-8")
+                for _channel, tool_name, current_version, target_version in outdated:
+                    snap_content = re.sub(
+                        rf'("{re.escape(tool_name)}"\s*,\s*"){re.escape(current_version)}"',
+                        rf'\g<1>{target_version}"',
+                        snap_content,
+                    )
+                snap.write_text(snap_content, encoding="utf-8")
+
+            module.environment_yml.write_text(content, encoding="utf-8")
             return True
 
         # Check 2: environment.yml is already current, but make sure the containers were actually
@@ -297,8 +308,9 @@ class ModuleVersionBumper(ComponentCommand):
 
         Image names are content hashes, so the version-bearing conda locks are checked instead,
         assuming the bioconda dependency name matches the conda package name. No ``.conda-lock`` dir
-        means the module was never Wave-built (left alone); an empty dir, or a meta.yml without a
-        ``containers:`` section, means an interrupted build (rebuilt).
+        means the module was never Wave-built; it is not rebuilt here, only when its version is bumped
+        (which migrates it). An empty dir, or a meta.yml without a ``containers:`` section, means an
+        interrupted build (rebuilt).
         """
         from nf_core.components.components_utils import read_meta_yml
 
@@ -306,7 +318,7 @@ class ModuleVersionBumper(ComponentCommand):
         if not conda_lock_dir.is_dir():
             log.debug(
                 f"No conda-lock directory for {module.component_name}; treating as up to date "
-                "(Wave migration is out of scope for bump-versions)"
+                "(only migrated to Wave when its version is bumped)"
             )
             return True
         lock_files = list(conda_lock_dir.glob("*.txt"))

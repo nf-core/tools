@@ -302,7 +302,7 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f"nextflow run {self.pipeline_dir}"
+        assert self.launcher.nextflow_cmd == f"nextflow run {self.pipeline_dir.resolve()}"
 
     def test_build_command_nf(self):
         """Test the functionality to build a nextflow command - core nf customised"""
@@ -311,7 +311,7 @@ class TestLaunch(TestPipelines):
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
         self.launcher.nxf_flags["-resume"] = True
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -name "Test_Workflow" -resume'
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir.resolve()} -name "Test_Workflow" -resume'
 
     def test_build_command_params(self):
         """Test the functionality to build a nextflow command - params supplied"""
@@ -319,7 +319,10 @@ class TestLaunch(TestPipelines):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         # Check command
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -params-file "{self.nf_params_fn}"'
+        assert (
+            self.launcher.nextflow_cmd
+            == f'nextflow run {self.pipeline_dir.resolve()} -params-file "{self.nf_params_fn}"'
+        )
         # Check saved parameters file
         with open(self.nf_params_fn) as fh:
             try:
@@ -335,7 +338,7 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} --input "custom_input"'
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir.resolve()} --input "custom_input"'
 
 
 def test_launch_params_out_option_is_path():

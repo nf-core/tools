@@ -4,7 +4,6 @@ Lint the main.nf file of a module
 
 import logging
 import re
-from pathlib import Path
 
 from rich.progress import Progress
 
@@ -133,7 +132,7 @@ def main_nf(
                 module.component_name,
                 module_lint_object.modules_repo.repo_path,
                 module.patch_path,
-                Path(module.component_dir).relative_to(module.base_dir),
+                module.component_dir.relative_to(module.base_dir),
                 reverse=True,
             ).get("main.nf", [""])
         except LookupError:
@@ -521,7 +520,7 @@ def check_process_section(
 
     # Modules listed under "singularity" in .github/skip_nf_test.json have no singularity
     # container on purpose, so the singularity_tag check is skipped for them.
-    skip_singularity = str(Path(module.component_dir).resolve()) in _load_skip_nf_test_sets(str(module.base_dir)).get(
+    skip_singularity = module.component_dir.resolve() in _load_skip_nf_test_sets(module.base_dir).get(
         "singularity", frozenset()
     )
 

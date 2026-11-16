@@ -186,6 +186,7 @@ def test_check_process_section_additional_registries(container_line, additional_
     mock_lint.component_name = "tool/subtool"
     mock_lint.process_name = "TOOL_SUBTOOL"
     mock_lint.component_dir = tmp_path
+    mock_lint.base_dir = tmp_path
 
     with patch("requests.head") as mock_head:
         mock_head.return_value = MagicMock(status_code=200)

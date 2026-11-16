@@ -73,12 +73,14 @@ jobs:
         profile: [conda, docker, singularity]
         isMain:
           - ${{ github.base_ref == 'master' || github.base_ref == 'main' }}
-        # Exclude conda and singularity on dev
+        # Exclude conda and singularity on dev and latest-everything on main/master
         exclude:
           - isMain: false
             profile: "conda"
           - isMain: false
             profile: "singularity"
+          - isMain: true
+            NXF_VER: "latest-everything"
         NXF_VER:
           - "25.10.4"
           - "latest-everything"
@@ -129,7 +131,7 @@ jobs:
 
       - name: Upload PR comment fragment
         if: ${{ always() && steps.run_nf_test.outcome == 'failure' && matrix.NXF_VER == 'latest-everything' }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pr-comment-fragment-${{ strategy.job-index }}
           path: pr-comment-fragment/
@@ -198,7 +200,7 @@ jobs:
 
       - name: Upload PR comment artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pr-comment
           path: pr-comment/{% endraw %}

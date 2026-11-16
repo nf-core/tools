@@ -17,7 +17,7 @@ jobs:
       - name: Check PRs
         if: github.repository == '{{ name }}'
         env:
-          HEAD_REPO:  {% raw %}${{ github.event.pull_request.head.repo.full_name }}{% endraw %}
+          HEAD_REPO: {% raw %}${{ github.event.pull_request.head.repo.full_name }}{% endraw %}
         run: |
           { [[ "$HEAD_REPO" == {{ name }} ]] && [[ $GITHUB_HEAD_REF == "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
 

@@ -117,10 +117,9 @@ class MetaYmlContainers(BaseModel):
 def module_uses_dockerfile(module: NFCoreComponent) -> bool:
     """Return True if the module has a Dockerfile (in its dir or parent) but no environment.yml."""
     env_yml = module.environment_yml
-    if env_yml is not None and Path(env_yml).exists():
+    if env_yml is not None and env_yml.exists():
         return False
-    component_dir = Path(module.component_dir)
-    return (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists()
+    return (module.component_dir / "Dockerfile").exists() or (module.component_dir.parent / "Dockerfile").exists()
 
 
 def repo_full_name_from_remote(remote_url: str) -> str:
@@ -213,7 +212,7 @@ def cache_is_expired(path: Path) -> bool:
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    cache_path = Path(NFCORE_CACHE_DIR) / "EDAM.tsv"
+    cache_path = NFCORE_CACHE_DIR / "EDAM.tsv"
 
     # Remove stale cache file
     if cache_path.exists() and cache_is_expired(cache_path):
@@ -267,19 +266,25 @@ def filter_modules_by_name(modules: list[NFCoreComponent], module_name: str) -> 
     """
     Filter modules by name, supporting exact matches and tool family matching.
 
+    A name matches a module exactly ('tool' or 'tool/subtool'), or it matches all
+    subtools of a tool ('tool' selects 'tool/subtool1', 'tool/subtool2', ...).
+    A name does not match other tools that start with the same characters
+    ('bwa' does not select 'bwamem2/mem').
+
     Args:
         modules (list[NFCoreComponent]): List of modules to filter
-        module_name (str): The module name or prefix to match
+        module_name (str): The tool or tool/subtool name to match
 
     Returns:
         list[NFCoreComponent]: List of matching modules
     """
+    module_name = module_name.rstrip("/")
     # First try to find an exact match
     exact_matches = [m for m in modules if m.component_name == module_name]
     if exact_matches:
         return exact_matches
-    # If no exact match, look for modules that start with the given name (subtools)
-    return [m for m in modules if m.component_name.startswith(module_name)]
+    # If no exact match, look for the subtools of the given tool
+    return [m for m in modules if m.component_name.startswith(f"{module_name}/")]
 
 
 def prompt_module_selection(

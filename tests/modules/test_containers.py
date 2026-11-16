@@ -54,7 +54,7 @@ class TestModuleContainers(TestModules):
     @mock.patch.object(ModuleContainers, "request_image_inspect")
     @mock.patch("nf_core.modules.containers.requests.post")
     def test_create_builds_containers(self, mock_post, mock_request_image_inspect, mock_requests_get):
-        def fake_post(url, json=None, headers=None):
+        def fake_post(url, json=None, headers=None, timeout=None):
             # `format` is "sif" for singularity, "docker" otherwise
             system = "singularity" if json.get("format") == "sif" else "docker"
             image = "community.wave.seqera.io/library/bpipe_test:0.1.0--abc123"

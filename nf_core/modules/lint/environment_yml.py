@@ -160,8 +160,7 @@ def lint_environment_yml(
             )
         )
 
-        component_dir = Path(module.component_dir)
-        if (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists():
+        if (module.component_dir / "Dockerfile").exists() or (module.component_dir.parent / "Dockerfile").exists():
             module.failed.append(
                 (
                     "environment_yml",

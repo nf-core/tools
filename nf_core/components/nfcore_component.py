@@ -70,6 +70,7 @@ class NFCoreComponent:
         self.container: dict = {}
         self.container_from_main_nf: str | None = None
         self._meta_yml_content: dict | None = None
+        self.main_nf_test_snap: Path | None = None
 
         if remote_component:
             # Initialize the important files
@@ -88,7 +89,8 @@ class NFCoreComponent:
 
             self.org = repo_dir
             self.nftest_testdir: Path | None = Path(self.component_dir, "tests")
-            self.nftest_main_nf: Path | None = Path(self.nftest_testdir, "main.nf.test")
+            self.main_nf_test: Path | None = Path(self.nftest_testdir, "main.nf.test")
+            self.main_nf_test_snap = Path(self.nftest_testdir, "main.nf.test.snap")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -106,14 +108,15 @@ class NFCoreComponent:
                 self.environment_yml = p if (p := Path(self.component_dir, "environment.yml")).exists() else None
                 self.nftest_testdir = p if (p := Path(self.component_dir, "tests")).exists() else None
                 if self.nftest_testdir is not None:
-                    self.nftest_main_nf = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+                    self.main_nf_test = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+                    self.main_nf_test_snap = Path(self.nftest_testdir, "main.nf.test.snap")
             else:
                 self.main_nf = self.component_dir
                 self.component_dir = self.component_dir.parent
                 self.meta_yml = None
                 self.environment_yml = None
                 self.nftest_testdir = None
-                self.nftest_main_nf = None
+                self.main_nf_test = None
 
         self.process_name: str = self._get_process_name()
 
@@ -161,17 +164,16 @@ class NFCoreComponent:
         Returns ``None`` if the component has no ``meta.yml``.
         """
         if reload or self._meta_yml_content is None:
-            if self.meta_yml is None or not Path(self.meta_yml).exists():
+            if self.meta_yml is None or not self.meta_yml.exists():
                 return None
             from nf_core.components.components_utils import read_meta_yml
 
-            self._meta_yml_content = read_meta_yml(Path(self.meta_yml))
+            self._meta_yml_content = read_meta_yml(self.meta_yml)
         return self._meta_yml_content
 
-    def _get_main_nf_tags(self, test_main_nf: Path | str) -> list[str]:
+    def _get_main_nf_tags(self, test_main_nf: Path) -> list[str]:
         """Collect all tags from the main.nf.test file."""
         tags: list[str] = []
-        test_main_nf = Path(test_main_nf)
         if not test_main_nf.is_file():
             return tags
         for line in test_main_nf.read_text().splitlines():
@@ -179,10 +181,9 @@ class NFCoreComponent:
                 tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: Path | str) -> list[str]:
+    def _get_included_components(self, main_nf: Path) -> list[str]:
         """Collect all included components from the main.nf file."""
         included_components = []
-        main_nf = Path(main_nf)
         data = main_nf.read_text() if main_nf.is_file() else ""
         for line in data.splitlines():
             if line.strip().startswith("include"):
@@ -199,8 +200,8 @@ class NFCoreComponent:
                     included_components.append(component)
         return included_components
 
-    def _get_included_components_in_chained_tests(self, main_nf_test: Path | str) -> list[str]:
-        """Collect all included components from the main.nf file."""
+    def _get_included_components_in_chained_tests(self, main_nf_test: Path) -> list[str]:
+        """Collect all included components from the script statements in the main.nf.test file."""
         included_components = []
         with open(main_nf_test) as fh:
             for line in fh:

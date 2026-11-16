@@ -39,14 +39,13 @@ repos:
     rev: "v2.4.0"
     hooks:
       - id: mypy
-        args: [--ignore-missing-imports, --scripts-are-modules, -n4]
+        args: [--scripts-are-modules, -n4]
         priority: 20
         additional_dependencies:
           - types-PyYAML
           - types-requests
           - types-jsonschema
           - types-Markdown
-          - types-setuptools
           - pydantic
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.13.5

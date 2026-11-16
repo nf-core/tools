@@ -104,6 +104,26 @@ class NfcoreCreateTest(unittest.TestCase):
             assert "template" in fh.read()
 
     @with_temporary_folder
+    def test_format_written_files_skips_without_code_linters(self, tmp_path):
+        """Pipelines skipping code_linters have no .prettierrc.yml, so prettier must not run on them"""
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
+            name=self.pipeline_name,
+            description=self.pipeline_description,
+            author=self.pipeline_author,
+            no_git=True,
+            outdir=tmp_path,
+        )
+        pipeline.written_files = {Path(tmp_path, "main.nf")}
+        with mock.patch("nf_core.pipelines.create.create.run_prettier_on_file") as mock_prettier:
+            pipeline.format_written_files()
+            mock_prettier.assert_called_once_with(Path(tmp_path, "main.nf"))
+
+            mock_prettier.reset_mock()
+            pipeline.config.skip_features = ["code_linters"]
+            pipeline.format_written_files()
+            mock_prettier.assert_not_called()
+
+    @with_temporary_folder
     def test_pipeline_creation_initiation_with_yml(self, tmp_path):
         pipeline = nf_core.pipelines.create.create.PipelineCreate(
             no_git=False,
@@ -217,3 +237,11 @@ class NfcoreCreateTest(unittest.TestCase):
                             )
                         else:
                             raise
+
+    @with_temporary_folder
+    def test_filter_ignored_files(self, tmp_path):
+        outdir = Path(tmp_path)
+        (outdir / ".gitignore").write_text("work/\n")
+        (outdir / ".prettierignore").write_text("*.log\n")
+        files = {outdir / "main.nf", outdir / "work" / "a.yml", outdir / "run.log"}
+        assert nf_core.pipelines.create.create._filter_ignored_files(outdir, files) == [outdir / "main.nf"]

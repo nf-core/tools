@@ -719,4 +719,5 @@ class ModuleLint(ComponentLint):
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")
             yaml.dump(corrected_meta_yml, fh)
-            run_prettier_on_file(fh.name)
+        # After the with-block, so prettier sees the flushed file
+        run_prettier_on_file(mod.meta_yml)
