@@ -1,6 +1,8 @@
 import mimetypes
 import re
 
+from nf_core.utils import get_wf_files
+
 
 def template_strings(self):
     """Check for template placeholders.
@@ -40,7 +42,7 @@ def template_strings(self):
     # Files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("template_strings", []) if self.lint_config is not None else []
 
-    files = self.list_files()
+    files = get_wf_files(self.wf_path)
     # Loop through files, searching for string
     num_matches = 0
     for fn in files:
@@ -50,19 +52,18 @@ def template_strings(self):
         # Skip binary files
         binary_ftypes = ["image", "application/java-archive"]
         (ftype, encoding) = mimetypes.guess_type(fn)
-        if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+        if encoding is not None or (ftype is not None and any(ftype.startswith(ft) for ft in binary_ftypes)):
             continue
 
         with open(fn, encoding="latin1") as fh:
-            lnum = 0
-            for line in fh:
-                lnum += 1
+            for i, line in enumerate(fh):
+                i += 1
                 cc_matches = re.findall(r"[^$]{{[^:}]*}}", line)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
-                        failed.append(f"Found a Jinja template string in `{fn}` L{lnum}: {cc_match}")
+                        failed.append(f"Found a Jinja template string in `{fn}` L{i}: {cc_match}")
                         num_matches += 1
     if num_matches == 0:
-        passed.append(f"Did not find any Jinja template strings ({len(self.files)} files)")
+        passed.append(f"Did not find any Jinja template strings ({len(files)} files)")
 
     return {"passed": passed, "failed": failed, "ignored": ignored}

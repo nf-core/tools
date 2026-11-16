@@ -11,17 +11,17 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 import sys
+from pathlib import Path
 
 import nf_core
 
-sys.path.insert(0, os.path.abspath("../../../nf_core"))
+sys.path.insert(0, str(Path("../../../nf_core").resolve()))
 
 # -- Project information -----------------------------------------------------
 
 project = "nf-core/tools"
-copyright = "2021, nf-core community"
+copyright = "2021, nf-core community"  # noqa: A001 - required by Sphinx
 author = "Numerous nf-core contributors"
 
 # The short X.Y version

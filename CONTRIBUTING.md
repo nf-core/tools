@@ -24,7 +24,7 @@ If you want to work with developing the nf-core/tools code, you'll need a couple
 Install using `uv`:
 
 ```bash
-uv sync --all-extras
+uv sync
 ```
 
 This will install all dependencies (listed in `pyproject.toml`) and install your local fork of nf-core/tools in editable mode. The virtual environment is automatically created in `.venv/` in the project directory.
@@ -90,7 +90,7 @@ Note: The `--config` flag is important in this repository to ensure prek uses th
 ## API Documentation
 
 We aim to write function docstrings according to the [Google Python style-guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings). These are used to automatically generate package documentation on the nf-core website using Sphinx.
-You can find this documentation here: [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/)
+You can find this documentation here: [nf-core tools Python API docs](https://nf-co.re/docs/nf-core-tools/api_reference/latest/).
 
 If you would like to test the documentation, you can install Sphinx locally by following Sphinx's [installation instruction](https://www.sphinx-doc.org/en/master/usage/installation.html).
 Once done, you can run `make clean` and then `make html` in the `docs/api` directory of `nf-core tools`.

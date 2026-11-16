@@ -16,7 +16,7 @@ Do you want to create a GitHub repository?
 
 
 class GithubRepoQuestion(Screen):
-    """Ask if the user wants to create a GitHub repository."""
+    """Ask if the user wants to create a Git repository."""
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -24,13 +24,13 @@ class GithubRepoQuestion(Screen):
         yield Markdown(
             dedent(
                 """
-                # Create GitHub repository
+                # Create Git repository
                 """
             )
         )
         yield Markdown(dedent(github_text_markdown))
         yield Center(
-            Button("Create GitHub repo", id="github_repo", variant="success"),
+            Button("Create Git repo", id="github_repo", variant="success"),
             Button("Finish without creating a repo", id="exit", variant="primary"),
             classes="cta",
         )

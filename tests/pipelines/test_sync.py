@@ -9,26 +9,11 @@ import git
 import pytest
 import yaml
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.sync
 from nf_core.utils import NFCoreYamlConfig
 
 from ..test_pipelines import TestPipelines
-from ..utils import with_temporary_folder
-
-
-class MockResponse:
-    def __init__(self, data: dict | list[dict], status_code: int, url: str):
-        self.url: str = url
-        self.status_code: int = status_code
-        self.from_cache: bool = False
-        self.reason: str = "Mocked response"
-        self.data: dict | list[dict] = data
-        self.content: str = json.dumps(data)
-        self.headers: dict[str, str] = {"content-encoding": "test", "connection": "fake"}
-
-    def json(self):
-        return self.data
+from ..utils import MockResponse, with_temporary_folder
 
 
 def mocked_requests_get(url, params=None, **kwargs) -> MockResponse:
@@ -101,7 +86,7 @@ class TestModules(TestPipelines):
         with open(nf_core_yml_path, "w") as fh:
             yaml.dump(nf_core_yml.model_dump(), fh)
 
-        psync = nf_core.pipelines.sync.PipelineSync(tmp_dir)
+        psync = nf_core.pipelines.sync.PipelineSync(Path(tmp_dir))
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
         assert "does not appear to be a git repository" in exc_info.value.args[0]
@@ -118,7 +103,7 @@ class TestModules(TestPipelines):
                 psync.inspect_sync_dir()
             assert exc_info.value.args[0].startswith("Uncommitted changes found in pipeline directory!")
         finally:
-            os.remove(test_fn)
+            test_fn.unlink()
 
     def test_inspect_sync_ignored_files(self):
         """
@@ -144,14 +129,14 @@ class TestModules(TestPipelines):
         """Try getting a workflow config, then make it miss a required config option"""
         # Try to sync, check we halt with the right error
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
-        psync.required_config_vars = ["fakethisdoesnotexist"]
+        psync.required_config_vars = {"fakesection": ["fakethisdoesnotexist"]}
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
         # Check that we did actually get some config back
-        assert psync.wf_config["params.validate_params"] == "true"
+        assert psync.wf_config["params"]["validate_params"] is True
         # Check that we raised because of the missing fake config var
-        assert exc_info.value.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
+        assert exc_info.value.args[0] == "Workflow config variable `fakesection.fakethisdoesnotexist` not found!"
 
     def test_checkout_template_branch(self):
         """Try checking out the TEMPLATE branch of the pipeline"""
@@ -180,7 +165,8 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
-        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
 
     def test_delete_tracked_template_branch_files_unlink_throws_error(self):
         """Test that SyncExceptionError is raised when Path.unlink throws an exception"""
@@ -291,7 +277,10 @@ class TestModules(TestPipelines):
         assert (Path(self.pipeline_dir) / ".git").exists()
 
     def test_create_template_pipeline(self):
-        """Confirm that we can create a new template pipeline in an empty directory"""
+        """Confirm that we can create a new template pipeline in an empty directory,
+        without running prettier on files ignored by the pipeline's (not the template's) .gitignore"""
+        ignored_file = Path(self.pipeline_dir) / "ignored.json"
+        self._make_ignored_file(ignored_file)
         # First, delete all the files
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
@@ -299,11 +288,17 @@ class TestModules(TestPipelines):
         psync.checkout_template_branch()
         psync.delete_tracked_template_branch_files()
         top_level_ignored = self._get_top_level_ignored(psync)
-        assert set(os.listdir(self.pipeline_dir)) == set([".git"]).union(top_level_ignored)
+        pipeline_contents = {f.name for f in Path(self.pipeline_dir).iterdir()}
+        assert pipeline_contents == {".git"}.union(top_level_ignored)
         # Now create the new template
-        psync.make_template_pipeline()
-        assert "main.nf" in os.listdir(self.pipeline_dir)
-        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+        with mock.patch("nf_core.pipelines.create.create.run_prettier_on_file") as mock_prettier:
+            psync.make_template_pipeline()
+        pipeline_path = Path(self.pipeline_dir)
+        assert (pipeline_path / "main.nf").exists()
+        assert (pipeline_path / "nextflow.config").exists()
+        formatted = {f for call in mock_prettier.call_args_list for f in call.args}
+        assert (pipeline_path / "main.nf").resolve() in formatted
+        assert ignored_file.resolve() not in formatted
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""
@@ -401,7 +396,7 @@ class TestModules(TestPipelines):
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
-        psync.repo.create_remote("origin", self.remote_path)
+        psync.repo.create_remote("origin", str(self.remote_path))
 
         psync.create_merge_base_branch()
         psync.push_merge_branch()
@@ -413,7 +408,7 @@ class TestModules(TestPipelines):
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
-        psync.repo.create_remote("origin", self.remote_path)
+        psync.repo.create_remote("origin", str(self.remote_path))
 
         with pytest.raises(nf_core.pipelines.sync.PullRequestExceptionError) as exc_info:
             psync.push_merge_branch()

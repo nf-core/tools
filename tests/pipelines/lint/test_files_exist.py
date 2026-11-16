@@ -19,7 +19,7 @@ class TestLintFilesExist(TestLint):
         Path(self.new_pipeline, "CHANGELOG.md").unlink()
 
         assert self.lint_obj._load()
-        self.lint_obj.nf_config["manifest.name"] = "nf-core/testpipeline"
+        self.lint_obj.nf_config["manifest"]["name"] = "nf-core/testpipeline"
 
         results = self.lint_obj.files_exist()
         assert "File not found: `CHANGELOG.md`" in results["failed"]
@@ -61,7 +61,7 @@ class TestLintFilesExist(TestLint):
             f.write(config)
 
         assert self.lint_obj._load()
-        self.lint_obj.nf_config["manifest.schema"] = "nf-core"
+        self.lint_obj.nf_config["manifest"]["schema"] = "nf-core"
         results = self.lint_obj.files_exist()
         assert results["failed"] == []
         assert results["ignored"] == []

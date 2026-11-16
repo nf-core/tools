@@ -1,22 +1,24 @@
 import json
 import logging
 import subprocess
+import sys
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
+import click
+import git
 import rich
 import yaml
-from rich.console import Console
 from rich.table import Table
 
 import nf_core.utils
 from nf_core import __version__
 from nf_core.utils import plural_s as _s
+from nf_core.utils import stdout as console
 from nf_core.utils import strip_ansi_codes
 
 log = logging.getLogger(__name__)
-
-# Create a console used by all lint tests
-console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
 
 def print_results_plain_text(results_list, directory=None, component_type=None):
@@ -47,7 +49,7 @@ def print_results_plain_text(results_list, directory=None, component_type=None):
                     # Pipeline results: (eid, msg)
                     eid, msg = r
                     console.print(
-                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}"
+                        f"\n[{color}]{eid}[/{color}] https://nf-co.re/docs/nf-core-tools/api_reference/{tools_version}/pipeline_lint_tests/{eid}"
                     )
                     print_lines(msg, strip_ansi=True)
                 else:
@@ -132,60 +134,60 @@ def print_fixes(lint_obj, plain_text=False):
 def check_git_repo() -> bool:
     """Check if the current directory is a git repository."""
     try:
-        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
+        git.Repo(search_parent_directories=True)
         return True
-    except subprocess.CalledProcessError:
+    except git.InvalidGitRepositoryError:
         return False
 
 
-def run_prettier_on_file(file: Path | str | list[str]) -> None:
-    """Run the pre-commit hook prettier on a file.
+def run_prettier_on_file(*files: Path) -> None:
+    """Run the pre-commit hook prettier on one or more files.
+
+    Skipped (with a debug message) outside a git repository. Syntax errors in a file are logged
+    as critical, any other prettier/prek failure as a warning.
 
     Args:
-        file (Path | str): A file identifier as a string or pathlib.Path.
-
-    Warns:
-        If Prettier is not installed, a warning is logged.
+        *files (Path): The files to format.
     """
+    if not files:
+        return
+    # prek refuses to run outside a git repository
+    if not check_git_repo():
+        log.debug("Not in a git repository, skipping prettier hook.")
+        return
 
-    is_git = check_git_repo()
+    ctx = click.get_current_context(silent=True)
+    verbose = bool(ctx and ctx.obj and ctx.obj.get("verbose"))
 
-    nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
-    args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
-    if isinstance(file, list):
-        args.extend(["--files", *file])
+    config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
+    # `python -m prek` lets prek locate its own binary, so isolated installs (uv tool, pipx, conda) work too
+    proc = subprocess.run(
+        [sys.executable, "-m", "prek", "run", "--config", str(config), "prettier"]
+        + (["--verbose"] if verbose else [])
+        + ["--files", *map(str, files)],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode == 0 or "files were modified by this hook" in proc.stdout:
+        log.debug(proc.stdout)
+    elif ": SyntaxError: " in proc.stdout:
+        log.critical(f"Can't format {', '.join(map(str, files))} because of a syntax error.\n{proc.stdout}")
     else:
-        args.extend(["--files", str(file)])
-
-    if is_git:
-        try:
-            proc = subprocess.run(args, capture_output=True, check=True)
-            log.debug(f"{proc.stdout.decode()}")
-        except subprocess.CalledProcessError as e:
-            if ": SyntaxError: " in e.stdout.decode():
-                log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
-            elif "files were modified by this hook" in e.stdout.decode():
-                all_lines = [line for line in e.stdout.decode().split("\n")]
-                files = "\n".join(all_lines[3:])
-                log.debug(f"The following files were modified by prettier:\n {files}")
-            else:
-                log.warning(
-                    "There was an error running the prettier pre-commit hook.\n"
-                    f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
-                )
-    else:
-        log.debug("Not in a git repository, skipping pre-commit hook.")
+        log.warning(
+            f"There was an error running the prettier pre-commit hook.\nSTDOUT: {proc.stdout}\nSTDERR: {proc.stderr}"
+        )
 
 
-def dump_json_with_prettier(file_name, file_content):
+def dump_json_with_prettier(file_name: Path | str, file_content: Mapping[str, Any]) -> None:
     """Dump a JSON file and run prettier on it.
+
     Args:
         file_name (Path | str): A file identifier as a string or pathlib.Path.
-        file_content (dict): Content to dump into the JSON file
+        file_content (Mapping[str, Any]): Content to dump into the JSON file
     """
     with open(file_name, "w") as fh:
         json.dump(file_content, fh, indent=4)
-    run_prettier_on_file(file_name)
+    run_prettier_on_file(Path(file_name))
 
 
 def dump_yaml_with_prettier(file_name: Path | str, file_content: dict) -> None:
@@ -197,7 +199,7 @@ def dump_yaml_with_prettier(file_name: Path | str, file_content: dict) -> None:
     """
     with open(file_name, "w") as fh:
         yaml.safe_dump(file_content, fh)
-    run_prettier_on_file(file_name)
+    run_prettier_on_file(Path(file_name))
 
 
 def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> list[list[str]]:

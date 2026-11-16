@@ -3,6 +3,7 @@
 # allow --force option and also a --release option (which takes a release name, or "all")
 force=false
 releases=()
+original_ref=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -38,6 +39,9 @@ if [[ ${#releases[@]} -eq 0 ]]; then
     releases+=("dev")
 fi
 
+# Save current position so we can restore it after each checkout
+original_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEAD)
+
 # Loop through each release
 for release in "${releases[@]}"; do
     # Checkout the release
@@ -63,8 +67,10 @@ for release in "${releases[@]}"; do
 
     done
 
-    # fix syntax in lint/merge_markers.py
-    sed -i 's/>>>>>>> or <<<<<<</``>>>>>>>`` or ``<<<<<<<``/g' nf_core/lint/merge_markers.py
+    # fix syntax in lint/merge_markers.py (file may not exist in all releases)
+    if [[ -f nf_core/lint/merge_markers.py ]]; then
+        sed -i 's/>>>>>>> or <<<<<<</``>>>>>>>`` or ``<<<<<<<``/g' nf_core/lint/merge_markers.py
+    fi
     # remove markdown files if --force is set
     if [[ "$force" = true ]]; then
         echo -e "\n\e[31mRemoving $output_dir/$release because of '--force'\e[0m"
@@ -75,7 +81,7 @@ for release in "${releases[@]}"; do
     # undo all changes
     git restore .
 
-    git checkout -
+    git checkout "$original_ref"
     # replace :::{seealso} with :::tip in the markdown files
     find "$output_dir/$release" -name "*.md" -exec sed -i 's/:::{seealso}/:::tip/g' {} \;
     i=1
@@ -89,6 +95,6 @@ for release in "${releases[@]}"; do
     find "$output_dir/$release" -name "*.md" -size 0 -delete
     # remove `.doctrees` directory
     rm -rf "$output_dir/$release/.doctrees"
-    # run pre-commit to fix any formatting issues on the generated markdown files
-    pre-commit run --files "$output_dir/$release"
+    # run prek to fix any formatting issues on the generated markdown files
+    prek run --files "$output_dir/$release"
 done

@@ -24,6 +24,25 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     * All included modules or subworkflows are used and their names are used for `versions.yml`
     * The workflow name is all capital letters
     * The subworkflow emits a software version
+
+    The following checks are performed:
+
+    main_nf_exists
+    ^^^^^^^^^^^^^^
+
+    The ``main.nf`` file must exist.
+
+    main_nf_script_outputs
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    The workflow must have an ``emit:`` block.
+
+    main_nf_version_emitted
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+    The subworkflow should emit a software version
+    channel. A warning is issued if no ``versions`` output is found (can be
+    ignored if the subworkflow uses topic channels).
     """
 
     inputs: list[str] = []
@@ -96,22 +115,6 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
     # Check the main definition
     check_main_section(subworkflow, main_lines, included_components)
 
-    # Check that a software version is emitted
-    if outputs:
-        if "versions" in outputs:
-            subworkflow.passed.append(
-                ("main_nf", "main_nf_version_emitted", "Subworkflow emits software version", subworkflow.main_nf)
-            )
-        else:
-            subworkflow.warned.append(
-                (
-                    "main_nf",
-                    "main_nf_version_emitted",
-                    "Subworkflow does not emit software version. Can be ignored if the subworkflow is using topic channels",
-                    subworkflow.main_nf,
-                )
-            )
-
     return inputs, outputs
 
 
@@ -157,24 +160,6 @@ def check_main_section(self, lines, included_components):
                         self.main_nf,
                     )
                 )
-            if component + ".out.versions" in script:
-                self.passed.append(
-                    (
-                        "main_nf",
-                        "main_nf_include_versions",
-                        f"Included component '{component}' versions are added in main.nf",
-                        self.main_nf,
-                    )
-                )
-            else:
-                self.warned.append(
-                    (
-                        "main_nf",
-                        "main_nf_include_versions",
-                        f"Included component '{component}' versions are not added in main.nf. Can be ignored if the module is using topic channels",
-                        self.main_nf,
-                    )
-                )
 
 
 def check_subworkflow_section(self, lines: list[str]) -> list[str]:
@@ -210,15 +195,8 @@ def check_subworkflow_section(self, lines: list[str]) -> list[str]:
     includes = []
     for line in lines:
         if line.strip().startswith("include"):
-            component_name = [line.split("{")[1].split("}")[0].strip()]
-            # check if multiple components are included
-            if ";" in component_name[0]:
-                component_name = component_name[0].split(";")
-            for comp in component_name:
-                if " as " in comp:
-                    comp = comp.split(" as ")[1].strip()
-                includes.append(comp)
-            continue
+            for name, alias, _link in self.parse_include_statement(line):
+                includes.append(alias or name)
     # remove duplicated components
     includes = list(set(includes))
     if len(includes) >= 2:

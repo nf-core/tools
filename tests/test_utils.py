@@ -1,13 +1,15 @@
 """Tests covering for utility functions."""
 
+import json
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
+import git
 import pytest
 import requests
 
-import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
 
@@ -15,6 +17,36 @@ from .test_pipelines import TestPipelines
 from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
+
+
+def test_is_interactive_consults_all_streams():
+    """Verify all three streams are checked — catches a forgotten stream or hardcoded return."""
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=True) as m_in,
+        mock.patch.object(sys.stdout, "isatty", return_value=True) as m_out,
+        mock.patch.object(sys.stderr, "isatty", return_value=True) as m_err,
+    ):
+        assert nf_core.utils.is_interactive() is True
+        m_in.assert_called_once()
+        m_out.assert_called_once()
+        m_err.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "stdin,stdout,stderr",
+    [
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+    ],
+)
+def test_is_interactive_false_if_any_non_tty(stdin, stdout, stderr):
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=stdin),
+        mock.patch.object(sys.stdout, "isatty", return_value=stdout),
+        mock.patch.object(sys.stderr, "isatty", return_value=stderr),
+    ):
+        assert nf_core.utils.is_interactive() is False
 
 
 def test_strip_ansi_codes():
@@ -74,7 +106,7 @@ class TestUtils(TestPipelines):
     def testload_pipeline_config(self):
         """Load the pipeline Nextflow config"""
         self.pipeline_obj.load_pipeline_config()
-        assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
+        assert self.pipeline_obj.nf_config["dag"]["enabled"] is True
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2
 
@@ -82,21 +114,6 @@ class TestUtils(TestPipelines):
     #     """Load the pipeline Conda environment.yml file"""
     #     self.pipeline_obj._load_conda_environment()
     #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda"]
-
-    def test_list_files_git(self):
-        """Test listing pipeline files using `git ls`"""
-        files = self.pipeline_obj.list_files()
-        assert Path(self.pipeline_dir, "main.nf") in files
-
-    @with_temporary_folder
-    def test_list_files_no_git(self, tmpdir):
-        """Test listing pipeline files without `git-ls`"""
-        # Create a test file in a temporary directory
-        tmp_fn = Path(tmpdir, "testfile")
-        tmp_fn.touch()
-        pipeline_obj = nf_core.utils.Pipeline(tmpdir)
-        files = pipeline_obj.list_files()
-        assert tmp_fn in files
 
     @mock.patch("pathlib.Path.mkdir")
     @mock.patch("pathlib.Path.exists")
@@ -144,7 +161,7 @@ class TestUtils(TestPipelines):
                 break
         else:
             raise AssertionError("Release 1.6 not found")
-        assert "dev" in wf_branches.keys()
+        assert "dev" in wf_branches
 
     def test_get_repo_releases_branches_not_nf_core(self):
         wfs = nf_core.pipelines.list.Workflows()
@@ -155,7 +172,7 @@ class TestUtils(TestPipelines):
                 break
         else:
             raise AssertionError("MultiQC release v1.32 not found")
-        assert "main" in wf_branches.keys()
+        assert "main" in wf_branches
 
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.pipelines.list.Workflows()
@@ -212,18 +229,40 @@ class TestUtils(TestPipelines):
 
     def test_set_wd_revert_on_raise(self):
         wd_before_context = Path().resolve()
-        with pytest.raises(Exception):
-            with nf_core.utils.set_wd(self.tmp_dir):
-                raise Exception
+        with pytest.raises(RuntimeError), nf_core.utils.set_wd(self.tmp_dir):
+            raise RuntimeError
         assert wd_before_context == Path().resolve()
+
+    def test_run_cmd_raises_command_error_with_both_streams(self):
+        """A failing command keeps stdout and stderr on the error and includes both in its message."""
+        with pytest.raises(nf_core.utils.CommandError) as exc_info:
+            nf_core.utils.run_cmd("sh", "-c 'echo details; echo summary >&2; exit 3'")
+        err = exc_info.value
+        assert isinstance(err, RuntimeError)
+        assert err.returncode == 3
+        assert err.output == "details\nsummary"
+        assert err.output in str(err)
+
+    def test_parse_nextflow_json_ignores_status_lines(self):
+        """Status lines that Nextflow prints around its JSON output on stdout are skipped."""
+        outputs = {
+            "plain": '{"processes": []}',
+            "status lines": '[PIPELINE] main.nf | profile=standard\n[WORKDIR] /work\n{"processes": []}\n[SUCCESS] done',
+            "nextflow < 26.05": 'Monitor the execution with Seqera Platform using this URL: https://x\n{"processes": []}',
+        }
+        for name, text in outputs.items():
+            with self.subTest(name):
+                assert nf_core.utils.parse_nextflow_json(text) == {"processes": []}
+        with pytest.raises(json.JSONDecodeError):
+            nf_core.utils.parse_nextflow_json("ERROR ~ no json here")
 
     @mock.patch("nf_core.utils.run_cmd")
     def test_fetch_wf_config(self, mock_run_cmd):
         """Test the fetch_wf_config() regular expression to read config params."""
-        mock_run_cmd.return_value = (b"params.param1 ? 'a=b' : ''\nparams.param2 = foo", b"mock")
-        config = nf_core.utils.fetch_wf_config(".", False)
-        assert len(config.keys()) == 1
-        assert "params.param2" in list(config.keys())
+        mock_run_cmd.return_value = (b'{"params": {"param2": "foo"}}', b"mock")
+        config = nf_core.utils.fetch_wf_config(Path(), False)
+        assert "params" in config
+        assert config["params"].get("param2") == "foo"
 
     @with_temporary_folder
     def test_get_wf_files(self, tmpdir):
@@ -243,3 +282,36 @@ class TestUtils(TestPipelines):
         files = nf_core.utils.get_wf_files(tmpdir)
         files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
         assert files == [".gitignore", "dir1/should-match-1", "should-match-2"]
+
+    @with_temporary_folder
+    def test_get_wf_files_git(self, tmpdir):
+        """Full gitignore semantics in a git repository"""
+        tmpdir = Path(tmpdir)
+        git.Repo.init(tmpdir)
+        # Cases the fnmatch fallback misses
+        (tmpdir / ".gitignore").write_text(".venv\n*.log\n!keep.log\n")
+        (tmpdir / "dir1").mkdir()
+        (tmpdir / "dir1" / ".gitignore").write_text("should-ignore-*\n")
+        for rpath in [
+            ".venv/should-ignore-1",
+            "debug.log",
+            "dir1/should-ignore-2",
+            "dir1/should-match-1",
+            "keep.log",
+            "dir1/naïve-ünïcode.txt",
+        ]:
+            p = tmpdir / rpath
+            p.parent.mkdir(exist_ok=True)
+            p.touch()
+        repo = git.Repo(tmpdir)
+        # Tracked non-ASCII paths are quoted by git unless `-z` is used
+        repo.index.add(["dir1/naïve-ünïcode.txt"])
+        files = nf_core.utils.get_wf_files(tmpdir)
+        files = sorted(str(Path(f).relative_to(tmpdir)) for f in files)
+        assert files == [
+            ".gitignore",
+            "dir1/.gitignore",
+            "dir1/naïve-ünïcode.txt",
+            "dir1/should-match-1",
+            "keep.log",
+        ]

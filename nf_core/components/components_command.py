@@ -7,6 +7,7 @@ from pathlib import Path
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_utils import scan_modules_dir
 
 from .components_utils import get_repo_info
 
@@ -35,10 +36,15 @@ class ComponentCommand:
         self.directory: Path = Path(directory)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress: bool = hide_progress
-        self.no_prompts: bool = no_prompts
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
         self.repo_type: str | None = None
         self.org: str = ""
         self._configure_repo_and_paths()
+
+    def require_prompts(self, msg: str) -> None:
+        """Raise UserWarning if prompts are disabled (via --no-prompts or non-interactive session)."""
+        if self.no_prompts:
+            raise UserWarning(f"{msg} and prompts are disabled.")
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """
@@ -50,7 +56,7 @@ class ComponentCommand:
         """
         try:
             if self.directory:
-                if self.directory == Path(".") and not nf_dir_req:
+                if self.directory == Path() and not nf_dir_req:
                     self.no_prompts = True
                 self.directory, self.repo_type, self.org = get_repo_info(self.directory, use_prompt=not self.no_prompts)
         except UserWarning:
@@ -69,11 +75,7 @@ class ComponentCommand:
         Get the local modules/subworkflows in a pipeline
         """
         local_component_dir = Path(self.directory, self.component_type, "local")
-        return [
-            str(Path(directory).relative_to(local_component_dir))
-            for directory, _, files in os.walk(local_component_dir)
-            if "main.nf" in files
-        ] + [
+        return scan_modules_dir(local_component_dir) + [
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
 
@@ -85,11 +87,7 @@ class ComponentCommand:
             component_base_path = Path(self.directory, self.default_modules_path)
         elif self.component_type == "subworkflows":
             component_base_path = Path(self.directory, self.default_subworkflows_path)
-        return [
-            str(Path(directory).relative_to(component_base_path))
-            for directory, _, files in os.walk(component_base_path)
-            if "main.nf" in files
-        ]
+        return scan_modules_dir(component_base_path)
 
     def has_valid_directory(self) -> bool:
         """Check that we were given a pipeline or clone of nf-core/modules"""
@@ -155,9 +153,7 @@ class ComponentCommand:
         if not repo_dir.exists():
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
-        return [
-            str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
-        ]
+        return scan_modules_dir(repo_dir)
 
     def install_component_files(
         self, component_name: str, component_version: str, modules_repo: ModulesRepo, install_dir: str | Path
@@ -257,6 +253,7 @@ class ComponentCommand:
                     and self.modules_repo.repo_path is not None
                     and modules_json.modules_json is not None
                 ):
+                    # TODO: Consider if this needs to be a string or if Path object would work
                     modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
                         self.modules_repo.repo_path
                     ][module_name]["patch"] = str(patch_path.relative_to(self.directory.resolve()))
@@ -273,20 +270,17 @@ class ComponentCommand:
         """
         include_stmts: dict[str, list[dict[str, int | str]]] = {}
         if self.repo_type == "pipeline":
-            workflow_files = Path(self.directory, "workflows").glob("*.nf")
+            workflow_files = Path(self.directory, "workflows").rglob("*.nf")
             for workflow_file in workflow_files:
-                with open(workflow_file) as fh:
+                with open(workflow_file) as fh, mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
                     # Check if component path is in the file using mmap
-                    with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
-                        if s.find(component_path.encode()) != -1:
-                            # If the component path is in the file, check for include statements
-                            for i, line in enumerate(fh):
-                                if line.startswith("include") and component_path in line:
-                                    if str(workflow_file) not in include_stmts:
-                                        include_stmts[str(workflow_file)] = []
-                                    include_stmts[str(workflow_file)].append(
-                                        {"line_number": i + 1, "line": line.rstrip()}
-                                    )
+                    if s.find(component_path.encode()) != -1:
+                        # If the component path is in the file, check for include statements
+                        for i, line in enumerate(fh):
+                            if line.startswith("include") and component_path in line:
+                                if str(workflow_file) not in include_stmts:
+                                    include_stmts[str(workflow_file)] = []
+                                include_stmts[str(workflow_file)].append({"line_number": i + 1, "line": line.rstrip()})
 
             return include_stmts
         else:

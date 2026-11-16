@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -10,6 +9,7 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.pipelines.containers_utils import try_generate_container_configs
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,10 @@ class ComponentPatch(ComponentCommand):
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
 
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             choices = [
                 component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                 for directory, component in components
@@ -61,7 +65,7 @@ class ComponentPatch(ComponentCommand):
                 choices=sorted(choices),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, self.modules_repo.repo_path, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -94,12 +98,15 @@ class ComponentPatch(ComponentCommand):
         patch_path = Path(self.directory, patch_relpath)
 
         if patch_path.exists():
+            self.require_prompts(
+                f"Patch already exists for '{component_fullname}'.\nPlease remove the existing patch file first"
+            )
             remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Do you want to regenerate it?",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if remove:
-                os.remove(patch_path)
+                patch_path.unlink()
             else:
                 return
 
@@ -112,7 +119,8 @@ class ComponentPatch(ComponentCommand):
             )
 
         # Write the patch to a temporary location (otherwise it is printed to the screen later)
-        patch_temp_path = tempfile.mktemp()
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            patch_temp_path = tmp.name
         try:
             ComponentsDiffer.write_diff_file(
                 patch_temp_path,
@@ -126,7 +134,9 @@ class ComponentPatch(ComponentCommand):
             )
             log.debug(f"Patch file wrote to a temporary directory {patch_temp_path}")
         except UserWarning:
-            raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
+            raise UserWarning(
+                f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute"
+            ) from None
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(
@@ -148,6 +158,10 @@ class ComponentPatch(ComponentCommand):
         shutil.move(patch_temp_path, patch_path)
         log.info(f"Patch file of '{component_fullname}' written to '{patch_path}'")
 
+        # Regenerate container configuration files for the pipeline when modules are removed
+        if self.component_type == "modules":
+            try_generate_container_configs(self.directory)
+
     def remove(self, component):
         # Check modules directory structure
         self.check_modules_structure()
@@ -155,8 +169,14 @@ class ComponentPatch(ComponentCommand):
         self.modules_json.check_up_to_date()
         self._parameter_checks(component)
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
+        if components is None:
+            raise ValueError(f"No components found for {self.component_type} in the pipeline")
 
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             choices = [
                 component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                 for directory, component in components
@@ -166,7 +186,7 @@ class ComponentPatch(ComponentCommand):
                 choices,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -199,6 +219,9 @@ class ComponentPatch(ComponentCommand):
         component_path = Path(self.directory, component_relpath)
 
         if patch_path.exists():
+            self.require_prompts(
+                f"Patch exists for '{component_fullname}'.\nPlease remove the existing patch file first"
+            )
             remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Are you sure you want to remove?",
                 style=nf_core.utils.nfcore_question_style,
@@ -213,9 +236,9 @@ class ComponentPatch(ComponentCommand):
         try:
             for file in Path(temp_component_dir).glob("*"):
                 file.rename(component_path.joinpath(file.name))
-            os.rmdir(temp_component_dir)
+            Path(temp_component_dir).rmdir()
         except Exception as err:
-            raise UserWarning(f"There was a problem reverting the patched file: {err}")
+            raise UserWarning(f"There was a problem reverting the patched file: {err}") from err
 
         log.info(f"Patch for {component} reverted!")
         # Remove patch file if we could revert the patch

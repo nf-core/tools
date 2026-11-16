@@ -106,7 +106,7 @@ def nf_test_content(self) -> dict[str, list[str]]:
             ignored.append(f"'{test_fn.relative_to(self.wf_path)}' checking ignored")
             continue
 
-        checks_passed = {check: False for check in test_checks}
+        checks_passed = dict.fromkeys(test_checks, False)
         with open(test_fn) as fh:
             for line in fh:
                 for check_name, check_info in test_checks.items():
@@ -145,7 +145,7 @@ def nf_test_content(self) -> dict[str, list[str]]:
         failed.append(f"'{conf_fn.relative_to(self.wf_path)}' does not exist")
     else:
         if nf_test_content_conf is None or str(conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
-            checks_passed = {check: False for check in config_checks}
+            checks_passed = dict.fromkeys(config_checks, False)
             with open(conf_fn) as fh:
                 for line in fh:
                     line = line.strip()
@@ -167,19 +167,19 @@ def nf_test_content(self) -> dict[str, list[str]]:
     nf_test_conf_fn = Path(self.wf_path, "nf-test.config")
     nf_test_checks: dict[str, dict[str, str]] = {
         "testsDir": {
-            "pattern": r'testsDir "\."',
+            "pattern": r'testsDir\s*=?\s*"\."',
             "description": "sets a `testsDir`",
-            "failure_msg": 'does not set a `testsDir`, it should contain `testsDir "."`',
+            "failure_msg": 'does not set a `testsDir`, it should contain `testsDir = "."`.',
         },
         "workDir": {
-            "pattern": r'workDir System\.getenv\("NFT_WORKDIR"\) \?: "\.nf-test"',
+            "pattern": r'workDir\s*=?\s*System\.getenv\("NFT_WORKDIR"\) \?: "\.nf-test"',
             "description": "sets a `workDir`",
-            "failure_msg": 'does not set a `workDir`, it should contain `workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"`',
+            "failure_msg": 'does not set a `workDir`, it should contain `workDir = System.getenv("NFT_WORKDIR") ?: ".nf-test"`.',
         },
         "configFile": {
-            "pattern": r'configFile "tests/nextflow\.config"',
+            "pattern": r'configFile\s*=?\s*"tests/nextflow\.config"',
             "description": "sets a `configFile`",
-            "failure_msg": 'does not set a `configFile`, it should contain `configFile "tests/nextflow.config"`',
+            "failure_msg": 'does not set a `configFile`, it should contain `configFile = "tests/nextflow.config"`.',
         },
     }
 
@@ -187,7 +187,7 @@ def nf_test_content(self) -> dict[str, list[str]]:
         failed.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' does not exist")
     else:
         if nf_test_content_conf is None or str(nf_test_conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
-            checks_passed = {check: False for check in nf_test_checks}
+            checks_passed = dict.fromkeys(nf_test_checks, False)
             with open(nf_test_conf_fn) as fh:
                 for line in fh:
                     line = line.strip()

@@ -187,7 +187,7 @@ class ComponentsDiffer:
                 elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                     # The file was removed between the commits
                     fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
-                elif limit_output and not file.suffix == ".nf":
+                elif limit_output and file.suffix != ".nf":
                     # Skip printing the diff for files other than main.nf
                     fh.write(f"Changes in '{Path(component, file)}' but not shown\n")
                 else:
@@ -235,16 +235,16 @@ class ComponentsDiffer:
 
     @staticmethod
     def print_diff(
-        component,
-        repo_path,
-        from_dir,
-        to_dir,
-        current_version=None,
-        new_version=None,
-        dsp_from_dir=None,
-        dsp_to_dir=None,
-        limit_output=False,
-    ):
+        component: str,
+        repo_path: str,
+        from_dir: str | Path,
+        to_dir: str | Path,
+        current_version: str | None = None,
+        new_version: str | None = None,
+        dsp_from_dir: str | Path | None = None,
+        dsp_to_dir: str | Path | None = None,
+        limit_output: bool = False,
+    ) -> None:
         """
         Prints the diffs between two component versions to the terminal
 
@@ -286,7 +286,7 @@ class ComponentsDiffer:
             elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
                 log.info(f"'{Path(dsp_from_dir, file)}' was removed")
-            elif limit_output and not file.suffix == ".nf":
+            elif limit_output and file.suffix != ".nf":
                 # Skip printing the diff for files other than main.nf
                 log.info(f"Changes in '{Path(component, file)}' but not shown")
             else:

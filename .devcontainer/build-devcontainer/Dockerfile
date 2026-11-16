@@ -1,20 +1,16 @@
 # devcontainers/miniconda image based on debian (bookworm)
 # see tags and images: https://mcr.microsoft.com/en-us/artifact/mar/devcontainers/miniconda/tags
-FROM mcr.microsoft.com/devcontainers/miniconda@sha256:b99720fe7bdce0346dc3c3ff54414ba78ff183d85a5a9d9a2e2e5775ce679347 AS build
+FROM mcr.microsoft.com/devcontainers/miniconda@sha256:c8a96d3426476d967a14b03a65b2914a4149de3f79c01741d38dc6f14c7c6d00 AS build
 
-# copy this repo at current revision
-COPY . /root/nfcore-tools/
+# Replace the Anaconda defaults channels (which require accepting their Terms of Service)
+# with conda-forge and bioconda. Uses --system because defaults is set in /opt/conda/.condarc
+RUN conda config --system --remove channels defaults && \
+    conda config --system --add channels bioconda && \
+    conda config --system --add channels conda-forge && \
+    conda config --system --set channel_priority strict
 
-# Explicitly reinstall python 3.13 via conda
-# Install uv and local nf-core tools version, and precommit hooks
-RUN cd /root/nfcore-tools/ && \
-    conda install -y python=3.13 && \
-    pip install --no-cache-dir --upgrade pip uv && \
-    uv pip install --system --no-cache-dir . && \
-    rm -rf /root/.cache/pip /root/.cache/uv
-
-# Install nextflow and nf-test via conda and run conda clean
-RUN conda install -c bioconda -y nextflow nf-test && \
+# Install python 3.14 (the image's Anaconda packages are built for 3.14), uv, nextflow and nf-test in one solve
+RUN conda install -y python=3.14 uv nextflow nf-test && \
     conda clean -afy
 
 # Install dependencies for apptainer build and apptainer and run apt clean
@@ -26,8 +22,14 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# copy this repo at current revision (after the slow installs, so source edits keep their cache)
+COPY . /root/nfcore-tools/
+
+# Install local nf-core tools version
+RUN uv pip install --system --no-cache-dir /root/nfcore-tools/
+
 # Final stage to copy only the required files after installation
-FROM mcr.microsoft.com/devcontainers/base:2.1.6-debian12@sha256:15143a8c806afb8db57ae2c92876c112d7a6a1ced31cd7aa8b414201782757a4 AS final
+FROM mcr.microsoft.com/devcontainers/base:2.2.5-debian12@sha256:99f5250dd2d5f8b11046d5662dd94c1e3c1dae56b560c7caad5ceb7edf349046 AS final
 
 # Copy only the conda environment and site-packages from build stage
 COPY --from=build /opt/conda /opt/conda

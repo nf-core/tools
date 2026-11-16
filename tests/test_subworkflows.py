@@ -6,9 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import nf_core.modules
 import nf_core.modules.install
-import nf_core.pipelines.create.create
 import nf_core.subworkflows
 
 from .utils import (

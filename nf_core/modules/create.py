@@ -17,7 +17,6 @@ class ModuleCreate(ComponentCreate):
         conda_name=None,
         conda_version=None,
         empty_template=False,
-        migrate_pytest=False,
     ):
         super().__init__(
             "modules",
@@ -30,5 +29,4 @@ class ModuleCreate(ComponentCreate):
             conda_name,
             conda_version,
             empty_template,
-            migrate_pytest,
         )

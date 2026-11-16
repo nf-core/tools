@@ -135,9 +135,7 @@ while orig_lines:
     # If the line already contains a link to the PR, don't add it again.
     line = _skip_existing_entry_for_this_pr(line, same_section=False)
 
-    if (
-        line.startswith("## ") and not line.strip() == "# nf-core/tools: Changelog"
-    ):  # Version header, e.g. "## v2.12dev"
+    if line.startswith("## ") and line.strip() != "# nf-core/tools: Changelog":  # Version header, e.g. "## v2.12dev"
         print(f"Found version header: {line.strip()}")
         updated_lines.append(line)
 

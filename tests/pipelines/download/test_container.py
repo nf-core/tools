@@ -5,7 +5,6 @@ import unittest
 import pytest
 import rich.progress_bar
 import rich.table
-import rich.text
 
 from nf_core.pipelines.download.container_fetcher import ContainerProgress
 
@@ -60,13 +59,12 @@ class ContainerProgressTest(unittest.TestCase):
             assert progress.tasks == []
 
             # Add another sub-task, this time that raises an exception
-            with pytest.raises(ValueError):
-                with progress.sub_task("Sub-task", total=28) as sub_task_id:
-                    assert sub_task_id == 1
-                    assert len(progress.tasks) == 1
-                    assert progress.task_ids[0] == sub_task_id
-                    assert progress.tasks[0].total == 28
-                    raise ValueError("This is a test error")
+            with pytest.raises(ValueError), progress.sub_task("Sub-task", total=28) as sub_task_id:
+                assert sub_task_id == 1
+                assert len(progress.tasks) == 1
+                assert progress.task_ids[0] == sub_task_id
+                assert progress.tasks[0].total == 28
+                raise ValueError("This is a test error")
 
             # The sub-task should also be gone now
             assert progress.tasks == []

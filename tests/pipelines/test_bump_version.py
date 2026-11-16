@@ -24,7 +24,7 @@ class TestBumpVersion(TestPipelines):
 
         # Check nextflow.config
         new_pipeline_obj.load_pipeline_config()
-        assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.1.0"
+        assert new_pipeline_obj.nf_config["manifest"]["version"].strip("'\"") == "1.1.0"
 
         # Check multiqc_config.yml
         with open(new_pipeline_obj._fp("assets/multiqc_config.yml")) as fh:
@@ -47,7 +47,7 @@ class TestBumpVersion(TestPipelines):
 
         # Check the pipeline config
         new_pipeline_obj.load_pipeline_config()
-        assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.2dev"
+        assert new_pipeline_obj.nf_config["manifest"]["version"].strip("'\"") == "1.2dev"
 
     def test_bump_nextflow_version(self):
         # Bump the version number to a specific version, preferably one
@@ -58,12 +58,17 @@ class TestBumpVersion(TestPipelines):
         new_pipeline_obj._load()
 
         # Check nextflow.config
-        assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == f"!>={version}"
+        assert new_pipeline_obj.nf_config["manifest"]["nextflowVersion"].strip("'\"") == f"!>={version}"
 
         # Check .github/workflows/nf-test.yml
         with open(new_pipeline_obj._fp(".github/workflows/nf-test.yml")) as fh:
             ci_yaml = yaml.safe_load(fh)
         assert ci_yaml["jobs"]["nf-test"]["strategy"]["matrix"]["NXF_VER"][0] == version
+
+        # Check .github/workflows/fix-linting.yml
+        with open(new_pipeline_obj._fp(".github/workflows/fix-linting.yml")) as fh:
+            ci_yaml = yaml.safe_load(fh)
+        assert ci_yaml["jobs"]["fix-linting"]["with"]["nextflow-versions"] == f'["{version}","latest-everything"]'
 
         # Check README.md
         with open(new_pipeline_obj._fp("README.md")) as fh:

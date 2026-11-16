@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import yaml
 from rich.console import Console
 
 import nf_core.modules.info
@@ -60,3 +63,29 @@ class TestModulesCreate(TestModules):
         assert "Module: fastqc" in output
         assert "Inputs" in output
         assert "Outputs" in output
+
+    def test_modules_info_mixed_input_type(self):
+        """Test getting info about a module with mixed input types (list and dict)"""
+        self.mods_install.install("fastqc")
+        meta_path = Path(self.pipeline_dir, "modules", "nf-core", "fastqc", "meta.yml")
+
+        # Load existing meta.yml
+        with open(meta_path) as f:
+            meta = yaml.safe_load(f)
+
+        # Append a dictionary-style input (the cause of the bug)
+        meta["input"].append({"index_format": {"type": "string", "description": "Index format"}})
+
+        # Write modified meta.yml back
+        with open(meta_path, "w") as f:
+            yaml.dump(meta, f)
+
+        mods_info = nf_core.modules.info.ModuleInfo(self.pipeline_dir, "fastqc")
+        mods_info_output = mods_info.get_component_info()
+        console = Console(record=True)
+        console.print(mods_info_output)
+        output = console.export_text()
+
+        assert "Module: fastqc" in output
+        assert "index_format" in output
+        assert "(string)" in output

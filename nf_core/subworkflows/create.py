@@ -12,7 +12,6 @@ class SubworkflowCreate(ComponentCreate):
         component="",
         author=None,
         force=False,
-        migrate_pytest=False,
     ):
         super().__init__(
             "subworkflows",
@@ -20,5 +19,4 @@ class SubworkflowCreate(ComponentCreate):
             component,
             author,
             force=force,
-            migrate_pytest=migrate_pytest,
         )

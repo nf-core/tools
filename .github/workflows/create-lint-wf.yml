@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "25.10.0"
+          - "25.10.4"
           - "latest-everything"
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -42,22 +42,22 @@ jobs:
           export NXF_WORK=$(pwd)
 
       # Get the repo code
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out source-code repository
 
       # Set up nf-core/tools
-      - name: Set up Python 3.14
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 
       - name: Install python dependencies
-        run: uv sync --all-extras
+        run: uv sync
 
       - name: run create-lint-wf
         uses: ./.github/actions/create-lint-wf
@@ -71,7 +71,7 @@ jobs:
 
       # Remove TODO statements
       - name: remove TODO
-        run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+        run: find nf-core-testpipeline -type f -exec sed -i 's/TODO nf-core:/TODONT nf-core:/g' {} \;
         working-directory: create-lint-wf
 
       # Uncomment includeConfig statement

@@ -1,3 +1,7 @@
+{% if repo_type == "modules" and org == "nf-core" -%}
+// Copyright (c) the nf-core community under an open-source MIT license.
+// See https://github.com/nf-core/modules for full license, file patching instructions and upstream contributing.
+{% endif -%}
 {%- if not_empty_template -%}
 // TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
 //               https://github.com/nf-core/modules/tree/master/modules/nf-core/
@@ -15,8 +19,7 @@
 //                 bwa mem | samtools view -B -T ref.fasta
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
-{%- endif %}
-
+{% endif %}
 process {{ component_name_underscore|upper }} {
     tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
     label '{{ process_label }}'
@@ -25,9 +28,9 @@ process {{ component_name_underscore|upper }} {
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     {% endif -%}
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
-        '{{ docker_container if docker_container else 'biocontainers/YOUR-TOOL-HERE' }}' }"
+        '{{ 'quay.io/' + docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"
 
     input:
     {%- if inputs %}
@@ -126,8 +129,8 @@ process {{ component_name_underscore|upper }} {
     {% if not_empty_template -%}
     // TODO nf-core: A stub section should mimic the execution of the original module as best as possible
     //               Have a look at the following examples:
-    //               Simple example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bcftools/annotate/main.nf#L47-L63
-    //               Complex example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bedtools/split/main.nf#L38-L54
+    //               Simple example: https://github.com/nf-core/modules/blob/624977dfaf562211e68a8a868ca80acc8461f1ac/modules/nf-core/cutadapt/main.nf#L34-L46
+    //               Complex example: https://github.com/nf-core/modules/blob/88d43dad73a675e66bff49ebb57fe657a5909018/modules/nf-core/bedtools/split/main.nf#L32-L43
     // TODO nf-core: If the module doesn't use arguments ($args), you SHOULD remove:
     //               - The definition of args `def args = task.ext.args ?: ''` above.
     //               - The use of the variable in the script `echo $args ` below.

@@ -30,11 +30,9 @@ class TestSubworkflowsRemove(TestSubworkflows):
         # assert subworkflows key is removed from modules.json
         assert (
             "bam_sort_stats_samtools"
-            not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"].keys()
+            not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]
         )
-        assert (
-            "samtools/index" not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"].keys()
-        )
+        assert "samtools/index" not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]
 
     def test_subworkflows_remove_subworkflow_keep_installed_module(self):
         """Test removing subworkflow and all it's dependencies after installing it, except for a separately installed module"""
@@ -57,11 +55,10 @@ class TestSubworkflowsRemove(TestSubworkflows):
         # assert subworkflows key is removed from modules.json
         assert (
             "bam_sort_stats_samtools"
-            not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"].keys()
+            not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]
         )
         assert (
-            "samtools/index"
-            in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"].keys()
+            "samtools/index" in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]
         )
 
     def test_subworkflows_remove_one_of_two_subworkflow(self):
@@ -120,11 +117,6 @@ class TestSubworkflowsRemove(TestSubworkflows):
         assert Path.exists(nfcore_fastqc_path) is True
         assert mod_json_before != mod_json_after
         # assert subworkflows key is removed from modules.json
-        assert CROSS_ORGANIZATION_URL not in mod_json_after["repos"].keys()
-        assert (
-            "fastqc" in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"].keys()
-        )
-        assert (
-            "fastp"
-            not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"].keys()
-        )
+        assert CROSS_ORGANIZATION_URL not in mod_json_after["repos"]
+        assert "fastqc" in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]
+        assert "fastp" not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]

@@ -40,6 +40,19 @@ If you are not used to this workflow with Git, see the [GitHub documentation](ht
 
 {% if is_nfcore -%}
 
+## Use of AI and LLMs
+
+The nf-core stance on the use of AI and LLMs is that humans are still ultimately responsible for their submitted code, regardless of the tools they use.
+
+If you’re using AI tools, try to stick by these guidelines:
+
+- Keep PRs as small and focused as possible
+- Avoid any unnecessary changes, such as moving or refactoring code (unless that is the explicit intention of the PR)
+- Review all generated code yourself before opening a PR, and ensure that you understand it
+- Engage with the community review process and expect to make revisions
+
+For more detail, see the [blog post](https://nf-co.re/blog/2026/statement-on-ai) for a statement from the nf-core/core team.
+
 ### Getting help
 
 For further information and help, see the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) or ask on the nf-core [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) Slack channel ([join our Slack here](https://nf-co.re/join/slack)).
@@ -84,7 +97,7 @@ Pull requests are typically reviewed when these tests are passing.
 
 #### Lint tests
 
-nf-core has a [set of guidelines](https://nf-co.re/docs/contributing/guidelines) which all pipelines must follow.
+nf-core has a [set of guidelines](https://nf-co.re/docs/specifications/overview) which all pipelines must follow.
 To enforce these, run linting with nf-core/tools:
 
 ```bash
@@ -131,7 +144,7 @@ Please also refer to the [pipeline-specific contribution guidelines](#pipeline-s
 - [ ] Perform local tests to validate that the new code works as expected.
   - [ ] If applicable, add a new test in the `tests` directory.
 - [ ] Update `usage.md`, `output.md`, and `citation.md` as appropriate.
-- [ ] [Lint](lint) the code with nf-core/tools.
+- [ ] [Lint](#lint-tests) the code with nf-core/tools.
 - [ ] Update any diagrams or pipeline images as necessary.
       {%- if multiqc %}
 - [ ] Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name cleanup, and module plots are in the appropriate order.
@@ -171,7 +184,7 @@ Specify these with generic `withLabel:` selectors, so they can be shared across 
 nf-core provides a set of standard labels that you should follow where possible, as seen in the [nf-core pipeline template](https://github.com/nf-core/tools/blob/main/nf_core/pipeline-template/conf/base.config).
 These labels define resource defaults for single-core processes, modules that require a GPU, and different levels of multi-core configurations with increasing memory requirements.
 
-Values assigned within these labels can be dynamically passed to a tool using the the `${task.cpus}` and `${task.memory}` Nextflow variables in the `script:` block of a module (see an example in the [modules repository](https://github.com/nf-core/modules/blob/bd1b6a40f55933d94b8c9ca94ec8c1ea0eaf4b82/modules/nf-core/samtools/bam2fq/main.nf#L30)).
+Values assigned within these labels can be dynamically passed to a tool using the `${task.cpus}` and `${task.memory}` Nextflow variables in the `script:` block of a module (see an example in the [modules repository](https://github.com/nf-core/modules/blob/bd1b6a40f55933d94b8c9ca94ec8c1ea0eaf4b82/modules/nf-core/samtools/bam2fq/main.nf#L30)).
 
 #### Nextflow version bumping
 
@@ -183,7 +196,7 @@ nf-core pipelines bump-version --nextflow . <min_nf_version>
 
 #### Images and figures guidelines
 
-If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/guidelines/graphic_design/overview).
+If you update images or graphics, follow the nf-core [style guidelines](https://nf-co.re/docs/community/brand/workflow-schematics).
 
 ## Pipeline specific contribution guidelines
 

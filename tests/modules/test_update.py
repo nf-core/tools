@@ -43,6 +43,20 @@ class TestModulesInstall(TestModules):
         assert update_obj.update("trimgalore") is True
         assert cmp_component(trimgalore_tmpdir, trimgalore_path) is True
 
+    @mock.patch("nf_core.components.update.ComponentUpdate.update_linked_components")
+    @mock.patch(
+        "nf_core.components.update.ComponentUpdate.get_components_to_update",
+        return_value=([], [{"name": "fake_sw", "git_remote": "x"}]),
+    )
+    def test_module_update_skip_deps_does_not_cascade(self, mock_get_linked, mock_cascade):
+        """`module update --skip-deps` skips cascade even when linked subworkflows exist."""
+        assert self.mods_install_old.install("trimgalore")
+        update_obj = ModuleUpdate(
+            self.pipeline_dir, show_diff=False, skip_deps=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+        )
+        assert update_obj.update("trimgalore") is True
+        assert not mock_cascade.called
+
     def test_install_at_hash_and_update(self):
         """Installs an old version of a module in the pipeline and updates it"""
         assert self.mods_install_old.install("trimgalore")
@@ -167,7 +181,7 @@ class TestModulesInstall(TestModules):
         # Fix the trimgalore version in the .nf-core.yml to an old version
         update_config = {GITLAB_URL: {GITLAB_REPO: {"trimgalore": OLD_TRIMGALORE_SHA}}}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -192,7 +206,7 @@ class TestModulesInstall(TestModules):
         # Set the trimgalore field to no update in the .nf-core.yml
         update_config = {GITLAB_URL: {GITLAB_REPO: {"trimgalore": False}}}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -221,7 +235,7 @@ class TestModulesInstall(TestModules):
         # Fix the version of all nf-core modules in the .nf-core.yml to an old version
         update_config = {GITLAB_URL: OLD_TRIMGALORE_SHA}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)
@@ -245,7 +259,7 @@ class TestModulesInstall(TestModules):
         # Fix the version of all nf-core modules in the .nf-core.yml to an old version
         update_config = {GITLAB_URL: False}
         config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
-        setattr(tools_config, "update", update_config)
+        tools_config.update = update_config
         assert config_fn is not None and tools_config is not None  # mypy
         with open(Path(self.pipeline_dir, config_fn), "w") as f:
             yaml.dump(tools_config.model_dump(), f)

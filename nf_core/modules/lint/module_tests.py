@@ -14,11 +14,61 @@ log = logging.getLogger(__name__)
 
 
 def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
-    """
-    Lint the tests of a module in ``nf-core/modules``
+    """Lint the tests of a module in ``nf-core/modules``
 
-    It verifies that the test directory exists
-    and contains a ``main.nf.test`` and a ``main.nf.test.snap``
+    Checks the ``tests/`` directory and ``main.nf.test`` file for correctness,
+    validates snapshot content, and verifies that nf-test tags follow guidelines.
+
+    The following checks are performed:
+
+    test_dir_exists
+    ^^^^^^^^^^^^^^^
+
+    The nf-test directory ``tests/`` must exist.
+
+    test_main_nf_exists
+    ^^^^^^^^^^^^^^^^^^^
+
+    The file ``tests/main.nf.test`` must exist.
+
+    test_snapshot_exists
+    ^^^^^^^^^^^^^^^^^^^^
+
+    If ``snapshot()`` is called in ``main.nf.test``,
+    the snapshot file ``tests/main.nf.test.snap`` must exist and be valid JSON.
+
+    test_snap_md5sum
+    ^^^^^^^^^^^^^^^^
+
+    The snapshot must not contain md5sums for empty files
+    (``d41d8cd98f00b204e9800998ecf8427e``) or empty compressed files
+    (``7029066c27ac6f5ef18d660d5741979a``), unless the test name contains ``stub``.
+
+    test_snap_versions
+    ^^^^^^^^^^^^^^^^^^
+
+    The snapshot must contain a ``versions`` key.
+
+    test_main_tags
+    ^^^^^^^^^^^^^^
+
+    The ``main.nf.test`` file must declare the required tags:
+    ``modules``, ``modules_<org>``, the full component name, and (for ``tool/subtool``
+    modules) the tool name alone. Tags for any chained components included via
+    ``include`` statements must also be present.
+
+    test_old_test_dir
+    ^^^^^^^^^^^^^^^^^
+
+    The legacy pytest directory
+    ``tests/modules/<component_name>/`` must not exist.
+
+    test_stub_gzip_syntax
+    ^^^^^^^^^^^^^^^^^^^^^^
+
+    Stub blocks with gzip output files must use the proper syntax. Stub files
+    ending in ``.gz`` must use ``echo "" | gzip > file.gz``. Simply touching or
+    creating empty ``.gz`` files will break nf-test's gzip parser.
 
     """
     if module.nftest_testdir is None:
@@ -34,7 +84,8 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
             return
         raise LintExceptionError("Module does not have a `tests` dir")
 
-    if module.nftest_main_nf is None:
+    # main_nf_test_snap is set together with main_nf_test, so this also narrows it to Path
+    if module.main_nf_test is None or module.main_nf_test_snap is None:
         if allow_missing:
             module.warned.append(
                 (
@@ -77,10 +128,8 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         return
 
     # Lint the test main.nf file
-    if module.nftest_main_nf.is_file():
-        module.passed.append(
-            ("module_tests", "test_main_nf_exists", "test `main.nf.test` exists", module.nftest_main_nf)
-        )
+    if module.main_nf_test.is_file():
+        module.passed.append(("module_tests", "test_main_nf_exists", "test `main.nf.test` exists", module.main_nf_test))
     else:
         if is_pytest:
             module.warned.append(
@@ -88,7 +137,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
-                    module.nftest_main_nf,
+                    module.main_nf_test,
                 )
             )
         else:
@@ -97,15 +146,15 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
-                    module.nftest_main_nf,
+                    module.main_nf_test,
                 )
             )
 
-    if module.nftest_main_nf.is_file():
+    if module.main_nf_test.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
-        with open(module.nftest_main_nf) as fh:
+        with open(module.main_nf_test) as fh:
             if "snapshot(" in fh.read():
-                snap_file = module.nftest_testdir / "main.nf.test.snap"
+                snap_file = module.main_nf_test_snap
 
                 if snap_file.is_file():
                     module.passed.append(
@@ -120,7 +169,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     with open(snap_file) as snap_fh:
                         try:
                             snap_content = json.load(snap_fh)
-                            for test_name in snap_content.keys():
+                            for test_name in snap_content:
                                 if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
                                     if "stub" not in test_name:
                                         module.failed.append(
@@ -213,15 +262,18 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                             snap_file,
                         )
                     )
+            # Check that stub blocks with gzip files use proper syntax
+            _check_stub_gzip_syntax(module)
+
             # Verify that tags are correct.
-            main_nf_tags = module._get_main_nf_tags(module.nftest_main_nf)
+            main_nf_tags = module._get_main_nf_tags(module.main_nf_test)
             not_alphabet = re.compile(r"[^a-zA-Z]")
             org_alp = not_alphabet.sub("", module.org)
             org_alphabet = org_alp if org_alp != "" else "nfcore"
             required_tags = ["modules", f"modules_{org_alphabet}", module.component_name]
             if module.component_name.count("/") == 1:
                 required_tags.append(module.component_name.split("/")[0])
-            chained_components_tags = module._get_included_components_in_chained_tests(module.nftest_main_nf)
+            chained_components_tags = module._get_included_components_in_chained_tests(module.main_nf_test)
             missing_tags = []
             log.debug(f"Required tags: {required_tags}")
             log.debug(f"Included components for chained nf-tests: {chained_components_tags}")
@@ -234,7 +286,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                         "module_tests",
                         "test_main_tags",
                         "Tags adhere to guidelines",
-                        module.nftest_main_nf,
+                        module.main_nf_test,
                     )
                 )
             else:
@@ -243,7 +295,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                         "module_tests",
                         "test_main_tags",
                         f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: `{','.join(missing_tags)}`",
-                        module.nftest_main_nf,
+                        module.main_nf_test,
                     )
                 )
 
@@ -266,5 +318,67 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     "test_old_test_dir",
                     "Old pytests don't exist for this module",
                     old_test_dir,
+                )
+            )
+
+
+def _check_stub_gzip_syntax(module: NFCoreComponent):
+    """
+    Linting Checks perfomed:
+    * ``test_stub_gzip_syntax``:
+     Check that stub blocks with gzip output files use the proper syntax.
+     Stub files ending in .gz must use: echo "" | gzip > file.gz
+     Simply touching or creating empty .gz files will break nf-test's gzip parser
+    """
+    if not module.main_nf.is_file():
+        return
+
+    with open(module.main_nf) as fh:
+        content = fh.read()
+
+    # Find all stub blocks (matches both """ and ''' style strings)
+    # Pattern matches: stub: followed by anything, then triple quotes, content, closing triple quotes
+    stub_pattern = re.compile(r'stub:.*?(?:"""|\'\'\')\s*(.*?)\s*(?:"""|\'\'\')', re.DOTALL)
+    stub_blocks = stub_pattern.findall(content)
+
+    invalid_gz_patterns = []
+    for stub_block in stub_blocks:
+        # Look for lines that create .gz files
+        # Only valid pattern is: echo "" | gzip > file.gz
+        # Each .gz creation is always on a single line
+
+        # Find all lines where .gz is the final extension
+        gz_lines = re.findall(r"^.*\.gz\s*$", stub_block, re.MULTILINE)
+
+        for line in gz_lines:
+            line = line.strip()
+            # Skip empty lines and comments
+            if not line or line.startswith(("//", "#")):
+                continue
+
+            # The ONLY valid pattern is: echo "" | gzip > file.gz
+            valid_pattern = r'echo\s+""\s*\|\s*gzip\s*>\s*.*\.gz$'
+
+            if not re.search(valid_pattern, line):
+                invalid_gz_patterns.append(line.strip())
+
+    if invalid_gz_patterns:
+        module.failed.append(
+            (
+                "module_tests",
+                "test_stub_gzip_syntax",
+                f"Stub gzip files must use 'echo \"\" | gzip >' syntax. Invalid patterns found: {'; '.join(set(invalid_gz_patterns))}",
+                module.main_nf,
+            )
+        )
+    else:
+        # Only add passed if there are actually stub blocks with .gz files
+        if stub_blocks and any(".gz" in block for block in stub_blocks):
+            module.passed.append(
+                (
+                    "module_tests",
+                    "test_stub_gzip_syntax",
+                    "Stub gzip files use correct syntax",
+                    module.main_nf,
                 )
             )

@@ -1,7 +1,9 @@
 {
     "-profile test": {
         "content": [
-            null,
+            {
+                
+            },
             [
                 "pipeline_info"
             ],
@@ -9,10 +11,10 @@
                 
             ]
         ],
+        "timestamp": "2026-10-02T08:57:28.181801475",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.03.1"
-        },
-        "timestamp": "2025-05-07T13:51:26.771349539"
+            "nf-test": "0.9.4",
+            "nextflow": "26.09.1"
+        }
     }
 }

@@ -8,3 +8,4 @@ This API documentation is for the [`nf-core/tools`](https://github.com/nf-core/t
 - [Module code lint tests](./module_lint_tests/environment_yml.md) (run by `nf-core modules lint`)
 - [Subworkflow code lint tests](./subworkflow_lint_tests/main_nf.md) (run by `nf-core subworkflows lint`)
 - [nf-core/tools Python package API reference](./api/utils.md)
+- [`.nf-core.yml` configuration reference](./api/nf_core_yml.md)

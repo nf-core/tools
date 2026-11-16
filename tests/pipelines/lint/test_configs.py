@@ -2,7 +2,6 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.pipelines.create
 import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
@@ -21,7 +20,7 @@ class TestLintConfigs(TestLint):
         result = lint_obj.modules_config()
         assert len(result["failed"]) == 0
         assert any(
-            ["`FASTQC` found in `conf/modules.config` and Nextflow scripts." in passed for passed in result["passed"]]
+            "`FASTQC` found in `conf/modules.config` and Nextflow scripts." in passed for passed in result["passed"]
         )
 
     def test_superfluous_withname_in_modules_config_fails(self):

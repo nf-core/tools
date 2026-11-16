@@ -13,10 +13,7 @@ import nf_core
 import nf_core.modules.modules_utils
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
-from nf_core.utils import (
-    NFCORE_CACHE_DIR,
-    NFCORE_DIR,
-)
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +32,7 @@ class WorkflowRepo(SyncedRepo):
         self,
         remote_url,
         revision,
-        commit,
+        revision_commits,
         additional_tags,
         location=None,
         hide_progress=False,
@@ -59,12 +56,7 @@ class WorkflowRepo(SyncedRepo):
             self.revision = [*revision]
         else:
             self.revision = []
-        if isinstance(commit, str):
-            self.commit = [commit]
-        elif isinstance(commit, list):
-            self.commit = [*commit]
-        else:
-            self.commit = []
+        self.revision_to_commit: dict[str, str] = dict(revision_commits) if isinstance(revision_commits, dict) else {}
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
         self.retries = 0  # retries for setting up the locally cached repository
         self.hide_progress = hide_progress
@@ -100,6 +92,10 @@ class WorkflowRepo(SyncedRepo):
 
     def retry_setup_local_repo(self, skip_confirm=False):
         self.retries += 1
+        if not skip_confirm and not nf_core.utils.is_interactive():
+            raise DownloadError(
+                f"Errors with locally cached repository of '{self.fullname}'. Please delete '{self.local_repo_dir}' manually and try again."
+            )
         if skip_confirm or rich.prompt.Confirm.ask(
             f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"
         ):
@@ -131,7 +127,9 @@ class WorkflowRepo(SyncedRepo):
         if location:
             self.local_repo_dir = location / self.fullname
         else:
-            self.local_repo_dir = Path(NFCORE_DIR) if not in_cache else Path(NFCORE_CACHE_DIR, self.fullname)
+            self.local_repo_dir = (
+                Path(NFCORE_DIR, self.fullname) if not in_cache else Path(NFCORE_CACHE_DIR, self.fullname)
+            )
 
         try:
             if not self.local_repo_dir.exists():
@@ -150,8 +148,8 @@ class WorkflowRepo(SyncedRepo):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                     super().update_local_repo_status(self.fullname, True)
-                except GitCommandError:
-                    raise DownloadError(f"Failed to clone from the remote: `{remote}`")
+                except GitCommandError as e:
+                    raise DownloadError(f"Failed to clone from the remote: `{remote}`") from e
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 
@@ -198,7 +196,14 @@ class WorkflowRepo(SyncedRepo):
                     self.repo.delete_tag(tag)
 
                 # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "main")
-                self.checkout(self.revision[0])
+                try:
+                    self.checkout(self.revision[0])
+                except GitCommandError:
+                    fallback_commit = self.revision_to_commit.get(self.revision[0])
+                    if fallback_commit:
+                        self.checkout(fallback_commit)
+                    else:
+                        raise
 
                 # delete unwanted heads/branches from repository
                 for head in heads_to_remove:
@@ -207,8 +212,12 @@ class WorkflowRepo(SyncedRepo):
                 # ensure all desired revisions/branches are available
                 for revision in desired_revisions:
                     if not self.repo.is_valid_object(revision):
-                        self.checkout(revision)
-                        self.repo.create_head(revision, revision)
+                        if (commit := self.revision_to_commit.get(revision)) is None:
+                            self.checkout(revision)
+                            self.repo.create_head(revision, revision)
+                        else:
+                            self.checkout(commit)
+                            self.repo.create_head(revision, commit)
                         if self.repo.head.is_detached:
                             self.repo.head.reset(index=True, working_tree=True)
 
@@ -217,16 +226,21 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.is_valid_object("latest"):
                         # "latest" exists as tag but not as branch
                         self.repo.create_head("latest", "latest")  # create a new head for latest
-                        self.checkout("latest")
                     else:
                         # desired revisions may contain arbitrary branch names that do not correspond to valid semantic versioning patterns.
                         valid_versions = [
                             Version(v) for v in desired_revisions if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
-                        # valid versions sorted in ascending order, last will be aliased as "latest".
-                        latest = sorted(valid_versions)[-1]
-                        self.repo.create_head("latest", str(latest))
-                        self.checkout(latest)
+                        # If no semantic versions are available (e.g. SHA-only revisions), fall back to the first
+                        # requested revision and its mapped commit.
+                        if valid_versions:
+                            latest_ref = str(sorted(valid_versions)[-1])
+                        elif self.revision:
+                            latest_ref = self.revision_to_commit.get(self.revision[0], self.revision[0])
+                        else:
+                            raise DownloadError("No revision available to create required 'latest' branch.")
+                        self.repo.create_head("latest", latest_ref)
+                    self.checkout("latest")
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
 
@@ -290,11 +304,12 @@ class WorkflowRepo(SyncedRepo):
     def bare_clone(self, destination: Path):
         if self.repo:
             try:
-                destfolder = destination.parent.absolute()
-                if not destfolder.exists():
-                    destfolder.mkdir()
+                destination = destination.absolute()
+                # Ensure the parent of the destination exists
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                # Remove an potentially existing previous clone
                 if destination.exists():
                     shutil.rmtree(destination)
-                self.repo.clone(str(destfolder), bare=True)
+                self.repo.clone(str(destination), bare=True)
             except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")

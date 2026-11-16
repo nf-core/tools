@@ -23,7 +23,7 @@ class TestModulesCreate(TestModules):
             try:
                 mod_json_sb = json.load(fh)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}") from e
 
         mod_json_obj = ModulesJson(self.pipeline_dir)
         mod_json = mod_json_obj.get_modules_json()
@@ -40,10 +40,10 @@ class TestModulesCreate(TestModules):
         mod_json = mod_json_obj.get_modules_json()
         assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
         assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]
-        assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["git_sha"]
+        assert mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["git_sha"] == "GIT_SHA"
         assert (
-            NF_CORE_MODULES_DEFAULT_BRANCH
-            == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
+            mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
+            == NF_CORE_MODULES_DEFAULT_BRANCH
         )
         assert (
             "modules" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["installed_by"]
@@ -214,7 +214,7 @@ class TestModulesCreate(TestModules):
             try:
                 mod_json_new = json.load(f)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}") from e
         assert mod_json == mod_json_new
 
     def test_mod_json_with_empty_modules_value(self):

@@ -17,7 +17,7 @@ class TestLaunch(TestPipelines):
     def setUp(self) -> None:
         super().setUp()
         self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")
-        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(str(self.pipeline_dir), params_out=self.nf_params_fn)
 
     @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
@@ -302,7 +302,7 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f"nextflow run {self.pipeline_dir}"
+        assert self.launcher.nextflow_cmd == f"nextflow run {self.pipeline_dir.resolve()}"
 
     def test_build_command_nf(self):
         """Test the functionality to build a nextflow command - core nf customised"""
@@ -311,7 +311,7 @@ class TestLaunch(TestPipelines):
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
         self.launcher.nxf_flags["-resume"] = True
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -name "Test_Workflow" -resume'
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir.resolve()} -name "Test_Workflow" -resume'
 
     def test_build_command_params(self):
         """Test the functionality to build a nextflow command - params supplied"""
@@ -319,13 +319,16 @@ class TestLaunch(TestPipelines):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         # Check command
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -params-file "{self.nf_params_fn}"'
+        assert (
+            self.launcher.nextflow_cmd
+            == f'nextflow run {self.pipeline_dir.resolve()} -params-file "{self.nf_params_fn}"'
+        )
         # Check saved parameters file
         with open(self.nf_params_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{self.nf_params_fn}' due to error {e}")
+                raise UserWarning(f"Unable to load JSON file '{self.nf_params_fn}' due to error {e}") from e
 
         assert saved_json == {"input": "custom_input"}
 
@@ -335,4 +338,16 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} --input "custom_input"'
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir.resolve()} --input "custom_input"'
+
+
+def test_launch_params_out_option_is_path():
+    """The --params-out CLI option converts its value to a Path, so params_out never
+    reaches Launch as a str that would crash params_out.exists() (#4299)."""
+    import click
+
+    from nf_core.__main__ import command_pipelines_launch
+
+    param = next(p for p in command_pipelines_launch.params if p.name == "params_out")
+    ctx = click.Context(command_pipelines_launch)
+    assert isinstance(param.type.convert("nf-params.json", param, ctx), Path)

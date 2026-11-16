@@ -26,8 +26,8 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version (str): The new version tag for the pipeline. Semantic versioning only.
     """
 
-    # Collect the old and new version numbers
-    current_version = pipeline_obj.nf_config.get("manifest.version", "").strip(" '\"")
+    manifest = pipeline_obj.nf_config.get("manifest", {})
+    current_version = manifest.get("version", "") or ""
     if new_version.startswith("v"):
         log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
@@ -99,8 +99,8 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["report_comment"],
     )
     # nf-test snap files
-    pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
-    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
+    pipeline_name = manifest.get("name", "")
+    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in pipeline_obj.wf_path.glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
             snap_file,
@@ -129,7 +129,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
 
     # SVG files in docs/images/ - version badges
-    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("docs/images/*.svg")]
+    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in pipeline_obj.wf_path.glob("docs/images/*.svg")]
     for svg_file in svg_files:
         update_file_version(
             svg_file,
@@ -169,8 +169,8 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version (str): The new version tag for the required Nextflow version.
     """
 
-    # Collect the old and new version numbers - strip leading non-numeric characters (>=)
-    current_version = pipeline_obj.nf_config.get("manifest.nextflowVersion", "").strip(" '\"")
+    manifest = pipeline_obj.nf_config.get("manifest", {})
+    current_version = manifest.get("nextflowVersion", "") or ""
     current_version = re.sub(r"^[^0-9\.]*", "", current_version)
     new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:
@@ -217,6 +217,21 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
             (f"version-%E2%89%A5{re.escape(current_version)}-green", f"version-%E2%89%A5{new_version}-green"),
         ],
         False,
+    )
+
+    # fix-linting.yml - Nextflow version matrix
+    update_file_version(
+        Path(".github", "workflows", "fix-linting.yml"),
+        pipeline_obj,
+        [
+            (
+                # example:
+                # nextflow-versions: '["25.10.4","latest-everything"]'
+                current_version,
+                new_version,
+            )
+        ],
+        yaml_key=["jobs", "fix-linting", "with", "nextflow-versions"],
     )
 
 
@@ -336,7 +351,7 @@ def log_change(old_content: str, new_content: str):
     old_lines = old_content.splitlines()
     new_lines = new_content.splitlines()
 
-    for old_line, new_line in zip(old_lines, new_lines):
+    for old_line, new_line in zip(old_lines, new_lines, strict=False):
         if old_line != new_line:
             stderr.print(f"          [red] - {old_line.strip()}", highlight=False)
             stderr.print(f"          [green] + {new_line.strip()}", highlight=False)
