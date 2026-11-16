@@ -100,7 +100,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
     # nf-test snap files
     pipeline_name = manifest.get("name", "")
-    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
+    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in pipeline_obj.wf_path.glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
             snap_file,
@@ -129,7 +129,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
 
     # SVG files in docs/images/ - version badges
-    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("docs/images/*.svg")]
+    svg_files = [f.relative_to(pipeline_obj.wf_path) for f in pipeline_obj.wf_path.glob("docs/images/*.svg")]
     for svg_file in svg_files:
         update_file_version(
             svg_file,
@@ -217,6 +217,21 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
             (f"version-%E2%89%A5{re.escape(current_version)}-green", f"version-%E2%89%A5{new_version}-green"),
         ],
         False,
+    )
+
+    # fix-linting.yml - Nextflow version matrix
+    update_file_version(
+        Path(".github", "workflows", "fix-linting.yml"),
+        pipeline_obj,
+        [
+            (
+                # example:
+                # nextflow-versions: '["25.10.4","latest-everything"]'
+                current_version,
+                new_version,
+            )
+        ],
+        yaml_key=["jobs", "fix-linting", "with", "nextflow-versions"],
     )
 
 

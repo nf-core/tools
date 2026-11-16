@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 import git
+import requests
 import rocrate.rocrate
 from git import Repo
 
@@ -15,16 +16,7 @@ import nf_core.pipelines.rocrate
 from nf_core.pipelines.bump_version import bump_pipeline_version
 
 from ..test_pipelines import TestPipelines
-
-
-class MockResponse:
-    def __init__(self, payload, status_code=200, url=""):
-        self.payload = payload
-        self.status_code = status_code
-        self.url = url
-
-    def json(self):
-        return self.payload
+from ..utils import MockResponse
 
 
 class TestROCrate(TestPipelines):
@@ -208,6 +200,36 @@ class TestROCrate(TestPipelines):
 
         self.assertEqual(person_names, {"Ada Lovelace", "Grace Hopper"})
         self.assertEqual(len(workflow["author"]), 2)
+
+    def _create_rocrate_offline(self) -> None:
+        """Create the crate while nf-co.re/pipelines.json is unreachable"""
+        default_mock = self._mock_requests_get()
+
+        def offline_requests_get(url, *args, **kwargs):
+            if url == "https://nf-co.re/pipelines.json":
+                raise requests.exceptions.ConnectionError("offline")
+            return default_mock(url, *args, **kwargs)
+
+        with mock.patch("nf_core.pipelines.rocrate.requests.get", side_effect=offline_requests_get):
+            self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
+
+    def test_rocrate_creation_falls_back_to_default_topics_when_offline(self):
+        """Use the default keywords if pipelines.json can't be fetched and there is no existing crate"""
+        Path(self.pipeline_dir, "ro-crate-metadata.json").unlink(missing_ok=True)
+        self._create_rocrate_offline()
+
+        workflow = self._graph_entity(self._read_crate_graph(), "#main.nf")
+        self.assertEqual(workflow["keywords"], ["nf-core", "nextflow"])
+
+    def test_rocrate_update_keeps_existing_topics_when_offline(self):
+        """Keep the keywords of an existing crate if pipelines.json can't be fetched"""
+        self._create_rocrate_with_mocked_requests(topics=["rna-seq", "transcriptomics"])
+        expected = ["nf-core", "nextflow", "rna-seq", "transcriptomics"]
+        self.assertEqual(self._graph_entity(self._read_crate_graph(), "#main.nf")["keywords"], expected)
+
+        self._create_rocrate_offline()
+
+        self.assertEqual(self._graph_entity(self._read_crate_graph(), "#main.nf")["keywords"], expected)
 
     def test_parse_manifest_authors_adds_git_contributors(self):
         """Enrich manifest.author metadata with contributor names discovered from git history"""

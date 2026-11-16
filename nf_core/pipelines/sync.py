@@ -61,7 +61,7 @@ class PipelineSync:
 
     def __init__(
         self,
-        pipeline_dir: str | Path,
+        pipeline_dir: Path,
         from_branch: str | None = None,
         make_pr: bool = False,
         gh_repo: str | None = None,
@@ -73,7 +73,7 @@ class PipelineSync:
     ):
         """Initialise syncing object"""
 
-        self.pipeline_dir: Path = Path(pipeline_dir).resolve()
+        self.pipeline_dir = pipeline_dir.resolve()
         self.from_branch = from_branch
         self.original_branch = None
         self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
@@ -226,7 +226,7 @@ class PipelineSync:
 
         # Fetch workflow variables
         log.debug("Fetching workflow config variables")
-        self.wf_config = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
+        self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
 
         # Check that we have the required variables
         for section, keys in self.required_config_vars.items():
@@ -263,7 +263,7 @@ class PipelineSync:
         Delete all tracked files in the repository
         """
         for the_file in self._get_tracked_files():
-            file_path = Path(self.pipeline_dir) / the_file
+            file_path = self.pipeline_dir / the_file
             log.debug(f"Deleting {file_path}")
             try:
                 file_path.unlink()
@@ -315,7 +315,7 @@ class PipelineSync:
 
         try:
             pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
-                outdir=str(self.pipeline_dir),
+                outdir=self.pipeline_dir,
                 from_config_file=True,
                 no_git=True,
                 force=True,
@@ -329,7 +329,7 @@ class PipelineSync:
                 # Set force true in config to overwrite existing files
                 self.config_yml.template.force = False
                 # Set outdir as the current directory to avoid local info leaking
-                self.config_yml.template.outdir = "."
+                self.config_yml.template.outdir = Path()
                 # Update nf-core version
                 self.config_yml.nf_core_version = nf_core.__version__
                 dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump(exclude_none=True))

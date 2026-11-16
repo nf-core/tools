@@ -84,7 +84,8 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
             return
         raise LintExceptionError("Module does not have a `tests` dir")
 
-    if module.nftest_main_nf is None:
+    # main_nf_test_snap is set together with main_nf_test, so this also narrows it to Path
+    if module.main_nf_test is None or module.main_nf_test_snap is None:
         if allow_missing:
             module.warned.append(
                 (
@@ -127,10 +128,8 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
         return
 
     # Lint the test main.nf file
-    if module.nftest_main_nf.is_file():
-        module.passed.append(
-            ("module_tests", "test_main_nf_exists", "test `main.nf.test` exists", module.nftest_main_nf)
-        )
+    if module.main_nf_test.is_file():
+        module.passed.append(("module_tests", "test_main_nf_exists", "test `main.nf.test` exists", module.main_nf_test))
     else:
         if is_pytest:
             module.warned.append(
@@ -138,7 +137,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
-                    module.nftest_main_nf,
+                    module.main_nf_test,
                 )
             )
         else:
@@ -147,15 +146,15 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     "module_tests",
                     "test_main_nf_exists",
                     "test `main.nf.test` does not exist",
-                    module.nftest_main_nf,
+                    module.main_nf_test,
                 )
             )
 
-    if module.nftest_main_nf.is_file():
+    if module.main_nf_test.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
-        with open(module.nftest_main_nf) as fh:
+        with open(module.main_nf_test) as fh:
             if "snapshot(" in fh.read():
-                snap_file = module.nftest_testdir / "main.nf.test.snap"
+                snap_file = module.main_nf_test_snap
 
                 if snap_file.is_file():
                     module.passed.append(
@@ -267,14 +266,14 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
             _check_stub_gzip_syntax(module)
 
             # Verify that tags are correct.
-            main_nf_tags = module._get_main_nf_tags(module.nftest_main_nf)
+            main_nf_tags = module._get_main_nf_tags(module.main_nf_test)
             not_alphabet = re.compile(r"[^a-zA-Z]")
             org_alp = not_alphabet.sub("", module.org)
             org_alphabet = org_alp if org_alp != "" else "nfcore"
             required_tags = ["modules", f"modules_{org_alphabet}", module.component_name]
             if module.component_name.count("/") == 1:
                 required_tags.append(module.component_name.split("/")[0])
-            chained_components_tags = module._get_included_components_in_chained_tests(module.nftest_main_nf)
+            chained_components_tags = module._get_included_components_in_chained_tests(module.main_nf_test)
             missing_tags = []
             log.debug(f"Required tags: {required_tags}")
             log.debug(f"Included components for chained nf-tests: {chained_components_tags}")
@@ -287,7 +286,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                         "module_tests",
                         "test_main_tags",
                         "Tags adhere to guidelines",
-                        module.nftest_main_nf,
+                        module.main_nf_test,
                     )
                 )
             else:
@@ -296,7 +295,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                         "module_tests",
                         "test_main_tags",
                         f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: `{','.join(missing_tags)}`",
-                        module.nftest_main_nf,
+                        module.main_nf_test,
                     )
                 )
 

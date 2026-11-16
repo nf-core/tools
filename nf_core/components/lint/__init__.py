@@ -284,7 +284,7 @@ class ComponentLint(ComponentCommand):
                     module_name = lint_result.component_name
 
                 # Make the filename clickable to open in VSCode
-                file_path_obj = Path(lint_result.file_path)
+                file_path_obj = lint_result.file_path
                 file_path_rel = file_path_obj.relative_to(self.directory)
                 file_path_link = f"[link=vscode://file/{file_path_obj.resolve()}]{file_path_rel}[/link]"
 

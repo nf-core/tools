@@ -14,11 +14,11 @@ def subworkflows_create(ctx, subworkflow, directory, author, force):
     """
     Create a new subworkflow from the nf-core template.
 
-    If the specified directory is a pipeline, this function creates a file called
-    'subworkflows/local/<subworkflow_name>.nf'
+    If the specified directory is a pipeline, this function creates the subworkflow files
+    in 'subworkflows/local/<subworkflow_name>'.
 
-    If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'subworkflows/' and 'tests/subworkflows'
+    If the specified directory is a clone of nf-core/modules, it creates the subworkflow files
+    in 'subworkflows/<org>/<subworkflow_name>'.
     """
     from nf_core.subworkflows import SubworkflowCreate
 
