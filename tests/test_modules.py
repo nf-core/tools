@@ -74,6 +74,10 @@ def create_modules_repo_dummy(tmp_dir):
     )
     conda_amd64 = CondaEntry(lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_amd64-bd-dummy_1.txt")
     conda_arm64 = CondaEntry(lock_file="modules/nf-core/bpipe/test/.conda-lock/linux_arm64-bd-dummy_1.txt")
+    for lock_file in (conda_amd64.lock_file, conda_arm64.lock_file):
+        lock_path = Path(root_dir, lock_file)
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock_path.touch()
     containers = MetaYmlContainers(
         docker={"linux/amd64": docker, "linux/arm64": docker},
         singularity={"linux/amd64": sing, "linux/arm64": sing},
