@@ -260,6 +260,15 @@ class ParamsFileBuilder:
             out += self.format_group(definition, show_hidden=show_hidden)
             out += "\n"
 
+        if schema.get("properties"):
+            definition = {
+                "title": "Other parameters",
+                "properties": schema["properties"],
+                "required": schema.get("required", []),
+            }
+            out += self.format_group(definition, show_hidden=show_hidden)
+            out += "\n"
+
         return out
 
     def write_params_file(self, output_fn: Path = Path("nf-params.yaml"), show_hidden=False, force=False) -> bool:
