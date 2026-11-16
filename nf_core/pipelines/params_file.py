@@ -232,6 +232,11 @@ class ParamsFileBuilder:
 
         Assumes the pipeline has been fetched (if remote) and the schema loaded.
 
+        Includes top-level ``properties`` and parameters grouped under
+        ``definitions`` (Draft 7) or ``$defs`` (Draft 2020-12). Ungrouped
+        parameters appear under "Other parameters", with the same defaults,
+        descriptions and hidden-parameter handling as grouped parameters.
+
         Args:
             show_hidden (bool): Whether to include hidden parameters
 
@@ -255,17 +260,20 @@ class ParamsFileBuilder:
         out += _print_wrapped(USAGE, "-", mode="end", indent=4)
         out += "\n"
 
-        # Add all parameter groups
-        for definition in schema.get("definitions", schema.get("$defs", {})).values():
-            out += self.format_group(definition, show_hidden=show_hidden)
-            out += "\n"
+        groups = list(schema.get(self.schema_obj.defs_notation, {}).values())
 
+        # Add ungrouped parameters to parameter groups
         if schema.get("properties"):
-            definition = {
-                "title": "Other parameters",
-                "properties": schema["properties"],
-                "required": schema.get("required", []),
-            }
+            groups.append(
+                {
+                    "title": "Other parameters",
+                    "properties": schema["properties"],
+                    "required": schema.get("required", []),
+                }
+            )
+
+        # Add all parameter groups
+        for definition in groups:
             out += self.format_group(definition, show_hidden=show_hidden)
             out += "\n"
 
