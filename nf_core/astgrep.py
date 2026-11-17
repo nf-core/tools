@@ -5,10 +5,8 @@ registered as an ast-grep custom language. The compiled parser library is discov
 
 1. The ``NFCORE_TREE_SITTER_NEXTFLOW_LIB`` environment variable (path to
    ``libnextflow.so`` / ``libnextflow.dylib``),
-2. An installed ``tree-sitter-nextflow`` Python package (its compiled binding
-   exports the ``tree_sitter_nextflow`` symbol ast-grep needs); until it is on
-   PyPI, install with
-   ``pip install git+https://github.com/nextflow-io/tree-sitter-nextflow.git``, or
+2. The installed ``tree-sitter-nextflow`` package (its compiled binding
+   exports the ``tree_sitter_nextflow`` symbol ast-grep needs), or
 3. A global ast-grep install (``~/.config/ast-grep/sgconfig.yml``), as set up by
    tree-sitter-nextflow's ``install-ast-grep.sh --global``.
 
