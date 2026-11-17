@@ -116,29 +116,32 @@ def nextflow_available() -> bool:
     return True
 
 
-def find_all(source: str, rule: dict):
-    """Find all nodes in Nextflow source matching an ast-grep rule.
-
-    Callers must check :func:`nextflow_available` first.
-    """
-    from ast_grep_py import SgRoot
-
-    return SgRoot(source, "nextflow").root().find_all(**rule)
-
-
 @cache
 def load_rule(path: Path) -> dict:
-    """Load an ast-grep lint rule file (id, severity, message, rule, ...)."""
+    """Load and validate an ast-grep lint rule file (id, severity, message, rule, ...)."""
     with open(path) as fh:
-        return yaml.safe_load(fh)
+        rule = yaml.safe_load(fh)
+    missing = {"id", "language", "message", "rule"} - set(rule or {})
+    if missing:
+        raise ValueError(f"ast-grep rule {path} is missing required keys: {', '.join(sorted(missing))}")
+    if rule["language"] != "nextflow":
+        raise ValueError(f"ast-grep rule {path} must set `language: nextflow`, not {rule['language']!r}")
+    return rule
+
+
+#: Keys of a rule file that ast-grep's ``find_all(config=...)`` understands
+_RULE_CONFIG_KEYS = ("rule", "constraints", "utils")
+
+
+def _rule_config(rule_config: dict) -> dict:
+    return {key: rule_config[key] for key in _RULE_CONFIG_KEYS if key in rule_config}
 
 
 def scan(source: str, rule_config: dict):
     """Find all nodes matching a full ast-grep rule config (rule/constraints/utils)."""
     from ast_grep_py import SgRoot
 
-    config = {key: rule_config[key] for key in ("rule", "constraints", "utils") if key in rule_config}
-    return SgRoot(source, "nextflow").root().find_all(config=config)
+    return SgRoot(source, "nextflow").root().find_all(config=_rule_config(rule_config))
 
 
 def find_matches(rule_config: dict, files: Iterable[Path | str], regex_unparseable: bool = False):
@@ -170,8 +173,7 @@ def find_matches(rule_config: dict, files: Iterable[Path | str], regex_unparseab
 
             root = SgRoot(text, "nextflow").root()
             if root.find(kind="ERROR") is None:
-                config = {key: rule_config[key] for key in ("rule", "constraints", "utils") if key in rule_config}
-                for match in root.find_all(config=config):
+                for match in root.find_all(config=_rule_config(rule_config)):
                     yield file, match.range().start.line + 1, match.text()
                 continue
             log.debug(f"{file} has parse errors, falling back to regex for {rule_config.get('id')}")
