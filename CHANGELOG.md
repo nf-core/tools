@@ -29,7 +29,7 @@
 - remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
 - cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
 - skip `latest-everything` nf-test runs on PRs to `main`/`master` ([#4393](https://github.com/nf-core/tools/pull/4393))
-- accept `record(process, tool, version)` entries from typed modules in the versions topic ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- accept `record(process, tool, version)` entries from typed modules in the versions topic ([#4624](https://github.com/nf-core/tools/pull/4624))
 
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 
@@ -57,7 +57,7 @@
 ### General
 
 - Fixes bug in `test-datasets list` related to broken rich import ([#4477](https://github.com/nf-core/tools/pull/4477))
-- Add `nf-core pipelines containers create-configs` to regenerate the pipeline `conf/containers_*.config` files ([#XXXX](https://github.com/nf-core/tools/pull/XXXX))
+- Add `nf-core pipelines containers create-configs` to regenerate the pipeline `conf/containers_*.config` files ([#4624](https://github.com/nf-core/tools/pull/4624))
 - update update-*-snapshot actions to more robust way ([#4509](https://github.com/nf-core/tools/pull/4509))
 
 ### Linting
