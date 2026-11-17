@@ -19,7 +19,8 @@ AREAS = {
     "modules": ROOT / "nf_core" / "modules" / "lint",
     "subworkflows": ROOT / "nf_core" / "subworkflows" / "lint",
 }
-RULES_DIR = ROOT / "nf_core" / "pipelines" / "lint" / "rules"
+RULE_DIRS = [area_dir / "rules" for area_dir in AREAS.values()]
+ASTGREP_IMPORT_RE = re.compile(r"^\s*(from nf_core import astgrep|import nf_core\.astgrep)", re.M)
 IMPORT_RE = re.compile(r"from nf_core\.\w+\.lint\.(\w+) import")
 
 
@@ -37,7 +38,7 @@ def scan() -> tuple[dict[str, bool], dict[str, set[str]]]:
             if not is_check(path):
                 continue
             text = path.read_text()
-            direct[path.stem] = "astgrep" in text
+            direct[path.stem] = bool(ASTGREP_IMPORT_RE.search(text))
             imports[path.stem] = set(IMPORT_RE.findall(text))
     return direct, imports
 
@@ -63,7 +64,7 @@ def build() -> dict:
             "migrated": migrated,
             "not_migrated": [c for c in checks if c not in migrated],
         }
-    result["rules"] = sorted(p.name for p in RULES_DIR.glob("*.yml")) if RULES_DIR.is_dir() else []
+    result["rules"] = sorted(str(p.relative_to(ROOT)) for d in RULE_DIRS for p in d.glob("*.yml"))
     return result
 
 
@@ -78,7 +79,7 @@ def print_table(data: dict) -> None:
         print(f"  not migrated: {', '.join(d['not_migrated']) or '-'}")
     pct = round(100 * migrated / total) if total else 0
     print(f"\n{migrated}/{total} lint modules use ast-grep rules ({pct}%)")
-    print(f"\nrule files in nf_core/pipelines/lint/rules/ ({len(data['rules'])}):")
+    print(f"\nrule files ({len(data['rules'])}):")
     for name in data["rules"]:
         print(f"  {name}")
 
