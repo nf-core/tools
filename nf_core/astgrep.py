@@ -21,6 +21,7 @@ import re
 import sys
 from collections.abc import Iterable
 from functools import cache
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -93,12 +94,12 @@ def nextflow_available() -> bool:
     try:
         from ast_grep_py import register_dynamic_language
     except ImportError:
-        log.debug("ast-grep-py not installed, structural Nextflow linting unavailable")
+        log.info("ast-grep-py not installed: Nextflow lint checks fall back to regex matching")
         return False
 
     lib = _find_library()
     if lib is None:
-        log.debug("tree-sitter-nextflow parser library not found, structural Nextflow linting unavailable")
+        log.info("tree-sitter-nextflow not installed: Nextflow lint checks fall back to regex matching")
         return False
 
     try:
@@ -117,7 +118,11 @@ def nextflow_available() -> bool:
         # e.g. an outdated library that does not export the parser symbol
         log.debug(f"Could not register Nextflow ast-grep language from {lib}: {e}")
         return False
-    log.debug(f"Registered Nextflow ast-grep language from {lib}")
+    try:
+        grammar_version = version("tree-sitter-nextflow")
+    except PackageNotFoundError:
+        grammar_version = "unknown"
+    log.debug(f"Registered Nextflow ast-grep language from {lib} (tree-sitter-nextflow {grammar_version})")
     return True
 
 
