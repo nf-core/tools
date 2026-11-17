@@ -1,9 +1,43 @@
 import fnmatch
 import logging
 import os
+import re
+from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+from nf_core import astgrep
+
+if TYPE_CHECKING:
+    from ast_grep_py import SgNode
 
 log = logging.getLogger(__name__)
+
+FALLBACK_REGEX = re.compile(r"TODO nf-core")
+
+
+def find_todo_comments(root: "SgNode") -> Iterator["SgNode"]:
+    """Yield every comment node containing ``TODO nf-core`` (strings and code are not flagged)."""
+    return iter(root.find_all(any=[{"kind": "line_comment"}, {"kind": "block_comment"}], regex="TODO nf-core"))
+
+
+def _clean_todo(text: str) -> str:
+    """Reduce a matched comment to the TODO text itself."""
+    for line in text.splitlines():
+        if "TODO nf-core" in line:
+            text = line
+            break
+    return (
+        text.replace("<!--", "")
+        .replace("-->", "")
+        .replace("/*", "")
+        .replace("*/", "")
+        .replace("*", "")
+        .replace("# TODO nf-core: ", "")
+        .replace("// TODO nf-core: ", "")
+        .replace("TODO nf-core: ", "")
+        .strip()
+    )
 
 
 def pipeline_todos(self, root_dir=None):
@@ -26,6 +60,10 @@ def pipeline_todos(self, root_dir=None):
     This lint test runs through all files in the pipeline and searches for these lines.
     If any are found they will throw a warning.
 
+    Nextflow/Groovy files are matched structurally via
+    :func:`find_todo_comments` when the parser is available (a "TODO nf-core"
+    inside a string is not flagged); all other files are searched line by line.
+
     .. tip:: Note that many GUI code editors have plugins to list all instances of *TODO*
               in a given project directory. This is a very quick and convenient way to get
               started on your pipeline!
@@ -45,33 +83,24 @@ def pipeline_todos(self, root_dir=None):
         with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
                 ignore.append(Path(line.strip().rstrip("/")).name)
+
+    to_check = []
     for root, dirs, files in os.walk(root_dir, topdown=True):
         # Ignore files
         for i_base in ignore:
             i = str(Path(root, i_base))
             dirs[:] = [d for d in dirs if not fnmatch.fnmatch(str(Path(root, d)), i)]
             files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
-        for fname in files:
-            try:
-                with open(Path(root, fname), encoding="latin1") as fh:
-                    for line in fh:
-                        if "TODO nf-core" in line:
-                            line = (
-                                line.replace("<!--", "")
-                                .replace("-->", "")
-                                .replace("# TODO nf-core: ", "")
-                                .replace("// TODO nf-core: ", "")
-                                .replace("TODO nf-core: ", "")
-                                .strip()
-                            )
-                            warned.append(f"TODO string in `{fname}`: _{line}_")
-                            file_paths.append(Path(root, fname))
-            except FileNotFoundError:
-                log.debug(f"Could not open file {fname} in pipeline_todos lint test")
+        to_check.extend(Path(root, fname) for fname in files)
+
+    matches = astgrep.find_nodes(
+        find_todo_comments, to_check, fallback=FALLBACK_REGEX, regex_unparseable=True, name="pipeline_todos"
+    )
+    for file, _line_num, text in matches:
+        warned.append(f"TODO string in `{file.name}`: _{_clean_todo(text)}_")
+        file_paths.append(file)
 
     if len(warned) == 0:
         passed.append("No TODO strings found")
 
-    # HACK file paths are returned to allow usage of this function in modules/lint.py
-    # Needs to be refactored!
     return {"passed": passed, "warned": warned, "file_paths": file_paths}

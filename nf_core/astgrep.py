@@ -21,11 +21,15 @@ import os
 import platform
 import re
 import sys
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable, Iterator
 from functools import cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
+
+if TYPE_CHECKING:
+    from ast_grep_py import SgNode
 
 log = logging.getLogger(__name__)
 
@@ -144,42 +148,75 @@ def scan(source: str, rule_config: dict):
 
 
 def find_matches(rule_config: dict, files: Iterable[Path | str], regex_unparseable: bool = False):
-    """Yield ``(file, line_number, snippet)`` for every rule match across files.
+    """Yield ``(file, line_number, snippet)`` for every match of a YAML rule config across files.
+
+    Thin wrapper around :func:`find_nodes` for rules stored as ast-grep YAML
+    (``rule``/``constraints``/``utils`` plus ``metadata.fallback-regex``).
+    """
+    config = {key: rule_config[key] for key in ("rule", "constraints", "utils") if key in rule_config}
+    yield from find_nodes(
+        lambda root: root.find_all(config=config),
+        files,
+        fallback=re.compile(rule_config["metadata"]["fallback-regex"]),
+        regex_unparseable=regex_unparseable,
+        name=rule_config.get("id", ""),
+    )
+
+
+def find_nodes(
+    matcher: "Callable[[SgNode], Iterable[SgNode]]",
+    files: Iterable[Path | str],
+    fallback: re.Pattern,
+    regex_unparseable: bool = False,
+    name: str = "",
+) -> Iterator[tuple[Path, int, str]]:
+    """Yield ``(file, line_number, snippet)`` for every node ``matcher`` finds across files.
+
+    ``matcher`` receives the root :class:`ast_grep_py.SgNode` of each parsed
+    file and returns the matching nodes, so match logic is plain Python using
+    the ast-grep Python API (``find_all``, ``get_match``, ``matches`` ...).
 
     A Nextflow/Groovy file is matched structurally only when the parser is
     available AND the file parses without ERROR nodes. A broken parse can
     swallow the rest of a file (e.g. process directives the grammar does not
     know yet), so any parse error means that file falls back to line-by-line
-    matching with the rule's ``metadata.fallback-regex`` — recall never drops
-    below regex level, and precision upgrades as the grammar matures.
+    matching with ``fallback`` — recall never drops below regex level, and
+    precision upgrades as the grammar matures.
 
     ``regex_unparseable`` controls files the Nextflow grammar cannot parse at
     all (e.g. markdown, yaml) when the parser is available: skipped by
-    default, regex-scanned if True (for rules that target all file types,
+    default, regex-scanned if True (for checks that target all file types,
     like TODOs).
     """
     structural = nextflow_available()
-    pattern = re.compile(rule_config["metadata"]["fallback-regex"])
     for file in map(Path, files):
         try:
             text = file.read_text(encoding="latin1")
         except (FileNotFoundError, IsADirectoryError, PermissionError) as e:
-            log.debug(f"Could not open file {file} while scanning for {rule_config.get('id')}: {e}")
+            log.debug(f"Could not open file {file} while scanning for {name}: {e}")
             continue
 
         if structural and file.suffix in NEXTFLOW_EXTENSIONS:
-            from ast_grep_py import SgRoot
-
-            root = SgRoot(text, "nextflow").root()
-            if root.find(kind="ERROR") is None:
-                config = {key: rule_config[key] for key in ("rule", "constraints", "utils") if key in rule_config}
-                for match in root.find_all(config=config):
-                    yield file, match.range().start.line + 1, match.text()
+            root = parse(text)
+            if root is not None:
+                for node in matcher(root):
+                    yield file, node.range().start.line + 1, node.text()
                 continue
-            log.debug(f"{file} has parse errors, falling back to regex for {rule_config.get('id')}")
+            log.debug(f"{file} has parse errors, falling back to regex for {name}")
         elif structural and not regex_unparseable:
             continue
 
         for line_number, line in enumerate(text.splitlines(), start=1):
-            if pattern.search(line):
+            if fallback.search(line):
                 yield file, line_number, line.strip()
+
+
+def parse(source: str) -> "SgNode | None":
+    """Parse Nextflow source and return its root node, or None if it has parse errors.
+
+    Callers must check :func:`nextflow_available` first.
+    """
+    from ast_grep_py import SgRoot
+
+    root = SgRoot(source, "nextflow").root()
+    return root if root.find(kind="ERROR") is None else None
