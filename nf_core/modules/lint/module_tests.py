@@ -67,7 +67,8 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
     ^^^^^^^^^^^^^^^^^^^^^^
 
     Stub blocks with gzip output files must use the proper syntax. Stub files
-    ending in ``.gz`` must use ``echo "" | gzip > file.gz``. Simply touching or
+    ending in ``.gz`` must use ``echo | gzip > file.gz`` or
+    ``echo "" | gzip > file.gz``. Simply touching or
     creating empty ``.gz`` files will break nf-test's gzip parser.
 
     """
@@ -327,7 +328,7 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
     Linting Checks perfomed:
     * ``test_stub_gzip_syntax``:
      Check that stub blocks with gzip output files use the proper syntax.
-     Stub files ending in .gz must use: echo "" | gzip > file.gz
+     Stub files ending in .gz must use: echo | gzip > file.gz or echo "" | gzip > file.gz
      Simply touching or creating empty .gz files will break nf-test's gzip parser
     """
     if not module.main_nf.is_file():
@@ -344,7 +345,7 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
     invalid_gz_patterns = []
     for stub_block in stub_blocks:
         # Look for lines that create .gz files
-        # Only valid pattern is: echo "" | gzip > file.gz
+        # Valid patterns include: echo | gzip > file.gz and echo "" | gzip > file.gz
         # Each .gz creation is always on a single line
 
         # Find all lines where .gz is the final extension
@@ -356,8 +357,8 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
             if not line or line.startswith(("//", "#")):
                 continue
 
-            # The ONLY valid pattern is: echo "" | gzip > file.gz
-            valid_pattern = r'echo\s+""\s*\|\s*gzip\s*>\s*.*\.gz$'
+            # Either an empty echo or an explicitly empty quoted string is valid.
+            valid_pattern = r'echo(?:\s+""|\s*)\s*\|\s*gzip\s*>\s*.*\.gz$'
 
             if not re.search(valid_pattern, line):
                 invalid_gz_patterns.append(line.strip())
@@ -367,7 +368,7 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
             (
                 "module_tests",
                 "test_stub_gzip_syntax",
-                f"Stub gzip files must use 'echo \"\" | gzip >' syntax. Invalid patterns found: {'; '.join(set(invalid_gz_patterns))}",
+                f"Stub gzip files must use 'echo | gzip >' or 'echo \"\" | gzip >' syntax. Invalid patterns found: {'; '.join(set(invalid_gz_patterns))}",
                 module.main_nf,
             )
         )

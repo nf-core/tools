@@ -272,7 +272,7 @@ class TestModuleTests(TestModules):
         assert "test_stub_gzip_syntax" in failed_tests, "test_stub_gzip_syntax not found in failed tests"
 
     def test_modules_stub_gzip_multiple_valid(self):
-        """Test linting a module with multiple valid stub gzip files"""
+        """Test linting a module with multiple valid stub gzip files, including empty echo"""
         main_nf = self.bpipe_test_module_path / "main.nf"
         original_content = main_nf.read_text()
 
@@ -283,7 +283,7 @@ class TestModuleTests(TestModules):
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > ${prefix}.txt.gz
-    echo "" | gzip > ${prefix}.vcf.gz
+    echo | gzip > ${prefix}.vcf.gz
     echo "" | gzip > ${prefix}.bam.gz
     touch ${prefix}.txt
     """
@@ -315,7 +315,7 @@ class TestModuleTests(TestModules):
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > ${prefix}.txt.gz
-    echo | gzip > ${prefix}.vcf.gz
+    echo "stub" | gzip > ${prefix}.vcf.gz
     echo "" | gzip > ${prefix}.bam.gz
     touch ${prefix}.txt
     """
