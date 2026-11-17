@@ -10,7 +10,7 @@ registered as an ast-grep custom language. The compiled parser library is discov
 3. A global ast-grep install (``~/.config/ast-grep/sgconfig.yml``), as set up by
    tree-sitter-nextflow's ``install-ast-grep.sh --global``.
 
-If none is available, :func:`nextflow_available` returns ``False`` and callers
+If none is available, :func:`parser_available` returns ``False`` and callers
 should fall back to text-based matching.
 """
 
@@ -86,7 +86,7 @@ def _find_library() -> Path | None:
 
 
 @cache
-def nextflow_available() -> bool:
+def parser_available() -> bool:
     """Register the Nextflow custom language with ast-grep (once per process).
 
     Returns False if ast-grep-py or the compiled parser library is unavailable.
@@ -200,7 +200,7 @@ def find_matches(rule_config: dict, files: Iterable[Path | str], regex_unparseab
     ``regex_unparseable`` is True (for rules that target all file types, like
     TODOs); this is the same whether or not the parser is installed.
     """
-    structural = nextflow_available()
+    structural = parser_available()
     rule_id = str(rule_config.get("id"))
     fallback = (rule_config.get("metadata") or {}).get("fallback-regex")
     pattern = re.compile(fallback) if fallback else None

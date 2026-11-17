@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Report how many nf-core lint checks use ast-grep YAML rules vs Python/regex.
 
-A check counts as migrated if its own module uses `nf_core.astgrep`, or if it
+A check counts as migrated if its own module uses `nf_core.nextflow.nf_ast`, or if it
 delegates (via `from nf_core.<area>.lint.<name> import ...`) to a module that does.
 """
 
@@ -20,7 +20,9 @@ AREAS = {
     "subworkflows": ROOT / "nf_core" / "subworkflows" / "lint",
 }
 RULE_DIRS = [area_dir / "rules" for area_dir in AREAS.values()]
-ASTGREP_IMPORT_RE = re.compile(r"^\s*(from nf_core import astgrep|import nf_core\.astgrep)", re.M)
+NF_AST_IMPORT_RE = re.compile(
+    r"^\s*(from nf_core\.nextflow import nf_ast|(from|import) nf_core\.nextflow\.nf_ast)", re.M
+)
 IMPORT_RE = re.compile(r"from nf_core\.\w+\.lint\.(\w+) import")
 
 
@@ -30,7 +32,7 @@ def is_check(path: Path) -> bool:
 
 
 def scan() -> tuple[dict[str, bool], dict[str, set[str]]]:
-    """Return (direct: stem->astgrep in own source, imports: stem->imported lint stems)."""
+    """Return (direct: stem->nf_ast in own source, imports: stem->imported lint stems)."""
     direct: dict[str, bool] = {}
     imports: dict[str, set[str]] = {}
     for area_dir in AREAS.values():
@@ -38,7 +40,7 @@ def scan() -> tuple[dict[str, bool], dict[str, set[str]]]:
             if not is_check(path):
                 continue
             text = path.read_text()
-            direct[path.stem] = bool(ASTGREP_IMPORT_RE.search(text))
+            direct[path.stem] = bool(NF_AST_IMPORT_RE.search(text))
             imports[path.stem] = set(IMPORT_RE.findall(text))
     return direct, imports
 
