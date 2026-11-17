@@ -58,6 +58,7 @@ workflow {{ short_name|upper }} {
     // Collate and save software versions
     //
     def topic_versions = channel.topic("versions")
+        .map { entry -> entry instanceof Record ? [entry.process, entry.tool, entry.version] : entry }
         .distinct()
         .branch { entry ->
             versions_file: entry instanceof Path
