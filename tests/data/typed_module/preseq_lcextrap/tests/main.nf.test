@@ -1,0 +1,108 @@
+nextflow_process {
+
+    name "Test Process PRESEQ_LCEXTRAP"
+    script "../main.nf"
+    process "PRESEQ_LCEXTRAP"
+    tag "modules"
+    tag "modules_nfcore"
+    tag "preseq"
+    tag "preseq/lcextrap"
+
+    topics "versions"
+
+    test("sarscov2 - single_end") {
+        when {
+            process {
+                """
+                input[0] = record(id: 'test', single_end: true, bam: file(params.modules_testdata_base_path + 'delete_me/preseq/SRR1003759_5M_subset.mr', checkIfExists: true))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out[0].collect { r -> [id: r.id, meta: r.meta, lc_extrap: file(r.lc_extrap), log: file(r.log).name] },
+                    topics
+                ).match() }
+            )
+        }
+    }
+
+    test("sarscov2 - single_end - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = record(id: 'test', single_end: true, bam: file(params.modules_testdata_base_path + 'delete_me/preseq/SRR1003759_5M_subset.mr', checkIfExists: true))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out, topics).match() }
+            )
+        }
+    }
+
+    test("sarscov2 - paired_end") {
+        when {
+            process {
+                """
+                input[0] = record(id: 'test', single_end: false, bam: file(params.modules_testdata_base_path + 'delete_me/preseq/SRR1003759_5M_subset.mr', checkIfExists: true))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out[0].collect { r -> [id: r.id, meta: r.meta, lc_extrap: file(r.lc_extrap), log: file(r.log).name] },
+                    topics
+                ).match() }
+            )
+        }
+    }
+
+    test("sarscov2 - paired_end - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = record(id: 'test', single_end: false, bam: file(params.modules_testdata_base_path + 'delete_me/preseq/SRR1003759_5M_subset.mr', checkIfExists: true))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out, topics).match() }
+            )
+        }
+    }
+
+    test("sarscov2 - single_end - meta, output_prefix and args") {
+        when {
+            process {
+                """
+                input[0] = record(id: 'test', single_end: true, bam: file(params.modules_testdata_base_path + 'delete_me/preseq/SRR1003759_5M_subset.mr', checkIfExists: true), meta: record(id: 'test', condition: 'a'), output_prefix: 'custom', preseq_lcextrap_args: '-seed 1')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out[0].collect { r -> [id: r.id, meta: r.meta, lc_extrap: file(r.lc_extrap), log: file(r.log).name] },
+                    topics
+                ).match() }
+            )
+        }
+    }
+}

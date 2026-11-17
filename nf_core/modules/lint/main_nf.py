@@ -7,6 +7,7 @@ import re
 
 from rich.progress import Progress
 
+from nf_core.components import records
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.lint.meta_yml import _load_skip_nf_test_sets
@@ -113,6 +114,34 @@ def main_nf(
     A warning is issued if a legacy YAML-based ``versions`` emit is used instead
     of a topic output.
 
+    Modules that enable static types (``nextflow.enable.types = true``) are
+    checked against the static types specification instead: they have no
+    ``emit:`` outputs, versions come from the ``topic:`` block, and they must
+    not have a ``when:`` block. The following checks apply only to them:
+
+    main_nf_record_input
+    ^^^^^^^^^^^^^^^^^^^^
+
+    The ``input:`` block must declare exactly one ``record(...)``, and it must
+    have an ``id`` field.
+
+    main_nf_record_output
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The ``output:`` block must declare exactly one ``record(...)``, and it must
+    have ``id`` and ``meta`` fields.
+
+    main_nf_ext_directive
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    Every ``task.ext.<name>`` used in the ``script:`` or ``stub:`` block must be
+    defined in an ``ext [...]`` directive.
+
+    main_nf_no_when
+    ^^^^^^^^^^^^^^^
+
+    The process must not have a ``when:`` block.
+
     """
 
     inputs: list[str] = []
@@ -181,32 +210,50 @@ def main_nf(
     shell_lines = []
     exec_lines = []
     when_lines = []
+    typed = records.is_typed(lines_j)
+    typed_lines: list[str] = []
+    ext_lines: list[str] = []
     iter_lines = iter(lines)
     for line in iter_lines:
         if re.search(r"^\s*process\s*\w*\s*{", line) and state == "module":
             state = "process"
+        if typed:
+            if state in ["process", "ext"] and re.search(r"^\s*ext\s*\[", line):
+                state = "ext"
+            if state == "ext":
+                ext_lines.append(line)
+                if "".join(ext_lines).count("[") <= "".join(ext_lines).count("]"):
+                    state = "process"
+                continue
+            if state != "module":
+                typed_lines.append(line)
+            if re.search(r"^\s*topic\s*:", line) and state in ["input", "output"]:
+                state = "topic"
+                continue
         if re.search(r"^\s*input\s*:", line) and state in ["process"]:
             state = "input"
             continue
         if re.search(r"^\s*output\s*:", line) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search(r"^\s*when\s*:", line) and state in ["input", "output", "process"]:
+        if re.search(r"^\s*when\s*:", line) and state in ["input", "output", "topic", "process"]:
             state = "when"
             continue
-        if re.search(r"^\s*script\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*script\s*:", line) and state in ["input", "output", "topic", "when", "process"]:
             state = "script"
             continue
-        if re.search(r"^\s*shell\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*shell\s*:", line) and state in ["input", "output", "topic", "when", "process"]:
             state = "shell"
             continue
-        if re.search(r"^\s*exec\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*exec\s*:", line) and state in ["input", "output", "topic", "when", "process"]:
             state = "exec"
             continue
 
         # Perform state-specific linting checks
         if state == "process" and not _is_empty(line):
             process_lines.append(line)
+        if typed and state in ["input", "output", "topic"]:
+            continue
         if state == "input" and not _is_empty(line):
             # allow multiline tuples
             if "tuple" in line and line.count("(") <= 1:
@@ -229,6 +276,9 @@ def main_nf(
         if state == "exec" and not _is_empty(line):
             exec_lines.append(line)
 
+    if typed:
+        inputs, emits, topics = check_typed_sections(module, typed_lines)
+
     # Check meta naming
     if inputs:
         check_meta_input_names(module, inputs)
@@ -249,7 +299,22 @@ def main_nf(
     # docker-only format), so there is nothing to compare and no check is emitted.
 
     # Check the when statement
-    check_when_section(module, when_lines)
+    if typed:
+        if when_lines:
+            module.failed.append(
+                (
+                    "main_nf",
+                    "main_nf_no_when",
+                    "Modules with static types must not have a `when:` block",
+                    module.main_nf,
+                )
+            )
+        else:
+            module.passed.append(
+                ("main_nf", "main_nf_no_when", "No `when:` block in module with static types", module.main_nf)
+            )
+    else:
+        check_when_section(module, when_lines)
 
     # Check that we have script or shell, not both
     if sum(bool(block_lines) for block_lines in (script_lines, shell_lines, exec_lines)) > 1:
@@ -268,7 +333,9 @@ def main_nf(
 
     # Check the script definition
     if len(script_lines):
-        check_script_section(module, script_lines)
+        check_script_section(module, script_lines, typed=typed)
+        if typed:
+            check_ext_directive(module, ext_lines, script_lines)
 
     # Check that shell uses a template
     if len(shell_lines):
@@ -315,7 +382,12 @@ def main_nf(
                 ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
             )
 
-    if emits:
+    if typed:
+        if not topics:
+            module.failed.append(
+                ("main_nf", "main_nf_version_topic", "Module does not emit software versions as topic", module.main_nf)
+            )
+    elif emits:
         topic_versions_amount = sum(1 for t in topics if t == "versions")
         emit_versions_amount = sum(1 for e in emits if e.startswith("versions"))
         if topic_versions_amount == emit_versions_amount:
@@ -388,15 +460,16 @@ def check_nf_module_name(module, component_name):
         )
 
 
-def check_script_section(module, lines):
+def check_script_section(module, lines, typed: bool = False):
     """
     Lint the script section
     Checks whether `def prefix` is defined and whether getProcessName is used for `versions.yml`.
+    Modules with static types set the prefix in the `ext` directive instead, and must not read any `meta` key.
     """
     script = "".join(lines)
 
     # check for prefix (only if module has a meta map as input)
-    if module.has_meta:
+    if module.has_meta and not typed:
         if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
             module.passed.append(
                 (
@@ -416,8 +489,8 @@ def check_script_section(module, lines):
                 )
             )
 
-    # Validate meta keys
-    permitted_meta_keys = {"id", "single_end", "strandedness"}
+    # Validate meta keys. The `meta` record of a module with static types is opaque to the process.
+    permitted_meta_keys = set() if typed else {"id", "single_end", "strandedness"}
     invalid_meta_keys = [
         f"{prefix}{key}"
         for prefix, key in re.findall(r"(?<!\.)\b(meta\d*\??\.)(\w+)\b(?!\()", script)
@@ -450,6 +523,122 @@ def check_script_section(module, lines):
                 "main_nf",
                 "main_nf_ext_key",
                 f"Invalid 'ext' keys detected: {', '.join(invalid_ext_keys)}",
+                module.main_nf,
+            )
+        )
+
+
+def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """
+    Lint the ``input:``, ``output:`` and ``topic:`` blocks of a module with static types.
+
+    main_nf_record_input
+    ^^^^^^^^^^^^^^^^^^^^
+
+    The ``input:`` block must declare exactly one ``record(...)`` with an ``id`` field.
+
+    main_nf_record_output
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    The ``output:`` block must declare exactly one ``record(...)`` with ``id`` and ``meta`` fields.
+
+    wrong_version_output
+    ^^^^^^^^^^^^^^^^^^^^
+
+    Each ``versions`` record must have exactly the fields ``process``, ``tool`` and
+    ``version``, with ``process: "${task.process}"``.
+
+    Returns:
+        The input field names, the output field names and the topic names.
+    """
+    sections = records.split_sections(lines)
+    inputs: list[str] = []
+    emits: list[str] = []
+
+    for section, required, test_name in [
+        ("input", ["id"], "main_nf_record_input"),
+        ("output", ["id", "meta"], "main_nf_record_output"),
+    ]:
+        found = records.find_records(sections.get(section, ""))
+        if len(found) != 1:
+            module.failed.append(
+                (
+                    "main_nf",
+                    test_name,
+                    f"The `{section}:` block must declare exactly one `record(...)`, found {len(found)}",
+                    module.main_nf,
+                )
+            )
+            continue
+        fields = list(records.parse_record_fields(found[0][0], angle_brackets=section == "input"))
+        if section == "input":
+            inputs = fields
+        else:
+            emits = fields
+        missing = [name for name in required if name not in fields]
+        if missing:
+            module.failed.append(
+                (
+                    "main_nf",
+                    test_name,
+                    f"The `{section}:` record is missing the field(s): `{'`, `'.join(missing)}`",
+                    module.main_nf,
+                )
+            )
+        else:
+            module.passed.append(("main_nf", test_name, f"The `{section}:` block declares one record", module.main_nf))
+
+    topics = records.topic_records(sections.get("topic", ""))
+    for entry in topics.get("versions", []):
+        fields = entry["fields"]
+        process = fields.get("process", {}).get("value", "")
+        if sorted(fields) == ["process", "tool", "version"] and re.fullmatch(r'"\$\{\s*task\.process\s*\}"', process):
+            module.passed.append(
+                ("main_nf", "wrong_version_output", "Versions topic output is correctly formatted", module.main_nf)
+            )
+        else:
+            module.failed.append(
+                (
+                    "main_nf",
+                    "wrong_version_output",
+                    "Versions topic output is not correctly formatted, expected "
+                    "`record(process: \"${task.process}\", tool: '<tool>', version: eval(\"<version_command>\")) >> 'versions'`",
+                    module.main_nf,
+                )
+            )
+    return inputs, emits, list(topics)
+
+
+def check_ext_directive(module, ext_lines: list[str], script_lines: list[str]) -> None:
+    """
+    Check that every ``task.ext`` value used by the script of a module with static types
+    is defined in its ``ext [...]`` directive.
+
+    main_nf_ext_directive
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    Every ``task.ext.<name>`` in the ``script:`` or ``stub:`` block must be defined
+    in the ``ext [...]`` directive.
+    """
+    directive = records.strip_comments("".join(ext_lines))
+    entries = records.split_top_level(directive[directive.find("[") + 1 : directive.rfind("]")])
+    defined = {name.strip() for name, sep, _ in (entry.partition(":") for entry in entries) if sep}
+    used = set(re.findall(r"\btask\.ext\.(\w+)", "".join(script_lines)))
+    if missing := sorted(used - defined):
+        module.failed.append(
+            (
+                "main_nf",
+                "main_nf_ext_directive",
+                f"`task.ext` value(s) used but not defined in the `ext` directive: `{'`, `'.join(missing)}`",
+                module.main_nf,
+            )
+        )
+    else:
+        module.passed.append(
+            (
+                "main_nf",
+                "main_nf_ext_directive",
+                "All `task.ext` values are defined in the `ext` directive",
                 module.main_nf,
             )
         )

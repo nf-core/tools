@@ -20,6 +20,7 @@ import ruamel.yaml
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components import records
 from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
@@ -345,6 +346,70 @@ class ModuleLint(ComponentLint):
 
         return sort_by_schema(meta_yml, schema)
 
+    def _update_meta_yml_records(self, mod, meta_yml: dict, corrected_meta_yml: dict) -> None:
+        """
+        Rewrite the input, output and topic records of a module with static types to match ``main.nf``,
+        keeping the descriptions, patterns and ontologies of fields that are already in ``meta.yml``.
+        """
+        cmap = ruamel.yaml.comments.CommentedMap
+        input_fields = mod.inputs[0]["fields"] if len(mod.inputs) == 1 else {}
+        version_descriptions = {
+            "process": "The name of the process",
+            "tool": "The name of the tool",
+            "version": "The version of the tool",
+        }
+
+        def _output_type(name: str, value: str) -> dict:
+            if value in input_fields:
+                source = input_fields[value]
+                return {"type": source["type"], **({"optional": True} if source["optional"] else {})}
+            if value.startswith("file("):
+                return {"type": "Path"}
+            if value.startswith("files("):
+                return {"type": "Set<Path>"}
+            return {}
+
+        def _merge(main_entry: dict, meta_entries, section: str, topic: str | None = None) -> dict:
+            existing: dict = next((e for e in meta_entries or [] if records.is_record(e)), {})
+            existing_fields: dict = existing["fields"] if isinstance(existing.get("fields"), dict) else {}
+            fields = cmap()
+            for name, parsed in main_entry["fields"].items():
+                current = existing_fields.get(name) if isinstance(existing_fields.get(name), dict) else None
+                field = cmap()
+                if section == "input":
+                    field["type"] = parsed["type"]
+                    if parsed["optional"]:
+                        field["optional"] = True
+                    current = {k: v for k, v in (current or {}).items() if k != "optional"}
+                else:
+                    field["value"] = parsed["value"]
+                    if current is None and topic == "versions":
+                        current = {"type": "String", "description": version_descriptions.get(name, "")}
+                    elif current is None and section == "output":
+                        current = _output_type(name, parsed["value"])
+                for key, value in (current or {}).items():
+                    field.setdefault(key, value)
+                fields[name] = field
+            entry = cmap({"type": "record"})
+            if topic is None:
+                entry["description"] = existing.get("description", "")
+            entry["fields"] = fields
+            return entry
+
+        for section, obtain in [("input", self.obtain_inputs), ("output", self.obtain_outputs)]:
+            parsed = mod.inputs if section == "input" else mod.outputs
+            if len(parsed) == 1 and obtain(parsed) != obtain(meta_yml.get(section, [])):
+                log.debug(f"Updating the {section} record in '{mod.meta_yml}'")
+                corrected_meta_yml[section] = [_merge(parsed[0], meta_yml.get(section), section)]
+
+        meta_topics: dict = meta_yml["topics"] if isinstance(meta_yml.get("topics"), dict) else {}
+        if mod.topics and self.obtain_topics(mod.topics) != self.obtain_topics(meta_topics):
+            log.debug(f"Updating the topic records in '{mod.meta_yml}'")
+            topics = cmap(meta_topics)
+            for name, entries in mod.topics.items():
+                topics[name] = [_merge(entry, topics.get(name), "topics", name) for entry in entries]
+            corrected_meta_yml["topics"] = topics
+
     def update_meta_yml_file(self, mod):
         """
         Update the meta.yml file with the correct inputs, outputs, topics and containers
@@ -524,26 +589,29 @@ class ModuleLint(ComponentLint):
 
             return corrected_data
 
-        # Process inputs
-        populated_inputs = _populate_channel_elements(
-            "input", correct_inputs, meta_inputs, mod.inputs, meta_yml.get("input", {})
-        )
-        if populated_inputs is not None:
-            corrected_meta_yml["input"] = populated_inputs
+        if mod.is_typed:
+            self._update_meta_yml_records(mod, meta_yml, corrected_meta_yml)
+        else:
+            # Process inputs
+            populated_inputs = _populate_channel_elements(
+                "input", correct_inputs, meta_inputs, mod.inputs, meta_yml.get("input", {})
+            )
+            if populated_inputs is not None:
+                corrected_meta_yml["input"] = populated_inputs
 
-        # Process outputs
-        populated_outputs = _populate_channel_elements(
-            "output", correct_outputs, meta_outputs, mod.outputs, meta_yml.get("output", {})
-        )
-        if populated_outputs is not None:
-            corrected_meta_yml["output"] = populated_outputs
+            # Process outputs
+            populated_outputs = _populate_channel_elements(
+                "output", correct_outputs, meta_outputs, mod.outputs, meta_yml.get("output", {})
+            )
+            if populated_outputs is not None:
+                corrected_meta_yml["output"] = populated_outputs
 
-        # Process topics (check_exists=False allows adding topics that don't exist in meta.yml yet)
-        populated_topics = _populate_channel_elements(
-            "topics", correct_topics, meta_topics, mod.topics, meta_yml.get("topics", {}), check_exists=False
-        )
-        if populated_topics is not None:
-            corrected_meta_yml["topics"] = populated_topics
+            # Process topics (check_exists=False allows adding topics that don't exist in meta.yml yet)
+            populated_topics = _populate_channel_elements(
+                "topics", correct_topics, meta_topics, mod.topics, meta_yml.get("topics", {}), check_exists=False
+            )
+            if populated_topics is not None:
+                corrected_meta_yml["topics"] = populated_topics
 
         # Populate metadata for versions_* output channels and topics (from template)
         def _populate_versions_metadata(section_name: str, section_data: dict) -> None:
@@ -589,10 +657,11 @@ class ModuleLint(ComponentLint):
                                     f"Adding metadata to {section_name}.{ch_name} for '{normalized_name}' at index {j}"
                                 )
 
-        if "output" in corrected_meta_yml:
-            _populate_versions_metadata("output", corrected_meta_yml["output"])
-        if "topics" in corrected_meta_yml:
-            _populate_versions_metadata("topics", corrected_meta_yml["topics"])
+        if not mod.is_typed:
+            if "output" in corrected_meta_yml:
+                _populate_versions_metadata("output", corrected_meta_yml["output"])
+            if "topics" in corrected_meta_yml:
+                _populate_versions_metadata("topics", corrected_meta_yml["topics"])
 
         def _add_edam_ontologies(section, edam_formats, desc):
             expected_ontologies = []
@@ -639,7 +708,18 @@ class ModuleLint(ComponentLint):
 
         # EDAM ontologies
         edam_formats = nf_core.modules.modules_utils.load_edam()
-        if "input" in meta_yml:
+        if mod.is_typed:
+            for section in ["input", "output"]:
+                for entry in corrected_meta_yml.get(section, []):
+                    if not records.is_record(entry) or not isinstance(entry.get("fields"), dict):
+                        continue
+                    for name, field in entry["fields"].items():
+                        if not isinstance(field, dict):
+                            continue
+                        if "pattern" in field and "Path" in str(field.get("type", "")):
+                            field.setdefault("ontologies", [])
+                        _add_edam_ontologies(field, edam_formats, f"{section} - {name}")
+        elif "input" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["input"]):
                 if isinstance(channel, list):
                     for j, element in enumerate(channel):
@@ -653,7 +733,7 @@ class ModuleLint(ComponentLint):
                         corrected_meta_yml["input"][i][element_name], edam_formats, f"input - {element_name}"
                     )
 
-        if "output" in meta_yml:
+        if "output" in meta_yml and not mod.is_typed:
             for ch_name in corrected_meta_yml["output"]:
                 ch_content = corrected_meta_yml["output"][ch_name][0]
                 if isinstance(ch_content, list):
@@ -681,7 +761,7 @@ class ModuleLint(ComponentLint):
 
         # Create YAML anchors for versions_* keys in output that match "versions" in topics
         # Since we now populate metadata for both output and topics, set up anchors to reference output from topics
-        if "output" in corrected_meta_yml and "topics" in corrected_meta_yml:
+        if "output" in corrected_meta_yml and "topics" in corrected_meta_yml and not mod.is_typed:
             versions_keys = [key for key in corrected_meta_yml["output"] if key.startswith("versions_")]
 
             if versions_keys and "versions" in corrected_meta_yml["topics"]:

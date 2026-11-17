@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from nf_core.components import records
 from nf_core.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     check_nextflow_version,
@@ -59,9 +60,9 @@ class NFCoreComponent:
         self.passed: list[tuple[str, str, str, Path]] = []
         self.warned: list[tuple[str, str, str, Path]] = []
         self.failed: list[tuple[str, str, str, Path]] = []
-        self.inputs: list[list[dict[str, dict[str, str]]]] = []
+        self.inputs: list[Any] = []
         self.outputs: list[str] = []
-        self.topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]]
+        self.topics: dict[str, list[Any]]
         self.has_meta: bool = False
         self.git_sha: str | None = None
         self.is_patched: bool = False
@@ -155,6 +156,14 @@ class NFCoreComponent:
             with open(self.main_nf) as f:
                 data = f.read()
         return data
+
+    @property
+    def is_typed(self) -> bool:
+        """Whether the module enables Nextflow static types (``nextflow.enable.types = true``)."""
+        return self.component_type == "modules" and records.is_typed(self.load_main_nf())
+
+    def _typed_sections(self) -> dict[str, str]:
+        return records.split_sections(self.load_main_nf().splitlines())
 
     def load_meta_yml(self, reload: bool = False) -> dict | None:
         """
@@ -321,7 +330,12 @@ class NFCoreComponent:
         """Collect all inputs from the main.nf file."""
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
         data = self.load_main_nf()
-        if self.component_type == "modules":
+        if self.is_typed:
+            self.inputs = [
+                records.input_record(arguments)
+                for arguments, _ in records.find_records(self._typed_sections().get("input", ""))
+            ]
+        elif self.component_type == "modules":
             # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
             # regex matches:
             # val(foo)
@@ -365,7 +379,12 @@ class NFCoreComponent:
 
     def get_outputs_from_main_nf(self):
         data = self.load_main_nf()
-        if self.component_type == "modules":
+        if self.is_typed:
+            self.outputs = [
+                records.value_record(arguments)
+                for arguments, _ in records.find_records(self._typed_sections().get("output", ""))
+            ]
+        elif self.component_type == "modules":
             outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
             if "output:" not in data:
@@ -407,7 +426,9 @@ class NFCoreComponent:
 
     def get_topics_from_main_nf(self) -> None:
         data = self.load_main_nf()
-        if self.component_type == "modules":
+        if self.is_typed:
+            self.topics = records.topic_records(self._typed_sections().get("topic", ""))
+        elif self.component_type == "modules":
             topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"
             if "output:" not in data:
