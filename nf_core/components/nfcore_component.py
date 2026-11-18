@@ -162,9 +162,6 @@ class NFCoreComponent:
         """Whether the module enables Nextflow static types (``nextflow.enable.types = true``)."""
         return self.component_type == "modules" and records.is_typed(self.load_main_nf())
 
-    def _typed_sections(self) -> dict[str, str]:
-        return records.split_sections(self.load_main_nf().splitlines())
-
     def load_meta_yml(self, reload: bool = False) -> dict | None:
         """
         Return the parsed content of the component's ``meta.yml``, cached after the first read.
@@ -331,10 +328,7 @@ class NFCoreComponent:
         inputs: Any = []  # Can be 'list[list[dict[str, dict[str, str]]]]' or 'list[str]'
         data = self.load_main_nf()
         if self.is_typed:
-            self.inputs = [
-                records.input_record(arguments)
-                for arguments, _ in records.find_records(self._typed_sections().get("input", ""))
-            ]
+            self.inputs = records.parse(data).inputs
         elif self.component_type == "modules":
             # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
             # regex matches:
@@ -380,10 +374,7 @@ class NFCoreComponent:
     def get_outputs_from_main_nf(self):
         data = self.load_main_nf()
         if self.is_typed:
-            self.outputs = [
-                records.value_record(arguments)
-                for arguments, _ in records.find_records(self._typed_sections().get("output", ""))
-            ]
+            self.outputs = records.parse(data).outputs
         elif self.component_type == "modules":
             outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
@@ -427,7 +418,7 @@ class NFCoreComponent:
     def get_topics_from_main_nf(self) -> None:
         data = self.load_main_nf()
         if self.is_typed:
-            self.topics = records.topic_records(self._typed_sections().get("topic", ""))
+            self.topics = records.parse(data).topics
         elif self.component_type == "modules":
             topics: dict[str, list[dict[str, dict] | list[dict[str, dict[str, str]]]]] = {}
             # get topic name from main.nf after "output:". the names are always after "topic:"

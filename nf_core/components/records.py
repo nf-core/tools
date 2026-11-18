@@ -4,14 +4,12 @@ Parse the ``record(...)`` declarations of modules that use Nextflow static types
 """
 
 import re
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from functools import cache
 from typing import Any
 
 TYPED_MODULE_RE = re.compile(r"^\s*nextflow\.enable\.types\s*=\s*true\b", re.MULTILINE)
-SECTION_RE = re.compile(r"^\s*(input|output|topic|when|script|shell|exec|stub)\s*:\s*$")
-TOPIC_TARGET_RE = re.compile(r"^\s*>>\s*(['\"])(\w+)\1")
-
-_OPENERS = {"(": ")", "[": "]", "{": "}"}
-_CLOSERS = set(_OPENERS.values())
 
 
 def is_typed(main_nf: str) -> bool:
@@ -24,140 +22,80 @@ def is_record(entry: Any) -> bool:
     return isinstance(entry, dict) and entry.get("type") == "record"
 
 
-def _scan(text: str, angle_brackets: bool = False):
-    """Yield ``(index, char, depth)`` for every character outside string literals.
+@dataclass
+class TypedModule:
+    """The typed declarations of a module ``main.nf``, as found by the Nextflow grammar."""
 
-    ``depth`` is the bracket nesting level before the character. ``<``/``>`` only
-    nest when ``angle_brackets`` is set, because they are operators outside type annotations.
-    """
-    depth = 0
-    quote = None
-    i = 0
-    while i < len(text):
-        char = text[i]
-        if quote:
-            if char == "\\":
-                i += 2
-                continue
-            if char == quote:
-                quote = None
-        elif char in ("'", '"'):
-            quote = char
-        else:
-            yield i, char, depth
-            if char in _OPENERS or (angle_brackets and char == "<"):
-                depth += 1
-            elif char in _CLOSERS or (angle_brackets and char == ">"):
-                depth -= 1
-        i += 1
+    inputs: list[dict] = dataclass_field(default_factory=list)
+    outputs: list[dict] = dataclass_field(default_factory=list)
+    topics: dict[str, list[dict]] = dataclass_field(default_factory=dict)
+    ext: set[str] = dataclass_field(default_factory=set)
+    parse_errors: int = 0
 
 
-def strip_comments(text: str) -> str:
-    """Remove ``//`` line comments, leaving ``//`` inside string literals intact."""
-    lines = []
-    for line in text.split("\n"):
-        previous = -1
-        for i, char, _ in _scan(line):
-            if char == "/":
-                if previous == i - 1:
-                    line = line[: i - 1]
-                    break
-                previous = i
-        lines.append(line)
-    return "\n".join(lines)
+def _is_record_call(node) -> bool:
+    """Whether a node is a ``record(...)`` call expression."""
+    callee = node.child(0)
+    return node.kind() == "call_expression" and callee is not None and callee.text() == "record"
 
 
-def split_sections(lines: list[str]) -> dict[str, str]:
-    """Return the text of each ``<label>:`` section of a process, keyed by label."""
-    sections: dict[str, list[str]] = {}
-    current = None
-    for line in lines:
-        match = SECTION_RE.match(line)
-        if match:
-            current = match.group(1)
-            sections.setdefault(current, [])
-        elif current is not None:
-            sections[current].append(line.rstrip("\n"))
-    return {name: "\n".join(body) for name, body in sections.items()}
-
-
-def split_top_level(text: str, angle_brackets: bool = False) -> list[str]:
-    """Split ``text`` on commas that are outside brackets and string literals."""
-    parts = []
-    start = 0
-    for i, char, depth in _scan(text, angle_brackets):
-        if char == "," and depth == 0:
-            parts.append(text[start:i])
-            start = i + 1
-    parts.append(text[start:])
-    return [part.strip() for part in parts if part.strip()]
-
-
-def find_records(text: str) -> list[tuple[str, str]]:
-    """Find each top-level ``record(...)`` call in ``text``.
-
-    Returns:
-        A list of ``(arguments, trailing)`` pairs, where ``trailing`` is the text
-        after the closing parenthesis up to the next record (e.g. ``>> 'versions'``).
-    """
-    text = strip_comments(text)
-    spans = []
-    open_at = None
-    for i, char, depth in _scan(text):
-        if char == "(" and depth == 0 and re.search(r"(?<![\w.])record\s*$", text[:i]):
-            open_at = i
-        elif char == ")" and depth == 1 and open_at is not None:
-            spans.append((open_at, i))
-            open_at = None
-    records = []
-    for n, (start, end) in enumerate(spans):
-        next_start = spans[n + 1][0] if n + 1 < len(spans) else len(text)
-        records.append((text[start + 1 : end], text[end + 1 : next_start]))
-    return records
-
-
-def parse_record_fields(arguments: str, angle_brackets: bool = False) -> dict[str, str]:
-    """Parse ``name: expression`` pairs from the arguments of a ``record(...)`` call."""
+def _value_record(call) -> dict:
+    """Describe a ``record(...)`` call expression in the ``meta.yml`` record layout."""
     fields = {}
-    for part in split_top_level(arguments, angle_brackets):
-        name, sep, expression = part.partition(":")
-        if sep and re.fullmatch(r"\s*\w+\s*", name):
-            fields[name.strip()] = " ".join(expression.split())
-    return fields
-
-
-def parse_type(annotation: str) -> tuple[str, bool]:
-    """Split a type annotation such as ``Record?`` into its type and whether it is optional."""
-    annotation = re.sub(r"\s+", "", annotation)
-    optional = annotation.endswith("?")
-    return annotation.removesuffix("?"), optional
-
-
-def input_record(arguments: str) -> dict:
-    """Describe an input ``record(...)`` declaration in the ``meta.yml`` record layout."""
-    fields = {}
-    for name, annotation in parse_record_fields(arguments, angle_brackets=True).items():
-        type_, optional = parse_type(annotation)
-        fields[name] = {"type": type_, "optional": optional}
+    for argument in call.find_all(kind="named_argument"):
+        parent = argument.parent()
+        if parent is None or parent.parent() != call:
+            continue
+        name, *rest = [child for child in argument.children() if child.is_named()]
+        fields[name.text()] = {"value": " ".join(rest[0].text().split()) if rest else ""}
     return {"type": "record", "fields": fields}
 
 
-def value_record(arguments: str) -> dict:
-    """Describe an output or topic ``record(...)`` declaration in the ``meta.yml`` record layout."""
-    return {
-        "type": "record",
-        "fields": {name: {"value": value} for name, value in parse_record_fields(arguments).items()},
-    }
+@cache
+def parse(main_nf: str) -> TypedModule:
+    """Parse the input, output and topic records and the ``ext`` keys of a typed module."""
+    from ast_grep_py import SgRoot
 
+    from nf_core.astgrep import nextflow_available
 
-def topic_records(text: str) -> dict[str, list[dict]]:
-    """Group the ``record(...) >> 'topic'`` statements of a ``topic:`` section by topic name."""
-    topics: dict[str, list[dict]] = {}
-    for arguments, trailing in find_records(text):
-        match = TOPIC_TARGET_RE.match(trailing)
-        if match:
-            topics.setdefault(match.group(2), []).append(value_record(arguments))
-    return topics
+    if not nextflow_available():
+        raise RuntimeError("Linting modules with static types needs ast-grep-py and tree-sitter-nextflow>=0.4.1")
+    module = TypedModule()
+    root = SgRoot(main_nf, "nextflow").root()
+    module.parse_errors = len(root.find_all(kind="ERROR"))
+
+    for record in root.find_all(kind="process_record_input"):
+        fields = {}
+        for process_input in record.find_all(kind="process_input"):
+            name = process_input.find(kind="identifier")
+            annotation = process_input.find(kind="type")
+            if name is None:
+                continue
+            type_ = re.sub(r"\s+", "", annotation.text()) if annotation else ""
+            fields[name.text()] = {"type": type_.removesuffix("?"), "optional": type_.endswith("?")}
+        module.inputs.append({"type": "record", "fields": fields})
+
+    for section in root.find_all(kind="output_section"):
+        for call in section.find_all(kind="call_expression"):
+            parent = call.parent()
+            if _is_record_call(call) and parent is not None and parent.kind() == "expression_statement":
+                module.outputs.append(_value_record(call))
+
+    for section in root.find_all(kind="topic_section"):
+        for statement in section.find_all(kind="binary_expression"):
+            call, *_, target = [child for child in statement.children() if child.is_named()]
+            if _is_record_call(call) and target.kind() == "string":
+                topic = target.text().strip("'\"")
+                module.topics.setdefault(topic, []).append(_value_record(call))
+
+    for statement in root.find_all(kind="command_expression"):
+        command = statement.child(0)
+        if command is not None and command.text() == "ext":
+            for entry in statement.find_all(kind="map_entry"):
+                key = entry.child(0)
+                if key is not None:
+                    module.ext.add(key.text())
+    return module
 
 
 def normalise_record(entry: dict, attribute: str) -> dict:

@@ -31,6 +31,7 @@ authors = [
 ]
 requires-python = ">=3.11, <4"
 dependencies = [
+    "ast-grep-py>=0.44.0",
     "click",
     "filetype",
     "GitPython",
@@ -54,6 +55,7 @@ dependencies = [
     "repo2rocrate",
     "tabulate",
     "textual==8.2.8",
+    "tree-sitter-nextflow>=0.4.1",
     "trogon",
     "pdiff",
     "ruamel.yaml",

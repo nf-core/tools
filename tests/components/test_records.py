@@ -35,56 +35,102 @@ def test_is_record(entry, expected):
     assert records.is_record(entry) is expected
 
 
-def test_strip_comments_keeps_slashes_in_strings():
-    assert records.strip_comments("version: eval(\"sed -n 's/Version: //p'\") // trailing") == (
-        "version: eval(\"sed -n 's/Version: //p'\") "
-    )
+TYPED_PROCESS = """
+nextflow.enable.types = true
 
+process EXAMPLE {
+    tag "${id}"
 
-def test_input_record_types_and_optional_flags():
-    found = records.find_records(
-        """
+    ext [
+        prefix: { output_prefix ?: "${id}" },
+        args: { tool_args ?: '' }
+    ]
+
+    input:
     // a comment with record(foo: Bar)
     record(
         id: String,
         meta: Record?,
         reads: Map<String, Path>,
-        index: Set < Path >?,  // trailing comment
-        tool_args: String?
+        /* a block comment: with a colon */
+        index: Set<Path>?,  // trailing comment
+        tool_args: String?,
+        output_prefix: String?
     )
-    """
-    )
-    assert len(found) == 1
-    assert records.input_record(found[0][0])["fields"] == {
+
+    output:
+    record(id: id, meta: meta, out: file("*.txt", optional: true))
+
+    topic:
+    record(process: "${task.process}", tool: 'perl', version: eval("perl -e 'print substr(\\$^V, 1)'")) >> 'versions'
+    record(process: "${task.process}", tool: 'gzip', version: '1.13') >> "versions"
+    record(sample: id) >> 'samples'
+
+    script:
+    \"\"\"
+    tool ${task.ext.args} > ${task.ext.prefix}.txt
+    \"\"\"
+}
+"""
+
+
+def test_parse_input_record_types_and_optional_flags():
+    module = records.parse(TYPED_PROCESS)
+    assert module.parse_errors == 0
+    assert len(module.inputs) == 1
+    assert module.inputs[0]["fields"] == {
         "id": {"type": "String", "optional": False},
         "meta": {"type": "Record", "optional": True},
         "reads": {"type": "Map<String,Path>", "optional": False},
         "index": {"type": "Set<Path>", "optional": True},
         "tool_args": {"type": "String", "optional": True},
+        "output_prefix": {"type": "String", "optional": True},
     }
 
 
-def test_topic_records_group_by_topic():
-    topics = records.topic_records(
-        """
-    record(process: "${task.process}", tool: 'perl', version: eval("perl -e 'print substr(\\$^V, 1)'")) >> 'versions'
-    record(process: "${task.process}", tool: 'gzip', version: '1.13') >> "versions"
-    record(sample: id) >> 'samples'
-    """
-    )
+def test_parse_output_record_values():
+    module = records.parse(TYPED_PROCESS)
+    assert len(module.outputs) == 1
+    assert module.outputs[0]["fields"] == {
+        "id": {"value": "id"},
+        "meta": {"value": "meta"},
+        "out": {"value": 'file("*.txt", optional: true)'},
+    }
+
+
+def test_parse_topic_records_group_by_topic():
+    topics = records.parse(TYPED_PROCESS).topics
     assert list(topics) == ["versions", "samples"]
     assert [entry["fields"]["tool"]["value"] for entry in topics["versions"]] == ["'perl'", "'gzip'"]
     assert topics["versions"][0]["fields"]["version"]["value"] == "eval(\"perl -e 'print substr(\\$^V, 1)'\")"
 
 
-def test_find_records_counts_each_record():
-    assert len(records.find_records("record(a: A)\nrecord(b: B)")) == 2
-    assert records.find_records("tuple val(meta), path(bam)") == []
-    assert records.find_records("myrecord(a: A)") == []
+def test_parse_ext_keys():
+    assert records.parse(TYPED_PROCESS).ext == {"prefix", "args"}
+
+
+def test_parse_counts_each_record():
+    two_outputs = TYPED_PROCESS.replace(
+        'record(id: id, meta: meta, out: file("*.txt", optional: true))',
+        "record(id: id, meta: meta)\n    record(id: id, meta: meta)",
+    )
+    assert len(records.parse(two_outputs).outputs) == 2
 
 
 def test_describe_differences():
-    expected = [records.normalise_record(records.input_record("id: String, meta: Record?, bam: Path"), "type")]
+    expected = [
+        records.normalise_record(
+            {
+                "type": "record",
+                "fields": {
+                    "id": {"type": "String", "optional": False},
+                    "meta": {"type": "Record", "optional": True},
+                    "bam": {"type": "Path", "optional": False},
+                },
+            },
+            "type",
+        )
+    ]
     found = [
         records.normalise_record(
             {

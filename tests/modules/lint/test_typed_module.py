@@ -36,6 +36,10 @@ TYPED_SECTIONS = """
 """
 
 
+def _process(body: str) -> str:
+    return "process FOO {\n" + body + '    """\n    foo\n    """\n}\n'
+
+
 def _results(mock_lint):
     passed = {result[1] for result in mock_lint.passed}
     failed = {result[1] for result in mock_lint.failed}
@@ -44,7 +48,7 @@ def _results(mock_lint):
 
 def test_typed_sections_pass():
     mock_lint = MockModuleLint()
-    inputs, emits, topics = check_typed_sections(mock_lint, TYPED_SECTIONS.splitlines())
+    inputs, emits, topics = check_typed_sections(mock_lint, _process(TYPED_SECTIONS))
     passed, failed = _results(mock_lint)
 
     assert inputs == ["id", "meta", "bam"]
@@ -66,7 +70,7 @@ def test_typed_sections_pass():
 )
 def test_typed_sections_fail(old, new, lint_test):
     mock_lint = MockModuleLint()
-    check_typed_sections(mock_lint, TYPED_SECTIONS.replace(old, new).splitlines())
+    check_typed_sections(mock_lint, _process(TYPED_SECTIONS.replace(old, new)))
     _, failed = _results(mock_lint)
     assert failed == {lint_test}
 
@@ -74,7 +78,7 @@ def test_typed_sections_fail(old, new, lint_test):
 def test_typed_sections_without_record_input():
     mock_lint = MockModuleLint()
     inputs, _, _ = check_typed_sections(
-        mock_lint, TYPED_SECTIONS.replace("record(\n        id: String,", "(").splitlines()
+        mock_lint, _process(TYPED_SECTIONS.replace("record(\n        id: String,", "("))
     )
     _, failed = _results(mock_lint)
     assert inputs == []
@@ -100,7 +104,11 @@ def test_typed_sections_without_record_input():
 )
 def test_ext_directive(ext_lines, failed_test):
     mock_lint = MockModuleLint()
-    check_ext_directive(mock_lint, ext_lines, ['    "foo ${task.ext.args} -o ${task.ext.prefix}.txt"\n'])
+    check_ext_directive(
+        mock_lint,
+        _process("".join(ext_lines) + "    script:\n"),
+        ['    "foo ${task.ext.args} -o ${task.ext.prefix}.txt"\n'],
+    )
     passed, failed = _results(mock_lint)
     if failed_test:
         assert failed == {failed_test}

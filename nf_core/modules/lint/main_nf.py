@@ -211,7 +211,6 @@ def main_nf(
     exec_lines = []
     when_lines = []
     typed = records.is_typed(lines_j)
-    typed_lines: list[str] = []
     ext_lines: list[str] = []
     iter_lines = iter(lines)
     for line in iter_lines:
@@ -225,8 +224,6 @@ def main_nf(
                 if "".join(ext_lines).count("[") <= "".join(ext_lines).count("]"):
                     state = "process"
                 continue
-            if state != "module":
-                typed_lines.append(line)
             if re.search(r"^\s*topic\s*:", line) and state in ["input", "output"]:
                 state = "topic"
                 continue
@@ -277,7 +274,7 @@ def main_nf(
             exec_lines.append(line)
 
     if typed:
-        inputs, emits, topics = check_typed_sections(module, typed_lines)
+        inputs, emits, topics = check_typed_sections(module, lines_j)
 
     # Check meta naming
     if inputs:
@@ -335,7 +332,7 @@ def main_nf(
     if len(script_lines):
         check_script_section(module, script_lines, typed=typed)
         if typed:
-            check_ext_directive(module, ext_lines, script_lines)
+            check_ext_directive(module, lines_j, script_lines)
 
     # Check that shell uses a template
     if len(shell_lines):
@@ -528,7 +525,7 @@ def check_script_section(module, lines, typed: bool = False):
         )
 
 
-def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str], list[str]]:
+def check_typed_sections(module, main_nf: str) -> tuple[list[str], list[str], list[str]]:
     """
     Lint the ``input:``, ``output:`` and ``topic:`` blocks of a module with static types.
 
@@ -551,7 +548,7 @@ def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str]
     Returns:
         The input field names, the output field names and the topic names.
     """
-    sections = records.split_sections(lines)
+    parsed = records.parse(main_nf)
     inputs: list[str] = []
     emits: list[str] = []
 
@@ -559,7 +556,7 @@ def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str]
         ("input", ["id"], "main_nf_record_input"),
         ("output", ["id", "meta"], "main_nf_record_output"),
     ]:
-        found = records.find_records(sections.get(section, ""))
+        found = parsed.inputs if section == "input" else parsed.outputs
         if len(found) != 1:
             module.failed.append(
                 (
@@ -570,7 +567,7 @@ def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str]
                 )
             )
             continue
-        fields = list(records.parse_record_fields(found[0][0], angle_brackets=section == "input"))
+        fields = list(found[0]["fields"])
         if section == "input":
             inputs = fields
         else:
@@ -588,7 +585,7 @@ def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str]
         else:
             module.passed.append(("main_nf", test_name, f"The `{section}:` block declares one record", module.main_nf))
 
-    topics = records.topic_records(sections.get("topic", ""))
+    topics = parsed.topics
     for entry in topics.get("versions", []):
         fields = entry["fields"]
         process = fields.get("process", {}).get("value", "")
@@ -609,7 +606,7 @@ def check_typed_sections(module, lines: list[str]) -> tuple[list[str], list[str]
     return inputs, emits, list(topics)
 
 
-def check_ext_directive(module, ext_lines: list[str], script_lines: list[str]) -> None:
+def check_ext_directive(module, main_nf: str, script_lines: list[str]) -> None:
     """
     Check that every ``task.ext`` value used by the script of a module with static types
     is defined in its ``ext [...]`` directive.
@@ -620,9 +617,7 @@ def check_ext_directive(module, ext_lines: list[str], script_lines: list[str]) -
     Every ``task.ext.<name>`` in the ``script:`` or ``stub:`` block must be defined
     in the ``ext [...]`` directive.
     """
-    directive = records.strip_comments("".join(ext_lines))
-    entries = records.split_top_level(directive[directive.find("[") + 1 : directive.rfind("]")])
-    defined = {name.strip() for name, sep, _ in (entry.partition(":") for entry in entries) if sep}
+    defined = records.parse(main_nf).ext
     used = set(re.findall(r"\btask\.ext\.(\w+)", "".join(script_lines)))
     if missing := sorted(used - defined):
         module.failed.append(
