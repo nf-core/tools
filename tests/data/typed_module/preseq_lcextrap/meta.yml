@@ -1,0 +1,113 @@
+name: preseq_lcextrap
+description: Software for predicting library complexity and genome coverage in high-throughput sequencing
+keywords:
+  - preseq
+  - library
+  - complexity
+tools:
+  - preseq:
+      description: Software for predicting library complexity and genome coverage in high-throughput sequencing
+      homepage: http://smithlabresearch.org/software/preseq/
+      documentation: http://smithlabresearch.org/wp-content/uploads/manual.pdf
+      tool_dev_url: https://github.com/smithlabcode/preseq
+      licence:
+        - "GPL"
+      identifier: biotools:preseq
+input:
+  - type: record
+    description: A BAM file of one sample
+    fields:
+      id:
+        type: String
+        description: Sample identifier, used as the default output prefix
+      meta:
+        type: Record
+        optional: true
+        description: Pipeline-specific sample information, passed to the output
+      single_end:
+        type: Boolean
+        description: Whether the reads are single-end; paired-end reads run lc_extrap with `-pe`
+      bam:
+        type: Path
+        description: BAM/CRAM/SAM file
+        pattern: "*.{bam,cram,sam}"
+        ontologies: []
+      preseq_lcextrap_args:
+        type: String
+        optional: true
+        description: Additional arguments for preseq lc_extrap (overridden by `ext.args`)
+      output_prefix:
+        type: String
+        optional: true
+        description: Output file prefix (overridden by `ext.prefix`)
+output:
+  - type: record
+    description: The complexity extrapolation of one sample
+    fields:
+      id:
+        value: id
+        type: String
+        description: Sample identifier from the input record
+      meta:
+        value: meta
+        type: Record
+        optional: true
+        description: The `meta` record from the input, `null` if none was given
+      lc_extrap:
+        value: file("*.lc_extrap.txt")
+        type: Path
+        description: File containing output of Preseq lcextrap
+        pattern: "*.lc_extrap.txt"
+        ontologies: []
+      log:
+        value: file("*.log")
+        type: Path
+        description: Log file containing stderr produced by Preseq
+        pattern: "*.log"
+        ontologies: []
+topics:
+  versions:
+    - type: record
+      fields:
+        process:
+          value: '"${task.process}"'
+          type: String
+          description: The name of the process
+        tool:
+          value: "'preseq'"
+          type: String
+          description: The name of the tool
+        version:
+          value: 'eval("preseq 2>&1 | sed -n ''s/Version: //p''")'
+          type: String
+          description: The version of the tool
+authors:
+  - "@drpatelh"
+  - "@edmundmiller"
+maintainers:
+  - "@drpatelh"
+  - "@edmundmiller"
+containers:
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/preseq:3.2.0--c485d1f68d51de10
+      build_id: bd-c485d1f68d51de10_1
+      scan_id: sc-229b0262144f6304_1
+    linux/arm64:
+      name: community.wave.seqera.io/library/preseq:3.2.0--074b22872ea89b59
+      build_id: bd-074b22872ea89b59_1
+      scan_id: sc-5d926dca1c929f34_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/preseq:3.2.0--2f439e0eb6cb17a9
+      build_id: bd-2f439e0eb6cb17a9_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/49/497b9b64f7a0554e9e0eaba8b789fc8796a01f61547a52d6006774bea4b853d0/data
+    linux/arm64:
+      name: oras://community.wave.seqera.io/library/preseq:3.2.0--f838f1ee276e19c5
+      build_id: bd-f838f1ee276e19c5_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/7b/7be1d7d080ab08a30cee8f3497d38e939cf107fc4b0e08ccfd88d819e0e9a81b/data
+  conda:
+    linux/amd64:
+      lock_file: modules/nf-core/preseq/lcextrap/.conda-lock/linux_amd64-bd-c485d1f68d51de10_1.txt
+    linux/arm64:
+      lock_file: modules/nf-core/preseq/lcextrap/.conda-lock/linux_arm64-bd-074b22872ea89b59_1.txt

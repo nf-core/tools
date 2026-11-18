@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from jsonschema import exceptions, validators
 
+from nf_core.components import records
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import read_meta_yml as read_component_meta_yml
 from nf_core.components.components_utils import yaml as ruamel_yaml
@@ -163,6 +164,15 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
 
     or permutations of the above.
 
+    Modules that enable static types (``nextflow.enable.types = true``) describe
+    their input, output and ``versions`` topic records in ``meta.yml`` as a list
+    holding one ``type: record`` entry with a ``fields`` map. For these modules,
+    ``correct_meta_inputs`` compares the field names, types and ``optional``
+    flags (a ``?`` after the type in ``main.nf``), and ``correct_meta_outputs``
+    and ``correct_meta_topics`` compare the field names and ``value`` entries.
+    These checks run even if ``meta_yml_valid`` fails, so that they do not
+    depend on the version of the schema.
+
     """
     if module.meta_yml is None or not module.meta_yml.exists():
         if allow_missing:
@@ -234,9 +244,9 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
         )
 
     # Confirm that all input and output channels are correctly specified
-    if valid_meta_yml:
+    if valid_meta_yml or module.is_typed:
         # confirm that the name matches the process name in main.nf
-        if meta_yaml["name"].upper() == module.process_name:
+        if str(meta_yaml.get("name", "")).upper() == module.process_name:
             module.passed.append(
                 (
                     "meta_yml",
@@ -250,7 +260,7 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                 (
                     "meta_yml",
                     "meta_name",
-                    f"Conflicting `process` name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{module.process_name}`)",
+                    f"Conflicting `process` name between meta.yml (`{meta_yaml.get('name')}`) and main.nf (`{module.process_name}`)",
                     module.meta_yml,
                 )
             )
@@ -290,11 +300,15 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
             else:
+                input_differences = f"Inputs should contain: {correct_inputs}"
+                if module.is_typed:
+                    input_differences = f"Input record: {records.describe_differences(correct_inputs, meta_inputs)}"
                 module.failed.append(
                     (
                         "meta_yml",
                         "correct_meta_inputs",
-                        f"Module `meta.yml` does not match `main.nf`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        f"Module `meta.yml` does not match `main.nf`. {input_differences}"
+                        + "\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )
@@ -334,18 +348,24 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
             else:
+                output_differences = f"Outputs should contain: {correct_outputs}"
+                if module.is_typed and isinstance(correct_outputs, list) and isinstance(meta_outputs, list):
+                    output_differences = f"Output record: {records.describe_differences(correct_outputs, meta_outputs)}"
                 module.failed.append(
                     (
                         "meta_yml",
                         "correct_meta_outputs",
-                        f"Module `meta.yml` does not match `main.nf`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        f"Module `meta.yml` does not match `main.nf`. {output_differences}"
+                        + "\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )
         # Check that all topics are correctly specified
         if "topics" in meta_yaml or module.topics:
             correct_topics = obtain_topics(module_lint_object, module.topics)
-            meta_topics = obtain_topics(module_lint_object, meta_yaml.get("topics", {}))
+            meta_topics = obtain_topics(
+                module_lint_object, meta_yaml["topics"] if isinstance(meta_yaml.get("topics"), dict) else {}
+            )
 
             if not meta_topics:
                 module.failed.append(
@@ -377,11 +397,22 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
                     )
                 )
             else:
+                topic_differences = f"Topics should contain: {correct_topics}"
+                if module.is_typed:
+                    topic_differences = (
+                        "; ".join(
+                            f"Topic `{name}`: {records.describe_differences(entries, meta_topics.get(name, []))}"
+                            for name, entries in correct_topics.items()
+                            if entries != meta_topics.get(name)
+                        )
+                        or topic_differences
+                    )
                 module.failed.append(
                     (
                         "meta_yml",
                         "correct_meta_topics",
-                        f"Module `meta.yml` does not match `main.nf`. Topics should contain: {correct_topics}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        f"Module `meta.yml` does not match `main.nf`. {topic_differences}"
+                        + "\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )
@@ -460,9 +491,11 @@ def obtain_inputs(_, inputs: list) -> list:
     Returns:
         formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    formatted_inputs: list[list[str] | str] = []
+    formatted_inputs: list[list[str] | str | dict] = []
     for input_channel in inputs:
-        if isinstance(input_channel, list):
+        if records.is_record(input_channel):
+            formatted_inputs.append(records.normalise_record(input_channel, "type"))
+        elif isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
                 key = list(element.keys())[0]
@@ -485,6 +518,10 @@ def obtain_outputs(_, outputs: dict | list) -> dict | list:
     Returns:
         formatted_outputs (dict): A dictionary containing the outputs and their elements obtained from main.nf or meta.yml files.
     """
+    if isinstance(outputs, list) and any(records.is_record(output) for output in outputs):
+        return [
+            records.normalise_record(output, "value") if records.is_record(output) else output for output in outputs
+        ]
     formatted_outputs: dict = {}
     old_structure = isinstance(outputs, list)
     if old_structure:
@@ -525,7 +562,9 @@ def obtain_topics(_, topics: dict) -> dict:
         content = topics[name]
         t_elements: list = []
         for element in content:
-            if isinstance(element, list):
+            if records.is_record(element):
+                t_elements.append(records.normalise_record(element, "value"))
+            elif isinstance(element, list):
                 t_elements.append([])
                 for e in element:
                     key = list(e.keys())[0]
