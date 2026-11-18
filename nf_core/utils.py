@@ -112,7 +112,6 @@ __getattr__, __dir__ = lazy_attrs(
     globals(),
     {
         "nfcore_question_style": _nfcore_question_style,
-        "GitHubAPISession": "nf_core.github_api",
         "gh_api": "nf_core.github_api",
         "NFCoreTemplateConfig": "nf_core.pydantic_models",
         "NFCoreYamlLintConfig": "nf_core.pydantic_models",
@@ -290,7 +289,6 @@ class Pipeline:
         conda_config (dict): The parsed conda configuration file content (``environment.yml``).
         conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
         nf_config (dict): The Nextflow pipeline configuration file content.
-        files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
         wf_path (str): Path to the pipeline directory.
@@ -305,7 +303,6 @@ class Pipeline:
         self.conda_config: dict = {}
         self.conda_package_info: dict = {}
         self.nf_config: dict = {}
-        self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
         self.wf_path = Path(wf_path).resolve()
@@ -348,32 +345,6 @@ class Pipeline:
         """Convenience function to get full path to a file in the pipeline"""
         return Path(self.wf_path, fn)
 
-    def list_files(self) -> list[Path]:
-        """Get a list of all files in the pipeline"""
-        import subprocess
-
-        files = []
-        try:
-            # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
-            for fn in git_ls_files:
-                full_fn = Path(self.wf_path) / fn.decode("utf-8")
-                if full_fn.is_file():
-                    files.append(full_fn)
-                else:
-                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-        except subprocess.CalledProcessError:
-            # Failed, so probably not initialised as a git repository - just a list of all files
-            files = []
-            for file_path in self.wf_path.rglob("*"):
-                if file_path.is_file():
-                    # Append the file path to the list
-                    files.append(file_path)
-            if len(files) == 0:
-                log.debug(f"No files found in pipeline: {self.wf_path}")
-
-        return files
-
     def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
 
@@ -404,7 +375,7 @@ def is_pipeline_directory(wf_path):
     """
     for fn in ["main.nf", "nextflow.config"]:
         if not Path(wf_path, fn).is_file():
-            if wf_path == ".":
+            if Path(wf_path).resolve() == Path.cwd():
                 warning = f"Current directory is not a pipeline - '{fn}' is missing."
             else:
                 warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
@@ -562,9 +533,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     if result is not None:
         nfconfig_raw, _ = result
         try:
-            raw_str = nfconfig_raw.decode("utf-8")
-            json_start = raw_str.find("{")
-            parsed = json.loads(raw_str[json_start:] if json_start >= 0 else raw_str)
+            parsed = parse_nextflow_json(nfconfig_raw.decode("utf-8"))
             config.update(parsed)
             for k in parsed:
                 log.debug(f"Config section: {k}")
@@ -600,6 +569,38 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     return config
 
 
+def parse_nextflow_json(text: str) -> Any:
+    """Parse the JSON output of a Nextflow command, ignoring status lines printed around it.
+
+    Nextflow can print status lines to stdout next to the JSON, e.g. `[PIPELINE] ...`
+    or, before 26.05, the Seqera Platform monitoring URL.
+
+    Raises:
+        json.JSONDecodeError: If the text contains no valid JSON object.
+    """
+    json_start = text.find("{")
+    if json_start == -1:
+        return json.loads(text)
+    parsed, _ = json.JSONDecoder().raw_decode(text, json_start)
+    return parsed
+
+
+class CommandError(RuntimeError):
+    """Raised by `run_cmd` when a command exits with a non-zero code.
+
+    Keeps the captured streams, so callers can inspect the command's output instead of parsing the error message.
+    `output` holds both streams decoded, since Nextflow prints error details to stdout and only a summary to stderr.
+    """
+
+    def __init__(self, cmd: str, returncode: int, stdout: bytes, stderr: bytes):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        decoded = (stream.decode("utf-8", errors="replace").strip() for stream in (stdout, stderr))
+        self.output = "\n".join(text for text in decoded if text)
+        super().__init__(f"Command '{cmd}' failed with exit code {returncode}\n{self.output}")
+
+
 def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     """Run a specified command and capture the output. Handle errors nicely."""
     import shlex
@@ -619,14 +620,7 @@ def run_cmd(executable: str, cmd: str) -> tuple[bytes, bytes] | None:
     if proc.returncode != 0:
         if executable == "nf-test":
             return (proc.stdout, proc.stderr)
-        output = (
-            proc.stderr.decode("utf-8", errors="replace").strip()
-            if proc.stderr
-            else proc.stdout.decode("utf-8", errors="replace").strip()
-            if proc.stdout
-            else ""
-        )
-        raise RuntimeError(f"Command '{full_cmd}' failed with exit code {proc.returncode}\n{output}")
+        raise CommandError(full_cmd, proc.returncode, proc.stdout, proc.stderr)
 
     return (proc.stdout, proc.stderr)
 
@@ -1203,7 +1197,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCoreYamlConfig | None]":
+def load_tools_config(directory: Path | None = None) -> tuple[Path | None, "NFCoreYamlConfig | None"]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1220,7 +1214,7 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
     from nf_core.pydantic_models import NFCoreTemplateConfig, NFCoreYamlConfig
 
     tools_config = {}
-
+    directory = directory or Path()
     config_fn = get_first_available_path(directory, CONFIG_PATHS)
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
@@ -1273,7 +1267,7 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
                 description=manifest.get("description", ""),
                 author=author_names,
                 version=manifest.get("version", ""),
-                outdir=str(directory),
+                outdir=Path(directory),
                 is_nfcore=True,
             )
         elif "prefix" in config_template_keys or "skip" in config_template_keys:
@@ -1293,21 +1287,22 @@ def load_tools_config(directory: str | Path = ".") -> "tuple[Path | None, NFCore
     return config_fn, nf_core_yaml_config
 
 
-def determine_base_dir(directory: Path | str = ".") -> Path:
-    base_dir = start_dir = Path(directory).absolute()
-    # Only iterate up the tree if the start dir doesn't have a config
-    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
-        base_dir = base_dir.parent
-        config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
-        if config_fn:
-            break
-    return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
+def determine_base_dir(directory: Path | None = None) -> Path:
+    start_dir = directory or Path()
+    abs_start = start_dir.absolute()
+    if get_first_available_path(abs_start, CONFIG_PATHS):
+        return start_dir
+    # Search ancestors for a config, skipping the filesystem root; fall back to the start dir
+    return next(
+        (d for d in abs_start.parents[:-1] if get_first_available_path(d, CONFIG_PATHS)),
+        start_dir,
+    )
 
 
 def get_first_available_path(directory: Path | str, paths: list[str]) -> Path | None:
-    for p in paths:
-        if Path(directory, p).is_file():
-            return Path(directory, p)
+    for name in paths:
+        if (path := Path(directory, name)).is_file():
+            return path
     return None
 
 
@@ -1351,18 +1346,6 @@ def strip_ansi_codes(string, replace_with=""):
     From Stack Overflow: https://stackoverflow.com/a/14693789/713980
     """
     return ANSI_ESCAPE_RE.sub(replace_with, string)
-
-
-def is_relative_to(path1, path2):
-    """
-    Checks if a path is relative to another.
-
-    Should mimic Path.is_relative_to which not available in Python < 3.9
-
-    path1 (Path | str): The path that could be a subpath
-    path2 (Path | str): The path the could be the superpath
-    """
-    return str(path1).startswith(str(path2) + os.sep)
 
 
 def file_md5(fname):
@@ -1471,10 +1454,39 @@ def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
         yield Path(tmp)
 
 
-def get_wf_files(wf_path: Path):
-    """Return a list of all files in a directory (ignores .gitigore files)"""
+def get_wf_files(wf_path: Path) -> list[Path]:
+    """Return all files in a directory that are not ignored by git.
 
-    wf_files = []
+    Uses `git ls-files` at a repository root, else fnmatches the top-level .gitignore.
+
+    Args:
+        wf_path (Path): The directory to list.
+
+    Returns:
+        list[Path]: Paths of the files, prefixed with ``wf_path``.
+    """
+    import subprocess
+
+    # In a subdirectory, git would apply the parent repo's ignore rules
+    if not Path(wf_path, ".git").exists():
+        return _get_wf_files_without_git(wf_path)
+    try:
+        proc = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            cwd=wf_path,
+            capture_output=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return _get_wf_files_without_git(wf_path)
+    # Dedupe merge-conflict stages; skip deleted tracked files
+    paths = (Path(wf_path, f) for f in dict.fromkeys(proc.stdout.decode().split("\0")) if f)
+    return [path for path in paths if path.is_file()]
+
+
+def _get_wf_files_without_git(wf_path: Path) -> list[Path]:
+    """Fallback for `get_wf_files` outside a git repository."""
+    wf_files: list[Path] = []
 
     ignore = [".git/*"]
     try:
@@ -1488,11 +1500,21 @@ def get_wf_files(wf_path: Path):
     except FileNotFoundError:
         pass
 
-    for path in Path(wf_path).rglob("*"):
-        rpath = str(path.relative_to(wf_path))
-        if any(fnmatch.fnmatch(rpath, pattern) for pattern in ignore):
-            continue
-        if path.is_file():
-            wf_files.append(str(path))
+    # A trailing "*" also matches everything below "dir/", so prune such dirs
+    dir_ignore = [pattern for pattern in ignore if pattern.endswith("*")]
+    root = str(wf_path)
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Relative prefix as a plain string, for speed
+        prefix = dirpath[len(root) :].lstrip(os.sep)
+        prefix = prefix + os.sep if prefix else ""
+        dirnames[:] = [
+            d for d in dirnames if not any(fnmatch.fnmatch(f"{prefix}{d}/", pattern) for pattern in dir_ignore)
+        ]
+        for filename in filenames:
+            if any(fnmatch.fnmatch(prefix + filename, pattern) for pattern in ignore):
+                continue
+            path = Path(dirpath, filename)
+            if path.is_file():
+                wf_files.append(path)
 
     return wf_files

@@ -1,7 +1,7 @@
 import logging
 
-import rich.console
-import rich.table
+from rich.console import Console
+from rich.table import Table
 
 from nf_core.test_datasets.test_datasets_utils import (
     IGNORED_FILE_PREFIXES,
@@ -14,7 +14,7 @@ from nf_core.test_datasets.test_datasets_utils import (
 )
 from nf_core.utils import rich_force_colors
 
-stdout = rich.console.Console(force_terminal=rich_force_colors())
+stdout = Console(force_terminal=rich_force_colors())
 log = logging.getLogger(__name__)
 
 
@@ -56,7 +56,7 @@ def search_datasets(
         stdout.print(create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
         stdout.print(create_download_url(branch, selection))
     else:
-        table = rich.table.Table(show_header=False)
+        table = Table(show_header=False)
         table.add_column("")
         table.add_column("", overflow="fold")
         table.add_row("File Name:", selection)

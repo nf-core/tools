@@ -1,6 +1,4 @@
 email_template.html
-docs/api/_build
-testing
 nf_core/module-template/meta.yml
 nf_core/pipeline-template/nextflow_schema.json
 nf_core/pipeline-template/modules.json
@@ -10,6 +8,3 @@ nf_core/pipeline-template/.github/workflows/branch.yml
 nf_core/pipeline-template/.github/workflows/nf-test.yml
 nf_core/pipeline-template/.github/workflows/pr-comment.yml
 tests/data/pipeline_create_template_skip.yml
-# don't run on things handled by ruff
-*.py
-*.pyc

@@ -67,11 +67,19 @@ class CreateConfig(NFCoreTemplateConfig):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
-    @field_validator("org", "description", "author", "version", "outdir")
+    @field_validator("org", "description", "author", "version")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
         if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("outdir", mode="before")
+    @classmethod
+    def outdir_notempty(cls, v: Any) -> Any:
+        """Check that the output directory is not empty, before "" is converted to Path(".")."""
+        if isinstance(v, str) and v.strip() == "":
             raise ValueError("Cannot be left empty.")
         return v
 
@@ -87,9 +95,9 @@ class CreateConfig(NFCoreTemplateConfig):
 
     @field_validator("outdir")
     @classmethod
-    def path_valid(cls, v: str) -> str:
+    def path_valid(cls, v: Path) -> Path:
         """Check that a path is valid."""
-        if not Path(v).is_dir():
+        if not v.is_dir():
             raise ValueError("Must be a valid path.")
         return v
 

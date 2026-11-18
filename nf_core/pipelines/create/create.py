@@ -4,7 +4,6 @@ organization's specification based on a template.
 
 import configparser
 import logging
-import os
 import re
 import shutil
 from pathlib import Path
@@ -12,6 +11,7 @@ from pathlib import Path
 import git
 import git.config
 import jinja2
+import pathspec
 import yaml
 
 import nf_core
@@ -26,6 +26,16 @@ from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig, custom_yam
 log = logging.getLogger(__name__)
 
 
+def _filter_ignored_files(outdir: Path, files: set[Path]) -> list[Path]:
+    """Drop files matched by the .gitignore or .prettierignore in outdir."""
+    lines: list[str] = []
+    for ignore_file in (outdir / ".gitignore", outdir / ".prettierignore"):
+        if ignore_file.exists():
+            lines += ignore_file.read_text().splitlines()
+    spec = pathspec.GitIgnoreSpec.from_lines(lines)
+    return [f for f in files if not spec.match_file(f.relative_to(outdir).as_posix())]
+
+
 class PipelineCreate:
     """Creates a nf-core pipeline a la carte from the nf-core best-practice template.
 
@@ -37,11 +47,11 @@ class PipelineCreate:
         no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False. Used for tests and sync command.
             May the force be with you.
-        outdir (str): Path to the local output directory.
+        outdir (Path): Path to the local output directory.
         template_config (str|CreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
-        default_branch (str): Specifies the --initial-branch name.
+        default_branch (str): Specifies the --initial-branch name. If not given, read from the Git configuration.
     """
 
     def __init__(
@@ -52,11 +62,11 @@ class PipelineCreate:
         version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
-        outdir: Path | str | None = None,
-        template_config: CreateConfig | str | Path | None = None,
+        outdir: Path | None = None,
+        template_config: CreateConfig | Path | None = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: str = "master",
+        default_branch: str | None = None,
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -64,14 +74,14 @@ class PipelineCreate:
         elif from_config_file:
             # Try reading config file
             try:
-                _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
+                _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path.cwd())
                 # Obtain a CreateConfig object from `.nf-core.yml` config file
                 if config_yml is not None and getattr(config_yml, "template", None) is not None:
                     self.config = CreateConfig(**config_yml["template"].model_dump(exclude_none=True))
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
                 # Update the output directory
-                self.config.outdir = outdir if outdir else Path().cwd()
+                self.config.outdir = outdir if outdir else Path.cwd()
             except (FileNotFoundError, UserWarning):
                 log.debug("The '.nf-core.yml' configuration file was not found.")
         elif (name and description and author) or (template_config and (isinstance(template_config, (str, Path)))):
@@ -86,18 +96,18 @@ class PipelineCreate:
 
         # Set fields used by the class methods
         self.no_git = no_git
-        self.default_branch = default_branch
+        self.default_branch = default_branch or self.get_default_branch()
+        if not self.no_git:
+            self._check_default_branch()
         self.is_interactive = is_interactive
+        # Files written by this run; only these get formatted, so sync leaves gitignored files alone
+        self.written_files: set[Path] = set()
 
         if self.config.outdir is None:
-            self.config.outdir = str(Path.cwd())
-
-        # Get the default branch name from the Git configuration if it was not parsed from nextflow.config previously
-        if self.default_branch == "master":
-            self.get_default_branch()
+            self.config.outdir = Path()
 
         self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
-            self.config.skip_features or [], str(self.config.outdir)
+            self.config.skip_features or [], self.config.outdir
         )
 
         # format strings in features yaml
@@ -124,7 +134,7 @@ class PipelineCreate:
         self.name = self.config.name
         self.force = self.config.force
 
-        if self.config.outdir == ".":
+        if self.config.outdir == Path():
             self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
         else:
             self.outdir = Path(self.config.outdir).absolute()
@@ -183,7 +193,7 @@ class PipelineCreate:
             organisation (str): Name of the GitHub organisation to create the pipeline.
             version (str): Version of the pipeline.
             force (bool): Overwrites a given workflow directory with the same name.
-            outdir (str): Path to the local output directory.
+            outdir (Path): Path to the local output directory.
         """
         if self.config.org is None:
             self.config.org = organisation
@@ -192,11 +202,11 @@ class PipelineCreate:
         if self.config.force is None:
             self.config.force = force if force else False
         if self.config.outdir is None:
-            self.config.outdir = outdir if outdir else "."
+            self.config.outdir = outdir or Path()
         if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
 
-    def obtain_jinja_params_dict(self, features_to_skip: list[str], pipeline_dir: str | Path) -> tuple[dict, list[str]]:
+    def obtain_jinja_params_dict(self, features_to_skip: list[str], pipeline_dir: Path) -> tuple[dict, list[str]]:
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -272,17 +282,16 @@ class PipelineCreate:
         # Make the new pipeline
         self.render_template()
 
-        # Init the git repository and make the first commit
-        if not self.no_git:
+        if self.config.skip_features is None or "rocrate" not in self.config.skip_features:
+            # Create the RO-Crate metadata file (needs network access, so it is not part of render_template)
+            rocrate_obj = ROCrate(self.outdir)
+            rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
+            self.written_files.add(self.outdir / "ro-crate-metadata.json")
+
+        if self.no_git:
+            self.format_written_files()
+        else:
             self.git_init_pipeline()
-            # Run prettier on files
-            if self.config.skip_features is None or not (
-                "code_linters" in self.config.skip_features or "github" in self.config.skip_features
-            ):
-                current_dir = Path.cwd()
-                os.chdir(self.outdir)
-                run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
-                os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
@@ -316,8 +325,8 @@ class PipelineCreate:
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
-        template_files = list(Path(template_dir).glob("**/*"))
-        template_files += list(Path(template_dir).glob("*"))
+        template_files = list(template_dir.glob("**/*"))
+        template_files += list(template_dir.glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.jinja_params["short_name"]
         rename_files: dict[str, str] = {
@@ -373,15 +382,11 @@ class PipelineCreate:
 
                 # Mirror file permissions
                 output_path.chmod(template_fn_path.stat().st_mode)
+                self.written_files.add(output_path)
 
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
-
-        if self.config.skip_features is None or "rocrate" not in self.config.skip_features:
-            # Create the RO-Crate metadata file
-            rocrate_obj = ROCrate(self.outdir)
-            rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
 
         # Update the .nf-core.yml with linting configurations
         self.fix_linting()
@@ -393,13 +398,18 @@ class PipelineCreate:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                self.written_files.add(Path(config_fn))
 
         # generate container configs
         try_generate_container_configs(self.outdir)
 
-        # Run prettier on files for pipelines sync
-        log.debug("Running prettier on pipeline files")
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+    def format_written_files(self) -> None:
+        """Run prettier on the files written by this run, unless the pipeline skips code linting."""
+        # Without code_linters the pipeline has no .prettierrc.yml, so prettier would apply its default style
+        if "code_linters" in (self.config.skip_features or []):
+            log.debug("Pipeline skips code linters, not running prettier")
+            return
+        run_prettier_on_file(*_filter_ignored_files(self.outdir, self.written_files))
 
     def fix_linting(self):
         """
@@ -454,38 +464,46 @@ class PipelineCreate:
                 force=bool(self.force),
             )
 
-    def get_default_branch(self) -> None:
-        """Gets the default branch name from the Git configuration."""
+    def get_default_branch(self) -> str:
+        """Gets the default branch name from the Git configuration, defaulting to master."""
+        default_branch = "master"
         try:
-            self.default_branch = (
-                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "master"
-            )  # default to master
-            log.debug(f"Default branch name: {self.default_branch}")
+            default_branch = str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or default_branch
+            log.debug(f"Default branch name: {default_branch}")
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
+        return default_branch
+
+    def _check_default_branch(self) -> None:
+        """Checks that the default branch does not clash with the 'dev' and 'TEMPLATE' branches created by nf-core.
+
+        Raises:
+            UserWarning: if the default branch is set to 'dev' or 'TEMPLATE'.
+        """
         if self.default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch '{self.default_branch}' is incompatible with nf-core.\n"
+                f"Default branch '{self.default_branch}' is incompatible with nf-core.\n"
                 "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
                 "Set the default branch name with "
                 "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                "Or set the default_branch parameter in this class.\n"
-                "Pipeline git repository will not be initialised."
+                "Or set the default_branch parameter in this class."
             )
 
     def git_init_pipeline(self) -> None:
         """Initialises the new pipeline as a Git repository and submits first commit.
 
         Raises:
-            UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
+            UserWarning: if the 'TEMPLATE' and 'dev' branches already exist and force is not set.
         """
 
         log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
+        # Format between init (prek needs a repo) and the first commit, so the new pipeline starts clean
+        with nf_core.utils.set_wd(self.outdir):
+            self.format_written_files()
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
-        if self.default_branch:
-            repo.active_branch.rename(self.default_branch)
+        repo.active_branch.rename(self.default_branch)
         try:
             repo.git.branch("TEMPLATE")
             repo.git.branch("dev")

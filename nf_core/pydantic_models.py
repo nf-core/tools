@@ -7,7 +7,7 @@ when the config file is actually parsed.
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 class NFCoreTemplateConfig(BaseModel):
@@ -25,20 +25,17 @@ class NFCoreTemplateConfig(BaseModel):
     """ Pipeline version """
     force: bool | None = True
     """ Force overwrite of existing files """
-    outdir: str | Path | None = None
+    outdir: Path | None = None
     """ Output directory """
     skip_features: list | None = None
     """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
     is_nfcore: bool | None = None
     """ Whether the pipeline is an nf-core pipeline. """
 
-    # convert outdir to str
-    @field_validator("outdir")
-    @classmethod
-    def outdir_to_str(cls, v: str | Path | None) -> str | None:
-        if v is not None:
-            v = str(v)
-        return v
+    @field_serializer("outdir")
+    def outdir_to_str(self, v: Path | None) -> str | None:
+        """Dump outdir as a plain string, so it can be written to `.nf-core.yml` with yaml.safe_dump."""
+        return str(v) if v is not None else None
 
     def __getitem__(self, item: str) -> Any:
         if self is None:

@@ -216,7 +216,12 @@ class SubworkflowLint(ComponentLint):
                 swf.git_sha = version
 
             for test_name in self.lint_tests:
-                getattr(self, test_name)(swf)
+                try:
+                    getattr(self, test_name)(swf)
+                except (LookupError, AttributeError) as e:
+                    swf.failed.append(
+                        (test_name, test_name, f"Lint test raised an unexpected error: {e}", swf.component_dir)
+                    )
 
             self.passed += [LintResult(swf, *s) for s in swf.passed]
             warned = [LintResult(swf, *s) for s in swf.warned]
@@ -277,4 +282,5 @@ class SubworkflowLint(ComponentLint):
         with open(swf.meta_yml, "w") as fh:
             log.info(f"Updating {swf.meta_yml}")
             yaml.dump(meta_yaml_corrected, fh)
-            run_prettier_on_file(fh.name)
+        # After the with-block, so prettier sees the flushed file
+        run_prettier_on_file(swf.meta_yml)

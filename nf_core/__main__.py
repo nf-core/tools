@@ -167,7 +167,8 @@ def interface(ctx):
 @nf_core_cli.group(aliases=["p", "pipeline"])
 @click.command_panel("For users", commands=["download", "create-params-file", "launch", "list"])
 @click.command_panel(
-    "For developers", commands=["bump-version", "create", "create-logo", "lint", "rocrate", "schema", "sync"]
+    "For developers",
+    commands=["bump-version", "containers", "create", "create-logo", "lint", "rocrate", "schema", "sync"],
 )
 @click.pass_context
 def pipelines(ctx):
@@ -209,13 +210,43 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
     pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
 
 
+# nf-core pipelines containers subcommands
+@pipelines.group("containers", aliases=["container", "con"])
+@click.pass_context
+def pipelines_containers(ctx):
+    """
+    Commands to manage pipeline containers.
+    """
+    ctx.ensure_object(dict)
+
+
+# nf-core pipelines containers create-configs
+@pipelines_containers.command("create-configs")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True, path_type=Path),
+    default=".",
+    help=r"Pipeline directory [dim]\[default: current working directory][/]",
+)
+@click.pass_context
+def command_pipelines_containers_create_configs(ctx, directory):
+    """
+    Regenerate the pipeline container config files.
+    """
+    from nf_core.commands_pipelines import pipelines_containers_create_configs
+
+    pipelines_containers_create_configs(ctx, directory)
+
+
 # nf-core pipelines lint
 @pipelines.command("lint", aliases=["l"])
 @click.option(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory [dim]\[default: current working directory][/]",
 )
@@ -467,13 +498,13 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
     "-o",
     "--params-out",
     type=click.Path(path_type=Path),
-    default=str(Path.cwd() / "nf-params.json"),
+    default="nf-params.json",
     help="Path to save run parameters file",
 )
 @click.option(
     "-p",
     "--params-in",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     help="Set of input run params to use from a previous run",
 )
 @click.option(
@@ -548,19 +579,19 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
 @pipelines.command("rocrate")
 @click.argument(
     "pipeline_dir",
-    type=click.Path(exists=True),
-    default=Path.cwd(),
+    type=click.Path(exists=True, path_type=Path),
+    default=".",
     required=True,
     metavar="<pipeline directory>",
 )
 @click.option(
     "-j",
     "--json_path",
-    default=Path.cwd(),
-    type=str,
+    default=".",
+    type=click.Path(path_type=Path),
     help="Path to save RO Crate metadata json file to",
 )
-@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option("-z", "--zip_path", type=click.Path(path_type=Path), help="Path to save RO Crate zip file to")
 @click.option(
     "-pv",
     "--pipeline_version",
@@ -571,9 +602,9 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
 @click.pass_context
 def rocrate(
     ctx,
-    pipeline_dir: str,
-    json_path: str,
-    zip_path: str,
+    pipeline_dir: Path,
+    json_path: Path,
+    zip_path: Path,
     pipeline_version: str,
 ):
     """
@@ -591,7 +622,7 @@ def rocrate(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -658,7 +689,7 @@ def command_pipelines_sync(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -681,7 +712,9 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
 # nf-core pipelines create-logo
 @pipelines.command("create-logo")
 @click.argument("logo-text", metavar="<logo_text>")
-@click.option("-d", "--dir", "directory", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option(
+    "-d", "--dir", "directory", type=click.Path(path_type=Path), default=".", help="Directory to save the logo in."
+)
 @click.option(
     "-n",
     "--name",
@@ -744,7 +777,7 @@ def pipeline_schema():
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -754,7 +787,7 @@ def pipeline_schema():
     metavar="<pipeline name>",
     shell_complete=autocomplete_pipelines,
 )
-@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
+@click.argument("params", type=click.Path(exists=True, path_type=Path), required=True, metavar="<JSON params file>")
 def command_pipelines_schema_validate(directory, pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
@@ -774,7 +807,7 @@ def command_pipelines_schema_validate(directory, pipeline, params):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -809,13 +842,13 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.argument(
     "schema_file",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
@@ -834,13 +867,13 @@ def command_pipelines_schema_lint(directory, schema_file):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.argument(
     "schema_file",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default="nextflow_schema.json",
     required=False,
     metavar="<pipeline schema>",
@@ -951,7 +984,7 @@ def command_modules_list_remote(ctx, keywords, json):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
@@ -979,7 +1012,7 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1022,7 +1055,7 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1117,7 +1150,7 @@ def command_modules_update(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1146,7 +1179,7 @@ def command_modules_patch(ctx, tool, directory, remove):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1170,7 +1203,9 @@ def command_modules_remove(ctx, directory, tool, force):
 @modules.command("create", aliases=["c"])
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option(
+    "-d", "--dir", "directory", type=click.Path(exists=True, path_type=Path), default=".", metavar="<directory>"
+)
 @click.option(
     "-a",
     "--author",
@@ -1282,7 +1317,7 @@ def command_modules_create(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
@@ -1333,7 +1368,7 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<pipeline/modules directory>",
 )
@@ -1416,7 +1451,7 @@ def command_modules_lint(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
@@ -1444,7 +1479,7 @@ def command_modules_info(ctx, tool, directory):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
@@ -1605,7 +1640,9 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 @subworkflows.command("create", aliases=["c"])
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option(
+    "-d", "--dir", "directory", type=click.Path(exists=True, path_type=Path), default=".", metavar="<directory>"
+)
 @click.option(
     "-a",
     "--author",
@@ -1644,7 +1681,7 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<nf-core/modules directory>",
 )
@@ -1711,7 +1748,7 @@ def command_subworkflows_list_remote(ctx, keywords, json):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
@@ -1739,7 +1776,7 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     metavar="<pipeline/modules directory>",
 )
@@ -1816,7 +1853,7 @@ def command_subworkflows_lint(
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
@@ -1844,7 +1881,7 @@ def command_subworkflows_info(ctx, subworkflow, directory):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1899,7 +1936,7 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1944,7 +1981,7 @@ def subworkflows_patch(ctx, subworkflow, directory, remove):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
@@ -1979,7 +2016,7 @@ def command_subworkflows_remove(ctx, directory, subworkflow, force):
     "-d",
     "--dir",
     "directory",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=Path),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )

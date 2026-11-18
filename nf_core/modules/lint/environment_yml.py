@@ -141,7 +141,15 @@ def lint_environment_yml(
         # Parse the YAML content
         env_yml = yaml.load(content)
         if env_yml is None:
-            raise ruamel.yaml.scanner.ScannerError("Empty YAML file")
+            module.failed.append(
+                (
+                    "environment_yml",
+                    "environment_yml_exists",
+                    "Module's `environment.yml` is empty",
+                    module.environment_yml,
+                )
+            )
+            return
 
         module.passed.append(
             (
@@ -152,8 +160,7 @@ def lint_environment_yml(
             )
         )
 
-        component_dir = Path(module.component_dir)
-        if (component_dir / "Dockerfile").exists() or (component_dir.parent / "Dockerfile").exists():
+        if (module.component_dir / "Dockerfile").exists() or (module.component_dir.parent / "Dockerfile").exists():
             module.failed.append(
                 (
                     "environment_yml",

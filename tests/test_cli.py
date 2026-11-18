@@ -121,7 +121,7 @@ class TestCli(unittest.TestCase):
             cmd[-1],
             params["revision"],
             "command-only" in params,
-            params["params-in"],
+            Path(params["params-in"]),
             params["params-out"],
             "save-all" in params,
             "show-hidden" in params,
@@ -287,7 +287,7 @@ class TestCli(unittest.TestCase):
 
             assert result.exit_code == 0
             mock_lint.assert_called_once_with(
-                params["dir"],
+                Path(params["dir"]),
                 "release" in params,
                 (params["fix"],),
                 (params["key"],),

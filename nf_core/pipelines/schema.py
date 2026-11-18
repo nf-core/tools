@@ -575,7 +575,9 @@ class PipelineSchema:
 
         with tempfile.NamedTemporaryFile(mode="w+") as fh:
             fh.write(output)
-            run_prettier_on_file(fh.name)
+            # Flush first, otherwise prettier formats an empty file
+            fh.flush()
+            run_prettier_on_file(Path(fh.name))
             fh.seek(0)
             prettified_docs = fh.read()
 

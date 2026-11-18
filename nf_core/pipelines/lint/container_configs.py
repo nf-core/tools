@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-import git
-
 from nf_core.pipelines.containers_utils import ContainerConfigs
 
 log = logging.getLogger(__name__)
@@ -13,8 +11,8 @@ def container_configs(self):
 
     Scans all ``meta.yml`` files under ``modules/`` that contain a ``containers``
     key, reads the process name from the sibling ``main.nf``, and regenerates
-    the container configuration files in ``conf/``.  Uses ``git diff`` to detect
-    changes.  If not in ``--fix`` mode the working tree is restored to its
+    the container configuration files in ``conf/``.  Uses direct content comparison
+    to detect changes.  If not in ``--fix`` mode the working tree is restored to its
     original state afterwards.
 
     Can be skipped by adding the following to the ``.nf-core.yml`` file:
@@ -31,56 +29,51 @@ def container_configs(self):
     could_fix = False
 
     conf_dir = Path(self.wf_path) / "conf"
-    repo = git.Repo(self.wf_path)
 
+    def read_container_configs() -> dict[str, bytes]:
+        return {path.name: path.read_bytes() for path in conf_dir.glob("containers_*")}
+
+    before = read_container_configs()
     try:
         generated = ContainerConfigs(self.wf_path).generate_container_configs()
     except UserWarning as e:
         warned.append(f"Could not generate container configuration files: {e}")
         return {"passed": passed, "failed": failed, "warned": warned}
+    after = read_container_configs()
 
-    log.debug(f"Generated {len(generated)} container config file(s): {', '.join(sorted(generated)) or 'none'}")
+    new = after.keys() - before.keys()
+    removed = before.keys() - after.keys()
+    modified = {name for name in before.keys() & after.keys() if before[name] != after[name]}
+    correct = generated - new - modified
 
-    # Files modified in the working tree (tracked and changed by generation)
-    modified = {
-        Path(d.a_path).name
-        for d in repo.index.diff(None)
-        if d.a_path and Path(d.a_path).parent.name == "conf" and Path(d.a_path).name.startswith("containers_")
-    }
-    # Newly created files (generated but not previously tracked)
-    new = {
-        Path(f).name
-        for f in repo.untracked_files
-        if Path(f).parent.name == "conf" and Path(f).name.startswith("containers_")
-    }
-    # Already-correct files: generated, tracked, and unchanged
-    correct = generated - modified - new
-
-    log.debug(f"Container config status — correct: {len(correct)}, modified: {len(modified)}, new: {len(new)}")
+    log.debug(
+        f"Container config status — correct: {len(correct)}, modified: {len(modified)}, "
+        f"new: {len(new)}, removed: {len(removed)}"
+    )
 
     fixing = "container_configs" in self.fix
 
     for name in sorted(correct):
         passed.append(f"`conf/{name}` is up to date")
 
-    for name in sorted(modified | new):
+    for name in sorted(new | modified | removed):
         if fixing:
-            log.debug(f"Overwriting `conf/{name}` with regenerated container configuration")
-            passed.append(f"`conf/{name}` is up to date")
-            fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
-        else:
-            if name in new:
-                failed.append(f"`conf/{name}` is missing – please regenerate the container configuration files.")
+            if name in removed:
+                passed.append(f"`conf/{name}` is up to date")
+                fixed.append(f"`conf/{name}` removed, as no module provides containers for it anymore.")
             else:
-                failed.append(f"`conf/{name}` is out of date – please regenerate the container configuration files.")
-            could_fix = True
+                passed.append(f"`conf/{name}` is up to date")
+                fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
+        else:
+            reason = "missing" if name in new else "obsolete" if name in removed else "out of date"
+            failed.append(f"`conf/{name}` is {reason} – please regenerate the container configuration files.")
 
     if not fixing:
-        # Restore working tree: reset modified tracked files and delete new untracked ones
-        log.debug(f"Restoring working tree: resetting {len(modified)} modified, removing {len(new)} new file(s)")
-        for name in modified:
-            repo.git.restore(str(conf_dir / name))
+        could_fix = bool(new | modified | removed)
+        # Restore working tree to its pre-generation state
+        for name in modified | removed:
+            (conf_dir / name).write_bytes(before[name])
         for name in new:
-            (conf_dir / name).unlink(missing_ok=True)
+            (conf_dir / name).unlink()
 
     return {"passed": passed, "failed": failed, "warned": warned, "fixed": fixed, "could_fix": could_fix}

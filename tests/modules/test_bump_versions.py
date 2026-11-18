@@ -1,3 +1,4 @@
+import json
 import re
 import tempfile
 from pathlib import Path
@@ -247,44 +248,55 @@ class TestModulesBumpVersions(TestModules):
         mock_build.assert_not_called()
         assert any("up to date" in msg for msg, _ in version_bumper.up_to_date)
 
+    @staticmethod
+    def _make_version_bumper_and_module(
+        mod_dir: Path,
+        snap_path: Path | None = None,
+        env_text: str = "dependencies:\n  - bioconda::htslib=1.21\n  - bioconda::samtools=1.21\n",
+    ):
+        """ModuleVersionBumper (bypassing __init__) and a samtools/cat module with the given environment.yml text."""
+        env_yml = mod_dir / "environment.yml"
+        env_yml.write_text(env_text)
+        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper.__new__(
+            nf_core.modules.bump_versions.ModuleVersionBumper
+        )
+        version_bumper.failed = []
+        version_bumper.ignored = []
+        version_bumper.updated = []
+        version_bumper.up_to_date = []
+        version_bumper.directory = mod_dir
+        version_bumper.tools_config = NFCoreYamlConfig()
+        module = SimpleNamespace(
+            component_name="samtools/cat",
+            component_dir=mod_dir,
+            environment_yml=env_yml,
+            meta_yml=None,
+            main_nf_test_snap=snap_path,
+        )
+        return version_bumper, module
+
     @mock.patch("nf_core.utils.anaconda_package")
     def test_modules_bump_versions_multi_package(self, mock_anaconda):
         """Multi-package ('mulled') modules are now bumped, not skipped, and YAML comments survive."""
         mock_anaconda.return_value = {"versions": ["1.21", "1.23.1"], "latest_version": "1.23.1"}
 
         mod_dir = Path(tempfile.mkdtemp())
-        env_yml = mod_dir / "environment.yml"
-        env_yml.write_text(
-            "channels:\n"
+        version_bumper, module = self._make_version_bumper_and_module(
+            mod_dir,
+            env_text="channels:\n"
             "  - conda-forge\n"
             "  - bioconda\n"
             "dependencies:\n"
             "  # renovate: datasource=conda depName=bioconda/htslib\n"
             "  - bioconda::htslib=1.21\n"
             "  # renovate: datasource=conda depName=bioconda/samtools\n"
-            "  - bioconda::samtools=1.21\n"
+            "  - bioconda::samtools=1.21\n",
         )
+        env_yml = module.environment_yml
 
-        # Bypass __init__ - bump_module_version only needs the result lists, tools_config and directory
-        bumper = nf_core.modules.bump_versions.ModuleVersionBumper.__new__(
-            nf_core.modules.bump_versions.ModuleVersionBumper
-        )
-        bumper.failed = []
-        bumper.ignored = []
-        bumper.updated = []
-        bumper.up_to_date = []
-        bumper.directory = mod_dir
-        bumper.tools_config = SimpleNamespace()
-        module = SimpleNamespace(
-            component_name="samtools/cat",
-            component_dir=mod_dir,
-            environment_yml=env_yml,
-            meta_yml=None,
-        )
-
-        assert bumper.bump_module_version(module) is True
-        assert bumper.failed == []
-        assert len(bumper.updated) == 2
+        assert version_bumper.bump_module_version(module) is True
+        assert version_bumper.failed == []
+        assert len(version_bumper.updated) == 2
 
         new_content = env_yml.read_text()
         # Both bioconda packages were bumped...
@@ -293,6 +305,64 @@ class TestModulesBumpVersions(TestModules):
         # ...and the renovate comments were preserved (no yaml round-trip)
         assert "# renovate: datasource=conda depName=bioconda/htslib" in new_content
         assert "# renovate: datasource=conda depName=bioconda/samtools" in new_content
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    def test_modules_bump_versions_snapshot(self, mock_anaconda):
+        """Bumped tool versions are also updated in main.nf.test.snap, and nothing else is."""
+        mock_anaconda.return_value = {"versions": ["1.21", "1.23.1"], "latest_version": "1.23.1"}
+
+        mod_dir = Path(tempfile.mkdtemp())
+        snap_path = mod_dir / "tests" / "main.nf.test.snap"
+        snap_path.parent.mkdir()
+        # Versions as emitted by nf-test: [process, tool, version] triples, one value per line
+        snap_path.write_text(
+            json.dumps(
+                {
+                    "bam": {
+                        "content": [
+                            {
+                                "versions_samtools": [["SAMTOOLS_CAT", "samtools", "1.21"]],
+                                "versions_htslib": [["SAMTOOLS_CAT", "htslib", "1.21"]],
+                                # Not in environment.yml -> must stay at 1.21 despite the same version
+                                "versions_bcftools": [["SAMTOOLS_CAT", "bcftools", "1.21"]],
+                                # Same version string, but not preceded by a tool name
+                                "bam": ["test.bam:md5,1.21"],
+                            }
+                        ],
+                        "meta": {"nf-test": "0.9.2", "nextflow": "25.04.0"},
+                    }
+                },
+                indent=4,
+            )
+        )
+        version_bumper, module = self._make_version_bumper_and_module(mod_dir, snap_path)
+
+        assert version_bumper.bump_module_version(module) is True
+        assert version_bumper.failed == []
+
+        snap_text = snap_path.read_text()
+        # The one-value-per-line layout is kept, so the snapshot diff only touches the version line
+        assert re.search(r'"samtools",\n\s+"1\.23\.1"', snap_text)
+        content = json.loads(snap_text)["bam"]["content"][0]
+        assert content["versions_samtools"] == [["SAMTOOLS_CAT", "samtools", "1.23.1"]]
+        assert content["versions_htslib"] == [["SAMTOOLS_CAT", "htslib", "1.23.1"]]
+        assert content["versions_bcftools"] == [["SAMTOOLS_CAT", "bcftools", "1.21"]]
+        assert content["bam"] == ["test.bam:md5,1.21"]
+
+    @mock.patch("nf_core.utils.anaconda_package")
+    def test_modules_bump_versions_no_snapshot(self, mock_anaconda):
+        """A module without main.nf.test.snap is still bumped, and no snapshot is created."""
+        mock_anaconda.return_value = {"versions": ["1.21", "1.23.1"], "latest_version": "1.23.1"}
+
+        mod_dir = Path(tempfile.mkdtemp())
+        # Path set but file missing (as for a module without tests yet)
+        snap_path = mod_dir / "tests" / "main.nf.test.snap"
+        version_bumper, module = self._make_version_bumper_and_module(mod_dir, snap_path)
+
+        assert version_bumper.bump_module_version(module) is True
+        assert version_bumper.failed == []
+        assert "bioconda::samtools=1.23.1" in module.environment_yml.read_text()
+        assert not snap_path.exists()
 
     def test_modules_bump_versions_fail(self):
         """Fail updating a module with wrong name"""
