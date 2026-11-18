@@ -247,7 +247,6 @@ class ParamsFileBuilder:
             log.error("No schema object found")
             return ""
 
-        schema = self.schema_obj.schema
         pipeline_name = self.schema_obj.pipeline_manifest.get("name", self.pipeline)
         pipeline_version = self.schema_obj.pipeline_manifest.get("version", "0.0.0")
 
@@ -260,20 +259,8 @@ class ParamsFileBuilder:
         out += _print_wrapped(USAGE, "-", mode="end", indent=4)
         out += "\n"
 
-        groups = list(schema.get(self.schema_obj.defs_notation, {}).values())
-
-        # Add ungrouped parameters to parameter groups
-        if schema.get("properties"):
-            groups.append(
-                {
-                    "title": "Other parameters",
-                    "properties": schema["properties"],
-                    "required": schema.get("required", []),
-                }
-            )
-
-        # Add all parameter groups
-        for definition in groups:
+        # Add all parameter groups, including ungrouped parameters
+        for definition in self.schema_obj.get_param_groups():
             out += self.format_group(definition, show_hidden=show_hidden)
             out += "\n"
 
