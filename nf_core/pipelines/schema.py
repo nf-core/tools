@@ -918,7 +918,7 @@ class PipelineSchema:
                 s_key
                 and (p_key not in self.schema_defaults)
                 and (p_key not in self.ignored_params)
-                and (p_def := self.build_schema_param(p_val).get("default"))
+                and (p_def := self.build_schema_param(p_val).get("default")) is not None
             ) and (
                 self.no_prompts
                 or Confirm.ask(
