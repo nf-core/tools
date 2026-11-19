@@ -166,7 +166,18 @@ def modules_remove(ctx, directory, tool, force):
 
 
 def modules_create(
-    ctx, tool, directory, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+    ctx,
+    tool,
+    directory,
+    author,
+    label,
+    meta,
+    no_meta,
+    force,
+    conda_name,
+    conda_package_version,
+    empty_template,
+    with_records=False,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -200,6 +211,7 @@ def modules_create(
             conda_name,
             conda_package_version,
             empty_template,
+            with_records,
         )
         module_create.create()
     except UserWarning as e:

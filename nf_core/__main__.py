@@ -1262,6 +1262,12 @@ def command_modules_remove(ctx, directory, tool, force):
     default=False,
     help="Create a module from the template without TODOs or examples",
 )
+@click.option(
+    "--with-records",
+    is_flag=True,
+    default=False,
+    help="Create a statically typed module that uses record types for its input and output",
+)
 def command_modules_create(
     ctx,
     tool,
@@ -1274,6 +1280,7 @@ def command_modules_create(
     conda_name,
     conda_package_version,
     empty_template,
+    with_records,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -1292,6 +1299,7 @@ def command_modules_create(
         conda_name,
         conda_package_version,
         empty_template,
+        with_records,
     )
 
 
