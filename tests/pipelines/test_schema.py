@@ -423,6 +423,28 @@ class TestSchema(unittest.TestCase):
         assert len(params_added) == 1
         assert "foo" in params_added
 
+    def test_add_schema_found_configs_zero_default(self):
+        """Add numeric zero defaults from the config to existing schema params"""
+        for p_type, p_val in [("integer", 0), ("number", 0.0)]:
+            with self.subTest(p_val=p_val):
+                self.schema_obj.schema = {"properties": {"foo": {"type": p_type}}}
+                self.schema_obj.pipeline_params = {"foo": p_val}
+                self.schema_obj.no_prompts = True
+                self.schema_obj.get_schema_defaults()
+                self.schema_obj.add_schema_found_configs()
+                assert self.schema_obj.schema["properties"]["foo"] == {"type": p_type, "default": p_val}
+
+    def test_add_schema_found_configs_no_empty_default(self):
+        """Do not add false, null or empty-string defaults to existing schema params"""
+        for p_val in [False, None, ""]:
+            with self.subTest(p_val=p_val):
+                self.schema_obj.schema = {"properties": {"foo": {"type": "string"}}}
+                self.schema_obj.pipeline_params = {"foo": p_val}
+                self.schema_obj.no_prompts = True
+                self.schema_obj.get_schema_defaults()
+                self.schema_obj.add_schema_found_configs()
+                assert "default" not in self.schema_obj.schema["properties"]["foo"]
+
     def test_build_schema_param_str(self):
         """Build a new schema param from a config value (string)"""
         param = self.schema_obj.build_schema_param("foo")

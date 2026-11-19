@@ -4,6 +4,7 @@
 
 ### General
 
+- Preserve zero config defaults when adding defaults to existing schema parameters. ([#4620](https://github.com/nf-core/tools/pull/4620))
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
 - avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
@@ -20,6 +21,7 @@
 - Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
 - make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
 - Fix lint and update crash when a module patch removes `---` ([#4617](https://github.com/nf-core/tools/pull/4617))
+- Make conda-lock path always relative to repo root in `meta.yml` ([#4612](https://github.com/nf-core/tools/pull/4612))
 
 ### Template
 
@@ -29,6 +31,7 @@
 - Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
 - remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
 - cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
+- skip `latest-everything` nf-test runs on PRs to `main`/`master` ([#4393](https://github.com/nf-core/tools/pull/4393))
 
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 

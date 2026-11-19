@@ -479,7 +479,9 @@ class ModuleContainers:
                         self._conda_lock_paths[build_id] = conda_lock_path
                 # Only register the entry once the lock has actually been written, so
                 # meta.yml never points at a missing lock file.
-                containers.conda[platform] = CondaEntry(lock_file=str(conda_lock_path))
+                containers.conda[platform] = CondaEntry(
+                    lock_file=conda_lock_path.resolve().relative_to(self.directory.resolve()).as_posix()
+                )
                 new_lock_files.add(conda_lock_path)
                 set_status(task_id, f"conda lock {short_platform} done")
 
