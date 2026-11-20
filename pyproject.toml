@@ -82,6 +82,7 @@ dev = [
     "pytest-textual-snapshot==1.1.0",
     "pytest-xdist>=3.7.0",
     "pytest>=8.0.0",
+    "pytest-split>=0.11.0",
 ]
 
 [project.urls]
