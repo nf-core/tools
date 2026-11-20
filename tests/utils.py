@@ -2,14 +2,17 @@
 Helper functions for tests
 """
 
+import atexit
 import filecmp
 import functools
 import json
+import shutil
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import git
 import requests
 import responses
 import yaml
@@ -156,14 +159,13 @@ def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
     rsps.get(biotools_api_url, json=biotools_mock, status=200)
 
 
-def create_tmp_pipeline(no_git: bool = False) -> tuple[Path, Path, str, Path]:
-    """Create a new Pipeline for testing"""
-
-    tmp_dir = Path(tempfile.TemporaryDirectory().name)
-    root_repo_dir = Path(__file__).resolve().parent.parent
-    template_dir = root_repo_dir / "nf_core" / "pipeline-template"
+@functools.cache
+def _build_template_pipeline(no_git: bool) -> Path:
+    """Build the test pipeline once per test process; ``create_tmp_pipeline`` hands out copies of it."""
+    build_dir = Path(tempfile.mkdtemp(prefix="nfcore_test_pipeline_"))
+    atexit.register(shutil.rmtree, build_dir, ignore_errors=True)
     pipeline_name = "testpipeline"
-    pipeline_dir = tmp_dir / pipeline_name
+    pipeline_dir = build_dir / pipeline_name
     pipeline_dir.mkdir(parents=True)
 
     nf_core_yml = NFCoreYamlConfig(
@@ -190,6 +192,50 @@ def create_tmp_pipeline(no_git: bool = False) -> tuple[Path, Path, str, Path]:
     nf_core.pipelines.create.create.PipelineCreate(
         pipeline_name, "it is mine", "me", no_git=no_git, outdir=pipeline_dir, force=True
     ).init_pipeline()
+    return pipeline_dir
+
+
+def _relocate_pipeline_copy(source_dir: Path, pipeline_dir: Path) -> None:
+    """
+    Point a copied test pipeline at its new location. The template build records its absolute
+    ``outdir`` in ``.nf-core.yml``, which is also part of the initial commit of every branch.
+    """
+    nf_core_yml = pipeline_dir / ".nf-core.yml"
+    nf_core_yml.write_text(nf_core_yml.read_text().replace(str(source_dir), str(pipeline_dir)))
+    if not (pipeline_dir / ".git").exists():
+        return
+    repo = git.Repo(pipeline_dir)
+    old_commit = repo.head.commit
+    repo.index.add([".nf-core.yml"])
+    new_commit = repo.index.commit(
+        str(old_commit.message),
+        parent_commits=old_commit.parents,
+        head=False,
+        author=old_commit.author,
+        committer=old_commit.committer,
+        author_date=old_commit.authored_datetime,
+        commit_date=old_commit.committed_datetime,
+    )
+    for branch in repo.branches:
+        if branch.commit == old_commit:
+            branch.commit = new_commit
+    repo.close()
+
+
+def create_tmp_pipeline(no_git: bool = False) -> tuple[Path, Path, str, Path]:
+    """Create a new Pipeline for testing"""
+
+    tmp_dir = Path(tempfile.TemporaryDirectory().name)
+    root_repo_dir = Path(__file__).resolve().parent.parent
+    template_dir = root_repo_dir / "nf_core" / "pipeline-template"
+    pipeline_name = "testpipeline"
+    pipeline_dir = tmp_dir / pipeline_name
+
+    # Building the pipeline from the template takes several seconds, so copy a build made earlier in this process
+    source_dir = _build_template_pipeline(no_git)
+    tmp_dir.mkdir(parents=True)
+    shutil.copytree(source_dir, pipeline_dir, symlinks=True)
+    _relocate_pipeline_copy(source_dir, pipeline_dir)
 
     # return values to instance variables for later use in test methods
     return tmp_dir, template_dir, pipeline_name, pipeline_dir
