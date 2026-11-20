@@ -8,7 +8,6 @@ from typing import Literal
 
 import questionary
 
-import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.schema import PipelineSchema
 
@@ -95,14 +94,10 @@ class ParamsFileBuilder:
         """
         self.pipeline = pipeline
         self.pipeline_revision = revision
-        self.schema_obj: PipelineSchema | None = None
+        self.schema_obj = PipelineSchema()
         self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
-        # Fetch remote workflows
-        self.wfs = nf_core.pipelines.list.Workflows()
-        self.wfs.get_remote_workflows()
-
-    def get_pipeline(self) -> bool | None:
+    def get_pipeline(self) -> bool:
         """
         Prompt the user for a pipeline name and get the schema
         """
@@ -122,7 +117,7 @@ class ParamsFileBuilder:
 
             if launch_type == "Remote pipeline":
                 try:
-                    self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
+                    self.pipeline = nf_core.utils.prompt_remote_pipeline_name()
                 except AssertionError as e:
                     log.error(e.args[0])
                     return False
@@ -132,9 +127,6 @@ class ParamsFileBuilder:
                 ).unsafe_ask()
 
         # Get the schema
-        self.schema_obj = PipelineSchema()
-        if self.schema_obj is None:
-            return False
         self.schema_obj.get_schema_path(self.pipeline, local_only=False, revision=self.pipeline_revision)
         self.schema_obj.get_wf_params()
         return True
@@ -154,18 +146,15 @@ class ParamsFileBuilder:
         description = definition.get("description", "")
         properties = definition.get("properties")
 
-        hidden_props = set()
-        for param_key, param_props in properties.items():
-            if param_props.get("hidden", False):
-                hidden_props.add(param_key)
+        n_hidden = sum(1 for param_props in properties.values() if param_props.get("hidden", False))
 
         out += _print_wrapped(title, "=", mode="both")
         if description:
             out += _print_wrapped(description, mode="none")
 
         out += "\n"
-        if len(hidden_props) > 0:
-            out += _print_wrapped(f"({len(hidden_props)} hidden parameters are not shown)", mode="none")
+        if n_hidden > 0:
+            out += _print_wrapped(f"({n_hidden} hidden parameters are not shown)", mode="none")
             out += "\n\n"
 
         required_props = definition.get("required", [])
@@ -203,10 +192,6 @@ class ParamsFileBuilder:
             return None
 
         description = properties.get("description", "")
-        if self.schema_obj is None:
-            log.error("No schema object found")
-            return ""
-        self.schema_obj.get_schema_defaults()
         default = properties.get("default")
         param_type = properties.get("type")
         required = name in required_properties
@@ -238,10 +223,8 @@ class ParamsFileBuilder:
         Returns:
             str: Formatted output for the pipeline schema
         """
-        if self.schema_obj is None:
-            log.error("No schema object found")
-            return ""
-
+        # Sanitise the schema defaults in place before printing them
+        self.schema_obj.get_schema_defaults()
         schema = self.schema_obj.schema
         pipeline_name = self.schema_obj.pipeline_manifest.get("name", self.pipeline)
         pipeline_version = self.schema_obj.pipeline_manifest.get("version", "0.0.0")
@@ -275,9 +258,7 @@ class ParamsFileBuilder:
             bool: True if the template was written successfully, False otherwise
         """
 
-        self.get_pipeline()
-        if self.schema_obj is None:
-            log.error("No schema object found")
+        if not self.get_pipeline():
             return False
         try:
             self.schema_obj.load_schema()
