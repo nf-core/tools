@@ -1,7 +1,6 @@
 import filecmp
 import logging
 import os
-import shutil
 from collections.abc import Iterable
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
@@ -65,6 +64,8 @@ class SyncedRepo:
 
     local_repo_statuses: dict[str, bool] = {}
     no_pull_global = False
+    # Component listings per commit never change, so they are cached for the whole session
+    _component_listing_cache: dict[tuple[str, str, str, str], list[str]] = {}
 
     @staticmethod
     def local_repo_synced(repo_name):
@@ -229,6 +230,21 @@ class SyncedRepo:
         """
         self.checkout(self.branch)
 
+    def _is_checked_out(self, commit: str) -> bool:
+        """
+        Whether the working tree is already at ``commit`` (a branch name or a full git SHA),
+        in which case a ``git checkout`` would be a no-op.
+        """
+        if self.repo is None:
+            return False
+        try:
+            head = self.repo.head
+            if head.is_detached:
+                return head.commit.hexsha == commit
+            return head.ref.name == commit
+        except (ValueError, TypeError, GitCommandError):
+            return False
+
     def checkout(self, commit):
         """
         Checks out the repository at the requested commit (or branch)
@@ -236,6 +252,10 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit, or a branch name
         """
+        # `git checkout` stats the whole working tree even when nothing changes,
+        # which adds up for large repositories such as nf-core/modules.
+        if self._is_checked_out(commit):
+            return
         try:
             self.repo.git.checkout(commit)
         except GitCommandError as e:
@@ -288,26 +308,107 @@ class SyncedRepo:
         Returns:
             (bool): Whether the operation was successful or not
         """
-        # Check out the repository at the requested ref
+        # Resolve the requested ref. Files are read straight from the git object store, so the
+        # working tree of the cached repository never has to be switched to an old commit.
         try:
-            self.checkout(commit)
+            sha = self._resolve_commit(commit)
         except git.GitCommandError as e:
             log.error(f"Could not check out '{commit}' in the modules cache '{self.local_repo_dir}':\n{e}")
             return False
 
         # Check if the module/subworkflow exists in the branch
-        if not self.component_exists(component_name, component_type, checkout=False):
+        if component_name not in self._list_components_at(component_type, sha):
             log.error(
                 f"The requested {component_type[:-1]} does not exists in the branch '{self.branch}' of {self.remote_url}'"
             )
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_component_dir(component_name, component_type), Path(install_dir, component_name))
+        self._export_component_at(component_name, component_type, sha, Path(install_dir, component_name))
 
-        # Switch back to the tip of the branch
+        # Make sure the working tree is on the tip of the branch, as callers may read from it
         self.checkout_branch()
         return True
+
+    def _component_tree_path(self, component_type: str, component_name: str | None = None) -> str:
+        """Path of the modules/subworkflows directory (or of one component) inside the repository."""
+        if component_type not in ("modules", "subworkflows"):
+            raise ValueError(f"Invalid component type: {component_type}")
+        tree_path = f"{component_type}/{self.repo_path}"
+        if component_name is not None:
+            tree_path = f"{tree_path}/{component_name}"
+        return tree_path
+
+    def _resolve_commit(self, commit: str) -> str:
+        """
+        Resolve a branch name or (short) SHA to a full commit SHA.
+
+        Raises:
+            GitCommandError: if the ref does not exist in the repository
+        """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
+        return self.repo.git.rev_parse("--verify", f"{commit}^{{commit}}")
+
+    def _list_components_at(self, component_type: str, sha: str) -> list[str]:
+        """
+        List the modules/subworkflows present at commit ``sha`` without checking it out.
+        Like :meth:`get_avail_components`, a component is any directory containing a ``main.nf`` file.
+        """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
+        tree_path = self._component_tree_path(component_type)
+        cache_key = (str(self.local_repo_dir), sha, component_type, tree_path)
+        if cache_key not in SyncedRepo._component_listing_cache:
+            files = self.repo.git.ls_tree("-r", "--name-only", "-z", sha, "--", f"{tree_path}/").split("\0")
+            SyncedRepo._component_listing_cache[cache_key] = [
+                str(Path(file).parent.relative_to(tree_path)) for file in files if Path(file).name == "main.nf"
+            ]
+        return list(SyncedRepo._component_listing_cache[cache_key])
+
+    def _read_file_at(self, sha: str, path: str) -> bytes | None:
+        """Contents of the file at ``path`` in commit ``sha``, or None if it does not exist there."""
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
+        try:
+            blob = self.repo.commit(sha).tree / path
+        except KeyError:
+            return None
+        if blob.type != "blob":
+            return None
+        return blob.data_stream.read()
+
+    def _export_component_at(self, component_name: str, component_type: str, sha: str, dest: Path) -> None:
+        """
+        Write the files of a module/subworkflow at commit ``sha`` to ``dest``, without touching
+        the working tree of the cached repository. Like ``shutil.copytree``, fails if ``dest`` exists.
+        """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
+        tree_path = self._component_tree_path(component_type, component_name)
+        tree = self.repo.commit(sha).tree / tree_path
+        dest.mkdir(parents=True, exist_ok=False)
+        for item in tree.traverse():
+            target = dest / Path(item.path).relative_to(tree_path)
+            if item.type == "tree":
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            if item.type != "blob":
+                # Submodules are not checked out by a plain `git checkout` either
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            data = item.data_stream.read()
+            if item.mode == item.link_mode:
+                # Follow symlinks like `shutil.copytree` does, as long as they point to a file in the repository
+                link_target = os.path.normpath(Path(item.path).parent / data.decode())
+                linked = self._read_file_at(sha, link_target)
+                if linked is None:
+                    target.symlink_to(data.decode())
+                    continue
+                data = linked
+            target.write_bytes(data)
+            if item.mode & 0o111:
+                target.chmod(0o755)
 
     def component_files_identical(self, component_name, base_path, commit, component_type):
         """
@@ -319,19 +420,30 @@ class SyncedRepo:
         Returns:
             (bool): Whether the pipeline files are identical to the repo files
         """
-        if commit is None:
-            self.checkout_branch()
-        else:
-            self.checkout(commit)
         component_files = ["main.nf", "meta.yml"]
         files_identical = dict.fromkeys(component_files, True)
         component_dir = self.get_component_dir(component_name, component_type)
+        if commit is None:
+            self.checkout_branch()
+            for file in component_files:
+                try:
+                    files_identical[file] = filecmp.cmp(Path(component_dir, file), Path(base_path, file))
+                except FileNotFoundError:
+                    log.debug(f"Could not open file: {Path(component_dir, file)}")
+                    continue
+            return files_identical
+
+        # Compare against the files at the requested commit, read from the git object store
+        sha = self._resolve_commit(commit)
         for file in component_files:
-            try:
-                files_identical[file] = filecmp.cmp(Path(component_dir, file), Path(base_path, file))
-            except FileNotFoundError:
+            repo_contents = self._read_file_at(
+                sha, f"{self._component_tree_path(component_type, component_name)}/{file}"
+            )
+            local_file = Path(base_path, file)
+            if repo_contents is None or not local_file.is_file():
                 log.debug(f"Could not open file: {Path(component_dir, file)}")
                 continue
+            files_identical[file] = repo_contents == local_file.read_bytes()
         self.checkout_branch()
         return files_identical
 
@@ -409,10 +521,23 @@ class SyncedRepo:
         """
         Verifies that a given commit sha exists on the branch
         """
+        return self._commit_on_branch(sha) is not None
+
+    def _commit_on_branch(self, sha: str) -> git.Commit | None:
+        """
+        Return the commit with the full SHA ``sha`` if it is reachable from the tip of the branch.
+        Only full SHAs match, as when comparing against every commit SHA on the branch.
+        """
         if self.repo is None:
             raise ValueError("Repository not initialized")
         self.checkout_branch()
-        return sha in (commit.hexsha for commit in self.repo.iter_commits())
+        try:
+            commit = self.repo.commit(self._resolve_commit(sha))
+        except (GitCommandError, ValueError):
+            return None
+        if commit.hexsha != sha or not self.repo.is_ancestor(commit, self.repo.head.commit):
+            return None
+        return commit
 
     def get_commit_info(self, sha):
         """
@@ -425,16 +550,12 @@ class SyncedRepo:
         Raises:
             LookupError: If the search for the commit fails
         """
-        if self.repo is None:
-            raise ValueError("Repository not initialized")
-        self.checkout_branch()
-        for commit in self.repo.iter_commits():
-            if commit.hexsha == sha:
-                message = commit.message.splitlines()[0]
-                date_obj = commit.committed_datetime
-                date = str(date_obj.date())
-                return message, date
-        raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
+        commit = self._commit_on_branch(sha)
+        if commit is None:
+            raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
+        message = str(commit.message).splitlines()[0]
+        date = str(commit.committed_datetime.date())
+        return message, date
 
     def get_avail_components(self, component_type: str, checkout: bool = True, commit: str | None = None) -> list[str]:
         """
@@ -444,10 +565,11 @@ class SyncedRepo:
         Returns:
             ([ str ]): The module/subworkflow names
         """
+        if commit is not None:
+            # Read the listing from the git object store instead of checking out the commit
+            return self._list_components_at(component_type, self._resolve_commit(commit))
         if checkout:
             self.checkout_branch()
-        if commit is not None:
-            self.checkout(commit)
         # Get directory
         if component_type == "modules":
             directory = self.modules_dir
