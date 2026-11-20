@@ -327,7 +327,7 @@ class ComponentsDiffer:
         key = "preamble"
         while i < len(lines):
             line = lines[i]
-            if line.startswith("---"):
+            if line.startswith("--- "):
                 # New file found: add the old lines to the dictionary
                 # and determine the new filename
                 patches[key] = patch_lines
