@@ -137,6 +137,9 @@ NFCORE_DIR = Path(
 
 CONTAINER_SYSTEMS = ["docker", "singularity"]
 CONTAINER_PLATFORMS = ["linux/amd64", "linux/arm64"]
+# Pipeline template profile suffix per architecture, e.g. `docker` (amd64) and `docker_arm` (arm64)
+CONTAINER_ARCH_PROFILE_SUFFIX = {"amd64": "", "arm64": "_arm"}
+DEFAULT_CONTAINER_ARCH = "amd64"
 # Platforms a module must provide containers for. Others (e.g. linux/arm64) are
 # supported and validated when present, but not required.
 REQUIRED_CONTAINER_PLATFORMS = ["linux/amd64"]
