@@ -93,7 +93,7 @@ class ComponentInfo(ComponentCommand):
         Makes sure that we have a module/subworkflow name before proceeding.
 
         Args:
-            module: str: Module name to check
+            component: str: Module name to check
         """
         if component is None:
             self.require_prompts(
