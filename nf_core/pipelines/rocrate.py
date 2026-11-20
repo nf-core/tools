@@ -240,7 +240,7 @@ class ROCrate:
 
         # get keywords from nf-core website
         topics = ["nf-core", "nextflow"]
-        if org_short_name:
+        if org_short_name and org_short_name not in topics:
             topics.append(org_short_name)
         try:
             response = requests.get(f"{org_website}/pipelines.json", timeout=10)
