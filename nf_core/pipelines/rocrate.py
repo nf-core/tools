@@ -214,6 +214,9 @@ class ROCrate:
         if self.crate.mainEntity is None:
             raise ValueError("Main entity not set")
 
+        assert self.pipeline_obj.pipeline_name is not None  # mypy
+        pipeline_short_name = self.pipeline_obj.pipeline_name.split("/", 1)[-1]
+
         self.crate.mainEntity.append_to(
             "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
         )
@@ -225,7 +228,7 @@ class ROCrate:
         self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
         url = "dev" if self.version.endswith("dev") else self.version
         self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
+            "url", f"https://nf-co.re/{pipeline_short_name}/{url}/", compact=True
         )
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
@@ -245,8 +248,7 @@ class ROCrate:
             remote_workflows = []
         # go through all remote workflows and find the one that matches the pipeline name
         for remote_wf in remote_workflows:
-            assert self.pipeline_obj.pipeline_name is not None  # mypy
-            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
+            if remote_wf["name"] == pipeline_short_name:
                 topics = topics + remote_wf["topics"]
                 break
 
