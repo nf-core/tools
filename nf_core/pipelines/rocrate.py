@@ -191,9 +191,9 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        self.crate.add_jsonld(
-            {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
-        )
+        org_website = manifest.get("docsUrl", "https://nf-co.re/").rstrip("/")
+        org_name = manifest.get("organization", "nf-core")
+        self.crate.add_jsonld({"@id": org_website, "@type": "Organization", "name": org_name, "url": org_website})
 
         # Set metadata for main entity file
         self.set_main_entity("main.nf")
@@ -214,6 +214,8 @@ class ROCrate:
         if self.crate.mainEntity is None:
             raise ValueError("Main entity not set")
 
+        manifest = self.pipeline_obj.nf_config.get("manifest", {})
+        org_website = manifest.get("docsUrl", "https://nf-co.re/").rstrip("/")
         assert self.pipeline_obj.pipeline_name is not None  # mypy
         pipeline_short_name = self.pipeline_obj.pipeline_name.split("/", 1)[-1]
 
@@ -225,11 +227,9 @@ class ROCrate:
         self.crate.mainEntity.append_to(
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
-        self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
+        self.crate.mainEntity.append_to("sdPublisher", {"@id": org_website}, compact=True)
         url = "dev" if self.version.endswith("dev") else self.version
-        self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{pipeline_short_name}/{url}/", compact=True
-        )
+        self.crate.mainEntity.append_to("url", f"{org_website}/{pipeline_short_name}/{url}/", compact=True)
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
         # remove duplicate entries for version
@@ -238,13 +238,13 @@ class ROCrate:
         # get keywords from nf-core website
         topics = ["nf-core", "nextflow"]
         try:
-            response = requests.get("https://nf-co.re/pipelines.json", timeout=10)
+            response = requests.get(f"{org_website}/pipelines.json", timeout=10)
             response.raise_for_status()
             remote_workflows = response.json()["remote_workflows"]
         except (requests.exceptions.RequestException, ValueError, KeyError) as e:
             # Keep the keywords from an existing crate rather than silently dropping the pipeline topics
             topics = self._get_existing_keywords() or topics
-            log.warning(f"Could not fetch pipeline topics from nf-co.re, using keywords {topics}: {e}")
+            log.warning(f"Could not fetch pipeline topics from {org_website}, using keywords {topics}: {e}")
             remote_workflows = []
         # go through all remote workflows and find the one that matches the pipeline name
         for remote_wf in remote_workflows:
