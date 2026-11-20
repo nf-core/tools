@@ -20,17 +20,13 @@ class TestLintContainerConfigs(TestLint):
     # helpers
     # ------------------------------------------------------------------
 
-    def _lint(self, writes: dict[str, str | None], fix: tuple[str, ...] = (), wf_path: str | None = None):
-        """Run the lint with generation mocked to write (or, for ``None``, delete) the given ``conf/`` files."""
+    def _lint(self, writes: dict[str, str], fix: tuple[str, ...] = (), wf_path: str | None = None):
+        """Run the lint with generation mocked to write the given ``conf/`` files."""
 
         def generate(cc_self):
             for name, content in writes.items():
-                path = cc_self.workflow_directory / "conf" / name
-                if content is None:
-                    path.unlink()
-                else:
-                    path.write_text(content)
-            return {name for name, content in writes.items() if content is not None}
+                (cc_self.workflow_directory / "conf" / name).write_text(content)
+            return set(writes)
 
         with patch(GENERATE, autospec=True, side_effect=generate):
             lint_obj = nf_core.pipelines.lint.PipelineLint(wf_path or self.new_pipeline, fix=fix)
@@ -112,23 +108,3 @@ class TestLintContainerConfigs(TestLint):
 
         assert any("out of date" in f for f in result["failed"])
         assert cfg_path.read_text() == OLD, "Modified file should be restored even when using relative wf_path"
-
-    def test_container_configs_removed_file_restored_after_lint(self):
-        """A config deleted by generation (no module provides it anymore) fails lint and is restored."""
-        cfg_path = self._write_container_cfg("containers_docker_arm64.config", OLD)
-
-        result = self._lint({"containers_docker_arm64.config": None})
-
-        assert any("obsolete" in f for f in result["failed"])
-        assert result["could_fix"]
-        assert cfg_path.read_text() == OLD, "Removed file should be restored after lint"
-
-    def test_container_configs_fix_removes_obsolete_file(self):
-        """--fix keeps obsolete config files deleted and reports them as fixed."""
-        cfg_path = self._write_container_cfg("containers_docker_arm64.config", OLD)
-
-        result = self._lint({"containers_docker_arm64.config": None}, fix=("container_configs",))
-
-        assert len(result["failed"]) == 0
-        assert any("removed" in f for f in result["fixed"])
-        assert not cfg_path.exists()

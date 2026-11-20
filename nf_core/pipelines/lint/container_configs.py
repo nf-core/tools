@@ -11,9 +11,10 @@ def container_configs(self):
 
     Scans all ``meta.yml`` files under ``modules/`` that contain a ``containers``
     key, reads the process name from the sibling ``main.nf``, and regenerates
-    the container configuration files in ``conf/``.  Uses direct content comparison
-    to detect changes.  If not in ``--fix`` mode the working tree is restored to its
-    original state afterwards.
+    the container configuration files in ``conf/``.  Every platform needs a file, even
+    if no module provides a container for it, as ``nextflow.config`` includes all of them.
+    Uses direct content comparison to detect changes.  If not in ``--fix`` mode the
+    working tree is restored to its original state afterwards.
 
     Can be skipped by adding the following to the ``.nf-core.yml`` file:
 
@@ -42,36 +43,28 @@ def container_configs(self):
     after = read_container_configs()
 
     new = after.keys() - before.keys()
-    removed = before.keys() - after.keys()
     modified = {name for name in before.keys() & after.keys() if before[name] != after[name]}
     correct = generated - new - modified
 
-    log.debug(
-        f"Container config status — correct: {len(correct)}, modified: {len(modified)}, "
-        f"new: {len(new)}, removed: {len(removed)}"
-    )
+    log.debug(f"Container config status — correct: {len(correct)}, modified: {len(modified)}, new: {len(new)}")
 
     fixing = "container_configs" in self.fix
 
     for name in sorted(correct):
         passed.append(f"`conf/{name}` is up to date")
 
-    for name in sorted(new | modified | removed):
+    for name in sorted(new | modified):
         if fixing:
-            if name in removed:
-                passed.append(f"`conf/{name}` is up to date")
-                fixed.append(f"`conf/{name}` removed, as no module provides containers for it anymore.")
-            else:
-                passed.append(f"`conf/{name}` is up to date")
-                fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
+            passed.append(f"`conf/{name}` is up to date")
+            fixed.append(f"`conf/{name}` overwritten with regenerated container configuration.")
         else:
-            reason = "missing" if name in new else "obsolete" if name in removed else "out of date"
+            reason = "missing" if name in new else "out of date"
             failed.append(f"`conf/{name}` is {reason} – please regenerate the container configuration files.")
 
     if not fixing:
-        could_fix = bool(new | modified | removed)
+        could_fix = bool(new | modified)
         # Restore working tree to its pre-generation state
-        for name in modified | removed:
+        for name in modified:
             (conf_dir / name).write_bytes(before[name])
         for name in new:
             (conf_dir / name).unlink()

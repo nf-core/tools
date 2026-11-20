@@ -7,7 +7,13 @@ import ruamel.yaml
 
 from nf_core.commands_pipelines import pipelines_containers_create_configs
 from nf_core.modules.install import ModuleInstall
-from nf_core.pipelines.containers_utils import PLATFORMS, ContainerConfigs
+from nf_core.pipelines.containers_utils import (
+    EMPTY_CONFIG,
+    PLATFORMS,
+    ContainerConfigs,
+    container_configs_skipped,
+    try_generate_container_configs,
+)
 
 from ..test_pipelines import TestPipelines
 
@@ -82,10 +88,43 @@ class TestContainerConfigs(TestPipelines):
                 )
 
     def test_generate_container_configs_no_modules_dir(self) -> None:
-        """Returns an empty set immediately when there is no modules/ directory."""
+        """Without a modules/ directory every platform still gets a placeholder config, as nextflow.config includes them."""
         shutil.rmtree(self.pipeline_dir / "modules", ignore_errors=True)
         result = self.container_configs.generate_container_configs()
-        assert result == set()
+        assert result == {f"containers_{p_name}.config" for p_name in PLATFORMS}
+        for p_name in PLATFORMS:
+            assert (self.pipeline_dir / "conf" / f"containers_{p_name}.config").read_text() == EMPTY_CONFIG
+
+    def test_update_module_container_config_keeps_placeholder(self) -> None:
+        """Removing the last module providing a platform leaves a placeholder instead of deleting the file."""
+        fastqc_dir = self.pipeline_dir / "modules" / "nf-core" / "fastqc"
+        (fastqc_dir / "meta.yml").write_text("name: fastqc\n")  # no containers left
+        shutil.rmtree(self.pipeline_dir / "modules" / "nf-core" / "multiqc", ignore_errors=True)
+
+        self.container_configs.update_module_container_config(fastqc_dir)
+
+        for p_name in PLATFORMS:
+            cfg_path = self.pipeline_dir / "conf" / f"containers_{p_name}.config"
+            assert "FASTQC" not in cfg_path.read_text()
+
+        self.container_configs.generate_container_configs()
+        for p_name in PLATFORMS:
+            assert (self.pipeline_dir / "conf" / f"containers_{p_name}.config").read_text() == EMPTY_CONFIG
+
+    def test_try_generate_respects_skipped_feature(self) -> None:
+        """Automatic regeneration does nothing when the pipeline skips the container_configs feature."""
+        nf_core_yml = self.pipeline_dir / ".nf-core.yml"
+        config = yaml.load(nf_core_yml)
+        config["template"]["skip_features"] = ["container_configs"]
+        with nf_core_yml.open("w") as fh:
+            yaml.dump(config, fh)
+        for cfg_path in (self.pipeline_dir / "conf").glob("containers_*.config"):
+            cfg_path.unlink()
+
+        assert container_configs_skipped(self.pipeline_dir)
+        try_generate_container_configs(self.pipeline_dir)
+
+        assert not list((self.pipeline_dir / "conf").glob("containers_*.config"))
 
     def test_generate_container_configs_skips_meta_without_containers(self) -> None:
         """meta.yml files without a containers key are silently ignored."""
