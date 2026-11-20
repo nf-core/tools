@@ -365,20 +365,41 @@ class TestCli(unittest.TestCase):
         """Test nf-core pipelines schema lint defaults to nextflow_schema.json"""
         cmd = ["pipelines", "schema", "lint"]
         with self.runner.isolated_filesystem():
-            with open("nextflow_schema.json", "w") as f:
-                f.write("{}")
             self.invoke_cli(cmd)
-            mock_get_schema_path.assert_called_with(Path("nextflow_schema.json"))
+            mock_get_schema_path.assert_called_with(Path("nextflow_schema.json"), local_only=True)
 
     @mock.patch("nf_core.pipelines.schema.PipelineSchema.get_schema_path")
     def test_schema_lint_filename(self, mock_get_schema_path):
         """Test nf-core pipelines schema lint accepts a filename"""
         cmd = ["pipelines", "schema", "lint", "some_other_filename"]
         with self.runner.isolated_filesystem():
-            with open("some_other_filename", "w") as f:
-                f.write("{}")
             self.invoke_cli(cmd)
-            mock_get_schema_path.assert_called_with(Path("some_other_filename"))
+            mock_get_schema_path.assert_called_with(Path("some_other_filename"), local_only=True)
+
+    @mock.patch("nf_core.commands_pipelines.pipelines_schema_lint")
+    def test_schema_lint_dir(self, mock_schema_lint):
+        """Test nf-core pipelines schema lint finds the default schema in --dir, not the cwd"""
+        with self.runner.isolated_filesystem():
+            Path("pipeline").mkdir()
+            result = self.invoke_cli(["pipelines", "schema", "lint", "--dir", "pipeline"])
+            assert result.exit_code == 0, result.output
+            mock_schema_lint.assert_called_with(Path("pipeline", "nextflow_schema.json"))
+
+    def test_schema_lint_missing_schema(self):
+        """Test nf-core pipelines schema lint exits cleanly when the schema doesn't exist"""
+        with self.runner.isolated_filesystem():
+            Path("pipeline").mkdir()
+            result = self.invoke_cli(["pipelines", "schema", "lint", "--dir", "pipeline"])
+            assert result.exit_code == 1
+
+    @mock.patch("nf_core.commands_pipelines.pipelines_schema_docs")
+    def test_schema_docs_dir(self, mock_schema_docs):
+        """Test nf-core pipelines schema docs finds the default schema in --dir, not the cwd"""
+        with self.runner.isolated_filesystem():
+            Path("pipeline").mkdir()
+            result = self.invoke_cli(["pipelines", "schema", "docs", "--dir", "pipeline"])
+            assert result.exit_code == 0, result.output
+            assert mock_schema_docs.call_args.args[0] == Path("pipeline", "nextflow_schema.json")
 
     @mock.patch("nf_core.pipelines.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
