@@ -460,12 +460,16 @@ class TestROCrate(TestPipelines):
 
         self._set_manifest_identity(
             """docsUrl = 'https://www.example.com'
+            name = 'sweet-inst/testpipeline'
             organization = 'Sweet Institute'
             """
         )
         self._create_rocrate_with_mocked_requests()
 
         graph = self._read_crate_graph()
-        org_entry = [(entity["name"], entity["url"]) for entity in graph if entity.get("@type") == "Organization"]
 
+        self.assertEqual(graph[2]["name"][0], "sweet-inst/testpipeline")
+        self.assertEqual(graph[2]["keywords"], ["nf-core", "nextflow", "sweet-inst", "rna-seq"])
+
+        org_entry = [(entity["name"], entity["url"]) for entity in graph if entity.get("@type") == "Organization"]
         self.assertEqual(org_entry, [("Sweet Institute", "https://www.example.com")])

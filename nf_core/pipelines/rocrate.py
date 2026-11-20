@@ -216,12 +216,11 @@ class ROCrate:
 
         manifest = self.pipeline_obj.nf_config.get("manifest", {})
         org_website = (manifest.get("docsUrl") or "https://nf-co.re").rstrip("/")
-        assert self.pipeline_obj.pipeline_name is not None  # mypy
-        if "/" in self.pipeline_obj.pipeline_name:
-            (org_short_name, pipeline_short_name) = self.pipeline_obj.pipeline_name.split("/", 1)
+        if "/" in self.crate.name:
+            (org_short_name, pipeline_short_name) = self.crate.name.split("/", 1)
         else:
             org_short_name = None
-            pipeline_short_name = self.pipeline_obj.pipeline_name
+            pipeline_short_name = self.crate.name
 
         self.crate.mainEntity.append_to(
             "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
