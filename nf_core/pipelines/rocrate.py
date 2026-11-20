@@ -191,8 +191,8 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        org_website = manifest.get("docsUrl", "https://nf-co.re/").rstrip("/")
-        org_name = manifest.get("organization", "nf-core")
+        org_website = (manifest.get("docsUrl") or "https://nf-co.re").rstrip("/")
+        org_name = manifest.get("organization") or "nf-core"
         self.crate.add_jsonld({"@id": org_website, "@type": "Organization", "name": org_name, "url": org_website})
 
         # Set metadata for main entity file
@@ -215,7 +215,7 @@ class ROCrate:
             raise ValueError("Main entity not set")
 
         manifest = self.pipeline_obj.nf_config.get("manifest", {})
-        org_website = manifest.get("docsUrl", "https://nf-co.re/").rstrip("/")
+        org_website = (manifest.get("docsUrl") or "https://nf-co.re").rstrip("/")
         assert self.pipeline_obj.pipeline_name is not None  # mypy
         pipeline_short_name = self.pipeline_obj.pipeline_name.split("/", 1)[-1]
 
