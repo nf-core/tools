@@ -848,7 +848,7 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
 )
 @click.argument(
     "schema_file",
-    type=click.Path(exists=True, path_type=Path),
+    type=click.Path(path_type=Path),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
@@ -873,7 +873,7 @@ def command_pipelines_schema_lint(directory, schema_file):
 )
 @click.argument(
     "schema_file",
-    type=click.Path(exists=True, path_type=Path),
+    type=click.Path(path_type=Path),
     default="nextflow_schema.json",
     required=False,
     metavar="<pipeline schema>",

@@ -477,7 +477,7 @@ def pipelines_schema_lint(schema_path):
 
     schema_obj = PipelineSchema()
     try:
-        schema_obj.get_schema_path(schema_path)
+        schema_obj.get_schema_path(schema_path, local_only=True)
         schema_obj.load_lint_schema()
         # Validate title and description - just warnings as schema should still work fine
         try:
@@ -493,14 +493,12 @@ def pipelines_schema_docs(schema_path, output, output_format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    if not schema_path.exists():
-        log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
-        sys.exit(1)
-
     from nf_core.pipelines.schema import PipelineSchema
 
     schema_obj = PipelineSchema()
-    # Assume we're in a pipeline dir root if schema path not set
-    schema_obj.get_schema_path(schema_path)
+    try:
+        schema_obj.get_schema_path(schema_path, local_only=True)
+    except AssertionError:
+        sys.exit(1)
     schema_obj.load_schema()
     schema_obj.print_documentation(output, output_format, force, columns.split(","))
