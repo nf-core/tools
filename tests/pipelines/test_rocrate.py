@@ -68,7 +68,7 @@ class TestROCrate(TestPipelines):
         orcid_lookup = orcid_lookup or {}
 
         def mocked_requests_get(url, params=None, headers=None, **kwargs):
-            if url == "https://nf-co.re/pipelines.json":
+            if url in ("https://nf-co.re/pipelines.json", "https://www.example.com/pipelines.json"):
                 return MockResponse(
                     {"remote_workflows": [{"name": self.pipeline_obj.pipeline_name, "topics": topics}]},
                     url=url,
@@ -454,3 +454,26 @@ class TestROCrate(TestPipelines):
 
         # check creativeWorkStatus is Stable
         self.assertEqual(crate["@graph"][0]["creativeWorkStatus"], "Stable")
+
+    def test_rocrate_creation_uses_manifest_org_details(self):
+        """RO-Crate include values set in manifest.docsUrl and manifest.organization"""
+
+        self._set_manifest_identity(
+            """docsUrl = 'https://www.example.com'
+            name = 'sweet-inst/testpipeline'
+            organization = 'Sweet Institute'
+            """
+        )
+        self._create_rocrate_with_mocked_requests()
+
+        graph = self._read_crate_graph()
+
+        self.assertEqual(graph[2]["name"][0], "sweet-inst/testpipeline")
+        self.assertEqual(graph[2]["keywords"], ["nf-core", "nextflow", "sweet-inst", "rna-seq"])
+        self.assertEqual(graph[2]["sdPublisher"], {"@id": "https://www.example.com"})
+        self.assertEqual(
+            graph[2]["url"], ["https://github.com/nf-core/testpipeline", "https://www.example.com/testpipeline/dev/"]
+        )
+
+        org_entry = [(entity["name"], entity["url"]) for entity in graph if entity.get("@type") == "Organization"]
+        self.assertEqual(org_entry, [("Sweet Institute", "https://www.example.com")])

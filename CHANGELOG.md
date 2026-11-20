@@ -10,6 +10,7 @@
 - avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
 - limit get_wf_files to only consider files not ignored by git and remove `Pipeline.list_files()` in favour of it ([#4593](https://github.com/nf-core/tools/pull/4593))
 - make docker builds faster ([#4614](https://github.com/nf-core/tools/pull/4614))
+- Include org details from the manifest into the RO-Crate ([#4628](https://github.com/nf-core/tools/pull/4628))
 
 ### Linting
 
