@@ -217,7 +217,11 @@ class ROCrate:
         manifest = self.pipeline_obj.nf_config.get("manifest", {})
         org_website = (manifest.get("docsUrl") or "https://nf-co.re").rstrip("/")
         assert self.pipeline_obj.pipeline_name is not None  # mypy
-        pipeline_short_name = self.pipeline_obj.pipeline_name.split("/", 1)[-1]
+        if "/" in self.pipeline_obj.pipeline_name:
+            (org_short_name, pipeline_short_name) = self.pipeline_obj.pipeline_name.split("/", 1)
+        else:
+            org_short_name = None
+            pipeline_short_name = self.pipeline_obj.pipeline_name
 
         self.crate.mainEntity.append_to(
             "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
@@ -237,6 +241,8 @@ class ROCrate:
 
         # get keywords from nf-core website
         topics = ["nf-core", "nextflow"]
+        if org_short_name:
+            topics.append(org_short_name)
         try:
             response = requests.get(f"{org_website}/pipelines.json", timeout=10)
             response.raise_for_status()
