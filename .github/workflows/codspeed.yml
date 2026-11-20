@@ -54,13 +54,12 @@ jobs:
         run: uv sync --all-extras
 
       # Clone nf-core/modules into the local cache here, while network is
-      # available. The modules-install benchmark then runs entirely offline
-      # (no per-round fetch), so it stays deterministic even if the CodSpeed
-      # step sandboxes network during measurement.
+      # available. The module benchmarks then run with `--no-pull`, so no
+      # round pays for a `git fetch`.
       - name: Warm nf-core/modules cache
         run: uv run python -c "from nf_core.modules.modules_repo import ModulesRepo; ModulesRepo()"
 
-      # Most of the time is spent in subprocesses, which "simulation" mode can't see
+      # Every benchmark runs the `nf-core` CLI in a subprocess, which "simulation" mode can't see
       - name: Run benchmarks
         uses: CodSpeedHQ/action@af75f77f17a054769abefaa42fe8dc2975469b5f # v5.6.3
         with:

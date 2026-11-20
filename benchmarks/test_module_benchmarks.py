@@ -1,79 +1,71 @@
-"""CodSpeed wall-time benchmarks for module linting and git history lookups (offline)."""
+"""CodSpeed wall-time benchmarks for `nf-core modules` commands."""
 
 import shutil
-import sys
 
 import pytest
 
-# Installed in addition to the template's fastqc and multiqc
+# The nf-core/modules clone is prepared once by ``modules_cache``, so no round measures a `git fetch`
+MODULES = ("modules", "--no-pull")
+
+# Installed in addition to the modules that come with the template
 EXTRA_MODULES = ["samtools/sort", "fastp"]
 
+# How many fastqc commits behind the latest one the outdated install is
 OUTDATED_COMMIT_DEPTH = 10
 
-# Stub out the network calls made during module linting
-_OFFLINE_LINT_SETUP = """
-from unittest import mock
-
-import requests
-
-import nf_core.utils
-from nf_core.modules.modules_repo import ModulesRepo
+pytestmark = pytest.mark.usefixtures("modules_cache")
 
 
-def _fake_anaconda_package(dep, dep_channels=None):
-    version = dep.split("=")[1] if "=" in dep else "0"
-    return {"versions": [version], "latest_version": version}
-
-
-nf_core.utils.anaconda_package = _fake_anaconda_package
-nf_core.utils.fetch_wf_config = lambda *args, **kwargs: {}
-requests.head = lambda *args, **kwargs: mock.Mock(ok=True, status_code=200)
-ModulesRepo.no_pull_global = True
-"""
-
-
-@pytest.fixture(scope="session")
-def pipeline_with_modules(generated_pipeline, modules_cache, tmp_path_factory):
-    """Copy of the generated pipeline with EXTRA_MODULES installed."""
+def _pipeline_with(generated_pipeline, tmp_path_factory, name, modules, sha=None):
+    """Copy of the generated pipeline with ``modules`` installed (at ``sha``, if given)."""
     from nf_core.modules.install import ModuleInstall
 
-    pipeline_dir = tmp_path_factory.mktemp("pipeline_with_modules") / "pipeline"
-    shutil.copytree(generated_pipeline, pipeline_dir)
-    installer = ModuleInstall(pipeline_dir, prompt=False, force=True)
-    for module in EXTRA_MODULES:
+    pipeline_dir = tmp_path_factory.mktemp(name) / "pipeline"
+    shutil.copytree(generated_pipeline, pipeline_dir, symlinks=True)
+    installer = ModuleInstall(pipeline_dir, prompt=False, force=True, sha=sha)
+    for module in modules:
         assert installer.install(module), f"Could not install {module}"
     return pipeline_dir
 
 
-def test_modules_lint_all(benchmark_command, pipeline_with_modules):
-    """Lint all modules in a pipeline. Uses the API, as the CLI exits non-zero on lint failures."""
-    script = f"""{_OFFLINE_LINT_SETUP}
-from nf_core.modules.lint import ModuleLint
-
-ModuleLint({str(pipeline_with_modules)!r}, hide_progress=True).lint(all_modules=True, print_results=False)
-"""
-    benchmark_command([sys.executable, "-c", script], rounds=3, warmup_rounds=1)
+@pytest.fixture(scope="session")
+def pipeline_with_modules(generated_pipeline, tmp_path_factory):
+    return _pipeline_with(generated_pipeline, tmp_path_factory, "pipeline_with_modules", EXTRA_MODULES)
 
 
 @pytest.fixture(scope="session")
-def outdated_fastqc(modules_cache, tmp_path_factory):
-    """fastqc installed from an older commit."""
-    modules_repo = modules_cache
-    commits = list(modules_repo.get_component_git_log("fastqc", "modules", depth=OUTDATED_COMMIT_DEPTH + 1))
-    sha = commits[min(OUTDATED_COMMIT_DEPTH, len(commits) - 1)]["git_sha"]
-    install_dir = tmp_path_factory.mktemp("outdated_fastqc")
-    assert modules_repo.install_component("fastqc", install_dir, sha, "modules")
-    return modules_repo, install_dir / "fastqc"
+def pipeline_with_outdated_fastqc(generated_pipeline, modules_cache, tmp_path_factory):
+    commits = list(modules_cache.get_component_git_log("fastqc", "modules", depth=OUTDATED_COMMIT_DEPTH + 1))
+    sha = commits[OUTDATED_COMMIT_DEPTH]["git_sha"]
+    return _pipeline_with(generated_pipeline, tmp_path_factory, "pipeline_outdated_fastqc", ["fastqc"], sha=sha)
 
 
-def test_find_correct_commit_sha(benchmark, outdated_fastqc, tmp_path):
-    """Find the commit matching an installed module, as done when repairing modules.json."""
-    from nf_core.modules.modules_json import ModulesJson
+def test_modules_list_local(benchmark_cli, pipeline_with_modules):
+    """`nf-core modules list local` in a pipeline."""
+    benchmark_cli(*MODULES, "list", "local", "--dir", pipeline_with_modules)
 
-    modules_repo, fastqc_dir = outdated_fastqc
-    modules_json = ModulesJson(tmp_path, no_prompts=True)
 
-    def find_sha():
-        assert modules_json.find_correct_commit_sha("modules", "fastqc", fastqc_dir, modules_repo) is not None
+def test_modules_install(benchmark_cli, generated_pipeline, tmp_path):
+    """`nf-core modules install` of a module that isn't in the pipeline yet."""
+    target = tmp_path / "pipeline"
+    benchmark_cli(*MODULES, "install", "fastp", "--dir", target, reset=(generated_pipeline, target))
 
-    benchmark.pedantic(find_sha, rounds=3, warmup_rounds=1)
+
+def test_modules_update(benchmark_cli, pipeline_with_outdated_fastqc, tmp_path):
+    """`nf-core modules update` of a module that is several commits behind."""
+    target = tmp_path / "pipeline"
+    benchmark_cli(
+        *MODULES,
+        "update",
+        "fastqc",
+        "--dir",
+        target,
+        "--no-preview",
+        rounds=3,
+        reset=(pipeline_with_outdated_fastqc, target),
+    )
+
+
+def test_modules_lint_all(benchmark_cli, pipeline_with_modules):
+    """`nf-core modules lint --all` in a pipeline."""
+    benchmark_cli(*MODULES, "lint", "--all", "--dir", pipeline_with_modules, rounds=2, check=False)
