@@ -4,6 +4,7 @@
 
 ### General
 
+- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#4619](https://github.com/nf-core/tools/pull/4619))
 - Preserve zero config defaults when adding defaults to existing schema parameters. ([#4620](https://github.com/nf-core/tools/pull/4620))
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
