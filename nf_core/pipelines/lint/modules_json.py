@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.modules.modules_json"]
+
 from pathlib import Path
 
 from nf_core.modules.modules_json import ModulesJson, ModulesJsonType

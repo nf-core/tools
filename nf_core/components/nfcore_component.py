@@ -2,6 +2,9 @@
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.utils"]
+
 import json
 import logging
 import re

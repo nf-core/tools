@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["git", "git.exc", "nf_core.components.constants", "nf_core.utils"]
+
 import filecmp
 import logging
 import os

@@ -1,3 +1,12 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_utils",
+    "nf_core.modules.modules_json",
+    "nf_core.modules.modules_repo",
+    "nf_core.modules.modules_utils",
+    "nf_core.utils",
+]
+
 import logging
 import mmap
 import os

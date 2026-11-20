@@ -1,5 +1,16 @@
 """Launch a pipeline, interactively collecting params"""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.pipelines.lint_utils",
+    "nf_core.pipelines.schema",
+    "nf_core.utils",
+    "questionary",
+    "rich.console",
+    "rich.markdown",
+    "rich.prompt",
+]
+
 import copy
 import json
 import logging

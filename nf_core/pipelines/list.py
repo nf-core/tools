@@ -1,5 +1,8 @@
 """Lists available nf-core pipelines and versions."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["click.shell_completion", "nf_core.utils", "rich.table"]
+
 import json
 import logging
 import os

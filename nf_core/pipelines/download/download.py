@@ -1,5 +1,21 @@
 """Downloads a nf-core pipeline to the local file system."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core",
+    "nf_core.github_api",
+    "nf_core.pipelines.download.container_fetcher",
+    "nf_core.pipelines.download.docker",
+    "nf_core.pipelines.download.singularity",
+    "nf_core.pipelines.download.utils",
+    "nf_core.pipelines.download.workflow_repo",
+    "nf_core.pipelines.list",
+    "nf_core.utils",
+    "questionary",
+    "requests",
+    "rich",
+]
+
 import io
 import json
 import logging

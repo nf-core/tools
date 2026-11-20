@@ -1,5 +1,8 @@
 """Background updater for the cached nf-core version."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["packaging.version"]
+
 import json
 import re
 import sys

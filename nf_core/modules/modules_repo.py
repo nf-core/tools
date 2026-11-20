@@ -1,3 +1,15 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "git.exc",
+    "nf_core.components.constants",
+    "nf_core.modules.modules_utils",
+    "nf_core.synced_repo",
+    "nf_core.utils",
+    "rich.progress",
+    "rich.prompt",
+]
+
 import logging
 import os
 import shutil

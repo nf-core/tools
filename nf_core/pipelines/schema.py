@@ -1,5 +1,19 @@
 """Code to deal with pipeline JSON Schema"""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "jinja2",
+    "jsonschema",
+    "markdown",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.pipelines.list",
+    "nf_core.utils",
+    "rich.console",
+    "rich.prompt",
+    "rich.syntax",
+    "yaml",
+]
+
 import copy
 import json
 import logging

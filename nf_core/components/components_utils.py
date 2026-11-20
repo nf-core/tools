@@ -1,3 +1,14 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.modules_repo",
+    "nf_core.utils",
+    "questionary",
+    "requests",
+    "rich.prompt",
+    "ruamel.yaml",
+]
+
 import logging
 from pathlib import Path
 

@@ -2,6 +2,9 @@
 a nf-core pipeline.
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.pipelines.rocrate", "nf_core.utils", "rich.console", "ruamel.yaml"]
+
 import logging
 import re
 from pathlib import Path

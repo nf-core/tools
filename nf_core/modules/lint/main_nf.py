@@ -2,6 +2,14 @@
 Lint the main.nf file of a module
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_differ",
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.lint.meta_yml",
+    "rich.progress",
+]
+
 import logging
 import re
 from pathlib import Path

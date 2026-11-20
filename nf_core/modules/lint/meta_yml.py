@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "jsonschema",
+    "nf_core.components.components_differ",
+    "nf_core.components.components_utils",
+    "nf_core.components.lint",
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.lint.module_containers",
+    "nf_core.utils",
+]
+
 import json
 import logging
 from functools import cache

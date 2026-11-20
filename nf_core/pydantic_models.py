@@ -4,6 +4,9 @@ Kept separate from nf_core.utils so that pydantic is only imported
 when the config file is actually parsed.
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["pydantic"]
+
 from pathlib import Path
 from typing import Any, Literal
 

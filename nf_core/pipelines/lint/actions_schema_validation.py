@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["jsonschema", "requests", "yaml"]
+
 import logging
 from pathlib import Path
 from typing import Any

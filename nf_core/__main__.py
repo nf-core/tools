@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """nf-core: Helper tools for use with nf-core Nextflow pipelines."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core", "nf_core.components.constants", "nf_core.utils", "rich_click", "rich_click.rich_click"]
+
 import logging
 import os
 import sys

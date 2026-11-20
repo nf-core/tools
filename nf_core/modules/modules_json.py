@@ -1,3 +1,18 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "git.exc",
+    "nf_core.components.components_differ",
+    "nf_core.components.components_utils",
+    "nf_core.components.constants",
+    "nf_core.modules.modules_repo",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.utils",
+    "questionary",
+    "rich.prompt",
+    "typing_extensions",
+]
+
 import copy
 import datetime
 import json

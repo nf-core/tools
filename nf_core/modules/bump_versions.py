@@ -3,6 +3,21 @@ Bump versions for all modules on nf-core/modules
 or for a single module
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_command",
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.modules_utils",
+    "nf_core.utils",
+    "rich.box",
+    "rich.console",
+    "rich.markdown",
+    "rich.panel",
+    "rich.progress",
+    "rich.table",
+    "yaml",
+]
+
 import contextlib
 import logging
 import os

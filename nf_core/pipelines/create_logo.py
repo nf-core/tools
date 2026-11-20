@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["PIL", "nf_core", "nf_core.utils"]
+
 import logging
 from pathlib import Path
 

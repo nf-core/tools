@@ -1,5 +1,24 @@
 """A Textual app to create a pipeline."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "click",
+    "nf_core.pipelines.create",
+    "nf_core.pipelines.create.basicdetails",
+    "nf_core.pipelines.create.custompipeline",
+    "nf_core.pipelines.create.finaldetails",
+    "nf_core.pipelines.create.githubexit",
+    "nf_core.pipelines.create.githubrepo",
+    "nf_core.pipelines.create.githubrepoquestion",
+    "nf_core.pipelines.create.loggingscreen",
+    "nf_core.pipelines.create.nfcorepipeline",
+    "nf_core.pipelines.create.pipelinetype",
+    "nf_core.pipelines.create.welcome",
+    "rich.logging",
+    "textual.app",
+    "textual.widgets",
+]
+
 import logging
 
 import click

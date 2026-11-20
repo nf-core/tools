@@ -2,6 +2,21 @@
 organization's specification based on a template.
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "git.config",
+    "jinja2",
+    "nf_core",
+    "nf_core.pipelines.containers_utils",
+    "nf_core.pipelines.create.utils",
+    "nf_core.pipelines.create_logo",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.pipelines.rocrate",
+    "nf_core.utils",
+    "yaml",
+]
+
 import configparser
 import logging
 import os

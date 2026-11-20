@@ -1,3 +1,17 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_utils",
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.lint",
+    "nf_core.modules.modules_utils",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.utils",
+    "pydantic",
+    "requests",
+    "rich.pretty",
+    "rich.progress",
+]
+
 import base64
 import hashlib
 import logging

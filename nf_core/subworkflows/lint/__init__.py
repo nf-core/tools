@@ -6,6 +6,22 @@ Command:
 nf-core subworkflows lint
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.lint",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.subworkflows.lint.main_nf",
+    "nf_core.subworkflows.lint.meta_yml",
+    "nf_core.subworkflows.lint.subworkflow_changes",
+    "nf_core.subworkflows.lint.subworkflow_if_empty_null",
+    "nf_core.subworkflows.lint.subworkflow_tests",
+    "nf_core.subworkflows.lint.subworkflow_todos",
+    "nf_core.subworkflows.lint.subworkflow_version",
+    "nf_core.utils",
+    "rich",
+    "ruamel.yaml",
+]
+
 import logging
 import os
 

@@ -4,6 +4,9 @@ Kept separate from nf_core.utils so that requests_cache is only
 imported when the GitHub API is actually used.
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.utils", "requests.auth", "requests_cache", "rich.console", "rich.markup", "yaml"]
+
 import json
 import logging
 import os

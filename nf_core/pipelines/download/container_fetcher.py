@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.pipelines.download.utils", "nf_core.utils", "rich.progress"]
+
 import contextlib
 import logging
 import re

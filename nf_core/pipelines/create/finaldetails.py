@@ -1,5 +1,16 @@
 """A Textual app to create a pipeline."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.pipelines.create.create",
+    "nf_core.pipelines.create.utils",
+    "textual",
+    "textual.app",
+    "textual.containers",
+    "textual.screen",
+    "textual.widgets",
+]
+
 import contextlib
 from pathlib import Path
 from textwrap import dedent

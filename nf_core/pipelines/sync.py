@@ -1,5 +1,20 @@
 """Synchronise a pipeline TEMPLATE branch with the template."""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "nf_core",
+    "nf_core.github_api",
+    "nf_core.pipelines.create.create",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.utils",
+    "questionary",
+    "requests.auth",
+    "requests_cache",
+    "rich",
+    "yaml",
+]
+
 import json
 import logging
 import os

@@ -2,6 +2,9 @@
 Lint the main.nf file of a subworkflow
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.components.nfcore_component"]
+
 import logging
 import re
 

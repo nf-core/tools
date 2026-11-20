@@ -6,6 +6,28 @@ Command:
 nf-core modules lint
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_utils",
+    "nf_core.components.lint",
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.lint.environment_yml",
+    "nf_core.modules.lint.main_nf",
+    "nf_core.modules.lint.meta_yml",
+    "nf_core.modules.lint.module_changes",
+    "nf_core.modules.lint.module_deprecations",
+    "nf_core.modules.lint.module_patch",
+    "nf_core.modules.lint.module_tests",
+    "nf_core.modules.lint.module_todos",
+    "nf_core.modules.lint.module_version",
+    "nf_core.modules.modules_utils",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.utils",
+    "rich",
+    "rich.progress",
+    "ruamel.yaml",
+]
+
 import json
 import logging
 import os

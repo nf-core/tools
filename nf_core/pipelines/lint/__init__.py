@@ -4,6 +4,53 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "git.exc",
+    "nf_core",
+    "nf_core.components.lint",
+    "nf_core.modules.lint",
+    "nf_core.pipelines.lint.actions_awsfulltest",
+    "nf_core.pipelines.lint.actions_awstest",
+    "nf_core.pipelines.lint.actions_nf_test",
+    "nf_core.pipelines.lint.actions_schema_validation",
+    "nf_core.pipelines.lint.configs",
+    "nf_core.pipelines.lint.container_configs",
+    "nf_core.pipelines.lint.files_exist",
+    "nf_core.pipelines.lint.files_unchanged",
+    "nf_core.pipelines.lint.included_configs",
+    "nf_core.pipelines.lint.local_component_structure",
+    "nf_core.pipelines.lint.merge_markers",
+    "nf_core.pipelines.lint.modules_json",
+    "nf_core.pipelines.lint.modules_structure",
+    "nf_core.pipelines.lint.multiqc_config",
+    "nf_core.pipelines.lint.nextflow_config",
+    "nf_core.pipelines.lint.nf_test_content",
+    "nf_core.pipelines.lint.nfcore_yml",
+    "nf_core.pipelines.lint.pipeline_if_empty_null",
+    "nf_core.pipelines.lint.pipeline_name_conventions",
+    "nf_core.pipelines.lint.pipeline_todos",
+    "nf_core.pipelines.lint.plugin_includes",
+    "nf_core.pipelines.lint.readme",
+    "nf_core.pipelines.lint.rocrate_readme_sync",
+    "nf_core.pipelines.lint.schema_description",
+    "nf_core.pipelines.lint.schema_lint",
+    "nf_core.pipelines.lint.schema_params",
+    "nf_core.pipelines.lint.system_exit",
+    "nf_core.pipelines.lint.template_strings",
+    "nf_core.pipelines.lint.version_consistency",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.subworkflows.lint",
+    "nf_core.utils",
+    "rich",
+    "rich.console",
+    "rich.markdown",
+    "rich.panel",
+    "rich.progress",
+    "rich.table",
+]
+
 import datetime
 import json
 import logging

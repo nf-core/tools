@@ -1,3 +1,20 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_command",
+    "nf_core.components.constants",
+    "nf_core.modules.modules_json",
+    "nf_core.utils",
+    "questionary",
+    "rich",
+    "rich.console",
+    "rich.markdown",
+    "rich.panel",
+    "rich.syntax",
+    "rich.table",
+    "rich.text",
+    "yaml",
+]
+
 import logging
 from pathlib import Path
 

@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.pipelines.lint.pipeline_todos"]
+
 import logging
 
 from nf_core.pipelines.lint.pipeline_todos import pipeline_todos

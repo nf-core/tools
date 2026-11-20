@@ -61,3 +61,9 @@ repos:
         entry: python3 docs/api/check_lint_docstrings.py
         priority: 20
         files: ^nf_core/(modules|subworkflows)/lint/.*\.py$
+      - id: update-lazy-modules
+        name: Keep PEP 810 __lazy_modules__ in sync with imports
+        language: system
+        entry: python3 scripts/update_lazy_modules.py
+        priority: 5
+        files: ^nf_core/.*\.py$

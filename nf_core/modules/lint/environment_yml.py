@@ -1,3 +1,14 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "jsonschema",
+    "nf_core.components.lint",
+    "nf_core.components.nfcore_component",
+    "nf_core.modules.modules_utils",
+    "nf_core.utils",
+    "rich.progress",
+    "ruamel.yaml",
+]
+
 import json
 import logging
 from pathlib import Path

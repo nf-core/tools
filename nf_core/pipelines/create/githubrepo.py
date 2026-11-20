@@ -1,3 +1,18 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "github",
+    "nf_core.pipelines.create.utils",
+    "rich.text",
+    "textual",
+    "textual.app",
+    "textual.containers",
+    "textual.message",
+    "textual.screen",
+    "textual.widgets",
+    "yaml",
+]
+
 import contextlib
 import logging
 import os

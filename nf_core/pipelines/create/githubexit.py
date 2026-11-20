@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.utils", "textual.app", "textual.containers", "textual.screen", "textual.widgets"]
+
 from textwrap import dedent
 
 from textual.app import ComposeResult

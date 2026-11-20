@@ -1,3 +1,11 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.pipelines.download.container_fetcher",
+    "nf_core.pipelines.download.utils",
+    "nf_core.utils",
+    "rich.progress",
+]
+
 import concurrent.futures
 import itertools
 import logging

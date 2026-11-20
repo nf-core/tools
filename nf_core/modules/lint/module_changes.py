@@ -2,6 +2,9 @@
 Check whether the content of a module has changed compared to the original repository
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.components.components_differ", "nf_core.modules.modules_repo"]
+
 import shutil
 import tempfile
 from pathlib import Path

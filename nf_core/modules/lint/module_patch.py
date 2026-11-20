@@ -1,3 +1,6 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = ["nf_core.components.components_differ", "nf_core.components.nfcore_component"]
+
 from pathlib import Path
 
 from ...components.components_differ import ComponentsDiffer

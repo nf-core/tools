@@ -1,3 +1,13 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_command",
+    "nf_core.components.components_differ",
+    "nf_core.modules.modules_json",
+    "nf_core.pipelines.containers_utils",
+    "nf_core.utils",
+    "questionary",
+]
+
 import logging
 import shutil
 import tempfile

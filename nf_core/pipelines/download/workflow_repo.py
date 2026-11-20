@@ -1,3 +1,16 @@
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "git.exc",
+    "nf_core",
+    "nf_core.modules.modules_utils",
+    "nf_core.pipelines.download.utils",
+    "nf_core.synced_repo",
+    "nf_core.utils",
+    "packaging.version",
+    "rich",
+]
+
 import logging
 import os
 import re

@@ -2,6 +2,20 @@
 The ComponentCreate class handles generating of module and subworkflow templates
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "jinja2",
+    "nf_core",
+    "nf_core.components.components_command",
+    "nf_core.components.components_utils",
+    "nf_core.pipelines.lint_utils",
+    "nf_core.utils",
+    "packaging.version",
+    "questionary",
+    "rich.prompt",
+    "ruamel.yaml",
+]
+
 import json
 import logging
 import re

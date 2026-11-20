@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 """Code to deal with pipeline RO (Research Object) Crates"""
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "git",
+    "nf_core.utils",
+    "repo2rocrate.nextflow",
+    "requests",
+    "rich.progress",
+    "rocrate.model.person",
+    "rocrate.rocrate",
+]
+
 import logging
 import os
 import re

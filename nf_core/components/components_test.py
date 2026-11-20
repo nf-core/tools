@@ -2,6 +2,18 @@
 The ComponentsTest class handles the generation and testing of nf-test snapshots.
 """
 
+# Lazy on Python 3.15+ (PEP 810), see scripts/update_lazy_modules.py
+__lazy_modules__ = [
+    "nf_core.components.components_command",
+    "nf_core.utils",
+    "questionary",
+    "rich",
+    "rich.panel",
+    "rich.prompt",
+    "rich.syntax",
+    "rich.text",
+]
+
 import logging
 import os
 import re
