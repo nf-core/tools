@@ -469,7 +469,7 @@ class TestROCrate(TestPipelines):
         self.assertEqual(graph[2]["keywords"], ["nf-core", "nextflow", "sweet-inst", "rna-seq"])
         self.assertEqual(graph[2]["sdPublisher"], {"@id": "https://www.example.com"})
         self.assertEqual(
-            graph[2]["url"], ["https://github.com/nf-core/testpipeline", "https://www.example.com/testpipeline/dev/"]
+            graph[2]["url"], ["https://github.com/nf-core/testpipeline", "https://www.example.com/testpipeline/dev"]
         )
 
         org_entry = [(entity["name"], entity["url"]) for entity in graph if entity.get("@type") == "Organization"]

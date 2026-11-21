@@ -231,8 +231,15 @@ class ROCrate:
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
         self.crate.mainEntity.append_to("sdPublisher", {"@id": org_website}, compact=True)
-        url = "dev" if self.version.endswith("dev") else self.version
-        self.crate.mainEntity.append_to("url", f"{org_website}/{pipeline_short_name}/{url}/", compact=True)
+        # Expected URL for the documentation of this pipeline and version
+        url = "/".join((org_website, pipeline_short_name, "dev" if self.version.endswith("dev") else self.version))
+        try:
+            # Check that the URL is valid
+            response = requests.head(url, allow_redirects=True, timeout=10)
+            if response.ok:
+                self.crate.mainEntity.append_to("url", url, compact=True)
+        except requests.RequestException:
+            pass
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
         # remove duplicate entries for version
