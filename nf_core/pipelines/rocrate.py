@@ -13,6 +13,7 @@ import rocrate.rocrate
 from git import GitCommandError, InvalidGitRepositoryError
 from repo2rocrate.nextflow import NextflowCrateBuilder
 from rich.progress import BarColumn, Progress
+from rocrate.model.computationalworkflow import ComputationalWorkflow
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
@@ -291,7 +292,7 @@ class ROCrate:
                                 compact=True,
                             )
 
-    def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
+    def add_main_authors(self, wf_file: ComputationalWorkflow) -> None:
         """
         Add workflow authors to the crate
         """
