@@ -68,11 +68,8 @@ class TestROCrate(TestPipelines):
         orcid_lookup = orcid_lookup or {}
 
         def mocked_requests_get(url, params=None, headers=None, **kwargs):
-            if url in ("https://nf-co.re/pipelines.json", "https://www.example.com/pipelines.json"):
-                return MockResponse(
-                    {"remote_workflows": [{"name": self.pipeline_obj.pipeline_name, "topics": topics}]},
-                    url=url,
-                )
+            if url.startswith("https://api.github.com/repos/"):
+                return MockResponse({"names": topics}, url=url)
             if url.startswith("https://api.github.com/users/"):
                 username = url.rsplit("/", 1)[-1]
                 return MockResponse({"name": github_names.get(username)}, url=url)
@@ -201,12 +198,12 @@ class TestROCrate(TestPipelines):
         self.assertEqual(person_names, {"Ada Lovelace", "Grace Hopper"})
         self.assertEqual(len(workflow["author"]), 2)
 
-    def _create_rocrate_offline(self) -> None:
-        """Create the crate while nf-co.re/pipelines.json is unreachable"""
+    def _create_rocrate_offline_topics(self) -> None:
+        """Create the crate while GitHub topics are unreachable"""
         default_mock = self._mock_requests_get()
 
         def offline_requests_get(url, *args, **kwargs):
-            if url == "https://nf-co.re/pipelines.json":
+            if url.startswith("https://api.github.com/repos/"):
                 raise requests.exceptions.ConnectionError("offline")
             return default_mock(url, *args, **kwargs)
 
@@ -214,20 +211,20 @@ class TestROCrate(TestPipelines):
             self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
 
     def test_rocrate_creation_falls_back_to_default_topics_when_offline(self):
-        """Use the default keywords if pipelines.json can't be fetched and there is no existing crate"""
+        """Use the default keywords if GitHub topics can't be fetched and there is no existing crate"""
         Path(self.pipeline_dir, "ro-crate-metadata.json").unlink(missing_ok=True)
-        self._create_rocrate_offline()
+        self._create_rocrate_offline_topics()
 
         workflow = self._graph_entity(self._read_crate_graph(), "#main.nf")
         self.assertEqual(workflow["keywords"], ["nf-core", "nextflow"])
 
     def test_rocrate_update_keeps_existing_topics_when_offline(self):
-        """Keep the keywords of an existing crate if pipelines.json can't be fetched"""
+        """Keep the keywords of an existing crate if GitHub topics can't be fetched"""
         self._create_rocrate_with_mocked_requests(topics=["rna-seq", "transcriptomics"])
         expected = ["nf-core", "nextflow", "rna-seq", "transcriptomics"]
         self.assertEqual(self._graph_entity(self._read_crate_graph(), "#main.nf")["keywords"], expected)
 
-        self._create_rocrate_offline()
+        self._create_rocrate_offline_topics()
 
         self.assertEqual(self._graph_entity(self._read_crate_graph(), "#main.nf")["keywords"], expected)
 

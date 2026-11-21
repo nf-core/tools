@@ -238,24 +238,20 @@ class ROCrate:
         # remove duplicate entries for version
         self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
 
-        # get keywords from nf-core website
+        # get keywords from GitHub
         topics = ["nf-core", "nextflow"]
         if org_short_name and org_short_name not in topics:
             topics.append(org_short_name)
         try:
-            response = requests.get(f"{org_website}/pipelines.json", timeout=10)
+            response = requests.get(f"https://api.github.com/repos/{self.crate.name}/topics")
             response.raise_for_status()
-            remote_workflows = response.json()["remote_workflows"]
+            for topic in response.json()["names"]:
+                if topic not in topics:
+                    topics.append(topic)
         except (requests.exceptions.RequestException, ValueError, KeyError) as e:
             # Keep the keywords from an existing crate rather than silently dropping the pipeline topics
             topics = self._get_existing_keywords() or topics
-            log.warning(f"Could not fetch pipeline topics from {org_website}, using keywords {topics}: {e}")
-            remote_workflows = []
-        # go through all remote workflows and find the one that matches the pipeline name
-        for remote_wf in remote_workflows:
-            if remote_wf["name"] == pipeline_short_name:
-                topics = topics + remote_wf["topics"]
-                break
+            log.warning(f"Could not fetch pipeline topics from GitHub, using keywords {topics}: {e}")
 
         log.debug(f"Adding topics: {topics}")
         self.crate.mainEntity.append_to("keywords", topics)
