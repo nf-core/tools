@@ -17,6 +17,7 @@ from rocrate.model.computationalworkflow import ComputationalWorkflow
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
+from nf_core.github_api import gh_api
 from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
@@ -251,7 +252,7 @@ class ROCrate:
         if org_short_name and org_short_name not in topics:
             topics.append(org_short_name)
         try:
-            response = requests.get(f"https://api.github.com/repos/{self.crate.name}/topics")
+            response = gh_api.safe_get(f"https://api.github.com/repos/{self.crate.name}/topics")
             response.raise_for_status()
             for topic in response.json()["names"]:
                 if topic not in topics:
@@ -402,7 +403,7 @@ class ROCrate:
 
             for git_author in git_contributors:
                 progress_bar.update(bump_progress, advance=1, name=git_author)
-                github_name = requests.get(f"https://api.github.com/users/{git_author}").json().get("name")
+                github_name = gh_api.safe_get(f"https://api.github.com/users/{git_author}").json().get("name")
                 if github_name:
                     # remove usernames (just keep names with spaces)
                     if " " in github_name and github_name not in authors:

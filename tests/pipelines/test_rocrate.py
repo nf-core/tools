@@ -108,9 +108,15 @@ class TestROCrate(TestPipelines):
         self.fail(f"Could not find person {name}")
 
     def _create_rocrate_with_mocked_requests(self, topics=None, github_names=None, orcid_lookup=None) -> None:
-        with mock.patch(
-            "nf_core.pipelines.rocrate.requests.get",
-            side_effect=self._mock_requests_get(topics=topics, github_names=github_names, orcid_lookup=orcid_lookup),
+        with (
+            mock.patch(
+                "nf_core.pipelines.rocrate.gh_api.safe_get",
+                side_effect=self._mock_requests_get(topics=topics, github_names=github_names),
+            ),
+            mock.patch(
+                "nf_core.pipelines.rocrate.requests.get",
+                side_effect=self._mock_requests_get(orcid_lookup=orcid_lookup),
+            ),
         ):
             self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
 
@@ -207,7 +213,7 @@ class TestROCrate(TestPipelines):
                 raise requests.exceptions.ConnectionError("offline")
             return default_mock(url, *args, **kwargs)
 
-        with mock.patch("nf_core.pipelines.rocrate.requests.get", side_effect=offline_requests_get):
+        with mock.patch("nf_core.pipelines.rocrate.gh_api.safe_get", side_effect=offline_requests_get):
             self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
 
     def test_rocrate_creation_falls_back_to_default_topics_when_offline(self):
@@ -235,7 +241,7 @@ class TestROCrate(TestPipelines):
         self._commit_main_nf_change("octocat", "octocat@example.com", "Add git contributor")
 
         with mock.patch(
-            "nf_core.pipelines.rocrate.requests.get",
+            "nf_core.pipelines.rocrate.gh_api.safe_get",
             side_effect=self._mock_requests_get(github_names={"octocat": "Mona Octocat"}),
         ):
             contributors = self.rocrate_obj.parse_manifest_authors()
