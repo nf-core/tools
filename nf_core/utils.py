@@ -1245,7 +1245,7 @@ def load_tools_config(directory: Path | None = None) -> tuple[Path | None, "NFCo
         raise AssertionError(error_message) from e
 
     # Only pipelines use the Nextflow config here; skip spawning `nextflow config` for modules repositories
-    wf_config = fetch_wf_config(Path(directory)) if nf_core_yaml_config["repository_type"] == "pipeline" else {}
+    wf_config = fetch_wf_config(directory) if nf_core_yaml_config["repository_type"] == "pipeline" else {}
     if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
         # Retrieve information if template from config file is empty
         template = tools_config.get("template")
