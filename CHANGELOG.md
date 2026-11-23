@@ -22,6 +22,7 @@
 - Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
 - make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
 - Make conda-lock path always relative to repo root in `meta.yml` ([#4612](https://github.com/nf-core/tools/pull/4612))
+- fix switching the cached modules repository to a branch that has the same name as a directory, e.g. `subworkflows` ([#4634](https://github.com/nf-core/tools/pull/4634))
 
 ### Template
 
