@@ -117,6 +117,7 @@ class TestROCrate(TestPipelines):
                 "nf_core.pipelines.rocrate.requests.get",
                 side_effect=self._mock_requests_get(orcid_lookup=orcid_lookup),
             ),
+            mock.patch("nf_core.pipelines.rocrate.requests.head", return_value=mock.Mock(ok=True)),
         ):
             self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
 
