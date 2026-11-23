@@ -10,6 +10,7 @@
 - avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
 - limit get_wf_files to only consider files not ignored by git and remove `Pipeline.list_files()` in favour of it ([#4593](https://github.com/nf-core/tools/pull/4593))
 - make docker builds faster ([#4614](https://github.com/nf-core/tools/pull/4614))
+- run the Python tests in CI in 16 groups instead of one job per test file ([#4634](https://github.com/nf-core/tools/pull/4634))
 
 ### Linting
 
@@ -21,6 +22,7 @@
 - Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
 - make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
 - Make conda-lock path always relative to repo root in `meta.yml` ([#4612](https://github.com/nf-core/tools/pull/4612))
+- fix switching the cached modules repository to a branch that has the same name as a directory, e.g. `subworkflows` ([#4634](https://github.com/nf-core/tools/pull/4634))
 
 ### Template
 

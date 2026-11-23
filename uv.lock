@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11, <4"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -1704,6 +1704,7 @@ dev = [
     { name = "pytest-codspeed" },
     { name = "pytest-cov" },
     { name = "pytest-datafiles" },
+    { name = "pytest-split" },
     { name = "pytest-sugar" },
     { name = "pytest-textual-snapshot" },
     { name = "pytest-xdist" },
@@ -1761,6 +1762,7 @@ dev = [
     { name = "pytest-codspeed", specifier = ">=5.0.3" },
     { name = "pytest-cov" },
     { name = "pytest-datafiles" },
+    { name = "pytest-split", specifier = ">=0.11.0" },
     { name = "pytest-sugar", specifier = ">=1.1.1" },
     { name = "pytest-textual-snapshot", specifier = "==1.1.0" },
     { name = "pytest-xdist", specifier = ">=3.7.0" },
@@ -2484,6 +2486,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fc/8d/081ba12c1ea4eb1b899eb61b4501136c233492280fdb70343edcdfdf26ce/pytest_datafiles-3.0.1.tar.gz", hash = "sha256:05fc3eef2429fe26ae42283cccb1f3831b53b12d4bd8b4734bf42973d4af6e16", size = 222220, upload-time = "2026-01-04T15:08:23.287Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4b/23/88880d5dc36eac9696ad40823e37c1fdbfa81a67b9cfd0ed445b3ed7ec54/pytest_datafiles-3.0.1-py3-none-any.whl", hash = "sha256:c48f27a8afec03a482a10587ab5f5ab930ced4cbdeb2e3a2cbcc0323a51d22c7", size = 6357, upload-time = "2026-01-04T15:08:25.132Z" },
+]
+
+[[package]]
+name = "pytest-split"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/16/8af4c5f2ceb3640bb1f78dfdf5c184556b10dfe9369feaaad7ff1c13f329/pytest_split-0.11.0.tar.gz", hash = "sha256:8ebdb29cc72cc962e8eb1ec07db1eeb98ab25e215ed8e3216f6b9fc7ce0ec2b5", size = 13421, upload-time = "2026-02-03T09:14:31.469Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/a1/d4423657caaa8be9b31e491592b49cebdcfd434d3e74512ce71f6ec39905/pytest_split-0.11.0-py3-none-any.whl", hash = "sha256:899d7c0f5730da91e2daf283860eb73b503259cb416851a65599368849c7f382", size = 11911, upload-time = "2026-02-03T09:14:33.708Z" },
 ]
 
 [[package]]

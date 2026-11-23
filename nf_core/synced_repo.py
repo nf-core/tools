@@ -236,13 +236,15 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit, or a branch name
         """
+        # The trailing "--" makes git treat `commit` as a revision, even when a file or directory has the same name
+        # (e.g. a branch called "subworkflows" while a branch with a subworkflows/ directory is checked out)
         try:
-            self.repo.git.checkout(commit)
+            self.repo.git.checkout(commit, "--")
         except GitCommandError as e:
             if self.fullname and "modules" in self.fullname and "would be overwritten by checkout" in str(e):
                 log.debug(f"Discarding local changes in '{self.local_repo_dir}'")
                 self.repo.git.clean("-df")
-                self.repo.git.checkout(commit, force=True)
+                self.repo.git.checkout(commit, "--", force=True)
             else:
                 raise e
 
