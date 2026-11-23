@@ -33,26 +33,13 @@ concurrency:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # The tests (except pipelines/download) are dealt round-robin into this many groups.
+  # Keep in sync with the `group` matrix below.
+  PYTEST_SPLITS: 16
 
 jobs:
-  # create a test matrix based on all python files in /tests
-  list_tests:
-    name: Get test file matrix
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        name: Check out source-code repository
-
-      - name: List tests
-        id: list_tests
-        run: |
-          echo "tests=$(find tests -type f -name "test_*.py" | tac | sed 's/tests\///g'  | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
-    outputs:
-      tests: ${{ steps.list_tests.outputs.tests }}
-
   test:
-    name: Run ${{matrix.test}} with Python ${{ matrix.python-version }} and Nextflow ${{ matrix.nextflow-version }}
-    needs: list_tests
+    name: Run tests (group ${{ matrix.group }}) with Python ${{ matrix.python-version }} and Nextflow ${{ matrix.nextflow-version }}
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
       - runner=4cpu-linux-x64
@@ -60,9 +47,9 @@ jobs:
       matrix:
         # On PRs to main test with 3.11 and 3.14, otherwise just 3.11
         python-version: ${{ github.base_ref == 'main' && fromJson('["3.11", "3.14"]') || fromJson('["3.11"]') }}
-        test: ${{ fromJson(needs.list_tests.outputs.tests).test }}
+        # "download" runs tests/pipelines/download (needs Apptainer), the numbered groups run everything else
+        group: ["download", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         # On push/release test both NF versions, otherwise just 25.10.4
-        # Note: python×nextflow must stay ≤2 with 88 tests to stay under GitHub's 256-config limit
         nextflow-version: ${{ (github.event_name == 'push' || github.event_name == 'release') && fromJson('["25.10.4", "latest-stable"]') || fromJson('["25.10.4"]') }}
       fail-fast: false # run all tests even if one fails
     steps:
@@ -75,22 +62,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         name: Check out source-code repository
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install uv
+      - name: Install uv and Python ${{ matrix.python-version }}
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: uv sync
 
       - name: Set up Apptainer
-        if: ${{ startsWith(matrix.test, 'pipelines/download/') }}
+        if: ${{ matrix.group == 'download' }}
         uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3
 
       - name: Install Nextflow
@@ -110,16 +92,20 @@ jobs:
 
       - name: Test with pytest
         id: pytest
+        env:
+          GROUP: ${{ matrix.group }}
         run: |
-          uv run python -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 -n logical && exit_code=0|| exit_code=$?
-          # don't fail if no tests were collected, e.g. for test_licence.py
-          if [ "${exit_code}" -eq 5 ]; then
-            echo "No tests were collected"
-            exit 0
-          elif [ "${exit_code}" -ne 0 ]; then
-            echo "Tests failed with exit code ${exit_code}"
-            exit 1
+          if [ "${GROUP}" = "download" ]; then
+            test_args=(tests/pipelines/download)
+          else
+            # Without a durations file, least_duration deals the tests round-robin, which spreads
+            # each file's slow tests over all groups
+            test_args=(
+              tests --ignore=tests/pipelines/download
+              --splits "${PYTEST_SPLITS}" --group "${GROUP}" --splitting-algorithm least_duration
+            )
           fi
+          uv run python -m pytest "${test_args[@]}" --color=yes --cov --cov-config=.coveragerc --durations=0 -n logical
 
       - name: Generate coverage XML
         if: always()
@@ -135,17 +121,12 @@ jobs:
           env_vars: MATRIX_TEST
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          MATRIX_TEST: ${{ matrix.test }}
-
-      - name: remove slashes from test name
-        run: |
-          test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
-          echo "test=${test}" >> $GITHUB_ENV
+          MATRIX_TEST: ${{ matrix.group }}
 
       - name: Store snapshot report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
+        if: ${{ always() && steps.pytest.outcome == 'failure' && hashFiles('snapshot_report.html') != '' }}
         with:
           include-hidden-files: true
-          name: Snapshot Report ${{ env.test }}
+          name: Snapshot Report group ${{ matrix.group }} Python ${{ matrix.python-version }} Nextflow ${{ matrix.nextflow-version }}
           path: ./snapshot_report.html
