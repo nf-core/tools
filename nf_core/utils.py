@@ -985,11 +985,12 @@ def is_file_binary(path):
         return True
 
 
-def prompt_remote_pipeline_name(wfs):
+def prompt_remote_pipeline_name(wfs=None):
     """Prompt for the pipeline name with questionary
 
     Args:
         wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
+            If not given, the list of remote workflows is fetched.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -1004,6 +1005,11 @@ def prompt_remote_pipeline_name(wfs):
 
     if not is_interactive():
         raise UserWarning("No pipeline name provided and session is not interactive (no TTY detected).")
+    if wfs is None:
+        import nf_core.pipelines.list
+
+        wfs = nf_core.pipelines.list.Workflows()
+        wfs.get_remote_workflows()
     pipeline = questionary.autocomplete(
         "Pipeline name:",
         choices=[wf.name for wf in wfs.remote_workflows],
