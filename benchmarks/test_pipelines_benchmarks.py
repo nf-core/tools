@@ -3,6 +3,7 @@
 
 def test_pipelines_create(benchmark_cli, tmp_path):
     """`nf-core pipelines create` with all options given, so it doesn't prompt."""
+    outdir = tmp_path / "pipeline"
     benchmark_cli(
         "pipelines",
         "create",
@@ -13,15 +14,15 @@ def test_pipelines_create(benchmark_cli, tmp_path):
         "--author",
         "nf-core",
         "--outdir",
-        tmp_path / "pipeline",
-        "--force",  # every round after the first writes into the same directory
+        outdir,
         rounds=3,
+        clean=outdir,  # every round creates the pipeline from scratch
     )
 
 
 def test_pipelines_lint(benchmark_cli, generated_pipeline):
     """`nf-core pipelines lint` on a freshly created pipeline."""
-    benchmark_cli("pipelines", "lint", "--dir", generated_pipeline, rounds=2, check=False)
+    benchmark_cli("pipelines", "lint", "--dir", generated_pipeline, rounds=2)
 
 
 def test_pipelines_schema_lint(benchmark_cli, generated_pipeline):

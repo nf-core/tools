@@ -28,22 +28,31 @@ def benchmark_cli(benchmark):
     """Benchmark a single `nf-core <args>` invocation.
 
     ``reset=(source, target)`` replaces ``target`` with a copy of ``source`` before
-    every round, for commands that modify the pipeline. Set ``check=False`` for
-    commands that exit non-zero on findings (the linters).
+    every round, for commands that modify the pipeline. ``clean=path`` deletes
+    ``path`` before every round, for commands that must start from scratch.
+    ``expect_output`` is for the linters, which exit 1 on findings: exit code 1 is
+    then accepted only if the output contains it, so a crash can't pass as a speedup.
     """
 
-    def run_benchmark(*args, rounds=5, warmup_rounds=1, reset=None, check=True):
+    def run_benchmark(*args, rounds=5, warmup_rounds=1, reset=None, clean=None, expect_output=None):
         command = [NF_CORE, *map(str, args)]
 
         def target():
-            subprocess.run(command, check=check, capture_output=True, env=_ENV)
+            result = subprocess.run(command, capture_output=True, text=True, env=_ENV)
+            output = result.stdout + result.stderr
+            ok_codes = (0,) if expect_output is None else (0, 1)
+            assert result.returncode in ok_codes, f"exit code {result.returncode}:\n{output}"
+            assert expect_output is None or expect_output in output, f"{expect_output!r} not in output:\n{output}"
 
         def setup():
-            source, dest = reset
-            shutil.rmtree(dest, ignore_errors=True)
-            shutil.copytree(source, dest, symlinks=True)
+            if clean:
+                shutil.rmtree(clean, ignore_errors=True)
+            if reset:
+                source, dest = reset
+                shutil.rmtree(dest, ignore_errors=True)
+                shutil.copytree(source, dest, symlinks=True)
 
-        benchmark.pedantic(target, setup=setup if reset else None, rounds=rounds, warmup_rounds=warmup_rounds)
+        benchmark.pedantic(target, setup=setup if reset or clean else None, rounds=rounds, warmup_rounds=warmup_rounds)
 
     return run_benchmark
 

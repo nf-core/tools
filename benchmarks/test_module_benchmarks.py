@@ -67,5 +67,16 @@ def test_modules_update(benchmark_cli, pipeline_with_outdated_fastqc, tmp_path):
 
 
 def test_modules_lint_all(benchmark_cli, pipeline_with_modules):
-    """`nf-core modules lint --all` in a pipeline."""
-    benchmark_cli(*MODULES, "lint", "--all", "--dir", pipeline_with_modules, rounds=2, check=False)
+    """`nf-core modules lint --all` in a pipeline.
+
+    Template modules can fail lint tests newer than they are, so only require the summary.
+    """
+    benchmark_cli(
+        *MODULES,
+        "lint",
+        "--all",
+        "--dir",
+        pipeline_with_modules,
+        rounds=2,
+        expect_output="LINT RESULTS SUMMARY",
+    )
