@@ -888,22 +888,10 @@ class PipelineSchema:
             return {"type": "integer", "default": p_val}
         if isinstance(p_val, float):
             return {"type": "number", "default": p_val}
-
-        # TODO: remove string branch once old text-format config caches are no longer supported
-        p_val = p_val.strip("\"'")
-        if not p_val or p_val == "null":
+        if p_val == "":
             return {"type": "string"}
-        if p_val in ("true", "True"):
-            return {"type": "boolean", "default": True}
-        if p_val in ("false", "False"):
-            return {"type": "boolean"}
-        try:
-            num = float(p_val)
-            if num == int(num):
-                return {"type": "integer", "default": int(num)}
-            return {"type": "number", "default": num}
-        except ValueError:
-            return {"type": "string", "default": p_val}
+        # A quoted value such as '5' is a String in Nextflow, so it stays a string here
+        return {"type": "string", "default": p_val}
 
     def launch_web_builder(self):
         """

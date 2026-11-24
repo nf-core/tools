@@ -499,17 +499,18 @@ class TestSchema(unittest.TestCase):
 
     def test_build_schema_param_bool(self):
         """Build a new schema param from a config value (bool)"""
-        param = self.schema_obj.build_schema_param("True")
+        param = self.schema_obj.build_schema_param(True)
         assert param == {"type": "boolean", "default": True}
 
     def test_build_schema_param_int(self):
         """Build a new schema param from a config value (int)"""
-        param = self.schema_obj.build_schema_param("12")
+        param = self.schema_obj.build_schema_param(12)
         assert param == {"type": "integer", "default": 12}
+        assert self.schema_obj.build_schema_param("12") == {"type": "string", "default": "12"}
 
     def test_build_schema_param_float(self):
         """Build a new schema param from a config value (float)"""
-        param = self.schema_obj.build_schema_param("12.34")
+        param = self.schema_obj.build_schema_param(12.34)
         assert param == {"type": "number", "default": 12.34}
 
     def test_build_schema(self):
