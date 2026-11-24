@@ -423,6 +423,30 @@ class TestSchema(unittest.TestCase):
         assert len(params_added) == 1
         assert "foo" in params_added
 
+    def test_sanitise_param_default_nullable_types(self):
+        """Nullable types keep a default of their non-null type, and a null default stays null"""
+        for p_type, p_default, expected in [
+            (["number", "null"], 400, 400.0),
+            (["null", "number"], "1.5", 1.5),
+            (["integer", "null"], "5", 5),
+            (["boolean", "null"], "true", True),
+            (["string", "null"], 3, "3"),
+            (["number", "null"], None, None),
+        ]:
+            with self.subTest(p_type=p_type, p_default=p_default):
+                param = self.schema_obj.sanitise_param_default({"type": p_type, "default": p_default})
+                assert param["default"] == expected
+                assert type(param["default"]) is type(expected)
+
+    def test_validate_defaults_nullable_number(self):
+        """A numeric default for a nullable number param passes validation"""
+        self.schema_obj.schema = {"properties": {"foo": {"type": ["number", "null"], "default": 400}}}
+        self.schema_obj.pipeline_params = {"foo": 400}
+        self.schema_obj.no_prompts = True
+        self.schema_obj.get_schema_defaults()
+        assert self.schema_obj.schema_defaults["foo"] == 400
+        self.schema_obj.validate_default_params()
+
     def test_add_schema_found_configs_zero_default(self):
         """Add numeric zero defaults from the config to existing schema params"""
         for p_type, p_val in [("integer", 0), ("number", 0.0)]:

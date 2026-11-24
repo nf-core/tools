@@ -198,8 +198,16 @@ class PipelineSchema:
         if "type" not in param or "default" not in param:
             return param
 
+        # A nullable type such as ["number", "null"] is sanitised like its non-null type
+        param_type = param["type"]
+        if isinstance(param_type, list):
+            if param["default"] is None and "null" in param_type:
+                return param
+            non_null = [t for t in param_type if t != "null"]
+            param_type = non_null[0] if len(non_null) == 1 else None
+
         # Bools
-        if param["type"] == "boolean":
+        if param_type == "boolean":
             if not isinstance(param["default"], bool):
                 param["default"] = param["default"] == "true"
             return param
@@ -210,12 +218,12 @@ class PipelineSchema:
             return param
 
         # Integers
-        if param["type"] == "integer":
+        if param_type == "integer":
             param["default"] = int(param["default"])
             return param
 
         # Numbers
-        if param["type"] == "number":
+        if param_type == "number":
             param["default"] = float(param["default"])
             return param
 
