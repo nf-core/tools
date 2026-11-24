@@ -198,8 +198,14 @@ class PipelineSchema:
         if "type" not in param or "default" not in param:
             return param
 
+        param_types = param["type"] if isinstance(param["type"], list) else [param["type"]]
+        non_null_types = [t for t in param_types if t != "null"]
+
+        if param["default"] is None and "null" in param_types:
+            return param
+
         # Bools
-        if param["type"] == "boolean":
+        if non_null_types == ["boolean"]:
             if not isinstance(param["default"], bool):
                 param["default"] = param["default"] == "true"
             return param
@@ -210,17 +216,30 @@ class PipelineSchema:
             return param
 
         # Integers
-        if param["type"] == "integer":
+        if non_null_types == ["integer"]:
             param["default"] = int(param["default"])
             return param
 
         # Numbers
-        if param["type"] == "number":
+        if non_null_types == ["number"]:
             param["default"] = float(param["default"])
             return param
 
         if param["default"] is None:
             return param
+
+        # Preserve valid typed defaults for multi-type unions (e.g. ["string", "integer"])
+        if len(non_null_types) > 1:
+            if isinstance(param["default"], bool) and "boolean" in non_null_types:
+                return param
+            if (
+                isinstance(param["default"], int)
+                and not isinstance(param["default"], bool)
+                and ("integer" in non_null_types or "number" in non_null_types)
+            ):
+                return param
+            if isinstance(param["default"], float) and "number" in non_null_types:
+                return param
 
         # Strings
         param["default"] = str(param["default"])
@@ -370,14 +389,17 @@ class PipelineSchema:
         Assure that default parameters in the nextflow.config are correctly set
         by comparing them to their type in the schema
         """
+        schema_type = schema_param.get("type")
+        param_types = schema_type if isinstance(schema_type, list) else [schema_type]
+        non_null_types = [t for t in param_types if t != "null"]
 
         # If we have a default in the schema, check it matches the config
         if "default" in schema_param and (  # noqa SIM102
-            (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
+            (non_null_types == ["boolean"] and str(config_default).lower() != str(schema_param["default"]).lower())
             and (str(schema_param["default"]) != str(config_default).strip("'\""))
         ):
             # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
-            if schema_param["type"] != "string" or "{" not in schema_param["default"]:
+            if non_null_types != ["string"] or "{" not in str(schema_param["default"]):
                 self.invalid_nextflow_config_default_parameters[param] = (
                     f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
                 )
@@ -388,20 +410,20 @@ class PipelineSchema:
             return
 
         # Check variable types in nextflow.config
-        if schema_param["type"] == "string" and str(config_default).lower() in ["false", "true", "''"]:
+        if non_null_types == ["string"] and str(config_default).lower() in ["false", "true", "''"]:
             self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
-        if schema_param["type"] == "boolean" and str(config_default).lower() not in ["false", "true"]:
+        if non_null_types == ["boolean"] and str(config_default).lower() not in ["false", "true"]:
             self.invalid_nextflow_config_default_parameters[param] = (
                 f"Booleans should only be true or false, not `{config_default}`"
             )
-        if schema_param["type"] == "integer":
+        if non_null_types == ["integer"]:
             try:
                 int(config_default)
             except ValueError:
                 self.invalid_nextflow_config_default_parameters[param] = (
                     f"Does not look like an integer: `{config_default}`"
                 )
-        if schema_param["type"] == "number":
+        if non_null_types == ["number"]:
             try:
                 float(config_default)
             except ValueError:

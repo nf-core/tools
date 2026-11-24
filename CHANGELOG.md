@@ -14,6 +14,7 @@
 
 ### Linting
 
+- Handle nullable and union JSON Schema types in `PipelineSchema.sanitise_param_default()` and config default validation ([#4637](https://github.com/nf-core/tools/pull/4637))
 - make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
 - respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
 

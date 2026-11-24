@@ -413,6 +413,60 @@ class TestSchema(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.schema_obj.validate_default_params()
 
+    def test_sanitise_param_default_nullable_types(self):
+        """Test sanitising default values for nullable and union JSON Schema types"""
+        cases = [
+            ({"type": ["number", "null"], "default": 400}, 400.0, float),
+            ({"type": ["number", "null"], "default": "3.5"}, 3.5, float),
+            ({"type": ["number", "null"], "default": None}, None, type(None)),
+            ({"type": ["integer", "null"], "default": 400}, 400, int),
+            ({"type": ["integer", "null"], "default": "400"}, 400, int),
+            ({"type": ["integer", "null"], "default": None}, None, type(None)),
+            ({"type": ["boolean", "null"], "default": True}, True, bool),
+            ({"type": ["boolean", "null"], "default": "true"}, True, bool),
+            ({"type": ["boolean", "null"], "default": None}, None, type(None)),
+            ({"type": ["string", "null"], "default": "foo"}, "foo", str),
+            ({"type": ["string", "null"], "default": None}, None, type(None)),
+            ({"type": ["string", "integer"], "default": 42}, 42, int),
+            ({"type": ["string", "number"], "default": 3.5}, 3.5, float),
+        ]
+        for param, expected_val, expected_type in cases:
+            with self.subTest(param=param):
+                result = self.schema_obj.sanitise_param_default(dict(param))
+                assert result["default"] == expected_val
+                assert isinstance(result["default"], expected_type)
+
+    def test_validate_defaults_nullable_numeric(self):
+        """Test validating defaults for nullable numeric schema parameters"""
+        self.schema_obj.schema = {
+            "properties": {
+                "num_param": {"type": ["number", "null"], "default": 400},
+                "int_param": {"type": ["integer", "null"], "default": 10},
+                "null_num": {"type": ["number", "null"], "default": None},
+                "bool_param": {"type": ["boolean", "null"], "default": True},
+            }
+        }
+        self.schema_obj.pipeline_params = {
+            "num_param": 400,
+            "int_param": 10,
+            "null_num": None,
+            "bool_param": True,
+        }
+        self.schema_obj.no_prompts = True
+        self.schema_obj.get_schema_defaults()
+        self.schema_obj.validate_default_params()
+        assert self.schema_obj.schema_defaults["num_param"] == 400.0
+        assert self.schema_obj.schema_defaults["int_param"] == 10
+        assert "null_num" not in self.schema_obj.schema_defaults
+        assert self.schema_obj.schema_defaults["bool_param"] is True
+        assert self.schema_obj.invalid_nextflow_config_default_parameters == {}
+
+        # Invalid non-numeric config default for nullable numeric parameter is caught
+        self.schema_obj.validate_config_default_parameter(
+            "num_param", {"type": ["number", "null"], "default": 400}, "not_a_number"
+        )
+        assert "num_param" in self.schema_obj.invalid_nextflow_config_default_parameters
+
     def test_add_schema_found_configs(self):
         """Try adding a new parameter to the schema from the config"""
         self.schema_obj.pipeline_params = {"foo": "bar"}
