@@ -67,21 +67,21 @@ class SyncedRepo:
     _component_listing_cache: dict[tuple[str, str], list[str]] = {}
 
     @staticmethod
-    def local_repo_synced(repo_name):
+    def local_repo_synced(repo_name: str) -> bool:
         """
         Checks whether a local repo has been cloned/pull in the current session
         """
         return SyncedRepo.local_repo_statuses.get(repo_name, False)
 
     @staticmethod
-    def update_local_repo_status(repo_name, up_to_date):
+    def update_local_repo_status(repo_name: str, up_to_date: bool) -> None:
         """
         Updates the clone/pull status of a local repo
         """
         SyncedRepo.local_repo_statuses[repo_name] = up_to_date
 
     @staticmethod
-    def get_remote_branches(remote_url):
+    def get_remote_branches(remote_url: str) -> set[str]:
         """
         Get all branches from a remote repository
 
@@ -92,7 +92,7 @@ class SyncedRepo:
             (set[str]): All branches found in the remote
         """
         try:
-            unparsed_branches = git.Git().ls_remote(remote_url)
+            unparsed_branches = cast(str, git.Git().ls_remote(remote_url))
         except git.GitCommandError as e:
             raise LookupError(f"Was unable to fetch branches from '{remote_url}'") from e
         else:
@@ -117,9 +117,9 @@ class SyncedRepo:
         if remote_url is None:
             remote_url = NF_CORE_MODULES_REMOTE
 
-        self.remote_url = remote_url
-        self.fullname = None
-        self.local_repo_dir = None
+        self.remote_url: str = remote_url
+        self.fullname: str | None = None
+        self.local_repo_dir: Path | None = None
 
         self.repo = None
         # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
@@ -286,7 +286,6 @@ class SyncedRepo:
             component_type (str): Either 'modules' or 'subworkflows'
 
         Returns:
-            component_path (str): The path of the module/subworkflow in the local copy of the repository
             component_path (Path): The path of the module/subworkflow in the local copy of the repository
         """
         if self.local_repo_dir is None:
@@ -395,12 +394,14 @@ class SyncedRepo:
             if item.mode & 0o111:
                 target.chmod(0o755)
 
-    def component_files_identical(self, component_name, base_path, commit, component_type):
+    def component_files_identical(
+        self, component_name: str, base_path: Path, commit: str | None, component_type: str
+    ) -> dict[str, bool]:
         """
         Checks whether the module or subworkflow files in a pipeline are identical to the ones in the remote
         Args:
             component_name (str): The name of the module or subworkflow
-            base_path (str): The path to the module/subworkflow in the pipeline
+            base_path (Path): The path to the module/subworkflow in the pipeline
             commit (str | None): The commit to compare against, or None for the tip of the branch
 
         Returns:

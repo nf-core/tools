@@ -54,6 +54,8 @@ class ModulesRepo(SyncedRepo):
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
+        if self.local_repo_dir is None:
+            raise LookupError("Failed to set up local cache of modules repository")
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
         if config_fn is None or repo_config is None:
@@ -80,14 +82,14 @@ class ModulesRepo(SyncedRepo):
             gitless_repo_url = gitless_repo_url[:-4]
         return gitless_repo_url
 
-    def setup_local_repo(self, remote, branch, hide_progress=True, in_cache=False):
+    def setup_local_repo(self, remote_url, branch, hide_progress=True, in_cache=False):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
         the provided remote URL and returns a git.Repo of the new clone.
 
         Args:
-            remote (str): git url of remote
+            remote_url (str): git url of remote
             branch (str): name of branch to use
         Sets self.repo
         """
@@ -104,13 +106,13 @@ class ModulesRepo(SyncedRepo):
                     )
                     with pbar:
                         self.repo = git.Repo.clone_from(
-                            remote,
+                            remote_url,
                             self.local_repo_dir,
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                     ModulesRepo.update_local_repo_status(self.fullname, True)
                 except GitCommandError as e:
-                    raise LookupError(f"Failed to clone from the remote: `{remote}`") from e
+                    raise LookupError(f"Failed to clone from the remote: `{remote_url}`") from e
                 # Verify that the requested branch exists by checking it out
                 self.setup_branch(branch)
             else:
@@ -147,6 +149,6 @@ class ModulesRepo(SyncedRepo):
             if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
                 log.info(f"Removing '{self.local_repo_dir}'")
                 shutil.rmtree(self.local_repo_dir)
-                self.setup_local_repo(remote, branch, hide_progress)
+                self.setup_local_repo(remote_url, branch, hide_progress, in_cache)
             else:
                 raise LookupError("Exiting due to error with local modules git repo") from e
