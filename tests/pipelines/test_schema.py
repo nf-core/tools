@@ -413,6 +413,32 @@ class TestSchema(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.schema_obj.validate_default_params()
 
+    def test_get_param_type(self):
+        """Test resolving a param's type when it is a string or a list"""
+        assert nf_core.pipelines.schema.get_param_type({"type": "number"}) == "number"
+        assert nf_core.pipelines.schema.get_param_type({"type": ["number", "null"]}) == "number"
+        assert nf_core.pipelines.schema.get_param_type({"type": ["integer", "string"]}) is None
+        assert nf_core.pipelines.schema.get_param_type({}) is None
+
+    def test_sanitise_param_default_nullable(self):
+        """Test that nullable types keep correctly typed defaults (nf-core/tools#4636)"""
+        sanitise = self.schema_obj.sanitise_param_default
+        assert sanitise({"type": ["number", "null"], "default": 400})["default"] == 400.0
+        assert sanitise({"type": ["integer", "null"], "default": "5"})["default"] == 5
+        assert sanitise({"type": ["boolean", "null"], "default": "true"})["default"] is True
+        assert sanitise({"type": ["integer", "null"], "default": None})["default"] is None
+
+    def test_validate_defaults_nullable_number(self):
+        """Test that a nullable number with a numeric default passes default validation (nf-core/tools#4636)"""
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": ["number", "null"], "default": 400}},
+        }
+        self.schema_obj.get_schema_defaults()
+        self.schema_obj.pipeline_params = {"foo": 400}
+        self.schema_obj.no_prompts = True
+        self.schema_obj.validate_default_params()
+        assert self.schema_obj.invalid_nextflow_config_default_parameters == {}
+
     def test_add_schema_found_configs(self):
         """Try adding a new parameter to the schema from the config"""
         self.schema_obj.pipeline_params = {"foo": "bar"}

@@ -198,8 +198,14 @@ class PipelineSchema:
         if "type" not in param or "default" not in param:
             return param
 
+        param_type = get_param_type(param)
+
+        # Nullable types accept a null default as-is
+        if param["default"] is None and isinstance(param["type"], list) and "null" in param["type"]:
+            return param
+
         # Bools
-        if param["type"] == "boolean":
+        if param_type == "boolean":
             if not isinstance(param["default"], bool):
                 param["default"] = param["default"] == "true"
             return param
@@ -210,12 +216,12 @@ class PipelineSchema:
             return param
 
         # Integers
-        if param["type"] == "integer":
+        if param_type == "integer":
             param["default"] = int(param["default"])
             return param
 
         # Numbers
-        if param["type"] == "number":
+        if param_type == "number":
             param["default"] = float(param["default"])
             return param
 
@@ -255,11 +261,11 @@ class PipelineSchema:
         """Get a list of all parameter types in the schema"""
         for name, param in self.schema.get("properties", {}).items():
             if "type" in param:
-                self.schema_types[name] = param["type"]
+                self.schema_types[name] = get_param_type(param)
         for _, definition in self.schema.get(self.defs_notation, {}).items():
             for name, param in definition.get("properties", {}).items():
                 if "type" in param:
-                    self.schema_types[name] = param["type"]
+                    self.schema_types[name] = get_param_type(param)
 
     def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
@@ -370,14 +376,15 @@ class PipelineSchema:
         Assure that default parameters in the nextflow.config are correctly set
         by comparing them to their type in the schema
         """
+        param_type = get_param_type(schema_param)
 
         # If we have a default in the schema, check it matches the config
         if "default" in schema_param and (  # noqa SIM102
-            (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
+            (param_type == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
             and (str(schema_param["default"]) != str(config_default).strip("'\""))
         ):
             # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
-            if schema_param["type"] != "string" or "{" not in schema_param["default"]:
+            if param_type != "string" or "{" not in schema_param["default"]:
                 self.invalid_nextflow_config_default_parameters[param] = (
                     f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
                 )
@@ -388,20 +395,20 @@ class PipelineSchema:
             return
 
         # Check variable types in nextflow.config
-        if schema_param["type"] == "string" and str(config_default).lower() in ["false", "true", "''"]:
+        if param_type == "string" and str(config_default).lower() in ["false", "true", "''"]:
             self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
-        if schema_param["type"] == "boolean" and str(config_default).lower() not in ["false", "true"]:
+        if param_type == "boolean" and str(config_default).lower() not in ["false", "true"]:
             self.invalid_nextflow_config_default_parameters[param] = (
                 f"Booleans should only be true or false, not `{config_default}`"
             )
-        if schema_param["type"] == "integer":
+        if param_type == "integer":
             try:
                 int(config_default)
             except ValueError:
                 self.invalid_nextflow_config_default_parameters[param] = (
                     f"Does not look like an integer: `{config_default}`"
                 )
-        if schema_param["type"] == "number":
+        if param_type == "number":
             try:
                 float(config_default)
             except ValueError:
@@ -1025,6 +1032,21 @@ class PipelineSchema:
                 f"Pipeline schema builder returned unexpected status ({web_response['status']}): "
                 f"{self.web_schema_build_api_url}\n See verbose log for full response"
             )
+
+
+def get_param_type(param: dict) -> str | None:
+    """
+    Return the single non-null JSON schema type of a param, e.g. "number" for both
+    ``"number"`` and ``["number", "null"]``. Returns None if there is no type or several non-null types.
+    """
+    param_type = param.get("type")
+    if isinstance(param_type, str):
+        return param_type
+    if isinstance(param_type, list):
+        non_null = [t for t in param_type if t != "null"]
+        if len(non_null) == 1:
+            return non_null[0]
+    return None
 
 
 def strip_required(node):
