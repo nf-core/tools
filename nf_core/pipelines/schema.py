@@ -151,13 +151,18 @@ class PipelineSchema:
             log.error(error)
             raise AssertionError(error)
 
-    def load_lint_schema(self):
-        """Load and lint a given schema to see if it looks valid"""
+    def load_lint_schema(self, check_defaults: bool = True) -> None:
+        """Load and lint a given schema to see if it looks valid
+
+        Args:
+            check_defaults: Also validate the schema and config defaults (skipped by `schema build`, which fixes them)
+        """
         try:
             self.load_schema()
             num_params = self.validate_schema()
             self.get_schema_defaults()
-            self.validate_default_params()
+            if check_defaults:
+                self.validate_default_params()
             if len(self.invalid_nextflow_config_default_parameters) > 0:
                 params = "\n --".join(
                     [f"{param}: {msg}" for param, msg in self.invalid_nextflow_config_default_parameters.items()]
@@ -190,18 +195,19 @@ class PipelineSchema:
             raise AssertionError("Schema missing top-level `$schema` attribute")
         log.debug(f"JSON file loaded: {self.schema_filename}")
 
-    def sanitise_param_default(self, param):
+    def sanitise_param_default(self, param: dict) -> dict:
         """
-        Given a param, ensure that the default value is the correct variable type
+        Given a param, ensure that the default value is the correct variable type.
+        Only for schemas that come back from the web launcher, which returns everything as strings.
         """
         if "type" not in param or "default" not in param:
             return param
 
-        param_type = get_param_type(param)
-
-        # Nullable types accept a null default as-is
-        if param["default"] is None and isinstance(param["type"], list) and "null" in param["type"]:
+        # Nothing to convert (and int(None)/float(None) would raise)
+        if param["default"] is None:
             return param
+
+        param_type = get_param_type(param)
 
         # Bools
         if param_type == "boolean":
@@ -224,11 +230,9 @@ class PipelineSchema:
             param["default"] = float(param["default"])
             return param
 
-        if param["default"] is None:
-            return param
-
-        # Strings
-        param["default"] = str(param["default"])
+        # Strings (types like ["number", "string"] are left as they are)
+        if param_type == "string":
+            param["default"] = str(param["default"])
         return param
 
     def get_schema_defaults(self) -> None:
@@ -241,20 +245,16 @@ class PipelineSchema:
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
             self.schema_params[p_key] = ("properties", p_key)
-            if "default" in param:
-                param = self.sanitise_param_default(param)
-                if param["default"] is not None:
-                    self.schema_defaults[p_key] = param["default"]
+            if param.get("default") is not None:
+                self.schema_defaults[p_key] = param["default"]
 
         # TODO add support for nested parameters
         # Grouped schema properties in subschema definitions
         for defn_name, definition in self.schema.get(self.defs_notation, {}).items():
             for p_key, param in definition.get("properties", {}).items():
                 self.schema_params[p_key] = (self.defs_notation, defn_name, "properties", p_key)
-                if "default" in param:
-                    param = self.sanitise_param_default(param)
-                    if param["default"] is not None:
-                        self.schema_defaults[p_key] = param["default"]
+                if param.get("default") is not None:
+                    self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
@@ -669,9 +669,9 @@ class PipelineSchema:
                 log.info("Please ask for help on the nf-core Slack")
                 return False
         else:
-            # Schema found - load and validate
+            # Schema found - load and validate; wrong defaults are fixed from the config below
             try:
-                self.load_lint_schema()
+                self.load_lint_schema(check_defaults=False)
             except AssertionError:
                 log.error(f"Existing pipeline schema found, but it is invalid: {self.schema_filename}")
                 log.info("Please fix or delete this file, then try again.")

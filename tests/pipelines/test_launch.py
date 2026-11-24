@@ -204,6 +204,13 @@ class TestLaunch(TestPipelines):
         assert "-name" not in self.launcher.nxf_flags
         assert self.launcher.schema_obj.input_params["igenomes_ignore"] is True
 
+    def test_sanitise_web_response_schema_defaults(self):
+        """Check that string defaults in the schema returned by the web launcher are converted to their types"""
+        self.launcher.get_pipeline_schema()
+        self.launcher.schema_obj.schema["properties"] = {"foo": {"type": "boolean", "default": "true"}}
+        self.launcher.sanitise_web_response()
+        assert self.launcher.schema_obj.schema["properties"]["foo"]["default"] is True
+
     def test_ob_to_questionary_bool(self):
         """Check converting a python dict to a pyenquirer format - booleans"""
         sc_obj = {

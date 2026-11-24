@@ -401,11 +401,13 @@ class Launch:
         # Collect questionary objects for each defined input_param
         questionary_objects = {}
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
+            self.schema_obj.sanitise_param_default(param_obj)
             questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         definitions_schemas = self.schema_obj.schema.get("$defs", self.schema_obj.schema.get("definitions", {})).items()
         for _, definition in definitions_schemas:
             for param_id, param_obj in definition.get("properties", {}).items():
+                self.schema_obj.sanitise_param_default(param_obj)
                 questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
