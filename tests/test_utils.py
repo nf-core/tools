@@ -1,5 +1,6 @@
 """Tests covering for utility functions."""
 
+import hashlib
 import json
 import os
 import sys
@@ -263,6 +264,32 @@ class TestUtils(TestPipelines):
         config = nf_core.utils.fetch_wf_config(Path(), False)
         assert "params" in config
         assert config["params"].get("param2") == "foo"
+
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.run_cmd")
+    def test_fetch_wf_config_ignores_old_format_cache(self, tmpdir, mock_run_cmd):
+        """A cache written before the `-o json` switch (no format tag) is not loaded."""
+        tmpdir = Path(tmpdir)
+        wf_path = tmpdir / "wf"
+        wf_path.mkdir()
+        (wf_path / "nextflow.config").write_text("params.foo = 'bar'\n")
+        nxf_home = tmpdir / ".nextflow"
+        (nxf_home / "nf-core").mkdir(parents=True)
+        # same name as the old cache file for this pipeline, holding `-flat` style keys
+        old_hash = hashlib.sha256(
+            hashlib.sha256((wf_path / "nextflow.config").read_bytes()).hexdigest().encode("utf-8")
+        ).hexdigest()
+        old_cache = nxf_home / "nf-core" / f"wf-config-cache-{old_hash[:25]}.json"
+        old_cache.write_text(json.dumps({"params.foo": "'bar'"}))
+
+        mock_run_cmd.return_value = (b'{"params": {"foo": "bar"}}', b"")
+        with mock.patch.dict(os.environ, {"NXF_HOME": str(nxf_home)}):
+            config = nf_core.utils.fetch_wf_config(wf_path)
+            assert config["params"] == {"foo": "bar"}
+            mock_run_cmd.assert_called_once()
+            # the new cache is used on the next call
+            assert nf_core.utils.fetch_wf_config(wf_path) == config
+            mock_run_cmd.assert_called_once()
 
     @with_temporary_folder
     def test_get_wf_files(self, tmpdir):

@@ -4,6 +4,9 @@
 
 ### General
 
+### General
+
+- tag the `nextflow config` cache file with its format, so a cache written by nf-core/tools < 4.1 (`-flat` output) is no longer loaded ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
 - Preserve zero config defaults when adding defaults to existing schema parameters. ([#4620](https://github.com/nf-core/tools/pull/4620))
 - Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
 - Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#4619](https://github.com/nf-core/tools/pull/4619))

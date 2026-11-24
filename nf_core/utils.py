@@ -463,6 +463,9 @@ def read_module_name(main_nf: Path) -> str | None:
     return match.group(1) if match else None
 
 
+WF_CONFIG_CACHE_FORMAT = "json"
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -506,7 +509,9 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     # Hash the hash
     if len(concat_hash) > 0:
         bighash = hashlib.sha256(concat_hash.encode("utf-8")).hexdigest()
-        cache_fn = f"wf-config-cache-{bighash[:25]}.json"
+        # The format tag keeps a cache written in an older format (`nextflow config -flat`)
+        # from being read back; bump it when the cached structure changes.
+        cache_fn = f"wf-config-cache-{WF_CONFIG_CACHE_FORMAT}-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
         cache_path = Path(cache_basedir, cache_fn)
