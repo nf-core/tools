@@ -18,7 +18,7 @@
 
 ### Linting
 
-- keep numeric defaults for nullable parameter types such as `["number", "null"]` when sanitising schema defaults ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
+- keep numeric defaults for nullable parameter types such as `["number", "null"]` when sanitising schema defaults ([#4639](https://github.com/nf-core/tools/pull/4639))
 - make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
 - respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
 
