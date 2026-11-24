@@ -573,7 +573,10 @@ class Launch:
             nice_param_id = f"--{param_id}" if not param_id.startswith("-") else param_id
             self.print_param_header(nice_param_id, param_obj)
 
-        if param_obj.get("type") == "boolean":
+        # Resolve nullable types such as ["number", "null"] to "number"
+        param_type = nf_core.pipelines.schema.get_param_type(param_obj)
+
+        if param_type == "boolean":
             question["type"] = "list"
             question["choices"] = ["True", "False"]
             question["default"] = "False"
@@ -581,14 +584,14 @@ class Launch:
         # Start with the default from the param object
         if "default" in param_obj:
             # Boolean default is cast back to a string later - this just normalises all inputs
-            if param_obj["type"] == "boolean" and isinstance(param_obj["default"], str):
+            if param_type == "boolean" and isinstance(param_obj["default"], str):
                 question["default"] = param_obj["default"].lower() == "true"
             else:
                 question["default"] = param_obj["default"]
 
         # Overwrite default with parsed schema, includes --params-in etc
         if self.schema_obj is not None and param_id in self.schema_obj.input_params:
-            if param_obj["type"] == "boolean" and isinstance(self.schema_obj.input_params[param_id], str):
+            if param_type == "boolean" and isinstance(self.schema_obj.input_params[param_id], str):
                 question["default"] = self.schema_obj.input_params[param_id].lower() == "true"
             else:
                 question["default"] = self.schema_obj.input_params[param_id]
@@ -601,7 +604,7 @@ class Launch:
         if "default" in question:
             question["default"] = str(question["default"])
 
-        if param_obj.get("type") == "boolean":
+        if param_type == "boolean":
             # Filter returned value
             def filter_boolean(val):
                 if isinstance(val, bool):
@@ -610,7 +613,7 @@ class Launch:
 
             question["filter"] = filter_boolean
 
-        if param_obj.get("type") == "number":
+        if param_type == "number":
             # Validate number type
             def validate_number(val):
                 try:
@@ -636,7 +639,7 @@ class Launch:
 
             question["filter"] = filter_number
 
-        if param_obj.get("type") == "integer":
+        if param_type == "integer":
             # Validate integer type
             def validate_integer(val):
                 try:
