@@ -428,16 +428,37 @@ class TestSchema(unittest.TestCase):
         assert sanitise({"type": ["boolean", "null"], "default": "true"})["default"] is True
         assert sanitise({"type": ["integer", "null"], "default": None})["default"] is None
 
-    def test_validate_defaults_nullable_number(self):
-        """Test that a nullable number with a numeric default passes default validation (nf-core/tools#4636)"""
+    def test_validate_config_defaults_against_schema(self):
+        """Test that config defaults are checked with the schema's own rules, including nullable types (nf-core/tools#4636)"""
         self.schema_obj.schema = {
-            "properties": {"foo": {"type": ["number", "null"], "default": 400}},
+            "$defs": {
+                "group": {
+                    "properties": {
+                        "mode": {"type": "string", "enum": ["fast", "slow"]},
+                        "flag": {"type": "boolean"},
+                        "count": {"type": ["integer", "null"]},
+                        "name": {"type": "string"},
+                        "size": {"type": ["number", "null"], "default": 400},
+                    }
+                }
+            },
+            "allOf": [{"$ref": "#/$defs/group"}],
         }
         self.schema_obj.get_schema_defaults()
-        self.schema_obj.pipeline_params = {"foo": 400}
+        self.schema_obj.pipeline_params = {
+            "mode": "medium",
+            "flag": "true",
+            "count": None,
+            "name": "false",
+            "size": 400,
+        }
         self.schema_obj.no_prompts = True
         self.schema_obj.validate_default_params()
-        assert self.schema_obj.invalid_nextflow_config_default_parameters == {}
+        invalid = self.schema_obj.invalid_nextflow_config_default_parameters
+        assert invalid.keys() == {"mode", "flag", "name"}
+        assert "is not one of" in invalid["mode"]
+        assert "is not of type 'boolean'" in invalid["flag"]
+        assert invalid["name"] == "String should not be set to `false`"
 
     def test_add_schema_found_configs(self):
         """Try adding a new parameter to the schema from the config"""

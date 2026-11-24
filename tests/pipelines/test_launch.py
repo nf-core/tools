@@ -237,6 +237,15 @@ class TestLaunch(TestPipelines):
         assert result["filter"]("123.456") == 123.456
         assert result["filter"]("") == ""
 
+    def test_ob_to_questionary_nullable(self):
+        """Check that nullable types get the same prompt as their non-null type"""
+        number = self.launcher.single_param_to_questionary("foo", {"type": ["number", "null"], "default": 0.1})
+        assert number["validate"]("abc") == "Must be a number"
+        assert number["filter"]("400") == 400.0
+        boolean = self.launcher.single_param_to_questionary("bar", {"type": ["boolean", "null"], "default": True})
+        assert boolean["type"] == "list"
+        assert boolean["filter"]("true") is True
+
     def test_ob_to_questionary_integer(self):
         """Check converting a python dict to a pyenquirer format - with enum"""
         sc_obj = {"type": "integer", "default": 1}

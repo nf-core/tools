@@ -33,7 +33,6 @@ class PipelineSchema:
         self.pipeline_dir = ""
         self._schema_filename = ""
         self.schema_defaults = {}
-        self.schema_types = {}
         self.schema_params = {}
         self.input_params = {}
         self.pipeline_params = {}
@@ -257,16 +256,6 @@ class PipelineSchema:
                     if param["default"] is not None:
                         self.schema_defaults[p_key] = param["default"]
 
-    def get_schema_types(self) -> None:
-        """Get a list of all parameter types in the schema"""
-        for name, param in self.schema.get("properties", {}).items():
-            if "type" in param:
-                self.schema_types[name] = get_param_type(param)
-        for _, definition in self.schema.get(self.defs_notation, {}).items():
-            for name, param in definition.get("properties", {}).items():
-                if "type" in param:
-                    self.schema_types[name] = get_param_type(param)
-
     def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
         # Write results to a JSON file
@@ -327,11 +316,10 @@ class PipelineSchema:
         """
         if self.schema is None:
             log.error("[red][✗] Pipeline schema not found")
-        try:
-            jsonschema.validate(self.schema_defaults, strip_required(self.schema))
-        except jsonschema.exceptions.ValidationError as e:
-            log.debug(f"Complete error message:\n{e}")
-            raise AssertionError(f"Default parameters are invalid: {e.message}") from e
+        validator = jsonschema.validators.validator_for(self.schema)(strip_required(self.schema))
+        if error := jsonschema.exceptions.best_match(validator.iter_errors(self.schema_defaults)):
+            log.debug(f"Complete error message:\n{error}")
+            raise AssertionError(f"Default parameters are invalid: {error.message}")
         for param, default in self.schema_defaults.items():
             if default in ("null", "", None, "None") or default is False:
                 log.warning(
@@ -343,77 +331,27 @@ class PipelineSchema:
         if self.pipeline_params == {}:
             self.get_wf_params()
 
-        # Go over group keys
-        for _group_key, group in self.schema.get(self.defs_notation, {}).items():
-            group_properties = group.get("properties")
-            for param in group_properties:
-                if param in self.ignored_params:
-                    continue
-                if param in self.pipeline_params:
-                    self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
-                else:
-                    self.invalid_nextflow_config_default_parameters[param] = (
-                        "Not in pipeline parameters. Check `nextflow.config`."
-                    )
-
-        # Go over ungrouped params if any exist
-        ungrouped_properties = self.schema.get("properties")
-        if ungrouped_properties:
-            for param in ungrouped_properties:
-                if param in self.ignored_params:
-                    continue
-                if param in self.pipeline_params:
-                    self.validate_config_default_parameter(
-                        param, ungrouped_properties[param], self.pipeline_params[param]
-                    )
-                else:
-                    self.invalid_nextflow_config_default_parameters[param] = (
-                        "Not in pipeline parameters. Check `nextflow.config`."
-                    )
-
-    def validate_config_default_parameter(self, param, schema_param, config_default):
-        """
-        Assure that default parameters in the nextflow.config are correctly set
-        by comparing them to their type in the schema
-        """
-        param_type = get_param_type(schema_param)
-
-        # If we have a default in the schema, check it matches the config
-        if "default" in schema_param and (  # noqa SIM102
-            (param_type == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
-            and (str(schema_param["default"]) != str(config_default).strip("'\""))
-        ):
-            # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
-            if param_type != "string" or "{" not in schema_param["default"]:
+        config_defaults = {}
+        for param in self.schema_params:
+            if param in self.ignored_params:
+                continue
+            if param not in self.pipeline_params:
                 self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                    "Not in pipeline parameters. Check `nextflow.config`."
                 )
-                return
+            elif self.pipeline_params[param] is not None:
+                config_defaults[param] = self.pipeline_params[param]
 
-        # if default is null, we're good
-        if config_default is None or config_default == "null":
-            return
+        # `nextflow config -o json` types plain values (numbers, booleans, null), so the schema itself can check them
+        for error in validator.iter_errors(config_defaults):
+            if error.path:
+                self.invalid_nextflow_config_default_parameters.setdefault(error.path[0], error.message)
 
-        # Check variable types in nextflow.config
-        if param_type == "string" and str(config_default).lower() in ["false", "true", "''"]:
-            self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
-        if param_type == "boolean" and str(config_default).lower() not in ["false", "true"]:
-            self.invalid_nextflow_config_default_parameters[param] = (
-                f"Booleans should only be true or false, not `{config_default}`"
-            )
-        if param_type == "integer":
-            try:
-                int(config_default)
-            except ValueError:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Does not look like an integer: `{config_default}`"
-                )
-        if param_type == "number":
-            try:
-                float(config_default)
-            except ValueError:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Does not look like a number (float): `{config_default}`"
+        # nf-core convention that the schema can't express
+        for param, config_default in config_defaults.items():
+            if isinstance(config_default, str) and config_default.lower() in {"", "true", "false"}:
+                self.invalid_nextflow_config_default_parameters.setdefault(
+                    param, f"String should not be set to `{config_default}`"
                 )
 
     def validate_schema(self, schema=None):
