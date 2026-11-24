@@ -182,7 +182,7 @@ class PipelineSchema:
             log.error(error_msg)
             raise AssertionError(error_msg) from e
 
-    def load_schema(self):
+    def load_schema(self) -> None:
         """Load a pipeline schema from a file"""
         if self.schema_filename is None or not Path(self.schema_filename).exists():
             raise AssertionError("Pipeline schema filename could not be found.")
@@ -256,8 +256,10 @@ class PipelineSchema:
                 if param.get("default") is not None:
                     self.schema_defaults[p_key] = param["default"]
 
-    def save_schema(self, suppress_logging=False):
+    def save_schema(self, suppress_logging: bool = False) -> None:
         """Save a pipeline schema to a file"""
+        if not self.schema_filename:
+            raise AssertionError("Cannot save pipeline schema: no schema filename set")
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
         num_params += sum(len(d.get("properties", {})) for d in self.schema.get(self.defs_notation, {}).values())
@@ -265,7 +267,7 @@ class PipelineSchema:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         dump_json_with_prettier(self.schema_filename, self.schema)
 
-    def load_input_params(self, params_path):
+    def load_input_params(self, params_path: Path) -> None:
         """Load a given a path to a parameters file (JSON/YAML)
 
         These should be input parameters used to run a pipeline with
