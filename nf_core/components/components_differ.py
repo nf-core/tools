@@ -195,6 +195,9 @@ class ComponentsDiffer:
                     fh.write(f"Changes in '{Path(component, file)}':\n")
                     for line in diff:
                         fh.write(line)
+                        if not line.endswith("\n"):
+                            # The file has no final newline: end the line and mark it, as diff does
+                            fh.write("\n\\ No newline at end of file\n")
                     fh.write("\n")
 
             fh.write("*" * 60 + "\n")
@@ -374,8 +377,17 @@ class ComponentsDiffer:
         new_lines = []
         old_partial = []
         new_partial = []
+        last_kind = None
         # First two lines indicate the file names, the third line is the first hunk
         for line in patch[3:]:
+            if line.startswith("\\"):
+                # '\ No newline at end of file': the previous line has no final newline
+                if last_kind in (" ", "-") and old_partial:
+                    old_partial[-1] = old_partial[-1].removesuffix("\n")
+                if last_kind in (" ", "+") and new_partial:
+                    new_partial[-1] = new_partial[-1].removesuffix("\n")
+                continue
+            last_kind = line[:1]
             if line.startswith("@"):
                 old_lines.append(old_partial)
                 new_lines.append(new_partial)
