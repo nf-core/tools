@@ -4,9 +4,16 @@
 
 ### General
 
+- Preserve zero config defaults when adding defaults to existing schema parameters. ([#4620](https://github.com/nf-core/tools/pull/4620))
+- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
+- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#4619](https://github.com/nf-core/tools/pull/4619))
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
 - add type hints to commands. Fix a comment in template sync PR when no blog post given. ([#4594](https://github.com/nf-core/tools/pull/4594))
+- avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
+- limit get_wf_files to only consider files not ignored by git and remove `Pipeline.list_files()` in favour of it ([#4593](https://github.com/nf-core/tools/pull/4593))
+- make docker builds faster ([#4614](https://github.com/nf-core/tools/pull/4614))
+- don't run `nextflow config` when loading the `.nf-core.yml` of a non-pipeline repository ([#4632](https://github.com/nf-core/tools/pull/4632))
 
 ### Linting
 
@@ -17,6 +24,9 @@
 
 - Add license header to module and subworkflow `main.nf` templates ([#4511](https://github.com/nf-core/tools/pull/4511))
 - make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
+- Fix lint and update crash when a module patch removes `---` ([#4617](https://github.com/nf-core/tools/pull/4617))
+- Make conda-lock path always relative to repo root in `meta.yml` ([#4612](https://github.com/nf-core/tools/pull/4612))
+- speed up installing and updating modules and subworkflows by reading files from git instead of checking out old commits ([#4633](https://github.com/nf-core/tools/pull/4633))
 
 ### Template
 
@@ -25,6 +35,8 @@
 - match the nf-schema version in `awsfulltest.yml`, have the `block-pipeline-outdir` hook check the files passed by pre-commit instead of the staged diff, and correct the `upload-artifact` version comments in `nf-test.yml` ([#4570](https://github.com/nf-core/tools/pull/4570))
 - Let running tasks finish when a task fails on its last retry, instead of terminating the run ([#4506](https://github.com/nf-core/tools/pull/4506))
 - remove double space in branch.yml ([#4595](https://github.com/nf-core/tools/pull/4595))
+- cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
+- skip `latest-everything` nf-test runs on PRs to `main`/`master` ([#4393](https://github.com/nf-core/tools/pull/4393))
 
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 

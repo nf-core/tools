@@ -396,8 +396,8 @@ class ModulesJson:
     def find_correct_commit_sha(
         self,
         component_type: str,
-        component_name: str | Path,
-        component_path: str | Path,
+        component_name: str,
+        component_path: Path,
         modules_repo: ModulesRepo,
     ) -> str | None:
         """

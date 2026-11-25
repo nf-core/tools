@@ -289,7 +289,6 @@ class Pipeline:
         conda_config (dict): The parsed conda configuration file content (``environment.yml``).
         conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
         nf_config (dict): The Nextflow pipeline configuration file content.
-        files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
         wf_path (str): Path to the pipeline directory.
@@ -304,7 +303,6 @@ class Pipeline:
         self.conda_config: dict = {}
         self.conda_package_info: dict = {}
         self.nf_config: dict = {}
-        self.files: list[Path] = []
         self.git_sha: str | None = None
         self.minNextflowVersion: str | None = None
         self.wf_path = Path(wf_path).resolve()
@@ -346,32 +344,6 @@ class Pipeline:
     def _fp(self, fn: str | Path) -> Path:
         """Convenience function to get full path to a file in the pipeline"""
         return Path(self.wf_path, fn)
-
-    def list_files(self) -> list[Path]:
-        """Get a list of all files in the pipeline"""
-        import subprocess
-
-        files = []
-        try:
-            # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
-            for fn in git_ls_files:
-                full_fn = Path(self.wf_path) / fn.decode("utf-8")
-                if full_fn.is_file():
-                    files.append(full_fn)
-                else:
-                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-        except subprocess.CalledProcessError:
-            # Failed, so probably not initialised as a git repository - just a list of all files
-            files = []
-            for file_path in self.wf_path.rglob("*"):
-                if file_path.is_file():
-                    # Append the file path to the list
-                    files.append(file_path)
-            if len(files) == 0:
-                log.debug(f"No files found in pipeline: {self.wf_path}")
-
-        return files
 
     def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
@@ -1272,7 +1244,8 @@ def load_tools_config(directory: Path | None = None) -> tuple[Path | None, "NFCo
             )
         raise AssertionError(error_message) from e
 
-    wf_config = fetch_wf_config(Path(directory))
+    # Only pipelines use the Nextflow config here; skip spawning `nextflow config` for modules repositories
+    wf_config = fetch_wf_config(directory) if nf_core_yaml_config["repository_type"] == "pipeline" else {}
     if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
         # Retrieve information if template from config file is empty
         template = tools_config.get("template")
@@ -1482,10 +1455,39 @@ def set_wd_tempdir(base_dir: Path | None = None) -> Generator[Path, None, None]:
         yield Path(tmp)
 
 
-def get_wf_files(wf_path: Path):
-    """Return a list of all files in a directory (ignores .gitigore files)"""
+def get_wf_files(wf_path: Path) -> list[Path]:
+    """Return all files in a directory that are not ignored by git.
 
-    wf_files = []
+    Uses `git ls-files` at a repository root, else fnmatches the top-level .gitignore.
+
+    Args:
+        wf_path (Path): The directory to list.
+
+    Returns:
+        list[Path]: Paths of the files, prefixed with ``wf_path``.
+    """
+    import subprocess
+
+    # In a subdirectory, git would apply the parent repo's ignore rules
+    if not Path(wf_path, ".git").exists():
+        return _get_wf_files_without_git(wf_path)
+    try:
+        proc = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            cwd=wf_path,
+            capture_output=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return _get_wf_files_without_git(wf_path)
+    # Dedupe merge-conflict stages; skip deleted tracked files
+    paths = (Path(wf_path, f) for f in dict.fromkeys(proc.stdout.decode().split("\0")) if f)
+    return [path for path in paths if path.is_file()]
+
+
+def _get_wf_files_without_git(wf_path: Path) -> list[Path]:
+    """Fallback for `get_wf_files` outside a git repository."""
+    wf_files: list[Path] = []
 
     ignore = [".git/*"]
     try:
@@ -1499,11 +1501,21 @@ def get_wf_files(wf_path: Path):
     except FileNotFoundError:
         pass
 
-    for path in Path(wf_path).rglob("*"):
-        rpath = str(path.relative_to(wf_path))
-        if any(fnmatch.fnmatch(rpath, pattern) for pattern in ignore):
-            continue
-        if path.is_file():
-            wf_files.append(str(path))
+    # A trailing "*" also matches everything below "dir/", so prune such dirs
+    dir_ignore = [pattern for pattern in ignore if pattern.endswith("*")]
+    root = str(wf_path)
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Relative prefix as a plain string, for speed
+        prefix = dirpath[len(root) :].lstrip(os.sep)
+        prefix = prefix + os.sep if prefix else ""
+        dirnames[:] = [
+            d for d in dirnames if not any(fnmatch.fnmatch(f"{prefix}{d}/", pattern) for pattern in dir_ignore)
+        ]
+        for filename in filenames:
+            if any(fnmatch.fnmatch(prefix + filename, pattern) for pattern in ignore):
+                continue
+            path = Path(dirpath, filename)
+            if path.is_file():
+                wf_files.append(path)
 
     return wf_files

@@ -604,8 +604,7 @@ class PipelineSchema:
         """
         out = f"# {self.schema['title']}\n\n"
         out += f"{self.schema['description']}\n"
-        # Grouped parameters
-        for definition in self.schema.get(self.defs_notation, {}).values():
+        for definition in self.get_param_groups():
             out += f"\n## {definition.get('title', {})}\n\n"
             out += f"{definition.get('description', '')}\n\n"
             required = definition.get("required", [])
@@ -613,15 +612,25 @@ class PipelineSchema:
             param_table = self.markdown_param_table(properties, required, columns)
             out += param_table
 
-        # Top-level ungrouped parameters
-        if len(self.schema.get("properties", {})) > 0:
-            out += "\n## Other parameters\n\n"
-            required = self.schema.get("required", [])
-            properties = self.schema.get("properties", {})
-            param_table = self.markdown_param_table(properties, required, columns)
-            out += param_table
-
         return out
+
+    def get_param_groups(self) -> list[dict]:
+        """Get the parameter groups of the schema, including ungrouped parameters.
+
+        Returns:
+            list[dict]: The group definitions under ``definitions`` (Draft 7) or ``$defs`` (Draft 2020-12),
+            followed by a synthetic "Other parameters" group holding the top-level ``properties``, if any.
+        """
+        groups = list(self.schema.get(self.defs_notation, {}).values())
+        if self.schema.get("properties"):
+            groups.append(
+                {
+                    "title": "Other parameters",
+                    "properties": self.schema["properties"],
+                    "required": self.schema.get("required", []),
+                }
+            )
+        return groups
 
     def markdown_param_table(self, properties, required, columns):
         """Creates a markdown table for params from jsonschema properties section
@@ -909,7 +918,7 @@ class PipelineSchema:
                 s_key
                 and (p_key not in self.schema_defaults)
                 and (p_key not in self.ignored_params)
-                and (p_def := self.build_schema_param(p_val).get("default"))
+                and (p_def := self.build_schema_param(p_val).get("default")) is not None
             ) and (
                 self.no_prompts
                 or Confirm.ask(

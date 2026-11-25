@@ -237,3 +237,11 @@ class NfcoreCreateTest(unittest.TestCase):
                             )
                         else:
                             raise
+
+    @with_temporary_folder
+    def test_filter_ignored_files(self, tmp_path):
+        outdir = Path(tmp_path)
+        (outdir / ".gitignore").write_text("work/\n")
+        (outdir / ".prettierignore").write_text("*.log\n")
+        files = {outdir / "main.nf", outdir / "work" / "a.yml", outdir / "run.log"}
+        assert nf_core.pipelines.create.create._filter_ignored_files(outdir, files) == [outdir / "main.nf"]

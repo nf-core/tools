@@ -1,7 +1,5 @@
-import filecmp
 import logging
 import os
-import shutil
 from collections.abc import Iterable
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
@@ -10,8 +8,7 @@ from typing import cast
 import git
 from git.exc import GitCommandError
 
-from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
-from nf_core.utils import load_tools_config
+from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
@@ -65,23 +62,35 @@ class SyncedRepo:
 
     local_repo_statuses: dict[str, bool] = {}
     no_pull_global = False
+    # Component listings per commit never change, so they are cached for the whole session
+    _component_listing_cache: dict[tuple[str, str], list[str]] = {}
+
+    # Set by the subclass __init__/setup_local_repo before anything reads them
+    remote_url: str
+    fullname: str
+    local_repo_dir: Path
+    repo: git.Repo
+    branch: str
+    repo_path: str
+    modules_dir: Path
+    subworkflows_dir: Path
 
     @staticmethod
-    def local_repo_synced(repo_name):
+    def local_repo_synced(repo_name: str) -> bool:
         """
         Checks whether a local repo has been cloned/pull in the current session
         """
         return SyncedRepo.local_repo_statuses.get(repo_name, False)
 
     @staticmethod
-    def update_local_repo_status(repo_name, up_to_date):
+    def update_local_repo_status(repo_name: str, up_to_date: bool) -> None:
         """
         Updates the clone/pull status of a local repo
         """
         SyncedRepo.local_repo_statuses[repo_name] = up_to_date
 
     @staticmethod
-    def get_remote_branches(remote_url):
+    def get_remote_branches(remote_url: str) -> set[str]:
         """
         Get all branches from a remote repository
 
@@ -92,7 +101,7 @@ class SyncedRepo:
             (set[str]): All branches found in the remote
         """
         try:
-            unparsed_branches = git.Git().ls_remote(remote_url)
+            unparsed_branches = cast(str, git.Git().ls_remote(remote_url))
         except git.GitCommandError as e:
             raise LookupError(f"Was unable to fetch branches from '{remote_url}'") from e
         else:
@@ -105,53 +114,8 @@ class SyncedRepo:
                     branches[sha] = branch_name
             return set(branches.values())
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False):
-        """
-        Initializes the object and clones the git repository if it is not already present
-        """
-
-        # This allows us to set this one time and then keep track of the user's choice
-        SyncedRepo.no_pull_global |= no_pull
-
-        # Check if the remote seems to be well formed
-        if remote_url is None:
-            remote_url = NF_CORE_MODULES_REMOTE
-
-        self.remote_url = remote_url
-        self.fullname = None
-        self.local_repo_dir = None
-
-        self.repo = None
-        # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
-        # the WorkflowRepo define their own including custom init methods. This needs
-        # fixing.
-        self.setup_local_repo(remote_url, branch, hide_progress)
-
-        if self.local_repo_dir is None:
-            raise ValueError("Repository not initialized")
-        else:
-            config_fn, repo_config = load_tools_config(self.local_repo_dir)
-            if config_fn is not None and repo_config is not None:
-                try:
-                    self.repo_path = repo_config.org_path
-                except KeyError as e:
-                    raise UserWarning(f"'org_path' key not present in {config_fn.name}") from e
-
-            # Verify that the repo seems to be correctly configured
-            if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
-                self.verify_branch()
-
-            # Convenience variable
-            self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
-            self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
-
-            self.avail_module_names = None
-
     def __repr__(self) -> str:
         return f"SyncedRepo({self.remote_url}, {self.branch})"
-
-    def setup_local_repo(self, remote_url, branch, hide_progress):
-        pass
 
     def verify_sha(self, prompt, sha):
         """
@@ -213,7 +177,7 @@ class SyncedRepo:
         """
         Verifies the active branch conforms to the correct directory structure
         """
-        local_repo_path = Path(cast(str, self.local_repo_dir))
+        local_repo_path = self.local_repo_dir
 
         if not Path(local_repo_path, "modules").exists():
             err_str = f"Repository '{self.remote_url}' ({self.branch}) does not contain the 'modules/' directory"
@@ -229,6 +193,19 @@ class SyncedRepo:
         """
         self.checkout(self.branch)
 
+    def _is_checked_out(self, commit: str) -> bool:
+        """
+        Whether the working tree is already at ``commit`` (a branch name or a full git SHA),
+        in which case a ``git checkout`` would be a no-op.
+        """
+        try:
+            head = self.repo.head
+            if head.is_detached:
+                return head.commit.hexsha == commit
+            return head.ref.name == commit
+        except (ValueError, TypeError, GitCommandError):
+            return False
+
     def checkout(self, commit):
         """
         Checks out the repository at the requested commit (or branch)
@@ -236,6 +213,10 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit, or a branch name
         """
+        # `git checkout` stats the whole working tree even when nothing changes,
+        # which adds up for large repositories such as nf-core/modules.
+        if self._is_checked_out(commit):
+            return
         try:
             self.repo.git.checkout(commit)
         except GitCommandError as e:
@@ -264,16 +245,12 @@ class SyncedRepo:
         Does not verify that the path exists.
         Args:
             component_name (str): The name of the module/subworkflow
+            component_type (str): Either 'modules' or 'subworkflows'
 
         Returns:
-            component_path (str): The path of the module/subworkflow in the local copy of the repository
+            component_path (Path): The path of the module/subworkflow in the local copy of the repository
         """
-        if component_type == "modules":
-            return Path(self.modules_dir, component_name)
-        elif component_type == "subworkflows":
-            return Path(self.subworkflows_dir, component_name)
-        else:
-            raise ValueError(f"Invalid component type: {component_type}")
+        return Path(self.local_repo_dir, self._component_tree_path(component_type, component_name))
 
     def install_component(self, component_name: str, install_dir: str | Path, commit: str, component_type: str) -> bool:
         """
@@ -288,51 +265,124 @@ class SyncedRepo:
         Returns:
             (bool): Whether the operation was successful or not
         """
-        # Check out the repository at the requested ref
+        # Files are read straight from the git object store, so the working tree never moves to an old commit
         try:
-            self.checkout(commit)
+            sha = self._resolve_commit(commit)
         except git.GitCommandError as e:
-            log.error(f"Could not check out '{commit}' in the modules cache '{self.local_repo_dir}':\n{e}")
+            log.error(f"Could not find '{commit}' in the modules cache '{self.local_repo_dir}':\n{e}")
             return False
 
         # Check if the module/subworkflow exists in the branch
-        if not self.component_exists(component_name, component_type, checkout=False):
+        commit_tree = self.repo.commit(sha).tree
+        tree_path = self._component_tree_path(component_type, component_name)
+        if self._blob_at(commit_tree, f"{tree_path}/main.nf") is None:
             log.error(
                 f"The requested {component_type[:-1]} does not exists in the branch '{self.branch}' of {self.remote_url}'"
             )
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_component_dir(component_name, component_type), Path(install_dir, component_name))
-
-        # Switch back to the tip of the branch
-        self.checkout_branch()
+        self._export_tree(commit_tree, tree_path, Path(install_dir, component_name))
         return True
 
-    def component_files_identical(self, component_name, base_path, commit, component_type):
+    def _component_tree_path(self, component_type: str, component_name: str | None = None) -> str:
+        """Path of the modules/subworkflows directory (or of one component) inside the repository."""
+        if component_type not in ("modules", "subworkflows"):
+            raise ValueError(f"Invalid component type: {component_type}")
+        tree_path = f"{component_type}/{self.repo_path}"
+        if component_name is not None:
+            tree_path = f"{tree_path}/{component_name}"
+        return tree_path
+
+    def _resolve_commit(self, commit: str) -> str:
+        """
+        Resolve a branch name or (short) SHA to a full commit SHA.
+
+        Raises:
+            GitCommandError: if the ref does not exist in the repository
+        """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
+        return self.repo.git.rev_parse("--verify", f"{commit}^{{commit}}")
+
+    def _list_components_at(self, component_type: str, sha: str) -> list[str]:
+        """
+        List the modules/subworkflows present at commit ``sha`` without checking it out.
+        Like :meth:`get_avail_components`, a component is any directory containing a ``main.nf`` file.
+        """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
+        tree_path = self._component_tree_path(component_type)
+        cache_key = (sha, tree_path)
+        if cache_key not in SyncedRepo._component_listing_cache:
+            files = self.repo.git.ls_tree("-r", "--name-only", "-z", sha, "--", f"{tree_path}/").split("\0")
+            SyncedRepo._component_listing_cache[cache_key] = [
+                str(Path(file).parent.relative_to(tree_path)) for file in files if Path(file).name == "main.nf"
+            ]
+        return list(SyncedRepo._component_listing_cache[cache_key])
+
+    @staticmethod
+    def _blob_at(tree: git.Tree, path: str) -> git.Blob | None:
+        """The file at ``path`` below ``tree``, or None if there is no such file."""
+        try:
+            item = tree / path
+        except KeyError:
+            return None
+        return item if isinstance(item, git.Blob) else None
+
+    def _export_tree(self, commit_tree: git.Tree, tree_path: str, dest: Path) -> None:
+        """
+        Write the files below ``tree_path`` of a commit to ``dest``, without touching the working tree
+        of the cached repository. Like ``shutil.copytree``, fails if ``dest`` exists.
+        """
+        dest.mkdir(parents=True, exist_ok=False)
+        for item in (commit_tree / tree_path).traverse():
+            # Directories are created with their files; submodules are skipped like a plain `git checkout` does
+            if not isinstance(item, git.Blob):
+                continue
+            target = dest / Path(item.path).relative_to(tree_path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            data = item.data_stream.read()
+            if item.mode == item.link_mode:
+                # Follow symlinks like `shutil.copytree` does, as long as they point to a file in the repository
+                linked = self._blob_at(commit_tree, os.path.normpath(Path(item.path).parent / data.decode()))
+                if linked is None:
+                    target.symlink_to(data.decode())
+                    continue
+                data = linked.data_stream.read()
+            target.write_bytes(data)
+            if item.mode & 0o111:
+                target.chmod(0o755)
+
+    def component_files_identical(
+        self, component_name: str, base_path: Path, commit: str | None, component_type: str
+    ) -> dict[str, bool]:
         """
         Checks whether the module or subworkflow files in a pipeline are identical to the ones in the remote
         Args:
             component_name (str): The name of the module or subworkflow
-            base_path (str): The path to the module/subworkflow in the pipeline
+            base_path (Path): The path to the module/subworkflow in the pipeline
+            commit (str | None): The commit to compare against, or None for the tip of the branch
 
         Returns:
             (bool): Whether the pipeline files are identical to the repo files
         """
-        if commit is None:
-            self.checkout_branch()
-        else:
-            self.checkout(commit)
         component_files = ["main.nf", "meta.yml"]
         files_identical = dict.fromkeys(component_files, True)
-        component_dir = self.get_component_dir(component_name, component_type)
+        tree_path = self._component_tree_path(component_type, component_name)
+        sha = self._resolve_commit(commit if commit is not None else self.branch)
+        try:
+            component_tree = self.repo.commit(sha).tree / tree_path
+        except KeyError:
+            log.debug(f"Could not find '{tree_path}' at commit '{sha}'")
+            return files_identical
         for file in component_files:
-            try:
-                files_identical[file] = filecmp.cmp(Path(component_dir, file), Path(base_path, file))
-            except FileNotFoundError:
-                log.debug(f"Could not open file: {Path(component_dir, file)}")
+            repo_file = self._blob_at(component_tree, file)
+            local_file = Path(base_path, file)
+            if repo_file is None or not local_file.is_file():
+                log.debug(f"Could not open file: {tree_path}/{file}")
                 continue
-        self.checkout_branch()
+            files_identical[file] = repo_file.data_stream.read() == local_file.read_bytes()
         return files_identical
 
     def ensure_git_user_config(self, default_name: str, default_email: str) -> None:
@@ -409,10 +459,20 @@ class SyncedRepo:
         """
         Verifies that a given commit sha exists on the branch
         """
-        if self.repo is None:
-            raise ValueError("Repository not initialized")
-        self.checkout_branch()
-        return sha in (commit.hexsha for commit in self.repo.iter_commits())
+        return self._commit_on_branch(sha) is not None
+
+    def _commit_on_branch(self, sha: str) -> git.Commit | None:
+        """
+        Return the commit with the full SHA ``sha`` if it is reachable from the tip of the branch.
+        Only full SHAs match, as when comparing against every commit SHA on the branch.
+        """
+        try:
+            resolved = self._resolve_commit(sha)
+        except GitCommandError:
+            return None
+        if resolved != sha or not self.repo.is_ancestor(resolved, self.branch):
+            return None
+        return self.repo.commit(resolved)
 
     def get_commit_info(self, sha):
         """
@@ -425,16 +485,12 @@ class SyncedRepo:
         Raises:
             LookupError: If the search for the commit fails
         """
-        if self.repo is None:
-            raise ValueError("Repository not initialized")
-        self.checkout_branch()
-        for commit in self.repo.iter_commits():
-            if commit.hexsha == sha:
-                message = commit.message.splitlines()[0]
-                date_obj = commit.committed_datetime
-                date = str(date_obj.date())
-                return message, date
-        raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
+        commit = self._commit_on_branch(sha)
+        if commit is None:
+            raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
+        message = str(commit.message).splitlines()[0]
+        date = str(commit.committed_datetime.date())
+        return message, date
 
     def get_avail_components(self, component_type: str, checkout: bool = True, commit: str | None = None) -> list[str]:
         """
@@ -444,10 +500,11 @@ class SyncedRepo:
         Returns:
             ([ str ]): The module/subworkflow names
         """
+        if commit is not None:
+            # Read the listing from the git object store instead of checking out the commit
+            return self._list_components_at(component_type, self._resolve_commit(commit))
         if checkout:
             self.checkout_branch()
-        if commit is not None:
-            self.checkout(commit)
         # Get directory
         if component_type == "modules":
             directory = self.modules_dir
