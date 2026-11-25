@@ -3,6 +3,8 @@ import enum
 import json
 import logging
 import os
+from collections.abc import Iterator
+from itertools import pairwise
 from pathlib import Path
 
 from rich import box
@@ -13,6 +15,19 @@ from rich.syntax import Syntax
 import nf_core.utils
 
 log = logging.getLogger(__name__)
+
+
+def _unified_diff(old_lines: list[str], new_lines: list[str], fromfile: Path, tofile: Path) -> Iterator[str]:
+    """
+    Unified diff of two lists of lines. Unlike difflib, end the last line of a file without
+    a final newline and mark it with '\\ No newline at end of file', as diff and git do
+    """
+    for line in difflib.unified_diff(old_lines, new_lines, fromfile=str(fromfile), tofile=str(tofile)):
+        if line.endswith("\n"):
+            yield line
+        else:
+            yield line + "\n"
+            yield "\\ No newline at end of file\n"
 
 
 class ComponentsDiffer:
@@ -86,12 +101,7 @@ class ComponentsDiffer:
                     diffs[file] = (ComponentsDiffer.DiffEnum.UNCHANGED, ())
                 else:
                     # Compute the diff
-                    diff = difflib.unified_diff(
-                        old_lines,
-                        new_lines,
-                        fromfile=str(Path(dsp_from_dir, file)),
-                        tofile=str(Path(dsp_to_dir, file)),
-                    )
+                    diff = _unified_diff(old_lines, new_lines, Path(dsp_from_dir, file), Path(dsp_to_dir, file))
                     diffs[file] = (ComponentsDiffer.DiffEnum.CHANGED, diff)
 
             elif temp_path.exists():
@@ -99,12 +109,7 @@ class ComponentsDiffer:
                     new_lines = fh.readlines()
                 # The file was created
                 # Show file against /dev/null
-                diff = difflib.unified_diff(
-                    [],
-                    new_lines,
-                    fromfile=str(Path("/dev", "null")),
-                    tofile=str(Path(dsp_to_dir, file)),
-                )
+                diff = _unified_diff([], new_lines, Path("/dev", "null"), Path(dsp_to_dir, file))
                 diffs[file] = (ComponentsDiffer.DiffEnum.CREATED, diff)
 
             elif curr_path.exists():
@@ -112,12 +117,7 @@ class ComponentsDiffer:
                 # Show file against /dev/null
                 with open(curr_path) as fh:
                     old_lines = fh.readlines()
-                diff = difflib.unified_diff(
-                    old_lines,
-                    [],
-                    fromfile=str(Path(dsp_from_dir, file)),
-                    tofile=str(Path("/dev", "null")),
-                )
+                diff = _unified_diff(old_lines, [], Path(dsp_from_dir, file), Path("/dev", "null"))
                 diffs[file] = (ComponentsDiffer.DiffEnum.REMOVED, diff)
 
         return diffs
@@ -195,9 +195,6 @@ class ComponentsDiffer:
                     fh.write(f"Changes in '{Path(component, file)}':\n")
                     for line in diff:
                         fh.write(line)
-                        if not line.endswith("\n"):
-                            # The file has no final newline: end the line and mark it, as diff does
-                            fh.write("\n\\ No newline at end of file\n")
                     fh.write("\n")
 
             fh.write("*" * 60 + "\n")
@@ -222,11 +219,11 @@ class ComponentsDiffer:
             fromfile = Path("a", fromfile)
             tofile = Path("b", tofile)
 
-        modules_json_diff = difflib.unified_diff(
+        modules_json_diff = _unified_diff(
             json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
             json.dumps(new_modules_json, indent=4).splitlines(keepends=True),
-            fromfile=str(fromfile),
-            tofile=str(tofile),
+            fromfile,
+            tofile,
         )
 
         # Save diff for modules.json to file
@@ -377,17 +374,13 @@ class ComponentsDiffer:
         new_lines = []
         old_partial = []
         new_partial = []
-        last_kind = None
         # First two lines indicate the file names, the third line is the first hunk
-        for line in patch[3:]:
+        for line, next_line in pairwise(patch[3:] + [""]):
             if line.startswith("\\"):
-                # '\ No newline at end of file': the previous line has no final newline
-                if last_kind in (" ", "-") and old_partial:
-                    old_partial[-1] = old_partial[-1].removesuffix("\n")
-                if last_kind in (" ", "+") and new_partial:
-                    new_partial[-1] = new_partial[-1].removesuffix("\n")
                 continue
-            last_kind = line[:1]
+            if next_line.startswith("\\"):
+                # '\ No newline at end of file': this line has no final newline
+                line = line.removesuffix("\n")
             if line.startswith("@"):
                 old_lines.append(old_partial)
                 new_lines.append(new_partial)
