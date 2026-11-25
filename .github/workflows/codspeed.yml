@@ -28,7 +28,7 @@ permissions:
 jobs:
   startup-benchmarks:
     name: Run benchmarks
-    runs-on: runs-on=${{ github.run_id }}-codspeed/family=c8a.xlarge/spot=false
+    runs-on: codspeed-macro
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Check out source-code repository
