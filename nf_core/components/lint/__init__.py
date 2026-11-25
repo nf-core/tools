@@ -194,13 +194,13 @@ class ComponentLint(ComponentCommand):
 
     def schema_path(self, filename: str, *, local: bool = False) -> Path:
         if local:
-            remote = self._remote_url or NF_CORE_MODULES_REMOTE
+            remote = getattr(self, "_remote_url", None) or NF_CORE_MODULES_REMOTE
             repo_dir = nf_core.modules.modules_repo.NFCORE_DIR / repo_full_name_from_remote(remote)
         else:
             repo_dir = self.modules_repo.local_repo_dir
         if repo_dir is None:
             raise ModulesRepoUnavailableError("Local module cache not found")
-        return Path(repo_dir, self.component_type, filename)
+        return Path(repo_dir, getattr(self, "component_type", "modules"), filename)
 
     def __repr__(self) -> str:
         return f"ComponentLint({self.component_type}, {self.directory})"
