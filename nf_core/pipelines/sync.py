@@ -20,6 +20,7 @@ import nf_core.pipelines.create.create
 import nf_core.utils
 from nf_core.github_api import gh_api
 from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
+from nf_core.pipelines.sync_merge import TemplateMergeResult, merge_template
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +80,7 @@ class PipelineSync:
         self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
         self.merge_branch = self.original_merge_branch
         self.made_changes = False
+        self.template_merge = TemplateMergeResult()
         self.make_pr = make_pr
         self.gh_pr_returned_data: dict = {}
         self.required_config_vars: dict[str, list[str]] = {
@@ -164,6 +166,7 @@ class PipelineSync:
                     raise PullRequestExceptionError("Could not find GitHub username and repo name")
 
                 self.push_template_branch()
+                self.resolve_merge_conflicts()
                 self.create_merge_base_branch()
                 self.push_merge_branch()
                 self.make_pull_request()
@@ -369,8 +372,40 @@ class PipelineSync:
         except GitCommandError as e:
             raise PullRequestExceptionError(f"Could not push TEMPLATE branch:\n  {e}") from e
 
+    def resolve_merge_conflicts(self):
+        """Try to resolve the conflicts that merging TEMPLATE into the PR base branch would have.
+
+        If every conflict can be resolved, the merge (plus the commits that update template components and
+        regenerate generated files) is used as the head of the PR, so that it can be merged without conflicts.
+        Otherwise the PR is opened from TEMPLATE as before, and the PR body lists what is left to resolve.
+        """
+        log.info(f"Trying to resolve merge conflicts between '{self.from_branch}' and 'TEMPLATE'")
+        try:
+            self.template_merge = merge_template(
+                self.repo,
+                base_ref=str(self.from_branch),
+                template_ref="TEMPLATE",
+                message=f"Merge nf-core/tools {nf_core.__version__} template into {self.from_branch}",
+            )
+        # Never let the conflict resolution get in the way of opening the PR
+        except Exception as e:  # noqa: BLE001
+            log.warning(f"Could not try to resolve merge conflicts:\n{e}")
+            self.template_merge = TemplateMergeResult()
+            return
+
+        for warning in self.template_merge.warnings:
+            log.warning(warning)
+        if self.template_merge.commit is not None:
+            log.info(f"Resolved merge conflicts in {len(self.template_merge.conflicts)} file(s)")
+        elif self.template_merge.unresolved:
+            log.info(
+                f"Could not resolve merge conflicts in {len(self.template_merge.unresolved)} file(s): "
+                + ", ".join(self.template_merge.unresolved)
+            )
+
     def create_merge_base_branch(self):
-        """Create a new branch from the updated TEMPLATE branch
+        """Create a new branch from the updated TEMPLATE branch, or from the
+        merge commit with resolved conflicts if there is one.
         This branch will then be used to create the PR
         """
         # Check if branch exists already
@@ -392,7 +427,7 @@ class PipelineSync:
         # Create new branch and checkout
         log.info(f"Checking out merge base branch '{self.merge_branch}'")
         try:
-            self.repo.create_head(self.merge_branch)
+            self.repo.create_head(self.merge_branch, self.template_merge.commit or "HEAD")
         except GitCommandError as e:
             raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}") from e
 
@@ -431,6 +466,7 @@ class PipelineSync:
             "> Since nf-core/tools 3.5.0, older template update PRs will not be automatically closed, but will remain open in your pipeline repository. "
             "Older template PRs will be automatically closed once a newer template PR has been merged."
         ).format(tag=nf_core.__version__)
+        pr_body_text += self._merge_conflicts_pr_text()
 
         # Make new pull-request
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
@@ -454,6 +490,48 @@ class PipelineSync:
                 self.pr_url = self.gh_pr_returned_data["html_url"]
                 log.debug(f"GitHub API PR worked, return code {r.status_code}")
                 log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
+
+    def _merge_conflicts_pr_text(self) -> str:
+        """Describe the automatic merge conflict resolution for the PR body."""
+        merge = self.template_merge
+        sections = []
+        if merge.commit is not None:
+            sections.append(
+                f"Merging the template into `{self.from_branch}` conflicted, but every conflict was resolved "
+                "automatically, so this PR can be merged without conflicts. Please review these changes carefully."
+            )
+            if merge.resolved:
+                sections.append(
+                    "Resolved by applying the template changes to your version of the file:\n\n"
+                    + "\n".join(f"- `{path}`" for path in merge.resolved)
+                )
+            if merge.by_rule:
+                sections.append(
+                    "Resolved by rule:\n\n"
+                    + "\n".join(f"- `{path}`: {action}" for path, action in merge.by_rule.items())
+                )
+            if merge.regenerated:
+                sections.append(
+                    "Commits after the merge on this branch:\n\n" + "\n".join(f"- {step}" for step in merge.regenerated)
+                )
+            if merge.todo:
+                sections.append(
+                    "These steps failed. Please run them on this branch:\n\n"
+                    + "\n".join(f"- [ ] {command}" for command in merge.todo)
+                )
+        elif merge.conflicts:
+            sections.append(
+                f"Merging the template into `{self.from_branch}` will conflict in these files:\n\n"
+                + "\n".join(f"- `{path}`" for path in merge.conflicts)
+            )
+            if merge.unresolved:
+                sections.append(
+                    "These could not be resolved automatically: " + ", ".join(f"`{path}`" for path in merge.unresolved)
+                )
+        if not sections:
+            return ""
+        sections += [f"> [!WARNING]\n> {warning}" for warning in merge.warnings]
+        return "\n\n## Merge conflicts\n\n" + "\n\n".join(sections)
 
     @staticmethod
     def _parse_json_response(response) -> tuple[Any, str]:
