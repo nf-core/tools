@@ -54,22 +54,21 @@ class ModulesRepo(SyncedRepo):
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
-        if self.local_repo_dir is None:
-            raise LookupError("Failed to set up local cache of modules repository")
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
         if config_fn is None or repo_config is None:
             raise UserWarning(f"Could not find a configuration file in {self.local_repo_dir}")
         try:
-            self.repo_path = repo_config.org_path
+            org_path = repo_config.org_path
         except KeyError as e:
             raise UserWarning(f"'org_path' key not present in {config_fn.name}") from e
+        if org_path is None:
+            raise UserWarning(f"Could not find the org_path in the configuration file: {config_fn.name}")
+        self.repo_path = org_path
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
             self.verify_branch()
-        if self.repo_path is None:
-            raise UserWarning(f"Could not find the org_path in the configuration file: {config_fn.name}")
         # Convenience variable
         self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
         self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)

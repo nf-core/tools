@@ -8,8 +8,7 @@ from typing import cast
 import git
 from git.exc import GitCommandError
 
-from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
-from nf_core.utils import load_tools_config
+from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
@@ -66,6 +65,16 @@ class SyncedRepo:
     # Component listings per commit never change, so they are cached for the whole session
     _component_listing_cache: dict[tuple[str, str], list[str]] = {}
 
+    # Set by the subclass __init__/setup_local_repo before anything reads them
+    remote_url: str
+    fullname: str
+    local_repo_dir: Path
+    repo: git.Repo
+    branch: str
+    repo_path: str
+    modules_dir: Path
+    subworkflows_dir: Path
+
     @staticmethod
     def local_repo_synced(repo_name: str) -> bool:
         """
@@ -105,53 +114,8 @@ class SyncedRepo:
                     branches[sha] = branch_name
             return set(branches.values())
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False):
-        """
-        Initializes the object and clones the git repository if it is not already present
-        """
-
-        # This allows us to set this one time and then keep track of the user's choice
-        SyncedRepo.no_pull_global |= no_pull
-
-        # Check if the remote seems to be well formed
-        if remote_url is None:
-            remote_url = NF_CORE_MODULES_REMOTE
-
-        self.remote_url: str = remote_url
-        self.fullname: str | None = None
-        self.local_repo_dir: Path | None = None
-
-        self.repo = None
-        # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
-        # the WorkflowRepo define their own including custom init methods. This needs
-        # fixing.
-        self.setup_local_repo(remote_url, branch, hide_progress)
-
-        if self.local_repo_dir is None:
-            raise ValueError("Repository not initialized")
-        else:
-            config_fn, repo_config = load_tools_config(self.local_repo_dir)
-            if config_fn is not None and repo_config is not None:
-                try:
-                    self.repo_path = repo_config.org_path
-                except KeyError as e:
-                    raise UserWarning(f"'org_path' key not present in {config_fn.name}") from e
-
-            # Verify that the repo seems to be correctly configured
-            if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
-                self.verify_branch()
-
-            # Convenience variable
-            self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
-            self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
-
-            self.avail_module_names = None
-
     def __repr__(self) -> str:
         return f"SyncedRepo({self.remote_url}, {self.branch})"
-
-    def setup_local_repo(self, remote_url, branch, hide_progress):
-        pass
 
     def verify_sha(self, prompt, sha):
         """
@@ -213,7 +177,7 @@ class SyncedRepo:
         """
         Verifies the active branch conforms to the correct directory structure
         """
-        local_repo_path = Path(cast(str, self.local_repo_dir))
+        local_repo_path = self.local_repo_dir
 
         if not Path(local_repo_path, "modules").exists():
             err_str = f"Repository '{self.remote_url}' ({self.branch}) does not contain the 'modules/' directory"
@@ -234,8 +198,6 @@ class SyncedRepo:
         Whether the working tree is already at ``commit`` (a branch name or a full git SHA),
         in which case a ``git checkout`` would be a no-op.
         """
-        if self.repo is None:
-            return False
         try:
             head = self.repo.head
             if head.is_detached:
@@ -288,8 +250,6 @@ class SyncedRepo:
         Returns:
             component_path (Path): The path of the module/subworkflow in the local copy of the repository
         """
-        if self.local_repo_dir is None:
-            raise ValueError("Repository not initialized")
         return Path(self.local_repo_dir, self._component_tree_path(component_type, component_name))
 
     def install_component(self, component_name: str, install_dir: str | Path, commit: str, component_type: str) -> bool:
