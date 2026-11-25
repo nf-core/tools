@@ -5,11 +5,14 @@
 ### General
 
 - Preserve zero config defaults when adding defaults to existing schema parameters. ([#4620](https://github.com/nf-core/tools/pull/4620))
+- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
+- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#4619](https://github.com/nf-core/tools/pull/4619))
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
 - avoid prek input overload and forward `--verbose` to it ([#4272](https://github.com/nf-core/tools/pull/4272))
 - limit get_wf_files to only consider files not ignored by git and remove `Pipeline.list_files()` in favour of it ([#4593](https://github.com/nf-core/tools/pull/4593))
 - make docker builds faster ([#4614](https://github.com/nf-core/tools/pull/4614))
+- don't run `nextflow config` when loading the `.nf-core.yml` of a non-pipeline repository ([#4632](https://github.com/nf-core/tools/pull/4632))
 
 ### Linting
 
