@@ -127,6 +127,10 @@ def files_exist(self) -> dict[str, list[str]]:
         log.warning("Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is '<pipeline>'.")
         short_name = pipeline_name
 
+    # Guard against empty pipeline name causing index errors in Path templates below
+    if not short_name:
+        short_name = "UNNAMED"
+
     files_fail = [
         [Path(".gitattributes")],
         [Path(".gitignore")],
