@@ -308,16 +308,10 @@ class ModuleLint(ComponentLint):
 
         Returns:
             dict: The meta.yml JSON schema
-
-        Raises:
-            LookupError: If the local module cache is not found
         """
         # Return cached schema if already loaded
         if self.meta_schema is not None:
             return self.meta_schema
-
-        if self.modules_repo.local_repo_dir is None:
-            raise LookupError("Local module cache not found")
 
         with open(Path(self.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
             self.meta_schema = json.load(fh)

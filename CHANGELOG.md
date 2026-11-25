@@ -25,6 +25,7 @@
 - make `nf-core modules bump-version` also update the version in the snapshot ([#4583](https://github.com/nf-core/tools/pull/4583))
 - Fix lint and update crash when a module patch removes `---` ([#4617](https://github.com/nf-core/tools/pull/4617))
 - Make conda-lock path always relative to repo root in `meta.yml` ([#4612](https://github.com/nf-core/tools/pull/4612))
+- speed up installing and updating modules and subworkflows by reading files from git instead of checking out old commits ([#4633](https://github.com/nf-core/tools/pull/4633))
 
 ### Template
 
