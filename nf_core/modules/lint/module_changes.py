@@ -6,8 +6,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import nf_core.modules.modules_repo
+from git.exc import GitCommandError
+
 from nf_core.components.components_differ import ComponentsDiffer
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 
 
 def module_changes(module_lint_object, module):
@@ -31,6 +33,12 @@ def module_changes(module_lint_object, module):
     Each module file must be identical to the corresponding
     file in the remote repository at the pinned commit SHA.
     """
+    if not module.main_nf.is_file():
+        module.failed.append(
+            ("module_changes", "check_local_copy", "Installed module is missing main.nf", module.main_nf)
+        )
+        return
+
     if module.is_patched:
         # If the module is patched, we need to apply
         # the patch in reverse before comparing with the remote
@@ -57,18 +65,28 @@ def module_changes(module_lint_object, module):
     module.branch = module_lint_object.modules_json.get_component_branch(
         "modules", module.component_name, module.repo_url, module.org
     )
-    modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
+    try:
+        modules_repo = module_lint_object.get_lint_repo(module.repo_url, module.branch)
+        comparisons = modules_repo.component_files_identical(module.component_name, tempdir, module.git_sha, "modules")
+    except (ModulesRepoUnavailableError, GitCommandError) as e:
+        module.warned.append(
+            (
+                "module_changes",
+                "check_local_copy",
+                f"Could not compare module with the remote: {e}",
+                module.component_dir,
+            )
+        )
+        return
 
-    for f, same in modules_repo.component_files_identical(
-        module.component_name, tempdir, module.git_sha, "modules"
-    ).items():
+    for f, same in comparisons.items():
         if same:
             module.passed.append(
                 (
                     "module_changes",
                     "check_local_copy",
                     "Local copy of module up to date",
-                    f"{Path(module.component_dir, f)}",
+                    Path(module.component_dir, f),
                 )
             )
         else:
@@ -77,6 +95,6 @@ def module_changes(module_lint_object, module):
                     "module_changes",
                     "check_local_copy",
                     "Local copy of module does not match remote",
-                    f"{Path(module.component_dir, f)}",
+                    Path(module.component_dir, f),
                 )
             )

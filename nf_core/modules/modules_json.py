@@ -17,7 +17,7 @@ from typing_extensions import TypedDict
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
 from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepo, ModulesRepoUnavailableError
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
 from ..components.components_differ import ComponentsDiffer
@@ -309,7 +309,10 @@ class ModulesJson:
         else:
             raise ValueError(f"Unknown component type '{component_type}'")
         # Get the branches present in the repository, as well as the default branch
-        available_branches = ModulesRepo.get_remote_branches(remote_url)
+        try:
+            available_branches = ModulesRepo.get_remote_branches(remote_url)
+        except LookupError as e:
+            raise ModulesRepoUnavailableError(str(e)) from e
         sb_local = []
         dead_components = []
         repo_entry: dict[str, ModulesJsonModuleEntry] = {}
@@ -600,9 +603,13 @@ class ModulesJson:
         for branch, modules in branches_and_mods.items():
             try:
                 modules_repo = ModulesRepo(remote_url=remote_url, branch=branch)
+            except ModulesRepoUnavailableError:
+                # Preserve the recorded entries if reconciliation cannot reach the remote.
+                raise
             except LookupError as e:
                 log.error(e)
                 failed_to_install.extend(modules)
+                continue
             for module, sha in modules:
                 if not modules_repo.install_component(module, self.modules_dir / install_dir, sha, "modules"):
                     log.warning(

@@ -2,6 +2,7 @@ import logging
 import mmap
 import os
 import shutil
+from functools import cached_property
 from pathlib import Path
 
 import nf_core.utils
@@ -28,18 +29,30 @@ class ComponentCommand:
         no_pull: bool = False,
         hide_progress: bool = False,
         no_prompts: bool = False,
+        defer_repo: bool = False,
     ) -> None:
         """
         Initialise the ComponentClass object
         """
         self.component_type: str = component_type
         self.directory: Path = Path(directory)
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
-        self.hide_progress: bool = hide_progress
+        self._remote_url = remote_url
+        self._branch = branch
+        self.no_pull = no_pull
+        self.hide_progress = hide_progress
+        if not defer_repo:
+            self.modules_repo = self._load_modules_repo()
         self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
         self.repo_type: str | None = None
         self.org: str = ""
         self._configure_repo_and_paths()
+
+    @cached_property
+    def modules_repo(self) -> ModulesRepo:
+        return self._load_modules_repo()
+
+    def _load_modules_repo(self) -> ModulesRepo:
+        return ModulesRepo(self._remote_url, self._branch, self.no_pull, self.hide_progress)
 
     def require_prompts(self, msg: str) -> None:
         """Raise UserWarning if prompts are disabled (via --no-prompts or non-interactive session)."""

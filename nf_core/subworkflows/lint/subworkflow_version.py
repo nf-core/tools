@@ -5,7 +5,9 @@ Verify that a subworkflow has a correct entry in the modules.json file
 import logging
 from pathlib import Path
 
-import nf_core.modules.modules_repo
+from git.exc import GitCommandError
+
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 
 log = logging.getLogger(__name__)
 
@@ -48,30 +50,40 @@ def subworkflow_version(subworkflow_lint_object, subworkflow):
         ("subworkflow_version", "git_sha", "Found git_sha entry in `modules.json`", modules_json_path)
     )
 
-    # Check whether a new version is available
+    subworkflow.branch = subworkflow_lint_object.modules_json.get_component_branch(
+        "subworkflows", subworkflow.component_name, subworkflow.repo_url, subworkflow.org
+    )
     try:
-        subworkflow.branch = subworkflow_lint_object.modules_json.get_component_branch(
-            "subworkflows", subworkflow.component_name, subworkflow.repo_url, subworkflow.org
-        )
-        modules_repo = nf_core.modules.modules_repo.ModulesRepo(
-            remote_url=subworkflow.repo_url, branch=subworkflow.branch
-        )
-
-        subworkflow_git_log = modules_repo.get_component_git_log(subworkflow.component_name, "subworkflows")
-        if version == next(subworkflow_git_log)["git_sha"]:
-            subworkflow.passed.append(
-                (
-                    "subworkflow_version",
-                    "subworkflow_version",
-                    "Subworkflow is in the latest version",
-                    subworkflow.component_dir,
-                )
-            )
-        else:
-            subworkflow.warned.append(
-                ("subworkflow_version", "subworkflow_version", "New version available", subworkflow.component_dir)
-            )
-    except UserWarning:
+        modules_repo = subworkflow_lint_object.get_lint_repo(subworkflow.repo_url, subworkflow.branch)
+        latest = next(iter(modules_repo.get_component_git_log(subworkflow.component_name, "subworkflows")), None)
+    except (ModulesRepoUnavailableError, GitCommandError, UserWarning) as e:
         subworkflow.warned.append(
-            ("subworkflow_version", "subworkflow_version", "Failed to fetch git log", subworkflow.component_dir)
+            (
+                "subworkflow_version",
+                "subworkflow_version",
+                f"Could not check subworkflow version: {e}",
+                subworkflow.component_dir,
+            )
+        )
+        return
+
+    if latest is None:
+        subworkflow.warned.append(
+            (
+                "subworkflow_version",
+                "subworkflow_version",
+                "No git history found for subworkflow",
+                subworkflow.component_dir,
+            )
+        )
+    elif version == latest["git_sha"]:
+        message = (
+            "Subworkflow matches the cached version"
+            if subworkflow_lint_object.no_pull
+            else "Subworkflow is in the latest version"
+        )
+        subworkflow.passed.append(("subworkflow_version", "subworkflow_version", message, subworkflow.component_dir))
+    else:
+        subworkflow.warned.append(
+            ("subworkflow_version", "subworkflow_version", "New version available", subworkflow.component_dir)
         )

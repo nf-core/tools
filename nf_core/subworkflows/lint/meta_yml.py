@@ -6,6 +6,7 @@ import jsonschema.validators
 
 import nf_core.components.components_utils
 from nf_core.components.lint import LintExceptionError
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 
 log = logging.getLogger(__name__)
 
@@ -97,16 +98,20 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         return
 
     # Confirm that the meta.yml file is valid according to the JSON schema
-    valid_meta_yml = True
+    valid_meta_yml = False
     try:
-        with open(Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflows/yaml-schema.json")) as fh:
+        with subworkflow_lint_object.schema_path("yaml-schema.json", local=allow_missing).open() as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
         subworkflow.passed.append(
             ("meta_yml", "meta_yml_valid", "Subworkflow `meta.yml` is valid", subworkflow.meta_yml)
         )
+        valid_meta_yml = True
+    except (FileNotFoundError, ModulesRepoUnavailableError) as e:
+        subworkflow.warned.append(
+            ("meta_yml", "meta_yml_valid", f"Could not load meta.yml schema: {e}", subworkflow.meta_yml)
+        )
     except jsonschema.exceptions.ValidationError as e:
-        valid_meta_yml = False
         hint = ""
         if len(e.path) > 0:
             hint = f"\nCheck the entry for `{e.path[0]}`."

@@ -24,7 +24,13 @@ def subworkflows_create(ctx, subworkflow, directory, author, force):
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(directory, subworkflow, author, force)
+        subworkflow_create = SubworkflowCreate(
+            directory,
+            subworkflow,
+            author,
+            force,
+            no_pull=ctx.obj["modules_repo_no_pull"],
+        )
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -127,6 +133,7 @@ def subworkflows_lint(
             branch=ctx.obj["modules_repo_branch"],
             no_pull=ctx.obj["modules_repo_no_pull"],
             hide_progress=ctx.obj["hide_progress"],
+            local=local,
         )
         subworkflow_lint.lint(
             subworkflow=subworkflow,

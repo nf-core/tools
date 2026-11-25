@@ -52,6 +52,8 @@ class SubworkflowLint(ComponentLint):
         no_pull=False,
         registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress=False,
+        *,
+        local: bool = False,
     ):
         super().__init__(
             component_type="subworkflows",
@@ -63,6 +65,7 @@ class SubworkflowLint(ComponentLint):
             no_pull=no_pull,
             registry=registry,
             hide_progress=hide_progress,
+            local=local,
         )
 
     def lint(
@@ -111,13 +114,15 @@ class SubworkflowLint(ComponentLint):
         if subworkflow:
             if all_subworkflows:
                 raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
-            local_subworkflows = []
-            remote_subworkflows = [s for s in self.all_remote_components if s.component_name == subworkflow]
-            if len(remote_subworkflows) == 0:
+            available = self.all_local_components if local else self.all_remote_components
+            matched = [s for s in available if s.component_name == subworkflow]
+            if not matched:
                 raise LintExceptionError(f"Could not find the specified subworkflow: '{subworkflow}'")
+            local_subworkflows = matched if local else []
+            remote_subworkflows = [] if local else matched
         else:
             local_subworkflows = self.all_local_components
-            remote_subworkflows = self.all_remote_components
+            remote_subworkflows = [] if local else self.all_remote_components
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]'{self.directory}'")
@@ -133,7 +138,7 @@ class SubworkflowLint(ComponentLint):
 
         # If it is a pipeline, load the lint config file and the modules.json file
         if self.repo_type == "pipeline":
-            self.set_up_pipeline_files()
+            self.set_up_pipeline_files(local=local)
 
         # Lint local subworkflows
         if local and len(local_subworkflows) > 0:
@@ -283,4 +288,5 @@ class SubworkflowLint(ComponentLint):
             log.info(f"Updating {swf.meta_yml}")
             yaml.dump(meta_yaml_corrected, fh)
         # After the with-block, so prettier sees the flushed file
-        run_prettier_on_file(swf.meta_yml)
+        if not self.no_pull:
+            run_prettier_on_file(swf.meta_yml)

@@ -44,8 +44,10 @@ class ComponentCreate(ComponentCommand):
         conda_name: str | None = None,
         conda_version: str | None = None,
         empty_template: bool = False,
+        *,
+        no_pull: bool = False,
     ):
-        super().__init__(component_type, directory)
+        super().__init__(component_type, directory, no_pull=no_pull, defer_repo=no_pull)
         self.directory = directory
         self.component = component
         self.author = author
@@ -110,7 +112,7 @@ class ComponentCreate(ComponentCommand):
         ```
 
         """
-        if self.component_type == "modules":
+        if self.component_type == "modules" and not self.no_pull:
             # Check modules directory structure
             self.check_modules_structure()
 
@@ -171,7 +173,8 @@ class ComponentCreate(ComponentCommand):
             # Generate meta.yml inputs and outputs
             self.generate_meta_yml_file()
 
-        run_prettier_on_file(*self.file_paths.values())
+        if not self.no_pull:
+            run_prettier_on_file(*self.file_paths.values())
 
         log.info("Created following files:\n  " + "\n  ".join(str(f) for f in self.file_paths.values()))
 
@@ -416,16 +419,20 @@ class ComponentCreate(ComponentCommand):
         """
         Prompt for GitHub username
         """
-        # Try to guess the current user if `gh` is installed
-        author_default = None
-        try:
-            gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=subprocess.DEVNULL))
-            author_default = f"@{gh_auth_user['login']}"
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
-
         # Regex to validate username (GitHub, GitLab, and other git-based code hosting services)
         username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d\.]|-(?=[a-zA-Z\d\.])){0,38}$")
+        if self.author is not None and username_regex.match(self.author):
+            return
+
+        # Try to guess the current user if `gh` is installed
+        author_default = None
+        if not self.no_pull:
+            try:
+                gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=subprocess.DEVNULL))
+                author_default = f"@{gh_auth_user['login']}"
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
+
         while self.author is None or not username_regex.match(self.author):
             if self.author is not None:
                 log.warning("Does not look like a valid username (must start with an '@')!")
