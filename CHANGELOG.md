@@ -27,6 +27,7 @@
 - Make conda-lock path always relative to repo root in `meta.yml` ([#4612](https://github.com/nf-core/tools/pull/4612))
 - speed up installing and updating modules and subworkflows by reading files from git instead of checking out old commits ([#4633](https://github.com/nf-core/tools/pull/4633))
 - Mark a missing final newline in module and subworkflow patches, so patches that reach the end of such a file apply again ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
+- Mark a missing final newline in module and subworkflow patches, so patches that reach the end of such a file apply again ([#4643](https://github.com/nf-core/tools/pull/4643))
 
 ### Template
 
