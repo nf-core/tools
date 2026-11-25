@@ -16,6 +16,10 @@ from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 log = logging.getLogger(__name__)
 
 
+class ModulesRepoUnavailableError(LookupError):
+    """The remote or the requested local cache could not be reached."""
+
+
 class ModulesRepo(SyncedRepo):
     """
     An object to store details about the repository being used for modules.
@@ -37,13 +41,17 @@ class ModulesRepo(SyncedRepo):
         branch: str | None = None,
         no_pull: bool = False,
         hide_progress: bool = False,
+        *,
+        cache_only: bool = False,
     ) -> None:
         """
         Initializes the object and clones the git repository if it is not already present
         """
 
         # This allows us to set this one time and then keep track of the user's choice
-        ModulesRepo.no_pull_global |= no_pull
+        if not cache_only:
+            ModulesRepo.no_pull_global |= no_pull
+        self.cache_only = cache_only
 
         # Check if the remote seems to be well formed
         if remote_url is None:
@@ -94,6 +102,8 @@ class ModulesRepo(SyncedRepo):
         self.local_repo_dir = Path(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
             if not self.local_repo_dir.exists():
+                if self.cache_only:
+                    raise ModulesRepoUnavailableError(f"No cached modules repository for `{remote}`")
                 try:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
@@ -110,16 +120,16 @@ class ModulesRepo(SyncedRepo):
                         )
                     ModulesRepo.update_local_repo_status(self.fullname, True)
                 except GitCommandError as e:
-                    raise LookupError(f"Failed to clone from the remote: `{remote}`") from e
+                    raise ModulesRepoUnavailableError(f"Failed to clone from the remote: `{remote}`") from e
                 # Verify that the requested branch exists by checking it out
                 self.setup_branch(branch)
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 
-                if ModulesRepo.no_pull_global:
+                if ModulesRepo.no_pull_global and not self.cache_only:
                     ModulesRepo.update_local_repo_status(self.fullname, True)
                 # If the repo is already cloned, fetch the latest changes from the remote
-                if not ModulesRepo.local_repo_synced(self.fullname):
+                if not self.cache_only and not ModulesRepo.local_repo_synced(self.fullname):
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
                         rich.progress.BarColumn(bar_width=None),
@@ -127,22 +137,34 @@ class ModulesRepo(SyncedRepo):
                         transient=True,
                         disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
                     )
-                    with pbar:
-                        self.repo.remotes.origin.fetch(
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
-                        )
+                    try:
+                        with pbar:
+                            self.repo.remotes.origin.fetch(
+                                progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
+                            )
+                    except GitCommandError as e:
+                        raise ModulesRepoUnavailableError(f"Failed to fetch from the remote: `{remote}`") from e
                     ModulesRepo.update_local_repo_status(self.fullname, True)
 
                 # Before verifying the branch, fetch the changes
                 # Verify that the requested branch exists by checking it out
-                self.setup_branch(branch)
+                try:
+                    self.setup_branch(branch)
+                except LookupError as e:
+                    if self.cache_only:
+                        raise ModulesRepoUnavailableError(str(e)) from e
+                    raise
 
                 # Now merge the changes
                 tracking_branch = self.repo.active_branch.tracking_branch()
                 if tracking_branch is None:
+                    if self.cache_only:
+                        return
                     raise LookupError(f"There is no remote tracking branch '{self.branch}' in '{self.remote_url}'")
                 self.repo.git.merge(tracking_branch.name)
         except (GitCommandError, InvalidGitRepositoryError) as e:
+            if self.cache_only:
+                raise ModulesRepoUnavailableError(f"Could not use the cached modules repository for `{remote}`") from e
             log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
             if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
                 log.info(f"Removing '{self.local_repo_dir}'")

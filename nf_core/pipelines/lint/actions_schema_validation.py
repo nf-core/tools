@@ -27,15 +27,21 @@ def actions_schema_validation(self) -> dict[str, list[str]]:
     # Get all workflow files
     action_workflows = list(Path(self.wf_path).glob(".github/workflows/*.y*ml"))
 
-    # Load the GitHub workflow schema
-    r = requests.get("https://www.schemastore.org/github-workflow", allow_redirects=True)
-    # handle "Service Unavailable" error
-    if r.status_code not in [200, 301]:
-        warned.append(
-            f"Failed to fetch schema: Response code for `https://www.schemastore.org/github-workflow` was {r.status_code}"
-        )
+    if not action_workflows:
         return {"passed": passed, "failed": failed, "warned": warned}
-    schema: dict[str, Any] = r.json()
+
+    schema_url = "https://www.schemastore.org/github-workflow"
+    try:
+        response = requests.get(schema_url, timeout=10)
+        response.raise_for_status()
+        schema: Any = response.json()
+    except requests.RequestException as e:
+        warned.append(f"Could not fetch GitHub workflow schema from `{schema_url}`: {e}")
+        return {"passed": passed, "failed": failed, "warned": warned}
+
+    if not isinstance(schema, dict):
+        warned.append(f"Invalid GitHub workflow schema from `{schema_url}`: expected JSON object")
+        return {"passed": passed, "failed": failed, "warned": warned}
 
     # Validate all workflows against the schema
     for wf_path in action_workflows:

@@ -130,7 +130,7 @@ def main_nf(
             lines = ComponentsDiffer.try_apply_patch(
                 module.component_type,
                 module.component_name,
-                module_lint_object.modules_repo.repo_path,
+                module.org,
                 module.patch_path,
                 module.component_dir.relative_to(module.base_dir),
                 reverse=True,

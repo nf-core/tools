@@ -5,7 +5,7 @@
 ### General
 
 - Preserve zero config defaults when adding defaults to existing schema parameters. ([#4620](https://github.com/nf-core/tools/pull/4620))
-- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
+- Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#4642](https://github.com/nf-core/tools/pull/4642))
 - Include ungrouped schema parameters in `nf-core pipelines create-params-file` output. ([#4619](https://github.com/nf-core/tools/pull/4619))
 - remove unused basePackages option ([#4568](https://github.com/nf-core/tools/pull/4568))
 - move `Path | str` to just `Path` and simplify downstream code ([#4590](https://github.com/nf-core/tools/pull/4590))
@@ -16,6 +16,7 @@
 
 ### Linting
 
+- Fix offline and `--no-pull` handling in module, subworkflow, and pipeline linting and creation ([#4642](https://github.com/nf-core/tools/pull/4642))
 - make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
 - respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
 

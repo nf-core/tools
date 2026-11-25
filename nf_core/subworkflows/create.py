@@ -12,6 +12,8 @@ class SubworkflowCreate(ComponentCreate):
         component="",
         author=None,
         force=False,
+        *,
+        no_pull=False,
     ):
         super().__init__(
             "subworkflows",
@@ -19,4 +21,5 @@ class SubworkflowCreate(ComponentCreate):
             component,
             author,
             force=force,
+            no_pull=no_pull,
         )

@@ -6,8 +6,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import nf_core.modules.modules_repo
+from git.exc import GitCommandError
+
 from nf_core.components.components_differ import ComponentsDiffer
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 
 
 def subworkflow_changes(subworkflow_lint_object, subworkflow):
@@ -37,6 +39,12 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
     Each subworkflow file must be identical to the
     corresponding file in the remote repository at the pinned commit SHA.
     """
+    if not subworkflow.main_nf.is_file():
+        subworkflow.failed.append(
+            ("subworkflow_changes", "check_local_copy", "Installed subworkflow is missing main.nf", subworkflow.main_nf)
+        )
+        return
+
     if subworkflow.is_patched:
         # If the subworkflow is patched, we need to apply
         # the patch in reverse before comparing with the remote
@@ -60,7 +68,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
                     "subworkflow_changes",
                     "subworkflow_patch",
                     "Subworkflow patch can be cleanly applied",
-                    f"{subworkflow.component_dir}",
+                    subworkflow.component_dir,
                 )
             )
         except LookupError:
@@ -69,7 +77,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
                     "subworkflow_changes",
                     "subworkflow_patch",
                     "Subworkflow patch cannot be cleanly applied",
-                    f"{subworkflow.component_dir}",
+                    subworkflow.component_dir,
                 )
             )
             return
@@ -78,18 +86,30 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
     subworkflow.branch = subworkflow_lint_object.modules_json.get_component_branch(
         "subworkflows", subworkflow.component_name, subworkflow.repo_url, subworkflow.org
     )
-    modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=subworkflow.repo_url, branch=subworkflow.branch)
+    try:
+        modules_repo = subworkflow_lint_object.get_lint_repo(subworkflow.repo_url, subworkflow.branch)
+        comparisons = modules_repo.component_files_identical(
+            subworkflow.component_name, tempdir, subworkflow.git_sha, "subworkflows"
+        )
+    except (ModulesRepoUnavailableError, GitCommandError) as e:
+        subworkflow.warned.append(
+            (
+                "subworkflow_changes",
+                "check_local_copy",
+                f"Could not compare subworkflow with the remote: {e}",
+                subworkflow.component_dir,
+            )
+        )
+        return
 
-    for f, same in modules_repo.component_files_identical(
-        subworkflow.component_name, tempdir, subworkflow.git_sha, "subworkflows"
-    ).items():
+    for f, same in comparisons.items():
         if same:
             subworkflow.passed.append(
                 (
                     "subworkflow_changes",
                     "check_local_copy",
                     "Local copy of subworkflow up to date",
-                    f"{Path(subworkflow.component_dir, f)}",
+                    Path(subworkflow.component_dir, f),
                 )
             )
         else:
@@ -98,6 +118,6 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
                     "subworkflow_changes",
                     "check_local_copy",
                     "Local copy of subworkflow does not match remote",
-                    f"{Path(subworkflow.component_dir, f)}",
+                    Path(subworkflow.component_dir, f),
                 )
             )

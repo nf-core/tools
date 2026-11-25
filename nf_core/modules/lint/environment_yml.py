@@ -9,6 +9,7 @@ from rich.progress import Progress
 import nf_core.utils
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 from nf_core.modules.modules_utils import module_uses_dockerfile
 
 log = logging.getLogger(__name__)
@@ -206,7 +207,7 @@ def lint_environment_yml(
     if env_yml:
         valid_env_yml = False
         try:
-            with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/environment-schema.json")) as fh:
+            with module_lint_object.schema_path("environment-schema.json", local=allow_missing).open() as fh:
                 schema = json.load(fh)
             validators.validate(instance=env_yml, schema=schema)
             module.passed.append(
@@ -218,6 +219,15 @@ def lint_environment_yml(
                 )
             )
             valid_env_yml = True
+        except (FileNotFoundError, ModulesRepoUnavailableError) as e:
+            module.warned.append(
+                (
+                    "environment_yml",
+                    "environment_yml_valid",
+                    f"Could not load environment.yml schema: {e}",
+                    module.environment_yml,
+                )
+            )
         except exceptions.ValidationError as e:
             hint = ""
             if len(e.path) > 0:

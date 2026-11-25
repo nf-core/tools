@@ -636,9 +636,7 @@ def run_linting(
         except LookupError:
             subworkflow_lint_obj = None
 
-        # Verify that the pipeline is correctly configured and has  a modules.json file
         module_lint_obj.has_valid_directory()
-        module_lint_obj.has_modules_file()
         # Run only the tests we want
         if key:
             # Select only the module lint tests

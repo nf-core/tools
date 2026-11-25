@@ -23,6 +23,7 @@ import nf_core.utils
 from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
 from nf_core.utils import unquote
 
@@ -70,6 +71,8 @@ class ModuleLint(ComponentLint):
         no_pull: bool = False,
         registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress: bool = False,
+        *,
+        local: bool = False,
     ):
         super().__init__(
             component_type="modules",
@@ -81,8 +84,9 @@ class ModuleLint(ComponentLint):
             no_pull=no_pull,
             registry=registry,
             hide_progress=hide_progress,
+            local=local,
         )
-        self.meta_schema: Mapping[str, Any] | None = None
+        self._meta_schemas: dict[Path, Mapping[str, Any]] = {}
 
     def lint(
         self,
@@ -119,6 +123,10 @@ class ModuleLint(ComponentLint):
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
         """
+        if fix_version and self.no_pull:
+            log.warning("Skipping --fix-version with --no-pull because container rebuilds require network access.")
+            fix_version = False
+
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
         if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
@@ -130,13 +138,15 @@ class ModuleLint(ComponentLint):
         if module:
             if all_modules:
                 raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
-            local_modules = []
-            remote_modules = nf_core.modules.modules_utils.filter_modules_by_name(self.all_remote_components, module)
-            if len(remote_modules) == 0:
+            available = self.all_local_components if local else self.all_remote_components
+            matched = nf_core.modules.modules_utils.filter_modules_by_name(available, module)
+            if not matched:
                 raise LintExceptionError(f"Could not find the specified module: '{module}'")
+            local_modules = matched if local else []
+            remote_modules = [] if local else matched
         else:
             local_modules = self.all_local_components
-            remote_modules = self.all_remote_components
+            remote_modules = [] if local else self.all_remote_components
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]'{self.directory}'")
@@ -152,7 +162,7 @@ class ModuleLint(ComponentLint):
 
         # If it is a pipeline, load the lint config file and the modules.json file
         if self.repo_type == "pipeline":
-            self.set_up_pipeline_files()
+            self.set_up_pipeline_files(local=local)
 
         # Lint local modules
         if local and len(local_modules) > 0:
@@ -301,10 +311,10 @@ class ModuleLint(ComponentLint):
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
 
-    def load_meta_schema(self) -> Mapping[str, Any]:
+    def load_meta_schema(self, *, local: bool = False) -> Mapping[str, Any]:
         """
         Load the meta.yml JSON schema from the local modules repository cache.
-        The schema is cached in self.meta_schema to avoid reloading.
+        Cache each schema by its path.
 
         Returns:
             dict: The meta.yml JSON schema
@@ -312,18 +322,13 @@ class ModuleLint(ComponentLint):
         Raises:
             LookupError: If the local module cache is not found
         """
-        # Return cached schema if already loaded
-        if self.meta_schema is not None:
-            return self.meta_schema
+        path = self.schema_path("meta-schema.json", local=local)
+        if path not in self._meta_schemas:
+            with path.open() as fh:
+                self._meta_schemas[path] = json.load(fh)
+        return self._meta_schemas[path]
 
-        if self.modules_repo.local_repo_dir is None:
-            raise LookupError("Local module cache not found")
-
-        with open(Path(self.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
-            self.meta_schema = json.load(fh)
-        return self.meta_schema
-
-    def sort_meta_yml(self, meta_yml: dict) -> dict:
+    def sort_meta_yml(self, meta_yml: dict, *, local: bool = False) -> dict:
         """Sort meta.yml keys according to the schema's property order.
 
         Recurses into nested objects that the schema describes with ``properties``
@@ -331,7 +336,10 @@ class ModuleLint(ComponentLint):
         too. Arrays, ``$ref``/``patternProperties`` nodes and scalars are left untouched.
         """
         try:
-            schema = self.load_meta_schema()
+            schema = self.load_meta_schema(local=local)
+        except (FileNotFoundError, ModulesRepoUnavailableError) as e:
+            log.warning(f"Could not load meta.yml schema for sorting: {e}")
+            return meta_yml
         except LintExceptionError as e:
             raise UserWarning("Failed to load meta schema", e) from e
 
@@ -673,11 +681,12 @@ class ModuleLint(ComponentLint):
                     )
 
         # Add bio.tools identifier
-        for i, tool in enumerate(corrected_meta_yml["tools"]):
+        for tool in corrected_meta_yml.get("tools") or []:
             tool_name = list(tool.keys())[0]
             if "identifier" not in tool[tool_name]:
                 biotools_data = get_biotools_response(tool_name)
-                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(biotools_data, tool_name)
+                if biotools_data is not None:
+                    tool[tool_name]["identifier"] = get_biotools_id(biotools_data, tool_name)
 
         # Create YAML anchors for versions_* keys in output that match "versions" in topics
         # Since we now populate metadata for both output and topics, set up anchors to reference output from topics
@@ -713,11 +722,13 @@ class ModuleLint(ComponentLint):
             else:
                 return obj
 
-        corrected_meta_yml = self.sort_meta_yml(corrected_meta_yml)
+        local = mod.repo_type == "pipeline" and mod.repo_url is None
+        corrected_meta_yml = self.sort_meta_yml(corrected_meta_yml, local=local)
         corrected_meta_yml = _ensure_string_keys(corrected_meta_yml)
 
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")
             yaml.dump(corrected_meta_yml, fh)
         # After the with-block, so prettier sees the flushed file
-        run_prettier_on_file(mod.meta_yml)
+        if not self.no_pull:
+            run_prettier_on_file(mod.meta_yml)

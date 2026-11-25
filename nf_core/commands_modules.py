@@ -200,6 +200,7 @@ def modules_create(
             conda_name,
             conda_package_version,
             empty_template,
+            no_pull=ctx.obj["modules_repo_no_pull"],
         )
         module_create.create()
     except UserWarning as e:
@@ -262,6 +263,7 @@ def modules_lint(
             branch=ctx.obj["modules_repo_branch"],
             no_pull=ctx.obj["modules_repo_no_pull"],
             hide_progress=ctx.obj["hide_progress"],
+            local=local,
         )
         module_lint.lint(
             module=tool,

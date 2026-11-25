@@ -18,6 +18,7 @@ from nf_core.modules.lint.module_containers import (
     lint_main_nf_container,
     lint_meta_yml_containers,
 )
+from nf_core.modules.modules_repo import ModulesRepoUnavailableError
 from nf_core.utils import ContainerRegistryUrls, unquote
 
 if TYPE_CHECKING:
@@ -207,10 +208,12 @@ def meta_yml(module_lint_object: ModuleLint, module: NFCoreComponent, allow_miss
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        schema = module_lint_object.load_meta_schema()
+        schema = module_lint_object.load_meta_schema(local=allow_missing)
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml", "meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
+    except (FileNotFoundError, ModulesRepoUnavailableError) as e:
+        module.warned.append(("meta_yml", "meta_yml_valid", f"Could not load meta.yml schema: {e}", module.meta_yml))
     except exceptions.ValidationError as e:
         hint = ""
         if len(e.path) > 0:
@@ -430,15 +433,12 @@ def read_meta_yml_patched(module_lint_object: ComponentLint, module: NFCoreCompo
     Returns:
         dict: The `meta.yml` file as a dictionary
     """
-    if module_lint_object.modules_repo.repo_path is None:
-        raise ValueError("modules_repo.repo_path is None")
-
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ComponentsDiffer.try_apply_patch(
             module.component_type,
             module.component_name,
-            module_lint_object.modules_repo.repo_path,
+            module.org,
             module.patch_path,
             Path(module.component_dir).relative_to(module.base_dir),
             reverse=True,

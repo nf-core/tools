@@ -6,6 +6,7 @@ in nf-core pipelines
 import logging
 import operator
 import os
+from functools import cached_property
 from pathlib import Path
 
 import rich.box
@@ -14,11 +15,15 @@ import rich.repr
 from rich.markdown import Markdown
 from rich.table import Table
 
+import nf_core.modules.modules_repo
 import nf_core.utils
 from nf_core import __version__
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_repo import ModulesRepo, ModulesRepoUnavailableError
+from nf_core.modules.modules_utils import repo_full_name_from_remote
 from nf_core.pipelines.lint_utils import console
 from nf_core.utils import NFCoreYamlLintConfig
 from nf_core.utils import plural_s as _s
@@ -64,6 +69,8 @@ class ComponentLint(ComponentCommand):
         no_pull: bool = False,
         registry: tuple[str, ...] = ("quay.io", "community.wave.seqera.io/library"),
         hide_progress: bool = False,
+        *,
+        local: bool = False,
     ):
         super().__init__(
             component_type,
@@ -72,6 +79,7 @@ class ComponentLint(ComponentCommand):
             branch=branch,
             no_pull=no_pull,
             hide_progress=hide_progress,
+            defer_repo=True,
         )
 
         self.fail_warned = fail_warned
@@ -94,30 +102,11 @@ class ComponentLint(ComponentCommand):
                 "Could not determine repository type. Please check the repository type in the nf-core.yml"
             )
 
+        if not local:
+            # Reconcile the inventory before callers start linting installed components.
+            _ = self.all_remote_components
+
         if self.repo_type == "pipeline":
-            modules_json = ModulesJson(self.directory)
-            modules_json.check_up_to_date()
-            self.all_remote_components: list[NFCoreComponent] = []
-            for repo_url, components in modules_json.get_all_components(self.component_type).items():
-                if remote_url is not None and remote_url != repo_url:
-                    continue
-                if isinstance(components, str):
-                    raise LookupError(
-                        f"Error parsing modules.json: {components}. Please check the file for errors or try again."
-                    )
-                for org, comp in components:
-                    self.all_remote_components.append(
-                        NFCoreComponent(
-                            comp,
-                            repo_url,
-                            Path(self.directory, self.component_type, org, comp),
-                            self.repo_type,
-                            self.directory,
-                            self.component_type,
-                        )
-                    )
-            if not self.all_remote_components:
-                log.warning(f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline.")
             local_component_dir = Path(self.directory, self.component_type, "local")
 
             if local_component_dir.exists():
@@ -137,21 +126,81 @@ class ComponentLint(ComponentCommand):
             self._set_registry(registry)
 
         elif self.repo_type == "modules":
-            component_dir = Path(
-                self.directory,
-                self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path,
-            )
-            self.all_remote_components = [
-                NFCoreComponent(m, None, component_dir / m, self.repo_type, self.directory, self.component_type)
-                for m in self.get_components_clone_modules()
-            ]
-            self.all_local_components = []
-            if not self.all_remote_components:
-                log.warning(f"No {self.component_type} in '{self.component_type}' directory")
-
             # This could be better, perhaps glob for all nextflow.config files in?
             self.config = nf_core.utils.fetch_wf_config(self.directory / "tests" / "config", cache_config=True)
             self._set_registry(registry)
+
+    @cached_property
+    def all_remote_components(self) -> list[NFCoreComponent]:
+        if self.repo_type == "modules":
+            component_dir = self.directory / (
+                self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path
+            )
+            components = [
+                NFCoreComponent(name, None, component_dir / name, self.repo_type, self.directory, self.component_type)
+                for name in self.get_components_clone_modules()
+            ]
+            if not components:
+                log.warning(f"No {self.component_type} in '{self.component_type}' directory")
+            return components
+
+        modules_json = ModulesJson(self.directory)
+        try:
+            if self.no_pull:
+                modules_json.load()
+            else:
+                modules_json.check_up_to_date()
+        except ModulesRepoUnavailableError as e:
+            log.warning(f"Could not reconcile modules.json with the remote repository: {e}")
+        except UserWarning as e:
+            if not self.no_pull:
+                raise
+            log.warning(f"Skipping installed {self.component_type}: {e}")
+            return []
+
+        if modules_json.modules_json is None:
+            return []
+        self.modules_json = modules_json
+        components = []
+        for repo_url, entries in modules_json.get_all_components(self.component_type).items():
+            if self._remote_url is not None and self._remote_url != repo_url:
+                continue
+            if isinstance(entries, str):
+                raise LookupError(
+                    f"Error parsing modules.json: {entries}. Please check the file for errors or try again."
+                )
+            for org, name in entries:
+                components.append(
+                    NFCoreComponent(
+                        name,
+                        repo_url,
+                        self.directory / self.component_type / org / name,
+                        "pipeline",
+                        self.directory,
+                        self.component_type,
+                    )
+                )
+        if not components:
+            log.warning(
+                f"No {self.component_type} from {self._remote_url or NF_CORE_MODULES_REMOTE} installed in pipeline."
+            )
+        return components
+
+    def _load_modules_repo(self) -> ModulesRepo:
+        return self.get_lint_repo(self._remote_url, self._branch)
+
+    def get_lint_repo(self, remote_url: str | None, branch: str | None) -> ModulesRepo:
+        return ModulesRepo(remote_url, branch, hide_progress=self.hide_progress, cache_only=self.no_pull)
+
+    def schema_path(self, filename: str, *, local: bool = False) -> Path:
+        if local:
+            remote = getattr(self, "_remote_url", None) or NF_CORE_MODULES_REMOTE
+            repo_dir = nf_core.modules.modules_repo.NFCORE_DIR / repo_full_name_from_remote(remote)
+        else:
+            repo_dir = self.modules_repo.local_repo_dir
+        if repo_dir is None:
+            raise ModulesRepoUnavailableError("Local module cache not found")
+        return Path(repo_dir, getattr(self, "component_type", "modules"), filename)
 
     def __repr__(self) -> str:
         return f"ComponentLint({self.component_type}, {self.directory})"
@@ -196,10 +245,11 @@ class ComponentLint(ComponentCommand):
         else:
             return ["main_nf", "meta_yml", "subworkflow_todos", "subworkflow_if_empty_null", "subworkflow_tests"]
 
-    def set_up_pipeline_files(self):
+    def set_up_pipeline_files(self, *, local: bool = False):
         self.load_lint_config()
-        self.modules_json = ModulesJson(self.directory)
-        self.modules_json.load()
+        if not local:
+            # Resolving installed components also loads their modules.json metadata.
+            _ = self.all_remote_components
 
         # Only continue if a lint config has been loaded
         if self.lint_config:
