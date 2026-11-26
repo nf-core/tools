@@ -27,6 +27,8 @@ from nf_core.pipelines.download.singularity import SINGULARITY_CACHE_DIR_ENV_VAR
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
+    CONTAINER_ARCH_PROFILE_SUFFIX,
+    DEFAULT_CONTAINER_ARCH,
     NF_INSPECT_MIN_NF_VERSION,
     NFCORE_VER_LAST_WITHOUT_NF_INSPECT,
     CommandError,
@@ -68,6 +70,7 @@ class DownloadWorkflow:
         container_cache_index (Path | None): An index for the remote container cache. Defaults to None.
         parallel (int): The number of parallel downloads to use. Defaults to 4.
         hide_progress (bool): Flag to hide the progress bar. Defaults to False.
+        container_arch (tuple[str] | str | None): CPU architecture(s) to fetch images for ("amd64", "arm64"). Defaults to amd64.
     """
 
     def __init__(
@@ -86,6 +89,7 @@ class DownloadWorkflow:
         container_cache_index: Path | None = None,
         parallel: int = 4,
         hide_progress: bool = False,
+        container_arch: tuple[str, ...] | str | None = None,
     ):
         # Verify that the flags provided make sense together
         if (
@@ -126,6 +130,12 @@ class DownloadWorkflow:
             self.additional_tags = None
 
         self.container_system = container_system
+        if isinstance(container_arch, str):
+            container_arch = (container_arch,)
+        self.container_arch = list(dict.fromkeys(container_arch or (DEFAULT_CONTAINER_ARCH,)))
+        unknown_arch = set(self.container_arch) - CONTAINER_ARCH_PROFILE_SUFFIX.keys()
+        if unknown_arch:
+            raise DownloadError(f"Unsupported container architecture(s): {', '.join(sorted(unknown_arch))}")
         self.container_fetcher: ContainerFetcher | None = None
         # Check if a cache or libraries were specfied even though singularity was not
         if self.container_system != "singularity":
@@ -252,6 +262,7 @@ class DownloadWorkflow:
             f"Use containers: '{self.container_system}'",
         ]
         if self.container_system:
+            summary_log.append(f"Container architecture: '{', '.join(self.container_arch)}'")
             summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
         if self.container_system in SINGULARITY_SYSTEMS and os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) is not None:
             summary_log.append(
@@ -669,23 +680,37 @@ class DownloadWorkflow:
         """
         Find container image names for workflow using the `nextflow inspect` command.
 
-        Requires Nextflow >= 25.04.4
+        Runs `nextflow inspect` once per architecture in `self.container_arch` and stores the union in
+        `self.containers`. Requires Nextflow >= 25.04.4
 
         Args:
             workflow_directory (Path): The directory containing the workflow files.
+            revision (str): The workflow revision, used for logging.
+            with_test_containers (bool): Also include the `test` and `test_full` profiles.
             entrypoint (str): The entrypoint for the `nextflow inspect` command.
         """
 
         log.info(
             f"Fetching container names for workflow revision {revision} using [magenta bold]nextflow inspect[/]. This might take a while."
         )
-        # TODO: Select container system via profile. Is this stable enough?
-        # NOTE: We will likely don't need this after the switch to Seqera containers
-        profile_str = f"{self.container_system}"
+        # Each architecture has its own profile (e.g. `singularity_arm`) that loads per-arch container configs
+        self.containers = list(
+            set().union(
+                *(
+                    self._inspect_containers(workflow_directory, entrypoint, arch, with_test_containers)
+                    for arch in self.container_arch
+                )
+            )
+        )
+
+    def _inspect_containers(
+        self, workflow_directory: Path, entrypoint: str, arch: str, with_test_containers: bool
+    ) -> set[str]:
+        """Run `nextflow inspect` with the profile for `arch` and return the unique container names."""
+        profile_str = f"{self.container_system}{CONTAINER_ARCH_PROFILE_SUFFIX[arch]}"
         if with_test_containers:
             profile_str += ",test,test_full"
         profile = f"-profile {profile_str}" if self.container_system else ""
-
         working_dir = Path().absolute()
 
         def run_nextflow_inspect(params_file: Path | None = None) -> dict[str, Any]:
@@ -710,6 +735,13 @@ class DownloadWorkflow:
         except RuntimeError as e:
             # Only a failed command carries Nextflow output worth checking for known problems
             nf_error = e.output if isinstance(e, CommandError) else ""
+
+            # Older pipeline revisions predate the per-architecture `*_arm` profiles
+            if "Unknown configuration profile" in nf_error and CONTAINER_ARCH_PROFILE_SUFFIX[arch]:
+                raise DownloadError(
+                    f"This pipeline revision has no {arch} profile ({profile}). "
+                    f"Drop `--container-arch {arch}` or choose a revision that provides per-architecture containers."
+                ) from e
 
             # Nextflow >= 26.04 enforces strict process directive syntax and rejects old-style
             # if/else container blocks with "Invalid process directive". Users need an older NF.
@@ -741,11 +773,7 @@ class DownloadWorkflow:
                 raise DownloadError(e) from e
 
         try:
-            # NOTE: Should we save the container name too to have more meta information?
-            named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-            # We only want to process unique containers
-            self.containers = list(set(named_containers.values()))
-
+            return {proc["container"] for proc in out_json["processes"]}
         except KeyError as e:
             log.error("Failed to parse output of 'nextflow inspect' to extract containers")
             raise DownloadError(e) from e

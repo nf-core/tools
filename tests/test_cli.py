@@ -176,6 +176,7 @@ class TestCli(unittest.TestCase):
             "container-cache-utilisation": "copy",
             "container-cache-index": "/path/index.txt",
             "parallel-downloads": 2,
+            "container-arch": "arm64",
         }
 
         cmd = (
@@ -203,6 +204,7 @@ class TestCli(unittest.TestCase):
             container_cache_index=params["container-cache-index"],
             parallel=params["parallel-downloads"],
             hide_progress="hide-progress" in toplevel_params,
+            container_arch=(params["container-arch"],),
         )
 
         mock_dl.return_value.download_workflow.assert_called_once()
