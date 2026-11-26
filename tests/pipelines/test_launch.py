@@ -204,6 +204,13 @@ class TestLaunch(TestPipelines):
         assert "-name" not in self.launcher.nxf_flags
         assert self.launcher.schema_obj.input_params["igenomes_ignore"] is True
 
+    def test_sanitise_web_response_schema_defaults(self):
+        """Check that string defaults in the schema returned by the web launcher are converted to their types"""
+        self.launcher.get_pipeline_schema()
+        self.launcher.schema_obj.schema["properties"] = {"foo": {"type": "boolean", "default": "true"}}
+        self.launcher.sanitise_web_response()
+        assert self.launcher.schema_obj.schema["properties"]["foo"]["default"] is True
+
     def test_ob_to_questionary_bool(self):
         """Check converting a python dict to a pyenquirer format - booleans"""
         sc_obj = {
@@ -236,6 +243,15 @@ class TestLaunch(TestPipelines):
         assert result["validate"]("123.56sdkfjb") == "Must be a number"
         assert result["filter"]("123.456") == 123.456
         assert result["filter"]("") == ""
+
+    def test_ob_to_questionary_nullable(self):
+        """Check that nullable types get the same prompt as their non-null type"""
+        number = self.launcher.single_param_to_questionary("foo", {"type": ["number", "null"], "default": 0.1})
+        assert number["validate"]("abc") == "Must be a number"
+        assert number["filter"]("400") == 400.0
+        boolean = self.launcher.single_param_to_questionary("bar", {"type": ["boolean", "null"], "default": True})
+        assert boolean["type"] == "list"
+        assert boolean["filter"]("true") is True
 
     def test_ob_to_questionary_integer(self):
         """Check converting a python dict to a pyenquirer format - with enum"""

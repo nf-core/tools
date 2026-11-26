@@ -388,6 +388,9 @@ NF_INSPECT_MIN_NF_VERSION = (25, 4, 4, False)
 # This is the maximal version of nf-core/tools that does not require `nextflow inspect` for downloads
 NFCORE_VER_LAST_WITHOUT_NF_INSPECT = (3, 3, 2)
 
+# Bump when the cached `fetch_wf_config` output changes shape (v2: typed `nextflow config -o json` instead of `-flat`)
+WF_CONFIG_CACHE_VERSION = 2
+
 
 # Pretty print a Nextflow version tuple
 def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
@@ -506,7 +509,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     # Hash the hash
     if len(concat_hash) > 0:
         bighash = hashlib.sha256(concat_hash.encode("utf-8")).hexdigest()
-        cache_fn = f"wf-config-cache-{bighash[:25]}.json"
+        cache_fn = f"wf-config-cache-v{WF_CONFIG_CACHE_VERSION}-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
         cache_path = Path(cache_basedir, cache_fn)

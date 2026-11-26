@@ -413,6 +413,72 @@ class TestSchema(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.schema_obj.validate_default_params()
 
+    def test_get_param_type(self):
+        """Test resolving a param's type when it is a string or a list"""
+        assert nf_core.pipelines.schema.get_param_type({"type": "number"}) == "number"
+        assert nf_core.pipelines.schema.get_param_type({"type": ["number", "null"]}) == "number"
+        assert nf_core.pipelines.schema.get_param_type({"type": ["integer", "string"]}) is None
+        assert nf_core.pipelines.schema.get_param_type({}) is None
+
+    def test_sanitise_param_default_nullable(self):
+        """Test that nullable types keep correctly typed defaults (nf-core/tools#4636)"""
+        sanitise = self.schema_obj.sanitise_param_default
+        assert sanitise({"type": ["number", "null"], "default": 400})["default"] == 400.0
+        assert sanitise({"type": ["integer", "null"], "default": "5"})["default"] == 5
+        assert sanitise({"type": ["boolean", "null"], "default": "true"})["default"] is True
+        assert sanitise({"type": ["integer", "null"], "default": None})["default"] is None
+        assert sanitise({"type": "integer", "default": None})["default"] is None
+        assert sanitise({"type": ["number", "string"], "default": 0.1})["default"] == 0.1
+
+    def test_sanitise_param_default_none(self):
+        """Test that a None default on a non-nullable type is left as-is instead of crashing"""
+        sanitise = self.schema_obj.sanitise_param_default
+        assert sanitise({"type": "integer", "default": None})["default"] is None
+        assert sanitise({"type": "number", "default": None})["default"] is None
+        assert sanitise({"type": "string", "default": None})["default"] is None
+
+    def test_mistyped_schema_default_is_reported(self):
+        """Test that a schema default of the wrong type is reported, not silently converted"""
+        self.schema_obj.schema = {"properties": {"foo": {"type": "integer", "default": "15"}}}
+        self.schema_obj.get_schema_defaults()
+        assert self.schema_obj.schema_defaults == {"foo": "15"}
+        assert self.schema_obj.schema["properties"]["foo"]["default"] == "15"
+        self.schema_obj.no_prompts = True
+        with pytest.raises(AssertionError, match="'15' is not of type 'integer'"):
+            self.schema_obj.validate_default_params()
+
+    def test_validate_config_defaults_against_schema(self):
+        """Test that config defaults are checked with the schema's own rules, including nullable types (nf-core/tools#4636)"""
+        self.schema_obj.schema = {
+            "$defs": {
+                "group": {
+                    "properties": {
+                        "mode": {"type": "string", "enum": ["fast", "slow"]},
+                        "flag": {"type": "boolean"},
+                        "count": {"type": ["integer", "null"]},
+                        "name": {"type": "string"},
+                        "size": {"type": ["number", "null"], "default": 400},
+                    }
+                }
+            },
+            "allOf": [{"$ref": "#/$defs/group"}],
+        }
+        self.schema_obj.get_schema_defaults()
+        self.schema_obj.pipeline_params = {
+            "mode": "medium",
+            "flag": "true",
+            "count": None,
+            "name": "false",
+            "size": 400,
+        }
+        self.schema_obj.no_prompts = True
+        self.schema_obj.validate_default_params()
+        invalid = self.schema_obj.invalid_nextflow_config_default_parameters
+        assert invalid.keys() == {"mode", "flag", "name"}
+        assert "is not one of" in invalid["mode"]
+        assert "is not of type 'boolean'" in invalid["flag"]
+        assert invalid["name"] == "String should not be set to `false`"
+
     def test_add_schema_found_configs(self):
         """Try adding a new parameter to the schema from the config"""
         self.schema_obj.pipeline_params = {"foo": "bar"}
@@ -452,17 +518,18 @@ class TestSchema(unittest.TestCase):
 
     def test_build_schema_param_bool(self):
         """Build a new schema param from a config value (bool)"""
-        param = self.schema_obj.build_schema_param("True")
+        param = self.schema_obj.build_schema_param(True)
         assert param == {"type": "boolean", "default": True}
 
     def test_build_schema_param_int(self):
         """Build a new schema param from a config value (int)"""
-        param = self.schema_obj.build_schema_param("12")
+        param = self.schema_obj.build_schema_param(12)
         assert param == {"type": "integer", "default": 12}
+        assert self.schema_obj.build_schema_param("12") == {"type": "string", "default": "12"}
 
     def test_build_schema_param_float(self):
         """Build a new schema param from a config value (float)"""
-        param = self.schema_obj.build_schema_param("12.34")
+        param = self.schema_obj.build_schema_param(12.34)
         assert param == {"type": "number", "default": 12.34}
 
     def test_build_schema(self):
@@ -485,6 +552,15 @@ class TestSchema(unittest.TestCase):
         Path(test_pipeline_dir, "nextflow_schema.json").unlink()
 
         self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
+
+    def test_build_schema_fixes_mistyped_default(self):
+        """Test that schema build repairs a default of the wrong type from the config instead of refusing to run"""
+        schema = json.loads(self.template_schema.read_text())
+        schema["$defs"]["generic_options"]["properties"]["validate_params"]["default"] = "true"
+        self.template_schema.write_text(json.dumps(schema))
+        assert self.schema_obj.build_schema(self.template_dir, True, False, None) is not False
+        schema = json.loads(self.template_schema.read_text())
+        assert schema["$defs"]["generic_options"]["properties"]["validate_params"]["default"] is True
 
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):

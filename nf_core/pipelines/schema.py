@@ -33,7 +33,6 @@ class PipelineSchema:
         self.pipeline_dir = ""
         self._schema_filename = ""
         self.schema_defaults = {}
-        self.schema_types = {}
         self.schema_params = {}
         self.input_params = {}
         self.pipeline_params = {}
@@ -152,13 +151,18 @@ class PipelineSchema:
             log.error(error)
             raise AssertionError(error)
 
-    def load_lint_schema(self):
-        """Load and lint a given schema to see if it looks valid"""
+    def load_lint_schema(self, check_defaults: bool = True) -> None:
+        """Load and lint a given schema to see if it looks valid
+
+        Args:
+            check_defaults: Also validate the schema and config defaults (skipped by `schema build`, which fixes them)
+        """
         try:
             self.load_schema()
             num_params = self.validate_schema()
             self.get_schema_defaults()
-            self.validate_default_params()
+            if check_defaults:
+                self.validate_default_params()
             if len(self.invalid_nextflow_config_default_parameters) > 0:
                 params = "\n --".join(
                     [f"{param}: {msg}" for param, msg in self.invalid_nextflow_config_default_parameters.items()]
@@ -178,7 +182,7 @@ class PipelineSchema:
             log.error(error_msg)
             raise AssertionError(error_msg) from e
 
-    def load_schema(self):
+    def load_schema(self) -> None:
         """Load a pipeline schema from a file"""
         if self.schema_filename is None or not Path(self.schema_filename).exists():
             raise AssertionError("Pipeline schema filename could not be found.")
@@ -191,15 +195,22 @@ class PipelineSchema:
             raise AssertionError("Schema missing top-level `$schema` attribute")
         log.debug(f"JSON file loaded: {self.schema_filename}")
 
-    def sanitise_param_default(self, param):
+    def sanitise_param_default(self, param: dict) -> dict:
         """
-        Given a param, ensure that the default value is the correct variable type
+        Given a param, ensure that the default value is the correct variable type.
+        Only for schemas that come back from the web launcher, which returns everything as strings.
         """
         if "type" not in param or "default" not in param:
             return param
 
+        # Nothing to convert (and int(None)/float(None) would raise)
+        if param["default"] is None:
+            return param
+
+        param_type = get_param_type(param)
+
         # Bools
-        if param["type"] == "boolean":
+        if param_type == "boolean":
             if not isinstance(param["default"], bool):
                 param["default"] = param["default"] == "true"
             return param
@@ -210,20 +221,18 @@ class PipelineSchema:
             return param
 
         # Integers
-        if param["type"] == "integer":
+        if param_type == "integer":
             param["default"] = int(param["default"])
             return param
 
         # Numbers
-        if param["type"] == "number":
+        if param_type == "number":
             param["default"] = float(param["default"])
             return param
 
-        if param["default"] is None:
-            return param
-
-        # Strings
-        param["default"] = str(param["default"])
+        # Strings (types like ["number", "string"] are left as they are)
+        if param_type == "string":
+            param["default"] = str(param["default"])
         return param
 
     def get_schema_defaults(self) -> None:
@@ -236,33 +245,21 @@ class PipelineSchema:
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
             self.schema_params[p_key] = ("properties", p_key)
-            if "default" in param:
-                param = self.sanitise_param_default(param)
-                if param["default"] is not None:
-                    self.schema_defaults[p_key] = param["default"]
+            if param.get("default") is not None:
+                self.schema_defaults[p_key] = param["default"]
 
         # TODO add support for nested parameters
         # Grouped schema properties in subschema definitions
         for defn_name, definition in self.schema.get(self.defs_notation, {}).items():
             for p_key, param in definition.get("properties", {}).items():
                 self.schema_params[p_key] = (self.defs_notation, defn_name, "properties", p_key)
-                if "default" in param:
-                    param = self.sanitise_param_default(param)
-                    if param["default"] is not None:
-                        self.schema_defaults[p_key] = param["default"]
+                if param.get("default") is not None:
+                    self.schema_defaults[p_key] = param["default"]
 
-    def get_schema_types(self) -> None:
-        """Get a list of all parameter types in the schema"""
-        for name, param in self.schema.get("properties", {}).items():
-            if "type" in param:
-                self.schema_types[name] = param["type"]
-        for _, definition in self.schema.get(self.defs_notation, {}).items():
-            for name, param in definition.get("properties", {}).items():
-                if "type" in param:
-                    self.schema_types[name] = param["type"]
-
-    def save_schema(self, suppress_logging=False):
+    def save_schema(self, suppress_logging: bool = False) -> None:
         """Save a pipeline schema to a file"""
+        if not self.schema_filename:
+            raise AssertionError("Cannot save pipeline schema: no schema filename set")
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
         num_params += sum(len(d.get("properties", {})) for d in self.schema.get(self.defs_notation, {}).values())
@@ -270,7 +267,7 @@ class PipelineSchema:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         dump_json_with_prettier(self.schema_filename, self.schema)
 
-    def load_input_params(self, params_path):
+    def load_input_params(self, params_path: Path) -> None:
         """Load a given a path to a parameters file (JSON/YAML)
 
         These should be input parameters used to run a pipeline with
@@ -321,11 +318,10 @@ class PipelineSchema:
         """
         if self.schema is None:
             log.error("[red][✗] Pipeline schema not found")
-        try:
-            jsonschema.validate(self.schema_defaults, strip_required(self.schema))
-        except jsonschema.exceptions.ValidationError as e:
-            log.debug(f"Complete error message:\n{e}")
-            raise AssertionError(f"Default parameters are invalid: {e.message}") from e
+        validator = jsonschema.validators.validator_for(self.schema)(strip_required(self.schema))
+        if error := jsonschema.exceptions.best_match(validator.iter_errors(self.schema_defaults)):
+            log.debug(f"Complete error message:\n{error}")
+            raise AssertionError(f"Default parameters are invalid: {error.message}")
         for param, default in self.schema_defaults.items():
             if default in ("null", "", None, "None") or default is False:
                 log.warning(
@@ -337,76 +333,27 @@ class PipelineSchema:
         if self.pipeline_params == {}:
             self.get_wf_params()
 
-        # Go over group keys
-        for _group_key, group in self.schema.get(self.defs_notation, {}).items():
-            group_properties = group.get("properties")
-            for param in group_properties:
-                if param in self.ignored_params:
-                    continue
-                if param in self.pipeline_params:
-                    self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
-                else:
-                    self.invalid_nextflow_config_default_parameters[param] = (
-                        "Not in pipeline parameters. Check `nextflow.config`."
-                    )
-
-        # Go over ungrouped params if any exist
-        ungrouped_properties = self.schema.get("properties")
-        if ungrouped_properties:
-            for param in ungrouped_properties:
-                if param in self.ignored_params:
-                    continue
-                if param in self.pipeline_params:
-                    self.validate_config_default_parameter(
-                        param, ungrouped_properties[param], self.pipeline_params[param]
-                    )
-                else:
-                    self.invalid_nextflow_config_default_parameters[param] = (
-                        "Not in pipeline parameters. Check `nextflow.config`."
-                    )
-
-    def validate_config_default_parameter(self, param, schema_param, config_default):
-        """
-        Assure that default parameters in the nextflow.config are correctly set
-        by comparing them to their type in the schema
-        """
-
-        # If we have a default in the schema, check it matches the config
-        if "default" in schema_param and (  # noqa SIM102
-            (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
-            and (str(schema_param["default"]) != str(config_default).strip("'\""))
-        ):
-            # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
-            if schema_param["type"] != "string" or "{" not in schema_param["default"]:
+        config_defaults = {}
+        for param in self.schema_params:
+            if param in self.ignored_params:
+                continue
+            if param not in self.pipeline_params:
                 self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                    "Not in pipeline parameters. Check `nextflow.config`."
                 )
-                return
+            elif self.pipeline_params[param] is not None:
+                config_defaults[param] = self.pipeline_params[param]
 
-        # if default is null, we're good
-        if config_default is None or config_default == "null":
-            return
+        # `nextflow config -o json` types plain values (numbers, booleans, null), so the schema itself can check them
+        for error in validator.iter_errors(config_defaults):
+            if error.path:
+                self.invalid_nextflow_config_default_parameters.setdefault(error.path[0], error.message)
 
-        # Check variable types in nextflow.config
-        if schema_param["type"] == "string" and str(config_default).lower() in ["false", "true", "''"]:
-            self.invalid_nextflow_config_default_parameters[param] = f"String should not be set to `{config_default}`"
-        if schema_param["type"] == "boolean" and str(config_default).lower() not in ["false", "true"]:
-            self.invalid_nextflow_config_default_parameters[param] = (
-                f"Booleans should only be true or false, not `{config_default}`"
-            )
-        if schema_param["type"] == "integer":
-            try:
-                int(config_default)
-            except ValueError:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Does not look like an integer: `{config_default}`"
-                )
-        if schema_param["type"] == "number":
-            try:
-                float(config_default)
-            except ValueError:
-                self.invalid_nextflow_config_default_parameters[param] = (
-                    f"Does not look like a number (float): `{config_default}`"
+        # nf-core convention that the schema can't express
+        for param, config_default in config_defaults.items():
+            if isinstance(config_default, str) and config_default.lower() in {"", "true", "false"}:
+                self.invalid_nextflow_config_default_parameters.setdefault(
+                    param, f"String should not be set to `{config_default}`"
                 )
 
     def validate_schema(self, schema=None):
@@ -724,9 +671,9 @@ class PipelineSchema:
                 log.info("Please ask for help on the nf-core Slack")
                 return False
         else:
-            # Schema found - load and validate
+            # Schema found - load and validate; wrong defaults are fixed from the config below
             try:
-                self.load_lint_schema()
+                self.load_lint_schema(check_defaults=False)
             except AssertionError:
                 log.error(f"Existing pipeline schema found, but it is invalid: {self.schema_filename}")
                 log.info("Please fix or delete this file, then try again.")
@@ -943,22 +890,10 @@ class PipelineSchema:
             return {"type": "integer", "default": p_val}
         if isinstance(p_val, float):
             return {"type": "number", "default": p_val}
-
-        # TODO: remove string branch once old text-format config caches are no longer supported
-        p_val = p_val.strip("\"'")
-        if not p_val or p_val == "null":
+        if p_val == "":
             return {"type": "string"}
-        if p_val in ("true", "True"):
-            return {"type": "boolean", "default": True}
-        if p_val in ("false", "False"):
-            return {"type": "boolean"}
-        try:
-            num = float(p_val)
-            if num == int(num):
-                return {"type": "integer", "default": int(num)}
-            return {"type": "number", "default": num}
-        except ValueError:
-            return {"type": "string", "default": p_val}
+        # A quoted value such as '5' is a String in Nextflow, so it stays a string here
+        return {"type": "string", "default": p_val}
 
     def launch_web_builder(self):
         """
@@ -1025,6 +960,21 @@ class PipelineSchema:
                 f"Pipeline schema builder returned unexpected status ({web_response['status']}): "
                 f"{self.web_schema_build_api_url}\n See verbose log for full response"
             )
+
+
+def get_param_type(param: dict) -> str | None:
+    """
+    Return the single non-null JSON schema type of a param, e.g. "number" for both
+    ``"number"`` and ``["number", "null"]``. Returns None if there is no type or several non-null types.
+    """
+    param_type = param.get("type")
+    if isinstance(param_type, str):
+        return param_type
+    if isinstance(param_type, list):
+        non_null = [t for t in param_type if t != "null"]
+        if len(non_null) == 1:
+            return non_null[0]
+    return None
 
 
 def strip_required(node):
