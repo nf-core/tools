@@ -191,7 +191,7 @@ class TestCli(unittest.TestCase):
         mock_dl.assert_called_once_with(
             cmd[-1],
             (params["revision"],),
-            params["outdir"],
+            Path(params["outdir"]),
             compress_type=params["compress"],
             force="force" in params,
             platform="platform" in params,
@@ -200,7 +200,7 @@ class TestCli(unittest.TestCase):
             container_system=params["container-system"],
             container_library=(params["container-library"],),
             container_cache_utilisation=params["container-cache-utilisation"],
-            container_cache_index=params["container-cache-index"],
+            container_cache_index=Path(params["container-cache-index"]),
             parallel=params["parallel-downloads"],
             hide_progress="hide-progress" in toplevel_params,
         )
@@ -227,7 +227,7 @@ class TestCli(unittest.TestCase):
             params["author"],
             force="force" in params,
             version="1.0.0dev",
-            outdir=params["outdir"],
+            outdir=Path(params["outdir"]),
             template_config=None,
             organisation="nf-core",
         )
@@ -295,8 +295,8 @@ class TestCli(unittest.TestCase):
                 "fail-ignored" in params,
                 "fail-warned" in params,
                 "test",
-                params["markdown"],
-                params["json"],
+                Path(params["markdown"]),
+                Path(params["json"]),
                 "hide-progress" in params,
                 False,  # plain_text
             )
@@ -387,5 +387,5 @@ class TestCli(unittest.TestCase):
         cmd = ["pipelines", "create-logo", "test"]
         result = self.invoke_cli(cmd)
 
-        mock_create_logo.assert_called_with("test", Path.cwd(), None, "light", 2300, "png", False)
+        mock_create_logo.assert_called_with("test", Path(), None, "light", 2300, "png", False)
         assert result.exit_code == 0

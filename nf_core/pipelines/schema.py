@@ -558,7 +558,7 @@ class PipelineSchema:
 
     def print_documentation(
         self,
-        output_fn=None,
+        output_fn: Path | None = None,
         output_format="markdown",
         force=False,
         columns=None,
@@ -588,7 +588,7 @@ class PipelineSchema:
             else:
                 print(prettified_docs, end="")
         else:
-            if Path(output_fn).exists() and not force:
+            if output_fn.exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
             with open(output_fn, "w") as fh:

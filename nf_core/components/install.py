@@ -52,7 +52,7 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: str | dict[str, str], silent: bool = False) -> bool:
+    def install(self, component: str | dict[str, str] | None, silent: bool = False) -> bool:
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)

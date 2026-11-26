@@ -2,20 +2,29 @@ import logging
 import sys
 from pathlib import Path
 
-import rich
+import click
 
 import nf_core.utils
-from nf_core.utils import rich_force_colors
+from nf_core.utils import stdout
 
 log = logging.getLogger(__name__)
 
-stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 ## nf-core pipelines command functions ##
 
 
 # nf-core pipelines create
-def pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
+def pipelines_create(
+    ctx: click.Context,
+    name: str | None,
+    description: str | None,
+    author: str | None,
+    version: str,
+    force: bool,
+    outdir: Path | None,
+    template_yaml: Path | None,
+    organisation: str,
+) -> None:
     """
     Create a new pipeline using the nf-core template.
 
@@ -65,7 +74,7 @@ def pipelines_create(ctx, name, description, author, version, force, outdir, tem
 
 
 # nf-core pipelines bump-version
-def pipelines_bump_version(ctx, new_version, directory, nextflow):
+def pipelines_bump_version(ctx: click.Context, new_version: str, directory: Path, nextflow: bool) -> None:
     """
     Update nf-core pipeline version number.
 
@@ -100,7 +109,7 @@ def pipelines_bump_version(ctx, new_version, directory, nextflow):
 
 
 # nf-core pipelines containers create-configs
-def pipelines_containers_create_configs(ctx, directory):
+def pipelines_containers_create_configs(ctx: click.Context | None, directory: Path) -> None:
     """
     Regenerate the pipeline container config files.
 
@@ -116,7 +125,7 @@ def pipelines_containers_create_configs(ctx, directory):
 
     try:
         is_pipeline_directory(directory)
-        ContainerConfigs(Path(directory)).generate_container_configs()
+        ContainerConfigs(directory).generate_container_configs()
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
@@ -124,19 +133,19 @@ def pipelines_containers_create_configs(ctx, directory):
 
 # nf-core pipelines lint
 def pipelines_lint(
-    ctx,
-    directory,
-    release,
-    fix,
-    key,
-    show_passed,
-    fail_ignored,
-    fail_warned,
-    markdown,
-    json,
-    sort_by,
-    plain_text,
-):
+    ctx: click.Context,
+    directory: Path,
+    release: bool,
+    fix: tuple[str, ...],
+    key: tuple[str, ...],
+    show_passed: bool,
+    fail_ignored: bool,
+    fail_warned: bool,
+    markdown: Path | None,
+    json: Path | None,
+    sort_by: str,
+    plain_text: bool,
+) -> None:
     """
     Check pipeline code against nf-core guidelines.
 
@@ -193,21 +202,21 @@ def pipelines_lint(
 
 # nf-core pipelines download
 def pipelines_download(
-    ctx,
-    pipeline,
-    revision,
-    outdir,
-    compress_type,
-    force,
-    platform,
-    download_configuration,
-    tag,
-    container_system,
-    container_library,
-    container_cache_utilisation,
-    container_cache_index,
-    parallel_downloads,
-):
+    ctx: click.Context,
+    pipeline: str | None,
+    revision: tuple[str, ...],
+    outdir: Path | None,
+    compress_type: str | None,
+    force: bool,
+    platform: bool,
+    download_configuration: str,
+    tag: tuple[str, ...],
+    container_system: str | None,
+    container_library: tuple[str, ...],
+    container_cache_utilisation: str | None,
+    container_cache_index: Path | None,
+    parallel_downloads: int,
+) -> None:
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -236,7 +245,15 @@ def pipelines_download(
 
 
 # nf-core pipelines create-params-file
-def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts=False):
+def pipelines_create_params_file(
+    ctx: click.Context,
+    pipeline: str | None,
+    revision: str | None,
+    output: Path,
+    force: bool,
+    show_hidden: bool,
+    no_prompts: bool = False,
+) -> None:
     """
     Build a parameter file for a pipeline.
 
@@ -252,24 +269,24 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
 
     builder = ParamsFileBuilder(pipeline, revision, no_prompts)
 
-    if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):
+    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
         sys.exit(1)
 
 
 # nf-core pipelines launch
 def pipelines_launch(
-    ctx,
-    pipeline,
-    launch_id,
-    revision,
-    command_only,
-    params_in,
-    params_out,
-    save_all,
-    show_hidden,
-    url,
-    no_prompts=False,
-):
+    ctx: click.Context,
+    pipeline: str | None,
+    launch_id: str | None,
+    revision: str | None,
+    command_only: bool,
+    params_in: Path | None,
+    params_out: Path,
+    save_all: bool,
+    show_hidden: bool,
+    url: str,
+    no_prompts: bool = False,
+) -> None:
     """
     Launch a pipeline using a web GUI or command line prompts.
 
@@ -302,7 +319,7 @@ def pipelines_launch(
 
 
 # nf-core pipelines list
-def pipelines_list(ctx, keywords, sort, json, show_archived):
+def pipelines_list(ctx: click.Context, keywords: tuple[str, ...], sort: str, json: bool, show_archived: bool) -> None:
     """
     List available nf-core pipelines with local info.
 
@@ -316,7 +333,7 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 
 # nf-core pipelines rocrate
 def pipelines_rocrate(
-    ctx,
+    ctx: click.Context,
     pipeline_dir: Path,
     json_path: Path | None,
     zip_path: Path | None,
@@ -338,17 +355,17 @@ def pipelines_rocrate(
 
 # nf-core pipelines sync
 def pipelines_sync(
-    ctx,
-    directory,
-    from_branch,
-    pull_request,
-    github_repository,
-    username,
-    template_yaml,
-    force_pr,
-    blog_post,
-    no_prompts=False,
-):
+    ctx: click.Context,
+    directory: Path,
+    from_branch: str | None,
+    pull_request: bool,
+    github_repository: str | None,
+    username: str | None,
+    template_yaml: Path | None,
+    force_pr: bool,
+    blog_post: str | None,
+    no_prompts: bool = False,
+) -> None:
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -386,7 +403,15 @@ def pipelines_sync(
 
 
 # nf-core pipelines create-logo
-def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force):
+def pipelines_create_logo(
+    logo_text: str,
+    directory: Path,
+    name: str | None,
+    theme: str,
+    width: int,
+    img_format: str,
+    force: bool,
+) -> None:
     """
     Generate a logo with the nf-core logo template.
 
@@ -395,13 +420,7 @@ def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, 
     from nf_core.pipelines.create_logo import create_logo
 
     try:
-        directory = directory.resolve()
         logo_path = create_logo(logo_text, directory, name, theme, width, img_format, force)
-        # Print path to logo relative to current working directory
-        try:
-            logo_path = Path(logo_path).relative_to(Path.cwd())
-        except ValueError:
-            logo_path = Path(logo_path)
         log.info(f"Created logo: [magenta]{logo_path}[/]")
     except UserWarning as e:
         log.error(e)
@@ -409,7 +428,7 @@ def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, 
 
 
 # nf-core pipelines schema validate
-def pipelines_schema_validate(pipeline, params):
+def pipelines_schema_validate(pipeline: str | Path, params: Path) -> None:
     """
     Validate a set of parameters against a pipeline schema.
 
@@ -437,7 +456,7 @@ def pipelines_schema_validate(pipeline, params):
 
 
 # nf-core pipelines schema build
-def pipelines_schema_build(directory, no_prompts, web_only, url):
+def pipelines_schema_build(directory: Path, no_prompts: bool, web_only: bool, url: str) -> None:
     """
     Interactively build a pipeline schema from Nextflow params.
 
@@ -461,7 +480,7 @@ def pipelines_schema_build(directory, no_prompts, web_only, url):
 
 
 # nf-core pipelines schema lint
-def pipelines_schema_lint(schema_path):
+def pipelines_schema_lint(schema_path: Path) -> None:
     """
     Check that a given pipeline schema is valid.
 
@@ -489,7 +508,9 @@ def pipelines_schema_lint(schema_path):
 
 
 # nf-core pipelines schema docs
-def pipelines_schema_docs(schema_path, output, output_format, force, columns):
+def pipelines_schema_docs(
+    schema_path: Path, output: Path | None, output_format: str, force: bool, columns: str
+) -> None:
     """
     Outputs parameter documentation for a pipeline schema.
     """

@@ -35,7 +35,7 @@ def list_dataset_branches() -> None:
 
 
 def list_datasets(
-    maybe_branch: str = "",
+    maybe_branch: str | None = None,
     generate_nf_path: bool = False,
     generate_dl_url: bool = False,
     ignored_file_prefixes: list[str] = IGNORED_FILE_PREFIXES,

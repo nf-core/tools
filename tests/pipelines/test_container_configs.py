@@ -112,11 +112,11 @@ class TestPipelinesContainersCommand(TestPipelines):
         original = cfg_path.read_text()
         cfg_path.write_text("not a container config\n")
 
-        pipelines_containers_create_configs(None, str(self.pipeline_dir))
+        pipelines_containers_create_configs(None, self.pipeline_dir)
 
         assert cfg_path.read_text() == original
 
     def test_exits_when_not_a_pipeline(self) -> None:
         """A directory without main.nf exits with an error."""
         with pytest.raises(SystemExit):
-            pipelines_containers_create_configs(None, str(self.tmp_dir))
+            pipelines_containers_create_configs(None, self.tmp_dir)
