@@ -13,9 +13,11 @@ import rocrate.rocrate
 from git import GitCommandError, InvalidGitRepositoryError
 from repo2rocrate.nextflow import NextflowCrateBuilder
 from rich.progress import BarColumn, Progress
+from rocrate.model.computationalworkflow import ComputationalWorkflow
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
+from nf_core.github_api import gh_api
 from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
@@ -191,9 +193,9 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        self.crate.add_jsonld(
-            {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
-        )
+        org_website = (manifest.get("docsUrl") or "https://nf-co.re").rstrip("/")
+        org_name = manifest.get("organization") or "nf-core"
+        self.crate.add_jsonld({"@id": org_website, "@type": "Organization", "name": org_name, "url": org_website})
 
         # Set metadata for main entity file
         self.set_main_entity("main.nf")
@@ -214,6 +216,14 @@ class ROCrate:
         if self.crate.mainEntity is None:
             raise ValueError("Main entity not set")
 
+        manifest = self.pipeline_obj.nf_config.get("manifest", {})
+        org_website = (manifest.get("docsUrl") or "https://nf-co.re").rstrip("/")
+        if "/" in self.crate.name:
+            (org_short_name, pipeline_short_name) = self.crate.name.split("/", 1)
+        else:
+            org_short_name = None
+            pipeline_short_name = self.crate.name
+
         self.crate.mainEntity.append_to(
             "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
         )
@@ -222,33 +232,35 @@ class ROCrate:
         self.crate.mainEntity.append_to(
             "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
         )
-        self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
-        url = "dev" if self.version.endswith("dev") else self.version
-        self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
-        )
+        self.crate.mainEntity.append_to("sdPublisher", {"@id": org_website}, compact=True)
+        # Expected URL for the documentation of this pipeline and version
+        url = "/".join((org_website, pipeline_short_name, "dev" if self.version.endswith("dev") else self.version))
+        try:
+            # Check that the URL is valid
+            response = requests.head(url, allow_redirects=True, timeout=10)
+            if response.ok:
+                self.crate.mainEntity.append_to("url", url, compact=True)
+        except requests.RequestException:
+            pass
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
         # remove duplicate entries for version
         self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
 
-        # get keywords from nf-core website
+        # get keywords from GitHub
         topics = ["nf-core", "nextflow"]
+        if org_short_name and org_short_name not in topics:
+            topics.append(org_short_name)
         try:
-            response = requests.get("https://nf-co.re/pipelines.json", timeout=10)
+            response = gh_api.safe_get(f"https://api.github.com/repos/{self.crate.name}/topics")
             response.raise_for_status()
-            remote_workflows = response.json()["remote_workflows"]
+            for topic in response.json()["names"]:
+                if topic not in topics:
+                    topics.append(topic)
         except (requests.exceptions.RequestException, ValueError, KeyError) as e:
             # Keep the keywords from an existing crate rather than silently dropping the pipeline topics
             topics = self._get_existing_keywords() or topics
-            log.warning(f"Could not fetch pipeline topics from nf-co.re, using keywords {topics}: {e}")
-            remote_workflows = []
-        # go through all remote workflows and find the one that matches the pipeline name
-        for remote_wf in remote_workflows:
-            assert self.pipeline_obj.pipeline_name is not None  # mypy
-            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
-                topics = topics + remote_wf["topics"]
-                break
+            log.warning(f"Could not fetch pipeline topics from GitHub, using keywords {topics}: {e}")
 
         log.debug(f"Adding topics: {topics}")
         self.crate.mainEntity.append_to("keywords", topics)
@@ -281,7 +293,7 @@ class ROCrate:
                                 compact=True,
                             )
 
-    def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
+    def add_main_authors(self, wf_file: ComputationalWorkflow) -> None:
         """
         Add workflow authors to the crate
         """
@@ -391,7 +403,7 @@ class ROCrate:
 
             for git_author in git_contributors:
                 progress_bar.update(bump_progress, advance=1, name=git_author)
-                github_name = requests.get(f"https://api.github.com/users/{git_author}").json().get("name")
+                github_name = gh_api.safe_get(f"https://api.github.com/users/{git_author}").json().get("name")
                 if github_name:
                     # remove usernames (just keep names with spaces)
                     if " " in github_name and github_name not in authors:

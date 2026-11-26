@@ -68,11 +68,8 @@ class TestROCrate(TestPipelines):
         orcid_lookup = orcid_lookup or {}
 
         def mocked_requests_get(url, params=None, headers=None, **kwargs):
-            if url == "https://nf-co.re/pipelines.json":
-                return MockResponse(
-                    {"remote_workflows": [{"name": self.pipeline_obj.pipeline_name, "topics": topics}]},
-                    url=url,
-                )
+            if url.startswith("https://api.github.com/repos/"):
+                return MockResponse({"names": topics}, url=url)
             if url.startswith("https://api.github.com/users/"):
                 username = url.rsplit("/", 1)[-1]
                 return MockResponse({"name": github_names.get(username)}, url=url)
@@ -111,9 +108,16 @@ class TestROCrate(TestPipelines):
         self.fail(f"Could not find person {name}")
 
     def _create_rocrate_with_mocked_requests(self, topics=None, github_names=None, orcid_lookup=None) -> None:
-        with mock.patch(
-            "nf_core.pipelines.rocrate.requests.get",
-            side_effect=self._mock_requests_get(topics=topics, github_names=github_names, orcid_lookup=orcid_lookup),
+        with (
+            mock.patch(
+                "nf_core.pipelines.rocrate.gh_api.safe_get",
+                side_effect=self._mock_requests_get(topics=topics, github_names=github_names),
+            ),
+            mock.patch(
+                "nf_core.pipelines.rocrate.requests.get",
+                side_effect=self._mock_requests_get(orcid_lookup=orcid_lookup),
+            ),
+            mock.patch("nf_core.pipelines.rocrate.requests.head", return_value=mock.Mock(ok=True)),
         ):
             self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
 
@@ -201,33 +205,33 @@ class TestROCrate(TestPipelines):
         self.assertEqual(person_names, {"Ada Lovelace", "Grace Hopper"})
         self.assertEqual(len(workflow["author"]), 2)
 
-    def _create_rocrate_offline(self) -> None:
-        """Create the crate while nf-co.re/pipelines.json is unreachable"""
+    def _create_rocrate_offline_topics(self) -> None:
+        """Create the crate while GitHub topics are unreachable"""
         default_mock = self._mock_requests_get()
 
         def offline_requests_get(url, *args, **kwargs):
-            if url == "https://nf-co.re/pipelines.json":
+            if url.startswith("https://api.github.com/repos/"):
                 raise requests.exceptions.ConnectionError("offline")
             return default_mock(url, *args, **kwargs)
 
-        with mock.patch("nf_core.pipelines.rocrate.requests.get", side_effect=offline_requests_get):
+        with mock.patch("nf_core.pipelines.rocrate.gh_api.safe_get", side_effect=offline_requests_get):
             self.assertTrue(self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir))
 
     def test_rocrate_creation_falls_back_to_default_topics_when_offline(self):
-        """Use the default keywords if pipelines.json can't be fetched and there is no existing crate"""
+        """Use the default keywords if GitHub topics can't be fetched and there is no existing crate"""
         Path(self.pipeline_dir, "ro-crate-metadata.json").unlink(missing_ok=True)
-        self._create_rocrate_offline()
+        self._create_rocrate_offline_topics()
 
         workflow = self._graph_entity(self._read_crate_graph(), "#main.nf")
         self.assertEqual(workflow["keywords"], ["nf-core", "nextflow"])
 
     def test_rocrate_update_keeps_existing_topics_when_offline(self):
-        """Keep the keywords of an existing crate if pipelines.json can't be fetched"""
+        """Keep the keywords of an existing crate if GitHub topics can't be fetched"""
         self._create_rocrate_with_mocked_requests(topics=["rna-seq", "transcriptomics"])
         expected = ["nf-core", "nextflow", "rna-seq", "transcriptomics"]
         self.assertEqual(self._graph_entity(self._read_crate_graph(), "#main.nf")["keywords"], expected)
 
-        self._create_rocrate_offline()
+        self._create_rocrate_offline_topics()
 
         self.assertEqual(self._graph_entity(self._read_crate_graph(), "#main.nf")["keywords"], expected)
 
@@ -238,7 +242,7 @@ class TestROCrate(TestPipelines):
         self._commit_main_nf_change("octocat", "octocat@example.com", "Add git contributor")
 
         with mock.patch(
-            "nf_core.pipelines.rocrate.requests.get",
+            "nf_core.pipelines.rocrate.gh_api.safe_get",
             side_effect=self._mock_requests_get(github_names={"octocat": "Mona Octocat"}),
         ):
             contributors = self.rocrate_obj.parse_manifest_authors()
@@ -454,3 +458,26 @@ class TestROCrate(TestPipelines):
 
         # check creativeWorkStatus is Stable
         self.assertEqual(crate["@graph"][0]["creativeWorkStatus"], "Stable")
+
+    def test_rocrate_creation_uses_manifest_org_details(self):
+        """RO-Crate include values set in manifest.docsUrl and manifest.organization"""
+
+        self._set_manifest_identity(
+            """docsUrl = 'https://www.example.com'
+            name = 'sweet-inst/testpipeline'
+            organization = 'Sweet Institute'
+            """
+        )
+        self._create_rocrate_with_mocked_requests()
+
+        graph = self._read_crate_graph()
+
+        self.assertEqual(graph[2]["name"][0], "sweet-inst/testpipeline")
+        self.assertEqual(graph[2]["keywords"], ["nf-core", "nextflow", "sweet-inst", "rna-seq"])
+        self.assertEqual(graph[2]["sdPublisher"], {"@id": "https://www.example.com"})
+        self.assertEqual(
+            graph[2]["url"], ["https://github.com/nf-core/testpipeline", "https://www.example.com/testpipeline/dev"]
+        )
+
+        org_entry = [(entity["name"], entity["url"]) for entity in graph if entity.get("@type") == "Organization"]
+        self.assertEqual(org_entry, [("Sweet Institute", "https://www.example.com")])
