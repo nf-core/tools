@@ -373,7 +373,7 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity", "docker", "apptainer"]),
+    type=click.Choice(["none", "singularity", "docker", "apptainer", "apple_container"]),
     help="Download container images of required software.",
 )
 @click.option(
@@ -1338,7 +1338,7 @@ def command_modules_create(
 )
 @click.option(
     "--profile",
-    type=click.Choice(["docker", "singularity", "conda"]),
+    type=click.Choice(["docker", "singularity", "conda", "apple_container", "apple_container_arm64"]),
     default=None,
     help="Run tests with a specific profile",
 )
@@ -1702,7 +1702,7 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force):
 )
 @click.option(
     "--profile",
-    type=click.Choice(["docker", "singularity", "conda"]),
+    type=click.Choice(["docker", "singularity", "conda", "apple_container", "apple_container_arm64"]),
     default=None,
     help="Run tests with a specific profile",
 )

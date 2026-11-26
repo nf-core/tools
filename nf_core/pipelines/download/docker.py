@@ -44,6 +44,9 @@ class DockerFetcher(ContainerFetcher):
     Fetcher for Docker containers.
     """
 
+    # Substrings in the CLI output that mark a failed pull/save command
+    error_markers: tuple[str, ...] = ("invalid reference format", "Error response from daemon:")
+
     def __init__(
         self,
         outdir: Path,
@@ -313,21 +316,16 @@ class DockerFetcher(ContainerFetcher):
             proc.wait()
             log.debug(f"Docker command '{' '.join(command)}' has exited.")
 
-        if lines:
-            # something went wrong with the container retrieval
-            possible_error_lines = {
-                "invalid reference format",
-                "Error response from daemon:",
-            }
-            if any(pel in line for pel in possible_error_lines for line in lines):
-                self.progress.remove_task(progress_task)
-                raise DockerError(
-                    container=container,
-                    address=address,
-                    out_path=output_path,
-                    command=command,
-                    error_msg=lines,
-                )
+        # something went wrong with the container retrieval
+        if lines and any(marker in line for marker in self.error_markers for line in lines):
+            self.progress.remove_task(progress_task)
+            raise DockerError(
+                container=container,
+                address=address,
+                out_path=output_path,
+                command=command,
+                error_msg=lines,
+            )
 
     def cleanup(self) -> None:
         """
@@ -382,6 +380,7 @@ class DockerError(Exception):
 
         error_patterns = {
             r"reference does not exist": self.ImageNotPulledError,
+            r"failed to get image for reference": self.ImageNotPulledError,  # Apple Container
             r"repository does not exist": self.ImageNotFoundError,
             r"Error response from daemon: Head .*: denied": self.ImageNotFoundError,
             r"manifest unknown": self.InvalidTagError,
