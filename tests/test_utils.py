@@ -315,3 +315,50 @@ class TestUtils(TestPipelines):
             "dir1/should-match-1",
             "keep.log",
         ]
+
+
+PIXI_LOCK = """\
+version: 6
+environments:
+  default:
+    channels:
+    - url: https://conda.anaconda.org/conda-forge/
+    packages:
+      linux-64:
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/tool-1.0-h0_0.tar.bz2
+packages:
+- conda: https://conda.anaconda.org/bioconda/linux-64/tool-1.0-h0_0.tar.bz2
+  md5: 22222222222222222222222222222222
+  depends:
+  - libzlib
+- conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda
+  md5: 11111111111111111111111111111111
+"""
+
+
+def test_pixi_lock_to_explicit():
+    """Pixi lock files are turned into conda @EXPLICIT files, keeping URLs and md5s."""
+    explicit = nf_core.utils.pixi_lock_to_explicit(PIXI_LOCK, "linux/amd64")
+    lines = [line for line in explicit.splitlines() if not line.startswith("#")]
+    assert lines == [
+        "@EXPLICIT",
+        "https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda#11111111111111111111111111111111",
+        "https://conda.anaconda.org/bioconda/linux-64/tool-1.0-h0_0.tar.bz2#22222222222222222222222222222222",
+    ]
+    assert nf_core.utils.is_explicit_conda_lock(explicit)
+
+
+def test_pixi_lock_to_explicit_passes_explicit_through():
+    explicit = "# comment\n@EXPLICIT\nhttps://example.org/a-1-0.conda#abc\n"
+    assert nf_core.utils.pixi_lock_to_explicit(explicit, "linux/amd64") == explicit
+
+
+def test_pixi_lock_to_explicit_rejects_unknown_format():
+    with pytest.raises(ValueError):
+        nf_core.utils.pixi_lock_to_explicit("not: a lock\n", "linux/amd64")
+
+
+def test_is_explicit_conda_lock():
+    assert not nf_core.utils.is_explicit_conda_lock(PIXI_LOCK)
+    assert nf_core.utils.is_explicit_conda_lock("\n# header\n@EXPLICIT\n")

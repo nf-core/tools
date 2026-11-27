@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from nf_core.utils import read_module_name
+from nf_core.utils import is_explicit_conda_lock, read_module_name
 
 log = logging.getLogger(__name__)
 
@@ -81,9 +81,31 @@ def _process_meta(meta_path: Path) -> tuple[str, dict[str, str]] | None:
     for platform_name, (runtime, arch, protocol) in PLATFORMS.items():
         log.debug(f"Adding container for platform {platform_name}, runtime={runtime}, arch={arch}, protocol={protocol}")
         with contextlib.suppress(KeyError, TypeError):
-            platform_containers[platform_name] = meta["containers"][runtime][arch][protocol]
+            value = meta["containers"][runtime][arch][protocol]
+            if runtime == "conda" and not _conda_lock_is_usable(meta_path.parent, value):
+                log.debug(
+                    f"Skipping conda lock file {value} for {module_name}: not a conda @EXPLICIT file, "
+                    "so conda cannot create an environment from it. The module environment.yml is used instead."
+                )
+                continue
+            platform_containers[platform_name] = value
 
     return module_name, platform_containers
+
+
+def _conda_lock_is_usable(module_dir: Path, lock_file: str) -> bool:
+    """Return False if the lock file next to the module is known not to be a conda ``@EXPLICIT`` file.
+
+    Older module releases ship pixi lock files (``version: 6`` YAML) which ``conda create --file``
+    cannot read, so pointing Nextflow at them breaks ``-with-conda``. Lock files that cannot be
+    read are kept, so a missing file does not silently change the generated config.
+    """
+    lock_path = module_dir / ".conda-lock" / Path(lock_file).name
+    try:
+        text = lock_path.read_text()
+    except OSError:
+        return True
+    return is_explicit_conda_lock(text)
 
 
 class ContainerConfigs:

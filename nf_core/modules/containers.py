@@ -36,6 +36,7 @@ from nf_core.utils import (
     CONTAINER_SYSTEMS,
     REQUIRED_CONTAINER_PLATFORMS,
     ContainerRegistryUrls,
+    pixi_lock_to_explicit,
 )
 
 log = logging.getLogger(__name__)
@@ -807,7 +808,13 @@ class ModuleContainers:
         log.debug(f"Downloading conda lock file from {conda_lock_url}")
         resp = wave_send("get", conda_lock_url, error_context=f"Conda lock download for platform {platform}")
         log.debug(f"Successfully downloaded conda lock file from {conda_lock_url}")
-        return resp.text
+        # Wave serves pixi lock files, which `conda create --file` (used by Nextflow) cannot
+        # read. Store them as conda @EXPLICIT files instead.
+        try:
+            return pixi_lock_to_explicit(resp.text, platform)
+        except ValueError as e:
+            log.warning(f"Could not convert conda lock file for {platform} to @EXPLICIT format, keeping it as is: {e}")
+            return resp.text
 
     def list_containers(self) -> list[tuple[str, str, str]]:
         """
