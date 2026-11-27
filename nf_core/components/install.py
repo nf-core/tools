@@ -13,6 +13,7 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import (
     get_components_to_install,
+    get_linked_component_branch,
     prompt_component_version_sha,
 )
 from nf_core.components.constants import (
@@ -56,8 +57,7 @@ class ComponentInstall(ComponentCommand):
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
-            default_branch = self.branch if remote_url == self.current_remote.remote_url else None
-            branch = component.get("branch", default_branch)
+            branch = get_linked_component_branch(component, self.current_remote.remote_url, self.branch)
             self.modules_repo = ModulesRepo(remote_url, branch)
             component = component["name"]
 

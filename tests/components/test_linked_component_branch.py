@@ -168,6 +168,6 @@ def test_manage_changes_in_linked_components_only_applies_branch_to_same_remote(
     installed_args = [call.args[0] for call in mock_install_cls.return_value.install.call_args_list]
     by_name = {m["name"]: m for m in installed_args}
     assert by_name["fastqc"]["git_remote"] == NF_CORE_MODULES_REMOTE
-    assert "branch" not in by_name["fastqc"]
+    assert by_name["fastqc"]["branch"] is None
     assert by_name["mymodule/command1"]["git_remote"] == FORK_REMOTE
     assert by_name["mymodule/command1"]["branch"] == FEATURE_BRANCH

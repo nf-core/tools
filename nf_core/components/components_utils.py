@@ -149,6 +149,19 @@ def prompt_component_version_sha(
     return git_sha
 
 
+def get_linked_component_branch(component: dict[str, str], current_remote_url: str, branch: str | None) -> str | None:
+    """
+    Return the branch to use for a component linked to a subworkflow.
+
+    A branch set on the component is used as is. Otherwise ``branch`` applies only when the
+    component comes from the current remote; a component from another remote (such as
+    nf-core/modules) uses that remote's default branch.
+    """
+    if component.get("git_remote", current_remote_url) == current_remote_url:
+        return component.get("branch", branch)
+    return component.get("branch")
+
+
 def get_components_to_install(
     subworkflow_dir: str | Path,
 ) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
