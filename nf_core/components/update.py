@@ -10,6 +10,7 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import (
     get_components_to_install,
+    get_linked_component_branch,
     prompt_component_version_sha,
 )
 from nf_core.components.install import ComponentInstall
@@ -104,7 +105,7 @@ class ComponentUpdate(ComponentCommand):
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
-            branch = component.get("branch", self.branch)
+            branch = get_linked_component_branch(component, self.current_remote.remote_url, self.branch)
             self.modules_repo = ModulesRepo(remote_url, branch)
             component = component["name"]
 
@@ -929,16 +930,22 @@ class ComponentUpdate(ComponentCommand):
         if self.component_type == "modules":
             # All subworkflow names in the installed_by section of a module are subworkflows using this module
             # We need to update them too
-            git_remote = self.current_remote.remote_url
             for subworkflow in installed_by:
+                git_remote = self.current_remote.remote_url
+                branch = None
                 if subworkflow != component:
                     for remote_url, content in mods_json["repos"].items():
                         if all_subworkflows := content.get("subworkflows"):
                             for details in all_subworkflows.values():
                                 if subworkflow in details:
                                     git_remote = remote_url
+                                    if remote_url != self.current_remote.remote_url:
+                                        branch = details[subworkflow].get("branch")
                 if subworkflow != self.component_type:
-                    subworkflows_to_update.append({"name": subworkflow, "git_remote": git_remote})
+                    entry = {"name": subworkflow, "git_remote": git_remote}
+                    if branch is not None:
+                        entry["branch"] = branch
+                    subworkflows_to_update.append(entry)
 
         elif self.component_type == "subworkflows":
             for repo, repo_content in mods_json["repos"].items():
@@ -949,14 +956,13 @@ class ComponentUpdate(ComponentCommand):
                             # The checked component is used by the updated subworkflow
                             # We need to update it too
                             if component in comp_content["installed_by"]:
+                                entry = {"name": comp, "git_remote": repo, "org_path": install_dir}
+                                if repo != self.current_remote.remote_url and "branch" in comp_content:
+                                    entry["branch"] = comp_content["branch"]
                                 if component_type == "modules":
-                                    modules_to_update.append(
-                                        {"name": comp, "git_remote": repo, "org_path": install_dir}
-                                    )
+                                    modules_to_update.append(entry)
                                 elif component_type == "subworkflows":
-                                    subworkflows_to_update.append(
-                                        {"name": comp, "git_remote": repo, "org_path": install_dir}
-                                    )
+                                    subworkflows_to_update.append(entry)
 
         return modules_to_update, subworkflows_to_update
 
@@ -1031,7 +1037,7 @@ class ComponentUpdate(ComponentCommand):
             for module in included_modules:
                 module_name = module["name"]
                 module["git_remote"] = module.get("git_remote", self.current_remote.remote_url)
-                module["branch"] = module.get("branch", self.branch)
+                module["branch"] = get_linked_component_branch(module, self.current_remote.remote_url, self.branch)
                 if module_name not in modules_to_update:
                     log.info(f"Installing newly included module '{module_name}' for '{component}'")
                     install_module_object = ComponentInstall(self.directory, "modules", installed_by=component)
@@ -1039,7 +1045,9 @@ class ComponentUpdate(ComponentCommand):
             for subworkflow in included_subworkflows:
                 subworkflow_name = subworkflow["name"]
                 subworkflow["git_remote"] = subworkflow.get("git_remote", self.current_remote.remote_url)
-                subworkflow["branch"] = subworkflow.get("branch", self.branch)
+                subworkflow["branch"] = get_linked_component_branch(
+                    subworkflow, self.current_remote.remote_url, self.branch
+                )
                 if subworkflow_name not in subworkflows_to_update:
                     log.info(f"Installing newly included subworkflow '{subworkflow_name}' for '{component}'")
                     install_subworkflow_object = ComponentInstall(

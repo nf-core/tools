@@ -1,7 +1,10 @@
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
+from nf_core.components.install import ComponentInstall
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.subworkflows.install import SubworkflowInstall
 
@@ -227,3 +230,45 @@ class TestSubworkflowsInstall(TestSubworkflows):
         with pytest.raises(Exception) as excinfo:
             install_obj.install("fastqc")
             assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
+
+
+FORK_REMOTE = "https://github.com/organization/nf-core-modules.git"
+FEATURE_BRANCH = "feature/my-workflow"
+
+
+def _make_installer(tmp_path: Path, component_type: str = "modules", branch: str = FEATURE_BRANCH) -> ComponentInstall:
+    installer = object.__new__(ComponentInstall)
+    installer.directory = tmp_path
+    installer.component_type = component_type
+    installer.branch = branch
+    installer.sha = None
+    installer.current_sha = None
+    installer.current_remote = mock.MagicMock(remote_url=FORK_REMOTE, repo_path="my-organization")
+    installer.modules_repo = installer.current_remote
+    installer.repo_type = "modules"
+    return installer
+
+
+@pytest.mark.parametrize(
+    ("component_dict", "expected_remote", "expected_branch"),
+    [
+        ({"name": "fastqc", "git_remote": NF_CORE_MODULES_REMOTE}, NF_CORE_MODULES_REMOTE, None),
+        (
+            {"name": "fastqc", "git_remote": NF_CORE_MODULES_REMOTE, "branch": "master"},
+            NF_CORE_MODULES_REMOTE,
+            "master",
+        ),
+        ({"name": "mymodule/command1", "git_remote": FORK_REMOTE}, FORK_REMOTE, FEATURE_BRANCH),
+    ],
+)
+def test_install_dict_component_branch_selection(
+    tmp_path: Path, component_dict: dict[str, str], expected_remote: str, expected_branch: str | None
+) -> None:
+    installer = _make_installer(tmp_path, component_type="modules")
+
+    with mock.patch("nf_core.components.install.ModulesRepo") as mock_repo:
+        mock_repo.return_value.remote_url = expected_remote
+        result = installer.install(component_dict, silent=True)
+
+    assert result is False
+    mock_repo.assert_called_once_with(expected_remote, expected_branch)
