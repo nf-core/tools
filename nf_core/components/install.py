@@ -56,7 +56,8 @@ class ComponentInstall(ComponentCommand):
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote.remote_url)
-            branch = component.get("branch", self.branch)
+            default_branch = self.branch if remote_url == self.current_remote.remote_url else None
+            branch = component.get("branch", default_branch)
             self.modules_repo = ModulesRepo(remote_url, branch)
             component = component["name"]
 
