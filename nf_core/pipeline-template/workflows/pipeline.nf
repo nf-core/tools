@@ -66,7 +66,7 @@ workflow {{ short_name|upper }} {
 
     def topic_versions_string = topic_versions.versions_tuple
         .map { process, tool, version ->
-            [ process[process.lastIndexOf(':')+1..-1], [ tool.toString(), version.toString() ] ]
+            [ process[process.lastIndexOf(':')+1..-1], [ tool.toString(), version?.toString() ] ]
         }
         .groupTuple(by:0)
         .map { process, tool_versions ->
