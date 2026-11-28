@@ -28,6 +28,7 @@
 - speed up installing and updating modules and subworkflows by reading files from git instead of checking out old commits ([#4633](https://github.com/nf-core/tools/pull/4633))
 - Mark a missing final newline in module and subworkflow patches, so patches that reach the end of such a file apply again ([#PRNUM](https://github.com/nf-core/tools/pull/PRNUM))
 - Mark a missing final newline in module and subworkflow patches, so patches that reach the end of such a file apply again ([#4643](https://github.com/nf-core/tools/pull/4643))
+- Store module conda lock files in conda's `@EXPLICIT` format instead of Wave's pixi lock format, and leave pixi lock files out of the generated `conf/containers_conda_lock_files_*.config` so `-with-conda` works ([#4647](https://github.com/nf-core/tools/pull/4647))
 
 ### Template
 
