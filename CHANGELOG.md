@@ -39,6 +39,7 @@
 - cleanup included components ([#4604](https://github.com/nf-core/tools/pull/4604))
 - skip `latest-everything` nf-test runs on PRs to `main`/`master` ([#4393](https://github.com/nf-core/tools/pull/4393))
 - Write topic versions as YAML strings, so versions such as `1.20` stay as written; pipeline snapshots need updating, as numeric topic versions are now stored as strings (`1.2` becomes `"1.20"`) ([#4648](https://github.com/nf-core/tools/pull/4648))
+- Update `utils_nfcore_pipeline`, so `versions.yml` values such as `1.20` stay as written; pipeline snapshots of such versions need updating ([#4650](https://github.com/nf-core/tools/pull/4650))
 
 ## v4.2.2 - [Metropolitan Mouse Patch 2](https://github.com/nf-core/tools/releases/tag/4.2.2) - [2026-11-12]
 
