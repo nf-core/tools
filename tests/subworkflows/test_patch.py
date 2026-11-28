@@ -170,6 +170,8 @@ class TestSubworkflowsPatch(TestSubworkflows):
             )
             is False
         )
+        assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
+        assert (subworkflow_install_dir / "bam_sort_stats_samtools.diff").exists()
 
     def test_create_patch_update_success(self):
         """
