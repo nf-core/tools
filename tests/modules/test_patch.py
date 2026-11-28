@@ -218,6 +218,9 @@ class TestModulesCreate(TestModules):
         assert (
             update_obj.try_apply_patch(BISMARK_ALIGN, REPO_NAME, patch_path, module_path, module_install_dir) is False
         )
+        # Original patch file must remain in place and also be copied into the staging install dir
+        assert (module_path / patch_fn).exists()
+        assert (module_install_dir / patch_fn).exists()
 
     def test_create_patch_update_success(self):
         """
@@ -340,6 +343,37 @@ class TestModulesCreate(TestModules):
         with open(module_path / patch_fn) as fh:
             new_patch_contents = fh.read()
         assert patch_contents == new_patch_contents
+
+    def test_create_patch_update_fail_preview_declined(self):
+        """Declining a previewed update after a failed patch must not delete the existing patch file."""
+        setup_patch(self.pipeline_dir, True)
+        module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
+
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj.patch(BISMARK_ALIGN)
+
+        patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
+        patch_file = module_path / patch_fn
+        assert patch_file.exists()
+        original_patch_contents = patch_file.read_text()
+        original_main_nf = (module_path / "main.nf").read_text()
+
+        update_obj = nf_core.modules.update.ModuleUpdate(
+            self.pipeline_dir,
+            sha=FAIL_SHA,
+            show_diff=True,
+            update_deps=True,
+            remote_url=GITLAB_URL,
+            branch=PATCH_BRANCH,
+        )
+        update_obj.no_prompts = False
+        with mock.patch("nf_core.components.update.questionary.confirm") as mock_confirm:
+            mock_confirm.return_value.unsafe_ask.return_value = False
+            update_obj.update(BISMARK_ALIGN)
+
+        assert patch_file.exists()
+        assert patch_file.read_text() == original_patch_contents
+        assert (module_path / "main.nf").read_text() == original_main_nf
 
     def test_remove_patch(self):
         """Test creating a patch when there is no change to the module"""
